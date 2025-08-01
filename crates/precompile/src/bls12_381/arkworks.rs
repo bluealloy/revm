@@ -1,3 +1,4 @@
+//! BLS12-381 precompile using Arkworks BLS12-381 implementation.
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
     bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH},
@@ -347,7 +348,7 @@ fn map_fp2_to_g2(fp2: &Fq2) -> G2Affine {
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 #[inline]
-fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
+pub(crate) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
     if pairs.is_empty() {
         return true;
     }
@@ -360,7 +361,7 @@ fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
 
 /// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
 #[inline]
-pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileError> {
+pub(crate) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileError> {
     if pairs.is_empty() {
         return Ok(true);
     }
@@ -405,7 +406,7 @@ pub(super) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, Precomp
 
 /// Performs point addition on two G1 points taking byte coordinates.
 #[inline]
-pub(super) fn p1_add_affine_bytes(
+pub(crate) fn p1_add_affine_bytes(
     a: G1Point,
     b: G1Point,
 ) -> Result<[u8; G1_LENGTH], PrecompileError> {
@@ -426,7 +427,7 @@ pub(super) fn p1_add_affine_bytes(
 
 /// Performs point addition on two G2 points taking byte coordinates.
 #[inline]
-pub(super) fn p2_add_affine_bytes(
+pub(crate) fn p2_add_affine_bytes(
     a: G2Point,
     b: G2Point,
 ) -> Result<[u8; G2_LENGTH], PrecompileError> {
@@ -447,7 +448,7 @@ pub(super) fn p2_add_affine_bytes(
 
 /// Maps a field element to a G1 point from bytes
 #[inline]
-pub(super) fn map_fp_to_g1_bytes(
+pub(crate) fn map_fp_to_g1_bytes(
     fp_bytes: &[u8; FP_LENGTH],
 ) -> Result<[u8; G1_LENGTH], PrecompileError> {
     let fp = read_fp(fp_bytes)?;
@@ -457,7 +458,7 @@ pub(super) fn map_fp_to_g1_bytes(
 
 /// Maps field elements to a G2 point from bytes
 #[inline]
-pub(super) fn map_fp2_to_g2_bytes(
+pub(crate) fn map_fp2_to_g2_bytes(
     fp2_x: &[u8; FP_LENGTH],
     fp2_y: &[u8; FP_LENGTH],
 ) -> Result<[u8; G2_LENGTH], PrecompileError> {
@@ -468,7 +469,7 @@ pub(super) fn map_fp2_to_g2_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
-pub(super) fn p1_msm_bytes(
+pub(crate) fn p1_msm_bytes(
     point_scalar_pairs: impl Iterator<Item = Result<(G1Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
 ) -> Result<[u8; G1_LENGTH], PrecompileError> {
     let mut g1_points = Vec::new();
@@ -505,7 +506,7 @@ pub(super) fn p1_msm_bytes(
 
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
-pub(super) fn p2_msm_bytes(
+pub(crate) fn p2_msm_bytes(
     point_scalar_pairs: impl Iterator<Item = Result<(G2Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
 ) -> Result<[u8; G2_LENGTH], PrecompileError> {
     let mut g2_points = Vec::new();

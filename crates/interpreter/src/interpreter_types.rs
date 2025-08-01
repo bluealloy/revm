@@ -260,7 +260,7 @@ pub trait LoopControl {
     }
     /// Is end of the loop.
     fn is_end(&self) -> bool;
-    /// Reverts to previous instruction pointer.
+    /// Sets the `end` flag internally. Action should be taken after.
     fn reset_action(&mut self);
     /// Set return action.
     fn set_action(&mut self, action: InterpreterAction);

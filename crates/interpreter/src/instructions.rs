@@ -155,7 +155,7 @@ mod tail {
                     }
 
                     let opcode = cx.pre_step();
-                    // become
+                    become
                     (const { &self::table::<W, H>() })[opcode as usize](cx.interpreter, cx.host, cx.ip)
                 }
             )*
@@ -167,7 +167,8 @@ mod tail {
                         table[bytecode::opcode::$instr as usize] = conv(self::$instr);
                     )*
                     table
-                }
+                };
+                super::cx::table::<W, H>()
             }
         };
     }

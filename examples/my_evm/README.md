@@ -76,5 +76,5 @@ System calls are needed for inserting of fetching data on pre or post block stat
 ```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), revm::inspector::NoOpInspector);
 // System call with given input to system contract address.
-let _res = my_evm.transact_system_call(bytes!("0x0001"), address!("f529c70db0800449ebd81fbc6e4221523a989f05"));
+let _res = my_evm.system_call_one(SYSTEM_ADDRESS, address!("f529c70db0800449ebd81fbc6e4221523a989f05"), bytes!("0x0001"));
 ```

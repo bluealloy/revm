@@ -12,11 +12,10 @@ pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
-pub mod bn128;
+pub mod bn254;
 pub mod hash;
 pub mod identity;
 pub mod interface;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -55,10 +54,9 @@ cfg_if::cfg_if! {
 #[cfg(feature = "gmp")]
 use aurora_engine_modexp as _;
 
-use cfg_if::cfg_if;
 use core::hash::Hash;
 use primitives::{hardfork::SpecId, Address, HashMap, HashSet, OnceLock};
-use std::{boxed::Box, vec::Vec};
+use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -66,34 +64,12 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 }
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
-#[derive(Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles
     inner: HashMap<Address, PrecompileFn>,
     /// Addresses of precompile
     addresses: HashSet<Address>,
-    /// Crypto implementation
-    crypto: Box<dyn Crypto>,
-}
-
-impl Clone for Precompiles {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            addresses: self.addresses.clone(),
-            crypto: self.crypto.clone_box(),
-        }
-    }
-}
-
-impl Default for Precompiles {
-    fn default() -> Self {
-        Self {
-            inner: Default::default(),
-            addresses: Default::default(),
-            crypto: Box::new(DefaultCrypto),
-        }
-    }
 }
 
 impl Precompiles {
@@ -108,26 +84,6 @@ impl Precompiles {
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::OSAKA => Self::osaka(),
         }
-    }
-
-    /// Creates a new Precompiles instance with a custom crypto implementation.
-    pub fn with_crypto(spec: PrecompileSpecId, crypto: Box<dyn Crypto>) -> Self {
-        let base = Self::new(spec).clone();
-        Self {
-            inner: base.inner,
-            addresses: base.addresses,
-            crypto,
-        }
-    }
-
-    /// Returns the crypto implementation.
-    pub fn crypto(&self) -> &dyn Crypto {
-        &*self.crypto
-    }
-
-    /// Sets a custom crypto implementation.
-    pub fn set_crypto(&mut self, crypto: Box<dyn Crypto>) {
-        self.crypto = crypto;
     }
 
     /// Returns precompiles for Homestead spec.
@@ -160,9 +116,9 @@ impl Precompiles {
                 modexp::BYZANTIUM,
                 // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
                 // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                bn128::add::BYZANTIUM,
-                bn128::mul::BYZANTIUM,
-                bn128::pair::BYZANTIUM,
+                bn254::add::BYZANTIUM,
+                bn254::mul::BYZANTIUM,
+                bn254::pair::BYZANTIUM,
             ]);
             precompiles
         })
@@ -175,9 +131,9 @@ impl Precompiles {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                bn128::add::ISTANBUL,
-                bn128::mul::ISTANBUL,
-                bn128::pair::ISTANBUL,
+                bn254::add::ISTANBUL,
+                bn254::mul::ISTANBUL,
+                bn254::pair::ISTANBUL,
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
             ]);
@@ -206,21 +162,10 @@ impl Precompiles {
         static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::berlin().clone();
-
-            // EIP-4844: Shard Blob Transactions
-            cfg_if! {
-                if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
-                    let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
-                } else {
-                    let precompile = PrecompileWithAddress(u64_to_address(0x0A), |_,_,_| Err(PrecompileError::Fatal("c-kzg feature is not enabled".into())));
-                }
-            }
-
-
             precompiles.extend([
-                precompile,
+                // EIP-4844: Shard Blob Transactions
+                kzg_point_evaluation::POINT_EVALUATION,
             ]);
-
             precompiles
         })
     }
@@ -319,11 +264,7 @@ impl Precompiles {
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
-        Self {
-            inner,
-            addresses,
-            crypto: self.crypto.clone_box(),
-        }
+        Self { inner, addresses }
     }
 
     /// Returns intersection of `self` and `other`.
@@ -340,11 +281,7 @@ impl Precompiles {
 
         let addresses = inner.keys().cloned().collect::<HashSet<_>>();
 
-        Self {
-            inner,
-            addresses,
-            crypto: self.crypto.clone_box(),
-        }
+        Self { inner, addresses }
     }
 }
 

@@ -157,11 +157,6 @@ where
             )?;
         }
 
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
-
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
 
         // old balance is journaled before mint is incremented.
@@ -209,6 +204,11 @@ where
         // Touch account so we know it is changed.
         caller_account.mark_touch();
         caller_account.info.balance = new_balance;
+
+        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        if tx.kind().is_call() {
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.
@@ -1108,5 +1108,38 @@ mod tests {
         // Check that the caller was reimbursed the correct amount of ETH.
         let account = evm.ctx().journal_mut().load_account(SENDER).unwrap();
         assert_eq!(account.info.balance, expected_refund);
+    }
+
+    #[test]
+    fn test_tx_low_balance_nonce_unchanged() {
+        let ctx = Context::op().with_tx(
+            OpTransaction::builder()
+                .base(TxEnv::builder().value(U256::from(1000)))
+                .build_fill(),
+        );
+
+        let mut evm = ctx.build_op();
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+
+        let result = handler.validate_against_state_and_deduct_caller(&mut evm);
+
+        assert!(matches!(
+            result.err().unwrap(),
+            EVMError::Transaction(OpTransactionError::Base(
+                InvalidTransaction::LackOfFundForMaxFee { .. }
+            ))
+        ));
+        assert_eq!(
+            evm.0
+                .ctx
+                .journal_mut()
+                .load_account(Address::ZERO)
+                .unwrap()
+                .info
+                .nonce,
+            0
+        );
     }
 }

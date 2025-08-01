@@ -10,13 +10,16 @@ mod serde;
 /// Extended bytecode structure that wraps base bytecode with additional execution metadata.
 #[derive(Debug)]
 pub struct ExtBytecode {
+    /// Bytecode Keccak-256 hash.
+    /// This is `None` if it hasn't been calculated yet.
+    /// Since it's not necessary for execution, it's not calculated by default.
     bytecode_hash: Option<B256>,
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
     pub action: Option<InterpreterAction>,
+    has_set_action: bool,
     /// The base bytecode.
     base: Bytecode,
-    has_set_action: bool,
     /// The current instruction pointer.
     instruction_pointer: *const u8,
 }
@@ -38,40 +41,63 @@ impl Default for ExtBytecode {
 
 impl ExtBytecode {
     /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
+    ///
+    /// The bytecode hash will not be calculated.
     #[inline]
     pub fn new(base: Bytecode) -> Self {
-        let instruction_pointer = base.bytecode_ptr();
-        Self {
-            base,
-            instruction_pointer,
-            bytecode_hash: None,
-            action: None,
-            has_set_action: false,
-        }
+        Self::new_with_optional_hash(base, None)
     }
 
     /// Creates new `ExtBytecode` with the given hash.
+    #[inline]
     pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
+        Self::new_with_optional_hash(base, Some(hash))
+    }
+
+    /// Creates new `ExtBytecode` with the given hash.
+    #[inline]
+    pub fn new_with_optional_hash(base: Bytecode, hash: Option<B256>) -> Self {
         let instruction_pointer = base.bytecode_ptr();
         Self {
             base,
             instruction_pointer,
-            bytecode_hash: Some(hash),
+            bytecode_hash: hash,
             action: None,
             has_set_action: false,
         }
     }
 
     /// Regenerates the bytecode hash.
+    #[inline]
+    #[deprecated(note = "use `get_or_calculate_hash` or `calculate_hash` instead")]
+    #[doc(hidden)]
     pub fn regenerate_hash(&mut self) -> B256 {
+        self.calculate_hash()
+    }
+
+    /// Re-calculates the bytecode hash.
+    ///
+    /// Prefer [`get_or_calculate_hash`](Self::get_or_calculate_hash) if you just need to get the hash.
+    #[inline]
+    pub fn calculate_hash(&mut self) -> B256 {
         let hash = self.base.hash_slow();
         self.bytecode_hash = Some(hash);
         hash
     }
 
     /// Returns the bytecode hash.
+    #[inline]
     pub fn hash(&mut self) -> Option<B256> {
         self.bytecode_hash
+    }
+
+    /// Returns the bytecode hash or calculates it if it is not set.
+    #[inline]
+    pub fn get_or_calculate_hash(&mut self) -> B256 {
+        *self.bytecode_hash.get_or_insert_with(
+            #[cold]
+            || self.base.hash_slow(),
+        )
     }
 }
 
