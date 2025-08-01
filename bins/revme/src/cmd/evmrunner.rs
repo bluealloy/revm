@@ -59,6 +59,9 @@ pub struct Cmd {
     /// Whether to print the trace
     #[arg(long)]
     trace: bool,
+    /// Whether to use tail calls
+    #[arg(long, conflicts_with = "trace")]
+    tail: bool,
 }
 
 impl Cmd {
@@ -93,7 +96,7 @@ impl Cmd {
         let mut evm = Context::mainnet()
             .with_db(db)
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
-        if !self.trace {
+        if self.tail {
             evm.instruction = EthInstructions::new_mainnet();
         }
 
@@ -113,9 +116,11 @@ impl Cmd {
                 .without_plots();
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
-                b.iter(|| {
-                    let _ = evm.transact(tx.clone()).unwrap();
-                })
+                b.iter_batched(
+                    || tx.clone(),
+                    |input| evm.transact(input).unwrap(),
+                    criterion::BatchSize::SmallInput,
+                );
             });
             criterion_group.finish();
 
