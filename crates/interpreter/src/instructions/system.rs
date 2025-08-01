@@ -1,106 +1,98 @@
 use crate::{
     gas,
-    interpreter::Interpreter,
-    interpreter_types::{
-        InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
-    },
-    CallInput, InstructionResult,
+    instructions::InstructionReturn,
+    interpreter_types::{InputsTr, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr},
+    CallInput, InstructionContextTr, InstructionResult,
 };
-use core::ptr;
+use core::{ops::ControlFlow, ptr};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-use crate::InstructionContext;
+macro_rules! copy_memory_resize {
+    ($context:expr, $memory_offset:expr, $len:expr) => {
+        match copy_memory_resize($context, $memory_offset, $len) {
+            ControlFlow::Continue(memory_offset) => memory_offset,
+            ControlFlow::Break(result) => return result,
+        }
+    };
+}
 
 /// Implements the KECCAK256 instruction.
 ///
 /// Computes Keccak-256 hash of memory data.
-pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    popn_top!([offset], top, context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, top);
-    gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
+#[inline]
+pub fn keccak256<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    popn_top!([offset], top, context);
+    let len = as_usize_or_fail!(context, top);
+    gas_or_fail!(context, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, from, len);
-        primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
+        let from = as_usize_or_fail!(context, offset);
+        resize_memory!(context, from, len);
+        primitives::keccak256(context.memory().slice_len(from, len).as_ref())
     };
     *top = hash.into();
+    InstructionReturn::cont()
 }
 
 /// Implements the ADDRESS instruction.
 ///
 /// Pushes the current contract's address onto the stack.
-pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context
-            .interpreter
-            .input
-            .target_address()
-            .into_word()
-            .into()
-    );
+#[inline]
+pub fn address<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.input().target_address().into_word().into());
+    InstructionReturn::cont()
 }
 
 /// Implements the CALLER instruction.
 ///
 /// Pushes the caller's address onto the stack.
-pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context
-            .interpreter
-            .input
-            .caller_address()
-            .into_word()
-            .into()
-    );
+#[inline]
+pub fn caller<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.input().caller_address().into_word().into());
+    InstructionReturn::cont()
 }
 
 /// Implements the CODESIZE instruction.
 ///
 /// Pushes the size of running contract's bytecode onto the stack.
-pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.bytecode.bytecode_len())
-    );
+#[inline]
+pub fn codesize<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.bytecode().bytecode_len()));
+    InstructionReturn::cont()
 }
 
 /// Implements the CODECOPY instruction.
 ///
 /// Copies running contract's bytecode to memory.
-pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    popn!([memory_offset, code_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
-        return;
-    };
+#[inline]
+pub fn codecopy<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    popn!([memory_offset, code_offset, len], context);
+    let len = as_usize_or_fail!(context, len);
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
     let code_offset = as_usize_saturated!(code_offset);
 
     // Note: This can't panic because we resized memory to fit.
-    context.interpreter.memory.set_data(
-        memory_offset,
-        code_offset,
-        len,
-        context.interpreter.bytecode.bytecode_slice(),
-    );
+    let data = fuck_lt!(context.bytecode().bytecode_slice());
+    context
+        .memory()
+        .set_data(memory_offset, code_offset, len, data);
+    InstructionReturn::cont()
 }
 
 /// Implements the CALLDATALOAD instruction.
 ///
 /// Loads 32 bytes of input data from the specified offset.
-pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([], offset_ptr, context.interpreter);
+#[inline]
+pub fn calldataload<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::VERYLOW);
+    popn_top!([], offset_ptr, context);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
-    let input = context.interpreter.input.input();
-    let input_len = input.len();
+    let input_len = context.input().input().len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
 
@@ -108,14 +100,16 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
-        match context.interpreter.input.input() {
+        match context.input().input() {
             CallInput::Bytes(bytes) => {
                 unsafe {
                     ptr::copy_nonoverlapping(bytes.as_ptr().add(offset), word.as_mut_ptr(), count)
                 };
             }
             CallInput::SharedBuffer(range) => {
-                let input_slice = context.interpreter.memory.global_slice(range.clone());
+                let range = range.clone();
+                let memory = context.memory();
+                let input_slice = memory.global_slice(range);
                 unsafe {
                     ptr::copy_nonoverlapping(
                         input_slice.as_ptr().add(offset),
@@ -127,120 +121,127 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
         }
     }
     *offset_ptr = word.into();
+    InstructionReturn::cont()
 }
 
 /// Implements the CALLDATASIZE instruction.
 ///
 /// Pushes the size of input data onto the stack.
-pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.input.input().len())
-    );
+#[inline]
+pub fn calldatasize<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.input().input().len()));
+    InstructionReturn::cont()
 }
 
 /// Implements the CALLVALUE instruction.
 ///
 /// Pushes the value sent with the current call onto the stack.
-pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.interpreter.input.call_value());
+#[inline]
+pub fn callvalue<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.input().call_value());
+    InstructionReturn::cont()
 }
 
 /// Implements the CALLDATACOPY instruction.
 ///
 /// Copies input data to memory.
-pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    popn!([memory_offset, data_offset, len], context.interpreter);
-    let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
-        return;
-    };
+#[inline]
+pub fn calldatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    popn!([memory_offset, data_offset, len], context);
+    let len = as_usize_or_fail!(context, len);
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
 
     let data_offset = as_usize_saturated!(data_offset);
-    match context.interpreter.input.input() {
+    match fuck_lt!(context).input().input() {
         CallInput::Bytes(bytes) => {
             context
-                .interpreter
-                .memory
+                .memory()
                 .set_data(memory_offset, data_offset, len, bytes.as_ref());
         }
         CallInput::SharedBuffer(range) => {
-            context.interpreter.memory.set_data_from_global(
-                memory_offset,
-                data_offset,
-                len,
-                range.clone(),
-            );
+            context
+                .memory()
+                .set_data_from_global(memory_offset, data_offset, len, range.clone());
         }
     }
+    InstructionReturn::cont()
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    check!(context.interpreter, BYZANTIUM);
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.return_data.buffer().len())
-    );
+#[inline]
+pub fn returndatasize<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    check!(context, BYZANTIUM);
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.return_data().buffer().len()));
+    InstructionReturn::cont()
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    check!(context.interpreter, BYZANTIUM);
-    popn!([memory_offset, offset, len], context.interpreter);
+#[inline]
+pub fn returndatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    check!(context, BYZANTIUM);
+    popn!([memory_offset, offset, len], context);
 
-    let len = as_usize_or_fail!(context.interpreter, len);
+    let len = as_usize_or_fail!(context, len);
     let data_offset = as_usize_saturated!(offset);
 
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     let data_end = data_offset.saturating_add(len);
-    if data_end > context.interpreter.return_data.buffer().len() {
-        context.interpreter.halt(InstructionResult::OutOfOffset);
-        return;
+    if data_end > context.return_data().buffer().len() {
+        return context.halt(InstructionResult::OutOfOffset);
     }
 
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
-        return;
-    };
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
 
     // Note: This can't panic because we resized memory to fit.
-    context.interpreter.memory.set_data(
-        memory_offset,
-        data_offset,
-        len,
-        context.interpreter.return_data.buffer(),
-    );
+    let data = fuck_lt!(context.return_data().buffer());
+    context
+        .memory()
+        .set_data(memory_offset, data_offset, len, data);
+    InstructionReturn::cont()
 }
 
 /// Implements the GAS instruction.
 ///
 /// Pushes the amount of remaining gas onto the stack.
-pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.gas.remaining())
-    );
+#[inline]
+pub fn gas<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.gas().remaining()));
+    InstructionReturn::cont()
 }
 
 /// Common logic for copying data from a source buffer to the EVM's memory.
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
-pub fn memory_resize(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+#[inline]
+pub fn copy_memory_resize<C: InstructionContextTr>(
+    context: &mut C,
     memory_offset: U256,
     len: usize,
-) -> Option<usize> {
+) -> ControlFlow<InstructionReturn, usize> {
     // Safe to cast usize to u64
-    gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
+    gas_or_fail!(
+        context,
+        gas::copy_cost_verylow(len),
+        ControlFlow::Break(InstructionReturn::halt())
+    );
     if len == 0 {
-        return None;
+        return ControlFlow::Break(InstructionReturn::cont());
     }
-    let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
-    resize_memory!(interpreter, memory_offset, len, None);
+    let memory_offset = as_usize_or_fail_ret!(
+        context,
+        memory_offset,
+        ControlFlow::Break(InstructionReturn::halt())
+    );
+    resize_memory!(
+        context,
+        memory_offset,
+        len,
+        ControlFlow::Break(InstructionReturn::halt())
+    );
 
-    Some(memory_offset)
+    ControlFlow::Continue(memory_offset)
 }

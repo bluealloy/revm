@@ -4,6 +4,7 @@ use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
+    handler::instructions::EthInstructions,
     primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -58,6 +59,9 @@ pub struct Cmd {
     /// Whether to print the trace
     #[arg(long)]
     trace: bool,
+    /// Whether to use tail calls
+    #[arg(long, conflicts_with = "trace")]
+    tail: bool,
 }
 
 impl Cmd {
@@ -92,6 +96,9 @@ impl Cmd {
         let mut evm = Context::mainnet()
             .with_db(db)
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
+        if self.tail {
+            evm.instruction = EthInstructions::new_mainnet();
+        }
 
         let tx = TxEnv::builder()
             .caller(BENCH_CALLER)
@@ -109,9 +116,11 @@ impl Cmd {
                 .without_plots();
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
-                b.iter(|| {
-                    let _ = evm.transact(tx.clone()).unwrap();
-                })
+                b.iter_batched(
+                    || tx.clone(),
+                    |input| evm.transact(input).unwrap(),
+                    criterion::BatchSize::SmallInput,
+                );
             });
             criterion_group.finish();
 
@@ -119,19 +128,17 @@ impl Cmd {
         }
 
         let time = Instant::now();
-        let state = if self.trace {
-            evm.inspect_tx(tx.clone())
-                .map_err(|_| Errors::EVMError)?
-                .state
+        let r = if self.trace {
+            evm.inspect_tx(tx)
         } else {
-            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
-            println!("Result: {:#?}", out.result);
-            out.state
-        };
+            evm.transact(tx)
+        }
+        .map_err(|_| Errors::EVMError)?;
         let time = time.elapsed();
 
+        println!("Result: {:#?}", r.result);
         if self.state {
-            println!("State: {state:#?}");
+            println!("State: {:#?}", r.state);
         }
 
         println!("Elapsed: {time:?}");

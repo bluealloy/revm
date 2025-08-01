@@ -4,6 +4,7 @@ use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::CountInspector;
 use revm::{
     bytecode::Bytecode,
+    handler::instructions::EthInstructions,
     primitives::{bytes, hex, Bytes, TxKind},
     Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
@@ -27,26 +28,17 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("snailtracer", |b| {
         b.iter_batched(
-            || {
-                // create a transaction input
-                tx.clone()
-            },
-            |input| {
-                let _ = evm.transact_one(input).unwrap();
-            },
+            || tx.clone(),
+            |input| evm.transact_one(input).unwrap(),
             criterion::BatchSize::SmallInput,
         );
     });
 
+    evm.instruction = EthInstructions::new_mainnet_no_tail();
     criterion.bench_function("analysis-inspector", |b| {
         b.iter_batched(
-            || {
-                // create a transaction input
-                tx.clone()
-            },
-            |input| {
-                let _ = evm.inspect_one_tx(input);
-            },
+            || tx.clone(),
+            |input| evm.inspect_one_tx(input),
             criterion::BatchSize::SmallInput,
         );
     });

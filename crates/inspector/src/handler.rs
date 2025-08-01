@@ -197,6 +197,7 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
 /// This function is used to inspect the Interpreter loop.
 /// It will call [`Inspector::step`] and [`Inspector::step_end`] after each instruction.
 /// And [`Inspector::log`],[`Inspector::selfdestruct`] for each log and selfdestruct instruction.
+// TODO: `ip` is unused
 pub fn inspect_instructions<CTX, IT>(
     context: &mut CTX,
     interpreter: &mut Interpreter<IT>,
@@ -214,7 +215,7 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
-        interpreter.step(instructions, context);
+        let ret = interpreter.step(instructions, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
@@ -222,7 +223,7 @@ where
 
         inspector.step_end(interpreter, context);
 
-        if interpreter.bytecode.is_end() {
+        if !ret.can_continue() | interpreter.bytecode.is_end() {
             break;
         }
     }

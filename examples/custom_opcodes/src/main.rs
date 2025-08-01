@@ -8,9 +8,9 @@ use revm::{
     handler::{instructions::EthInstructions, EthPrecompiles},
     inspector::inspectors::TracerEip3155,
     interpreter::{
+        instructions::InstructionReturn,
         interpreter::EthInterpreter,
         interpreter_types::{Immediates, Jumps},
-        InstructionContext,
     },
     primitives::TxKind,
     state::Bytecode,
@@ -37,15 +37,13 @@ pub fn main() {
     )));
 
     // Create a new instruction set with our mainnet opcodes.
-    let mut instructions = EthInstructions::new_mainnet();
+    let mut instructions = EthInstructions::<EthInterpreter, _>::new_mainnet_no_tail();
     // insert our custom opcode
-    instructions.insert_instruction(
-        MY_STATIC_JUMP,
-        |ctx: InstructionContext<'_, _, EthInterpreter>| {
-            let offset = ctx.interpreter.bytecode.read_i16();
-            ctx.interpreter.bytecode.relative_jump(offset as isize);
-        },
-    );
+    instructions.insert_instruction(MY_STATIC_JUMP, |interpreter, _host, _ip| {
+        let offset = interpreter.bytecode.read_i16();
+        interpreter.bytecode.relative_jump(offset as isize);
+        InstructionReturn::cont()
+    });
 
     // Create a new EVM instance.
     let mut evm = Evm::new(ctx, instructions, EthPrecompiles::default())

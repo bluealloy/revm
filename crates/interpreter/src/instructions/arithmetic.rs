@@ -1,94 +1,115 @@
 use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
-    InstructionContext,
+    instructions::InstructionReturn,
+    interpreter_types::{RuntimeFlag, StackTr},
+    InstructionContextTr,
 };
 use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
-pub fn add<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn add<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_add(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the MUL instruction - multiplies two values from stack.
-pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn mul<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_mul(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the SUB instruction - subtracts two values from stack.
-pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::VERYLOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn sub<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::VERYLOW);
+    popn_top!([op1], op2, context);
     *op2 = op1.wrapping_sub(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the DIV instruction - divides two values from stack.
-pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn div<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
+    InstructionReturn::cont()
 }
 
 /// Implements the SDIV instruction.
 ///
 /// Performs signed division of two values from stack.
-pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn sdiv<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     *op2 = i256_div(op1, *op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the MOD instruction.
 ///
 /// Pops two values from stack and pushes the remainder of their division.
-pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
+#[inline]
+pub fn rem<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
+    InstructionReturn::cont()
 }
 
 /// Implements the SMOD instruction.
 ///
 /// Performs signed modulo of two values from stack.
-pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([op1], op2, context.interpreter);
-    *op2 = i256_mod(op1, *op2)
+#[inline]
+pub fn smod<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([op1], op2, context);
+    *op2 = i256_mod(op1, *op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the ADDMOD instruction.
 ///
 /// Pops three values from stack and pushes (a + b) % n.
-pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::MID);
-    popn_top!([op1, op2], op3, context.interpreter);
-    *op3 = op1.add_mod(op2, *op3)
+#[inline]
+pub fn addmod<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::MID);
+    popn_top!([op1, op2], op3, context);
+    *op3 = op1.add_mod(op2, *op3);
+    InstructionReturn::cont()
 }
 
 /// Implements the MULMOD instruction.
 ///
 /// Pops three values from stack and pushes (a * b) % n.
-pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::MID);
-    popn_top!([op1, op2], op3, context.interpreter);
-    *op3 = op1.mul_mod(op2, *op3)
+#[inline]
+pub fn mulmod<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::MID);
+    popn_top!([op1, op2], op3, context);
+    *op3 = op1.mul_mod(op2, *op3);
+    InstructionReturn::cont()
 }
 
 /// Implements the EXP instruction - exponentiates two values from stack.
-pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    popn_top!([op1], op2, context.interpreter);
-    gas_or_fail!(context.interpreter, gas::exp_cost(spec_id, *op2));
+#[inline]
+pub fn exp<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    let spec_id = context.runtime_flag().spec_id();
+    popn_top!([op1], op2, context);
+    gas_or_fail!(context, gas::exp_cost(spec_id, *op2));
     *op2 = op1.pow(*op2);
+    InstructionReturn::cont()
 }
 
 /// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
@@ -120,9 +141,10 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::LOW);
-    popn_top!([ext], x, context.interpreter);
+#[inline]
+pub fn signextend<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::LOW);
+    popn_top!([ext], x, context);
     // For 31 we also don't need to do anything.
     if ext < U256::from(31) {
         let ext = ext.as_limbs()[0];
@@ -131,4 +153,5 @@ pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext
         let mask = (U256::from(1) << bit_index) - U256::from(1);
         *x = if bit { *x | !mask } else { *x & mask };
     }
+    InstructionReturn::cont()
 }

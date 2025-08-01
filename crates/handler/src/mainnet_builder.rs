@@ -39,7 +39,7 @@ where
         Evm {
             ctx: self,
             inspector: (),
-            instruction: EthInstructions::default(),
+            instruction: EthInstructions::new_mainnet(),
             precompiles: EthPrecompiles::default(),
             frame_stack: FrameStack::new(),
         }
@@ -52,7 +52,7 @@ where
         Evm {
             ctx: self,
             inspector,
-            instruction: EthInstructions::default(),
+            instruction: EthInstructions::new_mainnet_no_tail(),
             precompiles: EthPrecompiles::default(),
             frame_stack: FrameStack::new(),
         }

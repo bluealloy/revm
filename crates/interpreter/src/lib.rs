@@ -3,12 +3,31 @@
 //! Interpreter is part of the project that executes EVM instructions.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(explicit_tail_calls)]
+#![allow(incomplete_features)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// TODO(dani): rename `context` to `cx`
+
 #[macro_use]
 mod macros;
+
+/// a
+#[no_mangle]
+#[cfg(feature = "asm")]
+pub fn instruction_tables() -> impl Sized {
+    type W = crate::interpreter::EthInterpreter;
+    type H = context_interface::DummyHost;
+    (
+        crate::interpreter::Interpreter::<crate::interpreter::EthInterpreter<()>>::invalid(),
+        instructions::instruction_table::<W, H>(),
+        instructions::instruction_table_tail::<W, H>(),
+    )
+}
+/// b
+pub type EEEInterpreter = crate::interpreter::Interpreter<crate::interpreter::EthInterpreter>;
 
 /// Gas calculation utilities and constants.
 pub mod gas;
@@ -32,7 +51,7 @@ pub use context_interface::{
 };
 pub use context_interface::{host, Host};
 pub use gas::{Gas, InitialAndFloorGas};
-pub use instruction_context::InstructionContext;
+pub use instruction_context::{InstructionContext, InstructionContextTr};
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
@@ -44,3 +63,21 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};
+
+/// asdf
+///
+/// # Safety
+///
+/// Not safe
+pub unsafe fn extend_lt<'a, T: ?Sized>(x: &T) -> &'a T {
+    std::mem::transmute(x)
+}
+
+/// asdf
+///
+/// # Safety
+///
+/// Not safe
+pub unsafe fn extend_lt_mut<'a, T: ?Sized>(x: &mut T) -> &'a mut T {
+    std::mem::transmute(x)
+}

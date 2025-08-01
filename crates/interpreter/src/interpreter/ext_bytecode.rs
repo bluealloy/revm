@@ -21,7 +21,7 @@ pub struct ExtBytecode {
     /// The base bytecode.
     base: Bytecode,
     /// The current instruction pointer.
-    instruction_pointer: *const u8,
+    ip: *const u8,
 }
 
 impl Deref for ExtBytecode {
@@ -60,7 +60,7 @@ impl ExtBytecode {
         let instruction_pointer = base.bytecode_ptr();
         Self {
             base,
-            instruction_pointer,
+            ip: instruction_pointer,
             bytecode_hash: hash,
             action: None,
             has_set_action: false,
@@ -114,6 +114,16 @@ impl LoopControl for ExtBytecode {
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
+        debug_assert_eq!(
+            self.has_set_action,
+            self.action.is_some(),
+            "has_set_action out of sync"
+        );
+        debug_assert!(
+            !self.has_set_action,
+            "action already set;\nold: {:#?}\nnew: {:#?}",
+            self.action, action,
+        );
         self.has_set_action = true;
         self.action = Some(action);
     }
@@ -127,12 +137,12 @@ impl LoopControl for ExtBytecode {
 impl Jumps for ExtBytecode {
     #[inline]
     fn relative_jump(&mut self, offset: isize) {
-        self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
+        self.ip = unsafe { self.ip.offset(offset) };
     }
 
     #[inline]
     fn absolute_jump(&mut self, offset: usize) {
-        self.instruction_pointer = unsafe { self.base.bytes_ref().as_ptr().add(offset) };
+        self.ip = unsafe { self.base.bytes_ref().as_ptr().add(offset) };
     }
 
     #[inline]
@@ -144,47 +154,52 @@ impl Jumps for ExtBytecode {
     }
 
     #[inline]
+    fn base(&self) -> *const u8 {
+        self.base.bytes_ref().as_ptr()
+    }
+
+    #[inline]
     fn opcode(&self) -> u8 {
-        // SAFETY: `instruction_pointer` always point to bytecode.
-        unsafe { *self.instruction_pointer }
+        // SAFETY: `ip` is always a valid pointer into the bytecode.
+        unsafe { *self.ip }
+    }
+
+    #[inline]
+    fn ip(&self) -> *const u8 {
+        self.ip
+    }
+
+    #[inline]
+    fn set_ip(&mut self, ip: *const u8) {
+        self.ip = ip;
     }
 
     #[inline]
     fn pc(&self) -> usize {
-        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
-        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
-        unsafe {
-            self.instruction_pointer
-                .offset_from(self.base.bytes_ref().as_ptr()) as usize
-        }
+        // SAFETY: `ip` is always at an offset from the start of the bytes.
+        unsafe { self.ip.offset_from_unsigned(self.base()) }
     }
 }
 
 impl Immediates for ExtBytecode {
     #[inline]
     fn read_u16(&self) -> u16 {
-        unsafe { read_u16(self.instruction_pointer) }
+        unsafe { read_u16(self.ip) }
     }
 
     #[inline]
     fn read_u8(&self) -> u8 {
-        unsafe { *self.instruction_pointer }
+        unsafe { *self.ip }
     }
 
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
-        unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
+        unsafe { core::slice::from_raw_parts(self.ip, len) }
     }
 
     #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
-        unsafe {
-            read_u16(
-                self.instruction_pointer
-                    // Offset for max_index that is one byte
-                    .offset(offset),
-            )
-        }
+        unsafe { read_u16(self.ip.offset(offset)) }
     }
 }
 

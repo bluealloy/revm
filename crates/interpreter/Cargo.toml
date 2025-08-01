@@ -23,6 +23,8 @@ bytecode.workspace = true
 primitives.workspace = true
 context-interface.workspace = true
 
+auto_impl.workspace = true
+
 # optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
@@ -43,3 +45,6 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+
+# TODO(dani): debugging
+asm = []

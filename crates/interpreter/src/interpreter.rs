@@ -19,8 +19,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, instructions::InstructionReturn,
+    interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -223,12 +223,13 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
-        let context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-        context.step(instruction_table);
+    #[must_use]
+    pub fn step<H: ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) -> InstructionReturn {
+        InstructionContext::new(self, host).step(instruction_table)
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -237,8 +238,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// This uses dummy Host.
     #[inline]
-    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        self.step(instruction_table, &mut DummyHost);
+    pub fn step_dummy(
+        &mut self,
+        instruction_table: &InstructionTable<IW, DummyHost>,
+    ) -> InstructionReturn {
+        self.step(instruction_table, &mut DummyHost)
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -248,9 +252,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
-        }
+        while self.step(instruction_table, host).can_continue() {}
         self.take_next_action()
     }
 }

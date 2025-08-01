@@ -1,94 +1,90 @@
 use crate::{
     gas,
-    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
-    Host,
+    instructions::InstructionReturn,
+    interpreter_types::{RuntimeFlag, StackTr},
+    Host, InstructionContextTr,
 };
 use primitives::{hardfork::SpecId::*, U256};
 
-use crate::InstructionContext;
-
 /// EIP-1344: ChainID opcode
-pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    check!(context.interpreter, ISTANBUL);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.chain_id());
+#[inline]
+pub fn chainid<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    check!(context, ISTANBUL);
+    gas!(context, gas::BASE);
+    push!(context, context.host().chain_id());
+    InstructionReturn::cont()
 }
 
 /// Implements the COINBASE instruction.
 ///
 /// Pushes the current block's beneficiary address onto the stack.
-pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context.host.beneficiary().into_word().into()
-    );
+#[inline]
+pub fn coinbase<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.host().beneficiary().into_word().into());
+    InstructionReturn::cont()
 }
 
 /// Implements the TIMESTAMP instruction.
 ///
 /// Pushes the current block's timestamp onto the stack.
-pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.timestamp());
+#[inline]
+pub fn timestamp<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.host().timestamp());
+    InstructionReturn::cont()
 }
 
 /// Implements the NUMBER instruction.
 ///
 /// Pushes the current block number onto the stack.
-pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, U256::from(context.host.block_number()));
+#[inline]
+pub fn block_number<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, U256::from(context.host().block_number()));
+    InstructionReturn::cont()
 }
 
 /// Implements the DIFFICULTY/PREVRANDAO instruction.
 ///
 /// Pushes the block difficulty (pre-merge) or prevrandao (post-merge) onto the stack.
-pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    if context
-        .interpreter
-        .runtime_flag
-        .spec_id()
-        .is_enabled_in(MERGE)
-    {
+#[inline]
+pub fn difficulty<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    let value = if context.runtime_flag().spec_id().is_enabled_in(MERGE) {
         // Unwrap is safe as this fields is checked in validation handler.
-        push!(context.interpreter, context.host.prevrandao().unwrap());
+        context.host().prevrandao().unwrap()
     } else {
-        push!(context.interpreter, context.host.difficulty());
-    }
+        context.host().difficulty()
+    };
+    push!(context, value);
+    InstructionReturn::cont()
 }
 
 /// Implements the GASLIMIT instruction.
 ///
 /// Pushes the current block's gas limit onto the stack.
-pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.gas_limit());
+#[inline]
+pub fn gaslimit<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    gas!(context, gas::BASE);
+    push!(context, context.host().gas_limit());
+    InstructionReturn::cont()
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    check!(context.interpreter, LONDON);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.basefee());
+#[inline]
+pub fn basefee<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    check!(context, LONDON);
+    gas!(context, gas::BASE);
+    push!(context, context.host().basefee());
+    InstructionReturn::cont()
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
-pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
-    check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, context.host.blob_gasprice());
+#[inline]
+pub fn blob_basefee<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
+    check!(context, CANCUN);
+    gas!(context, gas::BASE);
+    push!(context, context.host().blob_gasprice());
+    InstructionReturn::cont()
 }

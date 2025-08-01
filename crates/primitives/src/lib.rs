@@ -34,3 +34,10 @@ pub use alloy_primitives::{
 pub type StorageKey = U256;
 /// type alias for storage values
 pub type StorageValue = U256;
+
+/// Hints to the compiler that this is a cold path, i.e. unlikely to be taken.
+#[cold]
+#[inline(always)]
+pub fn cold_path() {
+    // TODO: remove `#[cold]` and call `std::hint::cold_path` once stable.
+}

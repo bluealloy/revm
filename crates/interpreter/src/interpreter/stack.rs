@@ -48,17 +48,17 @@ impl Clone for Stack {
 }
 
 impl StackTr for Stack {
-    #[inline]
+    #[inline(always)]
     fn len(&self) -> usize {
         self.len()
     }
 
-    #[inline]
+    #[inline(always)]
     fn clear(&mut self) {
         self.data.clear();
     }
 
-    #[inline]
+    #[inline(always)]
     fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
         if self.len() < N {
             return None;
@@ -67,7 +67,7 @@ impl StackTr for Stack {
         Some(unsafe { self.popn::<N>() })
     }
 
-    #[inline]
+    #[inline(always)]
     fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)> {
         if self.len() < POPN + 1 {
             return None;
@@ -76,22 +76,22 @@ impl StackTr for Stack {
         Some(unsafe { self.popn_top::<POPN>() })
     }
 
-    #[inline]
+    #[inline(always)]
     fn exchange(&mut self, n: usize, m: usize) -> bool {
         self.exchange(n, m)
     }
 
-    #[inline]
+    #[inline(always)]
     fn dup(&mut self, n: usize) -> bool {
         self.dup(n)
     }
 
-    #[inline]
+    #[inline(always)]
     fn push(&mut self, value: U256) -> bool {
         self.push(value)
     }
 
-    #[inline]
+    #[inline(always)]
     fn push_slice(&mut self, slice: &[u8]) -> bool {
         self.push_slice_(slice)
     }
@@ -99,7 +99,7 @@ impl StackTr for Stack {
 
 impl Stack {
     /// Instantiate a new stack with the [default stack limit][STACK_LIMIT].
-    #[inline]
+    #[inline(always)]
     pub fn new() -> Self {
         Self {
             // SAFETY: Expansion functions assume that capacity is `STACK_LIMIT`.
@@ -108,44 +108,44 @@ impl Stack {
     }
 
     /// Instantiate a new invalid Stack.
-    #[inline]
+    #[inline(always)]
     pub fn invalid() -> Self {
         Self { data: Vec::new() }
     }
 
     /// Returns the length of the stack in words.
-    #[inline]
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
     /// Returns whether the stack is empty.
-    #[inline]
+    #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
     /// Returns a reference to the underlying data buffer.
-    #[inline]
+    #[inline(always)]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
     }
 
     /// Returns a mutable reference to the underlying data buffer.
-    #[inline]
+    #[inline(always)]
     pub fn data_mut(&mut self) -> &mut Vec<U256> {
         &mut self.data
     }
 
     /// Consumes the stack and returns the underlying data buffer.
-    #[inline]
+    #[inline(always)]
     pub fn into_data(self) -> Vec<U256> {
         self.data
     }
 
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
     /// empty.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
         self.data.pop().ok_or(InstructionResult::StackUnderflow)
@@ -156,7 +156,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         assume!(!self.data.is_empty());
@@ -168,7 +168,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
         assume!(!self.data.is_empty());
@@ -180,7 +180,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
         assume!(self.data.len() >= N);
@@ -192,7 +192,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn_top<const POPN: usize>(&mut self) -> ([U256; POPN], &mut U256) {
         let result = self.popn::<POPN>();
@@ -204,7 +204,7 @@ impl Stack {
     ///
     /// If it will exceed the stack limit, returns false and leaves the stack
     /// unchanged.
-    #[inline]
+    #[inline(always)]
     #[must_use]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
@@ -234,7 +234,7 @@ impl Stack {
     /// # Panics
     ///
     /// Panics if `n` is 0.
-    #[inline]
+    #[inline(always)]
     #[must_use]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn dup(&mut self, n: usize) -> bool {
@@ -271,7 +271,7 @@ impl Stack {
     /// # Panics
     ///
     /// Panics if `m` is zero.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn exchange(&mut self, n: usize, m: usize) -> bool {
         assume!(m > 0, "overlapping exchange");
@@ -294,7 +294,7 @@ impl Stack {
 
     /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
     /// if necessary.
-    #[inline]
+    #[inline(always)]
     pub fn push_slice(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
         if self.push_slice_(slice) {
             Ok(())
@@ -305,7 +305,7 @@ impl Stack {
 
     /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
     /// if necessary.
-    #[inline]
+    #[inline(always)]
     fn push_slice_(&mut self, slice: &[u8]) -> bool {
         if slice.is_empty() {
             return true;
@@ -371,7 +371,7 @@ impl Stack {
     /// Set a value at given index for the stack, where the top of the
     /// stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    #[inline]
+    #[inline(always)]
     pub fn set(&mut self, no_from_top: usize, val: U256) -> Result<(), InstructionResult> {
         if self.data.len() > no_from_top {
             let len = self.data.len();

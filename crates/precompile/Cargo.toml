@@ -24,7 +24,7 @@ primitives.workspace = true
 # modexp precompiles
 aurora-engine-modexp.workspace = true
 # gmp wrapper
-rug = { workspace = true, features = ["integer"], optional = true }
+# rug = { workspace = true, features = ["integer"], optional = true }
 
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
@@ -96,7 +96,7 @@ std = [
 	"ark-serialize/std",
 	"ark-std/std",
 	"p256/std",
-	"rug?/std",
+	# "rug?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -126,7 +126,7 @@ bn = ["dep:bn"]
 
 # Use rug (that wraps gmp) for modexp precompile.
 # It is faster library but licences as GPL code, if enabled please make sure to follow the license.
-gmp = ["dep:rug"]
+gmp = []
 
 [[bench]]
 name = "bench"
