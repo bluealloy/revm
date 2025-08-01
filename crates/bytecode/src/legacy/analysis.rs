@@ -39,7 +39,14 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         }
     }
 
-    let padding = (iterator as usize) - (end as usize) + (opcode != opcode::STOP) as usize;
+    let overflow_padding = (iterator as usize) - (end as usize);
+
+    let stop_padding = opcode::OpCode::info_by_op(opcode)
+        .map(|o| !o.is_terminating() as usize)
+        .unwrap_or(1);
+
+    let padding = overflow_padding + stop_padding;
+
     let bytecode = if padding > 0 {
         let mut padded = Vec::with_capacity(bytecode.len() + padding);
         padded.extend_from_slice(&bytecode);
@@ -172,5 +179,23 @@ mod tests {
         ];
         let (jump_table, _) = analyze_legacy(bytecode.clone().into());
         assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
+    }
+
+    #[test]
+    fn test_terminating_opcodes_behavior() {
+        // Test all known terminating opcodes
+        let terminating_opcodes = [
+            opcode::STOP,
+            opcode::RETURN,
+            opcode::REVERT,
+            opcode::INVALID,
+            opcode::SELFDESTRUCT,
+        ];
+
+        for &terminating_opcode in &terminating_opcodes {
+            let bytecode = vec![opcode::PUSH1, 0x01, terminating_opcode];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            assert_eq!(padded_bytecode.len(), bytecode.len());
+        }
     }
 }

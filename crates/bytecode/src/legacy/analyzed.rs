@@ -77,10 +77,16 @@ impl LegacyAnalyzedBytecode {
             "jump table length is less than original length"
         );
         assert!(!bytecode.is_empty(), "bytecode cannot be empty");
-        assert!(
-            bytecode.last() == Some(&opcode::STOP),
-            "last bytecode byte should be STOP (0x00)"
-        );
+
+        if let Some(&last_opcode) = bytecode.last() {
+            assert!(
+                opcode::OpCode::info_by_op(last_opcode)
+                    .map(|o| o.is_terminating())
+                    .unwrap_or(false),
+                "last bytecode byte should be terminating"
+            );
+        }
+
         Self {
             bytecode,
             original_len,
@@ -151,18 +157,18 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "last bytecode byte should be STOP (0x00)")]
-    fn test_panic_on_non_stop_bytecode() {
-        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
-        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
-        let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
-    }
-
-    #[test]
     #[should_panic(expected = "bytecode cannot be empty")]
     fn test_panic_on_empty_bytecode() {
         let bytecode = Bytes::from_static(&[]);
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 0]);
         let _ = LegacyAnalyzedBytecode::new(bytecode, 0, jump_table);
+    }
+
+    #[test]
+    #[should_panic(expected = "last bytecode byte should be terminating")]
+    fn test_panic_on_non_stop_bytecode() {
+        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
+        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
+        let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
     }
 }

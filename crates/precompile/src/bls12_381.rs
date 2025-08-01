@@ -2,12 +2,14 @@
 //! For more details check modules for each precompile.
 use crate::PrecompileWithAddress;
 
+#[allow(dead_code)]
+pub(crate) mod arkworks;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "blst")]{
         pub(crate) mod blst;
         pub(crate) use blst as crypto_backend;
     } else {
-        pub(crate) mod arkworks;
         pub(crate) use arkworks as crypto_backend;
     }
 }

@@ -161,4 +161,38 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         let state = self.finalize();
         Ok(ExecResultAndState::new(output, state))
     }
+
+    /// Inspect a system call with a given inspector and caller.
+    ///
+    /// Similar to [`InspectEvm::inspect_one`] but for system calls.
+    fn inspect_one_system_call_with_inspector_and_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+        inspector: Self::Inspector,
+    ) -> Result<Self::ExecutionResult, Self::Error> {
+        self.set_inspector(inspector);
+        self.inspect_one_system_call_with_caller(caller, system_contract_address, data)
+    }
+
+    /// Inspect a system call with a given inspector and finalize the state.
+    ///
+    /// Similar to [`InspectEvm::inspect`] but for system calls.
+    fn inspect_system_call_with_inspector_and_caller(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+        inspector: Self::Inspector,
+    ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+        let output = self.inspect_one_system_call_with_inspector_and_caller(
+            caller,
+            system_contract_address,
+            data,
+            inspector,
+        )?;
+        let state = self.finalize();
+        Ok(ExecResultAndState::new(output, state))
+    }
 }

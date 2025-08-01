@@ -25,7 +25,7 @@ use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
-use primitives::{keccak256, Address, Bytes, B256, U256};
+use primitives::{keccak256, Address, Bytes, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::boxed::Box;
@@ -308,11 +308,11 @@ impl EthFrame<EthInterpreter> {
             .nonce_bump_journal_entry(inputs.caller);
 
         // Create address
-        let mut init_code_hash = B256::ZERO;
+        let mut init_code_hash = None;
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
+                let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code));
                 inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
@@ -332,7 +332,7 @@ impl EthFrame<EthInterpreter> {
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = ExtBytecode::new_with_hash(
+        let bytecode = ExtBytecode::new_with_optional_hash(
             Bytecode::new_legacy(inputs.init_code.clone()),
             init_code_hash,
         );
