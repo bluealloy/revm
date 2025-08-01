@@ -12,10 +12,7 @@ use primitives::{hardfork::SpecId::*, U256};
 pub fn get_memory_input_and_out_ranges<C: InstructionContextTr>(
     context: &mut C,
 ) -> Option<(Range<usize>, Range<usize>)> {
-    let Some([in_offset, in_len, out_offset, out_len]) = context.stack().popn() else {
-        context.halt(crate::InstructionResult::StackUnderflow);
-        return None;
-    };
+    popn!([in_offset, in_len, out_offset, out_len], context, None);
 
     let mut in_range = resize_memory(context, in_offset, in_len)?;
 
@@ -39,10 +36,7 @@ pub fn resize_memory<C: InstructionContextTr>(
     let len = as_usize_or_fail_ret!(context, len, None);
     let offset = if len != 0 {
         let offset = as_usize_or_fail_ret!(context, offset, None);
-        if !context.resize_memory(offset, len) {
-            context.halt(crate::InstructionResult::MemoryOOG);
-            return None;
-        };
+        resize_memory!(context, offset, len, None);
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -59,10 +53,7 @@ pub fn calc_call_gas<C: InstructionContextTr>(
     local_gas_limit: u64,
 ) -> Option<u64> {
     let call_cost = gas::call_cost(context.runtime_flag().spec_id(), has_transfer, account_load);
-    if !context.record_gas_cost(call_cost) {
-        context.halt(crate::InstructionResult::OutOfGas);
-        return None;
-    };
+    gas!(context, call_cost, None);
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if context.runtime_flag().spec_id().is_enabled_in(TANGERINE) {

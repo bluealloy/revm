@@ -223,7 +223,7 @@ where
 
         inspector.step_end(interpreter, context);
 
-        if !ret.can_continue() {
+        if !ret.can_continue() | interpreter.bytecode.is_end() {
             break;
         }
     }
