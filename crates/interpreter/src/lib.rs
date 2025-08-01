@@ -51,7 +51,7 @@ pub use context_interface::{
 };
 pub use context_interface::{host, Host};
 pub use gas::{Gas, InitialAndFloorGas};
-pub use instruction_context::InstructionContext;
+pub use instruction_context::{InstructionContext, InstructionContextTr};
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
@@ -63,3 +63,21 @@ pub use interpreter_action::{
 };
 pub use interpreter_types::InterpreterTypes;
 pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};
+
+/// asdf
+///
+/// # Safety
+///
+/// Not safe
+pub unsafe fn extend_lt<'a, T: ?Sized>(x: &T) -> &'a T {
+    std::mem::transmute(x)
+}
+
+/// asdf
+///
+/// # Safety
+///
+/// Not safe
+pub unsafe fn extend_lt_mut<'a, T: ?Sized>(x: &mut T) -> &'a mut T {
+    std::mem::transmute(x)
+}

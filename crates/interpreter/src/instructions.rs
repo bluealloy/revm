@@ -27,7 +27,7 @@ pub mod tx_info;
 /// Utility functions and helpers for instruction implementation.
 pub mod utility;
 
-use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext, Interpreter};
+use crate::{interpreter_types::InterpreterTypes, Host, Interpreter};
 
 /// EVM opcode function signature.
 ///
@@ -82,26 +82,17 @@ pub const fn instruction_table_tail<W: InterpreterTypes, H: Host + ?Sized>(
 #[allow(non_snake_case)] // TODO: `paste!` to make the names lowercase?
 mod cx {
     use super::*;
+    use crate::instruction_context::InstructionContext;
 
-    // TODO: `InstructionContext` is a good abstraction for the inputs of an instruction.
-    // However, if more than 2 fields are added, then the entire struct will get spilled to the
-    // stack and passed by reference. This is not ideal for performance.
-    // We should find a way to let users pass in a function pointer that takes a
-    // `InstructionContext`, while internally we use the unrolled function arguments.
     macro_rules! context_instrs {
         ($($instr:ident = $instr_fn:expr;)*) => {
             $(
                 fn $instr<W: InterpreterTypes, H: Host + ?Sized>(
                     interpreter: &mut Interpreter<W>,
                     host: &mut H,
-                    ip: *const u8,
+                    _ip: *const u8,
                 ) -> InstructionReturn {
-                    let mut cx = InstructionContext { interpreter, host, ip };
-                    let ret = $instr_fn(&mut cx);
-                    if cx.ip != ip {
-                        cx.flush();
-                    }
-                    ret
+                    $instr_fn(&mut InstructionContext { interpreter, host })
                 }
             )*
 
@@ -123,6 +114,7 @@ mod cx {
 #[allow(non_snake_case)]
 mod tail {
     use super::*;
+    use crate::instruction_context::TailInstructionContext;
 
     // We drop the return value here because it's unused.
     // Since we tail call, we chain all calls together so the return value is only used internally to
@@ -146,8 +138,8 @@ mod tail {
                     host: &mut H,
                     ip: *const u8,
                 ) -> InstructionReturn {
-                    eprintln!("ip={ip:p} - {}", stringify!($instr));
-                    let mut cx = InstructionContext { interpreter, host, ip };
+                    // eprintln!("ip={ip:p} - {}", stringify!($instr));
+                    let mut cx = TailInstructionContext::new(interpreter, host, ip);
                     let ret = $instr_fn(&mut cx);
                     if !ret.can_continue() {
                         primitives::cold_path();
@@ -156,21 +148,18 @@ mod tail {
                     }
 
                     let opcode = cx.pre_step();
-                    become
-                    (const { &self::table::<W, H>() })[opcode as usize](cx.interpreter, cx.host, cx.ip)
+                    become (const { &self::table::<W, H>() })[opcode as usize](cx.inner.interpreter, cx.inner.host, cx.ip)
                 }
             )*
 
             pub(super) const fn table<W: InterpreterTypes, H: Host + ?Sized>() -> InstructionTable<W, H> {
-                // const {
-                //     let mut table: InstructionTable<W, H> = [conv(self::UNKNOWN); 256];
-                //     $(
-                //         table[bytecode::opcode::$instr as usize] = conv(self::$instr);
-                //     )*
-                //     table
-                // };
-                // TODO
-                super::cx::table::<W, H>()
+                const {
+                    let mut table: InstructionTable<W, H> = [conv(self::UNKNOWN); 256];
+                    $(
+                        table[bytecode::opcode::$instr as usize] = conv(self::$instr);
+                    )*
+                    table
+                }
             }
         };
     }
@@ -261,72 +250,72 @@ macro_rules! with_instrs {
         MCOPY = memory::mcopy;
 
         PUSH0 = stack::push0;
-        PUSH1 = stack::push::<1, _, _>;
-        PUSH2 = stack::push::<2, _, _>;
-        PUSH3 = stack::push::<3, _, _>;
-        PUSH4 = stack::push::<4, _, _>;
-        PUSH5 = stack::push::<5, _, _>;
-        PUSH6 = stack::push::<6, _, _>;
-        PUSH7 = stack::push::<7, _, _>;
-        PUSH8 = stack::push::<8, _, _>;
-        PUSH9 = stack::push::<9, _, _>;
-        PUSH10 = stack::push::<10, _, _>;
-        PUSH11 = stack::push::<11, _, _>;
-        PUSH12 = stack::push::<12, _, _>;
-        PUSH13 = stack::push::<13, _, _>;
-        PUSH14 = stack::push::<14, _, _>;
-        PUSH15 = stack::push::<15, _, _>;
-        PUSH16 = stack::push::<16, _, _>;
-        PUSH17 = stack::push::<17, _, _>;
-        PUSH18 = stack::push::<18, _, _>;
-        PUSH19 = stack::push::<19, _, _>;
-        PUSH20 = stack::push::<20, _, _>;
-        PUSH21 = stack::push::<21, _, _>;
-        PUSH22 = stack::push::<22, _, _>;
-        PUSH23 = stack::push::<23, _, _>;
-        PUSH24 = stack::push::<24, _, _>;
-        PUSH25 = stack::push::<25, _, _>;
-        PUSH26 = stack::push::<26, _, _>;
-        PUSH27 = stack::push::<27, _, _>;
-        PUSH28 = stack::push::<28, _, _>;
-        PUSH29 = stack::push::<29, _, _>;
-        PUSH30 = stack::push::<30, _, _>;
-        PUSH31 = stack::push::<31, _, _>;
-        PUSH32 = stack::push::<32, _, _>;
+        PUSH1 = stack::push::<1, _>;
+        PUSH2 = stack::push::<2, _>;
+        PUSH3 = stack::push::<3, _>;
+        PUSH4 = stack::push::<4, _>;
+        PUSH5 = stack::push::<5, _>;
+        PUSH6 = stack::push::<6, _>;
+        PUSH7 = stack::push::<7, _>;
+        PUSH8 = stack::push::<8, _>;
+        PUSH9 = stack::push::<9, _>;
+        PUSH10 = stack::push::<10, _>;
+        PUSH11 = stack::push::<11, _>;
+        PUSH12 = stack::push::<12, _>;
+        PUSH13 = stack::push::<13, _>;
+        PUSH14 = stack::push::<14, _>;
+        PUSH15 = stack::push::<15, _>;
+        PUSH16 = stack::push::<16, _>;
+        PUSH17 = stack::push::<17, _>;
+        PUSH18 = stack::push::<18, _>;
+        PUSH19 = stack::push::<19, _>;
+        PUSH20 = stack::push::<20, _>;
+        PUSH21 = stack::push::<21, _>;
+        PUSH22 = stack::push::<22, _>;
+        PUSH23 = stack::push::<23, _>;
+        PUSH24 = stack::push::<24, _>;
+        PUSH25 = stack::push::<25, _>;
+        PUSH26 = stack::push::<26, _>;
+        PUSH27 = stack::push::<27, _>;
+        PUSH28 = stack::push::<28, _>;
+        PUSH29 = stack::push::<29, _>;
+        PUSH30 = stack::push::<30, _>;
+        PUSH31 = stack::push::<31, _>;
+        PUSH32 = stack::push::<32, _>;
 
-        DUP1 = stack::dup::<1, _, _>;
-        DUP2 = stack::dup::<2, _, _>;
-        DUP3 = stack::dup::<3, _, _>;
-        DUP4 = stack::dup::<4, _, _>;
-        DUP5 = stack::dup::<5, _, _>;
-        DUP6 = stack::dup::<6, _, _>;
-        DUP7 = stack::dup::<7, _, _>;
-        DUP8 = stack::dup::<8, _, _>;
-        DUP9 = stack::dup::<9, _, _>;
-        DUP10 = stack::dup::<10, _, _>;
-        DUP11 = stack::dup::<11, _, _>;
-        DUP12 = stack::dup::<12, _, _>;
-        DUP13 = stack::dup::<13, _, _>;
-        DUP14 = stack::dup::<14, _, _>;
-        DUP15 = stack::dup::<15, _, _>;
-        DUP16 = stack::dup::<16, _, _>;
+        DUP1 = stack::dup::<1, _>;
+        DUP2 = stack::dup::<2, _>;
+        DUP3 = stack::dup::<3, _>;
+        DUP4 = stack::dup::<4, _>;
+        DUP5 = stack::dup::<5, _>;
+        DUP6 = stack::dup::<6, _>;
+        DUP7 = stack::dup::<7, _>;
+        DUP8 = stack::dup::<8, _>;
+        DUP9 = stack::dup::<9, _>;
+        DUP10 = stack::dup::<10, _>;
+        DUP11 = stack::dup::<11, _>;
+        DUP12 = stack::dup::<12, _>;
+        DUP13 = stack::dup::<13, _>;
+        DUP14 = stack::dup::<14, _>;
+        DUP15 = stack::dup::<15, _>;
+        DUP16 = stack::dup::<16, _>;
 
-        SWAP1 = stack::swap::<1, _, _>;
-        SWAP2 = stack::swap::<2, _, _>;
-        SWAP3 = stack::swap::<3, _, _>;
-        SWAP4 = stack::swap::<4, _, _>;
-        SWAP5 = stack::swap::<5, _, _>;
-        SWAP6 = stack::swap::<6, _, _>;
-        SWAP7 = stack::swap::<7, _, _>;
-        SWAP8 = stack::swap::<8, _, _>;
-        SWAP9 = stack::swap::<9, _, _>;
-        SWAP10 = stack::swap::<10, _, _>;
-        SWAP11 = stack::swap::<11, _, _>;
-        SWAP12 = stack::swap::<12, _, _>;
-        SWAP13 = stack::swap::<13, _, _>;
-        SWAP14 = stack::swap::<14, _, _>;
-        SWAP15 = stack::swap::<15, _, _>;
-        SWAP16 = stack::swap::<16, _, _>;
+        SWAP1 = stack::swap::<1, _>;
+        SWAP2 = stack::swap::<2, _>;
+        SWAP3 = stack::swap::<3, _>;
+        SWAP4 = stack::swap::<4, _>;
+        SWAP5 = stack::swap::<5, _>;
+        SWAP6 = stack::swap::<6, _>;
+        SWAP7 = stack::swap::<7, _>;
+        SWAP8 = stack::swap::<8, _>;
+        SWAP9 = stack::swap::<9, _>;
+        SWAP10 = stack::swap::<10, _>;
+        SWAP11 = stack::swap::<11, _>;
+        SWAP12 = stack::swap::<12, _>;
+        SWAP13 = stack::swap::<13, _>;
+        SWAP14 = stack::swap::<14, _>;
+        SWAP15 = stack::swap::<15, _>;
+        SWAP16 = stack::swap::<16, _>;
 
         LOG0 = host::log::<0, _>;
         LOG1 = host::log::<1, _>;
@@ -334,12 +323,12 @@ macro_rules! with_instrs {
         LOG3 = host::log::<3, _>;
         LOG4 = host::log::<4, _>;
 
-        CREATE = contract::create::<_, false, _>;
+        CREATE = contract::create::<false, _>;
         CALL = contract::call;
         CALLCODE = contract::call_code;
         RETURN = control::ret;
         DELEGATECALL = contract::delegate_call;
-        CREATE2 = contract::create::<_, true, _>;
+        CREATE2 = contract::create::<true, _>;
 
         STATICCALL = contract::static_call;
         REVERT = control::revert;

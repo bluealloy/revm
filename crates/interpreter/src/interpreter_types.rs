@@ -301,7 +301,7 @@ pub trait InterpreterTypes {
     /// Memory implementation type.
     type Memory: MemoryTr;
     /// Bytecode implementation type.
-    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
+    type Bytecode: BytecodeTr;
     /// Return data implementation type.
     type ReturnData: ReturnData;
     /// Input data implementation type.
@@ -313,3 +313,7 @@ pub trait InterpreterTypes {
     /// Output type for execution results.
     type Output;
 }
+
+/// Trait alias for `InterpreterTypes::Bytecode`.
+pub trait BytecodeTr: Jumps + Immediates + LoopControl + LegacyBytecode {}
+impl<T: Jumps + Immediates + LoopControl + LegacyBytecode> BytecodeTr for T {}
