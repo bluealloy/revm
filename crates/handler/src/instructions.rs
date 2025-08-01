@@ -19,12 +19,12 @@ pub trait InstructionProvider {
 
 /// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
 #[derive(Debug)]
-pub struct EthInstructions<WIRE: InterpreterTypes, HOST> {
+pub struct EthInstructions<WIRE: InterpreterTypes, HOST: ?Sized> {
     /// Table containing instruction implementations indexed by opcode.
     pub instruction_table: Box<InstructionTable<WIRE, HOST>>,
 }
 
-impl<WIRE, HOST> Clone for EthInstructions<WIRE, HOST>
+impl<WIRE, HOST: Host + ?Sized> Clone for EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
 {

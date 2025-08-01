@@ -22,19 +22,3 @@ impl<H: ?Sized, ITy: InterpreterTypes> std::fmt::Debug for InstructionContext<'_
             .finish()
     }
 }
-
-impl<H: ?Sized, ITy: InterpreterTypes> InstructionContext<'_, H, ITy> {
-    /// Executes the instruction at the current instruction pointer.
-    ///
-    /// Internally it will increment instruction pointer by one.
-    #[inline(always)]
-    pub(crate) fn step(self,opcode: u8, instruction_table: &[Instruction<ITy, H>; 256]) {
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        self.interpreter.bytecode.relative_jump(1);
-
-        // Execute instruction.
-        instruction_table[opcode as usize](self)
-    }
-}

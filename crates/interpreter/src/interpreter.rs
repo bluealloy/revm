@@ -235,19 +235,29 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline(always)]
-    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
+    pub fn step<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
-        let info = unsafe { &OPCODE_INFO.get_unchecked(opcode as usize) };
-        if !self.gas.record_cost_unsafe(info.static_gas() as u64) {
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        self.bytecode.relative_jump(1);
+
+        let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
+
+        if !self.gas.record_cost_unsafe(instruction.static_gas() as u64) {
             self.halt_oog();
         }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        context.step(opcode, instruction_table);
+        instruction.execute(context);
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -262,7 +272,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
     /// Executes the interpreter until it returns or stops.
     #[inline]
-    pub fn run_plain<H: ?Sized>(
+    pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
