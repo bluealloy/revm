@@ -22,7 +22,6 @@ pub struct ExtBytecode {
     base: Bytecode,
     /// The current instruction pointer.
     ip: *const u8,
-    bt: std::backtrace::Backtrace,
 }
 
 impl Deref for ExtBytecode {
@@ -65,7 +64,6 @@ impl ExtBytecode {
             bytecode_hash: hash,
             action: None,
             has_set_action: false,
-            bt: std::backtrace::Backtrace::force_capture(),
         }
     }
 
@@ -123,14 +121,12 @@ impl LoopControl for ExtBytecode {
         );
         debug_assert!(
             !self.has_set_action && !self.action.is_some(),
-            "action already set;\nold: {:#?}\nnew: {:#?}\nbt: {}",
+            "action already set;\nold: {:#?}\nnew: {:#?}",
             self.action,
             action,
-            self.bt,
         );
         self.has_set_action = true;
         self.action = Some(action);
-        // self.bt = std::backtrace::Backtrace::force_capture();
     }
 
     #[inline]
