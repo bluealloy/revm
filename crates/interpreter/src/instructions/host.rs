@@ -201,7 +201,7 @@ pub fn sstore<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
     let spec_id = context.runtime_flag().spec_id();
-    if spec_id.is_enabled_in(ISTANBUL) && context.remaining_gas() <= CALL_STIPEND {
+    if spec_id.is_enabled_in(ISTANBUL) && context.gas().remaining() <= CALL_STIPEND {
         return context.halt(InstructionResult::ReentrancySentryOOG);
     }
     gas!(

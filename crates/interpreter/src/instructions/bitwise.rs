@@ -13,6 +13,7 @@ use primitives::U256;
 pub fn lt<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::VERYLOW);
     popn_top!([op1], op2, context);
+
     *op2 = U256::from(op1 < *op2);
     InstructionReturn::cont()
 }
@@ -34,8 +35,7 @@ pub fn clz<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::LOW);
     popn_top!([], op1, context);
 
-    let leading_zeros = op1.leading_zeros();
-    *op1 = U256::from(leading_zeros);
+    *op1 = U256::from(op1.leading_zeros());
     InstructionReturn::cont()
 }
 
@@ -82,6 +82,7 @@ pub fn eq<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 pub fn iszero<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::VERYLOW);
     popn_top!([], op1, context);
+
     *op1 = U256::from(op1.is_zero());
     InstructionReturn::cont()
 }
@@ -93,6 +94,7 @@ pub fn iszero<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 pub fn bitand<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::VERYLOW);
     popn_top!([op1], op2, context);
+
     *op2 = op1 & *op2;
     InstructionReturn::cont()
 }

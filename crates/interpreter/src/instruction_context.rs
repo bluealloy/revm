@@ -19,9 +19,6 @@ pub trait InstructionContextTr: Sized {
     fn return_data(&mut self) -> impl ReturnData;
 
     fn gas(&self) -> &Gas;
-    fn remaining_gas(&self) -> u64 {
-        self.gas().remaining()
-    }
     #[must_use]
     fn record_gas_cost(&mut self, cost: u64) -> bool;
     fn record_refund(&mut self, refund: i64);

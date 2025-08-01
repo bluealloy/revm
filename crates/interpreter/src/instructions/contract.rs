@@ -61,7 +61,7 @@ pub fn create<const IS_CREATE2: bool, C: InstructionContextTr>(
         CreateScheme::Create
     };
 
-    let mut gas_limit = context.remaining_gas();
+    let mut gas_limit = context.gas().remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
     if context

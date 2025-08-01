@@ -39,7 +39,7 @@ pub fn resize_memory<C: InstructionContextTr>(
         resize_memory!(context, offset, len, None);
         offset
     } else {
-        usize::MAX //unrealistic value so we are sure it is not used
+        usize::MAX // Unrealistic value so we are sure it is not used.
     };
     Some(offset..offset + len)
 }

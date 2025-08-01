@@ -37,12 +37,7 @@ pub fn jumpi<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 #[inline(always)]
 #[allow(clippy::unused_unit)]
 fn jump_inner<C: InstructionContextTr>(context: &mut C, target: U256) -> InstructionReturn {
-    let target = as_usize_or_fail_ret!(
-        context,
-        target,
-        InstructionResult::InvalidJump,
-        InstructionReturn::halt()
-    );
+    let target = as_usize_or_fail!(context, target, InstructionResult::InvalidJump);
     if !context.bytecode().is_valid_legacy_jump(target) {
         return context.halt(InstructionResult::InvalidJump);
     }
@@ -66,7 +61,7 @@ pub fn jumpdest<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 #[inline]
 pub fn pc<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::BASE);
-    // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
+    // `- 1` because we have already advanced the instruction pointer in `Interpreter::step`.
     push!(context, U256::from(context.bytecode().pc() - 1));
     InstructionReturn::cont()
 }

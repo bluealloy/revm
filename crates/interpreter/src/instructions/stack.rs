@@ -52,7 +52,7 @@ pub fn push<const N: usize, C: InstructionContextTr>(context: &mut C) -> Instruc
 pub fn dup<const N: usize, C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::VERYLOW);
     if !context.stack().dup(N) {
-        context.halt(InstructionResult::StackOverflow);
+        return context.halt(InstructionResult::StackOverflow);
     }
     InstructionReturn::cont()
 }
@@ -65,7 +65,7 @@ pub fn swap<const N: usize, C: InstructionContextTr>(context: &mut C) -> Instruc
     gas!(context, gas::VERYLOW);
     assert!(N != 0);
     if !context.stack().exchange(0, N) {
-        context.halt(InstructionResult::StackOverflow);
+        return context.halt(InstructionResult::StackOverflow);
     }
     InstructionReturn::cont()
 }

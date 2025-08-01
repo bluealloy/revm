@@ -4,8 +4,17 @@ use crate::{
     interpreter_types::{InputsTr, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr},
     CallInput, InstructionContextTr, InstructionResult,
 };
-use core::ptr;
+use core::{ops::ControlFlow, ptr};
 use primitives::{B256, KECCAK_EMPTY, U256};
+
+macro_rules! copy_memory_resize {
+    ($context:expr, $memory_offset:expr, $len:expr) => {
+        match copy_memory_resize($context, $memory_offset, $len) {
+            ControlFlow::Continue(memory_offset) => memory_offset,
+            ControlFlow::Break(result) => return result,
+        }
+    };
+}
 
 /// Implements the KECCAK256 instruction.
 ///
@@ -63,9 +72,7 @@ pub fn codesize<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 pub fn codecopy<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     popn!([memory_offset, code_offset, len], context);
     let len = as_usize_or_fail!(context, len);
-    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
-        return InstructionReturn::cont();
-    };
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
     let code_offset = as_usize_saturated!(code_offset);
 
     // Note: This can't panic because we resized memory to fit.
@@ -143,9 +150,7 @@ pub fn callvalue<C: InstructionContextTr>(context: &mut C) -> InstructionReturn 
 pub fn calldatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     popn!([memory_offset, data_offset, len], context);
     let len = as_usize_or_fail!(context, len);
-    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
-        return InstructionReturn::cont();
-    };
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
 
     let data_offset = as_usize_saturated!(data_offset);
     match fuck_lt_mut!(context).input().input() {
@@ -187,9 +192,7 @@ pub fn returndatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionRe
         return context.halt(InstructionResult::OutOfOffset);
     }
 
-    let Some(memory_offset) = memory_resize(context, memory_offset, len) else {
-        return InstructionReturn::cont();
-    };
+    let memory_offset = copy_memory_resize!(context, memory_offset, len);
 
     // Note: This can't panic because we resized memory to fit.
     let data = fuck_lt!(context.return_data().buffer());
@@ -205,7 +208,7 @@ pub fn returndatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionRe
 #[inline]
 pub fn gas<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     gas!(context, gas::BASE);
-    push!(context, U256::from(context.remaining_gas()));
+    push!(context, U256::from(context.gas().remaining()));
     InstructionReturn::cont()
 }
 
@@ -213,18 +216,31 @@ pub fn gas<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
 #[inline]
-pub fn memory_resize<C: InstructionContextTr>(
+pub fn copy_memory_resize<C: InstructionContextTr>(
     context: &mut C,
     memory_offset: U256,
     len: usize,
-) -> Option<usize> {
+) -> ControlFlow<InstructionReturn, usize> {
     // Safe to cast usize to u64
-    gas_or_fail!(context, gas::copy_cost_verylow(len), None);
+    gas_or_fail!(
+        context,
+        gas::copy_cost_verylow(len),
+        ControlFlow::Break(InstructionReturn::halt())
+    );
     if len == 0 {
-        return None;
+        return ControlFlow::Break(InstructionReturn::cont());
     }
-    let memory_offset = as_usize_or_fail_ret!(context, memory_offset, None);
-    resize_memory!(context, memory_offset, len, None);
+    let memory_offset = as_usize_or_fail_ret!(
+        context,
+        memory_offset,
+        ControlFlow::Break(InstructionReturn::halt())
+    );
+    resize_memory!(
+        context,
+        memory_offset,
+        len,
+        ControlFlow::Break(InstructionReturn::halt())
+    );
 
-    Some(memory_offset)
+    ControlFlow::Continue(memory_offset)
 }
