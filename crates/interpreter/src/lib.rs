@@ -21,6 +21,7 @@ pub fn instruction_tables() -> impl Sized {
     type W = crate::interpreter::EthInterpreter;
     type H = context_interface::DummyHost;
     (
+        crate::interpreter::Interpreter::<crate::interpreter::EthInterpreter<()>>::invalid(),
         instructions::instruction_table::<W, H>(),
         instructions::instruction_table_tail::<W, H>(),
     )
