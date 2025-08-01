@@ -1,7 +1,11 @@
 use crate::{
     instructions::InstructionReturn,
-    interpreter_types::{BytecodeTr, InputsTr, Jumps, MemoryTr, ReturnData, RuntimeFlag, StackTr},
-    Gas, Instruction, InstructionResult, InstructionTable, Interpreter, InterpreterTypes,
+    interpreter_types::{
+        BytecodeTr, Immediates, InputsTr, Jumps, LegacyBytecode, LoopControl, MemoryTr, ReturnData,
+        RuntimeFlag, StackTr,
+    },
+    Gas, Instruction, InstructionResult, InstructionTable, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
 use context_interface::Host;
 
@@ -9,10 +13,10 @@ use context_interface::Host;
 #[allow(missing_docs)]
 pub trait InstructionContextTr: Sized {
     fn runtime_flag(&self) -> &impl RuntimeFlag;
-    fn stack(&mut self) -> &mut impl StackTr;
-    fn input(&mut self) -> &mut impl InputsTr;
-    fn bytecode(&mut self) -> &mut impl BytecodeTr;
-    fn return_data(&mut self) -> &mut impl ReturnData;
+    fn stack(&mut self) -> impl StackTr;
+    fn input(&mut self) -> impl InputsTr;
+    fn bytecode(&mut self) -> impl BytecodeTr;
+    fn return_data(&mut self) -> impl ReturnData;
 
     fn gas(&self) -> &Gas;
     fn remaining_gas(&self) -> u64 {
@@ -24,11 +28,11 @@ pub trait InstructionContextTr: Sized {
 
     fn halt(&mut self, result: InstructionResult) -> InstructionReturn;
 
-    fn memory(&mut self) -> &mut impl MemoryTr;
+    fn memory(&mut self) -> impl MemoryTr;
     #[must_use]
     fn resize_memory(&mut self, offset: usize, len: usize) -> bool;
 
-    fn host(&mut self) -> &mut (impl Host + ?Sized);
+    fn host(&mut self) -> impl Host;
 }
 
 /// Default implementation of [`InstructionContextTr`].
@@ -67,11 +71,13 @@ impl<'a, H: ?Sized, ITy: InterpreterTypes> InstructionContext<'a, H, ITy> {
     /// Executes the instruction in this context.
     #[inline]
     pub fn call(&mut self, f: Instruction<ITy, H>) -> InstructionReturn {
-        f(self.interpreter, self.host, core::ptr::null_mut())
+        // TODO(dani): ip is not used when not tail call table.
+        let ip = self.interpreter.bytecode.ip();
+        f(self.interpreter, self.host, ip)
     }
 
     #[inline]
-    pub(crate) fn pre_step(&mut self) -> u8 {
+    fn pre_step(&mut self) -> u8 {
         let opcode = self.interpreter.bytecode.opcode();
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
@@ -182,8 +188,11 @@ where
     fn input(&mut self) -> &mut I::Input {
         self.inner.input()
     }
-    fn bytecode(&mut self) -> &mut I::Bytecode {
-        self.inner.bytecode()
+    fn bytecode(&mut self) -> TailBytecode<'_, I::Bytecode> {
+        TailBytecode {
+            inner: self.inner.bytecode(),
+            ip: &mut self.ip,
+        }
     }
     fn return_data(&mut self) -> &mut I::ReturnData {
         self.inner.return_data()
@@ -212,5 +221,98 @@ where
 
     fn host(&mut self) -> &mut H {
         self.inner.host()
+    }
+}
+
+pub(crate) struct TailBytecode<'a, B: BytecodeTr> {
+    inner: &'a mut B,
+    ip: &'a mut *const u8,
+}
+
+impl<'a, B: BytecodeTr> TailBytecode<'a, B> {}
+
+impl<'a, B: BytecodeTr> LoopControl for TailBytecode<'a, B> {
+    #[inline]
+    fn is_end(&self) -> bool {
+        self.inner.is_end()
+    }
+    #[inline]
+    fn reset_action(&mut self) {
+        self.inner.reset_action();
+    }
+    #[inline]
+    fn set_action(&mut self, action: InterpreterAction) {
+        self.inner.set_action(action);
+    }
+    #[inline]
+    fn action(&mut self) -> &mut Option<InterpreterAction> {
+        self.inner.action()
+    }
+}
+
+impl<'a, B: BytecodeTr> Jumps for TailBytecode<'a, B> {
+    #[inline]
+    fn relative_jump(&mut self, offset: isize) {
+        self.inner.relative_jump(offset);
+    }
+    #[inline]
+    fn absolute_jump(&mut self, offset: usize) {
+        self.inner.absolute_jump(offset);
+    }
+    #[inline]
+    fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
+        self.inner.is_valid_legacy_jump(offset)
+    }
+    #[inline]
+    fn base(&self) -> *const u8 {
+        self.inner.base()
+    }
+
+    // Different. Use the local `ip` that is passed by value in the tail calls.
+    #[inline]
+    fn opcode(&self) -> u8 {
+        unsafe { *self.ip() }
+    }
+    #[inline]
+    fn ip(&self) -> *const u8 {
+        *self.ip
+    }
+    #[inline]
+    fn set_ip(&mut self, ip: *const u8) {
+        *self.ip = ip;
+    }
+    #[inline]
+    fn pc(&self) -> usize {
+        unsafe { self.ip.offset_from_unsigned(self.base()) }
+    }
+}
+
+impl<'a, B: BytecodeTr> Immediates for TailBytecode<'a, B> {
+    #[inline]
+    fn read_u16(&self) -> u16 {
+        self.inner.read_u16()
+    }
+    #[inline]
+    fn read_u8(&self) -> u8 {
+        self.inner.read_u8()
+    }
+    #[inline]
+    fn read_slice(&self, len: usize) -> &[u8] {
+        self.inner.read_slice(len)
+    }
+    #[inline]
+    fn read_offset_u16(&self, offset: isize) -> u16 {
+        self.inner.read_offset_u16(offset)
+    }
+}
+
+impl<'a, B: BytecodeTr> LegacyBytecode for TailBytecode<'a, B> {
+    #[inline]
+    fn bytecode_len(&self) -> usize {
+        self.inner.bytecode_len()
+    }
+    #[inline]
+    fn bytecode_slice(&self) -> &[u8] {
+        self.inner.bytecode_slice()
     }
 }

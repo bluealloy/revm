@@ -10,7 +10,6 @@
 extern crate alloc as std;
 
 // TODO(dani): rename `context` to `cx`
-// TODO(dani): we require `ip`-accessing methods to be used through context instead of directly on the bytecode
 
 #[macro_use]
 mod macros;

@@ -3904,6 +3904,7 @@ dependencies = [
 name = "revm-interpreter"
 version = "24.0.0"
 dependencies = [
+ "auto_impl",
  "bincode 2.0.1",
  "revm-bytecode",
  "revm-context-interface",

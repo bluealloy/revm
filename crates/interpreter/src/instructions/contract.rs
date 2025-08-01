@@ -122,11 +122,12 @@ pub fn call<C: InstructionContextTr>(context: &mut C) -> InstructionReturn {
     }
 
     // Call host to interact with target contract
+    let target_address = context.input().target_address();
     let action = InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
         input: CallInput::SharedBuffer(input),
         gas_limit,
         target_address: to,
-        caller: context.input().target_address(),
+        caller: target_address,
         bytecode_address: to,
         value: CallValue::Transfer(value),
         scheme: CallScheme::Call,
@@ -171,11 +172,12 @@ pub fn call_code<C: InstructionContextTr>(context: &mut C) -> InstructionReturn 
     }
 
     // Call host to interact with target contract
+    let target_address = context.input().target_address();
     let action = InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
         input: CallInput::SharedBuffer(input),
         gas_limit,
-        target_address: context.input().target_address(),
-        caller: context.input().target_address(),
+        target_address,
+        caller: target_address,
         bytecode_address: to,
         value: CallValue::Transfer(value),
         scheme: CallScheme::CallCode,
@@ -214,15 +216,18 @@ pub fn delegate_call<C: InstructionContextTr>(context: &mut C) -> InstructionRet
     gas!(context, gas_limit);
 
     // Call host to interact with target contract
+    let caller = context.input().caller_address();
+    let call_value = context.input().call_value();
+    let is_static = context.runtime_flag().is_static();
     let action = InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
         input: CallInput::SharedBuffer(input),
         gas_limit,
         target_address: context.input().target_address(),
-        caller: context.input().caller_address(),
+        caller,
         bytecode_address: to,
-        value: CallValue::Apparent(context.input().call_value()),
+        value: CallValue::Apparent(call_value),
         scheme: CallScheme::DelegateCall,
-        is_static: context.runtime_flag().is_static(),
+        is_static,
         return_memory_offset,
     })));
     context.bytecode().set_action(action);

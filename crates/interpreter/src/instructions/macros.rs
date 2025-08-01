@@ -151,8 +151,8 @@ macro_rules! popn_top {
             $context.halt($crate::InstructionResult::StackUnderflow);
             return $ret;
         }
-        let ([$( $x ),*], top) = unsafe { $context.stack().popn_top().unwrap_unchecked() };
-        let $top = unsafe { $crate::extend_lt_mut(top) };
+        let mut stack = fuck_lt_mut!($context).stack();
+        let ([$( $x ),*], $top) = unsafe { stack.popn_top().unwrap_unchecked() };
     };
 }
 
@@ -261,8 +261,16 @@ macro_rules! as_usize_or_fail_ret {
     };
 }
 
+// TODO(dani): ideally remove these
+
 macro_rules! fuck_lt {
     ($e:expr) => {
         unsafe { $crate::extend_lt($e) }
+    };
+}
+
+macro_rules! fuck_lt_mut {
+    ($e:expr) => {
+        unsafe { $crate::extend_lt_mut($e) }
     };
 }

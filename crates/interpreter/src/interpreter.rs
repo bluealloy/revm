@@ -252,11 +252,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        loop {
-            if !self.step(instruction_table, host).can_continue() {
-                break;
-            }
-        }
+        while self.step(instruction_table, host).can_continue() {}
         self.take_next_action()
     }
 }

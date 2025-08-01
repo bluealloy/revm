@@ -4,6 +4,7 @@ use core::ops::{Deref, Range};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
+#[auto_impl::auto_impl(&mut)]
 pub trait Immediates {
     /// Reads next 16 bits as signed integer from the bytecode.
     #[inline]
@@ -38,6 +39,7 @@ pub trait Immediates {
 }
 
 /// Trait for fetching inputs of the call.
+#[auto_impl::auto_impl(&mut)]
 pub trait InputsTr {
     /// Returns target address of the call.
     fn target_address(&self) -> Address;
@@ -55,6 +57,7 @@ pub trait InputsTr {
 /// Trait needed for legacy bytecode.
 ///
 /// Used in [`bytecode::opcode::CODECOPY`] and [`bytecode::opcode::CODESIZE`] opcodes.
+#[auto_impl::auto_impl(&mut)]
 pub trait LegacyBytecode {
     /// Returns current bytecode original length. Used in [`bytecode::opcode::CODESIZE`] opcode.
     fn bytecode_len(&self) -> usize;
@@ -63,6 +66,7 @@ pub trait LegacyBytecode {
 }
 
 /// Trait for Interpreter to be able to jump
+#[auto_impl::auto_impl(&mut)]
 pub trait Jumps {
     /// Relative jumps does not require checking for overflow.
     fn relative_jump(&mut self, offset: isize);
@@ -84,6 +88,7 @@ pub trait Jumps {
 }
 
 /// Trait for Interpreter memory operations.
+#[auto_impl::auto_impl(&mut)]
 pub trait MemoryTr {
     /// Sets memory data at given offset from data with a given data_offset and len.
     ///
@@ -155,6 +160,7 @@ pub trait MemoryTr {
 }
 
 /// Functions needed for Interpreter Stack operations.
+#[auto_impl::auto_impl(&mut)]
 pub trait StackTr {
     /// Returns stack length.
     fn len(&self) -> usize;
@@ -238,6 +244,7 @@ pub trait StackTr {
 }
 
 /// Returns return data.
+#[auto_impl::auto_impl(&mut)]
 pub trait ReturnData {
     /// Returns return data.
     fn buffer(&self) -> &Bytes;
@@ -252,6 +259,7 @@ pub trait ReturnData {
 }
 
 /// Trait controls execution of the loop.
+#[auto_impl::auto_impl(&mut)]
 pub trait LoopControl {
     /// Returns `true` if the loop should continue.
     #[inline]

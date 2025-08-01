@@ -133,7 +133,7 @@ mod tail {
     macro_rules! tail_instrs {
         ($($instr:ident = $instr_fn:expr;)*) => {
             $(
-                fn $instr<H: Host + ?Sized, W: InterpreterTypes>(
+                fn $instr<W: InterpreterTypes, H: Host + ?Sized>(
                     interpreter: &mut Interpreter<W>,
                     host: &mut H,
                     ip: *const u8,
@@ -159,7 +159,9 @@ mod tail {
                         table[bytecode::opcode::$instr as usize] = conv(self::$instr);
                     )*
                     table
-                }
+                };
+                // TODO(dani): fix nontail first
+                super::cx::table::<W, H>()
             }
         };
     }
