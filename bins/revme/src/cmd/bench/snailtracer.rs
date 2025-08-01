@@ -4,6 +4,7 @@ use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::CountInspector;
 use revm::{
     bytecode::Bytecode,
+    handler::instructions::EthInstructions,
     primitives::{bytes, hex, Bytes, TxKind},
     Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
@@ -33,6 +34,7 @@ pub fn run(criterion: &mut Criterion) {
         );
     });
 
+    evm.instruction = EthInstructions::new_mainnet_no_tail();
     criterion.bench_function("analysis-inspector", |b| {
         b.iter_batched(
             || tx.clone(),
