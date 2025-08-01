@@ -36,10 +36,10 @@ where
     type Context = Self;
 
     fn build_op(self) -> DefaultOpEvm<Self::Context> {
-        OpEvm::new(self, ())
+        OpEvm::new(self)
     }
 
     fn build_op_with_inspector<INSP>(self, inspector: INSP) -> DefaultOpEvm<Self::Context, INSP> {
-        OpEvm::new(self, inspector)
+        OpEvm::new_with_inspector(self, inspector)
     }
 }

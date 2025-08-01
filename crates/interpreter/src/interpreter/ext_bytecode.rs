@@ -120,10 +120,9 @@ impl LoopControl for ExtBytecode {
             "has_set_action out of sync"
         );
         debug_assert!(
-            !self.has_set_action && !self.action.is_some(),
+            !self.has_set_action,
             "action already set;\nold: {:#?}\nnew: {:#?}",
-            self.action,
-            action,
+            self.action, action,
         );
         self.has_set_action = true;
         self.action = Some(action);
@@ -200,13 +199,7 @@ impl Immediates for ExtBytecode {
 
     #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
-        unsafe {
-            read_u16(
-                self.ip
-                    // Offset for max_index that is one byte
-                    .offset(offset),
-            )
-        }
+        unsafe { read_u16(self.ip.offset(offset)) }
     }
 }
 

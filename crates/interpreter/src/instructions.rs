@@ -159,9 +159,7 @@ mod tail {
                         table[bytecode::opcode::$instr as usize] = conv(self::$instr);
                     )*
                     table
-                };
-                // TODO(dani): fix nontail first
-                super::cx::table::<W, H>()
+                }
             }
         };
     }

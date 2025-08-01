@@ -26,13 +26,26 @@ pub struct OpEvm<
     pub Evm<CTX, INSP, I, P, F>,
 );
 
-impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+impl<CTX: ContextTr> OpEvm<CTX, (), EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
     /// Create a new Optimism EVM.
-    pub fn new(ctx: CTX, inspector: INSP) -> Self {
+    pub fn new(ctx: CTX) -> Self {
+        Self(Evm {
+            ctx,
+            inspector: (),
+            instruction: EthInstructions::new_mainnet(),
+            precompiles: OpPrecompiles::default(),
+            frame_stack: FrameStack::new(),
+        })
+    }
+}
+
+impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+    /// Create a new Optimism EVM with a given inspector.
+    pub fn new_with_inspector(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
             ctx,
             inspector,
-            instruction: EthInstructions::new_mainnet(),
+            instruction: EthInstructions::new_mainnet_no_tail(),
             precompiles: OpPrecompiles::default(),
             frame_stack: FrameStack::new(),
         })

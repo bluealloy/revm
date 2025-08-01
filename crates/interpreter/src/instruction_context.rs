@@ -7,6 +7,7 @@ use crate::{
     Gas, Instruction, InstructionResult, InstructionTable, Interpreter, InterpreterAction,
     InterpreterTypes,
 };
+use bytecode::utils::read_u16;
 use context_interface::Host;
 
 /// Context passed to instruction implementations.
@@ -221,6 +222,7 @@ where
     }
 }
 
+// Use the local `ip` that is passed by value in the tail calls.
 pub(crate) struct TailBytecode<'a, B: BytecodeTr> {
     inner: &'a mut B,
     ip: &'a mut *const u8,
@@ -250,11 +252,11 @@ impl<'a, B: BytecodeTr> LoopControl for TailBytecode<'a, B> {
 impl<'a, B: BytecodeTr> Jumps for TailBytecode<'a, B> {
     #[inline]
     fn relative_jump(&mut self, offset: isize) {
-        self.inner.relative_jump(offset);
+        *self.ip = unsafe { self.ip.offset(offset) };
     }
     #[inline]
     fn absolute_jump(&mut self, offset: usize) {
-        self.inner.absolute_jump(offset);
+        *self.ip = unsafe { self.inner.base().add(offset) };
     }
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
@@ -264,8 +266,6 @@ impl<'a, B: BytecodeTr> Jumps for TailBytecode<'a, B> {
     fn base(&self) -> *const u8 {
         self.inner.base()
     }
-
-    // Different. Use the local `ip` that is passed by value in the tail calls.
     #[inline]
     fn opcode(&self) -> u8 {
         unsafe { *self.ip() }
@@ -284,22 +284,23 @@ impl<'a, B: BytecodeTr> Jumps for TailBytecode<'a, B> {
     }
 }
 
+// Different. Use the local `ip` that is passed by value in the tail calls.
 impl<'a, B: BytecodeTr> Immediates for TailBytecode<'a, B> {
     #[inline]
     fn read_u16(&self) -> u16 {
-        self.inner.read_u16()
+        unsafe { read_u16(self.ip()) }
     }
     #[inline]
     fn read_u8(&self) -> u8 {
-        self.inner.read_u8()
+        unsafe { *self.ip() }
     }
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
-        self.inner.read_slice(len)
+        unsafe { core::slice::from_raw_parts(self.ip(), len) }
     }
     #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
-        self.inner.read_offset_u16(offset)
+        unsafe { read_u16(self.ip().offset(offset)) }
     }
 }
 
