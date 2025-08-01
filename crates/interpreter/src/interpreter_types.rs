@@ -39,7 +39,6 @@ pub trait Immediates {
 }
 
 /// Trait for fetching inputs of the call.
-#[auto_impl::auto_impl(&mut)]
 pub trait InputsTr {
     /// Returns target address of the call.
     fn target_address(&self) -> Address;

@@ -100,15 +100,16 @@ pub fn calldataload<C: InstructionContextTr>(context: &mut C) -> InstructionRetu
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
-        match fuck_lt_mut!(context).input().input() {
+        match context.input().input() {
             CallInput::Bytes(bytes) => {
                 unsafe {
                     ptr::copy_nonoverlapping(bytes.as_ptr().add(offset), word.as_mut_ptr(), count)
                 };
             }
             CallInput::SharedBuffer(range) => {
+                let range = range.clone();
                 let memory = context.memory();
-                let input_slice = memory.global_slice(range.clone());
+                let input_slice = memory.global_slice(range);
                 unsafe {
                     ptr::copy_nonoverlapping(
                         input_slice.as_ptr().add(offset),
@@ -153,7 +154,7 @@ pub fn calldatacopy<C: InstructionContextTr>(context: &mut C) -> InstructionRetu
     let memory_offset = copy_memory_resize!(context, memory_offset, len);
 
     let data_offset = as_usize_saturated!(data_offset);
-    match fuck_lt_mut!(context).input().input() {
+    match fuck_lt!(context).input().input() {
         CallInput::Bytes(bytes) => {
             context
                 .memory()

@@ -15,7 +15,7 @@ use context_interface::Host;
 pub trait InstructionContextTr: Sized {
     fn runtime_flag(&self) -> &impl RuntimeFlag;
     fn stack(&mut self) -> impl StackTr;
-    fn input(&mut self) -> impl InputsTr;
+    fn input(&self) -> &impl InputsTr;
     fn bytecode(&mut self) -> impl BytecodeTr;
     fn return_data(&mut self) -> impl ReturnData;
 
@@ -106,8 +106,8 @@ where
     fn stack(&mut self) -> &mut I::Stack {
         &mut self.interpreter.stack
     }
-    fn input(&mut self) -> &mut I::Input {
-        &mut self.interpreter.input
+    fn input(&self) -> &I::Input {
+        &self.interpreter.input
     }
     fn bytecode(&mut self) -> &mut I::Bytecode {
         &mut self.interpreter.bytecode
@@ -183,7 +183,7 @@ where
     fn stack(&mut self) -> &mut I::Stack {
         self.inner.stack()
     }
-    fn input(&mut self) -> &mut I::Input {
+    fn input(&self) -> &I::Input {
         self.inner.input()
     }
     fn bytecode(&mut self) -> TailBytecode<'_, I::Bytecode> {

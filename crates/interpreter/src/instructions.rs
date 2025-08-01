@@ -144,7 +144,7 @@ mod tail {
                     if !ret.can_continue() {
                         primitives::cold_path();
                         cx.flush();
-                        return ret;
+                        return InstructionReturn::halt();
                     }
 
                     let opcode = cx.pre_step();
