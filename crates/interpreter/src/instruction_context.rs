@@ -1,8 +1,4 @@
-use bytecode::opcode::OPCODE_INFO;
-
-use crate::{gas, interpreter_types::Jumps, Interpreter, InterpreterTypes};
-
-use super::Instruction;
+use crate::{Interpreter, InterpreterTypes};
 
 /// Context passed to instruction implementations containing the host and interpreter.
 /// This struct provides access to both the host interface for external state operations

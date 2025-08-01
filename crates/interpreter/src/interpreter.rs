@@ -22,7 +22,7 @@ use crate::{
     host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
-use bytecode::{opcode::OPCODE_INFO, Bytecode};
+use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
@@ -250,7 +250,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if !self.gas.record_cost_unsafe(instruction.static_gas() as u64) {
+        if !self.gas.record_cost_unsafe(instruction.static_gas()) {
             self.halt_oog();
         }
         let context = InstructionContext {
