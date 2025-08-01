@@ -195,7 +195,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn take_next_action(&mut self) -> InterpreterAction {
         self.bytecode.reset_action();
         // Return next action if it is some.
-        core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
+        let action = core::mem::take(self.bytecode.action()).expect("Interpreter to set action");
+        action
     }
 
     /// Halt the interpreter with the given result.
@@ -206,6 +207,17 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn halt(&mut self, result: InstructionResult) {
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
+    }
+
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_oog(&mut self) {
+        self.gas.spend_all();
+        self.bytecode.set_action(InterpreterAction::new_halt(
+            InstructionResult::OutOfGas,
+            self.gas,
+        ));
     }
 
     /// Return with the given output.
@@ -222,13 +234,30 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline]
-    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
+    #[inline(always)]
+    pub fn step<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) {
+        // Get current opcode.
+        let opcode = self.bytecode.opcode();
+
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        self.bytecode.relative_jump(1);
+
+        let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
+
+        if !self.gas.record_cost_unsafe(instruction.static_gas()) {
+            self.halt_oog();
+        }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        context.step(instruction_table);
+        instruction.execute(context);
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -243,7 +272,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
     /// Executes the interpreter until it returns or stops.
     #[inline]
-    pub fn run_plain<H: ?Sized>(
+    pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,

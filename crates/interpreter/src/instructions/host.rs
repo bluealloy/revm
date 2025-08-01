@@ -43,7 +43,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
-    gas!(context.interpreter, gas::LOW);
+    //gas!(context.interpreter, gas::LOW);
 
     let Some(balance) = context
         .host
@@ -154,7 +154,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(context.interpreter, gas::BLOCKHASH);
+    //gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
 
     let requested_number = *number;
@@ -261,7 +261,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
-    gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
+    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
 
     popn!([index, value], context.interpreter);
 
@@ -274,7 +274,7 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 /// Load value from transient storage
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
-    gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
+    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
 
     popn_top!([], index, context.interpreter);
 
