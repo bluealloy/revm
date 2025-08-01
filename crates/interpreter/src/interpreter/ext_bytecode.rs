@@ -114,6 +114,16 @@ impl LoopControl for ExtBytecode {
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
+        debug_assert_eq!(
+            self.has_set_action,
+            self.action.is_some(),
+            "has_set_action out of sync"
+        );
+        debug_assert!(
+            !self.has_set_action,
+            "action already set;\nold: {:#?}\nnew: {:#?}",
+            self.action, action,
+        );
         self.has_set_action = true;
         self.action = Some(action);
     }
