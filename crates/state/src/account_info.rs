@@ -294,7 +294,7 @@ impl AccountInfo {
 
 #[cfg(test)]
 mod tests {
-    use std::cmp::Ordering;
+    use core::cmp::Ordering;
     use std::collections::BTreeSet;
     use bytecode::Bytecode;
     use primitives::{KECCAK_EMPTY, U256};
