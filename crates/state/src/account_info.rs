@@ -1,6 +1,8 @@
 use bytecode::Bytecode;
-use core::hash::{Hash, Hasher};
-use std::cmp::Ordering;
+use core::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
@@ -50,7 +52,6 @@ impl Hash for AccountInfo {
         self.code_hash.hash(state);
     }
 }
-
 
 impl PartialOrd for AccountInfo {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -294,11 +295,11 @@ impl AccountInfo {
 
 #[cfg(test)]
 mod tests {
-    use core::cmp::Ordering;
-    use std::collections::BTreeSet;
-    use bytecode::Bytecode;
-    use primitives::{KECCAK_EMPTY, U256};
     use crate::AccountInfo;
+    use bytecode::Bytecode;
+    use core::cmp::Ordering;
+    use primitives::{KECCAK_EMPTY, U256};
+    use std::collections::BTreeSet;
 
     #[test]
     fn test_account_info_trait_consistency() {
@@ -309,7 +310,6 @@ mod tests {
             code_hash: KECCAK_EMPTY,
             code: Some(bytecode.clone()),
         };
-
 
         let account2 = AccountInfo {
             balance: U256::ZERO,
@@ -326,14 +326,19 @@ mod tests {
             "Ordering should be equal after ignoring code in Ord"
         );
 
-
         let mut set = BTreeSet::new();
         assert!(set.insert(account1.clone()), "Inserted account1");
-        assert!(!set.insert(account2.clone()), "account2 not inserted (treated as duplicate)");
+        assert!(
+            !set.insert(account2.clone()),
+            "account2 not inserted (treated as duplicate)"
+        );
 
         assert_eq!(set.len(), 1, "Set should have only one unique account");
         assert!(set.contains(&account1), "Set contains account1");
-        assert!(set.contains(&account2), "Set contains account2 (since equal)");
+        assert!(
+            set.contains(&account2),
+            "Set contains account2 (since equal)"
+        );
 
         let mut accounts = vec![account2.clone(), account1.clone()];
         accounts.sort();
