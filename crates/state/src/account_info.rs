@@ -1,11 +1,12 @@
 use bytecode::Bytecode;
 use core::hash::{Hash, Hasher};
+use std::cmp::Ordering;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
@@ -47,6 +48,22 @@ impl Hash for AccountInfo {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
+    }
+}
+
+
+impl PartialOrd for AccountInfo {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for AccountInfo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.balance
+            .cmp(&other.balance)
+            .then_with(|| self.nonce.cmp(&other.nonce))
+            .then_with(|| self.code_hash.cmp(&other.code_hash))
     }
 }
 
@@ -272,5 +289,54 @@ impl AccountInfo {
             code: Some(bytecode),
             code_hash: hash,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+    use std::collections::BTreeSet;
+    use bytecode::Bytecode;
+    use primitives::{KECCAK_EMPTY, U256};
+    use crate::AccountInfo;
+
+    #[test]
+    fn test_account_info_trait_consistency() {
+        let bytecode = Bytecode::default();
+        let account1 = AccountInfo {
+            balance: U256::ZERO,
+            nonce: 0,
+            code_hash: KECCAK_EMPTY,
+            code: Some(bytecode.clone()),
+        };
+
+
+        let account2 = AccountInfo {
+            balance: U256::ZERO,
+            nonce: 0,
+            code_hash: KECCAK_EMPTY,
+            code: None,
+        };
+
+        assert_eq!(account1, account2, "Accounts should be equal ignoring code");
+
+        assert_eq!(
+            account1.cmp(&account2),
+            Ordering::Equal,
+            "Ordering should be equal after ignoring code in Ord"
+        );
+
+
+        let mut set = BTreeSet::new();
+        assert!(set.insert(account1.clone()), "Inserted account1");
+        assert!(!set.insert(account2.clone()), "account2 not inserted (treated as duplicate)");
+
+        assert_eq!(set.len(), 1, "Set should have only one unique account");
+        assert!(set.contains(&account1), "Set contains account1");
+        assert!(set.contains(&account2), "Set contains account2 (since equal)");
+
+        let mut accounts = vec![account2.clone(), account1.clone()];
+        accounts.sort();
+        assert_eq!(accounts[0], accounts[1], "Sorted vec treats them as equal");
     }
 }
