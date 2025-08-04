@@ -1,4 +1,24 @@
 # Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [7.2.0](https://github.com/bluealloy/revm/compare/revme-v7.1.0...revme-v7.2.0) - 2025-08-04
+
+### Added
+
+- Reuse bls12-381 codepaths to implement kzg point evaluation precompile ([#2809](https://github.com/bluealloy/revm/pull/2809))
+
+### Other
+
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
+- add gas_limit to revme evm ([#2779](https://github.com/bluealloy/revm/pull/2779))
+# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
