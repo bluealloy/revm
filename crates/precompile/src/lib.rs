@@ -82,7 +82,7 @@ impl Default for Precompiles {
         Self {
             inner: HashMap::new(),
             addresses: HashSet::new(),
-            optimized_access: vec![None; OPTIMIZE_SHORT_ADDRESS_ACCESS as usize],
+            optimized_access: vec![None; OPTIMIZE_SHORT_ADDRESS_ACCESS],
         }
     }
 }
@@ -231,9 +231,9 @@ impl Precompiles {
     /// Returns the precompile for the given address.
     #[inline]
     pub fn get(&self, address: &Address) -> Option<&PrecompileFn> {
-        if address.0.iter().rev().skip(1).all(|b| *b == 0) {
+        if address.0[..19].iter().all(|b| *b == 0) {
             let short_address = *address.0.last().unwrap() as usize;
-            if short_address < OPTIMIZE_SHORT_ADDRESS_ACCESS as usize {
+            if short_address < OPTIMIZE_SHORT_ADDRESS_ACCESS {
                 return self.optimized_access[short_address].as_ref();
             }
         }
@@ -269,11 +269,11 @@ impl Precompiles {
         let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
         for item in items.iter() {
             let address = item.0;
-            if address.0.iter().rev().skip(1).any(|b| *b != 0) {
+            if address.0[..19].iter().any(|b| *b != 0) {
                 continue;
             }
             let short_address = *address.0.last().unwrap() as usize;
-            if short_address < OPTIMIZE_SHORT_ADDRESS_ACCESS as usize {
+            if short_address < OPTIMIZE_SHORT_ADDRESS_ACCESS {
                 self.optimized_access[short_address] = Some(item.1);
             }
         }
