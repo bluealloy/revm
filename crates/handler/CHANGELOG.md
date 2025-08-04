@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v8.1.0...revm-handler-v9.0.0) - 2025-08-04
+
+### Added
+
+- gastable, record static gas in Interpreter loop ([#2822](https://github.com/bluealloy/revm/pull/2822))
+- fix renamed functions for system_call ([#2824](https://github.com/bluealloy/revm/pull/2824))
+- Align naming of SystemCallEvm function to ExecuteEvm ([#2814](https://github.com/bluealloy/revm/pull/2814))
+
+### Fixed
+
+- nonce changed is not reverted in journal if fail due to insufficient balance ([#2805](https://github.com/bluealloy/revm/pull/2805))
+
+### Other
+
+- *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
+- improve ExtBytecode hash handling ([#2826](https://github.com/bluealloy/revm/pull/2826))
+- fix run-tests.sh ([#2801](https://github.com/bluealloy/revm/pull/2801))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 
 ## [8.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v8.0.3...revm-handler-v8.1.0) - 2025-07-23
 
