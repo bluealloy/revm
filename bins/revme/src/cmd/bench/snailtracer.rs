@@ -33,7 +33,7 @@ pub fn run(criterion: &mut Criterion) {
         );
     });
 
-    criterion.bench_function("analysis-inspector", |b| {
+    criterion.bench_function("snailtracer-inspect", |b| {
         b.iter_batched(
             || tx.clone(),
             |input| evm.inspect_one_tx(input),
