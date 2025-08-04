@@ -217,6 +217,34 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.halt(InstructionResult::OutOfGas);
     }
 
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_memory_oog(&mut self) {
+        self.halt(InstructionResult::MemoryLimitOOG);
+    }
+
+    /// Halt the interpreter with and overflow error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_overflow(&mut self) {
+        self.halt(InstructionResult::StackOverflow);
+    }
+
+    /// Halt the interpreter with and underflow error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_underflow(&mut self) {
+        self.halt(InstructionResult::StackUnderflow);
+    }
+
+    /// Halt the interpreter with and not activated error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_not_activated(&mut self) {
+        self.halt(InstructionResult::NotActivated);
+    }
+
     /// Return with the given output.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
