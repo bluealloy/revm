@@ -4075,8 +4075,8 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.15.0"
-source = "git+https://github.com/danipopes/uint?rev=da39129cc1382a7f953f5a0683fe21d4fbe725d4#da39129cc1382a7f953f5a0683fe21d4fbe725d4"
+version = "1.16.0"
+source = "git+https://github.com/recmo/uint?branch=main#25e81ad8c6732624ce92e7d12800715e78df726c"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -4103,7 +4103,7 @@ dependencies = [
 [[package]]
 name = "ruint-macro"
 version = "1.2.1"
-source = "git+https://github.com/danipopes/uint?rev=da39129cc1382a7f953f5a0683fe21d4fbe725d4#da39129cc1382a7f953f5a0683fe21d4fbe725d4"
+source = "git+https://github.com/recmo/uint?branch=main#25e81ad8c6732624ce92e7d12800715e78df726c"
 
 [[package]]
 name = "rustc-demangle"
