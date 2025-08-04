@@ -22,7 +22,7 @@ Options:
 Eth tests are a suite of tests from the Ethereum Foundation that are used to test EVM implementations.
 Part of these tests are included in the revm repository in the `tests` folder.
 
-est suites for the latest hardforks can be found in [EEST releases](https://github.com/ethereum/execution-spec-tests/releases), and there are additional tests that cover older hardforks in [legacytests](https://github.com/ethereum/legacytests)
+Test suites for the latest hardforks can be found in [EEST releases](https://github.com/ethereum/execution-spec-tests/releases), and there are additional tests that cover older hardforks in [legacytests](https://github.com/ethereum/legacytests)
 
 Revm can run statetest type of tests with `revme` using the following command:
 `cargo run --release -p revme -- statetest folder_path`
