@@ -209,6 +209,14 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             .set_action(InterpreterAction::new_halt(result, self.gas));
     }
 
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_oog(&mut self) {
+        self.gas.spend_all();
+        self.halt(InstructionResult::OutOfGas);
+    }
+
     /// Return with the given output.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
@@ -239,8 +247,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if !self.gas.record_cost_saturating(instruction.static_gas()) {
-            return self.halt(InstructionResult::OutOfGas);
+        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+            return self.halt_oog();
         }
         let context = InstructionContext {
             interpreter: self,

@@ -153,15 +153,15 @@ impl Gas {
         false
     }
 
-    /// Records an explicit cost.
+    /// Records an explicit cost. In case of underflow the gas will wrap around cost.
     ///
-    /// Returns `false` if the gas limit is exceeded.
-    #[inline]
+    /// Returns `true` if the gas limit is exceeded.
+    #[inline(always)]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_cost_saturating(&mut self, cost: u64) -> bool {
-        let ret = self.remaining >= cost;
-        self.remaining = self.remaining.saturating_sub(cost);
-        ret
+    pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
+        let oog = self.remaining < cost;
+        self.remaining = self.remaining.wrapping_sub(cost);
+        oog
     }
 }
 
