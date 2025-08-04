@@ -45,14 +45,16 @@ where
         Self::new(instruction_table::<WIRE, HOST>())
     }
 
-    /// Rerurns new `EthInstructions` with custom instruction table.
+    /// Returns a new instance of `EthInstructions` with custom instruction table.
+    #[inline]
     pub fn new(base_table: InstructionTable<WIRE, HOST>) -> Self {
         Self {
             instruction_table: Box::new(base_table),
         }
     }
 
-    /// Inserts a new instruction into the instruction table.s
+    /// Inserts a new instruction into the instruction table.
+    #[inline]
     pub fn insert_instruction(&mut self, opcode: u8, instruction: Instruction<WIRE, HOST>) {
         self.instruction_table[opcode as usize] = instruction;
     }

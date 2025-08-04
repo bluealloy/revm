@@ -146,6 +146,19 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
+        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
+            self.remaining = new_remaining;
+            return true;
+        }
+        false
+    }
+
+    /// Records an explicit cost.
+    ///
+    /// Returns `false` if the gas limit is exceeded.
+    #[inline]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
+    pub fn record_cost_saturating(&mut self, cost: u64) -> bool {
         let ret = self.remaining >= cost;
         self.remaining = self.remaining.saturating_sub(cost);
         ret

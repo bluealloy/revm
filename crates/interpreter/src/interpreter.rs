@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas, host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -239,7 +239,9 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        gas!(self, instruction.static_gas());
+        if !self.gas.record_cost_saturating(instruction.static_gas()) {
+            return self.halt(InstructionResult::OutOfGas);
+        }
         let context = InstructionContext {
             interpreter: self,
             host,
@@ -270,6 +272,24 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.take_next_action()
     }
 }
+
+/* used for cargo asm
+pub fn asm_step(
+    interpreter: &mut Interpreter<EthInterpreter>,
+    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    host: &mut DummyHost,
+) {
+    interpreter.step(instruction_table, host);
+}
+
+pub fn asm_run(
+    interpreter: &mut Interpreter<EthInterpreter>,
+    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    host: &mut DummyHost,
+) {
+    interpreter.run_plain(instruction_table, host);
+}
+*/
 
 /// The result of an interpreter operation.
 #[derive(Clone, Debug, PartialEq, Eq)]

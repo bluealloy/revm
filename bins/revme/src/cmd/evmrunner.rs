@@ -109,9 +109,11 @@ impl Cmd {
                 .without_plots();
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
-                b.iter(|| {
-                    let _ = evm.transact(tx.clone()).unwrap();
-                })
+                b.iter_batched(
+                    || tx.clone(),
+                    |input| evm.transact(input).unwrap(),
+                    criterion::BatchSize::SmallInput,
+                );
             });
             criterion_group.finish();
 
@@ -119,19 +121,17 @@ impl Cmd {
         }
 
         let time = Instant::now();
-        let state = if self.trace {
-            evm.inspect_tx(tx.clone())
-                .map_err(|_| Errors::EVMError)?
-                .state
+        let r = if self.trace {
+            evm.inspect_tx(tx)
         } else {
-            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
-            println!("Result: {:#?}", out.result);
-            out.state
-        };
+            evm.transact(tx)
+        }
+        .map_err(|_| Errors::EVMError)?;
         let time = time.elapsed();
 
+        println!("Result: {:#?}", r.result);
         if self.state {
-            println!("State: {state:#?}");
+            println!("State: {:#?}", r.state);
         }
 
         println!("Elapsed: {time:?}");
