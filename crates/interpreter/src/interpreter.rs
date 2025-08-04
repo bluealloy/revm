@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    gas, host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -209,17 +209,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             .set_action(InterpreterAction::new_halt(result, self.gas));
     }
 
-    /// Halt the interpreter with an out-of-gas error.
-    #[cold]
-    #[inline(never)]
-    pub fn halt_oog(&mut self) {
-        self.gas.spend_all();
-        self.bytecode.set_action(InterpreterAction::new_halt(
-            InstructionResult::OutOfGas,
-            self.gas,
-        ));
-    }
-
     /// Return with the given output.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
@@ -234,7 +223,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline(always)]
+    #[inline]
     pub fn step<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
@@ -250,9 +239,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if !self.gas.record_cost_unsafe(instruction.static_gas()) {
-            self.halt_oog();
-        }
+        gas!(self, instruction.static_gas());
         let context = InstructionContext {
             interpreter: self,
             host,
