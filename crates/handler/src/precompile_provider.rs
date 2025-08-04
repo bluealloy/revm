@@ -120,7 +120,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
         };
 
-        match (*precompile)(input_bytes, gas_limit) {
+        match precompile.precompile()(input_bytes, gas_limit) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");
