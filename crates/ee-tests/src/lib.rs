@@ -98,12 +98,8 @@ where
 
     // Compare the output objects directly
     if *output != expected {
-        // If they don't match, generate a nicer error by pretty-printing both as JSON
-        // This helps with debugging by showing the exact differences
-        let expected_pretty = serde_json::to_string_pretty(&expected).unwrap();
-
         panic!(
-            "Value does not match testdata.\nExpected:\n{expected_pretty}\n\nActual:\n{output_json}"
+            "Value does not match testdata.\nExpected:\n{expected_json}\n\nActual:\n{output_json}"
         );
     }
 }

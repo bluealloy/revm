@@ -10,6 +10,10 @@ mod serde;
 /// Extended bytecode structure that wraps base bytecode with additional execution metadata.
 #[derive(Debug)]
 pub struct ExtBytecode {
+    /// The current instruction pointer.
+    instruction_pointer: *const u8,
+    /// Whether the execution should continue.
+    continue_execution: bool,
     /// Bytecode Keccak-256 hash.
     /// This is `None` if it hasn't been calculated yet.
     /// Since it's not necessary for execution, it's not calculated by default.
@@ -17,11 +21,8 @@ pub struct ExtBytecode {
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
     pub action: Option<InterpreterAction>,
-    has_set_action: bool,
     /// The base bytecode.
     base: Bytecode,
-    /// The current instruction pointer.
-    instruction_pointer: *const u8,
 }
 
 impl Deref for ExtBytecode {
@@ -63,7 +64,7 @@ impl ExtBytecode {
             instruction_pointer,
             bytecode_hash: hash,
             action: None,
-            has_set_action: false,
+            continue_execution: true,
         }
     }
 
@@ -103,28 +104,28 @@ impl ExtBytecode {
 
 impl LoopControl for ExtBytecode {
     #[inline]
-    fn is_end(&self) -> bool {
-        self.has_set_action
+    fn is_not_end(&self) -> bool {
+        self.continue_execution
     }
 
     #[inline]
     fn reset_action(&mut self) {
-        self.has_set_action = false;
+        self.continue_execution = true;
     }
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
         debug_assert_eq!(
-            self.has_set_action,
+            !self.continue_execution,
             self.action.is_some(),
             "has_set_action out of sync"
         );
         debug_assert!(
-            !self.has_set_action,
+            self.continue_execution,
             "action already set;\nold: {:#?}\nnew: {:#?}",
             self.action, action,
         );
-        self.has_set_action = true;
+        self.continue_execution = false;
         self.action = Some(action);
     }
 

@@ -62,7 +62,7 @@ macro_rules! gas {
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
         if !$interpreter.gas.record_cost($gas) {
-            $interpreter.halt($crate::InstructionResult::OutOfGas);
+            $interpreter.halt_oog();
             return $ret;
         }
     };
@@ -79,7 +79,7 @@ macro_rules! gas_or_fail {
         match $gas {
             Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
             None => {
-                $interpreter.halt($crate::InstructionResult::OutOfGas);
+                $interpreter.halt_oog();
                 return $ret;
             }
         }
