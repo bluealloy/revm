@@ -28,13 +28,10 @@ pub fn run(criterion: &mut Criterion) {
     let mut i = 0;
     criterion.bench_function("transfer", |b| {
         b.iter_batched(
-            || {
-                // create a transfer input
-                tx.clone()
-            },
+            || tx.clone(),
             |input| {
                 i += 1;
-                evm.transact_one(input).unwrap();
+                evm.transact_one(input).unwrap()
             },
             criterion::BatchSize::SmallInput,
         );
@@ -57,9 +54,5 @@ pub fn run(criterion: &mut Criterion) {
 
     evm.modify_cfg(|cfg| cfg.disable_nonce_check = false);
 
-    criterion.bench_function("transfer_finalize", |b| {
-        b.iter(|| {
-            let _ = evm.replay().unwrap();
-        })
-    });
+    criterion.bench_function("transfer_finalize", |b| b.iter(|| evm.replay().unwrap()));
 }
