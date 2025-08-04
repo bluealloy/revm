@@ -20,8 +20,7 @@ pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     message_and_signature[0..32].copy_from_slice(&hash[..]);
 
     // Fit signature into format the precompile expects
-    let rec_id = U256::from(rec_id as u64);
-    message_and_signature[32..64].copy_from_slice(&rec_id.to_be_bytes::<32>());
+    message_and_signature[63] = rec_id;
     message_and_signature[64..128].copy_from_slice(&data);
 
     let message_and_signature = Bytes::from(message_and_signature);
