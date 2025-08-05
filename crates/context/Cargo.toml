@@ -46,6 +46,7 @@ std = [
 	"database-interface/std",
 	"primitives/std",
 	"state/std",
+	"bitvec/std",
 ]
 serde = [
 	"dep:serde",
@@ -56,6 +57,7 @@ serde = [
 	"database/serde",
 	"database-interface/serde",
 	"derive-where/serde",
+	"bitvec/serde",
 ]
 dev = [
 	"memory_limit",

@@ -11,7 +11,7 @@ use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
 pub struct WarmAddresses {
     /// Set of warm loaded precompile addresses.
     precompile_set: HashSet<Address>,
-    /// Bit vector of precompile short addressess. If address is shorter than [`SHORT_ADDRESS_CAP`] it
+    /// Bit vector of precompile short addresses. If address is shorter than [`SHORT_ADDRESS_CAP`] it
     /// will be stored in this bit vector for faster access.
     precompile_short_addresses: BitVec,
     /// Coinbase address.
@@ -86,7 +86,7 @@ impl WarmAddresses {
             return self.precompile_short_addresses[short_address];
         }
 
-        // finaly check if it is precompile
+        // in the end check if it is inside precompile set
         self.precompile_set.contains(address)
     }
 
