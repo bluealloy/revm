@@ -1,5 +1,6 @@
 use core::fmt;
 use primitives::{b256, bytes, Address, Bytes, B256};
+use std::vec::Vec;
 
 /// Hash of EF01 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const EIP7702_MAGIC_HASH: B256 =
