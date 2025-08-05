@@ -7,7 +7,7 @@ use primitives::{hardfork::SpecId, Address, TxKind, U256};
 /// Configuration for the EVM.
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
-    /// Specification id type, in requires to be convertible to `SpecId` so it can be used
+    /// Specification id type, it requires to be convertible to `SpecId` so it can be used
     /// by default in mainnet.
     type Spec: Into<SpecId> + Clone;
 
