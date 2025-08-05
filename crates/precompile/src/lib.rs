@@ -80,8 +80,8 @@ pub struct Precompiles {
 impl Default for Precompiles {
     fn default() -> Self {
         Self {
-            inner: HashMap::new(),
-            addresses: HashSet::new(),
+            inner: HashMap::default(),
+            addresses: HashSet::default(),
             optimized_access: vec![None; SHORT_ADDRESS_CAP],
         }
     }
