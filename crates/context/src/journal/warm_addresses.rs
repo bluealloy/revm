@@ -10,11 +10,12 @@ use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WarmAddresses {
     /// Set of warm loaded precompile addresses.
-    pub precompile_set: HashSet<Address>,
-    /// Bit vector of short address access.
-    pub precompile_short_addresses: BitVec,
+    precompile_set: HashSet<Address>,
+    /// Bit vector of precompile short addressess. If address is shorter than [`SHORT_ADDRESS_CAP`] it
+    /// will be stored in this bit vector for faster access.
+    precompile_short_addresses: BitVec,
     /// Coinbase address.
-    pub coinbase: Option<Address>,
+    coinbase: Option<Address>,
 }
 
 impl WarmAddresses {
@@ -26,6 +27,18 @@ impl WarmAddresses {
             precompile_short_addresses: BitVec::new(),
             coinbase: None,
         }
+    }
+
+    /// Returns the precompile addresses.
+    #[inline]
+    pub fn precompiles(&self) -> &HashSet<Address> {
+        &self.precompile_set
+    }
+
+    /// Returns the coinbase address.
+    #[inline]
+    pub fn coinbase(&self) -> Option<Address> {
+        self.coinbase
     }
 
     /// Set the precompile addresses and short addresses.
@@ -55,18 +68,17 @@ impl WarmAddresses {
         self.coinbase = None;
     }
 
-    /// Returns the precompile addresses.
-    #[inline]
-    pub fn precompiles(&self) -> &HashSet<Address> {
-        &self.precompile_set
-    }
-
     /// Returns true if the address is warm loaded.
     #[inline]
     pub fn is_warm(&self, address: &Address) -> bool {
         // check if it is coinbase
         if Some(*address) == self.coinbase {
             return true;
+        }
+
+        // if there are no precompiles, it is cold loaded and bitvec is not set.
+        if self.precompile_set.is_empty() {
+            return false;
         }
 
         // check if it is short precompile address
@@ -139,7 +151,10 @@ mod tests {
 
         // Verify storage
         assert_eq!(warm_addresses.precompile_set, precompiles);
-        assert_eq!(warm_addresses.precompile_short_addresses.len(), SHORT_ADDRESS_CAP);
+        assert_eq!(
+            warm_addresses.precompile_short_addresses.len(),
+            SHORT_ADDRESS_CAP
+        );
 
         // Verify bitvec optimization
         assert!(warm_addresses.precompile_short_addresses[1]);

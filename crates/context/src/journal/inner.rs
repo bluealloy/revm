@@ -53,11 +53,7 @@ pub struct JournalInner<ENTRY> {
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     pub spec: SpecId,
-    // /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
-    // pub warm_coinbase_address: Option<Address>,
-    // /// Precompile addresses
-    // pub precompiles: HashSet<Address>,
-    /// Warm addresses
+    /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
 }
 
