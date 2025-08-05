@@ -63,13 +63,28 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64).div_ceil(32) * word + base
 }
 
+/// Optimize short address access.
+pub const SHORT_ADDRESS_CAP: usize = 300;
+
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct Precompiles {
     /// Precompiles
     inner: HashMap<Address, PrecompileFn>,
     /// Addresses of precompile
     addresses: HashSet<Address>,
+    /// Optimized addresses filter.
+    optimized_access: Vec<Option<PrecompileFn>>,
+}
+
+impl Default for Precompiles {
+    fn default() -> Self {
+        Self {
+            inner: HashMap::new(),
+            addresses: HashSet::new(),
+            optimized_access: vec![None; SHORT_ADDRESS_CAP],
+        }
+    }
 }
 
 impl Precompiles {
@@ -216,6 +231,9 @@ impl Precompiles {
     /// Returns the precompile for the given address.
     #[inline]
     pub fn get(&self, address: &Address) -> Option<&PrecompileFn> {
+        if let Some(short_address) = short_address(address) {
+            return self.optimized_access[short_address].as_ref();
+        }
         self.inner.get(address)
     }
 
@@ -246,6 +264,12 @@ impl Precompiles {
     #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
         let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
+        for item in items.iter() {
+            if let Some(short_address) = short_address(&item.0) {
+                self.optimized_access[short_address] = Some(item.1);
+            }
+        }
+
         self.addresses.extend(items.iter().map(|p| *p.address()));
         self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
     }
@@ -262,9 +286,9 @@ impl Precompiles {
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
-        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
-
-        Self { inner, addresses }
+        let mut precompiles = Self::default();
+        precompiles.extend(inner.into_iter().map(|p| PrecompileWithAddress(p.0, p.1)));
+        precompiles
     }
 
     /// Returns intersection of `self` and `other`.
@@ -279,10 +303,25 @@ impl Precompiles {
             .map(|(a, p)| (*a, *p))
             .collect::<HashMap<_, _>>();
 
-        let addresses = inner.keys().cloned().collect::<HashSet<_>>();
-
-        Self { inner, addresses }
+        let mut precompiles = Self::default();
+        precompiles.extend(inner.into_iter().map(|p| PrecompileWithAddress(p.0, p.1)));
+        precompiles
     }
+}
+
+/// Returns the short address from Address.
+///
+/// Short address is considered address that has 18 leading zeros
+/// and last two bytes are less than [`SHORT_ADDRESS_CAP`].
+pub fn short_address(address: &Address) -> Option<usize> {
+    if address.0[..18].iter().all(|b| *b == 0) {
+        let short_address = u16::from_be_bytes(address.0[18..].try_into().unwrap()) as usize;
+        if short_address < SHORT_ADDRESS_CAP {
+            return Some(short_address);
+        }
+    }
+
+    None
 }
 
 /// Precompile with address and function.
@@ -390,7 +429,33 @@ pub const fn u64_to_address(x: u64) -> Address {
 
 #[cfg(test)]
 mod test {
-    use crate::Precompiles;
+    use super::*;
+
+    fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileResult {
+        PrecompileResult::Err(PrecompileError::OutOfGas)
+    }
+
+    #[test]
+    fn test_optimized_access() {
+        let mut precompiles = Precompiles::istanbul().clone();
+        assert!(precompiles.optimized_access[9].is_some());
+        assert!(precompiles.optimized_access[10].is_none());
+
+        precompiles.extend([PrecompileWithAddress(u64_to_address(100), temp_precompile)]);
+        precompiles.extend([PrecompileWithAddress(u64_to_address(101), temp_precompile)]);
+
+        assert_eq!(
+            precompiles.optimized_access[100].unwrap()(&[], u64::MAX),
+            PrecompileResult::Err(PrecompileError::OutOfGas)
+        );
+
+        assert_eq!(
+            precompiles
+                .get(&Address::left_padding_from(&[101]))
+                .unwrap()(&[], u64::MAX),
+            PrecompileResult::Err(PrecompileError::OutOfGas)
+        );
+    }
 
     #[test]
     fn test_difference_precompile_sets() {
