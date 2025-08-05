@@ -1,5 +1,5 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
-use crate::entry::SelfdestructionRevertStatus;
+use crate::{entry::SelfdestructionRevertStatus, warm_addresses::WarmAddresses};
 
 use super::JournalEntryTr;
 use bytecode::Bytecode;
@@ -12,7 +12,7 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
@@ -53,10 +53,12 @@ pub struct JournalInner<ENTRY> {
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     pub spec: SpecId,
-    /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
-    pub warm_coinbase_address: Option<Address>,
-    /// Precompile addresses
-    pub precompiles: HashSet<Address>,
+    // /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
+    // pub warm_coinbase_address: Option<Address>,
+    // /// Precompile addresses
+    // pub precompiles: HashSet<Address>,
+    /// Warm addresses
+    pub warm_addresses: WarmAddresses,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -79,8 +81,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
-            precompiles: HashSet::default(),
-            warm_coinbase_address: None,
+            warm_addresses: WarmAddresses::new(),
         }
     }
 
@@ -108,12 +109,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            precompiles,
-            warm_coinbase_address,
+            warm_addresses,
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
-        let _ = precompiles;
         let _ = state;
         transient_storage.clear();
         *depth = 0;
@@ -122,7 +121,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
 
         // Clear coinbase address warming for next tx
-        *warm_coinbase_address = None;
+        warm_addresses.clear_coinbase();
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
@@ -139,12 +138,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            warm_coinbase_address,
-            precompiles,
+            warm_addresses,
         } = self;
-        // precompiles are not changed.
-        let _ = precompiles;
-
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
@@ -154,8 +149,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
+
         // Clear coinbase address warming for next tx
-        *warm_coinbase_address = None;
+        warm_addresses.clear_coinbase();
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -174,14 +170,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            warm_coinbase_address,
-            precompiles,
+            warm_addresses,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
-        let _ = precompiles;
         // Clear coinbase address warming for next tx
-        *warm_coinbase_address = None;
+        warm_addresses.clear_coinbase();
 
         let state = mem::take(state);
         logs.clear();
@@ -664,8 +658,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 };
 
                 // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
-                let is_cold = !self.precompiles.contains(&address)
-                    && self.warm_coinbase_address.as_ref() != Some(&address);
+                let is_cold = self.warm_addresses.is_cold(&address);
 
                 StateLoad {
                     data: vac.insert(account),
@@ -865,17 +858,4 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     }
 
     Ok(StateLoad::new(value, is_cold))
-}
-
-fn reset_preloaded_addresses(
-    warm_preloaded_addresses: &mut HashSet<Address>,
-    precompiles: &HashSet<Address>,
-) {
-    // `warm_preloaded_addresses` is append-only, and is initialized with `precompiles`.
-    // Avoid unnecessarily cloning if it hasn't changed.
-    if warm_preloaded_addresses.len() == precompiles.len() {
-        debug_assert_eq!(warm_preloaded_addresses, precompiles);
-        return;
-    }
-    warm_preloaded_addresses.clone_from(precompiles);
 }

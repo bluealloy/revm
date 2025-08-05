@@ -4,6 +4,7 @@
 //! and inner submodule contains [`JournalInner`] struct that contains state.
 pub mod entry;
 pub mod inner;
+pub mod warm_addresses;
 
 pub use entry::{JournalEntry, JournalEntryTr};
 pub use inner::JournalInner;
@@ -141,16 +142,18 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     fn warm_coinbase_account(&mut self, address: Address) {
-        self.inner.warm_coinbase_address = Some(address);
+        self.inner.warm_addresses.set_coinbase(address);
     }
 
     fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {
-        self.inner.precompiles = precompiles;
+        self.inner
+            .warm_addresses
+            .set_precompile_addresses(precompiles);
     }
 
     #[inline]
     fn precompile_addresses(&self) -> &HashSet<Address> {
-        &self.inner.precompiles
+        self.inner.warm_addresses.precompiles()
     }
 
     /// Returns call depth.
