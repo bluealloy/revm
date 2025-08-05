@@ -6,7 +6,7 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WarmAddresses {
     /// Set of warm loaded precompile addresses.
@@ -14,8 +14,16 @@ pub struct WarmAddresses {
     /// Bit vector of precompile short addresses. If address is shorter than [`SHORT_ADDRESS_CAP`] it
     /// will be stored in this bit vector for faster access.
     precompile_short_addresses: BitVec,
+    /// `true` if all precompiles are short addresses.
+    all_short_addresses: bool,
     /// Coinbase address.
     coinbase: Option<Address>,
+}
+
+impl Default for WarmAddresses {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WarmAddresses {
@@ -25,6 +33,7 @@ impl WarmAddresses {
         Self {
             precompile_set: HashSet::new(),
             precompile_short_addresses: BitVec::new(),
+            all_short_addresses: true,
             coinbase: None,
         }
     }
@@ -47,12 +56,16 @@ impl WarmAddresses {
         // short address is always smaller than SHORT_ADDRESS_CAP
         self.precompile_short_addresses = bitvec![usize, Lsb0; 0; SHORT_ADDRESS_CAP];
 
+        let mut all_short_addresses = true;
         for address in addresses.iter() {
             if let Some(short_address) = short_address(address) {
                 self.precompile_short_addresses.set(short_address, true);
+            } else {
+                all_short_addresses = false;
             }
         }
 
+        self.all_short_addresses = all_short_addresses;
         self.precompile_set = addresses;
     }
 
@@ -84,6 +97,11 @@ impl WarmAddresses {
         // check if it is short precompile address
         if let Some(short_address) = short_address(address) {
             return self.precompile_short_addresses[short_address];
+        }
+
+        // if all precompiles are short addresses, it is cold loaded.
+        if self.all_short_addresses {
+            return false;
         }
 
         // in the end check if it is inside precompile set

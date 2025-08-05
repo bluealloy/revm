@@ -74,6 +74,8 @@ pub struct Precompiles {
     addresses: HashSet<Address>,
     /// Optimized addresses filter.
     optimized_access: Vec<Option<PrecompileFn>>,
+    /// `true` if all precompiles are short addresses.
+    all_short_addresses: bool,
 }
 
 impl Default for Precompiles {
@@ -82,6 +84,7 @@ impl Default for Precompiles {
             inner: HashMap::new(),
             addresses: HashSet::new(),
             optimized_access: vec![None; SHORT_ADDRESS_CAP],
+            all_short_addresses: true,
         }
     }
 }
@@ -266,6 +269,8 @@ impl Precompiles {
         for item in items.iter() {
             if let Some(short_address) = short_address(&item.0) {
                 self.optimized_access[short_address] = Some(item.1);
+            } else {
+                self.all_short_addresses = false;
             }
         }
 
