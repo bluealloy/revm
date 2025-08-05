@@ -1,6 +1,6 @@
 //! Transaction type enum.
 
-/// Transaction types of all Ethereum transaction
+/// Transaction types of all Ethereum transactions
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
