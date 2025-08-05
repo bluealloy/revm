@@ -11,14 +11,10 @@ where
         > + 'static,
 {
     type AccessListItem<'a>
-        = L::AccessListItem<'a>
-    where
-        Self: 'a;
+        = L::AccessListItem<'a>;
 
     type Authorization<'a>
-        = L::Authorization<'a>
-    where
-        Self: 'a;
+        = L::Authorization<'a>;
 
     fn tx_type(&self) -> u8 {
         match self {
