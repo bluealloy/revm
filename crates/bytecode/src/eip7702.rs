@@ -54,7 +54,8 @@ impl Eip7702Bytecode {
 
     /// Creates a new EIP-7702 bytecode with the given address.
     pub fn new(address: Address) -> Self {
-        let mut raw = EIP7702_MAGIC_BYTES.to_vec();
+        let mut raw = Vec::with_capacity(23);
+        raw.extend_from_slice(&EIP7702_MAGIC_BYTES);
         raw.push(EIP7702_VERSION);
         raw.extend(&address);
         Self {
