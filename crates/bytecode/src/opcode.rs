@@ -195,6 +195,12 @@ impl OpCode {
                 | OpCode::STATICCALL
         )
     }
+
+    /// Returns true if the opcode is valid
+    #[inline]
+    pub const fn is_valid(&self) -> bool {
+        OPCODE_INFO[self.0 as usize].is_some()
+    }
 }
 
 impl PartialEq<u8> for OpCode {
@@ -747,5 +753,30 @@ mod tests {
                 assert_eq!(OpCode::parse(op.as_str()), Some(op));
             }
         }
+    }
+
+    #[test]
+    #[should_panic(expected = "opcode not found")]
+    fn test_new_unchecked_invalid() {
+        let op = unsafe { OpCode::new_unchecked(0x0C) };
+        op.info();
+    }
+
+    #[test]
+    fn test_op_code_valid() {
+        let op1 = OpCode::new(ADD).unwrap();
+        let op2 = OpCode::new(MUL).unwrap();
+        assert!(op1.is_valid());
+        assert!(op2.is_valid());
+
+        let op3 = unsafe { OpCode::new_unchecked(0x0C) };
+        assert!(!op3.is_valid());
+    }
+
+    #[test]
+    fn test_modifies_memory() {
+        assert!(OpCode::new(MLOAD).unwrap().modifies_memory());
+        assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
+        assert!(!OpCode::new(ADD).unwrap().modifies_memory());
     }
 }
