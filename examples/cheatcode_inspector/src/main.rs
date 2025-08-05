@@ -117,12 +117,6 @@ impl JournalTr for Backend {
             .warm_account_and_storage(address, storage_keys)
     }
 
-    fn warm_account(&mut self, address: Address) {
-        self.journaled_state
-            .warm_preloaded_addresses
-            .insert(address);
-    }
-
     fn warm_coinbase_account(&mut self, address: Address) {
         self.journaled_state.warm_coinbase_address = Some(address)
     }

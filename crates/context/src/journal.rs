@@ -140,19 +140,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.selfdestruct(&mut self.database, address, target)
     }
 
-    fn warm_account(&mut self, address: Address) {
-        self.inner.warm_preloaded_addresses.insert(address);
-    }
-
     fn warm_coinbase_account(&mut self, address: Address) {
         self.inner.warm_coinbase_address = Some(address);
     }
 
     fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {
         self.inner.precompiles = precompiles;
-        self.inner
-            .warm_preloaded_addresses
-            .clone_from(&self.inner.precompiles);
     }
 
     #[inline]

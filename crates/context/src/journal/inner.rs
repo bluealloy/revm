@@ -53,13 +53,6 @@ pub struct JournalInner<ENTRY> {
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     pub spec: SpecId,
-    /// Warm loaded addresses are used to check if loaded address
-    /// should be considered cold or warm loaded when the account
-    /// is first accessed.
-    ///
-    /// Note that this not include newly loaded accounts, account and storage
-    /// is considered warm if it is found in the `State`.
-    pub warm_preloaded_addresses: HashSet<Address>,
     /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
     pub warm_coinbase_address: Option<Address>,
     /// Precompile addresses
@@ -86,7 +79,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
-            warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
             warm_coinbase_address: None,
         }
@@ -116,7 +108,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            warm_preloaded_addresses,
             precompiles,
             warm_coinbase_address,
         } = self;
@@ -132,10 +123,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Clear coinbase address warming for next tx
         *warm_coinbase_address = None;
-        // Load precompiles into warm_preloaded_addresses.
-        // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
-        // at least after state clear EIP.
-        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
@@ -152,10 +139,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            warm_preloaded_addresses,
             warm_coinbase_address,
             precompiles,
         } = self;
+        // precompiles are not changed.
+        let _ = precompiles;
 
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
@@ -168,7 +156,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *transaction_id += 1;
         // Clear coinbase address warming for next tx
         *warm_coinbase_address = None;
-        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -187,16 +174,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             spec,
-            warm_preloaded_addresses,
             warm_coinbase_address,
             precompiles,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
+        let _ = precompiles;
         // Clear coinbase address warming for next tx
         *warm_coinbase_address = None;
-        // Load precompiles into warm_preloaded_addresses.
-        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
 
         let state = mem::take(state);
         logs.clear();
@@ -679,7 +664,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 };
 
                 // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
-                let is_cold = !self.warm_preloaded_addresses.contains(&address)
+                let is_cold = !self.precompiles.contains(&address)
                     && self.warm_coinbase_address.as_ref() != Some(&address);
 
                 StateLoad {
