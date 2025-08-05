@@ -64,7 +64,7 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 }
 
 /// Optimize short address access.
-const SHORT_ADDRESS_CAP: usize = 300;
+pub const SHORT_ADDRESS_CAP: usize = 300;
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
 #[derive(Clone, Debug)]
