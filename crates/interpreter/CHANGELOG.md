@@ -1,4 +1,36 @@
 # Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [25.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v24.0.0...revm-interpreter-v25.0.0) - 2025-08-06
+
+### Added
+
+- gastable, record static gas in Interpreter loop ([#2822](https://github.com/bluealloy/revm/pull/2822))
+
+### Fixed
+
+- map new once and for all (+ci) ([#2852](https://github.com/bluealloy/revm/pull/2852))
+
+### Other
+
+- *(deps)* bump ruint ([#2811](https://github.com/bluealloy/revm/pull/2811))
+- specialize halt, making instruction code very slightly smaller ([#2840](https://github.com/bluealloy/revm/pull/2840))
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- add debug assertions to set_action ([#2832](https://github.com/bluealloy/revm/pull/2832))
+- improve ExtBytecode hash handling ([#2826](https://github.com/bluealloy/revm/pull/2826))
+- fix inspector, cleanup loop ([#2797](https://github.com/bluealloy/revm/pull/2797))
+- start InstructionResult at 1 ([#2802](https://github.com/bluealloy/revm/pull/2802))
+- fix typos ([#2800](https://github.com/bluealloy/revm/pull/2800))
+- improve inspector loop ([#2776](https://github.com/bluealloy/revm/pull/2776))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- collapse debug info for interpreter macros ([#2780](https://github.com/bluealloy/revm/pull/2780))
+# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

@@ -1,4 +1,34 @@
 # Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v25.0.0...revm-precompile-v26.0.0) - 2025-08-06
+
+### Added
+
+- optimize access to precompile short addresses ([#2846](https://github.com/bluealloy/revm/pull/2846))
+- Reuse bls12-381 codepaths to implement kzg point evaluation precompile ([#2809](https://github.com/bluealloy/revm/pull/2809))
+- rename bn128 to bn254 for Ethereum standard consistency ([#2810](https://github.com/bluealloy/revm/pull/2810))
+
+### Fixed
+
+- map new once and for all (+ci) ([#2852](https://github.com/bluealloy/revm/pull/2852))
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- simplify the ecrecover test ([#2836](https://github.com/bluealloy/revm/pull/2836))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+- fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
