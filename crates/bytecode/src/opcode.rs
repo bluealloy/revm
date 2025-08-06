@@ -160,7 +160,7 @@ impl OpCode {
 
     /// Returns the number of both input and output stack elements.
     ///
-    /// Can be slightly faster that calling `inputs` and `outputs` separately.
+    /// Can be slightly faster than calling `inputs` and `outputs` separately.
     pub const fn input_output(&self) -> (u8, u8) {
         let info = self.info();
         (info.inputs, info.outputs)
@@ -225,7 +225,7 @@ pub struct OpCodeInfo {
     /// Number of intermediate bytes
     ///
     /// RJUMPV is a special case where the bytes len depends on bytecode value,
-    /// for RJUMV size will be set to one byte as it is the minimum immediate size.
+    /// for RJUMPV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
@@ -304,7 +304,7 @@ impl OpCodeInfo {
 
 /// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
 ///
-/// RJUMPV is special case where the bytes len is depending on bytecode value,
+/// RJUMPV is a special case where the bytes len depends on bytecode value,
 /// for RJUMPV size will be set to one byte while minimum is two.
 #[inline]
 pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
@@ -312,7 +312,7 @@ pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
     op
 }
 
-/// Use for [`OPCODE_INFO`] to set the terminating flag to true in the [`OpCodeInfo`].
+/// Used for [`OPCODE_INFO`] to set the terminating flag to true in the [`OpCodeInfo`].
 #[inline]
 pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
     op.terminating = true;
