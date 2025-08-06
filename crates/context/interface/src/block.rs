@@ -16,7 +16,7 @@ pub trait Block {
     /// The number of ancestor blocks of this block (block height).
     fn number(&self) -> U256;
 
-    /// Beneficiary (Coinbase, miner) is a address that have signed the block.
+    /// Beneficiary (Coinbase, miner) is an address that has signed the block.
     ///
     /// This is the receiver address of priority gas rewards.
     fn beneficiary(&self) -> Address;
