@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/op-revm-v8.1.0...op-revm-v9.0.0) - 2025-08-06
+
+### Added
+
+- fix renamed functions for system_call ([#2824](https://github.com/bluealloy/revm/pull/2824))
+- refactor test utils ([#2813](https://github.com/bluealloy/revm/pull/2813))
+- add system transaction inspection support ([#2808](https://github.com/bluealloy/revm/pull/2808))
+- Align naming of SystemCallEvm function to ExecuteEvm ([#2814](https://github.com/bluealloy/revm/pull/2814))
+- rename bn128 to bn254 for Ethereum standard consistency ([#2810](https://github.com/bluealloy/revm/pull/2810))
+
+### Fixed
+
+- *(op-revm)* system tx not enveloped ([#2807](https://github.com/bluealloy/revm/pull/2807))
+- nonce changed is not reverted in journal if fail due to insufficient balance ([#2805](https://github.com/bluealloy/revm/pull/2805))
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- *(op-revm)* Adds caller nonce assertion to op-revm intergation tests ([#2815](https://github.com/bluealloy/revm/pull/2815))
+- *(op-revm)* Full test coverage `OpTransactionError` ([#2818](https://github.com/bluealloy/revm/pull/2818))
+- Update test data for renamed tests ([#2817](https://github.com/bluealloy/revm/pull/2817))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+
 ## [8.1.0](https://github.com/bluealloy/revm/compare/op-revm-v8.0.3...op-revm-v8.1.0) - 2025-07-23
 
 ### Added

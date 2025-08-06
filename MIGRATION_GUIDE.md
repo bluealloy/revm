@@ -7,7 +7,8 @@
 * Precompiles:
   * Bn128 renamed to Bn254. https://github.com/ethereum/EIPs/pull/10029#issue-3240867404
 * `InstructionResult` now starts from 1 (previous 0) for perf purposes.
-* In `JournalInner` previous `precompiles`, `warm_coinbase_address` and `warm_preloaded_addresses` pub fields are now moved to `warm_addresses` to encapsulate addresses that are warm by default. 
+* In `JournalInner` previous `precompiles`, `warm_coinbase_address` and `warm_preloaded_addresses` pub fields are now moved to `warm_addresses` to encapsulate addresses that are warm by default. All access list account are all loaded from database.
+
 
 # v82 tag (revm v27.1.0) from v81 tag (revm v27.0.3)
 
