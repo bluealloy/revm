@@ -223,9 +223,6 @@ pub struct OpCodeInfo {
     /// Stack outputs
     outputs: u8,
     /// Number of intermediate bytes
-    ///
-    /// RJUMPV is a special case where the bytes len depends on bytecode value,
-    /// for RJUMPV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
@@ -303,9 +300,6 @@ impl OpCodeInfo {
 }
 
 /// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
-///
-/// RJUMPV is a special case where the bytes len depends on bytecode value,
-/// for RJUMPV size will be set to one byte while minimum is two.
 #[inline]
 pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
     op.immediate_size = n;
