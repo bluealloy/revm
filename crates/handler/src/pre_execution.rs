@@ -55,16 +55,10 @@ pub fn load_accounts<
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
             for item in access_list {
-                let address = item.address();
-                let mut storage = item.storage_slots().peekable();
-                if storage.peek().is_none() {
-                    journal.warm_account(*address);
-                } else {
-                    journal.warm_account_and_storage(
-                        *address,
-                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
-                    )?;
-                }
+                journal.warm_account_and_storage(
+                    *item.address(),
+                    item.storage_slots().map(|i| StorageKey::from_be_bytes(i.0)),
+                )?;
             }
         }
     }

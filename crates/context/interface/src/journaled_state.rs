@@ -66,9 +66,6 @@ pub trait JournalTr {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
-    /// Warms the account.
-    fn warm_account(&mut self, address: Address);
-
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);
 
