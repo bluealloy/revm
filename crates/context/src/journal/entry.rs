@@ -5,60 +5,60 @@
 //! They are created when there is change to the state from loading (making it warm), changes to the balance,
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
-use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
+use primitives::{AccountId, Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
 use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
 pub trait JournalEntryTr {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
-    fn account_warmed(address: Address) -> Self;
+    fn account_warmed(account_id: AccountId) -> Self;
 
     /// Creates a journal entry for when an account is destroyed via SELFDESTRUCT
     /// Records the target address that received the destroyed account's balance,
     /// whether the account was already destroyed, and its balance before destruction
     /// on revert, the balance is transferred back to the original account
     fn account_destroyed(
-        address: Address,
-        target: Address,
+        account_id: AccountId,
+        target: AccountId,
         destroyed_status: SelfdestructionRevertStatus,
         had_balance: U256,
     ) -> Self;
 
     /// Creates a journal entry for when an account is "touched" - accessed in a way that may require saving it.
     /// If account is empty and touch it will be removed from the state (EIP-161 state clear EIP)
-    fn account_touched(address: Address) -> Self;
+    fn account_touched(account_id: AccountId) -> Self;
 
     /// Creates a journal entry for a balance transfer between accounts
-    fn balance_transfer(from: Address, to: Address, balance: U256) -> Self;
+    fn balance_transfer(from: AccountId, to: AccountId, balance: U256) -> Self;
 
     /// Creates a journal entry for when an account's balance is changed.
-    fn balance_changed(address: Address, old_balance: U256) -> Self;
+    fn balance_changed(account_id: AccountId, old_balance: U256) -> Self;
 
     /// Creates a journal entry for when an account's nonce is incremented.
-    fn nonce_changed(address: Address) -> Self;
+    fn nonce_changed(account_id: AccountId) -> Self;
 
     /// Creates a journal entry for when a new account is created
-    fn account_created(address: Address, is_created_globally: bool) -> Self;
+    fn account_created(account_id: AccountId, is_created_globally: bool) -> Self;
 
     /// Creates a journal entry for when a storage slot is modified
     /// Records the previous value for reverting
-    fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self;
+    fn storage_changed(account_id: AccountId, key: StorageKey, had_value: StorageValue) -> Self;
 
     /// Creates a journal entry for when a storage slot is accessed and marked as "warm" for gas metering
     /// This is called with SLOAD opcode.
-    fn storage_warmed(address: Address, key: StorageKey) -> Self;
+    fn storage_warmed(account_id: AccountId, key: StorageKey) -> Self;
 
     /// Creates a journal entry for when a transient storage slot is modified (EIP-1153)
     /// Records the previous value for reverting
     fn transient_storage_changed(
-        address: Address,
+        account_id: AccountId,
         key: StorageKey,
         had_value: StorageValue,
     ) -> Self;
 
     /// Creates a journal entry for when an account's code is modified
-    fn code_changed(address: Address) -> Self;
+    fn code_changed(account_id: AccountId) -> Self;
 
     /// Reverts the state change recorded by this journal entry
     ///
@@ -215,76 +215,87 @@ pub enum JournalEntry {
     },
 }
 impl JournalEntryTr for JournalEntry {
-    fn account_warmed(address: Address) -> Self {
-        JournalEntry::AccountWarmed { address }
+    fn account_warmed(account_id: AccountId) -> Self {
+        // JournalEntry::AccountWarmed { account_id }
+        todo!()
     }
 
     fn account_destroyed(
-        address: Address,
-        target: Address,
+        account_id: AccountId,
+        target: AccountId,
         destroyed_status: SelfdestructionRevertStatus,
         had_balance: StorageValue,
     ) -> Self {
-        JournalEntry::AccountDestroyed {
-            address,
-            target,
-            destroyed_status,
-            had_balance,
-        }
+        // JournalEntry::AccountDestroyed {
+        //     address,
+        //     target,
+        //     destroyed_status,
+        //     had_balance,
+        // }
+        todo!()
     }
 
-    fn account_touched(address: Address) -> Self {
-        JournalEntry::AccountTouched { address }
+    fn account_touched(account_id: AccountId) -> Self {
+        // JournalEntry::AccountTouched { account_id }
+        todo!()
     }
 
-    fn balance_changed(address: Address, old_balance: U256) -> Self {
-        JournalEntry::BalanceChange {
-            address,
-            old_balance,
-        }
+    fn balance_changed(account_id: AccountId, old_balance: U256) -> Self {
+        // JournalEntry::BalanceChange {
+        //     account_id,
+        //     old_balance,
+        // }
+        todo!()
     }
 
-    fn balance_transfer(from: Address, to: Address, balance: U256) -> Self {
-        JournalEntry::BalanceTransfer { from, to, balance }
+    fn balance_transfer(from: AccountId, to: AccountId, balance: U256) -> Self {
+        // JournalEntry::BalanceTransfer { from, to, balance }
+        todo!()
     }
 
-    fn account_created(address: Address, is_created_globally: bool) -> Self {
-        JournalEntry::AccountCreated {
-            address,
-            is_created_globally,
-        }
+    fn account_created(account_id: AccountId, is_created_globally: bool) -> Self {
+        // JournalEntry::AccountCreated {
+        //     account_id,
+        //     is_created_globally,
+        // }
+        todo!()
     }
 
-    fn storage_changed(address: Address, key: StorageKey, had_value: StorageValue) -> Self {
-        JournalEntry::StorageChanged {
-            address,
-            key,
-            had_value,
-        }
+    fn storage_changed(account_id: AccountId, key: StorageKey, had_value: StorageValue) -> Self {
+        // JournalEntry::StorageChanged {
+        //     account_id,
+        //     key,
+        //     had_value,
+        // }
+        todo!()
     }
 
-    fn nonce_changed(address: Address) -> Self {
-        JournalEntry::NonceChange { address }
+    fn nonce_changed(account_id: AccountId) -> Self {
+        // JournalEntry::NonceChange { account_id }
+        todo!()
     }
 
-    fn storage_warmed(address: Address, key: StorageKey) -> Self {
-        JournalEntry::StorageWarmed { address, key }
+    fn storage_warmed(account_id: AccountId, key: StorageKey) -> Self {
+        // JournalEntry::StorageWarmed { account_id, key }
+        todo!()
     }
 
     fn transient_storage_changed(
-        address: Address,
+        account_id: AccountId,
         key: StorageKey,
         had_value: StorageValue,
     ) -> Self {
-        JournalEntry::TransientStorageChange {
-            address,
-            key,
-            had_value,
-        }
+        // JournalEntry::TransientStorageChange {
+        //     address,
+        //     key,
+        //     had_value,
+        // }
+        todo!()
     }
 
-    fn code_changed(address: Address) -> Self {
-        JournalEntry::CodeChange { address }
+    fn code_changed(account_id: AccountId) -> Self {
+        // JournalEntry::CodeChange { account_id }
+        todo!()
     }
 
     fn revert(
@@ -392,13 +403,14 @@ impl JournalEntryTr for JournalEntry {
                     return;
                 };
                 let tkey = (address, key);
-                if had_value.is_zero() {
-                    // if previous value is zero, remove it
-                    transient_storage.remove(&tkey);
-                } else {
-                    // if not zero, reinsert old value to transient storage.
-                    transient_storage.insert(tkey, had_value);
-                }
+                // if had_value.is_zero() {
+                //     // if previous value is zero, remove it
+                //     transient_storage.remove(&tkey);
+                // } else {
+                //     // if not zero, reinsert old value to transient storage.
+                //     transient_storage.insert(tkey, had_value);
+                // }
+                todo!()
             }
             JournalEntry::CodeChange { address } => {
                 let acc = state.get_mut(&address).unwrap();

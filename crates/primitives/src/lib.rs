@@ -15,6 +15,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub mod address;
 pub mod constants;
 pub mod eip170;
 pub mod eip3860;
@@ -27,6 +28,7 @@ pub mod eip7918;
 pub mod hardfork;
 mod once_lock;
 
+pub use address::{AccountId, AddressAndId, AddressAndOptionalId, AddressOrId};
 pub use constants::*;
 pub use once_lock::OnceLock;
 
