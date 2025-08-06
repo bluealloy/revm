@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.1.0...revm-bytecode-v6.2.0) - 2025-08-06
+
+### Added
+
+- removed padding in case last opcode is terminating or unknown ([#2816](https://github.com/bluealloy/revm/pull/2816))
+
+### Fixed
+
+- correct various typos in documentation and comments ([#2855](https://github.com/bluealloy/revm/pull/2855))
+
+### Other
+
+- *(OpCode)* add is_valid ([#2847](https://github.com/bluealloy/revm/pull/2847))
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
+- improve ExtBytecode hash handling ([#2826](https://github.com/bluealloy/revm/pull/2826))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+
 ## [6.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.0.1...revm-bytecode-v6.1.0) - 2025-07-23
 
 ### Added
