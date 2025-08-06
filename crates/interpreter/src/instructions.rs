@@ -30,7 +30,7 @@ pub mod utility;
 use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
 
 /// EVM opcode function signature.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct Instruction<W: InterpreterTypes, H: ?Sized> {
     fn_: fn(InstructionContext<'_, H, W>),
     static_gas: u64,
