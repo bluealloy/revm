@@ -55,16 +55,15 @@ cfg_if::cfg_if! {
 use aurora_engine_modexp as _;
 
 use core::hash::Hash;
-use primitives::{hardfork::SpecId, Address, HashMap, HashSet, OnceLock};
+use primitives::{
+    hardfork::SpecId, short_address, Address, HashMap, HashSet, OnceLock, SHORT_ADDRESS_CAP,
+};
 use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64).div_ceil(32) * word + base
 }
-
-/// Optimize short address access.
-pub const SHORT_ADDRESS_CAP: usize = 300;
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
 #[derive(Clone, Debug)]
@@ -75,6 +74,8 @@ pub struct Precompiles {
     addresses: HashSet<Address>,
     /// Optimized addresses filter.
     optimized_access: Vec<Option<PrecompileFn>>,
+    /// `true` if all precompiles are short addresses.
+    all_short_addresses: bool,
 }
 
 impl Default for Precompiles {
@@ -83,6 +84,7 @@ impl Default for Precompiles {
             inner: HashMap::default(),
             addresses: HashSet::default(),
             optimized_access: vec![None; SHORT_ADDRESS_CAP],
+            all_short_addresses: true,
         }
     }
 }
@@ -267,6 +269,8 @@ impl Precompiles {
         for item in items.iter() {
             if let Some(short_address) = short_address(&item.0) {
                 self.optimized_access[short_address] = Some(item.1);
+            } else {
+                self.all_short_addresses = false;
             }
         }
 
@@ -307,21 +311,6 @@ impl Precompiles {
         precompiles.extend(inner.into_iter().map(|p| PrecompileWithAddress(p.0, p.1)));
         precompiles
     }
-}
-
-/// Returns the short address from Address.
-///
-/// Short address is considered address that has 18 leading zeros
-/// and last two bytes are less than [`SHORT_ADDRESS_CAP`].
-pub fn short_address(address: &Address) -> Option<usize> {
-    if address.0[..18].iter().all(|b| *b == 0) {
-        let short_address = u16::from_be_bytes(address.0[18..].try_into().unwrap()) as usize;
-        if short_address < SHORT_ADDRESS_CAP {
-            return Some(short_address);
-        }
-    }
-
-    None
 }
 
 /// Precompile with address and function.

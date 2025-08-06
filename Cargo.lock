@@ -3806,6 +3806,7 @@ dependencies = [
 name = "revm-context"
 version = "8.0.4"
 dependencies = [
+ "bitvec",
  "cfg-if",
  "derive-where",
  "revm-bytecode",
