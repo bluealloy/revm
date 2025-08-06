@@ -31,7 +31,7 @@ impl WarmAddresses {
     #[inline]
     pub fn new() -> Self {
         Self {
-            precompile_set: HashSet::new(),
+            precompile_set: HashSet::default(),
             precompile_short_addresses: BitVec::new(),
             all_short_addresses: true,
             coinbase: None,
@@ -161,7 +161,7 @@ mod tests {
         bytes2[19] = 5u8;
         let short_addr2 = Address::from(bytes2);
 
-        let mut precompiles = HashSet::new();
+        let mut precompiles = HashSet::default();
         precompiles.insert(short_addr1);
         precompiles.insert(short_addr2);
 
@@ -201,7 +201,7 @@ mod tests {
         bytes[19] = 44u8; // 300
         let boundary_addr = Address::from(bytes);
 
-        let mut precompiles = HashSet::new();
+        let mut precompiles = HashSet::default();
         precompiles.insert(regular_addr);
         precompiles.insert(boundary_addr);
 
@@ -229,7 +229,7 @@ mod tests {
         let short_addr = Address::from(short_bytes);
         let regular_addr = address!("1234567890123456789012345678901234567890");
 
-        let mut precompiles = HashSet::new();
+        let mut precompiles = HashSet::default();
         precompiles.insert(short_addr);
         precompiles.insert(regular_addr);
 
@@ -255,7 +255,7 @@ mod tests {
         boundary_bytes[19] = boundary_val as u8;
         let boundary_addr = Address::from(boundary_bytes);
 
-        let mut precompiles = HashSet::new();
+        let mut precompiles = HashSet::default();
         precompiles.insert(boundary_addr);
 
         warm_addresses.set_precompile_addresses(precompiles);
