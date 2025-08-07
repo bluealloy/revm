@@ -3,7 +3,7 @@ use super::{
 };
 use bytecode::Bytecode;
 use primitives::{Address, HashMap, B256};
-use state::{Account, AccountInfo, EvmState};
+use state::{Account, AccountInfo, EvmState, EvmStorage};
 use std::vec::Vec;
 
 /// Cache state contains both modified and original values
@@ -124,15 +124,15 @@ impl CacheState {
         }
 
         let is_created = account.is_created();
-        let is_empty = account.is_empty();
 
         // Transform evm storage to storage with previous value.
-        let changed_storage = account
-            .storage
-            .into_iter()
-            .filter(|(_, slot)| slot.is_changed())
-            .map(|(key, slot)| (key, slot.into()))
-            .collect();
+        let compute_changed_storage = |storage: EvmStorage| {
+            storage
+                .into_iter()
+                .filter(|(_, slot)| slot.is_changed())
+                .map(|(key, slot)| (key, slot.into()))
+                .collect()
+        };
 
         // Note: It can happen that created contract get selfdestructed in same block
         // that is why is_created is checked after selfdestructed
@@ -143,6 +143,7 @@ impl CacheState {
         // by just setting storage inside CRATE constructor. Overlap of those contracts
         // is not possible because CREATE2 is introduced later.
         if is_created {
+            let changed_storage = compute_changed_storage(account.storage);
             return Some(this_account.newly_created(account.info, changed_storage));
         }
 
@@ -150,6 +151,7 @@ impl CacheState {
         // Account can be touched and not changed.
         // And when empty account is touched it needs to be removed from database.
         // EIP-161 state clear
+        let is_empty = account.is_empty();
         if is_empty {
             if self.has_state_clear {
                 // Touch empty account.
@@ -157,9 +159,11 @@ impl CacheState {
             } else {
                 // If account is empty and state clear is not enabled we should save
                 // empty account.
+                let changed_storage = compute_changed_storage(account.storage);
                 this_account.touch_create_pre_eip161(changed_storage)
             }
         } else {
+            let changed_storage = compute_changed_storage(account.storage);
             Some(this_account.change(account.info, changed_storage))
         }
     }
