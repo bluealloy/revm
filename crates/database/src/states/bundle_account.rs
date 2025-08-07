@@ -118,7 +118,7 @@ impl BundleAccount {
                     // if storage is not present set original value as current value.
                     self.storage
                         .entry(key)
-                        .or_insert(StorageSlot::new(value))
+                        .or_insert_with(|| StorageSlot::new(value))
                         .present_value = value;
                 }
                 RevertToSlot::Destroyed => {
