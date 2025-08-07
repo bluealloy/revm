@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.0...revm-bytecode-v6.2.1) - 2025-08-07
+
+### Other
+
+- update outdated opcode memory reference link ([#2859](https://github.com/bluealloy/revm/pull/2859))
+
 ## [6.2.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.1.0...revm-bytecode-v6.2.0) - 2025-08-06
 
 ### Added
