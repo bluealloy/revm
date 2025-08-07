@@ -4,38 +4,30 @@ use super::{
     utils::recover_address,
 };
 use fluentbase_genesis::GENESIS_CONTRACTS_BY_ADDRESS;
+use fluentbase_revm::{RwasmBuilder, RwasmContext, RwasmEvm};
 use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     bytecode::{ownable_account::OwnableAccountBytecode, Bytecode},
     context::{
-        result::ExecutionResult,
-        transaction::AccessListItem,
-        BlockEnv,
-        CfgEnv,
-        TransactTo,
-        TransactionType::Eip1559,
-        TxEnv,
+        result::ExecutionResult, transaction::AccessListItem, BlockEnv, CfgEnv, TransactTo,
+        TransactionType::Eip1559, TxEnv,
     },
     context_interface::block::calc_excess_blob_gas,
     database::{CacheState, InMemoryDB, State, StateBuilder},
     handler::MainnetContext,
     primitives::{hardfork::SpecId, keccak256, Bytes, B256, U256},
     state::AccountInfo,
-    ExecuteCommitEvm,
-    MainBuilder,
-    MainnetEvm,
+    ExecuteCommitEvm, MainBuilder, MainnetEvm,
 };
-use rwasm_revm::{RwasmBuilder, RwasmContext, RwasmEvm};
 use serde_json::json;
 use std::{
     fmt::Debug,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        Arc,
-        Mutex,
+        Arc, Mutex,
     },
     time::{Duration, Instant},
 };
