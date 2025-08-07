@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 /// Configuration for the test data comparison utility.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TestdataConfig {
     /// The directory where test data files are stored.
     pub testdata_dir: PathBuf,

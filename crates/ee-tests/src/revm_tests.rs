@@ -82,7 +82,7 @@ fn test_selfdestruct_multi_tx() {
 /// Verifies that created contracts persist correctly across transactions
 /// and that their state is properly maintained.
 #[test]
-pub fn test_multi_tx_create() {
+fn test_multi_tx_create() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.spec = SpecId::BERLIN;
@@ -191,7 +191,7 @@ pub fn test_multi_tx_create() {
 
 /// Creates deployment bytecode for a contract.
 /// Prepends the initialization code that will deploy the provided runtime bytecode.
-pub fn deployment_contract(bytes: &[u8]) -> Bytes {
+fn deployment_contract(bytes: &[u8]) -> Bytes {
     assert!(bytes.len() < 256);
     let len = bytes.len();
     let ret = &[

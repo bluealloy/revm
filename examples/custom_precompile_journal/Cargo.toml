@@ -1,7 +1,14 @@
 [package]
 name = "example-custom-precompile-journal"
 version = "0.1.0"
-edition = "2021"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 revm = { path = "../../crates/revm", features = ["optional_eip3607"] }
