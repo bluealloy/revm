@@ -71,7 +71,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<(), <Self::Database as Database>::Error> {
-        self.warm_account_and_storage(address, [].into_iter())
+        self.warm_account_and_storage(address, [])
     }
 
     /// Warms the coinbase account.

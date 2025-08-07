@@ -3773,7 +3773,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "27.2.0"
+version = "28.0.0"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3902,7 +3902,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "8.2.0"
+version = "9.0.0"
 dependencies = [
  "auto_impl",
  "either",
@@ -3980,7 +3980,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "8.0.6"
+version = "9.0.0"
 dependencies = [
  "k256",
  "revm",
