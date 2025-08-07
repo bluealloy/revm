@@ -32,7 +32,6 @@ sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 alloy-primitives.workspace = true
-ee-tests.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
