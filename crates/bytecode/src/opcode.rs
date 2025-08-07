@@ -174,7 +174,7 @@ impl OpCode {
 
     /// Returns true if the opcode modifies memory.
     ///
-    /// <https://bluealloy.github.io/revm/crates/interpreter/memory.html#opcodes>
+    /// <https://docs.rs/revm-interpreter/latest/revm_interpreter/instructions/index.html>
     ///
     /// <https://github.com/crytic/evm-opcodes>
     #[inline]
