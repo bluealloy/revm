@@ -25,7 +25,7 @@ use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
-use primitives::{keccak256, Address, Bytes, U256};
+use primitives::{keccak256, Address, AddressAndId, Bytes, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::boxed::Box;
@@ -165,7 +165,7 @@ impl EthFrame<EthInterpreter> {
         // Make account warm and loaded.
         let _ = ctx
             .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
+            .load_account_delegated(inputs.bytecode_address.to_id())?;
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
@@ -174,10 +174,11 @@ impl EthFrame<EthInterpreter> {
         if let CallValue::Transfer(value) = inputs.value {
             // Transfer value from caller to called account
             // Target will get touched even if balance transferred is zero.
-            if let Some(i) =
-                ctx.journal_mut()
-                    .transfer(inputs.caller, inputs.target_address, value)?
-            {
+            if let Some(i) = ctx.journal_mut().transfer(
+                inputs.caller.to_id(),
+                inputs.target_address.to_id(),
+                value,
+            )? {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());
             }
@@ -196,7 +197,7 @@ impl EthFrame<EthInterpreter> {
         if let Some(result) = precompiles
             .run(
                 ctx,
-                &inputs.bytecode_address,
+                &inputs.bytecode_address.address(),
                 &interpreter_input,
                 is_static,
                 gas_limit,
@@ -216,15 +217,16 @@ impl EthFrame<EthInterpreter> {
 
         let account = ctx
             .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
+            .load_account_code(inputs.bytecode_address.to_id())?;
 
-        let mut code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
+        let mut code_hash = account.0.info.code_hash();
+        let mut bytecode = account.0.info.code.clone().unwrap_or_default();
 
         if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
             let account = &ctx
                 .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
+                .load_account_code(eip7702_bytecode.delegated_address.into())?
+                .0
                 .info;
             bytecode = account.code.clone().unwrap_or_default();
             code_hash = account.code_hash();
@@ -253,6 +255,49 @@ impl EthFrame<EthInterpreter> {
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
+
+    /*
+
+
+    instruction CALL:
+    I want to set all fields that interpreter is going to use?
+    // Should i used InputsImpl, probably yes?
+
+    Additionally i needs some specific data for Call info
+
+    Call specific are:
+        return_memory_offset
+        scheme
+        is_static
+
+    Create specific:
+        Scheme
+        init_code can be data
+
+    CallInput:
+        InputsImpl
+
+
+    FrameInput:
+        Interpreter `Inputs for FrameInput`
+
+    FrameOutput:
+        InterpResult
+        scheme:
+        return_mem:
+        address:
+
+
+    CreateInput:
+        InputsImpl:
+
+
+    What do I want?
+        To consolidate Inputs and CallInput CreateInput.
+
+
+
+     */
 
     /// Make create frame.
     #[inline]
@@ -283,14 +328,12 @@ impl EthFrame<EthInterpreter> {
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        // Prague EOF
-        // TODO(EOF)
-        // if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
-        //     return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        // }
-
         // Fetch balance of caller.
-        let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
+        let caller_info = &mut context
+            .journal_mut()
+            .load_account(inputs.caller.to_id())?
+            .0
+            .info;
 
         // Check if caller has enough balance to send to the created contract.
         if caller_info.balance < inputs.value {
@@ -305,26 +348,32 @@ impl EthFrame<EthInterpreter> {
         caller_info.nonce = new_nonce;
         context
             .journal_mut()
-            .nonce_bump_journal_entry(inputs.caller);
+            .nonce_bump_journal_entry(inputs.caller.to_id());
 
         // Create address
         let mut init_code_hash = None;
         let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
+            CreateScheme::Create => inputs.caller.address().create(old_nonce),
             CreateScheme::Create2 { salt } => {
                 let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code));
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                inputs
+                    .caller
+                    .address()
+                    .create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
         };
 
         // warm load account.
-        context.journal_mut().load_account(created_address)?;
+        let created_address = context
+            .journal_mut()
+            .load_account(created_address.into())?
+            .1;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller,
-            created_address,
+            inputs.caller.to_id(),
+            created_address.to_id(),
             inputs.value,
             spec,
         ) {
@@ -347,7 +396,7 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit;
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::new_create(created_address),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -552,7 +601,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
-    address: Address,
+    address: AddressAndId,
     max_code_size: usize,
     is_eip3541_disabled: bool,
     spec_id: SpecId,

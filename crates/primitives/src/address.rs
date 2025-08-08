@@ -14,6 +14,18 @@ pub enum AddressOrId {
     Id(AccountId),
 }
 
+impl From<Address> for AddressOrId {
+    fn from(address: Address) -> Self {
+        Self::Address(address)
+    }
+}
+
+impl From<AccountId> for AddressOrId {
+    fn from(id: AccountId) -> Self {
+        Self::Id(id)
+    }
+}
+
 impl Default for AddressOrId {
     fn default() -> Self {
         Self::Address(Address::default())
@@ -55,13 +67,13 @@ impl AddressOrId {
 }
 
 /// Address and id.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AddressAndId {
     /// Address.
-    pub address: Address,
+    address: Address,
     /// Id.
-    pub id: AccountId,
+    id: AccountId,
 }
 
 impl AddressAndId {
@@ -82,16 +94,32 @@ impl AddressAndId {
     pub fn id(&self) -> AccountId {
         self.id
     }
+
+    /// Converts the address and id to an id.
+    pub fn to_id(&self) -> AddressOrId {
+        AddressOrId::Id(self.id)
+    }
+
+    /// Converts the address and id to an address or id.
+    pub fn to_address(&self) -> AddressOrId {
+        AddressOrId::Address(self.address)
+    }
 }
 
 /// Address and optional id.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AddressAndOptionalId {
     /// Address.
-    pub address: Address,
+    address: Address,
     /// Id.
-    pub id: Option<AccountId>,
+    id: Option<AccountId>,
+}
+
+impl From<Address> for AddressAndOptionalId {
+    fn from(address: Address) -> Self {
+        Self { address, id: None }
+    }
 }
 
 impl AddressAndOptionalId {

@@ -1,7 +1,7 @@
 use context_interface::result::Output;
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
-use primitives::Address;
+use primitives::{Address, AddressAndId};
 
 /// Call Frame
 #[derive(Debug, Clone)]
@@ -16,7 +16,7 @@ pub struct CallFrame {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
     /// Create frame has a created address.
-    pub created_address: Address,
+    pub created_address: AddressAndId,
 }
 
 /// Frame Data
@@ -107,7 +107,7 @@ impl FrameResult {
 
 impl FrameData {
     /// Creates a new create frame data.
-    pub fn new_create(created_address: Address) -> Self {
+    pub fn new_create(created_address: AddressAndId) -> Self {
         Self::Create(CreateFrame { created_address })
     }
 
@@ -129,7 +129,7 @@ impl FrameData {
     }
 
     /// Returns created address if frame is create otherwise returns None.
-    pub fn created_address(&self) -> Option<Address> {
+    pub fn created_address(&self) -> Option<AddressAndId> {
         match self {
             Self::Create(create_frame) => Some(create_frame.created_address),
             _ => None,

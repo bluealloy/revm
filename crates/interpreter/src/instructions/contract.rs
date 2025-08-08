@@ -11,7 +11,7 @@ use crate::{
     InterpreterAction,
 };
 use context_interface::CreateScheme;
-use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
+use primitives::{hardfork::SpecId, AddressOrId, Bytes, U256};
 use std::boxed::Box;
 
 use crate::InstructionContext;
@@ -107,7 +107,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Message call with value transfer to another account.
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([local_gas_limit, to, value], context.interpreter);
-    let to = to.into_address();
+    let to = to.into_address().into();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -124,12 +124,16 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
-    let Some(account_load) = context.host.load_account_delegated(to) else {
+    let Some(account_load) = context
+        .host
+        .load_account_delegated(AddressOrId::Address(to))
+    else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = account_load.address_and_id;
 
     let Some(mut gas_limit) = calc_call_gas(
         context.interpreter,
@@ -173,7 +177,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address().into();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -189,6 +193,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = load.address_and_id;
 
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
@@ -232,7 +237,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address().into();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -247,6 +252,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = load.address_and_id;
 
     // Set is_empty to false as we are not creating this account.
     load.is_empty = false;
@@ -283,7 +289,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address().into();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -298,6 +304,8 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = load.address_and_id;
+
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
     let Some(gas_limit) = calc_call_gas(context.interpreter, load, false, local_gas_limit) else {

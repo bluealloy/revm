@@ -299,7 +299,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address_or_id: AddressOrId,
         balance: U256,
-    ) -> Result<(), DB::Error> {
+    ) -> Result<AddressAndId, DB::Error> {
         let (account, address) = self.load_account(db, address_or_id)?.data;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
@@ -313,7 +313,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // add journal entry for balance increment.
         self.journal
             .push(ENTRY::balance_changed(address.id(), old_balance));
-        Ok(())
+        Ok(address)
     }
 
     /// Increments the nonce of the account.
@@ -387,8 +387,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn create_account_checkpoint(
         &mut self,
-        caller: AddressOrId,
-        target_address: Address,
+        caller_or_id: AddressOrId,
+        target_or_id: AddressOrId,
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
@@ -396,7 +396,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let checkpoint = self.checkpoint();
 
         // Fetch balance of caller.
-        let (caller_acc, caller) = self.state_new.get(&caller).unwrap();
+        let (caller_acc, caller) = self.state_new.get(&caller_or_id).unwrap();
         let caller_balance = caller_acc.info.balance;
         // Check if caller has enough balance to send to the created contract.
         if caller_balance < balance {
@@ -405,10 +405,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // Newly created account is present, as we just loaded it.
-        let (target_acc, target) = self
-            .state_new
-            .get_mut(&AddressOrId::Address(target_address))
-            .unwrap();
+        let (target_acc, target) = self.state_new.get_mut(&target_or_id).unwrap();
         let last_journal = &mut self.journal;
 
         // New account can be created if:
@@ -606,6 +603,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         let mut account_load = StateLoad::new(
             AccountLoad {
+                address_and_id: account.1,
+                delegated_account_address: None,
                 is_delegate_account_cold: None,
                 is_empty,
             },
@@ -647,8 +646,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, DB::Error> {
         todo!();
-        let load = Default::default();
-        let id = AddressAndId::new(address_or_id.address().unwrap(), 0);
+        //let load = Default::default();
+        //let id = AddressAndId::new(address_or_id.address().unwrap(), 0);
         // let load = match self.state.entry(address) {
         //     Entry::Occupied(entry) => {
         //         let account = entry.into_mut();
@@ -687,32 +686,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // };
 
         // journal loading of cold account.
-        if load.is_cold {
-            self.journal.push(ENTRY::account_warmed(id.id()));
-        }
-        if load_code {
-            let info = &mut load.data.info;
-            if info.code.is_none() {
-                let code = if info.code_hash == KECCAK_EMPTY {
-                    Bytecode::default()
-                } else {
-                    db.code_by_hash(info.code_hash)?
-                };
-                info.code = Some(code);
-            }
-        }
+        // if load.is_cold {
+        //     self.journal.push(ENTRY::account_warmed(id.id()));
+        // }
+        // if load_code {
+        //     let info = &mut load.data.info;
+        //     if info.code.is_none() {
+        //         let code = if info.code_hash == KECCAK_EMPTY {
+        //             Bytecode::default()
+        //         } else {
+        //             db.code_by_hash(info.code_hash)?
+        //         };
+        //         info.code = Some(code);
+        //     }
+        // }
 
-        for storage_key in storage_keys.into_iter() {
-            sload_with_account(
-                load.data,
-                db,
-                &mut self.journal,
-                self.transaction_id,
-                id,
-                storage_key,
-            )?;
-        }
-        Ok((load, id))
+        // for storage_key in storage_keys.into_iter() {
+        //     sload_with_account(
+        //         load.data,
+        //         db,
+        //         &mut self.journal,
+        //         self.transaction_id,
+        //         id,
+        //         storage_key,
+        //     )?;
+        // }
+        // Ok((load, id))
     }
 
     /// Loads storage slot.

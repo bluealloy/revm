@@ -16,7 +16,10 @@ use context_interface::{
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
-use primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{
+    hardfork::SpecId, Address, AddressAndId, AddressOrId, HashSet, Log, StorageKey, StorageValue,
+    B256, U256,
+};
 use state::{Account, EvmState};
 use std::vec::Vec;
 
@@ -106,27 +109,28 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn sload(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
-        self.inner.sload(&mut self.database, address, key)
+        self.inner.sload(&mut self.database, address_or_id, key)
     }
 
     fn sstore(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         key: StorageKey,
         value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
-        self.inner.sstore(&mut self.database, address, key, value)
+        self.inner
+            .sstore(&mut self.database, address_or_id, key, value)
     }
 
-    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
-        self.inner.tload(address, key)
+    fn tload(&mut self, address_or_id: AddressOrId, key: StorageKey) -> StorageValue {
+        self.inner.tload(address_or_id, key)
     }
 
-    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue) {
-        self.inner.tstore(address, key, value)
+    fn tstore(&mut self, address_or_id: AddressOrId, key: StorageKey, value: StorageValue) {
+        self.inner.tstore(address_or_id, key, value)
     }
 
     fn log(&mut self, log: Log) {
@@ -135,10 +139,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn selfdestruct(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        self.inner.selfdestruct(&mut self.database, address, target)
+        self.inner
+            .selfdestruct(&mut self.database, address_or_id, target)
     }
 
     fn warm_coinbase_account(&mut self, address: Address) {
@@ -167,10 +172,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self,
         address: Address,
         storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error> {
+    ) -> Result<AddressAndId, <Self::Database as Database>::Error> {
         self.inner
-            .load_account_optional(&mut self.database, address, false, storage_keys)?;
-        Ok(())
+            .load_account_optional(
+                &mut self.database,
+                AddressOrId::Address(address),
+                false,
+                storage_keys,
+            )
+            .map(|i| i.1)
     }
 
     #[inline]
@@ -181,66 +191,69 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn transfer(
         &mut self,
-        from: Address,
-        to: Address,
+        from: AddressOrId,
+        to: AddressOrId,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
         self.inner.transfer(&mut self.database, from, to, balance)
     }
 
     #[inline]
-    fn touch_account(&mut self, address: Address) {
-        self.inner.touch(address);
+    fn touch_account(&mut self, address_or_id: AddressOrId) {
+        self.inner.touch(&address_or_id);
     }
 
     #[inline]
     fn caller_accounting_journal_entry(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         old_balance: U256,
         bump_nonce: bool,
     ) {
         self.inner
-            .caller_accounting_journal_entry(address, old_balance, bump_nonce);
+            .caller_accounting_journal_entry(address_or_id, old_balance, bump_nonce);
     }
 
     /// Increments the balance of the account.
     #[inline]
     fn balance_incr(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         balance: U256,
-    ) -> Result<(), <Self::Database as Database>::Error> {
+    ) -> Result<AddressAndId, <Self::Database as Database>::Error> {
         self.inner
-            .balance_incr(&mut self.database, address, balance)
+            .balance_incr(&mut self.database, address_or_id, balance)
     }
 
     /// Increments the nonce of the account.
     #[inline]
-    fn nonce_bump_journal_entry(&mut self, address: Address) {
-        self.inner.nonce_bump_journal_entry(address)
+    fn nonce_bump_journal_entry(&mut self, address_or_id: AddressOrId) {
+        self.inner.nonce_bump_journal_entry(address_or_id)
     }
 
     #[inline]
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_account(&mut self.database, address)
+    fn load_account(
+        &mut self,
+        address_or_id: AddressOrId,
+    ) -> Result<StateLoad<(&mut Account, AddressAndId)>, DB::Error> {
+        self.inner.load_account(&mut self.database, address_or_id)
     }
 
     #[inline]
     fn load_account_code(
         &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.inner.load_code(&mut self.database, address)
+        address_or_id: AddressOrId,
+    ) -> Result<StateLoad<(&mut Account, AddressAndId)>, DB::Error> {
+        self.inner.load_code(&mut self.database, address_or_id)
     }
 
     #[inline]
     fn load_account_delegated(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         self.inner
-            .load_account_delegated(&mut self.database, address)
+            .load_account_delegated(&mut self.database, address_or_id)
     }
 
     #[inline]
@@ -259,21 +272,21 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
-        self.inner.set_code_with_hash(address, code, hash);
+    fn set_code_with_hash(&mut self, address_or_id: AddressOrId, code: Bytecode, hash: B256) {
+        self.inner.set_code_with_hash(address_or_id, code, hash);
     }
 
     #[inline]
     fn create_account_checkpoint(
         &mut self,
-        caller: Address,
-        address: Address,
+        caller_or_id: AddressOrId,
+        target_or_id: AddressOrId,
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
         // Ignore error.
         self.inner
-            .create_account_checkpoint(caller, address, balance, spec_id)
+            .create_account_checkpoint(caller_or_id, target_or_id, balance, spec_id)
     }
 
     #[inline]

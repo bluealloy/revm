@@ -7,7 +7,10 @@ use context_interface::{
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
-use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{
+    hardfork::SpecId, Address, AddressAndId, AddressOrId, Bytes, Log, StorageKey, StorageValue,
+    B256, U256,
+};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -530,9 +533,12 @@ impl<
 
     /* Journal */
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
+    fn load_account_delegated(
+        &mut self,
+        address_or_id: AddressOrId,
+    ) -> Option<StateLoad<AccountLoad>> {
         self.journal_mut()
-            .load_account_delegated(address)
+            .load_account_delegated(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -540,10 +546,10 @@ impl<
     }
 
     /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
+    fn balance(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<U256>> {
         self.journal_mut()
-            .load_account(address)
-            .map(|acc| acc.map(|a| a.info.balance))
+            .load_account(address_or_id)
+            .map(|acc| acc.map(|a| a.0.info.balance))
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -551,27 +557,33 @@ impl<
     }
 
     /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
+    fn load_account_code(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<Bytes>> {
         self.journal_mut()
-            .code(address)
+            .code(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
             .ok()
+            .map(|(a, _)| a)
     }
 
     /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
+    fn load_account_code_hash(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<B256>> {
         self.journal_mut()
-            .code_hash(address)
+            .code_hash(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
             .ok()
+            .map(|(a, _)| a)
     }
 
     /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
+    fn sload(
+        &mut self,
+        address: AddressOrId,
+        index: StorageKey,
+    ) -> Option<StateLoad<StorageValue>> {
         self.journal_mut()
             .sload(address, index)
             .map_err(|e| {
@@ -585,7 +597,7 @@ impl<
     /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
     fn sstore(
         &mut self,
-        address: Address,
+        address: AddressOrId,
         index: StorageKey,
         value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
@@ -598,12 +610,12 @@ impl<
     }
 
     /// Gets the transient storage value of `address` at `index`.
-    fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
+    fn tload(&mut self, address: AddressOrId, index: StorageKey) -> StorageValue {
         self.journal_mut().tload(address, index)
     }
 
     /// Sets the transient storage value of `address` at `index`.
-    fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
+    fn tstore(&mut self, address: AddressOrId, index: StorageKey, value: StorageValue) {
         self.journal_mut().tstore(address, index, value)
     }
 
@@ -615,7 +627,7 @@ impl<
     /// Marks `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(
         &mut self,
-        address: Address,
+        address: AddressOrId,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
         self.journal_mut()

@@ -5,7 +5,7 @@ use crate::{
     journaled_state::AccountLoad,
 };
 use auto_impl::auto_impl;
-use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, AddressOrId, Bytes, Log, StorageKey, StorageValue, B256, U256};
 
 /// Host trait with all methods that are needed by the Interpreter.
 ///
@@ -59,7 +59,7 @@ pub trait Host {
     /// Selfdestruct account, calls `ContextTr::journal_mut().selfdestruct(address, target)`
     fn selfdestruct(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>>;
 
@@ -68,25 +68,32 @@ pub trait Host {
     /// Sstore, calls `ContextTr::journal_mut().sstore(address, key, value)`
     fn sstore(
         &mut self,
-        address: Address,
+        address_or_id: AddressOrId,
         key: StorageKey,
         value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>>;
 
     /// Sload, calls `ContextTr::journal_mut().sload(address, key)`
-    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
+    fn sload(
+        &mut self,
+        address_or_id: AddressOrId,
+        key: StorageKey,
+    ) -> Option<StateLoad<StorageValue>>;
     /// Tstore, calls `ContextTr::journal_mut().tstore(address, key, value)`
-    fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
+    fn tstore(&mut self, address_or_id: AddressOrId, key: StorageKey, value: StorageValue);
     /// Tload, calls `ContextTr::journal_mut().tload(address, key)`
-    fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
+    fn tload(&mut self, address_or_id: AddressOrId, key: StorageKey) -> StorageValue;
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+    fn balance(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<U256>>;
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
+    fn load_account_delegated(
+        &mut self,
+        address_or_id: AddressOrId,
+    ) -> Option<StateLoad<AccountLoad>>;
     /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
+    fn load_account_code(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<Bytes>>;
     /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
+    fn load_account_code_hash(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<B256>>;
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
@@ -152,7 +159,7 @@ impl Host for DummyHost {
 
     fn selfdestruct(
         &mut self,
-        _address: Address,
+        _address_or_id: AddressOrId,
         _target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
         None
@@ -162,36 +169,43 @@ impl Host for DummyHost {
 
     fn sstore(
         &mut self,
-        _address: Address,
+        _address_or_id: AddressOrId,
         _key: StorageKey,
         _value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
         None
     }
 
-    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
+    fn sload(
+        &mut self,
+        _address_or_id: AddressOrId,
+        _key: StorageKey,
+    ) -> Option<StateLoad<StorageValue>> {
         None
     }
 
-    fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
+    fn tstore(&mut self, _address_or_id: AddressOrId, _key: StorageKey, _value: StorageValue) {}
 
-    fn tload(&mut self, _address: Address, _key: StorageKey) -> StorageValue {
+    fn tload(&mut self, _address_or_id: AddressOrId, _key: StorageKey) -> StorageValue {
         StorageValue::ZERO
     }
 
-    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+    fn balance(&mut self, _address_or_id: AddressOrId) -> Option<StateLoad<U256>> {
         None
     }
 
-    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
+    fn load_account_delegated(
+        &mut self,
+        _address_or_id: AddressOrId,
+    ) -> Option<StateLoad<AccountLoad>> {
         None
     }
 
-    fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
+    fn load_account_code(&mut self, _address_or_id: AddressOrId) -> Option<StateLoad<Bytes>> {
         None
     }
 
-    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+    fn load_account_code_hash(&mut self, _address_or_id: AddressOrId) -> Option<StateLoad<B256>> {
         None
     }
 }
