@@ -123,7 +123,8 @@ pub fn validate_against_state_and_deduct_caller<
     let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    // TODO load account, obtains AccountId and store it somewhere so we can access later.
+    let (caller_account, caller) = journal.load_account_code(tx.caller().into())?.data;
 
     validate_account_nonce_and_code(
         &mut caller_account.info,
@@ -172,7 +173,7 @@ pub fn validate_against_state_and_deduct_caller<
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }
 
-    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+    journal.caller_accounting_journal_entry(caller.to_id(), old_balance, tx.kind().is_call());
     Ok(())
 }
 
@@ -214,7 +215,7 @@ pub fn apply_eip7702_auth_list<
 
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
-        let mut authority_acc = journal.load_account_code(authority)?;
+        let authority_acc = journal.load_account_code(authority.into())?.data.0;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {

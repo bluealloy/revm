@@ -1,7 +1,7 @@
 use context_interface::result::Output;
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
-use primitives::{Address, AddressAndId};
+use primitives::AddressAndId;
 
 /// Call Frame
 #[derive(Debug, Clone)]
@@ -56,9 +56,10 @@ impl FrameResult {
     pub fn output(&self) -> Output {
         match self {
             FrameResult::Call(outcome) => Output::Call(outcome.result.output.clone()),
-            FrameResult::Create(outcome) => {
-                Output::Create(outcome.result.output.clone(), outcome.address)
-            }
+            FrameResult::Create(outcome) => Output::Create(
+                outcome.result.output.clone(),
+                outcome.address.map(|address| *address.address()),
+            ),
         }
     }
 

@@ -35,7 +35,8 @@ pub fn reimburse_caller<CTX: ContextTr>(
     additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
-    let caller = context.tx().caller();
+    // TODO save AccountId somewhere so we can access it here.
+    let caller = context.tx().caller().into();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Return balance of not spend gas.
@@ -55,7 +56,8 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
-    let beneficiary = context.block().beneficiary();
+    // TODO save beneficiary AccountId somewhere so we can access it here.
+    let beneficiary = context.block().beneficiary().into();
     let basefee = context.block().basefee() as u128;
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 

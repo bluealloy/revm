@@ -1,7 +1,7 @@
 use crate::evm::FrameTr;
 use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
+use crate::{CallFrame, FrameData, FrameResult};
 use context::result::FromStringError;
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
@@ -25,7 +25,7 @@ use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
-use primitives::{keccak256, Address, AddressAndId, Bytes, U256};
+use primitives::{keccak256, AddressAndId, Bytes, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::boxed::Box;
@@ -582,7 +582,12 @@ impl EthFrame<EthInterpreter> {
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
-                    outcome.address.unwrap_or_default().into_word().into()
+                    outcome
+                        .address
+                        .unwrap_or_default()
+                        .address()
+                        .into_word()
+                        .into()
                 } else {
                     U256::ZERO
                 };
@@ -652,7 +657,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
     // Set code
-    journal.set_code(address, bytecode);
+    journal.set_code(address.to_id(), bytecode);
 
     interpreter_result.result = InstructionResult::Return;
 }
