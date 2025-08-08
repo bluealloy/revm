@@ -65,7 +65,7 @@ impl BlobExcessGasAndPrice {
 }
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
-/// uses [`calc_excess_blob_gas`] internally.
+/// Uses [`calc_excess_blob_gas_osaka`] internally.
 #[inline]
 pub fn calc_excess_blob_gas(
     parent_excess_blob_gas: u64,
