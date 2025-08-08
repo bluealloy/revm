@@ -47,7 +47,7 @@ impl CountInspector {
 
     /// Get the count for a specific opcode.
     pub fn get_count(&self, opcode: u8) -> u64 {
-        self.opcode_counts.get(&opcode).copied().unwrap_or(0)
+        self.opcode_counts.get(&opcode).copied().unwrap_or_default()
     }
 
     /// Get a reference to all opcode counts.

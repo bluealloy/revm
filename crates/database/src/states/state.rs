@@ -93,7 +93,8 @@ impl<DB: Database> State<DB> {
         balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), DB::Error> {
         // Make transition and update cache state
-        let mut transitions = Vec::new();
+        let balances = balances.into_iter();
+        let mut transitions = Vec::with_capacity(balances.size_hint().0);
         for (address, balance) in balances {
             if balance == 0 {
                 continue;

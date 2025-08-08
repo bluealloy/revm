@@ -52,46 +52,55 @@ impl Account {
     }
 
     /// Marks the account as self destructed.
+    #[inline]
     pub fn mark_selfdestruct(&mut self) {
         self.status |= AccountStatus::SelfDestructed;
     }
 
     /// Unmarks the account as self destructed.
+    #[inline]
     pub fn unmark_selfdestruct(&mut self) {
         self.status -= AccountStatus::SelfDestructed;
     }
 
     /// Is account marked for self destruct.
+    #[inline]
     pub fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
     }
 
     /// Marks the account as touched
+    #[inline]
     pub fn mark_touch(&mut self) {
         self.status |= AccountStatus::Touched;
     }
 
     /// Unmarks the touch flag.
+    #[inline]
     pub fn unmark_touch(&mut self) {
         self.status -= AccountStatus::Touched;
     }
 
     /// If account status is marked as touched.
+    #[inline]
     pub fn is_touched(&self) -> bool {
         self.status.contains(AccountStatus::Touched)
     }
 
     /// Marks the account as newly created.
+    #[inline]
     pub fn mark_created(&mut self) {
         self.status |= AccountStatus::Created;
     }
 
     /// Unmarks the created flag.
+    #[inline]
     pub fn unmark_created(&mut self) {
         self.status -= AccountStatus::Created;
     }
 
     /// Marks the account as cold.
+    #[inline]
     pub fn mark_cold(&mut self) {
         self.status |= AccountStatus::Cold;
     }
@@ -393,7 +402,7 @@ impl EvmStorageSlot {
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let same_id = self.transaction_id == transaction_id;
         self.transaction_id = transaction_id;
-        let was_cold = core::mem::replace(&mut self.is_cold, false);
+        let was_cold = core::mem::take(&mut self.is_cold);
 
         if same_id {
             // only if transaction id is same we are returning was_cold.
