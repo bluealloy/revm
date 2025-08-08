@@ -1,7 +1,7 @@
 use super::{Immediates, Jumps, LegacyBytecode};
 use crate::{interpreter_types::LoopControl, InterpreterAction};
 use bytecode::{utils::read_u16, Bytecode};
-use core::{ops::Deref, ptr};
+use core::ops::Deref;
 use primitives::B256;
 
 #[cfg(feature = "serde")]
@@ -16,10 +16,10 @@ pub struct ExtBytecode {
     pub action: Option<InterpreterAction>,
     /// The base bytecode.
     base: Bytecode,
-    /// The previous instruction pointer.
-    previous_pointer: Option<*const u8>,
     /// The current instruction pointer.
     instruction_pointer: *const u8,
+    /// End flag
+    is_end: bool,
 }
 
 impl Deref for ExtBytecode {
@@ -47,7 +47,7 @@ impl ExtBytecode {
             instruction_pointer,
             bytecode_hash: None,
             action: None,
-            previous_pointer: None,
+            is_end: false,
         }
     }
 
@@ -59,7 +59,7 @@ impl ExtBytecode {
             instruction_pointer,
             bytecode_hash: Some(hash),
             action: None,
-            previous_pointer: None,
+            is_end: false,
         }
     }
 
@@ -79,23 +79,18 @@ impl ExtBytecode {
 impl LoopControl for ExtBytecode {
     #[inline]
     fn is_end(&self) -> bool {
-        self.instruction_pointer.is_null()
+        self.is_end
     }
 
     #[inline]
     fn revert_to_previous_pointer(&mut self) {
-        if let Some(previous_pointer) = self.previous_pointer {
-            self.instruction_pointer = previous_pointer;
-        }
+        self.is_end = false;
     }
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
         self.action = Some(action);
-        self.previous_pointer = Some(core::mem::replace(
-            &mut self.instruction_pointer,
-            ptr::null(),
-        ));
+        self.is_end = true;
     }
 
     #[inline]
