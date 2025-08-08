@@ -129,11 +129,6 @@ where
         return Err(PrecompileError::ModexpEip7823LimitSize);
     }
 
-    // special case for both base and mod length being 0.
-    if base_len == 0 && mod_len == 0 {
-        return Ok(PrecompileOutput::new(min_gas, Bytes::new()));
-    }
-
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
     let exp_highp_len = min(exp_len, 32);
 
@@ -152,6 +147,10 @@ where
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
         return Err(PrecompileError::OutOfGas);
+    }
+
+    if base_len == 0 && mod_len == 0 {
+        return Ok(PrecompileOutput::new(gas_cost, Bytes::new()));
     }
 
     // Padding is needed if the input does not contain all 3 values.
