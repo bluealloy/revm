@@ -74,7 +74,7 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on creation.
-    pub fn on_created(&self) -> AccountStatus {
+    pub fn on_created(&self) -> Self {
         match self {
             // If account was destroyed previously just copy new info to it.
             Self::DestroyedAgain
