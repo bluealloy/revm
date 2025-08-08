@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.2.1](https://github.com/bluealloy/revm/compare/revm-primitives-v20.2.0...revm-primitives-v20.2.1) - 2025-08-08
+
+### Other
+
+- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
+
 ## [20.2.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.1.0...revm-primitives-v20.2.0) - 2025-08-06
 
 ### Added

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v9.0.0...revm-inspector-v9.0.1) - 2025-08-08
+
+### Other
+
+- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v8.1.0...revm-inspector-v9.0.0) - 2025-08-06
 
 ### Added
