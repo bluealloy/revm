@@ -232,7 +232,7 @@ impl BundleAccount {
             }
             AccountStatus::Destroyed => {
                 // Clear this storage and move it to the Revert.
-                let this_storage = self.storage.drain().collect();
+                let this_storage = core::mem::take(&mut self.storage);
                 let ret = match self.status {
                     AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
                         Some(AccountRevert::new_selfdestructed(self.status, info_revert, this_storage))
@@ -356,7 +356,7 @@ impl BundleAccount {
                                 // Destroyed again will set empty account.
                                 AccountStatus::DestroyedChanged,
                                 AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default()),
-                                self.storage.drain().collect(),
+                                core::mem::take(&mut self.storage),
                                 HashMap::default(),
                             ))
                         }
