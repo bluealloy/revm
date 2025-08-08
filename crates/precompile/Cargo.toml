@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "25.0.0"
+version = "26.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -79,7 +79,7 @@ ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
 std = [
 	"primitives/std",
 	"k256/std",
@@ -102,9 +102,8 @@ hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
 asm-sha2 = ["sha2/asm"]
 
-# These libraries may not work on all no_std platforms as they depend on C.
 
-# Enables the KZG point evaluation precompile.
+# Enables the c-kzg point evaluation precompile. Enabled by default as most stable/used implementation.
 c-kzg = ["dep:c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["dep:kzg-rs"]

@@ -248,12 +248,12 @@ pub trait ReturnData {
 /// Trait controls execution of the loop.
 pub trait LoopControl {
     /// Returns `true` if the loop should continue.
-    #[inline]
-    fn is_not_end(&self) -> bool {
-        !self.is_end()
-    }
+    fn is_not_end(&self) -> bool;
     /// Is end of the loop.
-    fn is_end(&self) -> bool;
+    #[inline]
+    fn is_end(&self) -> bool {
+        !self.is_not_end()
+    }
     /// Sets the `end` flag internally. Action should be taken after.
     fn reset_action(&mut self);
     /// Set return action.

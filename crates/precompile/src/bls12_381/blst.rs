@@ -25,7 +25,7 @@ const MODULUS_REPR: [u8; 48] = [
 ];
 
 #[inline]
-fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
+pub(crate) fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
     let mut p_affine = blst_p1_affine::default();
     // SAFETY: both inputs are valid blst types
     unsafe { blst_p1_to_affine(&mut p_affine, p) };
@@ -33,7 +33,7 @@ fn p1_to_affine(p: &blst_p1) -> blst_p1_affine {
 }
 
 #[inline]
-fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
+pub(crate) fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
     let mut p = blst_p1::default();
     // SAFETY: both inputs are valid blst types
     unsafe { blst_p1_from_affine(&mut p, p_affine) };
@@ -41,7 +41,7 @@ fn p1_from_affine(p_affine: &blst_p1_affine) -> blst_p1 {
 }
 
 #[inline]
-fn p1_add_or_double(p: &blst_p1, p_affine: &blst_p1_affine) -> blst_p1 {
+pub(crate) fn p1_add_or_double(p: &blst_p1, p_affine: &blst_p1_affine) -> blst_p1 {
     let mut result = blst_p1::default();
     // SAFETY: all inputs are valid blst types
     unsafe { blst_p1_add_or_double_affine(&mut result, p, p_affine) };
@@ -49,7 +49,7 @@ fn p1_add_or_double(p: &blst_p1, p_affine: &blst_p1_affine) -> blst_p1 {
 }
 
 #[inline]
-fn p2_to_affine(p: &blst_p2) -> blst_p2_affine {
+pub(crate) fn p2_to_affine(p: &blst_p2) -> blst_p2_affine {
     let mut p_affine = blst_p2_affine::default();
     // SAFETY: both inputs are valid blst types
     unsafe { blst_p2_to_affine(&mut p_affine, p) };
@@ -57,7 +57,7 @@ fn p2_to_affine(p: &blst_p2) -> blst_p2_affine {
 }
 
 #[inline]
-fn p2_from_affine(p_affine: &blst_p2_affine) -> blst_p2 {
+pub(crate) fn p2_from_affine(p_affine: &blst_p2_affine) -> blst_p2 {
     let mut p = blst_p2::default();
     // SAFETY: both inputs are valid blst types
     unsafe { blst_p2_from_affine(&mut p, p_affine) };
@@ -65,7 +65,7 @@ fn p2_from_affine(p_affine: &blst_p2_affine) -> blst_p2 {
 }
 
 #[inline]
-fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
+pub(crate) fn p2_add_or_double(p: &blst_p2, p_affine: &blst_p2_affine) -> blst_p2 {
     let mut result = blst_p2::default();
     // SAFETY: all inputs are valid blst types
     unsafe { blst_p2_add_or_double_affine(&mut result, p, p_affine) };
@@ -108,7 +108,7 @@ fn p2_add_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
 ///
 /// Note: The scalar is expected to be in Big Endian format.
 #[inline]
-fn p1_scalar_mul(p: &blst_p1_affine, scalar: &blst_scalar) -> blst_p1_affine {
+pub(crate) fn p1_scalar_mul(p: &blst_p1_affine, scalar: &blst_scalar) -> blst_p1_affine {
     // Convert point to Jacobian coordinates
     let p_jacobian = p1_from_affine(p);
 
@@ -135,7 +135,7 @@ fn p1_scalar_mul(p: &blst_p1_affine, scalar: &blst_scalar) -> blst_p1_affine {
 ///
 /// Note: The scalar is expected to be in Big Endian format.
 #[inline]
-fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
+pub(crate) fn p2_scalar_mul(p: &blst_p2_affine, scalar: &blst_scalar) -> blst_p2_affine {
     // Convert point to Jacobian coordinates
     let p_jacobian = p2_from_affine(p);
 
@@ -308,7 +308,7 @@ fn is_fp12_one(f: &blst_fp12) -> bool {
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
 #[inline]
-fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
+pub(crate) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
     // When no inputs are given, we return true
     // This case can only trigger, if the initial pairing components
     // all had, either the G1 element as the point at infinity

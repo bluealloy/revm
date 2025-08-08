@@ -51,13 +51,13 @@ The [book](https://bluealloy.github.io/revm/) and [`Architecture and API`](https
 
 Some quick links can be found here. Some point to code documentation or the book. code docs are there to explain usage of a particular part of the code where the book is to get more of an overview of the architecture or how components/projects fit together.
 
-* How to build and use revm can be found here. [book](https://bluealloy.github.io/revm/dev.html)
-* Architecture overview can be seen here. [book](https://bluealloy.github.io/revm/architecture.html)
-* Structure of the project (list of crates and their versions) can be seen here. [book](https://github.com/bluealloy/revm/tree/main/crates)
-* How to use Revm Framework can be found in MyEvm example. [book](https://github.com/bluealloy/revm/tree/main/examples/my_evm)
-* Release procedure and changelogs explanation. [book](https://bluealloy.github.io/revm/release_procedure.html)
-* How to use revme (Revm binary with few commands) can be found here. [code](https://github.com/bluealloy/revm/tree/main/bins/revme)
-* How to run Ethereum test can be found here: [book](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
+* [How to build and use revm](https://bluealloy.github.io/revm/dev.html)
+* [Architecture overview](https://bluealloy.github.io/revm/architecture.html)
+* [Structure of the project](https://github.com/bluealloy/revm/tree/main/crates) (list of crates and their versions)
+* [How to use Revm Framework](https://github.com/bluealloy/revm/tree/main/examples/my_evm) (MyEvm example)
+* [Release procedure and changelogs explanation](https://bluealloy.github.io/revm/release_procedure.html)
+* [How to use revme](https://github.com/bluealloy/revm/tree/main/bins/revme) (Revm binary with few commands)
+* [How to run Ethereum tests](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
 * If there is more need for explanations please open a PR request.
 
 ## Supported Rust Versions (MSRV)
@@ -67,7 +67,7 @@ Revm always aims to stay up-to-date with the latest stable Rust release.
 The Minimum Supported Rust Version (MSRV) may be updated at any time, so we can take advantage of new features and improvements in Rust.
 
 ### Community:
-For questions please open a github issue or join the public telegram group: [https://t.me/+Ig4WDWOzikA3MzA0](https://t.me/+Ig4WDWOzikA3MzA0)
+For questions please open a github issue or join the public [telegram group](https://t.me/+Ig4WDWOzikA3MzA0)
 
 ### Licence
 Revm is licensed under MIT Licence.

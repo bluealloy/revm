@@ -27,26 +27,16 @@ pub fn run(criterion: &mut Criterion) {
 
     criterion.bench_function("snailtracer", |b| {
         b.iter_batched(
-            || {
-                // create a transaction input
-                tx.clone()
-            },
-            |input| {
-                let _ = evm.transact_one(input).unwrap();
-            },
+            || tx.clone(),
+            |input| evm.transact_one(input).unwrap(),
             criterion::BatchSize::SmallInput,
         );
     });
 
-    criterion.bench_function("analysis-inspector", |b| {
+    criterion.bench_function("snailtracer-inspect", |b| {
         b.iter_batched(
-            || {
-                // create a transaction input
-                tx.clone()
-            },
-            |input| {
-                let _ = evm.inspect_one_tx(input);
-            },
+            || tx.clone(),
+            |input| evm.inspect_one_tx(input),
             criterion::BatchSize::SmallInput,
         );
     });

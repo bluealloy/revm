@@ -43,4 +43,3 @@ pub use interpreter_action::{
     FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
-pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};

@@ -6,10 +6,10 @@ use crate::{opcode, Bytecode, OpCode};
 /// without dealing with the immediate values that follow instructions.
 #[derive(Debug, Clone)]
 pub struct BytecodeIterator<'a> {
-    /// Start pointer of the bytecode. Only used to calculate [`position`](Self::position).
-    start: *const u8,
     /// Iterator over the bytecode bytes.
     bytes: core::slice::Iter<'a, u8>,
+    /// Start pointer of the bytecode. Only used to calculate [`position`](Self::position).
+    start: *const u8,
 }
 
 impl<'a> BytecodeIterator<'a> {
@@ -21,8 +21,8 @@ impl<'a> BytecodeIterator<'a> {
             Bytecode::Eip7702(_) => &[],
         };
         Self {
-            start: bytes.as_ptr(),
             bytes: bytes.iter(),
+            start: bytes.as_ptr(),
         }
     }
 
@@ -40,15 +40,13 @@ impl<'a> BytecodeIterator<'a> {
     /// Returns the current position in the bytecode.
     #[inline]
     pub fn position(&self) -> usize {
-        (self.bytes.as_slice().as_ptr() as usize) - (self.start as usize)
-        // TODO: Use the following on 1.87
         // SAFETY: `start` always points to the start of the bytecode.
-        // unsafe {
-        //     self.bytes
-        //         .as_slice()
-        //         .as_ptr()
-        //         .offset_from_unsigned(self.start)
-        // }
+        unsafe {
+            self.bytes
+                .as_slice()
+                .as_ptr()
+                .offset_from_unsigned(self.start)
+        }
     }
 
     #[inline]

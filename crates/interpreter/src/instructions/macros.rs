@@ -47,7 +47,7 @@ macro_rules! check {
             .spec_id()
             .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
-            $interpreter.halt($crate::InstructionResult::NotActivated);
+            $interpreter.halt_not_activated();
             return;
         }
     };
@@ -62,7 +62,7 @@ macro_rules! gas {
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
         if !$interpreter.gas.record_cost($gas) {
-            $interpreter.halt($crate::InstructionResult::OutOfGas);
+            $interpreter.halt_oog();
             return $ret;
         }
     };
@@ -79,7 +79,7 @@ macro_rules! gas_or_fail {
         match $gas {
             Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
             None => {
-                $interpreter.halt($crate::InstructionResult::OutOfGas);
+                $interpreter.halt_oog();
                 return $ret;
             }
         }
@@ -101,7 +101,7 @@ macro_rules! resize_memory {
             $offset,
             $len,
         ) {
-            $interpreter.halt($crate::InstructionResult::MemoryOOG);
+            $interpreter.halt_memory_oog();
             return $ret;
         }
     };
@@ -113,7 +113,7 @@ macro_rules! resize_memory {
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreter:expr $(,$ret:expr)? ) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+            $interpreter.halt_underflow();
             return $($ret)?;
         };
     };
@@ -142,7 +142,7 @@ macro_rules! popn_top {
 
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
         if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
+            $interpreter.halt_underflow();
             return $($ret)?;
         }
         let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
@@ -155,7 +155,7 @@ macro_rules! popn_top {
 macro_rules! push {
     ($interpreter:expr, $x:expr $(,$ret:item)?) => (
         if !($interpreter.stack.push($x)) {
-            $interpreter.halt($crate::InstructionResult::StackOverflow);
+            $interpreter.halt_overflow();
             return $($ret)?;
         }
     )
