@@ -1,21 +1,19 @@
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize};
-
-use bytecode::Bytecode;
-use primitives::{hardfork, B256, KECCAK_EMPTY, U256};
 use bytecode::Bytecode;
 use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize};
+
+use primitives::{hardfork, B256, KECCAK_EMPTY, U256};
+
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq)]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
