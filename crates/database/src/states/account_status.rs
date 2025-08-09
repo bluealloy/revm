@@ -17,14 +17,22 @@
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountStatus {
+    /// The account has been loaded but does not exist.
     #[default]
     LoadedNotExisting,
+    /// The account has been loaded and exists.
     Loaded,
+    /// The account is loaded and empty, as per EIP-161.
     LoadedEmptyEIP161,
+    /// There are changes in the account that exist only in memory.
     InMemoryChange,
+    /// The account has been modified.
     Changed,
+    /// The account has been destroyed.
     Destroyed,
+    /// The account has been destroyed and then modified.
     DestroyedChanged,
+    /// The account has been destroyed again.
     DestroyedAgain,
 }
 

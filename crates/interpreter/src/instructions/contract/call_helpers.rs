@@ -1,12 +1,13 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
 };
 use context_interface::{context::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
 use primitives::{hardfork::SpecId::*, U256};
 
+/// Gets memory input and output ranges for call instructions.
 #[inline]
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
@@ -43,6 +44,7 @@ pub fn resize_memory(
     Some(offset..offset + len)
 }
 
+/// Calculates gas cost and limit for call instructions.
 #[inline]
 pub fn calc_call_gas(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
@@ -60,10 +62,7 @@ pub fn calc_call_gas(
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // Take l64 part of gas_limit
-        min(
-            interpreter.control.gas().remaining_63_of_64_parts(),
-            local_gas_limit,
-        )
+        min(interpreter.gas.remaining_63_of_64_parts(), local_gas_limit)
     } else {
         local_gas_limit
     };

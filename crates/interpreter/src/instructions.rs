@@ -2,24 +2,35 @@
 
 #[macro_use]
 pub mod macros;
+/// Arithmetic operations (ADD, SUB, MUL, DIV, etc.).
 pub mod arithmetic;
+/// Bitwise operations (AND, OR, XOR, NOT, etc.).
 pub mod bitwise;
+/// Block information instructions (COINBASE, TIMESTAMP, etc.).
 pub mod block_info;
+/// Contract operations (CALL, CREATE, DELEGATECALL, etc.).
 pub mod contract;
+/// Control flow instructions (JUMP, JUMPI, REVERT, etc.).
 pub mod control;
-pub mod data;
+/// Host environment interactions (SLOAD, SSTORE, LOG, etc.).
 pub mod host;
+/// Signed 256-bit integer operations.
 pub mod i256;
+/// Memory operations (MLOAD, MSTORE, MSIZE, etc.).
 pub mod memory;
+/// Stack operations (PUSH, POP, DUP, SWAP, etc.).
 pub mod stack;
+/// System information instructions (ADDRESS, CALLER, etc.).
 pub mod system;
+/// Transaction information instructions (ORIGIN, GASPRICE, etc.).
 pub mod tx_info;
+/// Utility functions and helpers for instruction implementation.
 pub mod utility;
 
-use crate::{interpreter_types::InterpreterTypes, Host, Interpreter};
+use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
 
 /// EVM opcode function signature.
-pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
+pub type Instruction<W, H> = fn(InstructionContext<'_, H, W>);
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
@@ -57,6 +68,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[SHL as usize] = bitwise::shl;
     table[SHR as usize] = bitwise::shr;
     table[SAR as usize] = bitwise::sar;
+    table[CLZ as usize] = bitwise::clz;
 
     table[KECCAK256 as usize] = system::keccak256;
 
@@ -100,7 +112,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[PC as usize] = control::pc;
     table[MSIZE as usize] = memory::msize;
     table[GAS as usize] = system::gas;
-    table[JUMPDEST as usize] = control::jumpdest_or_nop;
+    table[JUMPDEST as usize] = control::jumpdest;
     table[TLOAD as usize] = host::tload;
     table[TSTORE as usize] = host::tstore;
     table[MCOPY as usize] = memory::mcopy;
@@ -179,25 +191,6 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[LOG3 as usize] = host::log::<3, _>;
     table[LOG4 as usize] = host::log::<4, _>;
 
-    table[DATALOAD as usize] = data::data_load;
-    table[DATALOADN as usize] = data::data_loadn;
-    table[DATASIZE as usize] = data::data_size;
-    table[DATACOPY as usize] = data::data_copy;
-
-    table[RJUMP as usize] = control::rjump;
-    table[RJUMPI as usize] = control::rjumpi;
-    table[RJUMPV as usize] = control::rjumpv;
-    table[CALLF as usize] = control::callf;
-    table[RETF as usize] = control::retf;
-    table[JUMPF as usize] = control::jumpf;
-    table[DUPN as usize] = stack::dupn;
-    table[SWAPN as usize] = stack::swapn;
-    table[EXCHANGE as usize] = stack::exchange;
-
-    table[EOFCREATE as usize] = contract::eofcreate;
-    table[TXCREATE as usize] = contract::txcreate;
-    table[RETURNCONTRACT as usize] = contract::return_contract;
-
     table[CREATE as usize] = contract::create::<_, false, _>;
     table[CALL as usize] = contract::call;
     table[CALLCODE as usize] = contract::call_code;
@@ -205,11 +198,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
     table[DELEGATECALL as usize] = contract::delegate_call;
     table[CREATE2 as usize] = contract::create::<_, true, _>;
 
-    table[RETURNDATALOAD as usize] = system::returndataload;
-    table[EXTCALL as usize] = contract::extcall;
-    table[EXTDELEGATECALL as usize] = contract::extdelegatecall;
     table[STATICCALL as usize] = contract::static_call;
-    table[EXTSTATICCALL as usize] = contract::extstaticcall;
     table[REVERT as usize] = control::revert;
     table[INVALID as usize] = control::invalid;
     table[SELFDESTRUCT as usize] = host::selfdestruct;
@@ -235,8 +224,7 @@ mod tests {
             let is_instr_unknown = std::ptr::fn_addr_eq(*instr, unknown_istr);
             assert_eq!(
                 is_instr_unknown, is_opcode_unknown,
-                "Opcode 0x{:X?} is not handled",
-                i
+                "Opcode 0x{i:X?} is not handled",
             );
         }
     }

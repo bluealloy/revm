@@ -1,17 +1,24 @@
-use core::ops::Deref;
-
-use bytecode::{eof::CodeInfo, utils::read_u16, Bytecode};
-use primitives::{Bytes, B256};
-
-use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
+use super::{Immediates, Jumps, LegacyBytecode};
+use crate::{interpreter_types::LoopControl, InterpreterAction};
+use bytecode::{utils::read_u16, Bytecode};
+use core::{ops::Deref, ptr};
+use primitives::B256;
 
 #[cfg(feature = "serde")]
 mod serde;
 
+/// Extended bytecode structure that wraps base bytecode with additional execution metadata.
 #[derive(Debug)]
 pub struct ExtBytecode {
-    base: Bytecode,
     bytecode_hash: Option<B256>,
+    /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
+    /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
+    pub action: Option<InterpreterAction>,
+    /// The base bytecode.
+    base: Bytecode,
+    /// The previous instruction pointer.
+    previous_pointer: Option<*const u8>,
+    /// The current instruction pointer.
     instruction_pointer: *const u8,
 }
 
@@ -23,6 +30,12 @@ impl Deref for ExtBytecode {
     }
 }
 
+impl Default for ExtBytecode {
+    fn default() -> Self {
+        Self::new(Bytecode::default())
+    }
+}
+
 impl ExtBytecode {
     /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
     pub fn new(base: Bytecode) -> Self {
@@ -31,6 +44,8 @@ impl ExtBytecode {
             base,
             instruction_pointer,
             bytecode_hash: None,
+            action: None,
+            previous_pointer: None,
         }
     }
 
@@ -41,6 +56,8 @@ impl ExtBytecode {
             base,
             instruction_pointer,
             bytecode_hash: Some(hash),
+            action: None,
+            previous_pointer: None,
         }
     }
 
@@ -54,6 +71,34 @@ impl ExtBytecode {
     /// Returns the bytecode hash.
     pub fn hash(&mut self) -> Option<B256> {
         self.bytecode_hash
+    }
+}
+
+impl LoopControl for ExtBytecode {
+    #[inline]
+    fn is_end(&self) -> bool {
+        self.instruction_pointer.is_null()
+    }
+
+    #[inline]
+    fn revert_to_previous_pointer(&mut self) {
+        if let Some(previous_pointer) = self.previous_pointer {
+            self.instruction_pointer = previous_pointer;
+        }
+    }
+
+    #[inline]
+    fn set_action(&mut self, action: InterpreterAction) {
+        self.action = Some(action);
+        self.previous_pointer = Some(core::mem::replace(
+            &mut self.instruction_pointer,
+            ptr::null(),
+        ));
+    }
+
+    #[inline]
+    fn action(&mut self) -> &mut Option<InterpreterAction> {
+        &mut self.action
     }
 }
 
@@ -121,50 +166,12 @@ impl Immediates for ExtBytecode {
     }
 }
 
-impl EofCodeInfo for ExtBytecode {
-    fn code_info(&self, idx: usize) -> Option<&CodeInfo> {
-        self.base.eof().and_then(|eof| eof.body.code_info.get(idx))
-    }
-
-    fn code_section_pc(&self, idx: usize) -> Option<usize> {
-        self.base
-            .eof()
-            .and_then(|eof| eof.body.eof_code_section_start(idx))
-    }
-}
-
-impl EofData for ExtBytecode {
-    fn data(&self) -> &[u8] {
-        self.base.eof().expect("eof").data()
-    }
-
-    fn data_slice(&self, offset: usize, len: usize) -> &[u8] {
-        self.base.eof().expect("eof").data_slice(offset, len)
-    }
-
-    fn data_size(&self) -> usize {
-        self.base.eof().expect("eof").header.data_size as usize
-    }
-}
-
-impl EofContainer for ExtBytecode {
-    fn eof_container(&self, index: usize) -> Option<&Bytes> {
-        self.base
-            .eof()
-            .and_then(|eof| eof.body.container_section.get(index))
-    }
-}
-
 impl LegacyBytecode for ExtBytecode {
     fn bytecode_len(&self) -> usize {
-        // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
-        assume!(!self.base.is_eof());
         self.base.len()
     }
 
     fn bytecode_slice(&self) -> &[u8] {
-        // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
-        assume!(!self.base.is_eof());
         self.base.original_byte_slice()
     }
 }

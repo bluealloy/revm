@@ -80,7 +80,7 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
 pub fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
     cfg_if::cfg_if! {
         if #[cfg(feature = "c-kzg")] {
-            let kzg_settings = c_kzg::ethereum_kzg_settings(0);
+            let kzg_settings = c_kzg::ethereum_kzg_settings(8);
             kzg_settings.verify_kzg_proof(commitment, z, y, proof).unwrap_or(false)
         } else if #[cfg(feature = "kzg-rs")] {
             let env = kzg_rs::EnvKzgSettings::default();

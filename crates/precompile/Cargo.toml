@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "21.0.0"
+version = "24.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -19,6 +19,11 @@ workspace = true
 [dependencies]
 # revm
 primitives.workspace = true
+
+# modexp precompiles
+aurora-engine-modexp.workspace = true
+# gmp wrapper
+rug = { workspace = true, features = ["integer"], optional = true }
 
 # static precompile sets.
 once_cell = { workspace = true, features = ["alloc"] }
@@ -38,9 +43,6 @@ libsecp256k1 = { workspace = true, features = [
 # SHA2-256 and RIPEMD-160
 sha2.workspace = true
 ripemd.workspace = true
-
-# modexp
-aurora-engine-modexp.workspace = true
 
 # Optionally use substrate implementation for eip1962
 bn = { workspace = true, optional = true }
@@ -66,14 +68,16 @@ blst = { workspace = true, optional = true }
 ark-bls12-381 = { workspace = true, features = ["curve"] }
 
 # p256verify precompile
-p256 = { workspace = true, optional = true, features = ["ecdsa"] }
+p256 = { workspace = true, features = ["ecdsa"] }
 
 # utils
 cfg-if.workspace = true
+arrayref = "0.3.6"
 
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
+ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]
@@ -87,19 +91,18 @@ std = [
 	"c-kzg?/std",
 	"secp256k1?/std",
 	"libsecp256k1?/std",
-	"aurora-engine-modexp/std",
-	"p256?/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
+	"aurora-engine-modexp/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
+	"ark-std/std",
+	"p256/std",
+	"rug?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
-
-# Enables the p256verify precompile.
-secp256r1 = ["dep:p256"]
 
 # These libraries may not work on all no_std platforms as they depend on C.
 
@@ -124,8 +127,12 @@ blst = ["dep:blst"]
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
 
+# Use rug (that wraps gmp) for modexp precompile.
+# It is faster library but licences as GPL code, if enabled please make sure to follow the license.
+gmp = ["dep:rug"]
+
 [[bench]]
 name = "bench"
-path = "benches/bench.rs"
+path = "bench/main.rs"
 harness = false
 required-features = ["secp256k1"]

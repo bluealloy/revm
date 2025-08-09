@@ -1,9 +1,9 @@
+//! Common test utilities used to compare execution results against testdata.
 #![allow(dead_code)]
 
 use revm::{
-    context_interface::result::{
-        ExecutionResult, HaltReason, Output, ResultAndState, SuccessReason,
-    },
+    context::result::ResultAndState,
+    context_interface::result::{ExecutionResult, HaltReason, Output, SuccessReason},
     primitives::Bytes,
     state::EvmState,
 };
@@ -45,9 +45,10 @@ pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
     filename: &str,
     output: &ResultAndState<HaltReasonTy>,
 ) where
-    HaltReasonTy: serde::Serialize + serde::de::DeserializeOwned + PartialEq,
+    HaltReasonTy: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq,
 {
     use std::{fs, path::PathBuf};
+
     let tests_dir = PathBuf::from(TESTS_TESTDATA);
     let testdata_file = tests_dir.join(filename);
 
@@ -70,7 +71,7 @@ pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
     let expected_json = fs::read_to_string(&testdata_file).unwrap();
 
     // Deserialize to actual ResultAndState object for proper comparison
-    let expected: ResultAndState<HaltReasonTy> = serde_json::from_str(&expected_json).unwrap();
+    let expected = serde_json::from_str(&expected_json).unwrap();
 
     // Compare the output objects directly
     if output != &expected {
@@ -79,8 +80,7 @@ pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
         let expected_pretty = serde_json::to_string_pretty(&expected).unwrap();
 
         panic!(
-            "Value does not match testdata.\nExpected:\n{}\n\nActual:\n{}",
-            expected_pretty, output_json
+            "Value does not match testdata.\nExpected:\n{expected_pretty}\n\nActual:\n{output_json}",
         );
     }
 }
@@ -94,18 +94,18 @@ pub(crate) fn compare_or_save_testdata<HaltReasonTy>(
 #[test]
 fn template_test() {
     // Create a minimal result and state
-    let result: ResultAndState<HaltReason> = ResultAndState {
-        result: ExecutionResult::Success {
+    let result = ResultAndState::new(
+        ExecutionResult::Success {
             reason: SuccessReason::Stop,
             gas_used: 1000,
             gas_refunded: 0,
             logs: vec![],
             output: Output::Call(Bytes::from(vec![4, 5, 6])),
         },
-        state: EvmState::default(),
-    };
+        EvmState::default(),
+    );
 
     // Simply use the testdata comparison utility
     // No assertions needed - full validation is done by comparing with testdata
-    compare_or_save_testdata("template_test.json", &result);
+    compare_or_save_testdata::<HaltReason>("template_test.json", &result);
 }

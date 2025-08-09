@@ -9,12 +9,20 @@ use state::AccountInfo;
 /// at every transaction when evm output is applied to CacheState.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheAccount {
+    /// Account information and storage, if account exists.
     pub account: Option<PlainAccount>,
+    /// Account status flags.
     pub status: AccountStatus,
 }
 
 impl From<BundleAccount> for CacheAccount {
     fn from(account: BundleAccount) -> Self {
+        CacheAccount::from(&account)
+    }
+}
+
+impl From<&BundleAccount> for CacheAccount {
+    fn from(account: &BundleAccount) -> Self {
         let storage = account
             .storage
             .iter()
@@ -276,9 +284,9 @@ impl CacheAccount {
         })
     }
 
-    // Updates the account with new information and storage changes.
-    //
-    // Merges the provided storage values with the existing storage and updates the account status.
+    /// Updates the account with new information and storage changes.
+    ///
+    /// Merges the provided storage values with the existing storage and updates the account status.
     pub fn change(
         &mut self,
         new: AccountInfo,

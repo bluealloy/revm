@@ -2,7 +2,7 @@ use context_interface::CreateScheme;
 use primitives::{Address, Bytes, U256};
 
 /// Inputs for a create call
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     /// Caller address of the EVM

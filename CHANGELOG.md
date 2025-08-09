@@ -1,5 +1,142 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v82
+date 14.07.2025
+
+Fix for inspector not calling `step_end`.
+
+* `revm-context`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revm-interpreter`: 23.0.1 -> 23.0.2 (✓ API compatible changes)
+* `revm-precompile`: 24.0.0 -> 24.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revm-inspector`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `revme`: 7.0.3 -> 7.0.4 (✓ API compatible changes)
+* `op-revm`: 8.0.2 -> 8.0.3 (✓ API compatible changes)
+* `custom_precompile_journal`: 0.1.0
+* `revm`: 27.0.2 -> 27.0.3
+* `revm-statetest-types`: 8.0.3 -> 8.0.4
+
+# v81
+date: 03.07.2025
+
+Fix inspector step_end panic for opcode fn.
+
+* `revm-bytecode`: 6.0.0 -> 6.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revm-inspector`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revme`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+* `custom_precompile_journal`: 0.1.0
+* `revm-state`: 7.0.0 -> 7.0.1
+* `revm-database-interface`: 7.0.0 -> 7.0.1
+* `revm-context-interface`: 8.0.0 -> 8.0.1
+* `revm-context`: 8.0.1 -> 8.0.2
+* `revm-database`: 7.0.0 -> 7.0.1
+* `revm-interpreter`: 23.0.0 -> 23.0.1
+* `revm`: 27.0.1 -> 27.0.2
+* `revm-statetest-types`: 8.0.2 -> 8.0.3
+* `op-revm`: 8.0.1 -> 8.0.2
+
+# v80
+date 01.07.2025
+
+Fix `build` and `build_fill` for OpTransactionBuilder
+
+* `revm-context`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-handler`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm-inspector`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+* `revm`: 27.0.0 -> 27.0.1 (✓ API compatible changes)
+* `op-revm`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
+
+# v79
+date:  01.07.2025
+
+Fix for bytecode eq operation.
+
+* `revm-bytecode`: 5.0.0 -> 6.0.0 (⚠ API breaking changes)
+* `revm-state`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-context`: 7.0.1 -> 8.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 22.0.1 -> 23.0.0 (✓ API compatible changes)
+* `revm-precompile`: 23.0.0 -> 24.0.0 (✓ API compatible changes)
+* `revm-handler`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 7.0.1 -> 8.0.0 (✓ API compatible changes)
+* `revm`: 26.0.1 -> 27.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 8.0.1 -> 8.0.2 (✓ API compatible changes)
+* `revme`: 7.0.1 -> 7.0.2 (✓ API compatible changes)
+* `op-revm`: 7.0.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-database`: 6.0.0 -> 7.0.0
+
+# v78
+date: 20.05.2025
+
+Quick fix for not calling `frame_stack.clear()` https://github.com/bluealloy/revm/pull/2656
+
+* `revm-context`: 7.0.0 -> 7.0.1 (✓ API compatible changes)
+* `revm-interpreter`: 22.0.0 -> 22.0.1 (✓ API compatible changes)
+* `revm-precompile`: 23.0.0 -> 23.0.1 (✓ API compatible changes)
+* `revm-handler`: 7.0.0 -> 7.0.1 (✓ API compatible changes)
+* `revm-inspector`: 7.0.0 -> 7.0.1
+* `revm`: 26.0.0 -> 26.0.1
+* `revm-statetest-types`: 8.0.0 -> 8.0.1
+* `revme`: 7.0.0 -> 7.0.1
+* `op-revm`: 7.0.0 -> 7.0.1
+
+# v77
+date: 19.05.2025
+
+Perf upgrade and support for osaka devnet-2 EIPs.
+
+* `revm-primitives`: 19.2.0 -> 20.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 4.1.0 -> 5.0.0 (⚠ API breaking changes)
+* `revm-state`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-context`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-database`: 5.0.0 -> 6.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 21.0.0 -> 22.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 22.0.0 -> 23.0.0 (⚠ API breaking changes)
+* `revm-handler`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `revm`: 25.0.0 -> 26.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 7.0.0 -> 8.0.0 (✓ API compatible changes)
+* `revme`: 6.0.0 -> 7.0.0 (⚠ API breaking changes)
+* `op-revm`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+
+
+# v76
+date: 06.05.2025
+
+Introduction of multi transaction.
+
+* `revm-primitives`: 19.1.0 -> 19.2.0 (✓ API compatible changes)
+* `revm-bytecode`: 4.0.1 -> 4.1.0 (✓ API compatible changes)
+* `revm-state`: 4.0.1 -> 5.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 4.0.1 -> 5.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 5.0.0 -> 6.0.0 (⚠ API breaking changes)
+* `revm-context`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm-database`: 4.0.1 -> 5.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 20.0.0 -> 21.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 21.0.0 -> 22.0.0 (✓ API compatible changes)
+* `revm-handler`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+* `revm`: 24.0.1 -> 25.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 6.0.0 -> 7.0.0 (✓ API compatible changes)
+* `revme`: 5.1.1 -> 6.0.0 (⚠ API breaking changes)
+* `op-revm`: 5.0.1 -> 6.0.0 (⚠ API breaking changes)
+
+# v75 tag
+date: 31.05.2025
+
+Maintainance release.
+
+* `revm-context`: 5.0.0 -> 5.0.1
+* `revm-handler`: 5.0.0 -> 5.0.1
+* `revm-inspector`: 5.0.0 -> 5.0.1
+* `revm`: 24.0.0 -> 24.0.1
+* `revm-statetest-type`: 5.0.0 -> 6.0.0
+* `op-revm`: 5.0.0 -> 5.0.1
+
 # v74 tag
 date 23.05.2025
 

@@ -1,8 +1,10 @@
 pub mod analysis;
 pub mod burntpix;
 pub mod evm_build;
+pub mod gas_cost_estimator;
 pub mod snailtracer;
 pub mod transfer;
+pub mod transfer_multi;
 
 use clap::{Parser, ValueEnum};
 
@@ -13,6 +15,8 @@ pub enum BenchName {
     Snailtracer,
     Transfer,
     EvmBuild,
+    TransferMulti,
+    GasCostEstimator,
 }
 
 impl BenchName {
@@ -21,7 +25,9 @@ impl BenchName {
         BenchName::Burntpix,
         BenchName::Snailtracer,
         BenchName::Transfer,
+        BenchName::TransferMulti,
         BenchName::EvmBuild,
+        BenchName::GasCostEstimator,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -31,6 +37,8 @@ impl BenchName {
             BenchName::Snailtracer => "snailtracer",
             BenchName::Transfer => "transfer",
             BenchName::EvmBuild => "evm-build",
+            BenchName::TransferMulti => "transfer-multi",
+            BenchName::GasCostEstimator => "gas-cost-estimator",
         }
     }
 }
@@ -77,6 +85,12 @@ impl Cmd {
             }
             BenchName::EvmBuild => {
                 evm_build::run(&mut criterion);
+            }
+            BenchName::TransferMulti => {
+                transfer_multi::run(&mut criterion);
+            }
+            BenchName::GasCostEstimator => {
+                gas_cost_estimator::run(&mut criterion);
             }
         }
     }

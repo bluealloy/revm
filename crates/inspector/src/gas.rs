@@ -79,11 +79,11 @@ impl GasInspector {
 mod tests {
     use super::*;
     use crate::{InspectEvm, Inspector};
-    use context::Context;
+    use context::{Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
-        interpreter_types::{Jumps, LoopControl, ReturnData},
+        interpreter_types::{Jumps, ReturnData},
         CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
     };
     use primitives::{Address, Bytes, TxKind};
@@ -92,22 +92,26 @@ mod tests {
     #[derive(Default, Debug)]
     struct StackInspector {
         pc: usize,
+        opcode: u8,
         gas_inspector: GasInspector,
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
     impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for StackInspector {
         fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            self.gas_inspector.initialize_interp(interp.control.gas());
+            self.gas_inspector.initialize_interp(&interp.gas);
         }
 
         fn step(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
             self.pc = interp.bytecode.pc();
-            self.gas_inspector.step(interp.control.gas());
+            self.opcode = interp.bytecode.opcode();
+            self.gas_inspector.step(&interp.gas);
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            self.gas_inspector.step_end(interp.control.gas_mut());
+            interp.bytecode.pc();
+            interp.bytecode.opcode();
+            self.gas_inspector.step_end(&mut interp.gas);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
         }
@@ -140,18 +144,20 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let ctx = Context::mainnet()
-            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .modify_tx_chained(|tx| {
-                tx.caller = BENCH_CALLER;
-                tx.kind = TxKind::Call(BENCH_TARGET);
-                tx.gas_limit = 21100;
-            });
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode.clone()));
 
         let mut evm = ctx.build_mainnet_with_inspector(StackInspector::default());
 
         // Run evm.
-        evm.inspect_replay().unwrap();
+        evm.inspect_one_tx(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(BENCH_TARGET))
+                .gas_limit(21100)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
 
         let inspector = &evm.inspector;
 
@@ -246,16 +252,13 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let ctx = Context::mainnet()
+        let mut evm = Context::mainnet()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .modify_tx_chained(|tx| {
-                tx.caller = BENCH_CALLER;
-                tx.kind = TxKind::Call(BENCH_TARGET);
-            });
+            .build_mainnet_with_inspector(inspector);
 
-        let mut evm = ctx.build_mainnet_with_inspector(inspector);
-
-        let _ = evm.inspect_replay().unwrap();
+        let _ = evm
+            .inspect_one_tx(TxEnv::builder_for_bench().build().unwrap())
+            .unwrap();
         assert_eq!(evm.inspector.return_buffer.len(), 3);
         assert_eq!(
             evm.inspector.return_buffer,

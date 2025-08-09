@@ -1,24 +1,30 @@
 use revm::{
-    context::{Cfg, JournalOutput},
+    context::Cfg,
     context_interface::{
         result::{HaltReason, InvalidTransaction},
         Block, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, Frame, FrameResult,
+        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, FrameResult, FrameTr,
         Handler,
     },
-    interpreter::FrameInput,
+    interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
+    state::EvmState,
 };
 
 use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
 
+/// Custom handler that implements ERC20 token gas payment.
+/// Instead of paying gas in ETH, transactions pay gas using ERC20 tokens.
+/// The tokens are transferred from the transaction sender to a treasury address.
+#[derive(Debug)]
 pub struct Erc20MainnetHandler<EVM, ERROR, FRAME> {
     _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
 impl<CTX, ERROR, FRAME> Erc20MainnetHandler<CTX, ERROR, FRAME> {
+    /// Creates a new ERC20 gas payment handler
     pub fn new() -> Self {
         Self {
             _phantom: core::marker::PhantomData,
@@ -34,13 +40,12 @@ impl<EVM, ERROR, FRAME> Default for Erc20MainnetHandler<EVM, ERROR, FRAME> {
 
 impl<EVM, ERROR, FRAME> Handler for Erc20MainnetHandler<EVM, ERROR, FRAME>
 where
-    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>>,
-    FRAME: Frame<Evm = EVM, Error = ERROR, FrameResult = FrameResult, FrameInit = FrameInput>,
+    EVM: EvmTr<Context: ContextTr<Journal: JournalTr<State = EvmState>>, Frame = FRAME>,
+    FRAME: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
     ERROR: EvmTrError<EVM>,
 {
     type Evm = EVM;
     type Error = ERROR;
-    type Frame = FRAME;
     type HaltReason = HaltReason;
 
     fn validate_against_state_and_deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), ERROR> {
@@ -53,7 +58,7 @@ where
         let caller = context.tx().caller();
         let value = context.tx().value();
 
-        let (tx, journal) = context.tx_journal();
+        let (tx, journal) = context.tx_journal_mut();
 
         // Load caller's account.
         let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -61,10 +66,13 @@ where
         validate_account_nonce_and_code(
             &mut caller_account.info,
             tx.nonce(),
-            tx.kind().is_call(),
             is_eip3607_disabled,
             is_nonce_check_disabled,
         )?;
+
+        if tx.kind().is_call() {
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
 
         // Touch account so we know it is changed.
         caller_account.mark_touch();
@@ -76,7 +84,7 @@ where
 
         let account_balance_slot = erc_address_storage(tx.caller());
         let account_balance = context
-            .journal()
+            .journal_mut()
             .sload(TOKEN, account_balance_slot)
             .map(|v| v.data)
             .unwrap_or_default();
@@ -118,7 +126,7 @@ where
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let basefee = context.block().basefee() as u128;
@@ -141,7 +149,7 @@ where
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
-        exec_result: &mut <Self::Frame as Frame>::FrameResult,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let tx = context.tx();
@@ -156,8 +164,7 @@ where
             effective_gas_price
         };
 
-        let reward =
-            coinbase_gas_price.saturating_mul((gas.spent() - gas.refunded() as u64) as u128);
+        let reward = coinbase_gas_price.saturating_mul(gas.used() as u128);
         token_operation::<EVM::Context, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
 
         Ok(())

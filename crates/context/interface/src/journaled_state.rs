@@ -1,19 +1,19 @@
+//! Journaled state trait [`JournalTr`] and related types.
 use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
-use state::{
-    bytecode::{eof::EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
-    Account,
-    Bytecode,
-};
+use state::{Account, Bytecode};
+use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
+    /// Database type that is used in the journal.
     type Database: Database;
-    type FinalOutput;
+    /// State type that is returned by the journal after finalization.
+    type State;
 
     /// Creates new Journaled state.
     ///
@@ -21,10 +21,10 @@ pub trait JournalTr {
     fn new(database: Self::Database) -> Self;
 
     /// Returns the database.
-    fn db_ref(&self) -> &Self::Database;
+    fn db_mut(&mut self) -> &mut Self::Database;
 
     /// Returns the mutable database.
-    fn db(&mut self) -> &mut Self::Database;
+    fn db(&self) -> &Self::Database;
 
     /// Returns the storage value from Journal state.
     ///
@@ -69,6 +69,9 @@ pub trait JournalTr {
     /// Warms the account.
     fn warm_account(&mut self, address: Address);
 
+    /// Warms the coinbase account.
+    fn warm_coinbase_account(&mut self, address: Address);
+
     /// Warms the precompiles.
     fn warm_precompiles(&mut self, addresses: HashSet<Address>);
 
@@ -89,11 +92,23 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
-    /// Increments the nonce of the account.
-    fn inc_account_nonce(
+    /// Increments the balance of the account.
+    fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
-    ) -> Result<Option<u64>, <Self::Database as Database>::Error>;
+        old_balance: U256,
+        bump_nonce: bool,
+    );
+
+    /// Increments the balance of the account.
+    fn balance_incr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error>;
+
+    /// Increments the nonce of the account.
+    fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
     fn load_account(
@@ -126,8 +141,6 @@ pub trait JournalTr {
     }
 
     /// Returns account code bytes and if address is cold loaded.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
     fn code(
         &mut self,
@@ -136,20 +149,12 @@ pub trait JournalTr {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
-
-        let code = if code.is_eof() {
-            EOF_MAGIC_BYTES.clone()
-        } else {
-            code.original_bytes()
-        };
+        let code = code.original_bytes();
 
         Ok(StateLoad::new(code, a.is_cold))
     }
 
     /// Gets code hash of account.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC_HASH`
-    /// (the hash of `0xEF00`).
     fn code_hash(
         &mut self,
         address: Address,
@@ -159,21 +164,17 @@ pub trait JournalTr {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let code = acc.info.code.as_ref().unwrap();
+        let _code = acc.info.code.as_ref().unwrap();
 
-        let hash = if code.is_eof() {
-            EOF_MAGIC_HASH
-        } else if code.is_eip7702() {
-            EIP7702_MAGIC_HASH
-        } else {
-            acc.info.code_hash
-        };
+        let hash = acc.info.code_hash;
 
         Ok(StateLoad::new(hash, acc.is_cold))
     }
 
     /// Called at the end of the transaction to clean all residue data from journal.
-    fn clear(&mut self);
+    fn clear(&mut self) {
+        let _ = self.finalize();
+    }
 
     /// Creates a checkpoint of the current state. State can be revert to this point
     /// if needed.
@@ -197,10 +198,20 @@ pub trait JournalTr {
     /// Returns the depth of the journal.
     fn depth(&self) -> usize;
 
-    /// Does cleanup and returns modified state.
+    /// Take logs from journal.
+    fn take_logs(&mut self) -> Vec<Log>;
+
+    /// Commit current transaction journal and returns transaction logs.
+    fn commit_tx(&mut self);
+
+    /// Discard current transaction journal by removing journal entries and logs and incrementing the transaction id.
     ///
-    /// This resets the [JournalTr] to its initial state.
-    fn finalize(&mut self) -> Self::FinalOutput;
+    /// This function is useful to discard intermediate state that is interrupted by error and it will not revert
+    /// any already committed changes and it is safe to call it multiple times.
+    fn discard_tx(&mut self);
+
+    /// Clear current journal resetting it to initial state and return changes state.
+    fn finalize(&mut self) -> Self::State;
 }
 
 /// Transfer and creation result
@@ -215,10 +226,12 @@ pub enum TransferError {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
+    /// Checkpoint to where on revert we will go back to.
     pub log_i: usize,
+    /// Checkpoint to where on revert we will go back to and revert other journal entries.
     pub journal_i: usize,
 }
 

@@ -6,6 +6,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.4](https://github.com/bluealloy/revm/compare/revme-v7.0.3...revme-v7.0.4) - 2025-07-14
+
+### Other
+
+- incorrect StorageKey and StorageValue parameter order in burntpix benchmark ([#2704](https://github.com/bluealloy/revm/pull/2704))
+
+## [7.0.3](https://github.com/bluealloy/revm/compare/revme-v7.0.2...revme-v7.0.3) - 2025-07-03
+
+### Other
+
+- update Cargo.lock dependencies
+
+## [7.0.2](https://github.com/bluealloy/revm/compare/revme-v7.0.1...revme-v7.0.2) - 2025-06-30
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- statetest runner cleanup ([#2665](https://github.com/bluealloy/revm/pull/2665))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+
+## [7.0.1](https://github.com/bluealloy/revm/compare/revme-v7.0.0...revme-v7.0.1) - 2025-06-20
+
+### Other
+
+- updated the following local packages: revm-context-interface, revm-context, revm, revm-inspector, revm-statetest-types
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/revme-v6.0.0...revme-v7.0.0) - 2025-06-19
+
+### Added
+
+- remove EOF ([#2644](https://github.com/bluealloy/revm/pull/2644))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- change blob_max_count to max_blobs_per_tx ([#2608](https://github.com/bluealloy/revm/pull/2608))
+
+### Other
+
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
+## [6.0.0](https://github.com/bluealloy/revm/compare/revme-v5.1.1...revme-v6.0.0) - 2025-06-06
+
+### Added
+
+- Config blob basefee fraction ([#2551](https://github.com/bluealloy/revm/pull/2551))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+- use iter_batched for revme benches ([#2584](https://github.com/bluealloy/revm/pull/2584))
+- unify calling of journal account loading ([#2561](https://github.com/bluealloy/revm/pull/2561))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(cfg)* add tx_chain_id_check fields. Optimize effective gas cost calc ([#2557](https://github.com/bluealloy/revm/pull/2557))
+- add gas-cost-estimator selected bytecodes ([#2555](https://github.com/bluealloy/revm/pull/2555))
+
 ## [5.1.1](https://github.com/bluealloy/revm/compare/revme-v5.1.0...revme-v5.1.1) - 2025-05-31
 
 ### Other

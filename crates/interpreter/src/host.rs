@@ -1,7 +1,7 @@
 use context_interface::{
     context::{ContextTr, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
-    Block, Cfg, Database, JournalTr, LocalContextTr, Transaction, TransactionType,
+    Block, Cfg, Database, JournalTr, Transaction, TransactionType,
 };
 use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 
@@ -26,7 +26,7 @@ pub trait Host {
     /// Block prevrandao, calls ContextTr::block().prevrandao()
     fn prevrandao(&self) -> Option<U256>;
     /// Block number, calls ContextTr::block().number()
-    fn block_number(&self) -> u64;
+    fn block_number(&self) -> U256;
     /// Block timestamp, calls ContextTr::block().timestamp()
     fn timestamp(&self) -> U256;
     /// Block beneficiary, calls ContextTr::block().beneficiary()
@@ -42,8 +42,6 @@ pub trait Host {
     fn caller(&self) -> Address;
     /// Transaction blob hash, calls `ContextTr::tx().blob_hash(number)`
     fn blob_hash(&self, number: usize) -> Option<U256>;
-    /// Initcodes mapped to the hash.
-    fn initcode_by_hash(&mut self, hash: B256) -> Option<Bytes>;
 
     /* Config */
 
@@ -52,21 +50,21 @@ pub trait Host {
 
     /* Database */
 
-    /// Block hash, calls `ContextTr::journal().db().block_hash(number)`
+    /// Block hash, calls `ContextTr::journal_mut().db().block_hash(number)`
     fn block_hash(&mut self, number: u64) -> Option<B256>;
 
     /* Journal */
 
-    /// Selfdestruct account, calls `ContextTr::journal().selfdestruct(address, target)`
+    /// Selfdestruct account, calls `ContextTr::journal_mut().selfdestruct(address, target)`
     fn selfdestruct(
         &mut self,
         address: Address,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>>;
 
-    /// Log, calls `ContextTr::journal().log(log)`
+    /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
-    /// Sstore, calls `ContextTr::journal().sstore(address, key, value)`
+    /// Sstore, calls `ContextTr::journal_mut().sstore(address, key, value)`
     fn sstore(
         &mut self,
         address: Address,
@@ -74,19 +72,19 @@ pub trait Host {
         value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>>;
 
-    /// Sload, calls `ContextTr::journal().sload(address, key)`
+    /// Sload, calls `ContextTr::journal_mut().sload(address, key)`
     fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
-    /// Tstore, calls `ContextTr::journal().tstore(address, key, value)`
+    /// Tstore, calls `ContextTr::journal_mut().tstore(address, key, value)`
     fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
-    /// Tload, calls `ContextTr::journal().tload(address, key)`
+    /// Tload, calls `ContextTr::journal_mut().tload(address, key)`
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
-    /// Balance, calls `ContextTr::journal().load_account(address)`
+    /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
-    /// Load account delegated, calls `ContextTr::journal().load_account_delegated(address)`
+    /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
-    /// Load account code, calls `ContextTr::journal().load_account_code(address)`
+    /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
-    /// Load account code hash, calls `ContextTr::journal().code_hash(address)`
+    /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 }
 
@@ -113,7 +111,7 @@ impl<CTX: ContextTr> Host for CTX {
         self.block().prevrandao().map(|r| r.into_u256())
     }
 
-    fn block_number(&self) -> u64 {
+    fn block_number(&self) -> U256 {
         self.block().number()
     }
 
@@ -150,21 +148,16 @@ impl<CTX: ContextTr> Host for CTX {
             .map(|t| U256::from_be_bytes(t.0))
     }
 
-    fn initcode_by_hash(&mut self, hash: B256) -> Option<Bytes> {
-        self.local().get_validated_initcode(hash)
-    }
-
     /* Config */
 
     fn max_initcode_size(&self) -> usize {
-        self.cfg().max_code_size().saturating_mul(2)
+        self.cfg().max_initcode_size()
     }
 
     /* Database */
 
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        self.journal()
-            .db()
+        self.db_mut()
             .block_hash(requested_number)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -175,7 +168,7 @@ impl<CTX: ContextTr> Host for CTX {
     /* Journal */
 
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.journal()
+        self.journal_mut()
             .load_account_delegated(address)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -185,7 +178,7 @@ impl<CTX: ContextTr> Host for CTX {
 
     /// Gets balance of `address` and if the account is cold.
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.journal()
+        self.journal_mut()
             .load_account(address)
             .map(|acc| acc.map(|a| a.info.balance))
             .map_err(|e| {
@@ -196,7 +189,7 @@ impl<CTX: ContextTr> Host for CTX {
 
     /// Gets code of `address` and if the account is cold.
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.journal()
+        self.journal_mut()
             .code(address)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -206,7 +199,7 @@ impl<CTX: ContextTr> Host for CTX {
 
     /// Gets code hash of `address` and if the account is cold.
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.journal()
+        self.journal_mut()
             .code_hash(address)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -216,7 +209,7 @@ impl<CTX: ContextTr> Host for CTX {
 
     /// Gets storage value of `address` at `index` and if the account is cold.
     fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
-        self.journal()
+        self.journal_mut()
             .sload(address, index)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -233,7 +226,7 @@ impl<CTX: ContextTr> Host for CTX {
         index: StorageKey,
         value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
-        self.journal()
+        self.journal_mut()
             .sstore(address, index, value)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -243,17 +236,17 @@ impl<CTX: ContextTr> Host for CTX {
 
     /// Gets the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
-        self.journal().tload(address, index)
+        self.journal_mut().tload(address, index)
     }
 
     /// Sets the transient storage value of `address` at `index`.
     fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
-        self.journal().tstore(address, index, value)
+        self.journal_mut().tstore(address, index, value)
     }
 
     /// Emits a log owned by `address` with given `LogData`.
     fn log(&mut self, log: Log) {
-        self.journal().log(log);
+        self.journal_mut().log(log);
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
@@ -262,7 +255,7 @@ impl<CTX: ContextTr> Host for CTX {
         address: Address,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
-        self.journal()
+        self.journal_mut()
             .selfdestruct(address, target)
             .map_err(|e| {
                 *self.error() = Err(e.into());
@@ -272,6 +265,7 @@ impl<CTX: ContextTr> Host for CTX {
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
+#[derive(Debug)]
 pub struct DummyHost;
 
 impl Host for DummyHost {
@@ -295,8 +289,8 @@ impl Host for DummyHost {
         None
     }
 
-    fn block_number(&self) -> u64 {
-        0
+    fn block_number(&self) -> U256 {
+        U256::ZERO
     }
 
     fn timestamp(&self) -> U256 {
@@ -317,10 +311,6 @@ impl Host for DummyHost {
 
     fn caller(&self) -> Address {
         Address::ZERO
-    }
-
-    fn initcode_by_hash(&mut self, _hash: B256) -> Option<Bytes> {
-        None
     }
 
     fn blob_hash(&self, _number: usize) -> Option<U256> {

@@ -10,7 +10,9 @@ use state::AccountInfo;
 /// create needed Reverts.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct TransitionAccount {
+    /// Account information, if account exists.
     pub info: Option<AccountInfo>,
+    /// Current account status.
     pub status: AccountStatus,
     /// Previous account info is needed for account that got initially loaded.
     /// Initially loaded account are not present inside bundle and are needed

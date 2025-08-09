@@ -20,7 +20,6 @@ pub mod interface;
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
-#[cfg(feature = "secp256r1")]
 pub mod secp256r1;
 pub mod utilities;
 
@@ -36,6 +35,9 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(not(target_feature = "avx2"))]
+use arrayref as _;
+
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
@@ -49,6 +51,10 @@ cfg_if::cfg_if! {
         use ark_serialize as _;
     }
 }
+
+// silence aurora-engine-modexp if gmp is enabled
+#[cfg(feature = "gmp")]
+use aurora_engine_modexp as _;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
@@ -196,7 +202,7 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::prague().clone();
-            precompiles.extend([modexp::OSAKA]);
+            precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY]);
             Box::new(precompiles)
         })
     }

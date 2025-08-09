@@ -1,20 +1,26 @@
-use crate::{instructions::EthInstructions, EthPrecompiles};
-use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, Journal, TxEnv};
+use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
+use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
+/// Type alias for a mainnet EVM instance with standard Ethereum components.
 pub type MainnetEvm<CTX, INSP = ()> =
-    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles>;
+    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles, EthFrame<EthInterpreter>>;
 
+/// Type alias for a mainnet context with standard Ethereum environment types.
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
 
+/// Trait for building mainnet EVM instances from contexts.
 pub trait MainBuilder: Sized {
+    /// The context type that will be used in the EVM.
     type Context;
 
+    /// Builds a mainnet EVM instance without an inspector.
     fn build_mainnet(self) -> MainnetEvm<Self::Context>;
 
+    /// Builds a mainnet EVM instance with the provided inspector.
     fn build_mainnet_with_inspector<INSP>(self, inspector: INSP)
         -> MainnetEvm<Self::Context, INSP>;
 }
@@ -35,6 +41,7 @@ where
             inspector: (),
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
+            frame_stack: FrameStack::new(),
         }
     }
 
@@ -47,12 +54,14 @@ where
             inspector,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
+            frame_stack: FrameStack::new(),
         }
     }
 }
 
 /// Trait used to initialize Context with default mainnet types.
 pub trait MainContext {
+    /// Creates a new mainnet context with default configuration.
     fn mainnet() -> Self;
 }
 
@@ -72,8 +81,8 @@ mod test {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
-    use context::Context;
-    use context_interface::{transaction::Authorization, TransactionType};
+    use context::{Context, TxEnv};
+    use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
     use primitives::{hardfork::SpecId, TxKind, U256};
     use primitives::{StorageKey, StorageValue};
@@ -93,20 +102,24 @@ mod test {
 
         let ctx = Context::mainnet()
             .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
-            .with_db(BenchmarkDB::new_bytecode(bytecode))
-            .modify_tx_chained(|tx| {
-                tx.tx_type = TransactionType::Eip7702.into();
-                tx.gas_limit = 100_000;
-                tx.authorization_list = vec![Either::Left(auth)];
-                tx.caller = EEADDRESS;
-                tx.kind = TxKind::Call(signer.address());
-            });
+            .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();
 
-        let ok = evm.replay().unwrap();
+        let state = evm
+            .transact(
+                TxEnv::builder()
+                    .gas_limit(100_000)
+                    .authorization_list(vec![Either::Left(auth)])
+                    .caller(EEADDRESS)
+                    .kind(TxKind::Call(signer.address()))
+                    .build()
+                    .unwrap(),
+            )
+            .unwrap()
+            .state;
 
-        let auth_acc = ok.state.get(&signer.address()).unwrap();
+        let auth_acc = state.get(&signer.address()).unwrap();
         assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
         assert_eq!(auth_acc.info.nonce, 1);
         assert_eq!(

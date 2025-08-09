@@ -1,5 +1,7 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
-use super::{JournalEntryTr, JournalOutput};
+use crate::entry::SelfdestructionRevertStatus;
+
+use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
@@ -10,19 +12,10 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    Address,
-    HashMap,
-    HashSet,
-    Log,
-    StorageKey,
-    StorageValue,
-    B256,
-    KECCAK_EMPTY,
-    U256,
+    Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
-
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -39,8 +32,14 @@ pub struct JournalInner<ENTRY> {
     pub logs: Vec<Log>,
     /// The current call stack depth
     pub depth: usize,
-    /// The journal of state changes, one for each call
+    /// The journal of state changes, one for each transaction
     pub journal: Vec<ENTRY>,
+    /// Global transaction id that represent number of transactions executed (Including reverted ones).
+    /// It can be different from number of `journal_history` as some transaction could be
+    /// reverted or had a error on execution.
+    ///
+    /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
+    pub transaction_id: usize,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -61,6 +60,8 @@ pub struct JournalInner<ENTRY> {
     /// Note that this not include newly loaded accounts, account and storage
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
+    /// Warm coinbase address, stored separately to avoid cloning preloaded addresses.
+    pub warm_coinbase_address: Option<Address>,
     /// Precompile addresses
     pub precompiles: HashSet<Address>,
 }
@@ -81,21 +82,30 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
-            journal: Vec::new(),
+            journal: Vec::default(),
+            transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
             warm_preloaded_addresses: HashSet::default(),
             precompiles: HashSet::default(),
+            warm_coinbase_address: None,
         }
     }
 
-    /// Take the [`JournalOutput`] and clears the journal by resetting it to initial state.
-    ///
-    /// Note: Precompile addresses and spec are preserved and initial state of
-    /// warm_preloaded_addresses will contain precompiles addresses.
-    /// Precompile addresses
+    /// Returns the logs
     #[inline]
-    pub fn clear_and_take_output(&mut self) -> JournalOutput {
+    pub fn take_logs(&mut self) -> Vec<Log> {
+        mem::take(&mut self.logs)
+    }
+
+    /// Prepare for next transaction, by committing the current journal to history, incrementing the transaction id
+    /// and returning the logs.
+    ///
+    /// This function is used to prepare for next transaction. It will save the current journal
+    /// and clear the journal for the next transaction.
+    ///
+    /// `commit_tx` is used even for discarding transactions so transaction_id will be incremented.
+    pub fn commit_tx(&mut self) {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -104,22 +114,101 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs,
             depth,
             journal,
+            transaction_id,
             spec,
             warm_preloaded_addresses,
             precompiles,
+            warm_coinbase_address,
         } = self;
-        // Spec is not changed. It is always set again execution.
+        // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
-        // Load precompiles into warm_preloaded_addresses.
-        warm_preloaded_addresses.clone_from(precompiles);
-
-        let state = mem::take(state);
-        let logs = mem::take(logs);
+        let _ = precompiles;
+        let _ = state;
         transient_storage.clear();
-        journal.clear();
         *depth = 0;
 
-        JournalOutput { state, logs }
+        // Do nothing with journal history so we can skip cloning present journal.
+        journal.clear();
+
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
+        // Load precompiles into warm_preloaded_addresses.
+        // TODO for precompiles we can use max transaction_id so they are always touched warm loaded.
+        // at least after state clear EIP.
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
+        // increment transaction id.
+        *transaction_id += 1;
+        logs.clear();
+    }
+
+    /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
+    pub fn discard_tx(&mut self) {
+        // if there is no journal entries, there has not been any changes.
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            transaction_id,
+            spec,
+            warm_preloaded_addresses,
+            warm_coinbase_address,
+            precompiles,
+        } = self;
+
+        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        // iterate over all journals entries and revert our global state
+        journal.drain(..).rev().for_each(|entry| {
+            entry.revert(state, None, is_spurious_dragon_enabled);
+        });
+        transient_storage.clear();
+        *depth = 0;
+        logs.clear();
+        *transaction_id += 1;
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
+    }
+
+    /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
+    ///
+    /// Note: Precompile addresses and spec are preserved and initial state of
+    /// warm_preloaded_addresses will contain precompiles addresses.
+    #[inline]
+    pub fn finalize(&mut self) -> EvmState {
+        // Clears all field from JournalInner. Doing it this way to avoid
+        // missing any field.
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            transaction_id,
+            spec,
+            warm_preloaded_addresses,
+            warm_coinbase_address,
+            precompiles,
+        } = self;
+        // Spec is not changed. And it is always set again in execution.
+        let _ = spec;
+        // Clear coinbase address warming for next tx
+        *warm_coinbase_address = None;
+        // Load precompiles into warm_preloaded_addresses.
+        reset_preloaded_addresses(warm_preloaded_addresses, precompiles);
+
+        let state = mem::take(state);
+        logs.clear();
+        transient_storage.clear();
+
+        // clear journal and journal history.
+        journal.clear();
+        *depth = 0;
+        // reset transaction id.
+        *transaction_id = 0;
+
+        state
     }
 
     /// Return reference to state.
@@ -199,24 +288,56 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.set_code_with_hash(address, code, hash)
     }
 
-    /// Increments the nonce of the account.
-    ///
-    /// # Returns
-    ///
-    /// Returns the new nonce if it did not overflow, otherwise returns `None`.
+    /// Add journal entry for caller accounting.
     #[inline]
-    pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
-        let account = self.state.get_mut(&address).unwrap();
-        // Check if nonce is going to overflow.
-        if account.info.nonce == u64::MAX {
-            return None;
+    pub fn caller_accounting_journal_entry(
+        &mut self,
+        address: Address,
+        old_balance: U256,
+        bump_nonce: bool,
+    ) {
+        // account balance changed.
+        self.journal
+            .push(ENTRY::balance_changed(address, old_balance));
+        // account is touched.
+        self.journal.push(ENTRY::account_touched(address));
+
+        if bump_nonce {
+            // nonce changed.
+            self.journal.push(ENTRY::nonce_changed(address));
         }
-        Self::touch_account(&mut self.journal, address, account);
+    }
+
+    /// Increments the balance of the account.
+    ///
+    /// Mark account as touched.
+    #[inline]
+    pub fn balance_incr<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), DB::Error> {
+        let account = self.load_account(db, address)?.data;
+        let old_balance = account.info.balance;
+        account.info.balance = account.info.balance.saturating_add(balance);
+
+        // march account as touched.
+        if !account.is_touched() {
+            account.mark_touch();
+            self.journal.push(ENTRY::account_touched(address));
+        }
+
+        // add journal entry for balance increment.
+        self.journal
+            .push(ENTRY::balance_changed(address, old_balance));
+        Ok(())
+    }
+
+    /// Increments the nonce of the account.
+    #[inline]
+    pub fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journal.push(ENTRY::nonce_changed(address));
-
-        account.info.nonce += 1;
-
-        Some(account.info.nonce)
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
@@ -312,10 +433,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // set account status to create.
-        target_acc.mark_created();
+        let is_created_globally = target_acc.mark_created_locally();
 
         // this entry will revert set nonce.
-        last_journal.push(ENTRY::account_created(target_address));
+        last_journal.push(ENTRY::account_created(target_address, is_created_globally));
         target_acc.info.code = None;
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
@@ -374,7 +495,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .drain(checkpoint.journal_i..)
             .rev()
             .for_each(|entry| {
-                entry.revert(state, transient_storage, is_spurious_dragon_enabled);
+                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
             });
     }
 
@@ -422,17 +543,25 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
-        let previously_destroyed = acc.is_selfdestructed();
+
+        let destroyed_status = if !acc.is_selfdestructed() {
+            SelfdestructionRevertStatus::GloballySelfdestroyed
+        } else if !acc.is_selfdestructed_locally() {
+            SelfdestructionRevertStatus::LocallySelfdestroyed
+        } else {
+            SelfdestructionRevertStatus::RepeatedSelfdestruction
+        };
+
         let is_cancun_enabled = spec.is_enabled_in(CANCUN);
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
-        let journal_entry = if acc.is_created() || !is_cancun_enabled {
-            acc.mark_selfdestruct();
+        let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
+            acc.mark_selfdestructed_locally();
             acc.info.balance = U256::ZERO;
             Some(ENTRY::account_destroyed(
                 address,
                 target,
-                previously_destroyed,
+                destroyed_status,
                 balance,
             ))
         } else if address != target {
@@ -454,7 +583,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             data: SelfDestructResult {
                 had_value: !balance.is_zero(),
                 target_exists: !is_empty,
-                previously_destroyed,
+                previously_destroyed: destroyed_status
+                    == SelfdestructionRevertStatus::RepeatedSelfdestruction,
             },
             is_cold,
         })
@@ -467,19 +597,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false)
-    }
-
-    /// Initial load of account. This load will not be tracked inside journal
-    #[inline]
-    #[deprecated(note = "Use `load_account_optional_with_storage` instead")]
-    pub fn initial_account_load<DB: Database>(
-        &mut self,
-        db: &mut DB,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional_with_storage(db, address, false, storage_keys)
+        self.load_account_optional(db, address, false, [])
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -497,7 +615,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address, is_eip7702_enabled)?;
+        let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -512,11 +630,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(db, address)?;
-            // we need to skip this flag for the full EVM gas compatibility
-            // because all EVM contracts are represented though EIP-7702
-            if !fluentbase_types::is_system_precompile(&address) {
-                account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
-            }
+            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
         Ok(account_load)
@@ -534,7 +648,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true)
+        self.load_account_optional(db, address, true, [])
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
@@ -544,23 +658,23 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
         load_code: bool,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional_with_storage(db, address, load_code, [])
-    }
-
-    /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
-    pub fn load_account_optional_with_storage<DB: Database>(
-        &mut self,
-        db: &mut DB,
-        address: Address,
-        load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
-                let is_cold = account.mark_warm();
+                let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
+                // if it is colad loaded we need to clear local flags that can interact with selfdestruct
+                if is_cold {
+                    // if it is cold loaded and we have selfdestructed locally it means that
+                    // account was selfdestructed in previous transaction and we need to clear its information and storage.
+                    if account.is_selfdestructed_locally() {
+                        account.selfdestruct();
+                        account.unmark_selfdestructed_locally();
+                    }
+                    // unmark locally created
+                    account.unmark_created_locally();
+                }
                 StateLoad {
                     data: account,
                     is_cold,
@@ -570,11 +684,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
-                    Account::new_not_existing()
+                    Account::new_not_existing(self.transaction_id)
                 };
 
-                // Precompiles among some other account are warm loaded so we need to take that into account
-                let is_cold = !self.warm_preloaded_addresses.contains(&address);
+                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
+                let is_cold = !self.warm_preloaded_addresses.contains(&address)
+                    && self.warm_coinbase_address.as_ref() != Some(&address);
 
                 StateLoad {
                     data: vac.insert(account),
@@ -582,6 +697,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
         };
+
         // journal loading of cold account.
         if load.is_cold {
             self.journal.push(ENTRY::account_warmed(address));
@@ -599,7 +715,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         for storage_key in storage_keys.into_iter() {
-            sload_with_account(load.data, db, &mut self.journal, address, storage_key)?;
+            sload_with_account(
+                load.data,
+                db,
+                &mut self.journal,
+                self.transaction_id,
+                address,
+                storage_key,
+            )?;
         }
         Ok(load)
     }
@@ -619,7 +742,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
-        sload_with_account(account, db, &mut self.journal, address, key)
+        sload_with_account(
+            account,
+            db,
+            &mut self.journal,
+            self.transaction_id,
+            address,
+            key,
+        )
     }
 
     /// Stores storage slot.
@@ -728,6 +858,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
+    transaction_id: usize,
     address: Address,
     key: StorageKey,
 ) -> Result<StateLoad<StorageValue>, DB::Error> {
@@ -735,7 +866,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     let (value, is_cold) = match account.storage.entry(key) {
         Entry::Occupied(occ) => {
             let slot = occ.into_mut();
-            let is_cold = slot.mark_warm();
+            let is_cold = slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
         }
         Entry::Vacant(vac) => {
@@ -746,7 +877,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
                 db.storage(address, key)?
             };
 
-            vac.insert(EvmStorageSlot::new(value));
+            vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)
         }
@@ -758,4 +889,17 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     }
 
     Ok(StateLoad::new(value, is_cold))
+}
+
+fn reset_preloaded_addresses(
+    warm_preloaded_addresses: &mut HashSet<Address>,
+    precompiles: &HashSet<Address>,
+) {
+    // `warm_preloaded_addresses` is append-only, and is initialized with `precompiles`.
+    // Avoid unnecessarily cloning if it hasn't changed.
+    if warm_preloaded_addresses.len() == precompiles.len() {
+        debug_assert_eq!(warm_preloaded_addresses, precompiles);
+        return;
+    }
+    warm_preloaded_addresses.clone_from(precompiles);
 }

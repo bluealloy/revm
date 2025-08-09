@@ -5,18 +5,20 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(not(feature = "std"))]
-extern crate alloc as std;
-
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
+mod either;
 mod gas;
+/// Handler implementations for inspector integration.
 pub mod handler;
 mod inspect;
 mod inspector;
 mod mainnet_inspect;
 mod noop;
 mod traits;
+
+#[cfg(test)]
+mod inspector_tests;
 
 /// Inspector implementations.
 pub mod inspectors {

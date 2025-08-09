@@ -1,16 +1,21 @@
 use core::cmp::Ordering;
 use primitives::U256;
 
+/// Represents the sign of a 256-bit signed integer value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i8)]
 pub enum Sign {
     // Same as `cmp::Ordering`
+    /// Negative value sign
     Minus = -1,
+    /// Zero value sign  
     Zero = 0,
     #[allow(dead_code)] // "constructed" with `mem::transmute` in `i256_sign` below
+    /// Positive value sign
     Plus = 1,
 }
 
+/// The maximum positive value for a 256-bit signed integer.
 pub const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
     0xffffffffffffffff,
     0xffffffffffffffff,
@@ -18,6 +23,7 @@ pub const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
     0x7fffffffffffffff,
 ]);
 
+/// The minimum negative value for a 256-bit signed integer.
 pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x0000000000000000,
     0x0000000000000000,
@@ -27,6 +33,7 @@ pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFF_FFFF_FFFF_FFFF;
 
+/// Determines the sign of a 256-bit signed integer.
 #[inline]
 pub fn i256_sign(val: &U256) -> Sign {
     if val.bit(U256::BITS - 1) {
@@ -37,6 +44,7 @@ pub fn i256_sign(val: &U256) -> Sign {
     }
 }
 
+/// Determines the sign of a 256-bit signed integer and converts it to its absolute value.
 #[inline]
 pub fn i256_sign_compl(val: &mut U256) -> Sign {
     let sign = i256_sign(val);
@@ -54,16 +62,19 @@ fn u256_remove_sign(val: &mut U256) {
     }
 }
 
+/// Computes the two's complement of a U256 value in place.
 #[inline]
 pub fn two_compl_mut(op: &mut U256) {
     *op = two_compl(*op);
 }
 
+/// Computes the two's complement of a U256 value.
 #[inline]
 pub fn two_compl(op: U256) -> U256 {
     op.wrapping_neg()
 }
 
+/// Compares two 256-bit signed integers.
 #[inline]
 pub fn i256_cmp(first: &U256, second: &U256) -> Ordering {
     let first_sign = i256_sign(first);
@@ -76,6 +87,7 @@ pub fn i256_cmp(first: &U256, second: &U256) -> Ordering {
     }
 }
 
+/// Performs signed division of two 256-bit integers.
 #[inline]
 pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     let second_sign = i256_sign_compl(&mut second);
@@ -105,6 +117,7 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     }
 }
 
+/// Performs signed modulo of two 256-bit integers.
 #[inline]
 pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
     let first_sign = i256_sign_compl(&mut first);

@@ -9,7 +9,9 @@ mod alloydb;
 
 pub use database_interface::*;
 
+/// In-memory database implementations.
 pub mod in_memory_db;
+/// State management and tracking.
 pub mod states;
 
 #[cfg(feature = "alloydb")]

@@ -1,6 +1,8 @@
+//! Transaction trait [`Transaction`] and associated types.
 mod alloy_types;
 pub mod eip2930;
 pub mod eip7702;
+mod either;
 pub mod transaction_type;
 
 pub use alloy_types::{
@@ -22,15 +24,18 @@ pub trait TransactionError: Debug + core::error::Error {}
 
 /// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum
 ///
-/// Access to any associated type is gaited behind [`tx_type`][Transaction::tx_type] function.
+/// Access to any associated type is gated behind [`tx_type`][Transaction::tx_type] function.
 ///
 /// It can be extended to support new transaction types and only transaction types can be
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
+    /// EIP-2930 Access list item type.
     type AccessListItem<'a>: AccessListItemTr
     where
         Self: 'a;
+
+    /// EIP-7702 Authorization type.
     type Authorization<'a>: AuthorizationTr
     where
         Self: 'a;
@@ -128,16 +133,6 @@ pub trait Transaction {
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
     fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>>;
 
-    // TODO(EOF)
-    // /// List of initcodes found in Initcode transaction. Initcodes can only be accessed
-    // /// by TXCREATE opcode to create a new EOF contract.
-    // ///
-    // /// Each transaction can contain up to [`primitives::eof::MAX_INITCODE_COUNT`] initcodes,
-    // /// with each initcode not exceeding [`primitives::MAX_INITCODE_SIZE`] bytes in size.
-    // ///
-    // /// EIP link: <https://eips.ethereum.org/EIPS/eip-7873>
-    // fn initcodes(&self) -> &[Bytes];
-
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {
         self.gas_price()
@@ -185,6 +180,11 @@ pub trait Transaction {
     }
 
     /// Returns the effective balance that is going to be spent that depends on base_fee
+    /// Multiplication for gas are done in u128 type (saturated) and value is added as U256 type.
+    ///
+    /// # Reason
+    ///
+    /// This is done for performance reasons and it is known to be safe as there is no more that u128::MAX value of eth in existence.
     ///
     /// This is always strictly less than [`Self::max_balance_spending`].
     ///
@@ -195,26 +195,19 @@ pub trait Transaction {
         blob_price: u128,
     ) -> Result<U256, InvalidTransaction> {
         // gas_limit * max_fee + value + additional_gas_cost
-        let mut effective_balance_spending = U256::from(self.gas_limit())
-            .checked_mul(U256::from(self.effective_gas_price(base_fee)))
-            .and_then(|gas_cost| gas_cost.checked_add(self.value()))
+        let mut effective_balance_spending = (self.gas_limit() as u128)
+            .checked_mul(self.effective_gas_price(base_fee))
+            .and_then(|gas_cost| U256::from(gas_cost).checked_add(self.value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         // add blob fee
         if self.tx_type() == TransactionType::Eip4844 {
             let blob_gas = self.total_blob_gas() as u128;
             effective_balance_spending = effective_balance_spending
-                .checked_add(U256::from(blob_price).saturating_mul(U256::from(blob_gas)))
+                .checked_add(U256::from(blob_price.saturating_mul(blob_gas)))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
         }
 
         Ok(effective_balance_spending)
     }
-}
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait TransactionGetter {
-    type Transaction: Transaction;
-
-    fn tx(&self) -> &Self::Transaction;
 }

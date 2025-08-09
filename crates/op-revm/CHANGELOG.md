@@ -7,6 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.3](https://github.com/bluealloy/revm/compare/op-revm-v8.0.2...op-revm-v8.0.3) - 2025-07-14
+
+### Other
+
+- simplify gas calculations by introducing a used() method ([#2703](https://github.com/bluealloy/revm/pull/2703))
+
+## [8.0.2](https://github.com/bluealloy/revm/compare/op-revm-v8.0.1...op-revm-v8.0.2) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm
+
+## [8.0.1](https://github.com/bluealloy/revm/compare/op-revm-v7.0.1...op-revm-v8.0.1) - 2025-06-30
+
+### Added
+
+- optional_eip3541 ([#2661](https://github.com/bluealloy/revm/pull/2661))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- *(op/handler)* verify caller account is touched by zero value transfer ([#2669](https://github.com/bluealloy/revm/pull/2669))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+
+## [7.0.1](https://github.com/bluealloy/revm/compare/op-revm-v7.0.0...op-revm-v7.0.1) - 2025-06-20
+
+### Fixed
+
+- call stack_frame.clear() at end ([#2656](https://github.com/bluealloy/revm/pull/2656))
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/op-revm-v6.0.0...op-revm-v7.0.0) - 2025-06-19
+
+### Added
+
+- add fallible conversion from OpHaltReason to HaltReason ([#2649](https://github.com/bluealloy/revm/pull/2649))
+- remove EOF ([#2644](https://github.com/bluealloy/revm/pull/2644))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- enable P256 in Osaka ([#2601](https://github.com/bluealloy/revm/pull/2601))
+
+### Other
+
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
+## [6.0.0](https://github.com/bluealloy/revm/compare/op-revm-v5.0.1...op-revm-v6.0.0) - 2025-06-06
+
+### Added
+
+- add with_caller for system_transact ([#2587](https://github.com/bluealloy/revm/pull/2587))
+- *(Osaka)* EIP-7825 tx limit cap ([#2575](https://github.com/bluealloy/revm/pull/2575))
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Fixed
+
+- *(multitx)* Add local flags for create and selfdestruct ([#2581](https://github.com/bluealloy/revm/pull/2581))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+- *(op-revm)* impl type alias for Default OpEvm ([#2576](https://github.com/bluealloy/revm/pull/2576))
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- *(test)* preserve order of fields in json fixtures ([#2541](https://github.com/bluealloy/revm/pull/2541))
+
 ## [5.0.1](https://github.com/bluealloy/revm/compare/op-revm-v5.0.0...op-revm-v5.0.1) - 2025-05-31
 
 ### Other

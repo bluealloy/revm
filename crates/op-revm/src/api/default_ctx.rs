@@ -1,3 +1,4 @@
+//! Contains trait [`DefaultOp`] used to create a default context.
 use crate::{L1BlockInfo, OpSpecId, OpTransaction};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
@@ -18,7 +19,7 @@ pub trait DefaultOp {
 impl DefaultOp for OpContext<EmptyDB> {
     fn op() -> Self {
         Context::mainnet()
-            .with_tx(OpTransaction::default())
+            .with_tx(OpTransaction::builder().build_fill())
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK))
             .with_chain(L1BlockInfo::default())
     }
@@ -39,8 +40,8 @@ mod test {
         // convert to optimism context
         let mut evm = ctx.build_op_with_inspector(NoOpInspector {});
         // execute
-        let _ = evm.replay();
+        let _ = evm.transact(OpTransaction::builder().build_fill());
         // inspect
-        let _ = evm.inspect_replay();
+        let _ = evm.inspect_one_tx(OpTransaction::builder().build_fill());
     }
 }

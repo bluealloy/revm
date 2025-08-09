@@ -7,19 +7,17 @@ use core::fmt::Debug;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// Result of executing an EVM instruction.
+/// This enum represents all possible outcomes when executing an instruction,
+/// including successful execution, reverts, and various error conditions.
 pub enum InstructionResult {
-    // Success Codes
-    #[default]
-    /// Execution should continue to the next one.
-    Continue = 0x00,
     /// Encountered a `STOP` opcode
+    #[default]
     Stop,
     /// Return from the current call.
     Return,
     /// Self-destruct the current contract.
     SelfDestruct,
-    /// Return a contract (used in contract creation).
-    ReturnContract,
 
     // Revert Codes
     /// Revert the transaction.
@@ -34,10 +32,6 @@ pub enum InstructionResult {
     InvalidEOFInitCode,
     /// `ExtDelegateCall` calling a non EOF contract.
     InvalidExtDelegateCallTarget,
-
-    // Action Codes
-    /// Indicates a call or contract creation.
-    CallOrCreate = 0x20,
 
     // Error Codes
     /// Out of gas error.
@@ -86,36 +80,41 @@ pub enum InstructionResult {
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// `RETURNCONTRACT` called outside init EOF code.
-    ReturnContractInNotInitEOF,
-    /// Legacy contract is calling opcode that is enabled only in EOF.
-    EOFOpcodeDisabledInLegacy,
-    /// Stack overflow in EOF subroutine function calls.
-    SubRoutineStackOverflow,
-    /// Aux data overflow, new aux data is larger than `u16` max size.
-    EofAuxDataOverflow,
-    /// Aux data is smaller than already present data size.
-    EofAuxDataTooSmall,
-    /// `EXT*CALL` target address needs to be padded with 0s.
-    InvalidEXTCALLTarget,
 
-    // Fluentbase error codes
+    // Fluentbase Error Codes
+    /// Function can only be invoked as the root entry call
     RootCallOnly = 0x80,
+    /// Builtin function received malformed or invalid parameters
     MalformedBuiltinParams,
+    /// Exceeded maximum allowed call stack depth
     CallDepthOverflow,
+    /// Exit code must be non-negative, but a negative value was used
     NonNegativeExitCode,
+    /// Generic catch-all error for unknown failures
     UnknownError,
+    /// I/O operation tried to read/write outside allowed buffer bounds
     InputOutputOutOfBounds,
-    // rWasm trap error codes
+
+    // rWasm Trap Codes
+    /// Execution reached a code path marked as unreachable
     UnreachableCodeReached = 0x90,
+    /// Memory access outside the allocated memory range
     MemoryOutOfBounds,
+    /// Table index access outside the allocated table range
     TableOutOfBounds,
+    /// Indirect function call attempted with a null function reference
     IndirectCallToNull,
+    /// Division or remainder by zero occurred
     IntegerDivisionByZero,
+    /// Integer arithmetic operation overflowed the allowed range
     IntegerOverflow,
+    /// Invalid conversion to integer (e.g., from NaN or out-of-range value)
     BadConversionToInteger,
+    /// Function signature mismatch in a call
     BadSignature,
+    /// Execution ran out of allocated fuel/gas
     OutOfFuel,
+    /// Call an undefined or unregistered external function
     UnknownExternalFunction,
 }
 
@@ -135,7 +134,6 @@ impl From<SuccessReason> for InstructionResult {
             SuccessReason::Return => InstructionResult::Return,
             SuccessReason::Stop => InstructionResult::Stop,
             SuccessReason::SelfDestruct => InstructionResult::SelfDestruct,
-            SuccessReason::EofReturnContract => InstructionResult::ReturnContract,
         }
     }
 }
@@ -169,10 +167,6 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
             HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
-            HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
-            HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
-            HaltReason::SubRoutineStackOverflow => Self::SubRoutineStackOverflow,
-            HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
 
             // Fluentbase error codes
             HaltReason::RootCallOnly => Self::RootCallOnly,
@@ -195,17 +189,19 @@ impl From<HaltReason> for InstructionResult {
     }
 }
 
+/// Macro that matches all successful instruction results.
+/// Used in pattern matching to handle all successful execution outcomes.
 #[macro_export]
 macro_rules! return_ok {
     () => {
-        $crate::InstructionResult::Continue
-            | $crate::InstructionResult::Stop
+        $crate::InstructionResult::Stop
             | $crate::InstructionResult::Return
             | $crate::InstructionResult::SelfDestruct
-            | $crate::InstructionResult::ReturnContract
     };
 }
 
+/// Macro that matches all revert instruction results.
+/// Used in pattern matching to handle all revert outcomes.
 #[macro_export]
 macro_rules! return_revert {
     () => {
@@ -218,6 +214,8 @@ macro_rules! return_revert {
     };
 }
 
+/// Macro that matches all error instruction results.
+/// Used in pattern matching to handle all error outcomes.
 #[macro_export]
 macro_rules! return_error {
     () => {
@@ -244,12 +242,6 @@ macro_rules! return_error {
             | $crate::InstructionResult::CreateContractStartingWithEF
             | $crate::InstructionResult::CreateInitCodeSizeLimit
             | $crate::InstructionResult::FatalExternalError
-            | $crate::InstructionResult::ReturnContractInNotInitEOF
-            | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
-            | $crate::InstructionResult::SubRoutineStackOverflow
-            | $crate::InstructionResult::EofAuxDataTooSmall
-            | $crate::InstructionResult::EofAuxDataOverflow
-            | $crate::InstructionResult::InvalidEXTCALLTarget
             | $crate::InstructionResult::RootCallOnly
             | $crate::InstructionResult::MalformedBuiltinParams
             | $crate::InstructionResult::CallDepthOverflow
@@ -277,13 +269,9 @@ impl InstructionResult {
     }
 
     #[inline]
+    /// Returns whether the result is a success or revert (not an error).
     pub const fn is_ok_or_revert(self) -> bool {
         matches!(self, crate::return_ok!() | crate::return_revert!())
-    }
-
-    #[inline]
-    pub const fn is_continue(self) -> bool {
-        matches!(self, InstructionResult::Continue)
     }
 
     /// Returns whether the result is a revert.
@@ -302,10 +290,6 @@ impl InstructionResult {
 /// Internal results that are not exposed externally
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum InternalResult {
-    /// Internal instruction that signals Interpreter should continue running.
-    InternalContinue,
-    /// Internal instruction that signals call or create.
-    InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
     /// Internal to ExtDelegateCall
@@ -313,11 +297,18 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+/// Represents the outcome of instruction execution, distinguishing between
+/// success, revert, halt (error), fatal external errors, and internal results.
 pub enum SuccessOrHalt<HaltReasonTr> {
+    /// Successful execution with the specific success reason.
     Success(SuccessReason),
+    /// Execution reverted.
     Revert,
+    /// Execution halted due to an error.
     Halt(HaltReasonTr),
+    /// Fatal external error occurred.
     FatalExternalError,
+    /// Internal execution result not exposed externally.
     Internal(InternalResult),
 }
 
@@ -368,15 +359,13 @@ impl<HALT: From<HaltReason>> From<HaltReason> for SuccessOrHalt<HALT> {
 impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<HaltReasonTr> {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), /* used only in interpreter loop */
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
-            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), /* used only in interpreter loop */
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), /* not gonna happen for first call */
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), /* Check for first call is done separately. */
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), // not gonna happen for first call
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), // Check for first call is done separately.
             InstructionResult::OutOfGas => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic).into())
             }
@@ -395,9 +384,7 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::ReentrancySentryOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::ReentrancySentry).into())
             }
-            InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
-                Self::Halt(HaltReason::OpcodeNotFound.into())
-            }
+            InstructionResult::OpcodeNotFound => Self::Halt(HaltReason::OpcodeNotFound.into()),
             InstructionResult::CallNotAllowedInsideStatic => {
                 Self::Halt(HaltReason::CallNotAllowedInsideStatic.into())
             } // first call is not static call
@@ -411,7 +398,7 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow.into()),
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset.into()),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision.into()),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), /* Check for first call is done separately. */
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), // Check for first call is done separately.
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError.into()),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow.into()),
             InstructionResult::CreateContractSizeLimit
@@ -424,22 +411,6 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             // TODO : (EOF) Add proper Revert subtype.
             InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
-            InstructionResult::EOFOpcodeDisabledInLegacy => {
-                Self::Halt(HaltReason::OpcodeNotFound.into())
-            }
-            InstructionResult::SubRoutineStackOverflow => {
-                Self::Halt(HaltReason::SubRoutineStackOverflow.into())
-            }
-            InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
-            InstructionResult::EofAuxDataOverflow => {
-                Self::Halt(HaltReason::EofAuxDataOverflow.into())
-            }
-            InstructionResult::EofAuxDataTooSmall => {
-                Self::Halt(HaltReason::EofAuxDataTooSmall.into())
-            }
-            InstructionResult::InvalidEXTCALLTarget => {
-                Self::Halt(HaltReason::InvalidEXTCALLTarget.into())
-            }
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
             }
@@ -490,18 +461,16 @@ mod tests {
 
     #[test]
     fn all_results_are_covered() {
-        match InstructionResult::Continue {
+        match InstructionResult::Stop {
             return_error!() => {}
             return_revert!() => {}
             return_ok!() => {}
-            InstructionResult::CallOrCreate => {}
         }
     }
 
     #[test]
     fn test_results() {
         let ok_results = vec![
-            InstructionResult::Continue,
             InstructionResult::Stop,
             InstructionResult::Return,
             InstructionResult::SelfDestruct,

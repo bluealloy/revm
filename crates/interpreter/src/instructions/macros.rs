@@ -16,14 +16,14 @@ macro_rules! tri {
 macro_rules! require_non_staticcall {
     ($interpreter:expr) => {
         if $interpreter.runtime_flag.is_static() {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::StateChangeDuringStaticCall);
+            $interpreter.halt($crate::InstructionResult::StateChangeDuringStaticCall);
             return;
         }
     };
 }
 
+/// Macro for optional try - returns early if the expression evaluates to None.
+/// Similar to the `?` operator but for use in instruction implementations.
 #[macro_export]
 macro_rules! otry {
     ($expression: expr) => {{
@@ -39,9 +39,7 @@ macro_rules! otry {
 macro_rules! require_eof {
     ($interpreter:expr) => {
         if !$interpreter.runtime_flag.is_eof() {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::EOFOpcodeDisabledInLegacy);
+            $interpreter.halt($crate::InstructionResult::EOFOpcodeDisabledInLegacy);
             return;
         }
     };
@@ -56,9 +54,7 @@ macro_rules! check {
             .spec_id()
             .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::NotActivated);
+            $interpreter.halt($crate::InstructionResult::NotActivated);
             return;
         }
     };
@@ -71,10 +67,8 @@ macro_rules! gas {
         $crate::gas!($interpreter, $gas, ())
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.control.gas_mut().record_cost($gas) {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::OutOfGas);
+        if !$interpreter.gas.record_cost($gas) {
+            $interpreter.halt($crate::InstructionResult::OutOfGas);
             return $ret;
         }
     };
@@ -90,9 +84,7 @@ macro_rules! gas_or_fail {
         match $gas {
             Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
             None => {
-                $interpreter
-                    .control
-                    .set_instruction_result($crate::InstructionResult::OutOfGas);
+                $interpreter.halt($crate::InstructionResult::OutOfGas);
                 return $ret;
             }
         }
@@ -108,18 +100,12 @@ macro_rules! resize_memory {
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
         let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
-        match $interpreter
-            .control
-            .gas_mut()
-            .record_memory_expansion(words_num)
-        {
+        match $interpreter.gas.record_memory_expansion(words_num) {
             $crate::gas::MemoryExtensionResult::Extended => {
                 $interpreter.memory.resize(words_num * 32);
             }
             $crate::gas::MemoryExtensionResult::OutOfGas => {
-                $interpreter
-                    .control
-                    .set_instruction_result($crate::InstructionResult::MemoryOOG);
+                $interpreter.halt($crate::InstructionResult::MemoryOOG);
                 return $ret;
             }
             $crate::gas::MemoryExtensionResult::Same => (), // no action
@@ -132,7 +118,7 @@ macro_rules! resize_memory {
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreterreter:expr $(,$ret:expr)? ) => {
         let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
-            $interpreterreter.control.set_instruction_result($crate::InstructionResult::StackUnderflow);
+            $interpreterreter.halt($crate::InstructionResult::StackUnderflow);
             return $($ret)?;
         };
     };
@@ -141,9 +127,9 @@ macro_rules! popn {
 /// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
 #[macro_export]
 macro_rules! popn_top {
-    ([ $($x:ident),* ], $top:ident, $interpreterreter:expr $(,$ret:expr)? ) => {
-        let Some(([$( $x ),*], $top)) = $interpreterreter.stack.popn_top() else {
-            $interpreterreter.control.set_instruction_result($crate::InstructionResult::StackUnderflow);
+    ([ $($x:ident),* ], $top:ident, $interpreter:expr $(,$ret:expr)? ) => {
+        let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
+            $interpreter.halt($crate::InstructionResult::StackUnderflow);
             return $($ret)?;
         };
     };
@@ -154,23 +140,10 @@ macro_rules! popn_top {
 macro_rules! push {
     ($interpreter:expr, $x:expr $(,$ret:item)?) => (
         if !($interpreter.stack.push($x)) {
-            $interpreter.control.set_instruction_result($crate::InstructionResult::StackOverflow);
+            $interpreter.halt($crate::InstructionResult::StackOverflow);
             return $($ret)?;
         }
     )
-}
-
-#[macro_export]
-macro_rules! try_push {
-    ($interp:expr, $($x:expr),* $(,)?) => ($(
-        match $interp.stack.push(U256::try_from($x).unwrap()) {
-            Ok(()) => {},
-            Err(e) => {
-                $interp.instruction_result = e;
-                return;
-            }
-        }
-    )*)
 }
 
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
@@ -235,7 +208,7 @@ macro_rules! as_usize_or_fail_ret {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
-                    $interpreter.control.set_instruction_result($reason);
+                    $interpreter.halt($reason);
                     return $ret;
                 }
                 x[0] as usize

@@ -1,3 +1,5 @@
+//! Contains the `[flz_compress_len]` function.
+
 /// Returns the length of the data after compression through FastLZ, based on
 /// <https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js>
 ///
@@ -156,6 +158,10 @@ mod tests {
     fn test_flz_native_evm_parity(#[case] input: Bytes) {
         // This bytecode and ABI is for a contract, which wraps the LibZip library for easier fuzz testing.
         // The source of this contract is here: https://github.com/danyalprout/fastlz/blob/main/src/FastLz.sol#L6-L10
+
+        use revm::context::TxEnv;
+
+        use crate::OpTransaction;
         sol! {
             interface FastLz {
                 function fastLz(bytes input) external view returns (uint256);
@@ -168,18 +174,22 @@ mod tests {
 
         let mut evm = Context::op()
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
-            .modify_tx_chained(|tx| {
-                tx.base.caller = EEADDRESS;
-                tx.base.kind = TxKind::Call(FFADDRESS);
-                tx.base.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
-                tx.base.gas_limit = 3_000_000;
-                tx.enveloped_tx = Some(Bytes::default());
-            })
             .build_op();
 
-        let result_and_state = evm.replay().unwrap();
+        let tx = OpTransaction::builder()
+            .base(
+                TxEnv::builder()
+                    .caller(EEADDRESS)
+                    .kind(TxKind::Call(FFADDRESS))
+                    .data(FastLz::fastLzCall::new((input,)).abi_encode().into())
+                    .gas_limit(3_000_000),
+            )
+            .enveloped_tx(Some(Bytes::default()))
+            .build_fill();
 
-        let output = result_and_state.result.output().unwrap();
+        let result = evm.transact_one(tx).unwrap();
+
+        let output = result.output().unwrap();
         let evm_val = FastLz::fastLzCall::abi_decode_returns(output).unwrap();
 
         assert_eq!(U256::from(native_val), evm_val);

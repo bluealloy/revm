@@ -1,14 +1,28 @@
+//! State management and tracking for the EVM.
+
+/// Account status tracking.
 pub mod account_status;
+/// Bundle account representation.
 pub mod bundle_account;
+/// Bundle state management.
 pub mod bundle_state;
+/// Cache state implementation.
 pub mod cache;
+/// Cache account representation.
 pub mod cache_account;
+/// State changeset tracking.
 pub mod changes;
+/// Plain account representation.
 pub mod plain_account;
+/// State revert tracking.
 pub mod reverts;
+/// Main state implementation.
 pub mod state;
+/// State builder utilities.
 pub mod state_builder;
+/// Transition account representation.
 pub mod transition_account;
+/// Transition state management.
 pub mod transition_state;
 
 /// Account status for Block and Bundle states.

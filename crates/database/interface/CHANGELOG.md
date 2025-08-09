@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.0...revm-database-interface-v7.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-state
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v6.0.0...revm-database-interface-v7.0.0) - 2025-06-30
+
+### Added
+
+- implement Database traits for either::Either ([#2673](https://github.com/bluealloy/revm/pull/2673))
+
+### Other
+
+- fix copy-pasted inner doc comments ([#2663](https://github.com/bluealloy/revm/pull/2663))
+
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v5.0.0...revm-database-interface-v6.0.0) - 2025-06-19
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v4.0.1...revm-database-interface-v5.0.0) - 2025-06-06
+
+### Added
+
+- added TxEnv::new_bench() add util function ([#2556](https://github.com/bluealloy/revm/pull/2556))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- *(docs)* add lints to database-interface and op-revm crates ([#2568](https://github.com/bluealloy/revm/pull/2568))
+
 ## [4.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v4.0.0...revm-database-interface-v4.0.1) - 2025-05-22
 
 ### Other

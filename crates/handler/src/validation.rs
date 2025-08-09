@@ -1,14 +1,13 @@
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
-    Block,
-    Cfg,
-    ContextTr,
+    Block, Cfg, ContextTr,
 };
 use core::cmp;
 use interpreter::gas::{self, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
+/// Validates the execution environment including block and transaction parameters.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {
@@ -29,8 +28,9 @@ pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
     base_fee: Option<u128>,
+    disable_priority_fee_check: bool,
 ) -> Result<(), InvalidTransaction> {
-    if max_priority_fee > max_fee {
+    if !disable_priority_fee_check && max_priority_fee > max_fee {
         // Or gas_max_fee for eip1559
         return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
     }
@@ -98,15 +98,34 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
         Some(context.block().basefee() as u128)
     };
 
-    match TransactionType::from(tx_type) {
-        TransactionType::Legacy => {
-            // Check chain_id only if it is present in the legacy transaction.
-            // EIP-155: Simple replay attack protection
-            if let Some(chain_id) = tx.chain_id() {
-                if chain_id != context.cfg().chain_id() {
-                    return Err(InvalidTransaction::InvalidChainId);
-                }
+    let tx_type = TransactionType::from(tx_type);
+
+    // Check chain_id if config is enabled.
+    // EIP-155: Simple replay attack protection
+    if context.cfg().tx_chain_id_check() {
+        if let Some(chain_id) = tx.chain_id() {
+            if chain_id != context.cfg().chain_id() {
+                return Err(InvalidTransaction::InvalidChainId);
             }
+        } else if !tx_type.is_legacy() && !tx_type.is_custom() {
+            // Legacy transaction are the only one that can omit chain_id.
+            return Err(InvalidTransaction::MissingChainId);
+        }
+    }
+
+    // EIP-7825: Transaction Gas Limit Cap
+    let cap = context.cfg().tx_gas_limit_cap();
+    if tx.gas_limit() > cap {
+        return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+            gas_limit: tx.gas_limit(),
+            cap,
+        });
+    }
+
+    let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
+
+    match tx_type {
+        TransactionType::Legacy => {
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if tx.gas_price() < base_fee {
@@ -120,10 +139,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip2930NotSupported);
             }
 
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if tx.gas_price() < base_fee {
@@ -135,15 +150,11 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
-
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
         }
         TransactionType::Eip4844 => {
@@ -151,21 +162,18 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
 
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
                 tx.max_fee_per_blob_gas(),
                 context.block().blob_gasprice().unwrap_or_default(),
-                context.cfg().blob_max_count(),
+                context.cfg().max_blobs_per_tx(),
             )?;
         }
         TransactionType::Eip7702 => {
@@ -174,14 +182,11 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
                 return Err(InvalidTransaction::Eip7702NotSupported);
             }
 
-            if Some(context.cfg().chain_id()) != tx.chain_id() {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
+                disable_priority_fee_check,
             )?;
 
             let auth_list_len = tx.authorization_list_len();
@@ -320,30 +325,38 @@ mod tests {
     use bytecode::opcode;
     use context::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
-        Context,
+        Context, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, Address, Bytes, TxKind, MAX_INITCODE_SIZE};
+    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind};
 
     fn deploy_contract(
         bytecode: Bytes,
+        spec_id: Option<SpecId>,
     ) -> Result<ExecutionResult, EVMError<core::convert::Infallible>> {
         let ctx = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.kind = TxKind::Create;
-                tx.data = bytecode.clone();
+            .modify_cfg_chained(|c| {
+                if let Some(spec_id) = spec_id {
+                    c.spec = spec_id;
+                }
             })
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();
-        evm.replay_commit()
+        evm.transact_commit(
+            TxEnv::builder()
+                .kind(TxKind::Create)
+                .data(bytecode.clone())
+                .build()
+                .unwrap(),
+        )
     }
 
     #[test]
     fn test_eip3860_initcode_size_limit_failure() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE + 1];
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE + 1];
         let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(
             result,
             Err(EVMError::Transaction(
@@ -353,11 +366,47 @@ mod tests {
     }
 
     #[test]
-    fn test_eip3860_initcode_size_limit_success() {
-        let large_bytecode = vec![opcode::STOP; MAX_INITCODE_SIZE];
+    fn test_eip3860_initcode_size_limit_success_prague() {
+        let large_bytecode = vec![opcode::STOP; eip3860::MAX_INITCODE_SIZE];
         let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip7907_initcode_size_limit_failure_osaka() {
+        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE + 1];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(
+            result,
+            Err(EVMError::Transaction(
+                InvalidTransaction::CreateInitCodeSizeLimit
+            ))
+        ));
+    }
+
+    #[test]
+    fn test_eip7907_code_size_limit_failure() {
+        // EIP-7907: MAX_CODE_SIZE = 0x40000
+        // use the simplest method to return a contract code size greater than 0x40000
+        // PUSH3 0x40001 (greater than 0x40000) - return size
+        // PUSH1 0x00 - memory position 0
+        // RETURN - return uninitialized memory, will be filled with 0
+        let init_code = vec![
+            0x62, 0x04, 0x00, 0x01, // PUSH3 0x40001 (greater than 0x40000)
+            0x60, 0x00, // PUSH1 0
+            0xf3, // RETURN
+        ];
+        let bytecode: Bytes = init_code.into();
+        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        assert!(matches!(
+            result,
+            Ok(ExecutionResult::Halt {
+                reason: HaltReason::CreateContractSizeLimit,
+                ..
+            },)
+        ));
     }
 
     #[test]
@@ -372,7 +421,7 @@ mod tests {
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
         assert!(matches!(
             result,
             Ok(ExecutionResult::Halt {
@@ -394,14 +443,13 @@ mod tests {
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode);
+        let result = deploy_contract(bytecode, None);
         assert!(matches!(result, Ok(ExecutionResult::Success { .. },)));
     }
 
     #[test]
     fn test_eip170_create_opcode_size_limit_failure() {
-        // 1. create a "factory" contract, which will use the CREATE opcode to create another large
-        //    contract
+        // 1. create a "factory" contract, which will use the CREATE opcode to create another large contract
         // 2. because the sub contract exceeds the EIP-170 limit, the CREATE operation should fail
 
         // the bytecode of the factory contract:
@@ -441,28 +489,31 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE))
+            .expect("factory contract deployment failed");
 
         // get factory contract address
         let factory_address = match &factory_result {
-            ExecutionResult::Success { output, .. } => match output {
-                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
-            },
-            _ => panic!("factory contract deployment failed"),
+            ExecutionResult::Success {
+                output: Output::Create(_, Some(addr)),
+                ..
+            } => *addr,
+            _ => panic!("factory contract deployment failed: {factory_result:?}"),
         };
 
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.caller = tx_caller;
-                tx.kind = TxKind::Call(factory_address);
-                tx.data = Bytes::new();
-            })
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .replay_commit()
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {
@@ -483,10 +534,8 @@ mod tests {
 
     #[test]
     fn test_eip170_create_opcode_size_limit_success() {
-        // 1. create a "factory" contract, which will use the CREATE opcode to create another
-        //    contract
-        // 2. the sub contract generated by the factory contract does not exceed the EIP-170 limit,
-        //    so it should be created successfully
+        // 1. create a "factory" contract, which will use the CREATE opcode to create another contract
+        // 2. the sub contract generated by the factory contract does not exceed the EIP-170 limit, so it should be created successfully
 
         // the bytecode of the factory contract:
         // PUSH1 0x01      - the value for MSTORE
@@ -525,27 +574,30 @@ mod tests {
 
         // deploy factory contract
         let factory_bytecode: Bytes = factory_code.into();
-        let factory_result =
-            deploy_contract(factory_bytecode).expect("factory contract deployment failed");
+        let factory_result = deploy_contract(factory_bytecode, Some(SpecId::PRAGUE))
+            .expect("factory contract deployment failed");
         // get factory contract address
         let factory_address = match &factory_result {
-            ExecutionResult::Success { output, .. } => match output {
-                Output::Create(bytes, _) | Output::Call(bytes) => Address::from_slice(&bytes[..20]),
-            },
-            _ => panic!("factory contract deployment failed"),
+            ExecutionResult::Success {
+                output: Output::Create(_, Some(addr)),
+                ..
+            } => *addr,
+            _ => panic!("factory contract deployment failed: {factory_result:?}"),
         };
 
         // call factory contract to create sub contract
         let tx_caller = address!("0x0000000000000000000000000000000000100000");
         let call_result = Context::mainnet()
-            .modify_tx_chained(|tx| {
-                tx.caller = tx_caller;
-                tx.kind = TxKind::Call(factory_address);
-                tx.data = Bytes::new();
-            })
             .with_db(CacheDB::<EmptyDB>::default())
             .build_mainnet()
-            .replay_commit()
+            .transact_commit(
+                TxEnv::builder()
+                    .caller(tx_caller)
+                    .kind(TxKind::Call(factory_address))
+                    .data(Bytes::new())
+                    .build()
+                    .unwrap(),
+            )
             .expect("call factory contract failed");
 
         match &call_result {

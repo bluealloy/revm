@@ -125,6 +125,7 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool) -> Opt
 }
 
 #[inline]
+/// Calculates the gas cost for copy operations based on data length.
 pub const fn copy_cost(base_cost: u64, len: usize) -> Option<u64> {
     base_cost.checked_add(tri!(cost_per_word(len, COPY)))
 }
@@ -267,13 +268,7 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 ///   this is only accounted if value is transferred.
 ///
 /// account_load.is_empty will be accounted only if hardfork is SPURIOUS_DRAGON and
-/// there is transfer value.
-///
-/// This means that [`bytecode::opcode::EXTSTATICCALL`],
-/// [`bytecode::opcode::EXTDELEGATECALL`] that dont transfer value will not be
-/// effected by this field.
-///
-/// [`bytecode::opcode::CALL`], [`bytecode::opcode::EXTCALL`] use this field.
+/// there is transfer value. [`bytecode::opcode::CALL`] use this field.
 ///
 /// While [`bytecode::opcode::STATICCALL`], [`bytecode::opcode::DELEGATECALL`],
 /// [`bytecode::opcode::CALLCODE`] need to have this field hardcoded to false

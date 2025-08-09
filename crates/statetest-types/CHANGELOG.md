@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.4](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.3...revm-statetest-types-v8.0.4) - 2025-07-14
+
+### Other
+
+- updated the following local packages: revm
+
+## [8.0.3](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.2...revm-statetest-types-v8.0.3) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm
+
+## [8.0.2](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.1...revm-statetest-types-v8.0.2) - 2025-06-30
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- statetest runner cleanup ([#2665](https://github.com/bluealloy/revm/pull/2665))
+
+## [8.0.1](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.0...revm-statetest-types-v8.0.1) - 2025-06-20
+
+### Other
+
+- updated the following local packages: revm
+
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v7.0.0...revm-statetest-types-v8.0.0) - 2025-06-19
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+
+### Other
+
+- lints for examples ([#2650](https://github.com/bluealloy/revm/pull/2650))
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v6.0.0...revm-statetest-types-v7.0.0) - 2025-06-06
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+- unify calling of journal account loading ([#2561](https://github.com/bluealloy/revm/pull/2561))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v5.0.0...revm-statetest-types-v6.0.0) - 2025-05-31
 
 ### Other

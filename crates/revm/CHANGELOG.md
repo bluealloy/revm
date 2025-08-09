@@ -6,6 +6,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.3](https://github.com/bluealloy/revm/compare/revm-v27.0.2...revm-v27.0.3) - 2025-07-14
+
+### Other
+
+- updated the following local packages: revm-context, revm-interpreter, revm-precompile, revm-handler, revm-inspector
+
+## [27.0.2](https://github.com/bluealloy/revm/compare/revm-v27.0.1...revm-v27.0.2) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-handler, revm-inspector, revm-state, revm-database-interface, revm-context-interface, revm-context, revm-database, revm-interpreter
+
+## [27.0.1](https://github.com/bluealloy/revm/compare/revm-v26.0.1...revm-v27.0.1) - 2025-06-30
+
+### Added
+
+- optional_eip3541 ([#2661](https://github.com/bluealloy/revm/pull/2661))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- inline documentation of revm top modules ([#2666](https://github.com/bluealloy/revm/pull/2666))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+
+## [26.0.1](https://github.com/bluealloy/revm/compare/revm-v26.0.0...revm-v26.0.1) - 2025-06-20
+
+### Fixed
+
+- call stack_frame.clear() at end ([#2656](https://github.com/bluealloy/revm/pull/2656))
+
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-v25.0.0...revm-v26.0.0) - 2025-06-19
+
+### Added
+
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- enable P256 in Osaka ([#2601](https://github.com/bluealloy/revm/pull/2601))
+
+### Fixed
+
+- compare_or_save_testdata sig ([#2637](https://github.com/bluealloy/revm/pull/2637))
+
+### Other
+
+- lints for examples ([#2650](https://github.com/bluealloy/revm/pull/2650))
+- rename `transact` methods ([#2616](https://github.com/bluealloy/revm/pull/2616))
+
+## [25.0.0](https://github.com/bluealloy/revm/compare/revm-v24.0.1...revm-v25.0.0) - 2025-06-06
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Fixed
+
+- *(multitx)* Add local flags for create and selfdestruct ([#2581](https://github.com/bluealloy/revm/pull/2581))
+
+### Other
+
+- tag v75 revm v24.0.1 ([#2563](https://github.com/bluealloy/revm/pull/2563)) ([#2589](https://github.com/bluealloy/revm/pull/2589))
+
 ## [24.0.1](https://github.com/bluealloy/revm/compare/revm-v24.0.0...revm-v24.0.1) - 2025-05-31
 
 ### Other

@@ -18,6 +18,7 @@ use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
 use std::boxed::Box;
 
+/// Loads and warms accounts for execution, including precompiles and access list.
 pub fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
     ERROR: From<<<EVM::Context as ContextTr>::Db as Database>::Error>,
@@ -29,15 +30,15 @@ pub fn load_accounts<
     let gen_spec = context.cfg().spec();
     let spec = gen_spec.clone().into();
     // sets eth spec id in journal
-    context.journal().set_spec_id(spec);
+    context.journal_mut().set_spec_id(spec);
     let precompiles_changed = precompiles.set_spec(gen_spec);
-    let empty_warmed_precompiles = context.journal().precompile_addresses().is_empty();
+    let empty_warmed_precompiles = context.journal_mut().precompile_addresses().is_empty();
 
     if precompiles_changed || empty_warmed_precompiles {
         // load new precompile addresses into journal.
         // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
         context
-            .journal()
+            .journal_mut()
             .warm_precompiles(precompiles.warm_addresses().collect());
     }
 
@@ -45,11 +46,11 @@ pub fn load_accounts<
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         let coinbase = context.block().beneficiary();
-        context.journal().warm_account(coinbase);
+        context.journal_mut().warm_coinbase_account(coinbase);
     }
 
     // Load access list
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
@@ -71,11 +72,11 @@ pub fn load_accounts<
     Ok(())
 }
 
+/// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
     tx_nonce: u64,
-    bump_nonce: bool,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
 ) -> Result<(), InvalidTransaction> {
@@ -108,16 +109,10 @@ pub fn validate_account_nonce_and_code(
             _ => {}
         }
     }
-
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if bump_nonce {
-        // Nonce is already checked
-        caller_info.nonce = caller_info.nonce.saturating_add(1);
-    }
-
     Ok(())
 }
 
+/// Validates caller state and deducts transaction costs from the caller's balance.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
     CTX: ContextTr,
@@ -131,7 +126,7 @@ pub fn validate_against_state_and_deduct_caller<
     let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
     let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
 
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -139,18 +134,25 @@ pub fn validate_against_state_and_deduct_caller<
     validate_account_nonce_and_code(
         &mut caller_account.info,
         tx.nonce(),
-        tx.kind().is_call(),
         is_eip3607_disabled,
         is_nonce_check_disabled,
     )?;
 
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
+    if tx.kind().is_call() {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
+
     let max_balance_spending = tx.max_balance_spending()?;
+
+    let mut new_balance = caller_account.info.balance;
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
     if is_balance_check_disabled {
         // Make sure the caller's balance is at least the value of the transaction.
-        caller_account.info.balance = caller_account.info.balance.max(tx.value());
+        new_balance = caller_account.info.balance.max(tx.value());
     } else if max_balance_spending > caller_account.info.balance {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(max_balance_spending),
@@ -165,14 +167,15 @@ pub fn validate_against_state_and_deduct_caller<
         // subtracting max balance spending with value that is going to be deducted later in the call.
         let gas_balance_spending = effective_balance_spending - tx.value();
 
-        caller_account.info.balance = caller_account
-            .info
-            .balance
-            .saturating_sub(gas_balance_spending);
+        new_balance = new_balance.saturating_sub(gas_balance_spending);
     }
 
+    let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
     caller_account.mark_touch();
+    caller_account.info.balance = new_balance;
+
+    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
 }
 
@@ -191,7 +194,7 @@ pub fn apply_eip7702_auth_list<
     }
 
     let chain_id = context.cfg().chain_id();
-    let (tx, journal) = context.tx_journal();
+    let (tx, journal) = context.tx_journal_mut();
 
     let mut refunded_accounts = 0;
     for authorization in tx.authorization_list() {
@@ -229,11 +232,8 @@ pub fn apply_eip7702_auth_list<
             continue;
         }
 
-        let loaded_not_existing = authority_acc.is_loaded_as_not_existing();
-        let is_not_touched = !authority_acc.is_touched();
-        let loaded_not_existing_not_touched = loaded_not_existing && is_not_touched;
         // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !(authority_acc.is_empty() && loaded_not_existing_not_touched) {
+        if !(authority_acc.is_empty() && authority_acc.is_loaded_as_not_existing_not_touched()) {
             refunded_accounts += 1;
         }
 

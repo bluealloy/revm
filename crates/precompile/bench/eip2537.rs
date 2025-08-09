@@ -1,10 +1,10 @@
 //! Benchmarks for the BLS12-381 precompiles
 use ark_bls12_381::{Fq, Fr, G1Affine, G2Affine};
 use ark_ec::AffineRepr;
+use ark_std::rand::{rngs::StdRng, SeedableRng};
 use arkworks_general::{encode_base_field, encode_field_32_bytes, random_field, random_points};
 use criterion::{measurement::Measurement, BenchmarkGroup};
 use primitives::Bytes;
-use rand::{rngs::StdRng, SeedableRng};
 use revm_precompile::bls12_381_const::{PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH};
 
 const RNG_SEED: u64 = 42;
@@ -14,12 +14,12 @@ const MAX_PAIRING_PAIRS: usize = 16;
 type PrecompileInput = Vec<u8>;
 
 mod arkworks_general {
+    use super::StdRng;
     use ark_bls12_381::Fq;
     use ark_ec::AffineRepr;
     use ark_ff::Field;
 
     use ark_serialize::CanonicalSerialize;
-    use rand::rngs::StdRng;
     use revm_precompile::bls12_381_const::{FP_LENGTH, FP_PAD_BY, PADDED_FP_LENGTH};
 
     pub(super) fn random_points<P: AffineRepr>(num_points: usize, rng: &mut StdRng) -> Vec<P> {
@@ -184,7 +184,7 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = g1_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g1_msm (size {})", size), |b| {
+        group.bench_function(format!("g1_msm (size {size})"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -229,7 +229,7 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = g2_msm_test_vectors(size, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("g2_msm (size {})", size), |b| {
+        group.bench_function(format!("g2_msm (size {size})"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }
@@ -262,7 +262,7 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let test_vector = pairing_test_vectors(pairs, &mut rng);
         let input = Bytes::from(test_vector);
 
-        group.bench_function(format!("pairing ({} pairs)", pairs), |b| {
+        group.bench_function(format!("pairing ({pairs} pairs)"), |b| {
             b.iter(|| precompile(&input, u64::MAX).unwrap());
         });
     }

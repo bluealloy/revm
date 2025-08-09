@@ -25,7 +25,9 @@ impl SubRoutineReturnFrame {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SubRoutineImpl {
+    /// Stack of return frames for managing nested subroutine calls
     pub return_stack: Vec<SubRoutineReturnFrame>,
+    /// Index of the currently executing code section
     pub current_code_idx: usize,
 }
 
@@ -38,10 +40,18 @@ impl SubRoutineImpl {
         }
     }
 
+    /// Clears the function stack.
+    pub fn clear(&mut self) {
+        self.return_stack.clear();
+        self.current_code_idx = 0;
+    }
+
+    /// Returns the number of subroutine frames on the stack.
     pub fn len(&self) -> usize {
         self.return_stack.len()
     }
 
+    /// Returns true if the subroutine stack is empty.
     pub fn is_empty(&self) -> bool {
         self.return_stack.is_empty()
     }

@@ -1,82 +1,94 @@
 use crate::{
     gas,
-    interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTr},
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
 use primitives::{hardfork::SpecId::*, U256};
 
+use crate::InstructionContext;
+
 /// EIP-1344: ChainID opcode
-pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
-) {
-    check!(interpreter, ISTANBUL);
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.chain_id());
+pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, ISTANBUL);
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, context.host.chain_id());
 }
 
+/// Implements the COINBASE instruction.
+///
+/// Pushes the current block's beneficiary address onto the stack.
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.beneficiary().into_word().into());
+    gas!(context.interpreter, gas::BASE);
+    push!(
+        context.interpreter,
+        context.host.beneficiary().into_word().into()
+    );
 }
 
+/// Implements the TIMESTAMP instruction.
+///
+/// Pushes the current block's timestamp onto the stack.
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.timestamp());
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, context.host.timestamp());
 }
 
+/// Implements the NUMBER instruction.
+///
+/// Pushes the current block number onto the stack.
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.block_number()));
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, U256::from(context.host.block_number()));
 }
 
+/// Implements the DIFFICULTY/PREVRANDAO instruction.
+///
+/// Pushes the block difficulty (pre-merge) or prevrandao (post-merge) onto the stack.
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
-    if interpreter.runtime_flag.spec_id().is_enabled_in(MERGE) {
+    gas!(context.interpreter, gas::BASE);
+    if context
+        .interpreter
+        .runtime_flag
+        .spec_id()
+        .is_enabled_in(MERGE)
+    {
         // Unwrap is safe as this fields is checked in validation handler.
-        push!(interpreter, host.prevrandao().unwrap());
+        push!(context.interpreter, context.host.prevrandao().unwrap());
     } else {
-        push!(interpreter, host.difficulty());
+        push!(context.interpreter, context.host.difficulty());
     }
 }
 
+/// Implements the GASLIMIT instruction.
+///
+/// Pushes the current block's gas limit onto the stack.
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.gas_limit());
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, context.host.gas_limit());
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
-) {
-    check!(interpreter, LONDON);
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.basefee());
+pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, LONDON);
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, context.host.basefee());
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
 pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    interpreter: &mut Interpreter<WIRE>,
-    host: &mut H,
+    context: InstructionContext<'_, H, WIRE>,
 ) {
-    check!(interpreter, CANCUN);
-    gas!(interpreter, gas::BASE);
-    push!(interpreter, host.blob_gasprice());
+    check!(context.interpreter, CANCUN);
+    gas!(context.interpreter, gas::BASE);
+    push!(context.interpreter, context.host.blob_gasprice());
 }

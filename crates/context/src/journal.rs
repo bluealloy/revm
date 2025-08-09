@@ -84,19 +84,9 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
     }
 }
 
-/// Output of the journal after finalizing.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JournalOutput {
-    /// Changes or touched accounts that loads, created or changed in the journal.
-    pub state: EvmState,
-    /// Logs that were emitted by contract calls.
-    pub logs: Vec<Log>,
-}
-
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
-    type FinalOutput = JournalOutput;
+    type State = EvmState;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
@@ -105,11 +95,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    fn db_ref(&self) -> &Self::Database {
+    fn db(&self) -> &Self::Database {
         &self.database
     }
 
-    fn db(&mut self) -> &mut Self::Database {
+    fn db_mut(&mut self) -> &mut Self::Database {
         &mut self.database
     }
 
@@ -154,9 +144,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.warm_preloaded_addresses.insert(address);
     }
 
-    fn warm_precompiles(&mut self, address: HashSet<Address>) {
-        self.inner.precompiles = address;
-        self.inner.warm_preloaded_addresses = self.inner.precompiles.clone();
+    fn warm_coinbase_account(&mut self, address: Address) {
+        self.inner.warm_coinbase_address = Some(address);
+    }
+
+    fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {
+        self.inner.precompiles = precompiles;
+        self.inner
+            .warm_preloaded_addresses
+            .clone_from(&self.inner.precompiles);
     }
 
     #[inline]
@@ -176,12 +172,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
-        self.inner.load_account_optional_with_storage(
-            &mut self.database,
-            address,
-            false,
-            storage_keys,
-        )?;
+        self.inner
+            .load_account_optional(&mut self.database, address, false, storage_keys)?;
         Ok(())
     }
 
@@ -206,8 +198,31 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn inc_account_nonce(&mut self, address: Address) -> Result<Option<u64>, DB::Error> {
-        Ok(self.inner.inc_nonce(address))
+    fn caller_accounting_journal_entry(
+        &mut self,
+        address: Address,
+        old_balance: U256,
+        bump_nonce: bool,
+    ) {
+        self.inner
+            .caller_accounting_journal_entry(address, old_balance, bump_nonce);
+    }
+
+    /// Increments the balance of the account.
+    #[inline]
+    fn balance_incr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error> {
+        self.inner
+            .balance_incr(&mut self.database, address, balance)
+    }
+
+    /// Increments the nonce of the account.
+    #[inline]
+    fn nonce_bump_journal_entry(&mut self, address: Address) {
+        self.inner.nonce_bump_journal_entry(address)
     }
 
     #[inline]
@@ -253,12 +268,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn clear(&mut self) {
-        // Clears the inner journal state. Preserving only the spec and precompile addresses.
-        let _ = self.inner.clear_and_take_output();
-    }
-
-    #[inline]
     fn create_account_checkpoint(
         &mut self,
         caller: Address,
@@ -272,7 +281,23 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn finalize(&mut self) -> Self::FinalOutput {
-        self.inner.clear_and_take_output()
+    fn take_logs(&mut self) -> Vec<Log> {
+        self.inner.take_logs()
+    }
+
+    #[inline]
+    fn commit_tx(&mut self) {
+        self.inner.commit_tx()
+    }
+
+    #[inline]
+    fn discard_tx(&mut self) {
+        self.inner.discard_tx();
+    }
+
+    /// Clear current journal resetting it to initial state and return changes state.
+    #[inline]
+    fn finalize(&mut self) -> Self::State {
+        self.inner.finalize()
     }
 }

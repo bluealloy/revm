@@ -1,5 +1,6 @@
 pub mod static_data;
 
+use context::TxEnv;
 use criterion::Criterion;
 use primitives::{StorageKey, StorageValue};
 use static_data::{
@@ -37,18 +38,28 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(db)
-        .modify_tx_chained(|tx| {
-            tx.caller = BENCH_CALLER;
-            tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
-            tx.data = run_call_data.clone().into();
-            tx.gas_limit = u64::MAX;
-        })
+        .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet();
 
+    let tx = TxEnv::builder()
+        .caller(BENCH_CALLER)
+        .kind(TxKind::Call(BURNTPIX_MAIN_ADDRESS))
+        .data(run_call_data.clone().into())
+        .gas_limit(u64::MAX)
+        .build()
+        .unwrap();
+
     criterion.bench_function("burntpix", |b| {
-        b.iter(|| {
-            evm.replay().unwrap();
-        })
+        b.iter_batched(
+            || {
+                // create a transaction input
+                tx.clone()
+            },
+            |input| {
+                evm.transact_one(input).unwrap();
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 
     //Collects the data and uses it to generate the svg after running the benchmark
@@ -87,7 +98,7 @@ pub fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     let svg_dir = current_dir.join("burntpix").join("svgs");
     std::fs::create_dir_all(&svg_dir)?;
 
-    let file_path = svg_dir.join(format!("{}.svg", filename));
+    let file_path = svg_dir.join(format!("{filename}.svg"));
     let mut file = File::create(file_path)?;
     file.write_all(svg_data)?;
 
@@ -106,7 +117,7 @@ fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
 
 fn try_from_hex_to_u32(hex: &str) -> Result<u32, Box<dyn Error>> {
     let trimmed = hex.strip_prefix("0x").unwrap_or(hex);
-    u32::from_str_radix(trimmed, 16).map_err(|e| format!("Failed to parse hex: {}", e).into())
+    u32::from_str_radix(trimmed, 16).map_err(|e| format!("Failed to parse hex: {e}").into())
 }
 
 fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: &str) {
@@ -152,8 +163,8 @@ fn init_db() -> CacheDB<EmptyDB> {
     cache_db
         .insert_account_storage(
             BURNTPIX_MAIN_ADDRESS,
-            StorageValue::from(2),
-            StorageKey::from_be_bytes(*STORAGE_TWO),
+            StorageKey::from(2),
+            StorageValue::from_be_bytes(*STORAGE_TWO),
         )
         .unwrap();
 

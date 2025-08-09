@@ -8,6 +8,7 @@ use fluentbase_revm::{RwasmBuilder, RwasmContext, RwasmEvm};
 use fluentbase_sdk::{Address, PRECOMPILE_EVM_RUNTIME};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
+use revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE;
 use revm::{
     bytecode::{ownable_account::OwnableAccountBytecode, Bytecode},
     context::{
@@ -614,14 +615,17 @@ pub fn execute_test_suite(
         block_env.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-            block_env.set_blob_excess_gas_and_price(current_excess_blob_gas.to(), true);
+            block_env.set_blob_excess_gas_and_price(
+                current_excess_blob_gas.to(),
+                BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE,
+            );
         } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
             unit.env.parent_blob_gas_used,
             unit.env.parent_excess_blob_gas,
         ) {
             block_env.set_blob_excess_gas_and_price(
                 calc_excess_blob_gas(parent_blob_gas_used.to(), parent_excess_blob_gas.to(), 0),
-                true,
+                BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE,
             );
         }
 
@@ -659,7 +663,7 @@ pub fn execute_test_suite(
             ) {
                 continue;
             }
-            if spec_name.lt(&SpecName::Cancun) {
+            if spec_name.lt(&SpecName::Prague) {
                 continue;
             }
 

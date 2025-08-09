@@ -6,6 +6,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v24.0.0...revm-precompile-v24.0.1) - 2025-07-14
+
+### Other
+
+- use c-kzg precompute value 8 ([#2698](https://github.com/bluealloy/revm/pull/2698))
+
+## [24.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v23.0.0...revm-precompile-v24.0.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+
+## [23.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v22.0.0...revm-precompile-v23.0.0) - 2025-06-19
+
+### Added
+
+- *(osaka)* modexp assume minimal base/mod length of 32 ([#2613](https://github.com/bluealloy/revm/pull/2613)) ([#2643](https://github.com/bluealloy/revm/pull/2643))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- add basic tests for modexp ([#2603](https://github.com/bluealloy/revm/pull/2603))
+- enable P256 in Osaka ([#2601](https://github.com/bluealloy/revm/pull/2601))
+
+### Other
+
+- bump all deps ([#2647](https://github.com/bluealloy/revm/pull/2647))
+- build less benchmark binaries ([#2629](https://github.com/bluealloy/revm/pull/2629))
+
+## [22.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v21.0.0...revm-precompile-v22.0.0) - 2025-06-06
+
+### Added
+
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
 ## [21.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v20.1.0...revm-precompile-v21.0.0) - 2025-05-22
 
 ### Added

@@ -1,9 +1,27 @@
+use std::convert::Infallible;
+
 use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
-use database::PlainAccount;
+use context::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction};
+use database::{EmptyDB, PlainAccount, State};
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use revm::primitives::{keccak256, Address, Log, B256, U256};
 use triehash::sec_trie_root;
+
+pub struct TestValidationResult {
+    pub logs_root: B256,
+    pub state_root: B256,
+}
+
+pub fn compute_test_roots(
+    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    db: &State<EmptyDB>,
+) -> TestValidationResult {
+    TestValidationResult {
+        logs_root: log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default()),
+        state_root: state_merkle_trie_root(db.cache.trie_account()),
+    }
+}
 
 pub fn log_rlp_hash(logs: &[Log]) -> B256 {
     let mut out = Vec::with_capacity(alloy_rlp::list_length(logs));

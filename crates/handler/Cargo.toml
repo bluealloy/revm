@@ -1,7 +1,7 @@
 [package]
 name = "revm-handler"
 description = "Revm handler crates"
-version = "5.0.1"
+version = "8.0.3"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -13,13 +13,8 @@ readme.workspace = true
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unreachable_pub = "warn"
-unused_must_use = "deny"
-rust_2018_idioms = "deny"
-
-[lints.rustdoc]
-all = "warn"
+[lints]
+workspace = true
 
 [dependencies]
 # revm
@@ -31,7 +26,11 @@ context.workspace = true
 primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
+
+
 auto_impl.workspace = true
+derive-where.workspace = true
+
 # fluentbase
 fluentbase-sdk.workspace = true
 
@@ -51,30 +50,31 @@ alloy-signer-local.workspace = true
 [features]
 default = ["std"]
 std = [
-    "serde?/std",
-    "alloy-eip7702/std",
-    "bytecode/std",
-    "context/std",
-    "context-interface/std",
-    "database/std",
-    "database-interface/std",
-    "interpreter/std",
-    "precompile/std",
-    "primitives/std",
-    "state/std",
+	"serde?/std",
+	"alloy-eip7702/std",
+	"bytecode/std",
+	"context/std",
+	"context-interface/std",
+	"database/std",
+	"database-interface/std",
+	"interpreter/std",
+	"precompile/std",
+	"primitives/std",
+	"state/std",
     "fluentbase-sdk/std",
 ]
 serde = [
-    "dep:serde",
-    "primitives/serde",
-    "state/serde",
-    "context-interface/serde",
-    "alloy-eip7702/serde",
-    "bytecode/serde",
-    "context/serde",
-    "database/serde",
-    "database-interface/serde",
-    "interpreter/serde"
+	"dep:serde",
+	"primitives/serde",
+	"state/serde",
+	"context-interface/serde",
+	"alloy-eip7702/serde",
+	"bytecode/serde",
+	"context/serde",
+	"database/serde",
+	"database-interface/serde",
+	"interpreter/serde",
+	"derive-where/serde"
 ]
 serde-json = ["serde"]
 debug-print = []

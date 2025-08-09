@@ -1,6 +1,11 @@
+//! Block related types and functions.
+//!
+//! [`Block`] trait is used to retrieve block information required for execution.
 pub mod blob;
 
-pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
+pub use blob::{
+    calc_blob_gasprice, calc_excess_blob_gas, calc_excess_blob_gas_osaka, BlobExcessGasAndPrice,
+};
 
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
@@ -9,7 +14,7 @@ use primitives::{Address, B256, U256};
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Block {
     /// The number of ancestor blocks of this block (block height).
-    fn number(&self) -> u64;
+    fn number(&self) -> U256;
 
     /// Beneficiary (Coinbase, miner) is a address that have signed the block.
     ///
@@ -17,7 +22,7 @@ pub trait Block {
     fn beneficiary(&self) -> Address;
 
     /// The timestamp of the block in seconds since the UNIX epoch.
-    fn timestamp(&self) -> u64;
+    fn timestamp(&self) -> U256;
 
     /// The gas limit of the block.
     fn gas_limit(&self) -> u64;

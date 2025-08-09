@@ -1,3 +1,4 @@
+use context::TxEnv;
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
@@ -13,16 +14,24 @@ pub fn run(criterion: &mut Criterion) {
     // BenchmarkDB is dummy state that implements Database trait.
     let context = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
-        .modify_tx_chained(|tx| {
-            // Execution globals block hash/gas_limit/coinbase/timestamp..
-            tx.caller = BENCH_CALLER;
-            tx.kind = TxKind::Call(BENCH_TARGET);
-            tx.data = bytes!("8035F0CE");
-        });
+        .modify_cfg_chained(|c| c.disable_nonce_check = true);
+    let tx = TxEnv::builder()
+        .caller(BENCH_CALLER)
+        .kind(TxKind::Call(BENCH_TARGET))
+        .data(bytes!("8035F0CE"))
+        .build()
+        .unwrap();
     let mut evm = context.build_mainnet();
     criterion.bench_function("analysis", |b| {
-        b.iter(|| {
-            let _ = evm.replay().unwrap();
-        });
+        b.iter_batched(
+            || {
+                // create a transaction input
+                tx.clone()
+            },
+            |input| {
+                let _ = evm.transact_one(input);
+            },
+            criterion::BatchSize::SmallInput,
+        );
     });
 }

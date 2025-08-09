@@ -1,8 +1,7 @@
 use crate::handler::Erc20MainnetHandler;
 use revm::{
-    context::JournalOutput,
     context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         ContextTr, JournalTr,
     },
     database_interface::DatabaseCommit,
@@ -11,39 +10,53 @@ use revm::{
         PrecompileProvider,
     },
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    state::EvmState,
 };
 
+type Erc20Error<CTX> = EVMError<ContextTrDbError<CTX>, InvalidTransaction>;
+
+/// Executes a transaction using ERC20 tokens for gas payment.
+/// Returns the execution result and the finalized state changes.
+/// This function does not commit the state to the database.
 pub fn transact_erc20evm<EVM>(
     evm: &mut EVM,
-) -> Result<ResultAndState<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<(ExecutionResult<HaltReason>, EvmState), Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
-    Erc20MainnetHandler::<EVM, _, EthFrame<EVM, _, EthInterpreter>>::new().run(evm)
+    Erc20MainnetHandler::new().run(evm).map(|r| {
+        let state = evm.ctx().journal_mut().finalize();
+        (r, state)
+    })
 }
 
+/// Executes a transaction using ERC20 tokens for gas payment and commits the state.
+/// This is a convenience function that runs the transaction and immediately
+/// commits the resulting state changes to the database.
 pub fn transact_erc20evm_commit<EVM>(
     evm: &mut EVM,
-) -> Result<ExecutionResult<HaltReason>, EVMError<ContextTrDbError<EVM::Context>, InvalidTransaction>>
+) -> Result<ExecutionResult<HaltReason>, Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>, Db: DatabaseCommit>,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame = EthFrame<EthInterpreter>,
     >,
 {
-    transact_erc20evm(evm).map(|r| {
-        evm.ctx().db().commit(r.state);
-        r.result
+    transact_erc20evm(evm).map(|(result, state)| {
+        evm.ctx().db_mut().commit(state);
+        result
     })
 }

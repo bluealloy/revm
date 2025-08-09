@@ -150,6 +150,7 @@ impl<DB: Database> StateBuilder<DB> {
         }
     }
 
+    /// Sets the block hashes for the state.
     pub fn with_block_hashes(self, block_hashes: BTreeMap<u64, B256>) -> Self {
         Self {
             with_block_hashes: block_hashes,
@@ -157,6 +158,7 @@ impl<DB: Database> StateBuilder<DB> {
         }
     }
 
+    /// Builds the State with the configured settings.
     pub fn build(mut self) -> State<DB> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
             self.with_bundle_prestate = None;

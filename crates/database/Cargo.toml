@@ -1,7 +1,7 @@
 [package]
 name = "revm-database"
 description = "Revm Database implementations"
-version = "4.0.1"
+version = "7.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -13,13 +13,8 @@ readme.workspace = true
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[lints.rust]
-unreachable_pub = "warn"
-unused_must_use = "deny"
-rust_2018_idioms = "deny"
-
-[lints.rustdoc]
-all = "warn"
+[lints]
+workspace = true
 
 [dependencies]
 state.workspace = true

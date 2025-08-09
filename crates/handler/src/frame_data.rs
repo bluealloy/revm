@@ -19,31 +19,26 @@ pub struct CreateFrame {
     pub created_address: Address,
 }
 
-/// Eof Create Frame
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EOFCreateFrame {
-    pub created_address: Address,
-}
-
 /// Frame Data
 ///
 /// [`FrameData`] bundles different types of frames.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameData {
+    /// Call frame data.
     Call(CallFrame),
+    /// Create frame data.
     Create(CreateFrame),
-    EOFCreate(EOFCreateFrame),
 }
 
 /// Frame Result
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum FrameResult {
+    /// Call frame result.
     Call(CallOutcome),
+    /// Create frame result.
     Create(CreateOutcome),
-    EOFCreate(CreateOutcome),
 }
 
 impl FrameResult {
@@ -53,7 +48,6 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => outcome.result,
             FrameResult::Create(outcome) => outcome.result,
-            FrameResult::EOFCreate(outcome) => outcome.result,
         }
     }
 
@@ -65,9 +59,6 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
-            FrameResult::EOFCreate(outcome) => {
-                Output::Create(outcome.result.output.clone(), outcome.address)
-            }
         }
     }
 
@@ -77,7 +68,6 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
-            FrameResult::EOFCreate(outcome) => &outcome.result.gas,
         }
     }
 
@@ -87,7 +77,6 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
-            FrameResult::EOFCreate(outcome) => &mut outcome.result.gas,
         }
     }
 
@@ -97,7 +86,6 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
-            FrameResult::EOFCreate(outcome) => &outcome.result,
         }
     }
 
@@ -107,7 +95,6 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
-            FrameResult::EOFCreate(outcome) => &mut outcome.result,
         }
     }
 
@@ -119,10 +106,12 @@ impl FrameResult {
 }
 
 impl FrameData {
+    /// Creates a new create frame data.
     pub fn new_create(created_address: Address) -> Self {
         Self::Create(CreateFrame { created_address })
     }
 
+    /// Creates a new call frame data.
     pub fn new_call(return_memory_range: Range<usize>) -> Self {
         Self::Call(CallFrame {
             return_memory_range,

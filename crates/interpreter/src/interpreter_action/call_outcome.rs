@@ -14,7 +14,9 @@ use primitives::Bytes;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallOutcome {
+    /// The result of the interpreter's execution, including output data and gas usage
     pub result: InterpreterResult,
+    /// The range in memory where the output data is located
     pub memory_offset: Range<usize>,
 }
 

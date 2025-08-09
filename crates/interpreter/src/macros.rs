@@ -1,3 +1,5 @@
+/// Macro that triggers `unreachable!` in debug builds but uses unchecked unreachable in release builds.
+/// This provides better error messages during development while optimizing for performance in release.
 #[macro_export]
 macro_rules! debug_unreachable {
     ($($t:tt)*) => {
@@ -9,6 +11,9 @@ macro_rules! debug_unreachable {
     };
 }
 
+/// Macro for asserting assumptions in debug builds.
+/// In debug builds, this will trigger unreachable code if the assumption is false.
+/// In release builds, this serves as an optimization hint.
 #[macro_export]
 macro_rules! assume {
     ($e:expr $(,)?) => {

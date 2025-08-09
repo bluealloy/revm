@@ -6,6 +6,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.1...revm-interpreter-v23.0.2) - 2025-07-14
+
+### Other
+
+- simplify gas calculations by introducing a used() method ([#2703](https://github.com/bluealloy/revm/pull/2703))
+
+## [23.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.0...revm-interpreter-v23.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-context-interface
+
+## [22.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.1...revm-interpreter-v22.1.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+
+## [22.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.0...revm-interpreter-v22.0.1) - 2025-06-20
+
+### Other
+
+- updated the following local packages: revm-context-interface
+
+## [22.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v21.0.0...revm-interpreter-v22.0.0) - 2025-06-19
+
+### Added
+
+- remove EOF ([#2644](https://github.com/bluealloy/revm/pull/2644))
+- configurable contract size limit ([#2611](https://github.com/bluealloy/revm/pull/2611)) ([#2642](https://github.com/bluealloy/revm/pull/2642))
+- *(precompile)* rug/gmp-based modexp ([#2596](https://github.com/bluealloy/revm/pull/2596))
+- add clz opcode ([#2598](https://github.com/bluealloy/revm/pull/2598))
+- added instruction_result fn in LoopControl trait  ([#2595](https://github.com/bluealloy/revm/pull/2595))
+
+### Other
+
+- lints handler inspector interpreter ([#2646](https://github.com/bluealloy/revm/pull/2646))
+- bump all deps ([#2647](https://github.com/bluealloy/revm/pull/2647))
+- re-use frame allocation ([#2636](https://github.com/bluealloy/revm/pull/2636))
+- make CallInput default 0..0 ([#2621](https://github.com/bluealloy/revm/pull/2621))
+
+## [21.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v20.0.0...revm-interpreter-v21.0.0) - 2025-06-06
+
+### Added
+
+- expand timestamp/block_number to u256 ([#2546](https://github.com/bluealloy/revm/pull/2546))
+- transact multi tx ([#2517](https://github.com/bluealloy/revm/pull/2517))
+
+### Other
+
+- ContextTr rm *_ref, and add *_mut fn ([#2560](https://github.com/bluealloy/revm/pull/2560))
+- simplify Interpreter loop ([#2544](https://github.com/bluealloy/revm/pull/2544))
+- Add InstructionContext instead of Host and Interpreter ([#2548](https://github.com/bluealloy/revm/pull/2548))
+
 ## [20.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v19.1.0...revm-interpreter-v20.0.0) - 2025-05-22
 
 ### Added
@@ -130,7 +188,7 @@ Stable version
 - fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
 - move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
 
-## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
+## [16.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
 
 ### Added
 

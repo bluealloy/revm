@@ -74,6 +74,12 @@ impl Gas {
         self.limit - self.remaining
     }
 
+    /// Returns the final amount of gas used by subtracting the refund from spent gas.
+    #[inline]
+    pub const fn used(&self) -> u64 {
+        self.spent().saturating_sub(self.refunded() as u64)
+    }
+
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
@@ -163,6 +169,10 @@ impl Gas {
         MemoryExtensionResult::Extended
     }
 
+    /// Records the denominated fuel cost by converting the provided raw fuel cost
+    /// with a predefined fuel denomination rate (FUEL_DENOM_RATE) and logs it.
+    /// This operation does not round up due to syncing requirements between gas
+    /// and fuel rates.
     #[inline]
     pub fn record_denominated_cost(&mut self, fuel_cost: u64) -> bool {
         // TODO(dmitry123): "we can't do round ceil here because we need to sync gas/fuel rates"
@@ -170,12 +180,15 @@ impl Gas {
         self.record_cost(fuel_cost / FUEL_DENOM_RATE)
     }
 
+    /// Records a denominated fuel refund value.
     #[inline]
     pub fn record_denominated_refund(&mut self, fuel_refund: i64) {
         self.record_refund(fuel_refund / FUEL_DENOM_RATE as i64)
     }
 }
 
+/// Result of attempting to extend memory during execution.
+#[derive(Debug)]
 pub enum MemoryExtensionResult {
     /// Memory was extended.
     Extended,
@@ -199,6 +212,7 @@ pub struct MemoryGas {
 }
 
 impl MemoryGas {
+    /// Creates a new `MemoryGas` instance with zero memory allocation.
     pub const fn new() -> Self {
         Self {
             words_num: 0,
@@ -207,6 +221,8 @@ impl MemoryGas {
     }
 
     #[inline]
+    /// Records a new memory length and calculates additional cost if memory is expanded.
+    /// Returns the additional gas cost required, or None if no expansion is needed.
     pub fn record_new_len(&mut self, new_num: usize) -> Option<u64> {
         if new_num <= self.words_num {
             return None;

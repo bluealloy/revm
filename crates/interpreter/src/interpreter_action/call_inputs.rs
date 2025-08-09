@@ -58,10 +58,9 @@ impl CallInput {
 }
 
 impl Default for CallInput {
-    /// Returns a default `CallInput` with an empty `Bytes`.
     #[inline]
     fn default() -> Self {
-        CallInput::Bytes(Bytes::default())
+        CallInput::SharedBuffer(0..0)
     }
 }
 
@@ -72,8 +71,6 @@ pub struct CallInputs {
     /// The call data of the call.
     pub input: CallInput,
     /// The return memory offset where the output of the call is written.
-    ///
-    /// In EOF, this range is invalid as EOF calls do not write output to memory.
     pub return_memory_offset: Range<usize>,
     /// The gas limit of the call.
     pub gas_limit: u64,
@@ -101,8 +98,6 @@ pub struct CallInputs {
     pub scheme: CallScheme,
     /// Whether the call is a static call, or is initiated inside a static call.
     pub is_static: bool,
-    /// Whether the call is initiated from EOF bytecode.
-    pub is_eof: bool,
 }
 
 impl CallInputs {
@@ -165,26 +160,27 @@ pub enum CallScheme {
     DelegateCall,
     /// `STATICCALL`
     StaticCall,
-    /// `EXTCALL`
-    ExtCall,
-    /// `EXTSTATICCALL`
-    ExtStaticCall,
-    /// `EXTDELEGATECALL`
-    ExtDelegateCall,
 }
 
 impl CallScheme {
-    /// Returns true if it is EOF EXT*CALL.
-    pub fn is_ext(&self) -> bool {
-        matches!(
-            self,
-            Self::ExtCall | Self::ExtStaticCall | Self::ExtDelegateCall
-        )
+    /// Returns true if it is `CALL`.
+    pub fn is_call(&self) -> bool {
+        matches!(self, Self::Call)
     }
 
-    /// Returns true if it is ExtDelegateCall.
-    pub fn is_ext_delegate_call(&self) -> bool {
-        matches!(self, Self::ExtDelegateCall)
+    /// Returns true if it is `CALLCODE`.
+    pub fn is_call_code(&self) -> bool {
+        matches!(self, Self::CallCode)
+    }
+
+    /// Returns true if it is `DELEGATECALL`.
+    pub fn is_delegate_call(&self) -> bool {
+        matches!(self, Self::DelegateCall)
+    }
+
+    /// Returns true if it is `STATICCALL`.
+    pub fn is_static_call(&self) -> bool {
+        matches!(self, Self::StaticCall)
     }
 }
 

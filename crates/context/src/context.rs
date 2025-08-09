@@ -53,55 +53,78 @@ impl<
     type Chain = CHAIN;
     type Local = LOCAL;
 
+    #[inline]
     fn tx(&self) -> &Self::Tx {
         &self.tx
     }
 
+    #[inline]
     fn block(&self) -> &Self::Block {
         &self.block
     }
 
+    #[inline]
     fn cfg(&self) -> &Self::Cfg {
         &self.cfg
     }
 
-    fn journal(&mut self) -> &mut Self::Journal {
+    #[inline]
+    fn journal(&self) -> &Self::Journal {
+        &self.journaled_state
+    }
+
+    #[inline]
+    fn journal_mut(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state
     }
 
+    #[inline]
     fn journal_ref(&self) -> &Self::Journal {
         &self.journaled_state
     }
 
-    fn db(&mut self) -> &mut Self::Db {
+    #[inline]
+    fn db(&self) -> &Self::Db {
         self.journaled_state.db()
     }
 
-    fn db_ref(&self) -> &Self::Db {
-        self.journaled_state.db_ref()
+    #[inline]
+    fn db_mut(&mut self) -> &mut Self::Db {
+        self.journaled_state.db_mut()
     }
 
-    fn chain(&mut self) -> &mut Self::Chain {
-        &mut self.chain
-    }
-
-    fn chain_ref(&self) -> &Self::Chain {
+    #[inline]
+    fn chain(&self) -> &Self::Chain {
         &self.chain
     }
 
-    fn local(&mut self) -> &mut Self::Local {
+    #[inline]
+    fn chain_mut(&mut self) -> &mut Self::Chain {
+        &mut self.chain
+    }
+
+    #[inline]
+    fn local(&self) -> &Self::Local {
+        &self.local
+    }
+
+    #[inline]
+    fn local_mut(&mut self) -> &mut Self::Local {
         &mut self.local
     }
 
+    #[inline]
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
 
-    fn tx_journal(&mut self) -> (&Self::Tx, &mut Self::Journal) {
+    #[inline]
+    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal) {
         (&self.tx, &mut self.journaled_state)
     }
 
-    fn tx_local(&mut self) -> (&Self::Tx, &mut Self::Local) {
+    #[inline]
+    fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local) {
         (&self.tx, &mut self.local)
     }
 }
@@ -113,7 +136,8 @@ impl<
         CFG: Cfg,
         JOURNAL: JournalTr<Database = DB>,
         CHAIN,
-    > ContextSetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+        LOCAL: LocalContextTr,
+    > ContextSetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
     fn set_tx(&mut self, tx: Self::Tx) {
         self.tx = tx;
@@ -130,7 +154,8 @@ impl<
         DB: Database,
         JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
-    > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN>
+        LOCAL: LocalContextTr + Default,
+    > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
     ///
@@ -145,7 +170,7 @@ impl<
                 spec,
                 ..Default::default()
             },
-            local: LocalContext::default(),
+            local: LOCAL::default(),
             journaled_state,
             chain: Default::default(),
             error: Ok(()),
@@ -153,19 +178,20 @@ impl<
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 where
     BLOCK: Block,
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
+    LOCAL: LocalContextTr,
 {
     /// Creates a new context with a new journal type. New journal needs to have the same database type.
     pub fn with_new_journal<OJOURNAL: JournalTr<Database = DB>>(
         self,
         mut journal: OJOURNAL,
-    ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN> {
+    ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN, LOCAL> {
         journal.set_spec_id(self.cfg.spec().into());
         Context {
             tx: self.tx,
@@ -184,7 +210,7 @@ where
     pub fn with_db<ODB: Database>(
         self,
         db: ODB,
-    ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN> {
+    ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN, LOCAL> {
         let spec = self.cfg.spec().into();
         let mut journaled_state = Journal::new(db);
         journaled_state.set_spec_id(spec);
@@ -203,7 +229,8 @@ where
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN> {
+    ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL>
+    {
         let spec = self.cfg.spec().into();
         let mut journaled_state = Journal::new(WrapDatabaseRef(db));
         journaled_state.set_spec_id(spec);
@@ -219,7 +246,10 @@ where
     }
 
     /// Creates a new context with a new block type.
-    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
+    pub fn with_block<OB: Block>(
+        self,
+        block: OB,
+    ) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> {
         Context {
             tx: self.tx,
             block,
@@ -234,7 +264,7 @@ where
     pub fn with_tx<OTX: Transaction>(
         self,
         tx: OTX,
-    ) -> Context<BLOCK, OTX, CFG, DB, JOURNAL, CHAIN> {
+    ) -> Context<BLOCK, OTX, CFG, DB, JOURNAL, CHAIN, LOCAL> {
         Context {
             tx,
             block: self.block,
@@ -247,7 +277,7 @@ where
     }
 
     /// Creates a new context with a new chain type.
-    pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, JOURNAL, OC> {
+    pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, JOURNAL, OC, LOCAL> {
         Context {
             tx: self.tx,
             block: self.block,
@@ -263,7 +293,7 @@ where
     pub fn with_cfg<OCFG: Cfg>(
         mut self,
         cfg: OCFG,
-    ) -> Context<BLOCK, TX, OCFG, DB, JOURNAL, CHAIN> {
+    ) -> Context<BLOCK, TX, OCFG, DB, JOURNAL, CHAIN, LOCAL> {
         self.journaled_state.set_spec_id(cfg.spec().into());
         Context {
             tx: self.tx,
@@ -271,6 +301,22 @@ where
             cfg,
             journaled_state: self.journaled_state,
             local: self.local,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Creates a new context with a new local context type.
+    pub fn with_local<OL: LocalContextTr>(
+        self,
+        local: OL,
+    ) -> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, OL> {
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state: self.journaled_state,
+            local,
             chain: self.chain,
             error: Ok(()),
         }
@@ -375,7 +421,7 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(self.journaled_state.db());
+        f(self.journaled_state.db_mut());
     }
 
     /// Modifies the context journal.
@@ -384,5 +430,13 @@ where
         F: FnOnce(&mut JOURNAL),
     {
         f(&mut self.journaled_state);
+    }
+
+    /// Modifies the local context.
+    pub fn modify_local<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut LOCAL),
+    {
+        f(&mut self.local);
     }
 }

@@ -1,4 +1,4 @@
-//! Optimism-specific constants, types, and helpers.
+//! Database interface.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -9,12 +9,26 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use core::error::Error;
-use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
+use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
 
+/// Address with all `0xff..ff` in it. Used for testing.
+pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
+/// BENCH_TARGET address
+pub const BENCH_TARGET: Address = FFADDRESS;
+/// BENCH_TARGET_BALANCE balance
+pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
+/// Address with all `0xee..ee` in it. Used for testing.
+pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+/// BENCH_CALLER address
+pub const BENCH_CALLER: Address = EEADDRESS;
+/// BENCH_CALLER_BALANCE balance
+pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
+
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
+pub mod either;
 pub mod empty_db;
 pub mod try_commit;
 

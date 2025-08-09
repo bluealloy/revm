@@ -1,4 +1,5 @@
 use clap::Parser;
+use context::TxEnv;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use inspector::{inspectors::TracerEip3155, InspectEvm};
 use revm::{
@@ -84,13 +85,15 @@ impl Cmd {
         // The bytecode is deployed at zero address.
         let mut evm = Context::mainnet()
             .with_db(db)
-            .modify_tx_chained(|tx| {
-                tx.caller = BENCH_CALLER;
-                tx.kind = TxKind::Call(BENCH_TARGET);
-                tx.data = input;
-                tx.nonce = nonce;
-            })
             .build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::stdout())));
+
+        let tx = TxEnv::builder()
+            .caller(BENCH_CALLER)
+            .kind(TxKind::Call(BENCH_TARGET))
+            .data(input)
+            .nonce(nonce)
+            .build()
+            .unwrap();
 
         if self.bench {
             let mut criterion = criterion::Criterion::default()
@@ -100,7 +103,7 @@ impl Cmd {
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
                 b.iter(|| {
-                    let _ = evm.replay().unwrap();
+                    let _ = evm.transact(tx.clone()).unwrap();
                 })
             });
             criterion_group.finish();
@@ -109,20 +112,22 @@ impl Cmd {
         }
 
         let time = Instant::now();
-        let out = if self.trace {
-            evm.inspect_replay().map_err(|_| Errors::EVMError)?
+        let state = if self.trace {
+            evm.inspect_tx(tx.clone())
+                .map_err(|_| Errors::EVMError)?
+                .state
         } else {
-            let out = evm.replay().map_err(|_| Errors::EVMError)?;
+            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
-            out
+            out.state
         };
         let time = time.elapsed();
 
         if self.state {
-            println!("State: {:#?}", out.state);
+            println!("State: {state:#?}");
         }
 
-        println!("Elapsed: {:?}", time);
+        println!("Elapsed: {time:?}");
         Ok(())
     }
 }

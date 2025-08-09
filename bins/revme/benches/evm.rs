@@ -6,7 +6,9 @@ fn evm(c: &mut Criterion) {
     bench::burntpix::run(c);
     bench::snailtracer::run(c);
     bench::transfer::run(c);
+    bench::transfer_multi::run(c);
     bench::evm_build::run(c);
+    bench::gas_cost_estimator::run(c);
 }
 criterion_group!(benches, evm);
 criterion_main!(benches);
