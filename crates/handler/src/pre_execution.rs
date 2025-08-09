@@ -13,8 +13,8 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use primitives::{StorageKey, TxKind};
 use state::AccountInfo;
 use std::boxed::Box;
 
@@ -61,6 +61,12 @@ pub fn load_accounts<
                 )?;
             }
         }
+    }
+
+    // load tx target and set its id in journal.
+    if let TxKind::Call(target) = tx.kind() {
+        let (_, id) = journal.load_account_code(target.into())?.data;
+        journal.set_tx_target_address_id(id);
     }
 
     Ok(())
@@ -173,6 +179,7 @@ pub fn validate_against_state_and_deduct_caller<
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }
 
+    journal.set_caller_address_id(caller);
     journal.caller_accounting_journal_entry(caller.to_id(), old_balance, tx.kind().is_call());
     Ok(())
 }

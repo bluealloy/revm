@@ -67,9 +67,6 @@ pub trait JournalTr {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<AddressAndId, <Self::Database as Database>::Error>;
 
-    /// Warms the coinbase account.
-    fn warm_coinbase_account(&mut self, address: Address);
-
     /// Warms the precompiles. Precompile account will not be fetched from database
     ///
     /// Warming of precompiles assumes that account are frequently accessed and it will
@@ -122,6 +119,21 @@ pub trait JournalTr {
         &mut self,
         address_or_id: AddressOrId,
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, <Self::Database as Database>::Error>;
+
+    /// Sets the caller id.
+    fn set_caller_address_id(&mut self, id: AddressAndId);
+
+    /// Returns the caller address and id.
+    fn caller_address_id(&self) -> Option<AddressAndId>;
+
+    /// Sets the tx target address and id.
+    fn set_tx_target_address_id(&mut self, id: AddressAndId);
+
+    /// Returns the tx target address and id.
+    fn tx_target_address_id(&self) -> Option<AddressAndId>;
+
+    /// Warms the coinbase account.
+    fn warm_coinbase_account(&mut self, address: Address);
 
     /// Loads the account delegated.
     fn load_account_delegated(

@@ -293,10 +293,22 @@ pub trait Handler {
         let memory =
             SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
         let ctx = evm.ctx_ref();
+
+        let caller = ctx.journal().caller_address_id().expect("caller id is set");
+        let target = ctx
+            .journal()
+            .tx_target_address_id()
+            .expect("tx target id is set");
+        let tx = ctx.tx();
+        let input = tx.input().clone();
+        let value = tx.value();
+        let is_call = tx.kind().is_call();
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(ctx.tx(), gas_limit),
+            frame_input: execution::create_init_frame(
+                is_call, caller, target, input, value, gas_limit,
+            ),
         })
     }
 

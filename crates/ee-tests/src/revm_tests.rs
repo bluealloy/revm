@@ -49,7 +49,12 @@ fn test_selfdestruct_multi_tx() {
         .transact_one(TxEnv::builder_for_bench().build_fill())
         .unwrap();
 
-    let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
+    let (destroyed_acc, _) = evm
+        .ctx
+        .journal_mut()
+        .state_new
+        .get_mut(&BENCH_TARGET.into())
+        .unwrap();
 
     // balance got transferred to 0x0000..00FFFF
     assert_eq!(destroyed_acc.info.balance, U256::ZERO);
@@ -64,7 +69,12 @@ fn test_selfdestruct_multi_tx() {
         .transact_one(TxEnv::builder_for_bench().nonce(1).build_fill())
         .unwrap();
 
-    let destroyed_acc = evm.ctx.journal_mut().state.get_mut(&BENCH_TARGET).unwrap();
+    let (destroyed_acc, _) = evm
+        .ctx
+        .journal_mut()
+        .state_new
+        .get_mut(&BENCH_TARGET.into())
+        .unwrap();
 
     assert_eq!(destroyed_acc.info.code_hash, KECCAK_EMPTY);
     assert_eq!(destroyed_acc.info.nonce, 0);
@@ -102,11 +112,11 @@ pub fn test_multi_tx_create() {
 
     let created_address = result1.created_address().unwrap();
 
-    let created_acc = evm
+    let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state
-        .get_mut(&created_address)
+        .state_new
+        .get_mut(&created_address.into())
         .unwrap();
 
     assert_eq!(
@@ -126,11 +136,11 @@ pub fn test_multi_tx_create() {
         )
         .unwrap();
 
-    let created_acc = evm
+    let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state
-        .get_mut(&created_address)
+        .state_new
+        .get_mut(&created_address.into())
         .unwrap();
 
     // reset nonce to trigger create on same address.
@@ -146,9 +156,10 @@ pub fn test_multi_tx_create() {
     // reset caller nonce
     evm.ctx
         .journal_mut()
-        .state
-        .get_mut(&BENCH_CALLER)
+        .state_new
+        .get_mut(&BENCH_CALLER.into())
         .unwrap()
+        .0
         .info
         .nonce = 0;
 
@@ -166,11 +177,11 @@ pub fn test_multi_tx_create() {
     let created_address_new = result3.created_address().unwrap();
     assert_eq!(created_address, created_address_new);
 
-    let created_acc = evm
+    let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state
-        .get_mut(&created_address)
+        .state_new
+        .get_mut(&created_address.into())
         .unwrap();
 
     assert_eq!(

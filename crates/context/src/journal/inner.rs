@@ -23,8 +23,6 @@ use std::vec::Vec;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalInner<ENTRY> {
-    /// The current state
-    pub state: EvmState,
     /// The current state new
     pub state_new: EvmStateNew,
     /// Transient storage that is discarded after every transaction.
@@ -56,7 +54,7 @@ pub struct JournalInner<ENTRY> {
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     pub spec: SpecId,
-    /// Warm addresses containing both coinbase and current precompiles.
+    /// Warm addresses containing current precompiles and coinbase, caller and tx target addresses.
     pub warm_addresses: WarmAddresses,
 }
 
@@ -73,7 +71,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state: HashMap::default(),
             state_new: EvmStateNew::new(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
@@ -102,7 +99,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
-            state,
             state_new,
             transient_storage,
             logs,
@@ -114,7 +110,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
-        let _ = state;
         transient_storage.clear();
         *depth = 0;
 
@@ -122,7 +117,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
 
         // Clear coinbase address warming for next tx
-        warm_addresses.clear_coinbase();
+        warm_addresses.clear_addresses();
+
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
@@ -132,7 +128,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     pub fn discard_tx(&mut self) {
         // if there is no journal entries, there has not been any changes.
         let Self {
-            state,
             state_new,
             transient_storage,
             logs,
@@ -145,7 +140,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
+            entry.revert(state_new, None, is_spurious_dragon_enabled);
         });
         transient_storage.clear();
         *depth = 0;
@@ -153,7 +148,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *transaction_id += 1;
 
         // Clear coinbase address warming for next tx
-        warm_addresses.clear_coinbase();
+        warm_addresses.clear_addresses();
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -165,7 +160,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
-            state,
             state_new,
             transient_storage,
             logs,
@@ -178,9 +172,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
         // Clear coinbase address warming for next tx
-        warm_addresses.clear_coinbase();
+        warm_addresses.clear_addresses();
 
-        let state = mem::take(state);
+        // TODO output gets changes, it is now index map
+        let state = mem::take(state_new);
+        let state = HashMap::default();
+
         logs.clear();
         transient_storage.clear();
 
@@ -195,8 +192,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut EvmState {
-        &mut self.state
+    pub fn state(&mut self) -> &mut EvmStateNew {
+        &mut self.state_new
     }
 
     /// Sets SpecId.
@@ -475,7 +472,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state;
+        let state = &mut self.state_new;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         self.logs.truncate(checkpoint.log_i);
@@ -507,25 +504,26 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address_or_id: AddressOrId,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        // TODO re check this logic
-        let spec = self.spec;
-        let account_load = self.load_account(db, AddressOrId::Address(target))?;
-        let is_cold = account_load.is_cold;
-        let is_empty = account_load.0.state_clear_aware_is_empty(spec);
-        let target = account_load.1;
-
         let (acc, address) = self.state_new.get_mut(&address_or_id).unwrap();
-        if address.address() != target.address() {
+        let balance = acc.info.balance;
+
+        let spec = self.spec;
+        let target_account_load = self.load_account(db, AddressOrId::Address(target))?;
+        let is_cold = target_account_load.is_cold;
+        let is_empty = target_account_load.0.state_clear_aware_is_empty(spec);
+        let (target_acc, target) = target_account_load.data;
+
+        if target != address_or_id {
             // Both accounts are loaded before this point, `address` as we execute its contract.
             // and `target` at the beginning of the function.
-            let acc_balance = acc.info.balance;
-
-            let target_account = self.state.get_mut(target.address()).unwrap();
-            Self::touch_account(&mut self.journal, address.id(), target_account);
-            target_account.info.balance += acc_balance;
+            target_acc.info.balance += balance;
+            if !target_acc.is_touched() {
+                target_acc.mark_touch();
+                self.journal.push(ENTRY::account_touched(target.id()));
+            }
         }
 
-        let balance = acc.info.balance;
+        let (acc, _) = self.state_new.get_mut(&address_or_id).unwrap();
 
         let destroyed_status = if !acc.is_selfdestructed() {
             SelfdestructionRevertStatus::GloballySelfdestroyed

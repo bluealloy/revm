@@ -146,8 +146,29 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .selfdestruct(&mut self.database, address_or_id, target)
     }
 
+    #[inline]
     fn warm_coinbase_account(&mut self, address: Address) {
         self.inner.warm_addresses.set_coinbase(address);
+    }
+
+    #[inline]
+    fn set_caller_address_id(&mut self, id: AddressAndId) {
+        self.inner.warm_addresses.set_caller(id);
+    }
+
+    #[inline]
+    fn set_tx_target_address_id(&mut self, id: AddressAndId) {
+        self.inner.warm_addresses.set_tx_target(id);
+    }
+
+    #[inline]
+    fn caller_address_id(&self) -> Option<AddressAndId> {
+        self.inner.warm_addresses.caller()
+    }
+
+    #[inline]
+    fn tx_target_address_id(&self) -> Option<AddressAndId> {
+        self.inner.warm_addresses.tx_target()
     }
 
     fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {

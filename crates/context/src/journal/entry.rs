@@ -6,7 +6,7 @@
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
 use primitives::{AccountId, Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
-use state::{EvmState, TransientStorage};
+use state::{EvmState, EvmStateNew, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
@@ -81,7 +81,7 @@ pub trait JournalEntryTr {
     /// ```
     fn revert(
         self,
-        state: &mut EvmState,
+        state: &mut EvmStateNew,
         transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     );
@@ -300,10 +300,12 @@ impl JournalEntryTr for JournalEntry {
 
     fn revert(
         self,
-        state: &mut EvmState,
+        state: &mut EvmStateNew,
         transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     ) {
+        todo!();
+        /*
         match self {
             JournalEntry::AccountWarmed { address } => {
                 state.get_mut(&address).unwrap().mark_cold();
@@ -418,5 +420,6 @@ impl JournalEntryTr for JournalEntry {
                 acc.info.code = None;
             }
         }
+        */
     }
 }

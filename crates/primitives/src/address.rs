@@ -76,6 +76,15 @@ pub struct AddressAndId {
     id: AccountId,
 }
 
+impl PartialEq<AddressOrId> for AddressAndId {
+    fn eq(&self, other: &AddressOrId) -> bool {
+        match other {
+            AddressOrId::Address(address) => self.address == *address,
+            AddressOrId::Id(id) => self.id == *id,
+        }
+    }
+}
+
 impl AddressAndId {
     /// Creates a new address and id.
     #[inline]

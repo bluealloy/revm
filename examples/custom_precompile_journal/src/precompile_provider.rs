@@ -157,7 +157,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
     // Read from storage using the journal
     let value = context
         .journal_mut()
-        .sload(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY)
+        .sload(CUSTOM_PRECOMPILE_ADDRESS.into(), STORAGE_KEY)
         .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}")))?
         .data;
 
@@ -188,7 +188,7 @@ fn handle_write_storage<CTX: ContextTr>(
     // Store the value in the precompile's storage
     context
         .journal_mut()
-        .sstore(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY, value)
+        .sstore(CUSTOM_PRECOMPILE_ADDRESS.into(), STORAGE_KEY, value)
         .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}")))?;
 
     // Get the caller address
@@ -198,13 +198,13 @@ fn handle_write_storage<CTX: ContextTr>(
     // First, ensure the precompile has balance
     context
         .journal_mut()
-        .balance_incr(CUSTOM_PRECOMPILE_ADDRESS, U256::from(1))
+        .balance_incr(CUSTOM_PRECOMPILE_ADDRESS.into(), U256::from(1))
         .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}")))?;
 
     // Then transfer to caller
     let transfer_result = context
         .journal_mut()
-        .transfer(CUSTOM_PRECOMPILE_ADDRESS, caller, U256::from(1))
+        .transfer(CUSTOM_PRECOMPILE_ADDRESS.into(), caller.into(), U256::from(1))
         .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}")))?;
 
     if let Some(error) = transfer_result {

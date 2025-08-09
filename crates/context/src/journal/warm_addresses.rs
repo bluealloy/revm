@@ -3,7 +3,7 @@
 //! It is used to optimize access to precompile addresses.
 
 use bitvec::{bitvec, order::Lsb0, vec::BitVec};
-use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
+use primitives::{short_address, Address, AddressAndId, HashSet, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,6 +18,10 @@ pub struct WarmAddresses {
     all_short_addresses: bool,
     /// Coinbase address.
     coinbase: Option<Address>,
+    /// Caller address and id.
+    caller: Option<AddressAndId>,
+    /// Tx target address and id.
+    tx_target: Option<AddressAndId>,
 }
 
 impl Default for WarmAddresses {
@@ -35,6 +39,8 @@ impl WarmAddresses {
             precompile_short_addresses: BitVec::new(),
             all_short_addresses: true,
             coinbase: None,
+            caller: None,
+            tx_target: None,
         }
     }
 
@@ -48,6 +54,18 @@ impl WarmAddresses {
     #[inline]
     pub fn coinbase(&self) -> Option<Address> {
         self.coinbase
+    }
+
+    /// Returns the caller address and id.
+    #[inline]
+    pub fn caller(&self) -> Option<AddressAndId> {
+        self.caller
+    }
+
+    /// Returns the tx target address and id.
+    #[inline]
+    pub fn tx_target(&self) -> Option<AddressAndId> {
+        self.tx_target
     }
 
     /// Set the precompile addresses and short addresses.
@@ -75,10 +93,24 @@ impl WarmAddresses {
         self.coinbase = Some(address);
     }
 
-    /// Clear the coinbase address.
+    /// Set the coinbase address.
     #[inline]
-    pub fn clear_coinbase(&mut self) {
+    pub fn set_caller(&mut self, address: AddressAndId) {
+        self.caller = Some(address);
+    }
+
+    /// Set the tx target address and id.
+    #[inline]
+    pub fn set_tx_target(&mut self, address: AddressAndId) {
+        self.tx_target = Some(address);
+    }
+
+    /// Clear the coinbase/caller/tx target addresses.
+    #[inline]
+    pub fn clear_addresses(&mut self) {
         self.coinbase = None;
+        self.caller = None;
+        self.tx_target = None;
     }
 
     /// Returns true if the address is warm loaded.
@@ -143,7 +175,7 @@ mod tests {
         assert!(warm_addresses.is_warm(&coinbase_addr));
 
         // Test clearing coinbase
-        warm_addresses.clear_coinbase();
+        warm_addresses.clear_addresses();
         assert!(warm_addresses.coinbase.is_none());
         assert!(!warm_addresses.is_warm(&coinbase_addr));
     }
