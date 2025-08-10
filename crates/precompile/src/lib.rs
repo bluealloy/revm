@@ -247,7 +247,7 @@ impl Precompiles {
 
     /// Is the precompiles list empty.
     pub fn is_empty(&self) -> bool {
-        self.inner.len() == 0
+        self.inner.is_empty()
     }
 
     /// Returns the number of precompiles.
