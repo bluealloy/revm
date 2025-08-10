@@ -56,7 +56,6 @@ mod tests {
     fn test_step_halt() {
         let bytecode = [opcode::INVALID];
         let r = run(&bytecode, HaltInspector);
-        dbg!(&r);
         assert!(r.is_success());
     }
 
