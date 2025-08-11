@@ -318,8 +318,6 @@ pub trait Handler {
             gas.erase_cost(remaining);
         }
 
-        // Note: All refunds are now recorded to journal during execution via SSTORE/SELFDESTRUCT,
-        // so refunded should always be 0 here.
         Ok(())
     }
 

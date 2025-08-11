@@ -147,11 +147,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             warm_addresses,
             refund,
         } = self;
-        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
-        journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
-        });
+        Self::revert_journal_entries_impl(journal.drain(..), refund, state, None, *spec);
         transient_storage.clear();
         *depth = 0;
         logs.clear();
@@ -475,19 +472,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         self.logs.truncate(checkpoint.log_i);
 
         // iterate over last N journals sets and revert our global state
-        self.journal
-            .drain(checkpoint.journal_i..)
-            .rev()
-            .for_each(|entry| {
-                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
-            });
+        Self::revert_journal_entries_impl(
+            self.journal.drain(checkpoint.journal_i..),
+            &mut self.refund,
+            state,
+            Some(transient_storage),
+            self.spec,
+        );
     }
 
     /// Performs selfdestruct action.
@@ -879,7 +876,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// refund values being visible during individual call frame execution.
     #[inline]
     pub fn record_refund(&mut self, refund: i64) {
+        let old_refund = self.refund;
         self.refund += refund;
+        self.journal.push(ENTRY::refund_changed(old_refund));
     }
 
     /// Returns the current accumulated gas refund for the transaction.
@@ -888,11 +887,27 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.refund
     }
 
-    /// Resets the gas refund to zero.
-    ///
-    /// This is typically called at the start of a new transaction.
-    #[inline]
-    pub fn reset_refund(&mut self) {
-        self.refund = 0;
+    /// Reverts journal entries with proper handling of RefundChanged entries.
+    fn revert_journal_entries_impl<I>(
+        entries: I,
+        refund: &mut i64,
+        state: &mut EvmState,
+        mut transient_storage: Option<&mut TransientStorage>,
+        spec: SpecId,
+    ) where
+        I: Iterator<Item = ENTRY> + DoubleEndedIterator,
+    {
+        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        for entry in entries.rev() {
+            if let Some(old_refund_value) = entry.get_refund_revert() {
+                *refund = old_refund_value;
+            } else {
+                entry.revert(
+                    state,
+                    transient_storage.as_deref_mut(),
+                    is_spurious_dragon_enabled,
+                );
+            }
+        }
     }
 }

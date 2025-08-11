@@ -593,7 +593,6 @@ mod tests {
 
     #[test]
     fn test_consume_gas_with_refund() {
-        // Test basic refund calculation with EIP-3529 (London) limits
         let ctx = Context::op()
             .with_tx(
                 OpTransaction::builder()
