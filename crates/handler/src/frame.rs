@@ -143,7 +143,7 @@ impl EthFrame<EthInterpreter> {
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CallInputs>,
+        inputs: CallInputs,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -309,7 +309,7 @@ impl EthFrame<EthInterpreter> {
         context: &mut CTX,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CreateInputs>,
+        inputs: CreateInputs,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {

@@ -91,7 +91,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context
         .interpreter
         .bytecode
-        .set_action(InterpreterAction::NewFrame(FrameInput::Create(Box::new(
+        .set_action(InterpreterAction::NewFrame(FrameInput::Create(
             CreateInputs {
                 caller: context.interpreter.input.target_address(),
                 scheme,
@@ -99,7 +99,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                 init_code: code,
                 gas_limit,
             },
-        ))));
+        )));
 }
 
 /// Implements the CALL instruction.
@@ -155,19 +155,17 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
     context
         .interpreter
         .bytecode
-        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
-            CallInputs {
-                input: CallInput::SharedBuffer(input),
-                gas_limit,
-                target_address: to,
-                caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
-                value: CallValue::Transfer(value),
-                scheme: CallScheme::Call,
-                is_static: context.interpreter.runtime_flag.is_static(),
-                return_memory_offset,
-            },
-        ))));
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(CallInputs {
+            input: CallInput::SharedBuffer(input),
+            gas_limit,
+            target_address: to,
+            caller: context.interpreter.input.target_address(),
+            bytecode_address: to,
+            value: CallValue::Transfer(value),
+            scheme: CallScheme::Call,
+            is_static: context.interpreter.runtime_flag.is_static(),
+            return_memory_offset,
+        })));
 }
 
 /// Implements the CALLCODE instruction.
@@ -214,19 +212,17 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context
         .interpreter
         .bytecode
-        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
-            CallInputs {
-                input: CallInput::SharedBuffer(input),
-                gas_limit,
-                target_address: context.interpreter.input.target_address(),
-                caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
-                value: CallValue::Transfer(value),
-                scheme: CallScheme::CallCode,
-                is_static: context.interpreter.runtime_flag.is_static(),
-                return_memory_offset,
-            },
-        ))));
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(CallInputs {
+            input: CallInput::SharedBuffer(input),
+            gas_limit,
+            target_address: context.interpreter.input.target_address(),
+            caller: context.interpreter.input.target_address(),
+            bytecode_address: to,
+            value: CallValue::Transfer(value),
+            scheme: CallScheme::CallCode,
+            is_static: context.interpreter.runtime_flag.is_static(),
+            return_memory_offset,
+        })));
 }
 
 /// Implements the DELEGATECALL instruction.
@@ -266,19 +262,17 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context
         .interpreter
         .bytecode
-        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
-            CallInputs {
-                input: CallInput::SharedBuffer(input),
-                gas_limit,
-                target_address: context.interpreter.input.target_address(),
-                caller: context.interpreter.input.caller_address(),
-                bytecode_address: to,
-                value: CallValue::Apparent(context.interpreter.input.call_value()),
-                scheme: CallScheme::DelegateCall,
-                is_static: context.interpreter.runtime_flag.is_static(),
-                return_memory_offset,
-            },
-        ))));
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(CallInputs {
+            input: CallInput::SharedBuffer(input),
+            gas_limit,
+            target_address: context.interpreter.input.target_address(),
+            caller: context.interpreter.input.caller_address(),
+            bytecode_address: to,
+            value: CallValue::Apparent(context.interpreter.input.call_value()),
+            scheme: CallScheme::DelegateCall,
+            is_static: context.interpreter.runtime_flag.is_static(),
+            return_memory_offset,
+        })));
 }
 
 /// Implements the STATICCALL instruction.
@@ -317,17 +311,15 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context
         .interpreter
         .bytecode
-        .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
-            CallInputs {
-                input: CallInput::SharedBuffer(input),
-                gas_limit,
-                target_address: to,
-                caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
-                value: CallValue::Transfer(U256::ZERO),
-                scheme: CallScheme::StaticCall,
-                is_static: true,
-                return_memory_offset,
-            },
-        ))));
+        .set_action(InterpreterAction::NewFrame(FrameInput::Call(CallInputs {
+            input: CallInput::SharedBuffer(input),
+            gas_limit,
+            target_address: to,
+            caller: context.interpreter.input.target_address(),
+            bytecode_address: to,
+            value: CallValue::Transfer(U256::ZERO),
+            scheme: CallScheme::StaticCall,
+            is_static: true,
+            return_memory_offset,
+        })));
 }

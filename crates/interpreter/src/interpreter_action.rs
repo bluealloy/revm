@@ -19,9 +19,9 @@ pub enum FrameInput {
     /// No input data (empty frame)
     Empty,
     /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL` instruction called.
-    Call(Box<CallInputs>),
+    Call(CallInputs),
     /// `CREATE` or `CREATE2` instruction called.
-    Create(Box<CreateInputs>),
+    Create(CreateInputs),
 }
 
 /// Initialization data for creating a new execution frame.
