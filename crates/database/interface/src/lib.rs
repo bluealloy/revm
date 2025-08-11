@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountInfo, Bytecode};
+use state::{Account, AccountInfo, Bytecode, EvmState};
 use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.
@@ -69,7 +69,7 @@ pub trait Database {
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: HashMap<Address, Account>);
+    fn commit(&mut self, changes: EvmState);
 }
 
 /// EVM database interface.
@@ -138,7 +138,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: EvmState) {
         self.0.commit(changes)
     }
 }

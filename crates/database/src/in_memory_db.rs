@@ -6,7 +6,7 @@ use database_interface::{
 use primitives::{
     hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, AccountInfo, Bytecode};
+use state::{Account, AccountInfo, Bytecode, EvmState};
 use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
@@ -191,8 +191,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
-        for (address, mut account) in changes {
+    fn commit(&mut self, changes: EvmState) {
+        for (mut account, address) in changes.accounts {
             if !account.is_touched() {
                 continue;
             }

@@ -3,9 +3,6 @@ use primitives::{
     map::Entry, AccountId, Address, AddressAndId, AddressOrId, HashMap, StorageKey, StorageValue,
 };
 
-/// EVM State is a mapping from addresses to accounts.
-pub type EvmState = HashMap<Address, Account>;
-
 /// Structure used for EIP-1153 transient storage
 pub type TransientStorage = HashMap<(AccountId, StorageKey), StorageValue>;
 
@@ -15,7 +12,7 @@ pub type EvmStorage = HashMap<StorageKey, EvmStorageSlot>;
 /// EVM State with internal account management.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EvmStateNew {
+pub struct EvmState {
     /// Index of accounts.
     pub index: HashMap<Address, AccountId>,
     /// Accounts.
@@ -23,7 +20,7 @@ pub struct EvmStateNew {
     pub accounts: Vec<(Account, Address)>,
 }
 
-impl EvmStateNew {
+impl EvmState {
     /// Create a new empty state.
     pub fn new() -> Self {
         Self {
@@ -159,15 +156,15 @@ impl EvmStateNew {
     }
 }
 
-impl Default for EvmStateNew {
+impl Default for EvmState {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl From<HashMap<Address, Account>> for EvmStateNew {
+impl From<HashMap<Address, Account>> for EvmState {
     fn from(map: HashMap<Address, Account>) -> Self {
-        let mut state = EvmStateNew::new();
+        let mut state = EvmState::new();
         for (address, account) in map {
             state.insert(address, account);
         }

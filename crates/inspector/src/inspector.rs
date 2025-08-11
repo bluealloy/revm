@@ -5,7 +5,7 @@ use interpreter::{
     InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
-use state::EvmStateNew;
+use state::EvmState;
 
 /// EVM hooks into execution.
 ///
@@ -182,10 +182,10 @@ pub trait JournalExt {
     fn journal(&self) -> &[JournalEntry];
 
     /// Return the current Journaled state.
-    fn evm_state(&self) -> &EvmStateNew;
+    fn evm_state(&self) -> &EvmState;
 
     /// Return the mutable current Journaled state.
-    fn evm_state_mut(&mut self) -> &mut EvmStateNew;
+    fn evm_state_mut(&mut self) -> &mut EvmState;
 }
 
 impl<DB: Database> JournalExt for Journal<DB> {
@@ -200,12 +200,12 @@ impl<DB: Database> JournalExt for Journal<DB> {
     }
 
     #[inline]
-    fn evm_state(&self) -> &EvmStateNew {
+    fn evm_state(&self) -> &EvmState {
         &self.state_new
     }
 
     #[inline]
-    fn evm_state_mut(&mut self) -> &mut EvmStateNew {
+    fn evm_state_mut(&mut self) -> &mut EvmState {
         &mut self.state_new
     }
 }

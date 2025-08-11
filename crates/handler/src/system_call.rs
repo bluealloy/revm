@@ -315,7 +315,11 @@ mod tests {
         // only system contract is updated and present
         assert_eq!(output.state.len(), 1);
         assert_eq!(
-            output.state[&HISTORY_STORAGE_ADDRESS]
+            output
+                .state
+                .get(&HISTORY_STORAGE_ADDRESS.into())
+                .unwrap()
+                .0
                 .storage
                 .get(&StorageKey::from(0))
                 .map(|slot| slot.present_value)

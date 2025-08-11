@@ -15,7 +15,7 @@ use primitives::{
     AccountId, Address, AddressAndId, AddressOrId, HashMap, Log, StorageKey, StorageValue, B256,
     KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStateNew, EvmStorageSlot, TransientStorage};
+use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -24,7 +24,7 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalInner<ENTRY> {
     /// The current state new
-    pub state_new: EvmStateNew,
+    pub state_new: EvmState,
     /// Transient storage that is discarded after every transaction.
     ///
     /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
@@ -71,7 +71,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state_new: EvmStateNew::new(),
+            state_new: EvmState::new(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
@@ -174,9 +174,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clear coinbase address warming for next tx
         warm_addresses.clear_addresses();
 
-        // TODO output gets changes, it is now index map
         let state = mem::take(state_new);
-        let state = HashMap::default();
 
         logs.clear();
         transient_storage.clear();
@@ -192,7 +190,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut EvmStateNew {
+    pub fn state(&mut self) -> &mut EvmState {
         &mut self.state_new
     }
 
