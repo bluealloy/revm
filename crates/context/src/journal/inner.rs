@@ -155,6 +155,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Note: Precompile addresses and spec are preserved and initial state of
     /// warm_preloaded_addresses will contain precompiles addresses.
+    #[inline]
     pub fn finalize(&mut self) -> EvmState {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
@@ -287,7 +288,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Increments the balance of the account.
     ///
     /// Mark account as touched.
-    #[inline(never)]
+    #[inline]
     pub fn balance_incr<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -319,7 +320,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
-    #[inline(never)]
+    #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -378,7 +379,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Panics if the caller is not loaded inside the EVM state.
     /// This should have been done inside `create_inner`.
-    #[inline(never)]
+    #[inline]
     pub fn create_account_checkpoint(
         &mut self,
         caller_or_id: AddressOrId,
@@ -494,7 +495,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833>
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449>
     ///  * <https://eips.ethereum.org/EIPS/eip-6780>
-    #[inline(never)]
+    #[inline]
     pub fn selfdestruct<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -569,7 +570,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account into memory. return if it is cold or warm accessed
-    #[inline(never)]
+    #[inline]
     pub fn load_account<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -585,7 +586,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
-    #[inline(never)]
+    #[inline]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -622,7 +623,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
-    #[inline(never)]
+    #[inline]
     pub fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -632,7 +633,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline(always)]
+    #[inline(never)]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,

@@ -188,7 +188,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.depth
     }
 
-    #[inline(never)]
+    #[inline]
     fn warm_account_and_storage(
         &mut self,
         address: Address,
