@@ -8,8 +8,7 @@ use context_interface::{
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::{
-    hardfork::SpecId, Address, AddressAndId, AddressOrId, Bytes, Log, StorageKey, StorageValue,
-    B256, U256,
+    hardfork::SpecId, Address, AddressOrId, Bytes, Log, StorageKey, StorageValue, B256, U256,
 };
 
 /// EVM context contains data that EVM needs for execution.

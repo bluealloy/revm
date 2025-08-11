@@ -231,9 +231,9 @@ where
 
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
-        if result.result == InstructionResult::SelfDestruct {
-            inspect_selfdestruct(context, &mut inspector);
-        }
+        // if result.result == InstructionResult::SelfDestruct {
+        //     inspect_selfdestruct(context, &mut inspector);
+        // }
     }
 
     next_action
@@ -263,28 +263,28 @@ fn inspect_log<CTX, IT>(
     inspector.log(interpreter, context, log);
 }
 
-#[inline(never)]
-#[cold]
-fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
-where
-    CTX: ContextTr<Journal: JournalExt> + Host,
-    IT: InterpreterTypes,
-{
-    if let Some(
-        JournalEntry::AccountDestroyed {
-            address: contract,
-            target: to,
-            had_balance: balance,
-            ..
-        }
-        | JournalEntry::BalanceTransfer {
-            from: contract,
-            to,
-            balance,
-            ..
-        },
-    ) = context.journal_mut().journal().last()
-    {
-        inspector.selfdestruct(*contract, *to, *balance);
-    }
-}
+// #[inline(never)]
+// #[cold]
+// fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
+// where
+//     CTX: ContextTr<Journal: JournalExt> + Host,
+//     IT: InterpreterTypes,
+// {
+//     if let Some(
+//         JournalEntry::AccountDestroyed {
+//             account_id: 0,
+//             target: to,
+//             had_balance: balance,
+//             ..
+//         }
+//         | JournalEntry::BalanceTransfer {
+//             from: contract,
+//             to,
+//             balance,
+//             ..
+//         },
+//     ) = context.journal_mut().journal().last()
+//     {
+//         inspector.selfdestruct(*contract, *to, *balance);
+//     }
+// }

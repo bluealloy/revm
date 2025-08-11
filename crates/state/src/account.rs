@@ -4,7 +4,7 @@ use crate::{AccountInfo, EvmStorage, EvmStorageSlot};
 use bitflags::bitflags;
 use core::hash::Hash;
 use primitives::hardfork::SpecId;
-use primitives::{Address, HashMap, StorageKey};
+use primitives::{HashMap, StorageKey};
 
 /// Account type used inside Journal to track changed to state.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

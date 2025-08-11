@@ -53,7 +53,7 @@ fn test_selfdestruct_multi_tx() {
         .ctx
         .journal_mut()
         .state_new
-        .get_mut(&BENCH_TARGET.into())
+        .get_mut(BENCH_TARGET.into())
         .unwrap();
 
     // balance got transferred to 0x0000..00FFFF
@@ -73,7 +73,7 @@ fn test_selfdestruct_multi_tx() {
         .ctx
         .journal_mut()
         .state_new
-        .get_mut(&BENCH_TARGET.into())
+        .get_mut(BENCH_TARGET.into())
         .unwrap();
 
     assert_eq!(destroyed_acc.info.code_hash, KECCAK_EMPTY);
@@ -116,7 +116,7 @@ pub fn test_multi_tx_create() {
         .ctx
         .journal_mut()
         .state_new
-        .get_mut(&created_address.into())
+        .get_mut(created_address.into())
         .unwrap();
 
     assert_eq!(
@@ -140,7 +140,7 @@ pub fn test_multi_tx_create() {
         .ctx
         .journal_mut()
         .state_new
-        .get_mut(&created_address.into())
+        .get_mut(created_address.into())
         .unwrap();
 
     // reset nonce to trigger create on same address.
@@ -157,7 +157,7 @@ pub fn test_multi_tx_create() {
     evm.ctx
         .journal_mut()
         .state_new
-        .get_mut(&BENCH_CALLER.into())
+        .get_mut(BENCH_CALLER.into())
         .unwrap()
         .0
         .info
@@ -181,7 +181,7 @@ pub fn test_multi_tx_create() {
         .ctx
         .journal_mut()
         .state_new
-        .get_mut(&created_address.into())
+        .get_mut(created_address.into())
         .unwrap();
 
     assert_eq!(

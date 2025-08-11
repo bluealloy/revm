@@ -221,7 +221,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     #[inline]
     fn touch_account(&mut self, address_or_id: AddressOrId) {
-        self.inner.touch(&address_or_id);
+        self.inner.touch(address_or_id);
     }
 
     #[inline]
