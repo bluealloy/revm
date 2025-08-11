@@ -260,10 +260,6 @@ impl JournalTr for Backend {
     fn refund(&self) -> i64 {
         self.journaled_state.refund()
     }
-
-    fn reset_refund(&mut self) {
-        self.journaled_state.reset_refund()
-    }
 }
 
 impl JournalExt for Backend {

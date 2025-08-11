@@ -154,11 +154,6 @@ pub trait JournalTr {
     /// Returns the current accumulated gas refund for the transaction.
     fn refund(&self) -> i64;
 
-    /// Resets the gas refund to zero.
-    ///
-    /// This is typically called at the start of a new transaction.
-    fn reset_refund(&mut self);
-
     /// Returns account code bytes and if address is cold loaded.
     #[inline]
     fn code(
@@ -252,6 +247,8 @@ pub struct JournalCheckpoint {
     pub log_i: usize,
     /// Checkpoint to where on revert we will go back to and revert other journal entries.
     pub journal_i: usize,
+    /// Refund value at the time of checkpoint creation.
+    pub refund: i64,
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded

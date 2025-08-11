@@ -253,8 +253,6 @@ where
                 // For regular transactions prior to Regolith and all transactions after
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
-                // Note: All refunds are now recorded to journal during execution via SSTORE/SELFDESTRUCT,
-                // so refunded should always be 0 here.
             } else if is_deposit {
                 let tx = ctx.tx();
                 if tx.is_system_transaction() {
@@ -337,10 +335,10 @@ where
             frame_result.gas().spent(),
             eth_spec,
         );
-        
+
         // Set the final refund back to the gas object for API compatibility
         frame_result.gas_mut().set_refund(final_refund);
-        
+
         final_refund
     }
 
@@ -561,8 +559,6 @@ mod tests {
         *exec_result.gas()
     }
 
-
-
     #[test]
     fn test_revert_gas() {
         let ctx = Context::op()
@@ -608,13 +604,13 @@ mod tests {
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
         let ret_gas = Gas::new(90);
-        
+
         // Test without any refunds first
         let gas = call_last_frame_return(ctx.clone(), InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0); // No refunds recorded
-        
+
         // Test with revert - should have no refunds
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);

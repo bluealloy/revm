@@ -501,9 +501,6 @@ impl EthFrame<EthInterpreter> {
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
-
-                // Note: Sub-call refunds are already recorded to journal during execution,
-                // so out_gas.refunded() should always be 0 here.
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -531,8 +528,6 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 let stack_item = if instruction_result.is_ok() {
-                    // Note: Sub-call refunds are already recorded to journal during execution,
-                    // so outcome.gas().refunded() should always be 0 here.
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO

@@ -49,10 +49,10 @@ pub fn refund<CTX: ContextTr>(
 
     // Calculate final refund with EIP-3529 limits
     let final_refund = calculate_final_refund(total_refund, gas.spent(), spec);
-    
+
     // Set the final refund back to the gas object for API compatibility
     gas.set_refund(final_refund);
-    
+
     final_refund
 }
 
