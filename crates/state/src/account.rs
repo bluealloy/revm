@@ -1,10 +1,9 @@
-//! Account data structures and implementations.
-
-use crate::{AccountInfo, EvmStorage, EvmStorageSlot};
 use bitflags::bitflags;
 use core::hash::Hash;
 use primitives::hardfork::SpecId;
-use primitives::{HashMap, StorageKey};
+use primitives::{HashMap, StorageKey, StorageValue};
+
+use crate::{AccountInfo, EvmStorage, EvmStorageSlot};
 
 /// Account type used inside Journal to track changed to state.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -42,46 +41,55 @@ impl Account {
     }
 
     /// Marks the account as self destructed.
+    #[inline]
     pub fn mark_selfdestruct(&mut self) {
         self.status |= AccountStatus::SelfDestructed;
     }
 
     /// Unmarks the account as self destructed.
+    #[inline]
     pub fn unmark_selfdestruct(&mut self) {
         self.status -= AccountStatus::SelfDestructed;
     }
 
     /// Is account marked for self destruct.
+    #[inline]
     pub fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
     }
 
     /// Marks the account as touched
+    #[inline]
     pub fn mark_touch(&mut self) {
         self.status |= AccountStatus::Touched;
     }
 
     /// Unmarks the touch flag.
+    #[inline]
     pub fn unmark_touch(&mut self) {
         self.status -= AccountStatus::Touched;
     }
 
     /// If account status is marked as touched.
+    #[inline]
     pub fn is_touched(&self) -> bool {
         self.status.contains(AccountStatus::Touched)
     }
 
     /// Marks the account as newly created.
+    #[inline]
     pub fn mark_created(&mut self) {
         self.status |= AccountStatus::Created;
     }
 
     /// Unmarks the created flag.
+    #[inline]
     pub fn unmark_created(&mut self) {
         self.status -= AccountStatus::Created;
     }
 
     /// Marks the account as cold.
+    #[inline]
     pub fn mark_cold(&mut self) {
         self.status |= AccountStatus::Cold;
     }
@@ -317,8 +325,8 @@ impl Default for AccountStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AccountInfo, EvmStorageSlot};
-    use primitives::{HashMap, StorageKey, StorageValue, KECCAK_EMPTY, U256};
+    use crate::EvmStorageSlot;
+    use primitives::{StorageKey, KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {
@@ -384,7 +392,7 @@ mod tests {
         let mut account = Account::default();
 
         // Account is not cold by default
-        assert!(!account.status.contains(AccountStatus::Cold));
+        assert!(!account.status.contains(crate::AccountStatus::Cold));
 
         // When marking warm account as warm again, it should return false
         assert!(!account.mark_warm_with_transaction_id(0));
@@ -393,7 +401,7 @@ mod tests {
         account.mark_cold();
 
         // Account is cold
-        assert!(account.status.contains(AccountStatus::Cold));
+        assert!(account.status.contains(crate::AccountStatus::Cold));
 
         // When marking cold account as warm, it should return true
         assert!(account.mark_warm_with_transaction_id(0));
@@ -459,6 +467,27 @@ mod tests {
         let account = Account::default().with_cold_mark();
 
         assert!(account.status.contains(AccountStatus::Cold));
+    }
+
+    #[test]
+    fn test_storage_mark_warm_with_transaction_id() {
+        let mut slot = EvmStorageSlot::new(U256::ZERO, 0);
+        slot.is_cold = true;
+        slot.transaction_id = 0;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = false;
+        slot.transaction_id = 0;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = true;
+        slot.transaction_id = 1;
+        assert!(slot.mark_warm_with_transaction_id(1));
+
+        slot.is_cold = false;
+        slot.transaction_id = 1;
+        // Only if transaction id is same and is_cold is false, return false.
+        assert!(!slot.mark_warm_with_transaction_id(1));
     }
 
     #[test]

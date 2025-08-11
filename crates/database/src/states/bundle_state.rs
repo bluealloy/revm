@@ -307,7 +307,7 @@ impl BundleBuilder {
                     reverts_size += account_revert.size_hint();
                     reverts_map
                         .entry(block_number)
-                        .or_insert(Vec::new())
+                        .or_insert_with(Vec::new)
                         .push((address, account_revert));
                 }
             });
@@ -618,7 +618,7 @@ impl BundleState {
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
 
-            for (key, slot) in account.storage.iter().map(|(k, v)| (*k, *v)) {
+            for (&key, &slot) in account.storage.iter() {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
                 let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();

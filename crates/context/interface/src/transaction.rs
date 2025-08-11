@@ -55,7 +55,7 @@ pub trait Transaction {
     /// Note : Common field for all transactions.
     fn gas_limit(&self) -> u64;
 
-    /// The value sent to the receiver of [`TxKind::Call`][primitives::TxKind::Call].
+    /// The value sent to the receiver of [`TxKind::Call`].
     ///
     /// Note : Common field for all transactions.
     fn value(&self) -> U256;

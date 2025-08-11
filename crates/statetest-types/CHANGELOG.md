@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.5...revm-statetest-types-v9.0.0) - 2025-08-06
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+
 ## [8.0.5](https://github.com/bluealloy/revm/compare/revm-statetest-types-v8.0.4...revm-statetest-types-v8.0.5) - 2025-07-23
 
 ### Other

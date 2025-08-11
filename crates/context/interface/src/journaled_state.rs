@@ -67,10 +67,21 @@ pub trait JournalTr {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<AddressAndId, <Self::Database as Database>::Error>;
 
+    /// Warms the account. Internally calls [`JournalTr::warm_account_and_storage`] with empty storage keys.
+    fn warm_account(
+        &mut self,
+        address: Address,
+    ) -> Result<AddressAndId, <Self::Database as Database>::Error> {
+        self.warm_account_and_storage(address, [])
+    }
+
+    /// Warms the coinbase account.
+    fn warm_coinbase_account(&mut self, address: Address);
+
     /// Warms the precompiles. Precompile account will not be fetched from database
     ///
     /// Warming of precompiles assumes that account are frequently accessed and it will
-    /// be considered warm even when loaded from database.
+    /// be considered warm even when loaded from database.F
     fn warm_precompiles(&mut self, addresses: HashSet<Address>);
 
     /// Returns the addresses of the precompiles.
@@ -131,9 +142,6 @@ pub trait JournalTr {
 
     /// Returns the tx target address and id.
     fn tx_target_address_id(&self) -> Option<AddressAndId>;
-
-    /// Warms the coinbase account.
-    fn warm_coinbase_account(&mut self, address: Address);
 
     /// Loads the account delegated.
     fn load_account_delegated(

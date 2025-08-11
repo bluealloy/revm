@@ -1,5 +1,27 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v84
+date: 07.08.2025
+
+Small perf and maintainance release.
+
+revm-inspector@9.0.0 revm@28.0.0 revm-statetest-types@9.0.0
+
+`revm-primitives`: 20.1.0 -> 20.2.0 (✓ API compatible changes)
+`revm-bytecode`: 6.1.0 -> 6.2.0 (✓ API compatible changes)
+`revm-state`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+`revm-database-interface`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+`revm-context-interface`: 9.0.0 -> 10.0.0 (⚠ API breaking changes)
+`revm-context`: 8.0.4 -> 9.0.0 (⚠ API breaking changes)
+`revm-database`: 7.0.2 -> 7.0.3 (✓ API compatible changes)
+`revm-interpreter`: 24.0.0 -> 25.0.0 (⚠ API breaking changes)
+`revm-precompile`: 25.0.0 -> 26.0.0 (⚠ API breaking changes)
+`revm-handler`: 8.1.0 -> 9.0.0 (⚠ API breaking changes)
+`revm-inspector`: 8.1.0 -> 9.0.0 (✓ API compatible changes)
+`revm`: 27.1.0 -> 28.0.0 (✓ API compatible changes)
+`revm-statetest-types`: 8.0.5 -> 9.0.0 (✓ API compatible changes)
+`revme`: 7.1.0 -> 7.2.0 (✓ API compatible changes)
+`op-revm`: 8.1.0 -> 9.0.0 (⚠ API breaking changes)
 
 # v83 
 date: 23.07.2025

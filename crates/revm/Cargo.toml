@@ -1,7 +1,7 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "27.1.0"
+version = "28.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -34,7 +34,6 @@ state.workspace = true
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
-ee-tests.workspace = true
 
 [features]
 default = ["std", "secp256k1", "portable", "tracer", "c-kzg", "blst"]
