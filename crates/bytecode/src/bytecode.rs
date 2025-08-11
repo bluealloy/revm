@@ -8,7 +8,6 @@ use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
     BytecodeDecodeError, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
 };
-use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 
 /// Main bytecode structure with all variants.
