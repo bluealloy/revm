@@ -145,11 +145,11 @@ impl EvmState {
                 Ok((account, address_and_id))
             }
             Entry::Vacant(entry) => {
+                let account = fetch(address)?;
                 let id = self.accounts.len();
                 entry.insert(id);
-                let address_and_id = AddressAndId::new(address, id);
-                let account = fetch(address)?;
                 self.accounts.push((account, address));
+                let address_and_id = AddressAndId::new(address, id);
                 Ok((&mut self.accounts.last_mut().unwrap().0, address_and_id))
             }
         }

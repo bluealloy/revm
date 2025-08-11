@@ -5,7 +5,6 @@ use primitives::{AddressAndId, Bytes, U256};
 use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
-#[inline]
 pub fn create_init_frame(
     is_call: bool,
     caller: AddressAndId,
@@ -15,7 +14,7 @@ pub fn create_init_frame(
     gas_limit: u64,
 ) -> FrameInput {
     if is_call {
-        FrameInput::Call(CallInputs {
+        FrameInput::Call(Box::new(CallInputs {
             input: CallInput::Bytes(input),
             gas_limit,
             target_address: target,
@@ -25,14 +24,14 @@ pub fn create_init_frame(
             scheme: CallScheme::Call,
             is_static: false,
             return_memory_offset: 0..0,
-        })
+        }))
     } else {
-        FrameInput::Create(CreateInputs {
+        FrameInput::Create(Box::new(CreateInputs {
             caller,
             scheme: CreateScheme::Create,
             value,
             init_code: input,
             gas_limit,
-        })
+        }))
     }
 }

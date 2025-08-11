@@ -53,7 +53,7 @@ pub fn run(criterion: &mut Criterion) {
     // drop the journal
     let _ = evm.finalize();
 
-    // evm.modify_cfg(|cfg| cfg.disable_nonce_check = false);
+    evm.modify_cfg(|cfg| cfg.disable_nonce_check = false);
 
-    // criterion.bench_function("transfer_finalize", |b| b.iter(|| evm.replay().unwrap()));
+    criterion.bench_function("transfer_finalize", |b| b.iter(|| evm.replay().unwrap()));
 }

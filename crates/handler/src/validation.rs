@@ -8,7 +8,6 @@ use interpreter::gas::{self, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
-#[inline]
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {
@@ -219,7 +218,6 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
 }
 
 /// Validate initial transaction gas.
-#[inline]
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,

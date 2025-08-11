@@ -829,7 +829,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 }
 
 /// Loads storage slot with account.
-#[inline(never)]
+#[inline]
 pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
