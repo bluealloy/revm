@@ -635,7 +635,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -673,20 +673,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
             // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
             is_cold = self.warm_addresses.is_cold(address_and_id.address());
+
+            // journal loading of cold account.
+            if is_cold {
+                self.journal
+                    .push(ENTRY::account_warmed(address_and_id.id()));
+            }
         }
 
-        let mut load = StateLoad {
-            data: (account, address_and_id),
-            is_cold,
-        };
-
-        // journal loading of cold account.
-        if load.is_cold {
-            self.journal
-                .push(ENTRY::account_warmed(address_and_id.id()));
-        }
         if load_code {
-            let info = &mut load.data.0.info;
+            let info = &mut account.info;
             if info.code.is_none() {
                 let code = if info.code_hash == KECCAK_EMPTY {
                     Bytecode::default()
@@ -699,7 +695,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         for storage_key in storage_keys.into_iter() {
             sload_with_account(
-                &mut load.data.0,
+                account,
                 db,
                 &mut self.journal,
                 self.transaction_id,
@@ -708,7 +704,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             )?;
         }
 
-        Ok(load)
+        Ok(StateLoad {
+            data: (account, address_and_id),
+            is_cold,
+        })
     }
 
     /// Loads storage slot.

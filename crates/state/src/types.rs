@@ -27,7 +27,7 @@ impl EvmStateNew {
     /// Create a new empty state.
     pub fn new() -> Self {
         Self {
-            index: HashMap::with_capacity(1024),
+            index: HashMap::default(),
             accounts: Vec::with_capacity(1024),
         }
     }
@@ -174,15 +174,3 @@ impl From<HashMap<Address, Account>> for EvmStateNew {
         state
     }
 }
-
-// impl From<EvmStateNew> for HashMap<Address, Account> {
-//     fn from(state: EvmStateNew) -> Self {
-//         let mut map = HashMap::new();
-//         for (address, id) in state.index {
-//             if let Some(account) = state.accounts.get(id) {
-//                 map.insert(address, account.clone());
-//             }
-//         }
-//         map
-//     }
-// }
