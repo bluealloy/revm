@@ -87,6 +87,9 @@ pub trait Host {
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
     /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
+
+    /// Record gas refund, calls `ContextTr::journal_mut().record_refund(refund)`
+    fn record_refund(&mut self, refund: i64);
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
@@ -194,4 +197,6 @@ impl Host for DummyHost {
     fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
         None
     }
+
+    fn record_refund(&mut self, _refund: i64) {}
 }

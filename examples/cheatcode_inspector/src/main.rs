@@ -252,6 +252,18 @@ impl JournalTr for Backend {
     fn discard_tx(&mut self) {
         self.journaled_state.discard_tx()
     }
+
+    fn record_refund(&mut self, refund: i64) {
+        self.journaled_state.record_refund(refund)
+    }
+
+    fn refund(&self) -> i64 {
+        self.journaled_state.refund()
+    }
+
+    fn reset_refund(&mut self) {
+        self.journaled_state.reset_refund()
+    }
 }
 
 impl JournalExt for Backend {

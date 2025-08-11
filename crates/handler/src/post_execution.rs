@@ -18,13 +18,42 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
     }
 }
 
+/// Calculates the final gas refund amount based on the specification and spent gas.
+///
+/// This applies EIP-3529 (Reduction in refunds) which limits the maximum refund to:
+/// - 1/5 of gas spent (London and later)
+/// - 1/2 of gas spent (before London)
+pub fn calculate_final_refund(total_refund: i64, gas_spent: u64, spec: SpecId) -> i64 {
+    let max_refund_quotient = if spec.is_enabled_in(SpecId::LONDON) {
+        5
+    } else {
+        2
+    };
+    let final_refund = (total_refund as u64).min(gas_spent / max_refund_quotient) as i64;
+
+    // Ensure refund is non-negative
+    final_refund.max(0)
+}
+
 /// Calculates and applies gas refunds based on the specification.
-pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
-    gas.record_refund(eip7702_refund);
-    // Calculate gas refund for transaction.
-    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
-    // gas spend. (Before london it was 2th part of gas spend)
-    gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
+pub fn refund<CTX: ContextTr>(
+    context: &mut CTX,
+    gas: &mut Gas,
+    spec: SpecId,
+    eip7702_refund: i64,
+) -> i64 {
+    // Add EIP-7702 refund to the journal and get total refund
+    let journal = context.journal_mut();
+    journal.record_refund(eip7702_refund);
+    let total_refund = journal.refund();
+
+    // Calculate final refund with EIP-3529 limits
+    let final_refund = calculate_final_refund(total_refund, gas.spent(), spec);
+    
+    // Set the final refund back to the gas object for API compatibility
+    gas.set_refund(final_refund);
+    
+    final_refund
 }
 
 /// Reimburses the caller for unused gas.
@@ -32,6 +61,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
 pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
+    gas_refund: i64,
     additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
@@ -42,7 +72,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
     context.journal_mut().balance_incr(
         caller,
         U256::from(
-            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
+            effective_gas_price.saturating_mul((gas.remaining() + gas_refund as u64) as u128),
         ) + additional_refund,
     )?;
 

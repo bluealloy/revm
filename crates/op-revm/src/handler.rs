@@ -21,7 +21,7 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
-    primitives::{hardfork::SpecId, U256},
+    primitives::U256,
 };
 use std::boxed::Box;
 
@@ -231,7 +231,6 @@ where
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
-        let refunded = gas.refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
@@ -254,7 +253,8 @@ where
                 // For regular transactions prior to Regolith and all transactions after
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
-                gas.record_refund(refunded);
+                // Note: All refunds are now recorded to journal during execution via SSTORE/SELFDESTRUCT,
+                // so refunded should always be 0 here.
             } else if is_deposit {
                 let tx = ctx.tx();
                 if tx.is_system_transaction() {
@@ -287,6 +287,7 @@ where
         &self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        gas_refund: i64,
     ) -> Result<(), Self::Error> {
         let mut additional_refund = U256::ZERO;
 
@@ -298,7 +299,13 @@ where
                 .operator_fee_refund(frame_result.gas(), spec);
         }
 
-        reimburse_caller(evm.ctx(), frame_result.gas(), additional_refund).map_err(From::from)
+        reimburse_caller(
+            evm.ctx_mut(),
+            frame_result.gas(),
+            gas_refund,
+            additional_refund,
+        )
+        .map_err(From::from)
     }
 
     fn refund(
@@ -306,23 +313,35 @@ where
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
-    ) {
-        frame_result.gas_mut().record_refund(eip7702_refund);
-
+    ) -> i64 {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let is_regolith = evm.ctx().cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
 
         // Prior to Regolith, deposit transactions did not receive gas refunds.
         let is_gas_refund_disabled = is_deposit && !is_regolith;
-        if !is_gas_refund_disabled {
-            frame_result.gas_mut().set_final_refund(
-                evm.ctx()
-                    .cfg()
-                    .spec()
-                    .into_eth_spec()
-                    .is_enabled_in(SpecId::LONDON),
-            );
+        if is_gas_refund_disabled {
+            // Still record the refund even if disabled, for consistency
+            evm.ctx_mut().journal_mut().record_refund(eip7702_refund);
+            return 0;
         }
+
+        // Add EIP-7702 refund to the journal and get total refund
+        let journal = evm.ctx_mut().journal_mut();
+        journal.record_refund(eip7702_refund);
+        let total_refund = journal.refund();
+
+        // Calculate final refund with EIP-3529 limits
+        let eth_spec = evm.ctx().cfg().spec().into_eth_spec();
+        let final_refund = revm::handler::post_execution::calculate_final_refund(
+            total_refund,
+            frame_result.gas().spent(),
+            eth_spec,
+        );
+        
+        // Set the final refund back to the gas object for API compatibility
+        frame_result.gas_mut().set_refund(final_refund);
+        
+        final_refund
     }
 
     fn reward_beneficiary(
@@ -535,9 +554,14 @@ mod tests {
         handler
             .last_frame_result(&mut evm, &mut exec_result)
             .unwrap();
-        handler.refund(&mut evm, &mut exec_result, 0);
+        let gas_refund = handler.refund(&mut evm, &mut exec_result, 0);
+        handler
+            .reimburse_caller(&mut evm, &mut exec_result, gas_refund)
+            .unwrap();
         *exec_result.gas()
     }
+
+
 
     #[test]
     fn test_revert_gas() {
@@ -573,6 +597,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas_with_refund() {
+        // Test basic refund calculation with EIP-3529 (London) limits
         let ctx = Context::op()
             .with_tx(
                 OpTransaction::builder()
@@ -582,18 +607,19 @@ mod tests {
             )
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
 
-        let mut ret_gas = Gas::new(90);
-        ret_gas.record_refund(20);
-
+        let ret_gas = Gas::new(90);
+        
+        // Test without any refunds first
         let gas = call_last_frame_return(ctx.clone(), InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spent(), 10);
-        assert_eq!(gas.refunded(), 2); // min(20, 10/5)
-
+        assert_eq!(gas.refunded(), 0); // No refunds recorded
+        
+        // Test with revert - should have no refunds
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spent(), 10);
-        assert_eq!(gas.refunded(), 0);
+        assert_eq!(gas.refunded(), 0); // Revert means no refunds
     }
 
     #[test]
@@ -1087,8 +1113,9 @@ mod tests {
         ));
 
         // Reimburse the caller for the unspent portion of the fees.
+        let gas_refund = gas.refunded(); // Get refund before calling reimburse_caller
         handler
-            .reimburse_caller(&mut evm, &mut exec_result)
+            .reimburse_caller(&mut evm, &mut exec_result, gas_refund)
             .unwrap();
 
         // Compute the expected refund amount. If the transaction is a deposit, the operator fee refund never

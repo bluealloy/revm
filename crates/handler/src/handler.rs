@@ -221,11 +221,11 @@ pub trait Handler {
         eip7702_gas_refund: i64,
     ) -> Result<(), Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
-        self.refund(evm, exec_result, eip7702_gas_refund);
+        let gas_refund = self.refund(evm, exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
         self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
         // Return unused gas to caller
-        self.reimburse_caller(evm, exec_result)?;
+        self.reimburse_caller(evm, exec_result, gas_refund)?;
         // Pay transaction fees to beneficiary
         self.reward_beneficiary(evm, exec_result)?;
         Ok(())
@@ -310,7 +310,6 @@ pub trait Handler {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
-        let refunded = gas.refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
@@ -319,9 +318,8 @@ pub trait Handler {
             gas.erase_cost(remaining);
         }
 
-        if instruction_result.is_ok() {
-            gas.record_refund(refunded);
-        }
+        // Note: All refunds are now recorded to journal during execution via SSTORE/SELFDESTRUCT,
+        // so refunded should always be 0 here.
         Ok(())
     }
 
@@ -390,9 +388,9 @@ pub trait Handler {
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
-    ) {
+    ) -> i64 {
         let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+        post_execution::refund(evm.ctx_mut(), exec_result.gas_mut(), spec, eip7702_refund)
     }
 
     /// Returns unused gas costs to the transaction sender's account.
@@ -401,8 +399,9 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        gas_refund: i64,
     ) -> Result<(), Self::Error> {
-        post_execution::reimburse_caller(evm.ctx(), exec_result.gas(), U256::ZERO)
+        post_execution::reimburse_caller(evm.ctx_mut(), exec_result.gas(), gas_refund, U256::ZERO)
             .map_err(From::from)
     }
 

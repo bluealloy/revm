@@ -296,4 +296,19 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     fn finalize(&mut self) -> Self::State {
         self.inner.finalize()
     }
+
+    #[inline]
+    fn record_refund(&mut self, refund: i64) {
+        self.inner.record_refund(refund)
+    }
+
+    #[inline]
+    fn refund(&self) -> i64 {
+        self.inner.refund()
+    }
+
+    #[inline]
+    fn reset_refund(&mut self) {
+        self.inner.reset_refund()
+    }
 }

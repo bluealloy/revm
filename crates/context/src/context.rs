@@ -625,4 +625,9 @@ impl<
             })
             .ok()
     }
+
+    /// Records a gas refund for the current transaction.
+    fn record_refund(&mut self, refund: i64) {
+        self.journal_mut().record_refund(refund);
+    }
 }

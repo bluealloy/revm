@@ -145,6 +145,20 @@ pub trait JournalTr {
         self.set_code_with_hash(address, code, hash);
     }
 
+    /// Records a gas refund for the current transaction.
+    ///
+    /// This is used to track gas refunds globally at the journal level
+    /// instead of locally at the call frame level.
+    fn record_refund(&mut self, refund: i64);
+
+    /// Returns the current accumulated gas refund for the transaction.
+    fn refund(&self) -> i64;
+
+    /// Resets the gas refund to zero.
+    ///
+    /// This is typically called at the start of a new transaction.
+    fn reset_refund(&mut self);
+
     /// Returns account code bytes and if address is cold loaded.
     #[inline]
     fn code(
