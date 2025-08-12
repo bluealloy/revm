@@ -649,7 +649,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline(never)]
+    #[inline]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -658,18 +658,18 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, DB::Error> {
         let (account, address_and_id) = match address_or_id {
-            AddressOrId::Address(address) => self.state.get_mut_or_fetch(
-                address,
-                |address| -> Result<Account, DB::Error> {
-                    db.basic(address).map(|account| {
-                        if let Some(account) = account {
-                            account.into()
-                        } else {
-                            Account::new_not_existing(self.transaction_id)
-                        }
-                    })
-                },
-            )?,
+            AddressOrId::Address(address) => {
+                self.state
+                    .get_mut_or_fetch(address, |address| -> Result<Account, DB::Error> {
+                        db.basic(address).map(|account| {
+                            if let Some(account) = account {
+                                account.into()
+                            } else {
+                                Account::new_not_existing(self.transaction_id)
+                            }
+                        })
+                    })?
+            }
             AddressOrId::Id(id) => self.state.get_by_id_mut(id),
         };
 

@@ -41,7 +41,7 @@ pub fn run(criterion: &mut Criterion) {
             .caller(BENCH_CALLER)
             .kind(TxKind::Call((target + U256::from(i)).into_address()))
             .value(U256::from(1))
-            .gas_price(1)
+            .gas_price(0)
             .gas_priority_fee(None)
             .gas_limit(30_000)
             .build()

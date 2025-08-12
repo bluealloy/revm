@@ -25,23 +25,11 @@ pub fn load_accounts<
 >(
     evm: &mut EVM,
 ) -> Result<(), ERROR> {
-    let beneficiary = evm.ctx().block().beneficiary().into();
-    let (context, precompiles) = evm.ctx_precompiles();
-
+    let context = evm.ctx();
     let gen_spec = context.cfg().spec();
     let spec = gen_spec.clone().into();
-    // sets eth spec id in journal
-    context.journal_mut().set_spec_id(spec);
-    let precompiles_changed = precompiles.set_spec(gen_spec);
-    let empty_warmed_precompiles = context.journal_mut().precompile_addresses().is_empty();
 
-    if precompiles_changed || empty_warmed_precompiles {
-        // load new precompile addresses into journal.
-        // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
-        context
-            .journal_mut()
-            .warm_precompiles(precompiles.warm_addresses().collect());
-    }
+    let beneficiary = context.block().beneficiary().into();
 
     // Load access list
     let (tx, journal) = context.tx_journal_mut();
@@ -70,6 +58,21 @@ pub fn load_accounts<
         coinbase.mark_touch();
     }
     journal.set_coinbase_address_id(id);
+
+    let (context, precompiles) = evm.ctx_precompiles();
+
+    // sets eth spec id in journal
+    context.journal_mut().set_spec_id(spec);
+    let precompiles_changed = precompiles.set_spec(gen_spec);
+    let empty_warmed_precompiles = context.journal_mut().precompile_addresses().is_empty();
+
+    if precompiles_changed || empty_warmed_precompiles {
+        // load new precompile addresses into journal.
+        // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
+        context
+            .journal_mut()
+            .warm_precompiles(precompiles.warm_addresses().collect());
+    }
 
     Ok(())
 }
