@@ -311,6 +311,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(address)
     }
 
+    /// Increments the balance of the account.
+    ///
+    /// Mark account as touched.
     #[inline]
     pub fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256) {
         let account = self.state_new.get_by_id_mut(account_id).unwrap().0;
