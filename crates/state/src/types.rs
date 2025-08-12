@@ -20,6 +20,7 @@ pub struct EvmState {
     pub accounts: Vec<(Account, Address)>,
 }
 
+
 impl EvmState {
     /// Create a new empty state.
     pub fn new() -> Self {
@@ -148,6 +149,7 @@ impl EvmState {
                 let account = fetch(address)?;
                 let id = self.accounts.len();
                 entry.insert(id);
+                self.accounts.reserve(32);
                 self.accounts.push((account, address));
                 let address_and_id = AddressAndId::new(address, id);
                 Ok((&mut self.accounts.last_mut().unwrap().0, address_and_id))
