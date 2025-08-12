@@ -75,9 +75,6 @@ pub trait JournalTr {
         self.warm_account_and_storage(address, [])
     }
 
-    /// Warms the coinbase account.
-    fn warm_coinbase_account(&mut self, address: Address);
-
     /// Warms the precompiles. Precompile account will not be fetched from database
     ///
     /// Warming of precompiles assumes that account are frequently accessed and it will
@@ -130,13 +127,19 @@ pub trait JournalTr {
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, <Self::Database as Database>::Error>;
 
     /// Returns the account by id.
-    fn get_account_mut(&mut self, account_id: AccountId) -> &mut Account;
+    fn get_account_mut(&mut self, account_id: AccountId) -> (&mut Account, AddressAndId);
 
     /// Fast fetch the account by id.
-    fn get_account(&mut self, account_id: AccountId) -> &Account;
+    fn get_account(&mut self, account_id: AccountId) -> (&Account, AddressAndId);
 
     /// Sets the caller id.
     fn set_caller_address_id(&mut self, id: AddressAndId);
+
+    /// Sets the coinbase id.
+    fn set_coinbase_address_id(&mut self, id: AddressAndId);
+
+    /// Returns the coinbase address and id.
+    fn coinbase_address_id(&self) -> Option<AddressAndId>;
 
     /// Returns the caller address and id.
     fn caller_address_id(&self) -> Option<AddressAndId>;

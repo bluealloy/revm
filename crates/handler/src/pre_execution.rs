@@ -25,6 +25,7 @@ pub fn load_accounts<
 >(
     evm: &mut EVM,
 ) -> Result<(), ERROR> {
+    let beneficiary = evm.ctx().block().beneficiary().into();
     let (context, precompiles) = evm.ctx_precompiles();
 
     let gen_spec = context.cfg().spec();
@@ -42,13 +43,6 @@ pub fn load_accounts<
             .warm_precompiles(precompiles.warm_addresses().collect());
     }
 
-    // Load coinbase
-    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-    if spec.is_enabled_in(SpecId::SHANGHAI) {
-        let coinbase = context.block().beneficiary();
-        context.journal_mut().warm_coinbase_account(coinbase);
-    }
-
     // Load access list
     let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
@@ -63,11 +57,22 @@ pub fn load_accounts<
         }
     }
 
+    let (_, id) = journal.load_account_code(tx.caller().into())?.data;
+    journal.set_caller_address_id(id);
+
     // load tx target and set its id in journal.
     if let TxKind::Call(target) = tx.kind() {
         let (_, id) = journal.load_account_code(target.into())?.data;
         journal.set_tx_target_address_id(id);
     }
+
+    let (coinbase, id) = journal.load_account_code(beneficiary)?.data;
+    // Load coinbase
+    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+    if spec.is_enabled_in(SpecId::SHANGHAI) {
+        coinbase.mark_touch();
+    }
+    journal.set_coinbase_address_id(id);
 
     Ok(())
 }
@@ -125,12 +130,13 @@ pub fn validate_against_state_and_deduct_caller<
     let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
     let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
     let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
+    let caller = context.journal_mut().caller_address_id().unwrap();
 
     let (tx, journal) = context.tx_journal_mut();
 
     // Load caller's account.
     // TODO load account, obtains AccountId and store it somewhere so we can access later.
-    let (caller_account, caller) = journal.load_account_code(tx.caller().into())?.data;
+    let (caller_account, _) = journal.get_account_mut(caller.id());
 
     validate_account_nonce_and_code(
         &mut caller_account.info,

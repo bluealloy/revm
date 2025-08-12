@@ -147,11 +147,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn warm_coinbase_account(&mut self, address: Address) {
-        self.inner.warm_addresses.set_coinbase(address);
-    }
-
-    #[inline]
     fn set_caller_address_id(&mut self, id: AddressAndId) {
         self.inner.warm_addresses.set_caller(id);
     }
@@ -159,6 +154,16 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn set_tx_target_address_id(&mut self, id: AddressAndId) {
         self.inner.warm_addresses.set_tx_target(id);
+    }
+
+    #[inline]
+    fn set_coinbase_address_id(&mut self, id: AddressAndId) {
+        self.inner.warm_addresses.set_coinbase(id);
+    }
+
+    #[inline]
+    fn coinbase_address_id(&self) -> Option<AddressAndId> {
+        self.inner.warm_addresses.coinbase()
     }
 
     #[inline]
@@ -183,13 +188,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn get_account_mut(&mut self, account_id: AccountId) -> &mut Account {
-        self.inner.state().get_by_id_mut(account_id).0
+    fn get_account_mut(&mut self, account_id: AccountId) -> (&mut Account, AddressAndId) {
+        self.inner.state().get_by_id_mut(account_id)
     }
 
     #[inline]
-    fn get_account(&mut self, account_id: AccountId) -> &Account {
-        self.inner.state().get_by_id(account_id).0
+    fn get_account(&mut self, account_id: AccountId) -> (&Account, AddressAndId) {
+        self.inner.state().get_by_id(account_id)
     }
 
     /// Returns call depth.

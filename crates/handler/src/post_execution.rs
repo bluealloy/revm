@@ -56,8 +56,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
-    // TODO save beneficiary AccountId somewhere so we can access it here.
-    let beneficiary = context.block().beneficiary().into();
+    let beneficiary = context.journal().coinbase_address_id().unwrap();
     let basefee = context.block().basefee() as u128;
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
@@ -70,10 +69,10 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     };
 
     // reward beneficiary
-    context.journal_mut().balance_incr(
-        beneficiary,
+    context.journal_mut().balance_incr_by_id(
+        beneficiary.id(),
         U256::from(coinbase_gas_price * gas.used() as u128),
-    )?;
+    );
 
     Ok(())
 }

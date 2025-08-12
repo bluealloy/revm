@@ -1,8 +1,7 @@
 //! Try database commit interface.
 use crate::DatabaseCommit;
 use core::{convert::Infallible, error::Error, fmt};
-use primitives::{Address, HashMap};
-use state::{Account, EvmState};
+use state::EvmState;
 use std::sync::Arc;
 
 /// EVM database commit interface that can fail.

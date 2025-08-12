@@ -1,5 +1,5 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
-use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
+use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr, Transaction};
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
@@ -231,9 +231,9 @@ where
 
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
-        // if result.result == InstructionResult::SelfDestruct {
-        //     inspect_selfdestruct(context, &mut inspector);
-        // }
+        if result.result == InstructionResult::SelfDestruct {
+            inspect_selfdestruct(context, &mut inspector);
+        }
     }
 
     next_action
@@ -263,28 +263,36 @@ fn inspect_log<CTX, IT>(
     inspector.log(interpreter, context, log);
 }
 
-// #[inline(never)]
-// #[cold]
-// fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
-// where
-//     CTX: ContextTr<Journal: JournalExt> + Host,
-//     IT: InterpreterTypes,
-// {
-//     if let Some(
-//         JournalEntry::AccountDestroyed {
-//             account_id: 0,
-//             target: to,
-//             had_balance: balance,
-//             ..
-//         }
-//         | JournalEntry::BalanceTransfer {
-//             from: contract,
-//             to,
-//             balance,
-//             ..
-//         },
-//     ) = context.journal_mut().journal().last()
-//     {
-//         inspector.selfdestruct(*contract, *to, *balance);
-//     }
-// }
+#[inline(never)]
+#[cold]
+fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
+where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    let journal = context.journal_mut();
+    let journal = journal.journal();
+    let Some(
+        JournalEntry::AccountDestroyed {
+            account_id: contract,
+            target: to,
+            had_balance: balance,
+            ..
+        }
+        | JournalEntry::BalanceTransfer {
+            from: contract,
+            to,
+            balance,
+            ..
+        },
+    ) = journal.last()
+    else {
+        return;
+    };
+    let contract = *contract;
+    let to = *to;
+    let balance = *balance;
+    let contract = *context.journal_mut().get_account(contract).1.address();
+    let to = *context.journal_mut().get_account(to).1.address();
+    inspector.selfdestruct(contract, to, balance);
+}

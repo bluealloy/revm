@@ -9,8 +9,8 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use core::error::Error;
-use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountInfo, Bytecode, EvmState};
+use primitives::{address, Address, StorageKey, StorageValue, B256, U256};
+use state::{AccountInfo, Bytecode, EvmState};
 use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.

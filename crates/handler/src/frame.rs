@@ -221,7 +221,7 @@ impl EthFrame<EthInterpreter> {
 
         // let mut bytecode = account.0.info.code.clone().unwrap_or_default();
 
-        let account = if let Some(delegated_acc) = acc_load.delegated_account_address {
+        let (account, _) = if let Some(delegated_acc) = acc_load.delegated_account_address {
             ctx.journal_mut().get_account(delegated_acc.id())
         } else {
             ctx.journal_mut().get_account(acc_load.address_and_id.id())
