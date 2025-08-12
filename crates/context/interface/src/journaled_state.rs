@@ -130,10 +130,10 @@ pub trait JournalTr {
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, <Self::Database as Database>::Error>;
 
     /// Returns the account by id.
-    fn get_account_mut(&mut self, account_id: AccountId) -> Option<&mut Account>;
+    fn get_account_mut(&mut self, account_id: AccountId) -> &mut Account;
 
     /// Fast fetch the account by id.
-    fn get_account(&mut self, account_id: AccountId) -> Option<&Account>;
+    fn get_account(&mut self, account_id: AccountId) -> &Account;
 
     /// Sets the caller id.
     fn set_caller_address_id(&mut self, id: AddressAndId);

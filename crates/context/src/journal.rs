@@ -183,13 +183,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn get_account_mut(&mut self, account_id: AccountId) -> Option<&mut Account> {
-        self.inner.state().get_by_id_mut(account_id).map(|(a, _)| a)
+    fn get_account_mut(&mut self, account_id: AccountId) -> &mut Account {
+        self.inner.state().get_by_id_mut(account_id).0
     }
 
     #[inline]
-    fn get_account(&mut self, account_id: AccountId) -> Option<&Account> {
-        self.inner.state().get_by_id(account_id).map(|(a, _)| a)
+    fn get_account(&mut self, account_id: AccountId) -> &Account {
+        self.inner.state().get_by_id(account_id).0
     }
 
     /// Returns call depth.

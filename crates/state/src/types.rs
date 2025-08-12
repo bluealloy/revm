@@ -41,14 +41,11 @@ impl EvmState {
     /// Get an immutable reference to an account by address.
     pub fn get(&self, address_or_id: AddressOrId) -> Option<(&Account, AddressAndId)> {
         match address_or_id {
-            AddressOrId::Id(id) => self.get_by_id(id),
-            AddressOrId::Address(address) => self.index.get(&address).and_then(|id| {
-                self.accounts
-                    .get(id.0 as usize)
-                    .map(|accounts| accounts.get(id.1 as usize))
-                    .flatten()
-                    .map(|(acc, address)| (acc, AddressAndId::new(*address, *id)))
-            }),
+            AddressOrId::Id(id) => Some(self.get_by_id(id)),
+            AddressOrId::Address(address) => self
+                .index
+                .get(&address)
+                .map(|id| get_by_id(&self.accounts, *id)),
         }
     }
 
@@ -56,7 +53,7 @@ impl EvmState {
     #[inline]
     pub fn get_mut(&mut self, address_or_id: AddressOrId) -> Option<(&mut Account, AddressAndId)> {
         match address_or_id {
-            AddressOrId::Id(id) => self.get_by_id_mut(id),
+            AddressOrId::Id(id) => Some(self.get_by_id_mut(id)),
             AddressOrId::Address(address) => self.index.get(&address).and_then(|id| {
                 self.accounts
                     .get_mut(id.0 as usize)
@@ -69,17 +66,13 @@ impl EvmState {
 
     /// Get an immutable reference to an account by id.
     #[inline]
-    pub fn get_by_id(&self, id: AccountId) -> Option<(&Account, AddressAndId)> {
-        self.accounts
-            .get(id.0 as usize)
-            .map(|accounts| accounts.get(id.1 as usize))
-            .flatten()
-            .map(|(acc, address)| (acc, AddressAndId::new(*address, id)))
+    pub fn get_by_id(&self, id: AccountId) -> (&Account, AddressAndId) {
+        get_by_id(&self.accounts, id)
     }
 
     /// Get a mutable reference to an account by id.
     #[inline]
-    pub fn get_by_id_mut(&mut self, id: AccountId) -> Option<(&mut Account, AddressAndId)> {
+    pub fn get_by_id_mut(&mut self, id: AccountId) -> (&mut Account, AddressAndId) {
         get_by_id_mut(&mut self.accounts, id)
     }
 
@@ -139,9 +132,7 @@ impl EvmState {
         F: FnOnce(Address) -> Result<Account, ERROR>,
     {
         match self.index.entry(address) {
-            Entry::Occupied(entry) => {
-                Ok(get_by_id_mut(&mut self.accounts, *entry.get()).expect("Account to be present"))
-            }
+            Entry::Occupied(entry) => Ok(get_by_id_mut(&mut self.accounts, *entry.get())),
             Entry::Vacant(entry) => {
                 let account = fetch(address)?;
                 let id = push_account(&mut self.accounts, account, address);
@@ -184,12 +175,24 @@ fn push_account(
 fn get_by_id_mut(
     accounts: &mut Vec<Vec<(Account, Address)>>,
     id: AccountId,
-) -> Option<(&mut Account, AddressAndId)> {
-    accounts
-        .get_mut(id.0 as usize)
-        .map(|accounts| accounts.get_mut(id.1 as usize))
-        .flatten()
-        .map(|(acc, address)| (acc, AddressAndId::new(*address, id)))
+) -> (&mut Account, AddressAndId) {
+    let account = unsafe {
+        accounts
+            .get_unchecked_mut(id.0 as usize)
+            .get_unchecked_mut(id.1 as usize)
+    };
+    (&mut account.0, AddressAndId::new(account.1, id))
+}
+
+/// Get an immutable reference to an account by id.
+#[inline]
+fn get_by_id(accounts: &Vec<Vec<(Account, Address)>>, id: AccountId) -> (&Account, AddressAndId) {
+    let account = unsafe {
+        accounts
+            .get_unchecked(id.0 as usize)
+            .get_unchecked(id.1 as usize)
+    };
+    (&account.0, AddressAndId::new(account.1, id))
 }
 
 impl Default for EvmState {

@@ -316,7 +316,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Mark account as touched.
     #[inline]
     pub fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256) {
-        let account = self.state_new.get_by_id_mut(account_id).unwrap().0;
+        let account = self.state_new.get_by_id_mut(account_id).0;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
 
@@ -348,13 +348,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Option<TransferError> {
         if balance.is_zero() {
-            let to_account = self.state_new.get_by_id_mut(to).unwrap().0;
+            let to_account = self.state_new.get_by_id_mut(to).0;
             Self::touch_account(&mut self.journal, to, to_account);
             return None;
         }
 
         // sub balance from
-        let (from_account, _) = self.state_new.get_by_id_mut(from).unwrap();
+        let (from_account, _) = self.state_new.get_by_id_mut(from);
         Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
 
@@ -364,7 +364,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *from_balance = from_balance_decr;
 
         // add balance to
-        let (to_account, _) = self.state_new.get_by_id_mut(to).unwrap();
+        let (to_account, _) = self.state_new.get_by_id_mut(to);
         Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
@@ -669,7 +669,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     })
                 },
             )?,
-            AddressOrId::Id(id) => self.state_new.get_by_id_mut(id).unwrap(),
+            AddressOrId::Id(id) => self.state_new.get_by_id_mut(id),
         };
 
         let mut is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
