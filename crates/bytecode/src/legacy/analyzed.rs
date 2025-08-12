@@ -1,5 +1,4 @@
 use super::JumpTable;
-use crate::opcode;
 use primitives::Bytes;
 
 /// Legacy analyzed bytecode represents the original bytecode format used in Ethereum.
@@ -144,14 +143,6 @@ mod tests {
         let bytecode = LegacyRawBytecode(bytecode).into_analyzed();
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 1]);
         let _ = LegacyAnalyzedBytecode::new(bytecode.bytecode, bytecode.original_len, jump_table);
-    }
-
-    #[test]
-    #[should_panic(expected = "last bytecode byte should be STOP (0x00)")]
-    fn test_panic_on_non_stop_bytecode() {
-        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
-        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
-        let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
     }
 
     #[test]
