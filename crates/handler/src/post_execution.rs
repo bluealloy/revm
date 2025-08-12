@@ -37,16 +37,16 @@ pub fn reimburse_caller<CTX: ContextTr>(
 ) -> Result<(), <CTX::Db as Database>::Error> {
     let basefee = context.block().basefee() as u128;
     // TODO save AccountId somewhere so we can access it here.
-    let caller = context.journal().caller_address_id().unwrap();
+    let caller = context.journal().caller_address_id().unwrap().id();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Return balance of not spend gas.
-    context.journal_mut().balance_incr(
-        caller.to_id(),
+    context.journal_mut().balance_incr_by_id(
+        caller,
         U256::from(
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
         ) + additional_refund,
-    )?;
+    );
 
     Ok(())
 }

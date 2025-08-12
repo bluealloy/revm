@@ -311,6 +311,23 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(address)
     }
 
+    #[inline]
+    pub fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256) {
+        let account = self.state_new.get_by_id_mut(account_id).unwrap().0;
+        let old_balance = account.info.balance;
+        account.info.balance = account.info.balance.saturating_add(balance);
+
+        // march account as touched.
+        if !account.is_touched() {
+            account.mark_touch();
+            self.journal.push(ENTRY::account_touched(account_id));
+        }
+
+        // add journal entry for balance increment.
+        self.journal
+            .push(ENTRY::balance_changed(account_id, old_balance))
+    }
+
     /// Increments the nonce of the account.
     #[inline]
     pub fn nonce_bump_journal_entry(&mut self, address_or_id: AddressOrId) {

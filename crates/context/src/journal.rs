@@ -251,6 +251,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .balance_incr(&mut self.database, address_or_id, balance)
     }
 
+    #[inline]
+    fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256) {
+        self.inner.balance_incr_by_id(account_id, balance)
+    }
+
     /// Increments the nonce of the account.
     #[inline]
     fn nonce_bump_journal_entry(&mut self, address_or_id: AddressOrId) {

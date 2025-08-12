@@ -111,6 +111,9 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<AddressAndId, <Self::Database as Database>::Error>;
 
+    /// Increments the balance of the account.
+    fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256);
+
     /// Increments the nonce of the account.
     fn nonce_bump_journal_entry(&mut self, address_or_id: AddressOrId);
 
