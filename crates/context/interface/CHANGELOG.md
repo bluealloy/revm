@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.1](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.0.0...revm-context-interface-v10.0.1) - 2025-08-12
+
+### Other
+
+- Aggregate changes from PRs #2866, #2867, and #2874 ([#2876](https://github.com/bluealloy/revm/pull/2876))
+- make ci happy ([#2863](https://github.com/bluealloy/revm/pull/2863))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v9.0.0...revm-context-interface-v10.0.0) - 2025-08-06
 
 ### Added
