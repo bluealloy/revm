@@ -65,7 +65,7 @@ impl LegacyAnalyzedBytecode {
     ///
     /// * If `original_len` is greater than `bytecode.len()`
     /// * If jump table length is less than `original_len`.
-    /// * If last bytecode byte is not `0x00` or if bytecode is empty.
+    /// * If bytecode is empty.
     pub fn new(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
         assert!(
             original_len <= bytecode.len(),
