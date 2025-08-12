@@ -25,7 +25,7 @@ impl EvmState {
     pub fn new() -> Self {
         Self {
             index: HashMap::default(),
-            accounts: Vec::with_capacity(10),
+            accounts: Vec::default(),
         }
     }
 
