@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.0...revm-precompile-v26.0.1) - 2025-08-12
+
+### Fixed
+
+- *(osaka)* do base/mod zero check after gas calc ([#2872](https://github.com/bluealloy/revm/pull/2872))
+
+### Other
+
+- Aggregate changes from PRs #2866, #2867, and #2874 ([#2876](https://github.com/bluealloy/revm/pull/2876))
+
 ## [26.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v25.0.0...revm-precompile-v26.0.0) - 2025-08-06
 
 ### Added

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.4](https://github.com/bluealloy/revm/compare/revm-state-v7.0.3...revm-state-v7.0.4) - 2025-08-12
+
+### Other
+
+- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
+
 ## [7.0.3](https://github.com/bluealloy/revm/compare/revm-state-v7.0.2...revm-state-v7.0.3) - 2025-08-06
 
 ### Fixed
