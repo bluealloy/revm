@@ -17,8 +17,8 @@ use context_interface::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, AddressAndId, AddressOrId, HashSet, Log, StorageKey, StorageValue,
-    B256, U256,
+    hardfork::SpecId, AccountId, Address, AddressAndId, AddressOrId, HashSet, Log, StorageKey,
+    StorageValue, B256, U256,
 };
 use state::{Account, EvmState};
 use std::vec::Vec;
@@ -182,6 +182,16 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.warm_addresses.precompiles()
     }
 
+    #[inline]
+    fn get_account_mut(&mut self, account_id: AccountId) -> Option<&mut Account> {
+        self.inner.state().get_by_id_mut(account_id).map(|(a, _)| a)
+    }
+
+    #[inline]
+    fn get_account(&mut self, account_id: AccountId) -> Option<&Account> {
+        self.inner.state().get_by_id(account_id).map(|(a, _)| a)
+    }
+
     /// Returns call depth.
     #[inline]
     fn depth(&self) -> usize {
@@ -210,13 +220,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn transfer(
-        &mut self,
-        from: AddressOrId,
-        to: AddressOrId,
-        balance: U256,
-    ) -> Result<Option<TransferError>, DB::Error> {
-        self.inner.transfer(&mut self.database, from, to, balance)
+    fn transfer(&mut self, from: AccountId, to: AccountId, balance: U256) -> Option<TransferError> {
+        self.inner.transfer(from, to, balance)
     }
 
     #[inline]

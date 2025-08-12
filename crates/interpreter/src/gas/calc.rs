@@ -327,8 +327,8 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
 #[inline]
 pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64 {
     let mut gas = warm_cold_cost(load.is_cold);
-    if let Some(is_cold) = load.data.is_delegate_account_cold {
-        gas += warm_cold_cost(is_cold);
+    if let Some(delegated_acc) = load.data.delegated_account_address {
+        gas += warm_cold_cost(delegated_acc.is_cold);
     }
     gas
 }

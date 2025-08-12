@@ -98,16 +98,11 @@ impl Account {
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let same_id = self.transaction_id == transaction_id;
-        let is_cold = self.status.contains(AccountStatus::Cold);
-
-        self.status -= AccountStatus::Cold;
         self.transaction_id = transaction_id;
+        let is_cold = self.status.contains(AccountStatus::Cold);
+        self.status -= AccountStatus::Cold;
 
-        if !same_id {
-            return true;
-        }
-
-        is_cold
+        (same_id && is_cold) || !same_id
     }
 
     /// Is account locally created

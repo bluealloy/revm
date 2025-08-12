@@ -71,13 +71,9 @@ impl EvmStorageSlot {
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let same_id = self.transaction_id == transaction_id;
         self.transaction_id = transaction_id;
-        let was_cold = core::mem::replace(&mut self.is_cold, false);
-
-        if same_id {
-            // only if transaction id is same we are returning was_cold.
-            return was_cold;
-        }
-        true
+        let was_cold = core::mem::take(&mut self.is_cold);
+        // only if transaction id is same we are returning was_cold.
+        (same_id && was_cold) || !same_id
     }
 }
 

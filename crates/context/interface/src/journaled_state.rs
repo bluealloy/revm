@@ -3,8 +3,8 @@ use crate::context::{SStoreResult, SelfDestructResult};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, AddressAndId, AddressOrId, Bytes, HashSet, Log, StorageKey,
-    StorageValue, B256, U256,
+    hardfork::SpecId, AccountId, Address, AddressAndId, AddressOrId, Bytes, HashSet, Log,
+    StorageKey, StorageValue, B256, U256,
 };
 use state::{Account, Bytecode};
 use std::vec::Vec;
@@ -94,12 +94,7 @@ pub trait JournalTr {
     fn touch_account(&mut self, address_or_id: AddressOrId);
 
     /// Transfers the balance from one account to another.
-    fn transfer(
-        &mut self,
-        from: AddressOrId,
-        to: AddressOrId,
-        balance: U256,
-    ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
+    fn transfer(&mut self, from: AccountId, to: AccountId, balance: U256) -> Option<TransferError>;
 
     /// Increments the balance of the account.
     fn caller_accounting_journal_entry(
@@ -130,6 +125,12 @@ pub trait JournalTr {
         &mut self,
         address_or_id: AddressOrId,
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, <Self::Database as Database>::Error>;
+
+    /// Returns the account by id.
+    fn get_account_mut(&mut self, account_id: AccountId) -> Option<&mut Account>;
+
+    /// Fast fetch the account by id.
+    fn get_account(&mut self, account_id: AccountId) -> Option<&Account>;
 
     /// Sets the caller id.
     fn set_caller_address_id(&mut self, id: AddressAndId);
@@ -297,12 +298,10 @@ impl<T> StateLoad<T> {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountLoad {
-    /// Does account have delegate code and delegated account is cold loaded
-    pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
     /// Account address and id.
     pub address_and_id: AddressAndId,
-    /// delegated account address,
+    /// Does account have delegate code and delegated account is cold loaded
     pub delegated_account_address: Option<StateLoad<AddressAndId>>,
 }

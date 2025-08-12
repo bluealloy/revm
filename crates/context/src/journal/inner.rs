@@ -12,7 +12,7 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
-    AccountId, Address, AddressAndId, AddressOrId, HashMap, Log, StorageKey, StorageValue, B256,
+    AccountId, Address, AddressAndId, AddressOrId, Log, StorageKey, StorageValue, B256,
     KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
@@ -321,47 +321,42 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
-    pub fn transfer<DB: Database>(
+    pub fn transfer(
         &mut self,
-        db: &mut DB,
-        from: AddressOrId,
-        to: AddressOrId,
+        from: AccountId,
+        to: AccountId,
         balance: U256,
-    ) -> Result<Option<TransferError>, DB::Error> {
+    ) -> Option<TransferError> {
         if balance.is_zero() {
-            self.load_account(db, to)?;
-            let (to_account, to) = self.state_new.get_mut(to).unwrap();
-            Self::touch_account(&mut self.journal, to.id(), to_account);
-            return Ok(None);
+            let to_account = self.state_new.get_by_id_mut(to).unwrap().0;
+            Self::touch_account(&mut self.journal, to, to_account);
+            return None;
         }
-        // load accounts
-        let (_, to) = self.load_account(db, to)?.data;
-        let (_, from) = self.load_account(db, from)?.data;
 
         // sub balance from
-        let (from_account, from) = self.state_new.get_mut(AddressOrId::Id(from.id())).unwrap();
-        Self::touch_account(&mut self.journal, from.id(), from_account);
+        let (from_account, _) = self.state_new.get_by_id_mut(from).unwrap();
+        Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
 
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
-            return Ok(Some(TransferError::OutOfFunds));
+            return Some(TransferError::OutOfFunds);
         };
         *from_balance = from_balance_decr;
 
         // add balance to
-        let (to_account, to) = self.state_new.get_mut(AddressOrId::Id(to.id())).unwrap();
-        Self::touch_account(&mut self.journal, to.id(), to_account);
+        let (to_account, _) = self.state_new.get_by_id_mut(to).unwrap();
+        Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
-            return Ok(Some(TransferError::OverflowPayment));
+            return Some(TransferError::OverflowPayment);
         };
         *to_balance = to_balance_incr;
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
-            .push(ENTRY::balance_transfer(from.id(), to.id(), balance));
+            .push(ENTRY::balance_transfer(from, to, balance));
 
-        Ok(None)
+        None
     }
 
     /// Creates account or returns false if collision is detected.
@@ -601,7 +596,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             AccountLoad {
                 address_and_id: account.1,
                 delegated_account_address: None,
-                is_delegate_account_cold: None,
                 is_empty,
             },
             account.is_cold,
@@ -611,7 +605,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(Bytecode::Eip7702(code)) = &account.0.info.code {
             let address = code.address();
             let delegate_account = self.load_account(db, AddressOrId::Address(address))?;
-            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+            account_load.data.delegated_account_address =
+                Some(StateLoad::new(delegate_account.1, delegate_account.is_cold));
         }
 
         Ok(account_load)

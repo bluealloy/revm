@@ -163,9 +163,10 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Make account warm and loaded.
-        let _ = ctx
+        let acc_load = ctx
             .journal_mut()
-            .load_account_delegated(inputs.bytecode_address.to_id())?;
+            .load_account_delegated(inputs.bytecode_address.to_id())?
+            .data;
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
@@ -174,11 +175,10 @@ impl EthFrame<EthInterpreter> {
         if let CallValue::Transfer(value) = inputs.value {
             // Transfer value from caller to called account
             // Target will get touched even if balance transferred is zero.
-            if let Some(i) = ctx.journal_mut().transfer(
-                inputs.caller.to_id(),
-                inputs.target_address.to_id(),
-                value,
-            )? {
+            if let Some(i) =
+                ctx.journal_mut()
+                    .transfer(inputs.caller.id(), inputs.target_address.id(), value)
+            {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());
             }
@@ -215,22 +215,34 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        let account = ctx
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address.to_id())?;
+        // let account = ctx
+        //     .journal_mut()
+        //     .load_account_code(inputs.bytecode_address.to_id())?;
 
-        let mut code_hash = account.0.info.code_hash();
-        let mut bytecode = account.0.info.code.clone().unwrap_or_default();
+        // let mut bytecode = account.0.info.code.clone().unwrap_or_default();
 
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            let account = &ctx
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address.into())?
-                .0
-                .info;
-            bytecode = account.code.clone().unwrap_or_default();
-            code_hash = account.code_hash();
-        }
+        let account = if let Some(delegated_acc) = acc_load.delegated_account_address {
+            ctx.journal_mut()
+                .get_account(delegated_acc.id())
+                .expect("delegated account should be loaded")
+        } else {
+            ctx.journal_mut()
+                .get_account(acc_load.address_and_id.id())
+                .expect("account should be loaded")
+        };
+
+        let code_hash = account.info.code_hash();
+        let bytecode = account.info.code.clone().unwrap_or_default();
+
+        // if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+        //     let account = &ctx
+        //         .journal_mut()
+        //         .load_account_code(eip7702_bytecode.delegated_address.into())?
+        //         .0
+        //         .info;
+        //     bytecode = account.code.clone().unwrap_or_default();
+        //     code_hash = account.code_hash();
+        // }
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
