@@ -1,5 +1,4 @@
 use super::JumpTable;
-use crate::opcode;
 use primitives::Bytes;
 
 /// Legacy analyzed bytecode represents the original bytecode format used in Ethereum.
@@ -66,7 +65,7 @@ impl LegacyAnalyzedBytecode {
     ///
     /// * If `original_len` is greater than `bytecode.len()`
     /// * If jump table length is less than `original_len`.
-    /// * If last bytecode byte is not `0x00` or if bytecode is empty.
+    /// * If bytecode is empty.
     pub fn new(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
         assert!(
             original_len <= bytecode.len(),
@@ -77,16 +76,6 @@ impl LegacyAnalyzedBytecode {
             "jump table length is less than original length"
         );
         assert!(!bytecode.is_empty(), "bytecode cannot be empty");
-
-        if let Some(&last_opcode) = bytecode.last() {
-            assert!(
-                opcode::OpCode::info_by_op(last_opcode)
-                    .map(|o| o.is_terminating())
-                    .unwrap_or(false),
-                "last bytecode byte should be terminating"
-            );
-        }
-
         Self {
             bytecode,
             original_len,
@@ -162,13 +151,5 @@ mod tests {
         let bytecode = Bytes::from_static(&[]);
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 0]);
         let _ = LegacyAnalyzedBytecode::new(bytecode, 0, jump_table);
-    }
-
-    #[test]
-    #[should_panic(expected = "last bytecode byte should be terminating")]
-    fn test_panic_on_non_stop_bytecode() {
-        let bytecode = Bytes::from_static(&[opcode::PUSH1, 0x01]);
-        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 2]);
-        let _ = LegacyAnalyzedBytecode::new(bytecode, 2, jump_table);
     }
 }
