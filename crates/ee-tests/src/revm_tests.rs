@@ -52,7 +52,7 @@ fn test_selfdestruct_multi_tx() {
     let (destroyed_acc, _) = evm
         .ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(BENCH_TARGET.into())
         .unwrap();
 
@@ -72,7 +72,7 @@ fn test_selfdestruct_multi_tx() {
     let (destroyed_acc, _) = evm
         .ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(BENCH_TARGET.into())
         .unwrap();
 
@@ -115,7 +115,7 @@ fn test_multi_tx_create() {
     let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(created_address.into())
         .unwrap();
 
@@ -139,7 +139,7 @@ fn test_multi_tx_create() {
     let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(created_address.into())
         .unwrap();
 
@@ -156,7 +156,7 @@ fn test_multi_tx_create() {
     // reset caller nonce
     evm.ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(BENCH_CALLER.into())
         .unwrap()
         .0
@@ -180,7 +180,7 @@ fn test_multi_tx_create() {
     let (created_acc, _) = evm
         .ctx
         .journal_mut()
-        .state_new
+        .state
         .get_mut(created_address.into())
         .unwrap();
 

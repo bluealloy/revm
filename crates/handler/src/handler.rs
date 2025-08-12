@@ -174,8 +174,8 @@ pub trait Handler {
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        self.load_accounts(evm)?;
         self.validate_against_state_and_deduct_caller(evm)?;
+        self.load_accounts(evm)?;
 
         let gas = self.apply_eip7702_auth_list(evm)?;
         Ok(gas)
@@ -278,6 +278,10 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
     ) -> Result<(), Self::Error> {
+        let caller = evm.ctx().tx().caller().into();
+        let journal = evm.ctx_mut().journal_mut();
+        let (_, id) = journal.load_account_code(caller)?.data;
+        journal.set_caller_address_id(id);
         pre_execution::validate_against_state_and_deduct_caller(evm.ctx())
     }
 

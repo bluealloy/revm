@@ -6,7 +6,7 @@ use database_interface::{
 use primitives::{
     hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, AccountInfo, Bytecode, EvmState};
+use state::{AccountInfo, Bytecode, EvmState};
 use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.

@@ -24,7 +24,7 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalInner<ENTRY> {
     /// The current state new
-    pub state_new: EvmState,
+    pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
     ///
     /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
@@ -71,7 +71,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In ordinary case this is precompile or beneficiary.
     pub fn new() -> JournalInner<ENTRY> {
         Self {
-            state_new: EvmState::new(),
+            state: EvmState::new(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
@@ -99,7 +99,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
-            state_new,
+            state,
             transient_storage,
             logs,
             depth,
@@ -110,6 +110,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
+        let _ = state;
         transient_storage.clear();
         *depth = 0;
 
@@ -128,7 +129,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     pub fn discard_tx(&mut self) {
         // if there is no journal entries, there has not been any changes.
         let Self {
-            state_new,
+            state,
             transient_storage,
             logs,
             depth,
@@ -140,7 +141,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state_new, None, is_spurious_dragon_enabled);
+            entry.revert(state, None, is_spurious_dragon_enabled);
         });
         transient_storage.clear();
         *depth = 0;
@@ -160,7 +161,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
-            state_new,
+            state,
             transient_storage,
             logs,
             depth,
@@ -174,7 +175,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clear coinbase address warming for next tx
         warm_addresses.clear_addresses();
 
-        let state = mem::take(state_new);
+        let state = mem::take(state);
 
         logs.clear();
         transient_storage.clear();
@@ -191,7 +192,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Return reference to state.
     #[inline]
     pub fn state(&mut self) -> &mut EvmState {
-        &mut self.state_new
+        &mut self.state
     }
 
     /// Sets SpecId.
@@ -205,7 +206,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// be removed from state.
     #[inline]
     pub fn touch(&mut self, address_or_id: AddressOrId) {
-        if let Some((account, id)) = self.state_new.get_mut(address_or_id) {
+        if let Some((account, id)) = self.state.get_mut(address_or_id) {
             Self::touch_account(&mut self.journal, id.id(), account);
         }
     }
@@ -228,7 +229,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Panics if the account has not been loaded and is missing from the state set.
     #[inline]
     pub fn account(&self, address_or_id: AddressOrId) -> (&Account, AddressAndId) {
-        self.state_new
+        self.state
             .get(address_or_id)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded.
     }
@@ -238,7 +239,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Note: Assume account is warm and that hash is calculated from code.
     #[inline]
     pub fn set_code_with_hash(&mut self, address_or_id: AddressOrId, code: Bytecode, hash: B256) {
-        let (account, address) = self.state_new.get_mut(address_or_id).unwrap();
+        let (account, address) = self.state.get_mut(address_or_id).unwrap();
         Self::touch_account(&mut self.journal, address.id(), account);
 
         self.journal.push(ENTRY::code_changed(address.id()));
@@ -273,7 +274,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         old_balance: U256,
         bump_nonce: bool,
     ) {
-        let id = self.state_new.get_id(&address_or_id).unwrap();
+        let id = self.state.get_id(&address_or_id).unwrap();
         // account balance changed.
         self.journal.push(ENTRY::balance_changed(id, old_balance));
         // account is touched.
@@ -316,7 +317,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Mark account as touched.
     #[inline]
     pub fn balance_incr_by_id(&mut self, account_id: AccountId, balance: U256) {
-        let account = self.state_new.get_by_id_mut(account_id).0;
+        let account = self.state.get_by_id_mut(account_id).0;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
 
@@ -335,7 +336,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn nonce_bump_journal_entry(&mut self, address_or_id: AddressOrId) {
         // TODO check if it is okay to unwrap here
-        let id = self.state_new.get_id(&address_or_id).unwrap();
+        let id = self.state.get_id(&address_or_id).unwrap();
         self.journal.push(ENTRY::nonce_changed(id));
     }
 
@@ -348,13 +349,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Option<TransferError> {
         if balance.is_zero() {
-            let to_account = self.state_new.get_by_id_mut(to).0;
+            let to_account = self.state.get_by_id_mut(to).0;
             Self::touch_account(&mut self.journal, to, to_account);
             return None;
         }
 
         // sub balance from
-        let (from_account, _) = self.state_new.get_by_id_mut(from);
+        let (from_account, _) = self.state.get_by_id_mut(from);
         Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
 
@@ -364,7 +365,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *from_balance = from_balance_decr;
 
         // add balance to
-        let (to_account, _) = self.state_new.get_by_id_mut(to);
+        let (to_account, _) = self.state.get_by_id_mut(to);
         Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
@@ -406,7 +407,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let checkpoint = self.checkpoint();
 
         // Fetch balance of caller.
-        let (caller_acc, caller) = self.state_new.get(caller_or_id).unwrap();
+        let (caller_acc, caller) = self.state.get(caller_or_id).unwrap();
         let caller_balance = caller_acc.info.balance;
         // Check if caller has enough balance to send to the created contract.
         if caller_balance < balance {
@@ -415,7 +416,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         // Newly created account is present, as we just loaded it.
-        let (target_acc, target) = self.state_new.get_mut(target_or_id).unwrap();
+        let (target_acc, target) = self.state.get_mut(target_or_id).unwrap();
         let last_journal = &mut self.journal;
 
         // New account can be created if:
@@ -451,7 +452,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target_acc.info.balance = new_balance;
 
         // safe to decrement for the caller as balance check is already done.
-        self.state_new
+        self.state
             .get_mut(AddressOrId::Id(caller.id()))
             .unwrap()
             .0
@@ -485,7 +486,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state_new;
+        let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         self.logs.truncate(checkpoint.log_i);
@@ -517,7 +518,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address_or_id: AddressOrId,
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
-        let (acc, address) = self.state_new.get_mut(address_or_id).unwrap();
+        let (acc, address) = self.state.get_mut(address_or_id).unwrap();
         let balance = acc.info.balance;
 
         let spec = self.spec;
@@ -536,7 +537,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             }
         }
 
-        let (acc, _) = self.state_new.get_mut(address_or_id).unwrap();
+        let (acc, _) = self.state.get_mut(address_or_id).unwrap();
 
         let destroyed_status = if !acc.is_selfdestructed() {
             SelfdestructionRevertStatus::GloballySelfdestroyed
@@ -657,7 +658,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<StateLoad<(&mut Account, AddressAndId)>, DB::Error> {
         let (account, address_and_id) = match address_or_id {
-            AddressOrId::Address(address) => self.state_new.get_mut_or_fetch(
+            AddressOrId::Address(address) => self.state.get_mut_or_fetch(
                 address,
                 |address| -> Result<Account, DB::Error> {
                     db.basic(address).map(|account| {
@@ -669,7 +670,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     })
                 },
             )?,
-            AddressOrId::Id(id) => self.state_new.get_by_id_mut(id),
+            AddressOrId::Id(id) => self.state.get_by_id_mut(id),
         };
 
         let mut is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
@@ -736,7 +737,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, DB::Error> {
         // assume acc is warm
-        let (account, id) = self.state_new.get_mut(address_or_id).unwrap();
+        let (account, id) = self.state.get_mut(address_or_id).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
         sload_with_account(account, db, &mut self.journal, self.transaction_id, id, key)
     }
@@ -756,7 +757,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
         let present = self.sload(db, address_or_id, key)?;
-        let (acc, id) = self.state_new.get_mut(address_or_id).unwrap();
+        let (acc, id) = self.state.get_mut(address_or_id).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
         let slot = acc.storage.get_mut(&key).unwrap();
@@ -792,7 +793,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// EIP-1153: Transient storage opcodes
     #[inline]
     pub fn tload(&mut self, address_or_id: AddressOrId, key: StorageKey) -> StorageValue {
-        let id = self.state_new.get_id(&address_or_id).unwrap();
+        let id = self.state.get_id(&address_or_id).unwrap();
         self.transient_storage
             .get(&(id, key))
             .copied()
@@ -807,7 +808,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// EIP-1153: Transient storage opcodes
     #[inline]
     pub fn tstore(&mut self, address_or_id: AddressOrId, key: StorageKey, new: StorageValue) {
-        let id = self.state_new.get_id(&address_or_id).unwrap();
+        let id = self.state.get_id(&address_or_id).unwrap();
         let had_value = if new.is_zero() {
             // if new values is zero, remove entry from transient storage.
             // if previous values was some insert it inside journal.

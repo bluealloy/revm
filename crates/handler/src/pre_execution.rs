@@ -57,9 +57,6 @@ pub fn load_accounts<
         }
     }
 
-    let (_, id) = journal.load_account_code(tx.caller().into())?.data;
-    journal.set_caller_address_id(id);
-
     // load tx target and set its id in journal.
     if let TxKind::Call(target) = tx.kind() {
         let (_, id) = journal.load_account_code(target.into())?.data;

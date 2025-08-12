@@ -201,11 +201,11 @@ impl<DB: Database> JournalExt for Journal<DB> {
 
     #[inline]
     fn evm_state(&self) -> &EvmState {
-        &self.state_new
+        &self.state
     }
 
     #[inline]
     fn evm_state_mut(&mut self) -> &mut EvmState {
-        &mut self.state_new
+        &mut self.state
     }
 }
