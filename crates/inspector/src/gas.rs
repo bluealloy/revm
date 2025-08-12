@@ -222,7 +222,7 @@ mod tests {
         inspector.call_override.push(None);
         inspector.create_override.push(Some(CreateOutcome::new(
             InterpreterResult::new(InstructionResult::Revert, [0x02].into(), Gas::new(100_000)),
-            Some(AddressAndId::new(Address::ZERO, 0)),
+            Some(AddressAndId::new(Address::ZERO, (0, 0))),
         )));
 
         let contract_data: Bytes = Bytes::from(vec![

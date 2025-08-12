@@ -17,16 +17,16 @@ pub struct EvmState {
     pub index: HashMap<Address, AccountId>,
     /// Accounts.
     /// TODO make pushing of new account smarter and introduce a Vec of Vec so we dont need to clone it.
-    pub accounts: Vec<(Account, Address)>,
+    pub accounts: Vec<Vec<(Account, Address)>>,
 }
-
 
 impl EvmState {
     /// Create a new empty state.
     pub fn new() -> Self {
         Self {
             index: HashMap::default(),
-            accounts: Vec::default(),
+            // Allocate first with 3 account (Caller, target, beneficiary)
+            accounts: vec![Vec::with_capacity(3)],
         }
     }
 
@@ -39,15 +39,14 @@ impl EvmState {
     }
 
     /// Get an immutable reference to an account by address.
-    pub fn get(&self, address_or_id: &AddressOrId) -> Option<(&Account, AddressAndId)> {
+    pub fn get(&self, address_or_id: AddressOrId) -> Option<(&Account, AddressAndId)> {
         match address_or_id {
-            AddressOrId::Id(id) => self
-                .accounts
-                .get(*id)
-                .map(|(acc, address)| (acc, AddressAndId::new(*address, *id))),
-            AddressOrId::Address(address) => self.index.get(address).and_then(|id| {
+            AddressOrId::Id(id) => self.get_by_id(id),
+            AddressOrId::Address(address) => self.index.get(&address).and_then(|id| {
                 self.accounts
-                    .get(*id)
+                    .get(id.0 as usize)
+                    .map(|accounts| accounts.get(id.1 as usize))
+                    .flatten()
                     .map(|(acc, address)| (acc, AddressAndId::new(*address, *id)))
             }),
         }
@@ -57,13 +56,12 @@ impl EvmState {
     #[inline]
     pub fn get_mut(&mut self, address_or_id: AddressOrId) -> Option<(&mut Account, AddressAndId)> {
         match address_or_id {
-            AddressOrId::Id(id) => self
-                .accounts
-                .get_mut(id)
-                .map(|(acc, address)| (acc, AddressAndId::new(*address, id))),
+            AddressOrId::Id(id) => self.get_by_id_mut(id),
             AddressOrId::Address(address) => self.index.get(&address).and_then(|id| {
                 self.accounts
-                    .get_mut(*id)
+                    .get_mut(id.0 as usize)
+                    .map(|accounts| accounts.get_mut(id.1 as usize))
+                    .flatten()
                     .map(|(acc, address)| (acc, AddressAndId::new(*address, *id)))
             }),
         }
@@ -73,16 +71,16 @@ impl EvmState {
     #[inline]
     pub fn get_by_id(&self, id: AccountId) -> Option<(&Account, AddressAndId)> {
         self.accounts
-            .get(id)
+            .get(id.0 as usize)
+            .map(|accounts| accounts.get(id.1 as usize))
+            .flatten()
             .map(|(acc, address)| (acc, AddressAndId::new(*address, id)))
     }
 
     /// Get a mutable reference to an account by id.
     #[inline]
     pub fn get_by_id_mut(&mut self, id: AccountId) -> Option<(&mut Account, AddressAndId)> {
-        self.accounts
-            .get_mut(id)
-            .map(|(acc, address)| (acc, AddressAndId::new(*address, id)))
+        get_by_id_mut(&mut self.accounts, id)
     }
 
     /// Insert a new account or update an existing one.
@@ -91,13 +89,14 @@ impl EvmState {
         match self.index.get(&address) {
             Some(&id) => {
                 // Update existing account
-                self.accounts[id] = (account, address);
+                self.accounts[id.0 as usize][id.1 as usize] = (account, address);
                 AddressAndId::new(address, id)
             }
             None => {
-                let id = self.accounts.len();
+                // TODO Fix this
+                let id = (self.accounts.len() as u32, 0);
                 self.index.insert(address, id);
-                self.accounts.push((account, address));
+                self.accounts.push(vec![(account, address)]);
                 AddressAndId::new(address, id)
             }
         }
@@ -126,7 +125,7 @@ impl EvmState {
 
     /// Iterate over all accounts.
     pub fn iter(&self) -> impl Iterator<Item = &(Account, Address)> + '_ {
-        self.accounts.iter()
+        self.accounts.iter().flat_map(|accounts| accounts.iter())
     }
 
     /// Get a mutable reference to an account by address or fetch it if it doesn't exist.
@@ -141,21 +140,56 @@ impl EvmState {
     {
         match self.index.entry(address) {
             Entry::Occupied(entry) => {
-                let address_and_id = AddressAndId::new(address, *entry.get());
-                let (account, _) = self.accounts.get_mut(*entry.get()).unwrap();
-                Ok((account, address_and_id))
+                Ok(get_by_id_mut(&mut self.accounts, *entry.get()).expect("Account to be present"))
             }
             Entry::Vacant(entry) => {
                 let account = fetch(address)?;
-                let id = self.accounts.len();
+                let id = push_account(&mut self.accounts, account, address);
                 entry.insert(id);
-                self.accounts.reserve(32);
-                self.accounts.push((account, address));
                 let address_and_id = AddressAndId::new(address, id);
-                Ok((&mut self.accounts.last_mut().unwrap().0, address_and_id))
+                Ok((
+                    &mut self.accounts.last_mut().unwrap().last_mut().unwrap().0,
+                    address_and_id,
+                ))
             }
         }
     }
+}
+
+/// Push an account to the accounts vector, allocating a new page if last page is full.
+///
+/// Returns the account id that was assigned to the account.
+#[inline]
+fn push_account(
+    accounts: &mut Vec<Vec<(Account, Address)>>,
+    account: Account,
+    address: Address,
+) -> AccountId {
+    let page_id = accounts.len() as u32;
+    if let Some(last) = accounts.last_mut() {
+        if last.len() < 100 {
+            let id = (page_id - 1, last.len() as u32);
+            last.push((account, address));
+            return id;
+        }
+    }
+    let mut vec = Vec::with_capacity(100);
+    vec.push((account, address));
+    accounts.push(vec);
+    (page_id, 0)
+}
+
+/// Get a mutable reference to an account by id.
+#[inline]
+fn get_by_id_mut(
+    accounts: &mut Vec<Vec<(Account, Address)>>,
+    id: AccountId,
+) -> Option<(&mut Account, AddressAndId)> {
+    accounts
+        .get_mut(id.0 as usize)
+        .map(|accounts| accounts.get_mut(id.1 as usize))
+        .flatten()
+        .map(|(acc, address)| (acc, AddressAndId::new(*address, id)))
 }
 
 impl Default for EvmState {

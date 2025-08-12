@@ -317,7 +317,7 @@ mod tests {
         assert_eq!(
             output
                 .state
-                .get(&HISTORY_STORAGE_ADDRESS.into())
+                .get(HISTORY_STORAGE_ADDRESS.into())
                 .unwrap()
                 .0
                 .storage

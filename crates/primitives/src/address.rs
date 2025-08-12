@@ -2,7 +2,7 @@
 use crate::Address;
 
 /// Address id.
-pub type AccountId = usize;
+pub type AccountId = (u32, u32);
 
 /// Address or account id. Id is used for internal account management.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

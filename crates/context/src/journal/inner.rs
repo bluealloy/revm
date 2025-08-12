@@ -227,9 +227,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Panics if the account has not been loaded and is missing from the state set.
     #[inline]
-    pub fn account(&self, address_or_id: &AddressOrId) -> (&Account, AddressAndId) {
+    pub fn account(&self, address_or_id: AddressOrId) -> (&Account, AddressAndId) {
         self.state_new
-            .get(&address_or_id)
+            .get(address_or_id)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded.
     }
 
@@ -406,7 +406,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let checkpoint = self.checkpoint();
 
         // Fetch balance of caller.
-        let (caller_acc, caller) = self.state_new.get(&caller_or_id).unwrap();
+        let (caller_acc, caller) = self.state_new.get(caller_or_id).unwrap();
         let caller_balance = caller_acc.info.balance;
         // Check if caller has enough balance to send to the created contract.
         if caller_balance < balance {
