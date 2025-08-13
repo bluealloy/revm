@@ -37,6 +37,7 @@ cfg_if::cfg_if! {
 
 #[cfg(not(target_feature = "avx2"))]
 use arrayref as _;
+
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
@@ -54,6 +55,7 @@ cfg_if::cfg_if! {
 // silence aurora-engine-modexp if gmp is enabled
 #[cfg(feature = "gmp")]
 use aurora_engine_modexp as _;
+
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;

@@ -520,12 +520,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let spec = self.spec;
         let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
-        let mut is_empty = account_load.state_clear_aware_is_empty(spec);
-
-        // system precompiles are always empty...
-        if !is_empty && fluentbase_types::is_system_precompile(&target) {
-            is_empty = true;
-        }
+        let is_empty = account_load.state_clear_aware_is_empty(spec);
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -533,12 +528,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let acc_balance = self.state.get(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
-            let next_balance = target_account.info.balance + acc_balance;
-            // don't touch a precompiled contract if it persists empty after balance increase,
-            // because these contracts are empty with non-empty code hash
-            // that causes modification of an empty account that violates EIP-161
             Self::touch_account(&mut self.journal, target, target_account);
-            target_account.info.balance = next_balance;
+            target_account.info.balance += acc_balance;
         }
 
         let acc = self.state.get_mut(&address).unwrap();

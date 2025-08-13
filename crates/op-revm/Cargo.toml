@@ -72,6 +72,3 @@ c-kzg = ["revm/c-kzg"]
 kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
 bn = ["revm/bn"]
-json = [
-	"revm/json"
-]

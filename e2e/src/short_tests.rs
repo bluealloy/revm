@@ -99,9 +99,7 @@ mod failing_tests {
         // infinite loop or a very long test
         // fn st_attack_test_contract_creation_spam("tests/GeneralStateTests/stAttackTest/ContractCreationSpam.json");
 
-        fn precomps_eip2929_cancun("tests/GeneralStateTests/stPreCompiledContracts/precompsEIP2929Cancun.json");
         fn high_gas_price_paris("tests/GeneralStateTests/stTransactionTest/HighGasPriceParis.json");
-        fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
 
         // fn return50000("tests/GeneralStateTests/stQuadraticComplexityTest/Return50000.json");
         // fn return50000_2("tests/GeneralStateTests/stQuadraticComplexityTest/Return50000_2.json");

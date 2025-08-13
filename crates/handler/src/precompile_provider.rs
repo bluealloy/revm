@@ -2,9 +2,11 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::ContextTr;
 use interpreter::{CallInput, Gas, InputsImpl, InstructionResult, InterpreterResult};
-use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
+use precompile::PrecompileError;
+use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
-use std::{boxed::Box, string::String};
+use std::boxed::Box;
+use std::string::String;
 
 /// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
@@ -12,8 +14,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     /// The output type returned by precompile execution.
     type Output;
 
-    /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will
-    /// always return true.
+    /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will always return true.
     ///
     /// Returned booling will determine if precompile addresses should be injected into the journal.
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool;

@@ -20,10 +20,7 @@ pub mod k256;
 pub mod parity_libsecp256k1;
 
 use crate::{
-    utilities::right_pad,
-    PrecompileError,
-    PrecompileOutput,
-    PrecompileResult,
+    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
     PrecompileWithAddress,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};

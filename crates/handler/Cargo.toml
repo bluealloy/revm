@@ -78,7 +78,3 @@ serde = [
 ]
 serde-json = ["serde"]
 debug-print = []
-json = [
-	"fluentbase-sdk/json",
-	"interpreter/json"
-]

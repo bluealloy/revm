@@ -1,11 +1,8 @@
 use super::{
-    plain_account::PlainStorage,
-    transition_account::TransitionAccount,
-    CacheAccount,
-    PlainAccount,
+    plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use bytecode::Bytecode;
-use primitives::{Address, HashMap, B256, KECCAK_EMPTY};
+use primitives::{Address, HashMap, B256};
 use state::{Account, AccountInfo, EvmState};
 use std::vec::Vec;
 
@@ -66,31 +63,23 @@ impl CacheState {
             .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
-    /// Insert Loaded (Or LoadedEmptyEip161 if an account is empty) account.
+    /// Inserts Loaded (Or LoadedEmptyEip161 if account is empty) account.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
-        self.insert_account_with_storage(address, info, PlainStorage::default())
+        let account = if !info.is_empty() {
+            CacheAccount::new_loaded(info, HashMap::default())
+        } else {
+            CacheAccount::new_loaded_empty_eip161(HashMap::default())
+        };
+        self.accounts.insert(address, account);
     }
 
     /// Similar to `insert_account` but with storage.
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        mut info: AccountInfo,
+        info: AccountInfo,
         storage: PlainStorage,
     ) {
-        if let Some(code) = &info.code {
-            if !code.is_empty() {
-                if info.code_hash == KECCAK_EMPTY {
-                    info.code_hash = code.hash_slow();
-                }
-                self.contracts
-                    .entry(info.code_hash)
-                    .or_insert_with(|| code.clone());
-            }
-        }
-        if info.code_hash == B256::ZERO {
-            info.code_hash = KECCAK_EMPTY;
-        }
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {
@@ -99,8 +88,7 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    /// Applies output of revm execution and create account transitions that are used to build
-    /// BundleState.
+    /// Applies output of revm execution and create account transitions that are used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EvmState) -> Vec<(Address, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {

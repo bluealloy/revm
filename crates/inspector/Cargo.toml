@@ -68,7 +68,3 @@ serde = [
 # deprecated please use [`tracer`] feature instead
 serde-json = ["dep:serde", "dep:serde_json", "serde"]
 tracer = ["serde-json"]
-json = [
-	"handler/json",
-	"interpreter/json"
-]

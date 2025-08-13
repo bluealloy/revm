@@ -1,9 +1,7 @@
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
-    Block,
-    Cfg,
-    ContextTr,
+    Block, Cfg, ContextTr,
 };
 use core::cmp;
 use interpreter::gas::{self, InitialAndFloorGas};
@@ -319,8 +317,7 @@ mod tests {
     use bytecode::opcode;
     use context::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
-        Context,
-        TxEnv,
+        Context, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
     use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind};

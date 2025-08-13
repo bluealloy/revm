@@ -170,7 +170,7 @@ mod pyspecs_frontier_opcodes {
 
 mod pyspecs_frontier_precompiles {
     define_tests! {
-        // fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
+        fn precompile_absence("tests/GeneralStateTests/Pyspecs/frontier/precompiles/precompile_absence.json");
     }
 }
 

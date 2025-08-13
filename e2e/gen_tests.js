@@ -3,7 +3,7 @@
 // This script finds all JSON files in tests/GeneralStateTests, groups them by subdirectory,
 // and generates Rust modules with snake_case function wrappers for each test file.
 //
-// Usage: node gen_tests.js > generated_modules.rs
+// Usage: node gen_tests.js > ./src/tests.rs
 
 const fs = require('fs');
 const path = require('path');
@@ -66,6 +66,7 @@ const disabledTests = new Set([
     // these tests can't pass because of Fluent precompiled addresses (0x01... are physical contracts)
     'ext_code_hash_dynamic_argument',
     'random_statetest650',
+    'precomps_eip2929_cancun',
     'self_destruct',
     // disable blobs (we don't support them)
     'blobhash_list_bounds10',
@@ -117,8 +118,6 @@ const disabledTests = new Set([
     'static_loop_calls_depth_then_revert3',
     'static_return50000_2',
     // failing tests (uncomment once fixed)
-    'precompile_absence',
-    'precomps_eip2929_cancun',
     'high_gas_price_paris',
 ]);
 

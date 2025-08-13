@@ -1,15 +1,10 @@
-use crate::{inspectors::GasInspector, Inspector};
+use crate::inspectors::GasInspector;
+use crate::Inspector;
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
-    CallInputs,
-    CallOutcome,
-    CreateInputs,
-    CreateOutcome,
-    Interpreter,
-    InterpreterResult,
-    InterpreterTypes,
-    Stack,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+    InterpreterTypes, Stack,
 };
 use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;

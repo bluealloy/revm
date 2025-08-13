@@ -109,8 +109,3 @@ portable = ["precompile/portable"]
 gmp = ["precompile/gmp"]
 
 debug-print = ["handler/debug-print", "interpreter/debug-print"]
-json = [
-    "handler/json",
-    "inspector/json",
-    "interpreter/json"
-]
