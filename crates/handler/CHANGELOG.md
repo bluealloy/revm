@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.2](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.1...revm-handler-v9.0.2) - 2025-08-13
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-database-interface, revm-database, revm-state, revm-context-interface, revm-context, revm-interpreter
+
 ## [9.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.0...revm-handler-v9.0.1) - 2025-08-12
 
 ### Other
