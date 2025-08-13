@@ -756,11 +756,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
         // assume that acc exists and load the slot.
-        let present = self.sload(db, address_or_id, key)?;
-        let (acc, id) = self.state.get_mut(address_or_id).unwrap();
+
+        let (account, id) = self.state.get_mut(address_or_id).unwrap();
+        // only if account is created in this tx we can assume that storage is empty.
+        let present =
+            sload_with_account(account, db, &mut self.journal, self.transaction_id, id, key)?;
 
         // if there is no original value in dirty return present value, that is our original.
-        let slot = acc.storage.get_mut(&key).unwrap();
+        let slot = account.storage.get_mut(&key).unwrap();
 
         // new value is same as present, we don't need to do anything
         if present.data == new {
