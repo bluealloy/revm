@@ -7,7 +7,11 @@
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
     ownable_account::{OwnableAccountBytecode, OWNABLE_ACCOUNT_MAGIC_BYTES},
-    BytecodeDecodeError, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
+    rwasm::RWASM_MAGIC_BYTES,
+    BytecodeDecodeError,
+    JumpTable,
+    LegacyAnalyzedBytecode,
+    LegacyRawBytecode,
 };
 use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
@@ -64,7 +68,7 @@ impl Bytecode {
     }
 
     /// Returns `true` if bytecode is Metadata.
-    pub const fn is_metadata(&self) -> bool {
+    pub const fn is_ownable_account(&self) -> bool {
         matches!(self, Self::OwnableAccount(_))
     }
 
@@ -92,7 +96,7 @@ impl Bytecode {
 
     /// Creates a new metadata [`OwnableAccountBytecode`] from [`Address`].
     #[inline]
-    pub fn new_metadata(address: Address, metadata: Bytes) -> Self {
+    pub fn new_ownable_account(address: Address, metadata: Bytes) -> Self {
         Self::OwnableAccount(OwnableAccountBytecode::new(address, metadata))
     }
 
@@ -111,7 +115,7 @@ impl Bytecode {
                 let instance = OwnableAccountBytecode::new_raw(bytes)?;
                 Ok(Self::OwnableAccount(instance))
             }
-            Some(prefix) if prefix == &crate::RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytes)),
+            Some(prefix) if prefix == &RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytes)),
             _ => Ok(Self::new_legacy(bytes)),
         }
     }

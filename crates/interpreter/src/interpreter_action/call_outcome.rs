@@ -29,7 +29,7 @@ impl CallOutcome {
     ///
     /// * `result` - The result of the interpreter's execution.
     /// * `memory_offset` - The range in memory indicating where the output data is stored.
-    pub const fn new(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
+    pub fn new(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
         Self {
             result,
             memory_offset,

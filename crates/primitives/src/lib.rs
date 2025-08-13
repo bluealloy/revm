@@ -19,6 +19,8 @@ pub mod eip7918;
 pub mod hardfork;
 #[cfg(target_arch = "wasm32")]
 mod keccak256;
+/// An additional module for Wasm-related constants
+pub mod wasm;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub use alloy_primitives::keccak256;

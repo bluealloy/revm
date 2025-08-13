@@ -5,7 +5,6 @@ mod constants;
 
 pub use calc::*;
 pub use constants::*;
-use fluentbase_sdk::FUEL_DENOM_RATE;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

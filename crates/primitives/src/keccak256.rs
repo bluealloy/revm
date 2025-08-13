@@ -5,6 +5,7 @@ extern "C" {
     fn _keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
 }
 
+///
 #[inline(always)]
 pub fn keccak256<T: AsRef<[u8]>>(bytes: T) -> B256 {
     let mut result = B256::ZERO;

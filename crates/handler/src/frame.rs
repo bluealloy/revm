@@ -1,36 +1,58 @@
-use crate::evm::FrameTr;
-use crate::interrupted_outcome::SystemInterruptionOutcome;
-use crate::item_or_result::FrameInitOrResult;
-use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
-use context::result::FromStringError;
-use context_interface::context::ContextError;
-use context_interface::local::{FrameToken, OutFrame};
-use context_interface::ContextTr;
-use context_interface::{
-    journaled_state::{JournalCheckpoint, JournalTr},
-    Cfg, Database,
+use crate::{
+    evm::FrameTr,
+    item_or_result::FrameInitOrResult,
+    precompile_provider::PrecompileProvider,
+    CallFrame,
+    CreateFrame,
+    FrameData,
+    FrameResult,
+    ItemOrResult,
 };
-use core::cmp::min;
+use context::result::FromStringError;
+use context_interface::{
+    context::ContextError,
+    journaled_state::{JournalCheckpoint, JournalTr},
+    local::{FrameToken, OutFrame},
+    Cfg,
+    ContextTr,
+    Database,
+};
+use core::{cmp::min, fmt::Debug};
 use derive_where::derive_where;
 use fluentbase_sdk::{is_delegated_runtime_address, try_resolve_precompile_account_from_input};
-use interpreter::interpreter_action::FrameInit;
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, ExtBytecode},
+    interpreter_action::FrameInit,
     interpreter_types::ReturnData,
-    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterResult, InterpreterTypes, SharedMemory,
+    CallInput,
+    CallInputs,
+    CallOutcome,
+    CallValue,
+    CreateInputs,
+    CreateOutcome,
+    CreateScheme,
+    FrameInput,
+    Gas,
+    InputsImpl,
+    InstructionResult,
+    Interpreter,
+    InterpreterAction,
+    InterpreterResult,
+    InterpreterTypes,
+    SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+    keccak256,
+    Address,
+    Bytes,
+    B256,
+    U256,
 };
-use primitives::{keccak256, Address, Bytes, B256, U256};
 use state::Bytecode;
-use std::borrow::ToOwned;
-use std::boxed::Box;
+use std::{borrow::ToOwned, boxed::Box};
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -42,7 +64,7 @@ use std::boxed::Box;
     <IW as InterpreterTypes>::RuntimeFlag,
     <IW as InterpreterTypes>::Extend,
 )]
-pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
+pub struct EthFrame<IW: InterpreterTypes = EthInterpreter, EXT: Clone + Debug = ()> {
     /// Frame-specific data (Call, Create, or EOFCreate).
     pub data: FrameData,
     /// Input data for the frame.
@@ -57,21 +79,21 @@ pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
     /// Frame is considered finished if it has been called and returned a result.
     pub is_finished: bool,
     /// Info about interrupted call (for rwasm execution)
-    pub interrupted_outcome: Option<SystemInterruptionOutcome>,
+    pub interrupted_outcome: Option<EXT>,
 }
 
-impl<IT: InterpreterTypes> FrameTr for EthFrame<IT> {
+impl<IT: InterpreterTypes, EXT: Clone + Debug> FrameTr for EthFrame<IT, EXT> {
     type FrameResult = FrameResult;
     type FrameInit = FrameInit;
 }
 
-impl Default for EthFrame<EthInterpreter> {
+impl<EXT: Clone + Debug> Default for EthFrame<EthInterpreter, EXT> {
     fn default() -> Self {
         Self::do_default(Interpreter::default())
     }
 }
 
-impl EthFrame<EthInterpreter> {
+impl<EXT: Clone + Debug> EthFrame<EthInterpreter, EXT> {
     fn invalid() -> Self {
         Self::do_default(Interpreter::invalid())
     }
@@ -91,31 +113,8 @@ impl EthFrame<EthInterpreter> {
     }
 
     /// Insert an interrupted outcome into the frame
-    pub fn insert_interrupted_outcome(&mut self, interrupted_outcome: SystemInterruptionOutcome) {
+    pub fn insert_interrupted_outcome(&mut self, interrupted_outcome: EXT) {
         self.interrupted_outcome = Some(interrupted_outcome);
-    }
-
-    ///
-    pub fn insert_interrupted_result(&mut self, result: FrameResult) {
-        let created_address = if let FrameResult::Create(create_outcome) = &result {
-            create_outcome.address.or_else(|| {
-                // I don't know why EVM returns empty address and ok status in case of nonce
-                // overflow, I think nobody knows...
-                let is_nonce_overflow = create_outcome.result.result == InstructionResult::Return
-                    && create_outcome.address.is_none();
-                if is_nonce_overflow {
-                    Some(Address::ZERO)
-                } else {
-                    None
-                }
-            })
-        } else {
-            None
-        };
-        self.interrupted_outcome
-            .as_mut()
-            .unwrap()
-            .insert_result(result.into_interpreter_result(), created_address);
     }
 
     ///
@@ -124,7 +123,7 @@ impl EthFrame<EthInterpreter> {
     }
 
     ///
-    pub fn take_interrupted_outcome(&mut self) -> Option<SystemInterruptionOutcome> {
+    pub fn take_interrupted_outcome(&mut self) -> Option<EXT> {
         self.interrupted_outcome.take()
     }
 
@@ -142,7 +141,7 @@ impl EthFrame<EthInterpreter> {
 /// Type alias for database errors from a context.
 pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
-impl EthFrame<EthInterpreter> {
+impl<EXT: Clone + Debug> EthFrame<EthInterpreter, EXT> {
     /// Clear and initialize a frame.
     #[allow(clippy::too_many_arguments)]
     pub fn clear(
@@ -581,7 +580,7 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
-impl EthFrame<EthInterpreter> {
+impl<EXT: Clone + Debug> EthFrame<EthInterpreter, EXT> {
     /// Processes the next interpreter action, either creating a new frame or returning a result.
     pub fn process_next_action<
         CTX: ContextTr,
@@ -625,7 +624,6 @@ impl EthFrame<EthInterpreter> {
             FrameData::Create(frame) => {
                 let max_code_size = context.cfg().max_code_size();
                 let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
-
                 return_create(
                     context.journal_mut(),
                     self.checkpoint,
@@ -657,14 +655,6 @@ impl EthFrame<EthInterpreter> {
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(ERROR::from_string(e)),
             Ok(_) => (),
-        }
-
-        // if call is interrupted then we need to remember the interrupted state;
-        // the execution can be continued
-        // since the state is updated already
-        if self.is_interrupted_call() {
-            self.insert_interrupted_result(result);
-            return Ok(());
         }
 
         // Insert result to the top frame.

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    # binary 
+    # binary
     "bins/revme",
     # libraries
     "crates/revm",

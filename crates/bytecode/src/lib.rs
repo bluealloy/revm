@@ -18,8 +18,10 @@ mod iter;
 /// Legacy bytecode.
 pub mod legacy;
 pub mod opcode;
-/// Metadata account
+/// Ownable account
 pub mod ownable_account;
+/// Rwasm constants
+pub mod rwasm;
 pub mod utils;
 
 /// Re-export of bitvec crate, used to store legacy bytecode jump table.
@@ -29,11 +31,3 @@ pub use decode_errors::BytecodeDecodeError;
 pub use iter::BytecodeIterator;
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode};
 pub use opcode::OpCode;
-use primitives::Bytes;
-
-/// Rwasm magic number in array form.
-pub static RWASM_MAGIC_BYTES: Bytes = primitives::bytes!("ef52");
-/// Wasm magic number in array form.
-pub static WASM_MAGIC_BYTES: Bytes = primitives::bytes!("0061736d");
-/// SVM magic number in array form.
-pub static SVM_ELF_MAGIC_BYTES: Bytes = primitives::bytes!("7f454c46");

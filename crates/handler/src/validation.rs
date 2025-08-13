@@ -1,11 +1,13 @@
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
-    Block, Cfg, ContextTr,
+    Block,
+    Cfg,
+    ContextTr,
 };
 use core::cmp;
 use interpreter::gas::{self, InitialAndFloorGas};
-use primitives::{eip4844, hardfork::SpecId, B256};
+use primitives::{eip4844, hardfork::SpecId, wasm::wasm_max_code_size, B256};
 
 /// Validates the execution environment including block and transaction parameters.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
@@ -234,16 +236,8 @@ pub fn validate_tx_env<CTX: ContextTr, Error>(
 
     // EIP-3860: Limit and meter initcode
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx.kind().is_create() {
-        let max_initcode_size = if tx.input().len() >= 4
-            && tx.input()[..4] == fluentbase_sdk::WASM_MAGIC_BYTES
-        {
-            // If the initcode starts with WASM magic bytes, use WASM_MAX_CODE_SIZE
-            fluentbase_sdk::WASM_MAX_CODE_SIZE
-        } else if tx.input().len() >= 4 && tx.input()[..4] == fluentbase_sdk::SVM_ELF_MAGIC_BYTES {
-            fluentbase_sdk::SVM_MAX_CODE_SIZE
-        } else {
-            context.cfg().max_code_size().saturating_mul(2)
-        };
+        let max_initcode_size = wasm_max_code_size(tx.input())
+            .unwrap_or_else(|| context.cfg().max_code_size().saturating_mul(2));
         if context.tx().input().len() > max_initcode_size {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit);
         }
@@ -325,7 +319,8 @@ mod tests {
     use bytecode::opcode;
     use context::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
-        Context, TxEnv,
+        Context,
+        TxEnv,
     };
     use database::{CacheDB, EmptyDB};
     use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind};
