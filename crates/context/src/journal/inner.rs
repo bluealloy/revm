@@ -729,7 +729,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// # Panics
     ///
     /// Panics if the account is not present in the state.
-    #[inline(never)]
+    #[inline]
     pub fn sload<DB: Database>(
         &mut self,
         db: &mut DB,
