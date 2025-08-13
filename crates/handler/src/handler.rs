@@ -299,7 +299,7 @@ pub trait Handler {
         let ctx = evm.ctx_ref();
 
         let caller = ctx.journal().caller_address_id().expect("caller id is set");
-        let target = ctx
+        let (target, delegated_address) = ctx
             .journal()
             .tx_target_address_id()
             .expect("tx target id is set");
@@ -311,7 +311,13 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input: execution::create_init_frame(
-                is_call, caller, target, input, value, gas_limit,
+                is_call,
+                caller,
+                target,
+                delegated_address,
+                input,
+                value,
+                gas_limit,
             ),
         })
     }

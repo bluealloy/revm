@@ -19,6 +19,7 @@ use state::AccountInfo;
 use std::boxed::Box;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
+#[inline]
 pub fn load_accounts<
     EVM: EvmTr<Precompiles: PrecompileProvider<EVM::Context>>,
     ERROR: From<<<EVM::Context as ContextTr>::Db as Database>::Error>,
@@ -47,8 +48,11 @@ pub fn load_accounts<
 
     // load tx target and set its id in journal.
     if let TxKind::Call(target) = tx.kind() {
-        let (_, id) = journal.load_account_code(target.into())?.data;
-        journal.set_tx_target_address_id(id);
+        let acc = journal.load_account_delegated(target.into())?.data;
+        journal.set_tx_target_address_id(
+            acc.address_and_id,
+            acc.delegated_account_address.map(|a| a.data),
+        );
     }
 
     let (coinbase, id) = journal.load_account_code(beneficiary)?.data;

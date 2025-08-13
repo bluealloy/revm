@@ -145,10 +145,10 @@ pub trait JournalTr {
     fn caller_address_id(&self) -> Option<AddressAndId>;
 
     /// Sets the tx target address and id.
-    fn set_tx_target_address_id(&mut self, id: AddressAndId);
+    fn set_tx_target_address_id(&mut self, id: AddressAndId, delegated: Option<AddressAndId>);
 
     /// Returns the tx target address and id.
-    fn tx_target_address_id(&self) -> Option<AddressAndId>;
+    fn tx_target_address_id(&self) -> Option<(AddressAndId, Option<AddressAndId>)>;
 
     /// Loads the account delegated.
     fn load_account_delegated(
@@ -310,4 +310,18 @@ pub struct AccountLoad {
     pub address_and_id: AddressAndId,
     /// Does account have delegate code and delegated account is cold loaded
     pub delegated_account_address: Option<StateLoad<AddressAndId>>,
+}
+
+impl AccountLoad {
+    /// Returns the bytecode address.
+    ///
+    /// If the account has a delegated account, it returns the delegated account address.
+    /// Otherwise, it returns the account address.
+    pub fn bytecode_address(&self) -> AddressAndId {
+        if let Some(delegated_account_address) = &self.delegated_account_address {
+            delegated_account_address.data
+        } else {
+            self.address_and_id
+        }
+    }
 }

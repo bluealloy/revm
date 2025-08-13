@@ -22,6 +22,8 @@ pub struct WarmAddresses {
     caller: Option<AddressAndId>,
     /// Tx target address and id.
     tx_target: Option<AddressAndId>,
+    /// Tx target delegated address and id.
+    tx_target_delegated: Option<AddressAndId>,
 }
 
 impl Default for WarmAddresses {
@@ -41,6 +43,7 @@ impl WarmAddresses {
             coinbase: None,
             caller: None,
             tx_target: None,
+            tx_target_delegated: None,
         }
     }
 
@@ -64,8 +67,9 @@ impl WarmAddresses {
 
     /// Returns the tx target address and id.
     #[inline]
-    pub fn tx_target(&self) -> Option<AddressAndId> {
+    pub fn tx_target(&self) -> Option<(AddressAndId, Option<AddressAndId>)> {
         self.tx_target
+            .map(|tx_target| (tx_target, self.tx_target_delegated))
     }
 
     /// Set the precompile addresses and short addresses.
@@ -101,8 +105,9 @@ impl WarmAddresses {
 
     /// Set the tx target address and id.
     #[inline]
-    pub fn set_tx_target(&mut self, address: AddressAndId) {
+    pub fn set_tx_target(&mut self, address: AddressAndId, delegated: Option<AddressAndId>) {
         self.tx_target = Some(address);
+        self.tx_target_delegated = delegated;
     }
 
     /// Clear the coinbase/caller/tx target addresses.
@@ -111,6 +116,7 @@ impl WarmAddresses {
         self.coinbase = None;
         self.caller = None;
         self.tx_target = None;
+        self.tx_target_delegated = None;
     }
 
     /// Returns true if the address is warm loaded.

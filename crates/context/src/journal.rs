@@ -152,8 +152,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn set_tx_target_address_id(&mut self, id: AddressAndId) {
-        self.inner.warm_addresses.set_tx_target(id);
+    fn set_tx_target_address_id(&mut self, id: AddressAndId, delegated: Option<AddressAndId>) {
+        self.inner.warm_addresses.set_tx_target(id, delegated);
     }
 
     #[inline]
@@ -172,7 +172,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn tx_target_address_id(&self) -> Option<AddressAndId> {
+    fn tx_target_address_id(&self) -> Option<(AddressAndId, Option<AddressAndId>)> {
         self.inner.warm_addresses.tx_target()
     }
 

@@ -134,6 +134,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
     let to = account_load.address_and_id;
+    let bytecode_address = account_load.bytecode_address();
 
     let Some(mut gas_limit) = calc_call_gas(
         context.interpreter,
@@ -161,7 +162,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -193,7 +194,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
-    let to = load.address_and_id;
+    let bytecode_address = load.bytecode_address();
 
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
@@ -220,7 +221,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -252,7 +253,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::FatalExternalError);
         return;
     };
-    let to = load.address_and_id;
+    let bytecode_address = load.bytecode_address();
 
     // Set is_empty to false as we are not creating this account.
     load.is_empty = false;
@@ -272,7 +273,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.caller_address(),
-                bytecode_address: to,
+                bytecode_address,
                 value: CallValue::Apparent(context.interpreter.input.call_value()),
                 scheme: CallScheme::DelegateCall,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -305,6 +306,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
     let to = load.address_and_id;
+    let bytecode_address = load.bytecode_address();
 
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
@@ -323,7 +325,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
                 is_static: true,

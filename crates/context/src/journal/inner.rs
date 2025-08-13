@@ -649,7 +649,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -729,7 +729,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// # Panics
     ///
     /// Panics if the account is not present in the state.
-    #[inline]
+    #[inline(never)]
     pub fn sload<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -747,7 +747,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// And returns (original,present,new) slot value.
     ///
     /// **Note**: Account should already be present in our state.
-    #[inline]
+    #[inline(never)]
     pub fn sstore<DB: Database>(
         &mut self,
         db: &mut DB,

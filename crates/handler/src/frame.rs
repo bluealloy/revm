@@ -162,11 +162,11 @@ impl EthFrame<EthInterpreter> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // Make account warm and loaded.
-        let acc_load = ctx
-            .journal_mut()
-            .load_account_delegated(inputs.bytecode_address.to_id())?
-            .data;
+        // // Make account warm and loaded.
+        // let acc_load = ctx
+        //     .journal_mut()
+        //     .load_account_delegated(inputs.bytecode_address.to_id())?
+        //     .data;
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
@@ -215,30 +215,9 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        // let account = ctx
-        //     .journal_mut()
-        //     .load_account_code(inputs.bytecode_address.to_id())?;
-
-        // let mut bytecode = account.0.info.code.clone().unwrap_or_default();
-
-        let (account, _) = if let Some(delegated_acc) = acc_load.delegated_account_address {
-            ctx.journal_mut().get_account(delegated_acc.id())
-        } else {
-            ctx.journal_mut().get_account(acc_load.address_and_id.id())
-        };
-
-        let code_hash = account.info.code_hash();
-        let bytecode = account.info.code.clone().unwrap_or_default();
-
-        // if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-        //     let account = &ctx
-        //         .journal_mut()
-        //         .load_account_code(eip7702_bytecode.delegated_address.into())?
-        //         .0
-        //         .info;
-        //     bytecode = account.code.clone().unwrap_or_default();
-        //     code_hash = account.code_hash();
-        // }
+        let (bytecode_account, _) = ctx.journal_mut().get_account(inputs.bytecode_address.id());
+        let code_hash = bytecode_account.info.code_hash();
+        let bytecode = bytecode_account.info.code.clone().unwrap_or_default();
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
