@@ -33,8 +33,6 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
-anyhow.workspace = true
-rstest.workspace = true
 
 [features]
 default = ["std"]
