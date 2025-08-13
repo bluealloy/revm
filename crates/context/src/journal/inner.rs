@@ -55,6 +55,12 @@ pub struct JournalInner<ENTRY> {
     pub spec: SpecId,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
+    /// Global gas refund accumulated for the current transaction.
+    ///
+    /// This tracks refunds (such as from SSTORE operations) at the global journal level
+    /// instead of locally at each call frame, which helps avoid negative refund values
+    /// being visible during tracing.
+    pub refund: i64,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -78,6 +84,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth: 0,
             spec: SpecId::default(),
             warm_addresses: WarmAddresses::new(),
+            refund: 0,
         }
     }
 
@@ -106,6 +113,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
@@ -121,6 +129,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
+        // Reset refund for next transaction
+        *refund = 0;
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -135,12 +145,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
-        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
-        journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
-        });
+        Self::revert_journal_entries_impl(journal.drain(..), refund, state, None, *spec);
         transient_storage.clear();
         *depth = 0;
         logs.clear();
@@ -148,6 +156,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
+        // Reset refund when discarding transaction
+        *refund = 0;
     }
 
     /// Take the [`EvmState`] and clears the journal by resetting it to initial state.
@@ -167,11 +177,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
+        // Reset refund for next transaction
+        *refund = 0;
 
         let state = mem::take(state);
         logs.clear();
@@ -459,19 +472,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         self.logs.truncate(checkpoint.log_i);
 
         // iterate over last N journals sets and revert our global state
-        self.journal
-            .drain(checkpoint.journal_i..)
-            .rev()
-            .for_each(|entry| {
-                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
-            });
+        Self::revert_journal_entries_impl(
+            self.journal.drain(checkpoint.journal_i..),
+            &mut self.refund,
+            state,
+            Some(transient_storage),
+            self.spec,
+        );
     }
 
     /// Performs selfdestruct action.
@@ -854,4 +867,47 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     }
 
     Ok(StateLoad::new(value, is_cold))
+}
+
+impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
+    /// Records a gas refund for the current transaction.
+    ///
+    /// This accumulates refunds at the global journal level, avoiding negative
+    /// refund values being visible during individual call frame execution.
+    #[inline]
+    pub fn record_refund(&mut self, refund: i64) {
+        let old_refund = self.refund;
+        self.refund += refund;
+        self.journal.push(ENTRY::refund_changed(old_refund));
+    }
+
+    /// Returns the current accumulated gas refund for the transaction.
+    #[inline]
+    pub fn refund(&self) -> i64 {
+        self.refund
+    }
+
+    /// Reverts journal entries with proper handling of RefundChanged entries.
+    fn revert_journal_entries_impl<I>(
+        entries: I,
+        refund: &mut i64,
+        state: &mut EvmState,
+        mut transient_storage: Option<&mut TransientStorage>,
+        spec: SpecId,
+    ) where
+        I: Iterator<Item = ENTRY> + DoubleEndedIterator,
+    {
+        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        for entry in entries.rev() {
+            if let Some(old_refund_value) = entry.get_refund_revert() {
+                *refund = old_refund_value;
+            } else {
+                entry.revert(
+                    state,
+                    transient_storage.as_deref_mut(),
+                    is_spurious_dragon_enabled,
+                );
+            }
+        }
+    }
 }
