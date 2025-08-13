@@ -3837,12 +3837,10 @@ dependencies = [
  "alloy-eips",
  "alloy-provider",
  "alloy-transport",
- "anyhow",
  "revm-bytecode",
  "revm-database-interface",
  "revm-primitives",
  "revm-state",
- "rstest",
  "serde",
  "serde_json",
  "tokio",
@@ -3852,12 +3850,10 @@ dependencies = [
 name = "revm-database-interface"
 version = "7.0.4"
 dependencies = [
- "anyhow",
  "auto_impl",
  "either",
  "revm-primitives",
  "revm-state",
- "rstest",
  "serde",
  "tokio",
 ]
