@@ -1,6 +1,5 @@
 use crate::eip7702::Eip7702DecodeError;
-use core::fmt::Debug;
-use std::fmt;
+use core::fmt;
 
 /// Bytecode decode errors
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
