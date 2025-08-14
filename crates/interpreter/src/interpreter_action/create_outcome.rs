@@ -21,7 +21,7 @@ impl CreateOutcome {
     /// # Arguments
     ///
     /// * `result` - An [`InterpreterResult`] representing the result of the interpreter operation.
-    /// * `address` - An optional [`Address`] associated with the create operation.
+    /// * `AddressAndId` - An optional [`AddressAndId`] associated with the create operation.
     ///
     /// # Returns
     ///

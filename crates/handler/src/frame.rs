@@ -271,7 +271,7 @@ impl EthFrame<EthInterpreter> {
         // Fetch balance of caller.
         let caller_info = &mut context
             .journal_mut()
-            .load_account(inputs.caller.to_id())?
+            .get_account_mut(inputs.caller.id())
             .0
             .info;
 
