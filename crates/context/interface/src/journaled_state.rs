@@ -187,7 +187,7 @@ pub trait JournalTr {
         &mut self,
         address_or_id: AddressOrId,
     ) -> Result<(StateLoad<B256>, AddressAndId), <Self::Database as Database>::Error> {
-        let acc = self.load_account_code(address_or_id)?;
+        let acc = self.load_account(address_or_id)?;
         if acc.0.is_empty() {
             return Ok((StateLoad::new(B256::ZERO, acc.is_cold), acc.1));
         }
