@@ -1,13 +1,14 @@
 [package]
 name = "revm-context-interface"
 description = "Revm context interface crates"
-version = "7.0.1"
+version = "10.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -54,4 +55,6 @@ serde = [
 	"database-interface/serde",
 	"either/serde",
 ]
+
+# Deprecated, please use `serde` feature instead.
 serde-json = ["serde"]

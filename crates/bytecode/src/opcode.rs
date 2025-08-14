@@ -160,7 +160,7 @@ impl OpCode {
 
     /// Returns the number of both input and output stack elements.
     ///
-    /// Can be slightly faster that calling `inputs` and `outputs` separately.
+    /// Can be slightly faster than calling `inputs` and `outputs` separately.
     pub const fn input_output(&self) -> (u8, u8) {
         let info = self.info();
         (info.inputs, info.outputs)
@@ -174,7 +174,7 @@ impl OpCode {
 
     /// Returns true if the opcode modifies memory.
     ///
-    /// <https://bluealloy.github.io/revm/crates/interpreter/memory.html#opcodes>
+    /// <https://docs.rs/revm-interpreter/latest/revm_interpreter/instructions/index.html>
     ///
     /// <https://github.com/crytic/evm-opcodes>
     #[inline]
@@ -195,6 +195,18 @@ impl OpCode {
                 | OpCode::STATICCALL
         )
     }
+
+    /// Returns true if the opcode is valid
+    #[inline]
+    pub const fn is_valid(&self) -> bool {
+        OPCODE_INFO[self.0 as usize].is_some()
+    }
+}
+
+impl PartialEq<u8> for OpCode {
+    fn eq(&self, other: &u8) -> bool {
+        self.get().eq(other)
+    }
 }
 
 /// Information about opcode, such as name, and stack inputs and outputs
@@ -211,9 +223,6 @@ pub struct OpCodeInfo {
     /// Stack outputs
     outputs: u8,
     /// Number of intermediate bytes
-    ///
-    /// RJUMPV is a special case where the bytes len depends on bytecode value,
-    /// for RJUMV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
@@ -291,16 +300,13 @@ impl OpCodeInfo {
 }
 
 /// Used for [`OPCODE_INFO`] to set the immediate bytes number in the [`OpCodeInfo`].
-///
-/// RJUMPV is special case where the bytes len is depending on bytecode value,
-/// for RJUMPV size will be set to one byte while minimum is two.
 #[inline]
 pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
     op.immediate_size = n;
     op
 }
 
-/// Use for [`OPCODE_INFO`] to set the terminating flag to true in the [`OpCodeInfo`].
+/// Used for [`OPCODE_INFO`] to set the terminating flag to true in the [`OpCodeInfo`].
 #[inline]
 pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
     op.terminating = true;
@@ -728,8 +734,7 @@ mod tests {
             assert_eq!(
                 opcode.map(|opcode| opcode.terminating).unwrap_or_default(),
                 opcodes[i],
-                "Opcode {:?} terminating check failed.",
-                opcode
+                "Opcode {opcode:?} terminating check failed."
             );
         }
     }
@@ -742,5 +747,30 @@ mod tests {
                 assert_eq!(OpCode::parse(op.as_str()), Some(op));
             }
         }
+    }
+
+    #[test]
+    #[should_panic(expected = "opcode not found")]
+    fn test_new_unchecked_invalid() {
+        let op = unsafe { OpCode::new_unchecked(0x0C) };
+        op.info();
+    }
+
+    #[test]
+    fn test_op_code_valid() {
+        let op1 = OpCode::new(ADD).unwrap();
+        let op2 = OpCode::new(MUL).unwrap();
+        assert!(op1.is_valid());
+        assert!(op2.is_valid());
+
+        let op3 = unsafe { OpCode::new_unchecked(0x0C) };
+        assert!(!op3.is_valid());
+    }
+
+    #[test]
+    fn test_modifies_memory() {
+        assert!(OpCode::new(MLOAD).unwrap().modifies_memory());
+        assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
+        assert!(!OpCode::new(ADD).unwrap().modifies_memory());
     }
 }

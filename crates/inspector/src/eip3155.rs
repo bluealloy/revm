@@ -272,7 +272,7 @@ where
                 .action()
                 .as_ref()
                 .and_then(|a| a.instruction_result())
-                .map(|ir| format!("{:?}", ir)),
+                .map(|ir| format!("{ir:?}")),
             memory: self.memory.take(),
             storage: None,
             return_stack: None,

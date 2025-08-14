@@ -1,13 +1,14 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "23.0.0"
+version = "26.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -24,9 +25,6 @@ primitives.workspace = true
 aurora-engine-modexp.workspace = true
 # gmp wrapper
 rug = { workspace = true, features = ["integer"], optional = true }
-
-# static precompile sets.
-once_cell = { workspace = true, features = ["alloc"] }
 
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
@@ -72,19 +70,19 @@ p256 = { workspace = true, features = ["ecdsa"] }
 
 # utils
 cfg-if.workspace = true
+arrayref = "0.3.6"
 
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
-ark-std = { workspace = true}
+ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
 std = [
 	"primitives/std",
 	"k256/std",
-	"once_cell/std",
 	"ripemd/std",
 	"sha2/std",
 	"c-kzg?/std",
@@ -102,10 +100,10 @@ std = [
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
+asm-sha2 = ["sha2/asm"]
 
-# These libraries may not work on all no_std platforms as they depend on C.
 
-# Enables the KZG point evaluation precompile.
+# Enables the c-kzg point evaluation precompile. Enabled by default as most stable/used implementation.
 c-kzg = ["dep:c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["dep:kzg-rs"]

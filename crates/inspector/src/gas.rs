@@ -92,6 +92,7 @@ mod tests {
     #[derive(Default, Debug)]
     struct StackInspector {
         pc: usize,
+        opcode: u8,
         gas_inspector: GasInspector,
         gas_remaining_steps: Vec<(usize, u64)>,
     }
@@ -103,10 +104,13 @@ mod tests {
 
         fn step(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
             self.pc = interp.bytecode.pc();
+            self.opcode = interp.bytecode.opcode();
             self.gas_inspector.step(&interp.gas);
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
+            interp.bytecode.pc();
+            interp.bytecode.opcode();
             self.gas_inspector.step_end(&mut interp.gas);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));

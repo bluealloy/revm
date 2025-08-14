@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.4](https://github.com/bluealloy/revm/compare/revm-database-v7.0.3...revm-database-v7.0.4) - 2025-08-12
+
+### Other
+
+- use mem::take ([#2870](https://github.com/bluealloy/revm/pull/2870))
+- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
+- use HashMap::or_insert_with lazily compute ([#2864](https://github.com/bluealloy/revm/pull/2864))
+
+## [7.0.3](https://github.com/bluealloy/revm/compare/revm-database-v7.0.2...revm-database-v7.0.3) - 2025-08-06
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+
+## [7.0.2](https://github.com/bluealloy/revm/compare/revm-database-v7.0.1...revm-database-v7.0.2) - 2025-07-23
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-database-interface, revm-state
+
+## [7.0.1](https://github.com/bluealloy/revm/compare/revm-database-v7.0.0...revm-database-v7.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-state, revm-database-interface
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-database-v6.0.0...revm-database-v7.0.0) - 2025-06-30
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-state, revm-database-interface
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-database-v5.0.0...revm-database-v6.0.0) - 2025-06-19
 
 ### Added

@@ -40,12 +40,18 @@ pub struct Cmd {
     /// Overrides the positional `bytecode` argument.
     #[arg(long)]
     path: Option<PathBuf>,
+
     /// Whether to run in benchmarking mode
     #[arg(long)]
     bench: bool,
+
     /// Hex-encoded input/calldata bytes
     #[arg(long, default_value = "")]
     input: String,
+    /// Gas limit
+    #[arg(long, default_value = "1000000000")]
+    gas_limit: u64,
+
     /// Whether to print the state
     #[arg(long)]
     state: bool,
@@ -92,6 +98,7 @@ impl Cmd {
             .kind(TxKind::Call(BENCH_TARGET))
             .data(input)
             .nonce(nonce)
+            .gas_limit(self.gas_limit)
             .build()
             .unwrap();
 
@@ -102,9 +109,11 @@ impl Cmd {
                 .without_plots();
             let mut criterion_group = criterion.benchmark_group("revme");
             criterion_group.bench_function("evm", |b| {
-                b.iter(|| {
-                    let _ = evm.transact(tx.clone()).unwrap();
-                })
+                b.iter_batched(
+                    || tx.clone(),
+                    |input| evm.transact(input).unwrap(),
+                    criterion::BatchSize::SmallInput,
+                );
             });
             criterion_group.finish();
 
@@ -112,22 +121,20 @@ impl Cmd {
         }
 
         let time = Instant::now();
-        let state = if self.trace {
-            evm.inspect_tx(tx.clone())
-                .map_err(|_| Errors::EVMError)?
-                .state
+        let r = if self.trace {
+            evm.inspect_tx(tx)
         } else {
-            let out = evm.transact(tx.clone()).map_err(|_| Errors::EVMError)?;
-            println!("Result: {:#?}", out.result);
-            out.state
-        };
+            evm.transact(tx)
+        }
+        .map_err(|_| Errors::EVMError)?;
         let time = time.elapsed();
 
+        println!("Result: {:#?}", r.result);
         if self.state {
-            println!("State: {:#?}", state);
+            println!("State: {:#?}", r.state);
         }
 
-        println!("Elapsed: {:?}", time);
+        println!("Elapsed: {time:?}");
         Ok(())
     }
 }

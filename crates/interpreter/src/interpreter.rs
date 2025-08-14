@@ -14,7 +14,7 @@ pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
-pub use shared_memory::{num_words, SharedMemory};
+pub use shared_memory::{num_words, resize_memory, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
 // imports
@@ -183,19 +183,66 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
 }
 
 impl<IW: InterpreterTypes> Interpreter<IW> {
+    /// Performs EVM memory resize.
+    #[inline]
+    #[must_use]
+    pub fn resize_memory(&mut self, offset: usize, len: usize) -> bool {
+        resize_memory(&mut self.gas, &mut self.memory, offset, len)
+    }
+
     /// Takes the next action from the control and returns it.
     #[inline]
     pub fn take_next_action(&mut self) -> InterpreterAction {
+        self.bytecode.reset_action();
         // Return next action if it is some.
-        core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
+        let action = core::mem::take(self.bytecode.action()).expect("Interpreter to set action");
+        action
     }
 
     /// Halt the interpreter with the given result.
     ///
     /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    #[cold]
+    #[inline(never)]
     pub fn halt(&mut self, result: InstructionResult) {
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
+    }
+
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_oog(&mut self) {
+        self.gas.spend_all();
+        self.halt(InstructionResult::OutOfGas);
+    }
+
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_memory_oog(&mut self) {
+        self.halt(InstructionResult::MemoryLimitOOG);
+    }
+
+    /// Halt the interpreter with and overflow error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_overflow(&mut self) {
+        self.halt(InstructionResult::StackOverflow);
+    }
+
+    /// Halt the interpreter with and underflow error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_underflow(&mut self) {
+        self.halt(InstructionResult::StackUnderflow);
+    }
+
+    /// Halt the interpreter with and not activated error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_not_activated(&mut self) {
+        self.halt(InstructionResult::NotActivated);
     }
 
     /// Return with the given output.
@@ -213,12 +260,29 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub fn step<H: ?Sized>(&mut self, instruction_table: &InstructionTable<IW, H>, host: &mut H) {
+    pub fn step<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        host: &mut H,
+    ) {
+        // Get current opcode.
+        let opcode = self.bytecode.opcode();
+
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        self.bytecode.relative_jump(1);
+
+        let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
+
+        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+            return self.halt_oog();
+        }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        context.step(instruction_table);
+        instruction.execute(context);
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -228,40 +292,40 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// This uses dummy Host.
     #[inline]
     pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        let context = InstructionContext {
-            interpreter: self,
-            host: &mut DummyHost,
-        };
-        context.step(instruction_table);
+        self.step(instruction_table, &mut DummyHost);
     }
 
     /// Executes the interpreter until it returns or stops.
     #[inline]
-    pub fn run_plain<H: ?Sized>(
+    pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
         while self.bytecode.is_not_end() {
-            // Get current opcode.
-            let opcode = self.bytecode.opcode();
-
-            // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-            // it will do noop and just stop execution of this contract
-            self.bytecode.relative_jump(1);
-            let context = InstructionContext {
-                interpreter: self,
-                host,
-            };
-            // Execute instruction.
-            instruction_table[opcode as usize](context);
+            self.step(instruction_table, host);
         }
-        self.bytecode.revert_to_previous_pointer();
-
         self.take_next_action()
     }
 }
+
+/* used for cargo asm
+pub fn asm_step(
+    interpreter: &mut Interpreter<EthInterpreter>,
+    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    host: &mut DummyHost,
+) {
+    interpreter.step(instruction_table, host);
+}
+
+pub fn asm_run(
+    interpreter: &mut Interpreter<EthInterpreter>,
+    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    host: &mut DummyHost,
+) {
+    interpreter.run_plain(instruction_table, host);
+}
+*/
 
 /// The result of an interpreter operation.
 #[derive(Clone, Debug, PartialEq, Eq)]

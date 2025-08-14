@@ -55,16 +55,10 @@ pub fn load_accounts<
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
             for item in access_list {
-                let address = item.address();
-                let mut storage = item.storage_slots().peekable();
-                if storage.peek().is_none() {
-                    journal.warm_account(*address);
-                } else {
-                    journal.warm_account_and_storage(
-                        *address,
-                        storage.map(|i| StorageKey::from_be_bytes(i.0)),
-                    )?;
-                }
+                journal.warm_account_and_storage(
+                    *item.address(),
+                    item.storage_slots().map(|i| StorageKey::from_be_bytes(i.0)),
+                )?;
             }
         }
     }
@@ -138,42 +132,45 @@ pub fn validate_against_state_and_deduct_caller<
         is_nonce_check_disabled,
     )?;
 
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
-
     let max_balance_spending = tx.max_balance_spending()?;
-
-    let mut new_balance = caller_account.info.balance;
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        new_balance = caller_account.info.balance.max(tx.value());
-    } else if max_balance_spending > caller_account.info.balance {
+    if max_balance_spending > caller_account.info.balance && !is_balance_check_disabled {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(max_balance_spending),
             balance: Box::new(caller_account.info.balance),
         }
         .into());
-    } else {
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
+    }
 
-        // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = effective_balance_spending - tx.value();
+    let effective_balance_spending = tx
+        .effective_balance_spending(basefee, blob_price)
+        .expect("effective balance is always smaller than max balance so it can't overflow");
 
-        new_balance = new_balance.saturating_sub(gas_balance_spending);
+    // subtracting max balance spending with value that is going to be deducted later in the call.
+    let gas_balance_spending = effective_balance_spending - tx.value();
+
+    let mut new_balance = caller_account
+        .info
+        .balance
+        .saturating_sub(gas_balance_spending);
+
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        new_balance = new_balance.max(tx.value());
     }
 
     let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
     caller_account.mark_touch();
     caller_account.info.balance = new_balance;
+
+    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
+    if tx.kind().is_call() {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())

@@ -1,10 +1,87 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [26.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.0...revm-precompile-v26.0.1) - 2025-08-12
+
+### Fixed
+
+- *(osaka)* do base/mod zero check after gas calc ([#2872](https://github.com/bluealloy/revm/pull/2872))
+
+### Other
+
+- Aggregate changes from PRs #2866, #2867, and #2874 ([#2876](https://github.com/bluealloy/revm/pull/2876))
+
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v25.0.0...revm-precompile-v26.0.0) - 2025-08-06
+
+### Added
+
+- short address for journal cold/warm check ([#2849](https://github.com/bluealloy/revm/pull/2849))
+- optimize access to precompile short addresses ([#2846](https://github.com/bluealloy/revm/pull/2846))
+- Reuse bls12-381 codepaths to implement kzg point evaluation precompile ([#2809](https://github.com/bluealloy/revm/pull/2809))
+- rename bn128 to bn254 for Ethereum standard consistency ([#2810](https://github.com/bluealloy/revm/pull/2810))
+
+### Fixed
+
+- map new once and for all (+ci) ([#2852](https://github.com/bluealloy/revm/pull/2852))
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- simplify the ecrecover test ([#2836](https://github.com/bluealloy/revm/pull/2836))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+- fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [25.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v24.0.1...revm-precompile-v25.0.0) - 2025-07-23
+
+### Added
+
+- *(precompiles)* Use bytes API for underlying precompile library APIs ([#2705](https://github.com/bluealloy/revm/pull/2705))
+- *(precompile)* update osaka modexp gas divisor ([#2740](https://github.com/bluealloy/revm/pull/2740))
+- *(precompile)* update p256 verify osaka gas cost ([#2741](https://github.com/bluealloy/revm/pull/2741))
+- add a way for precompiles to revert ([#2711](https://github.com/bluealloy/revm/pull/2711))
+
+### Fixed
+
+- features and check in ci ([#2766](https://github.com/bluealloy/revm/pull/2766))
+
+### Other
+
+- use `EncodedPoint` to decode uncompressed public key ([#2736](https://github.com/bluealloy/revm/pull/2736))
+- *(precompile)* refactor blake2 input parsing ([#2734](https://github.com/bluealloy/revm/pull/2734))
+- Add blake2 benchmarks ([#2735](https://github.com/bluealloy/revm/pull/2735))
+- add asm-sha2 feature for sha2 precompile ([#2712](https://github.com/bluealloy/revm/pull/2712))
+
+## [24.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v24.0.0...revm-precompile-v24.0.1) - 2025-07-14
+
+### Other
+
+- use c-kzg precompute value 8 ([#2698](https://github.com/bluealloy/revm/pull/2698))
+
+## [24.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v23.0.0...revm-precompile-v24.0.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
 
 ## [23.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v22.0.0...revm-precompile-v23.0.0) - 2025-06-19
 

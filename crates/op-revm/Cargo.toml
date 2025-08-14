@@ -1,13 +1,14 @@
 [package]
 name = "op-revm"
 description = "Optimism variant of Revm"
-version = "7.0.1"
+version = "9.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -21,9 +22,6 @@ workspace = true
 revm.workspace = true
 auto_impl.workspace = true
 
-# static precompile sets.
-once_cell = { workspace = true, features = ["alloc"] }
-
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
@@ -32,8 +30,8 @@ rstest.workspace = true
 alloy-sol-types.workspace = true
 sha2.workspace = true
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
-alloy-primitives.workspace = true
 serde = { workspace = true, features = ["derive"] }
+alloy-primitives.workspace = true
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -41,7 +39,6 @@ std = [
 	"serde?/std",
 	"revm/std",
 	"alloy-sol-types/std",
-	"once_cell/std",
 	"sha2/std",
 	"serde_json/std",
 	"alloy-primitives/std",

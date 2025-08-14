@@ -1,0 +1,33 @@
+[package]
+name = "revm-ee-tests"
+description = "Common test utilities for REVM crates"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+revm = { workspace = true, features = ["serde"] }
+op-revm = { workspace = true, features = ["serde"] }
+
+[dev-dependencies]
+rstest = { workspace = true }
+alloy-sol-types = { workspace = true }
+sha2 = { workspace = true }
+alloy-primitives = { workspace = true }
+
+[features]
+default = []
+optional_balance_check = [
+    "revm/optional_balance_check",
+    "op-revm/optional_balance_check",
+]

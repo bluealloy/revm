@@ -1,4 +1,6 @@
-//! EIP-170: Contract code size limit
+//! EIP-170: Contract Code Size Limit
+//!
+//! Introduces a maximum limit on smart contract code size.
 
 /// EIP-170: Contract code size limit
 ///

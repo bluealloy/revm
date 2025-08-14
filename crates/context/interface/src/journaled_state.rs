@@ -20,10 +20,10 @@ pub trait JournalTr {
     /// Dont forget to set spec_id.
     fn new(database: Self::Database) -> Self;
 
-    /// Returns the database.
+    /// Returns a mutable reference to the database.
     fn db_mut(&mut self) -> &mut Self::Database;
 
-    /// Returns the mutable database.
+    /// Returns an immutable reference to the database.
     fn db(&self) -> &Self::Database;
 
     /// Returns the storage value from Journal state.
@@ -66,8 +66,13 @@ pub trait JournalTr {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error>;
 
-    /// Warms the account.
-    fn warm_account(&mut self, address: Address);
+    /// Warms the account. Internally calls [`JournalTr::warm_account_and_storage`] with empty storage keys.
+    fn warm_account(
+        &mut self,
+        address: Address,
+    ) -> Result<(), <Self::Database as Database>::Error> {
+        self.warm_account_and_storage(address, [])
+    }
 
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);

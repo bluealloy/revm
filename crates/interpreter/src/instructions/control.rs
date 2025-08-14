@@ -1,5 +1,4 @@
 use crate::{
-    gas,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     InstructionResult, InterpreterAction,
@@ -12,7 +11,7 @@ use crate::InstructionContext;
 ///
 /// Unconditional jump to a valid destination.
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
-    gas!(context.interpreter, gas::MID);
+    //gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
@@ -21,7 +20,7 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Conditional jump to a valid destination if condition is true.
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::HIGH);
+    //gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
 
     if !cond.is_zero() {
@@ -29,10 +28,10 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     }
 }
 
-#[inline(always)]
 /// Internal helper function for jump operations.
 ///
 /// Validates jump target and performs the actual jump.
+#[inline(always)]
 fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
@@ -46,15 +45,15 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::JUMPDEST);
+pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {
+    //gas!(context.interpreter, gas::JUMPDEST);
 }
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    gas!(context.interpreter, gas::BASE);
+    //gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
@@ -71,7 +70,7 @@ fn return_inner(
     instruction_result: InstructionResult,
 ) {
     // Zero gas cost
-    // gas!(interpreter, gas::ZERO)
+    // //gas!(interpreter, gas::ZERO)
     popn!([offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
     // Important: Offset must be ignored if len is zeros

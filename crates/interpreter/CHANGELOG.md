@@ -1,10 +1,90 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [25.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.0...revm-interpreter-v25.0.1) - 2025-08-12
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-context-interface
+
+## [25.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v24.0.0...revm-interpreter-v25.0.0) - 2025-08-06
+
+### Added
+
+- short address for journal cold/warm check ([#2849](https://github.com/bluealloy/revm/pull/2849))
+- gastable, record static gas in Interpreter loop ([#2822](https://github.com/bluealloy/revm/pull/2822))
+
+### Fixed
+
+- map new once and for all (+ci) ([#2852](https://github.com/bluealloy/revm/pull/2852))
+
+### Other
+
+- *(deps)* bump ruint ([#2811](https://github.com/bluealloy/revm/pull/2811))
+- specialize halt, making instruction code very slightly smaller ([#2840](https://github.com/bluealloy/revm/pull/2840))
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- add debug assertions to set_action ([#2832](https://github.com/bluealloy/revm/pull/2832))
+- improve ExtBytecode hash handling ([#2826](https://github.com/bluealloy/revm/pull/2826))
+- fix inspector, cleanup loop ([#2797](https://github.com/bluealloy/revm/pull/2797))
+- start InstructionResult at 1 ([#2802](https://github.com/bluealloy/revm/pull/2802))
+- fix typos ([#2800](https://github.com/bluealloy/revm/pull/2800))
+- improve inspector loop ([#2776](https://github.com/bluealloy/revm/pull/2776))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- collapse debug info for interpreter macros ([#2780](https://github.com/bluealloy/revm/pull/2780))
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [24.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.2...revm-interpreter-v24.0.0) - 2025-07-23
+
+### Added
+
+- *(interpreter)* update CLZ cost ([#2739](https://github.com/bluealloy/revm/pull/2739))
+
+### Fixed
+
+- features and check in ci ([#2766](https://github.com/bluealloy/revm/pull/2766))
+
+### Other
+
+- un-Box frames ([#2761](https://github.com/bluealloy/revm/pull/2761))
+- interpreter improvements ([#2760](https://github.com/bluealloy/revm/pull/2760))
+- evaluate instruction table initializer at compile time ([#2762](https://github.com/bluealloy/revm/pull/2762))
+- discard generic host implementation ([#2738](https://github.com/bluealloy/revm/pull/2738))
+- add release safety section for SharedMemory fn ([#2718](https://github.com/bluealloy/revm/pull/2718))
+- *(interpreter)* update docs for slice_mut and slice_range ([#2714](https://github.com/bluealloy/revm/pull/2714))
+
+## [23.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.1...revm-interpreter-v23.0.2) - 2025-07-14
+
+### Other
+
+- simplify gas calculations by introducing a used() method ([#2703](https://github.com/bluealloy/revm/pull/2703))
+
+## [23.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.0...revm-interpreter-v23.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-context-interface
+
+## [22.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.1...revm-interpreter-v22.1.0) - 2025-06-30
+
+### Added
+
+- blake2 avx2 ([#2670](https://github.com/bluealloy/revm/pull/2670))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
 
 ## [22.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v22.0.0...revm-interpreter-v22.0.1) - 2025-06-20
 
@@ -166,7 +246,7 @@ Stable version
 - fix wrong comment & remove useless struct ([#2105](https://github.com/bluealloy/revm/pull/2105))
 - move all dependencies to workspace ([#2092](https://github.com/bluealloy/revm/pull/2092))
 
-## [16.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
+## [16.0.0-alpha.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.2.0...revm-interpreter-v16.0.0-alpha.1) - 2025-02-16
 
 ### Added
 

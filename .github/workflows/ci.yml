@@ -21,10 +21,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: ["stable", "beta", "nightly"]
+        rust: ["1.88", "stable", "nightly"]
         flags: ["--no-default-features", "", "--all-features"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -40,7 +40,7 @@ jobs:
       matrix:
         features: ["", "kzg-rs"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: riscv32imac-unknown-none-elf
@@ -56,18 +56,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "serde", "std"]
+        features: ["", "serde", "std", "std,map-foldhash"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo check --no-default-features -p revm  --features=${{ matrix.features }}
+      - run: cargo check --no-default-features -p revm --features=${{ matrix.features }}
+
+  feature-checks:
+    name: features
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: cargo hack
+        run: cargo hack check --feature-powerset --depth 1
 
   clippy:
     name: clippy
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo clippy --workspace --all-targets --all-features
         env:
@@ -78,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-docs
@@ -91,31 +105,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - run: cargo fmt --all --check
-  
-  # Check crates correctly propagate features
+
   feature-propagation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: run zepter
         run: |
           cargo install zepter -f --locked
           zepter --version
           time zepter run check
 
-  typos-check:
-    name: TyposCheck
-    timeout-minutes: 5
+  typos:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: crate-ci/typos@v1.22.7
-        with:
-          config: ./typos.toml
-          isolated: true
+      - uses: actions/checkout@v5
+      - uses: crate-ci/typos@v1

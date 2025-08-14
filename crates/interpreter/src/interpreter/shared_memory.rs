@@ -8,6 +8,29 @@ use core::{
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
 
+trait RefcellExt<T> {
+    fn dbg_borrow(&self) -> Ref<'_, T>;
+    fn dbg_borrow_mut(&self) -> RefMut<'_, T>;
+}
+
+impl<T> RefcellExt<T> for RefCell<T> {
+    #[inline]
+    fn dbg_borrow(&self) -> Ref<'_, T> {
+        match self.try_borrow() {
+            Ok(b) => b,
+            Err(e) => debug_unreachable!("{e}"),
+        }
+    }
+
+    #[inline]
+    fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
+        match self.try_borrow_mut() {
+            Ok(b) => b,
+            Err(e) => debug_unreachable!("{e}"),
+        }
+    }
+}
+
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
 /// A [SharedMemory] instance should always be obtained using
@@ -80,13 +103,18 @@ impl MemoryTr for SharedMemory {
 
     /// Returns a byte slice of the memory region at the given offset.
     ///
+    /// # Panics
+    ///
+    /// Panics on out of bounds access in debug builds only.
+    ///
     /// # Safety
     ///
-    /// In debug this will panic on out of bounds. In release it will silently fail.
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer().borrow(); // Borrow the inner Vec<u8>
+        let buffer = self.buffer_ref();
         Ref::map(buffer, |b| match b.get(range) {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
@@ -162,6 +190,16 @@ impl SharedMemory {
         unsafe { self.buffer.as_ref().unwrap_unchecked() }
     }
 
+    #[inline]
+    fn buffer_ref(&self) -> Ref<'_, Vec<u8>> {
+        self.buffer().dbg_borrow()
+    }
+
+    #[inline]
+    fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
+        self.buffer().dbg_borrow_mut()
+    }
+
     /// Returns `true` if the `new_size` for the current context memory will
     /// make the shared buffer length exceed the `memory_limit`.
     #[cfg(feature = "memory_limit")]
@@ -180,7 +218,7 @@ impl SharedMemory {
         if self.child_checkpoint.is_some() {
             panic!("new_child_context was already called without freeing child context");
         }
-        let new_checkpoint = self.buffer().borrow().len();
+        let new_checkpoint = self.full_len();
         self.child_checkpoint = Some(new_checkpoint);
         SharedMemory {
             buffer: Some(self.buffer().clone()),
@@ -199,14 +237,18 @@ impl SharedMemory {
             return;
         };
         unsafe {
-            self.buffer().borrow_mut().set_len(child_checkpoint);
+            self.buffer_ref_mut().set_len(child_checkpoint);
         }
     }
 
     /// Returns the length of the current memory range.
     #[inline]
     pub fn len(&self) -> usize {
-        self.buffer().borrow().len() - self.my_checkpoint
+        self.full_len() - self.my_checkpoint
+    }
+
+    fn full_len(&self) -> usize {
+        self.buffer_ref().len()
     }
 
     /// Returns `true` if the current memory range is empty.
@@ -219,7 +261,7 @@ impl SharedMemory {
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
         self.buffer()
-            .borrow_mut()
+            .dbg_borrow_mut()
             .resize(self.my_checkpoint + new_size, 0);
     }
 
@@ -238,11 +280,17 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
+    /// `range.end <= self.len()`).
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer().borrow(); // Borrow the inner Vec<u8>
+        let buffer = self.buffer_ref();
         Ref::map(buffer, |b| {
             match b.get(range.start + self.my_checkpoint..range.end + self.my_checkpoint) {
                 Some(slice) => slice,
@@ -255,11 +303,16 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer().borrow(); // Borrow the inner Vec<u8>
+        let buffer = self.buffer_ref();
         Ref::map(buffer, |b| match b.get(range) {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
@@ -270,11 +323,17 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
+    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
+    /// memory.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
-        let buffer = self.buffer().borrow_mut(); // Borrow the inner Vec<u8> mutably
+        let buffer = self.buffer_ref_mut();
         RefMut::map(buffer, |b| {
             match b.get_mut(self.my_checkpoint + offset..self.my_checkpoint + offset + size) {
                 Some(slice) => slice,
@@ -382,7 +441,7 @@ impl SharedMemory {
         len: usize,
         data_range: Range<usize>,
     ) {
-        let mut buffer = self.buffer().borrow_mut(); // Borrow the inner Vec<u8> mutably
+        let mut buffer = self.buffer_ref_mut();
         let (src, dst) = buffer.split_at_mut(self.my_checkpoint);
         let src = if data_range.is_empty() {
             &mut []
@@ -404,9 +463,18 @@ impl SharedMemory {
     }
 
     /// Returns a reference to the memory of the current context, the active memory.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint is invalid in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an invalid checkpoint triggers undefined
+    /// behavior. The checkpoint must be within the bounds of the buffer.
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
-        let buffer = self.buffer().borrow();
+        let buffer = self.buffer_ref();
         Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
             Some(slice) => slice,
             None => debug_unreachable!("Context memory should be always valid"),
@@ -414,9 +482,18 @@ impl SharedMemory {
     }
 
     /// Returns a mutable reference to the memory of the current context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint is invalid in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an invalid checkpoint triggers undefined
+    /// behavior. The checkpoint must be within the bounds of the buffer.
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
-        let buffer = self.buffer().borrow_mut(); // Borrow the inner Vec<u8> mutably
+        let buffer = self.buffer_ref_mut();
         RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
             Some(slice) => slice,
             None => debug_unreachable!("Context memory should be always valid"),
@@ -465,6 +542,42 @@ pub const fn num_words(len: usize) -> usize {
     len.saturating_add(31) / 32
 }
 
+/// Performs EVM memory resize.
+#[inline]
+#[must_use]
+pub fn resize_memory<Memory: MemoryTr>(
+    gas: &mut crate::Gas,
+    memory: &mut Memory,
+    offset: usize,
+    len: usize,
+) -> bool {
+    let new_num_words = num_words(offset.saturating_add(len));
+    if new_num_words > gas.memory().words_num {
+        resize_memory_cold(gas, memory, new_num_words)
+    } else {
+        true
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn resize_memory_cold<Memory: MemoryTr>(
+    gas: &mut crate::Gas,
+    memory: &mut Memory,
+    new_num_words: usize,
+) -> bool {
+    let cost = unsafe {
+        gas.memory_mut()
+            .record_new_len(new_num_words)
+            .unwrap_unchecked()
+    };
+    if !gas.record_cost(cost) {
+        return false;
+    }
+    memory.resize(new_num_words * 32);
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -486,45 +599,45 @@ mod tests {
     fn new_free_child_context() {
         let mut sm1 = SharedMemory::new();
 
-        assert_eq!(sm1.buffer().borrow().len(), 0);
+        assert_eq!(sm1.buffer_ref().len(), 0);
         assert_eq!(sm1.my_checkpoint, 0);
 
-        unsafe { sm1.buffer().borrow_mut().set_len(32) };
+        unsafe { sm1.buffer_ref_mut().set_len(32) };
         assert_eq!(sm1.len(), 32);
         let mut sm2 = sm1.new_child_context();
 
-        assert_eq!(sm2.buffer().borrow().len(), 32);
+        assert_eq!(sm2.buffer_ref().len(), 32);
         assert_eq!(sm2.my_checkpoint, 32);
         assert_eq!(sm2.len(), 0);
 
-        unsafe { sm2.buffer().borrow_mut().set_len(96) };
+        unsafe { sm2.buffer_ref_mut().set_len(96) };
         assert_eq!(sm2.len(), 64);
         let mut sm3 = sm2.new_child_context();
 
-        assert_eq!(sm3.buffer().borrow().len(), 96);
+        assert_eq!(sm3.buffer_ref().len(), 96);
         assert_eq!(sm3.my_checkpoint, 96);
         assert_eq!(sm3.len(), 0);
 
-        unsafe { sm3.buffer().borrow_mut().set_len(128) };
+        unsafe { sm3.buffer_ref_mut().set_len(128) };
         let sm4 = sm3.new_child_context();
-        assert_eq!(sm4.buffer().borrow().len(), 128);
+        assert_eq!(sm4.buffer_ref().len(), 128);
         assert_eq!(sm4.my_checkpoint, 128);
         assert_eq!(sm4.len(), 0);
 
         // Free contexts
         drop(sm4);
         sm3.free_child_context();
-        assert_eq!(sm3.buffer().borrow().len(), 128);
+        assert_eq!(sm3.buffer_ref().len(), 128);
         assert_eq!(sm3.my_checkpoint, 96);
         assert_eq!(sm3.len(), 32);
 
         sm2.free_child_context();
-        assert_eq!(sm2.buffer().borrow().len(), 96);
+        assert_eq!(sm2.buffer_ref().len(), 96);
         assert_eq!(sm2.my_checkpoint, 32);
         assert_eq!(sm2.len(), 64);
 
         sm1.free_child_context();
-        assert_eq!(sm1.buffer().borrow().len(), 32);
+        assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.my_checkpoint, 0);
         assert_eq!(sm1.len(), 32);
     }
@@ -533,22 +646,19 @@ mod tests {
     fn resize() {
         let mut sm1 = SharedMemory::new();
         sm1.resize(32);
-        assert_eq!(sm1.buffer().borrow().len(), 32);
+        assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.len(), 32);
-        assert_eq!(sm1.buffer().borrow().get(0..32), Some(&[0_u8; 32] as &[u8]));
+        assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
 
         let mut sm2 = sm1.new_child_context();
         sm2.resize(96);
-        assert_eq!(sm2.buffer().borrow().len(), 128);
+        assert_eq!(sm2.buffer_ref().len(), 128);
         assert_eq!(sm2.len(), 96);
-        assert_eq!(
-            sm2.buffer().borrow().get(32..128),
-            Some(&[0_u8; 96] as &[u8])
-        );
+        assert_eq!(sm2.buffer_ref().get(32..128), Some(&[0_u8; 96] as &[u8]));
 
         sm1.free_child_context();
-        assert_eq!(sm1.buffer().borrow().len(), 32);
+        assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.len(), 32);
-        assert_eq!(sm1.buffer().borrow().get(0..32), Some(&[0_u8; 32] as &[u8]));
+        assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
     }
 }

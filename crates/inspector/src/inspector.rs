@@ -17,7 +17,7 @@ use state::EvmState;
 pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called before the interpreter is initialized.
     ///
-    /// If `interp.set_action` is set the execution of the interpreter is skipped.
+    /// If `interp.bytecode.set_action` is set the execution of the interpreter is skipped.
     #[inline]
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
@@ -31,7 +31,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// # Example
     ///
-    /// To get the current opcode, use `interp.current_opcode()`.
+    /// To get the current opcode, use `interp.bytecode.opcode()`.
     #[inline]
     fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
@@ -91,8 +91,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
 
     /// Called when a contract has been created.
     ///
-    /// InstructionResulting anything other than the values passed to this function (`(ret, remaining_gas,
-    /// address, out)`) will alter the result of the create.
+    /// Modifying the outcome will alter the result of the create operation.
     #[inline]
     fn create_end(
         &mut self,
@@ -111,6 +110,64 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = contract;
         let _ = target;
         let _ = value;
+    }
+}
+
+impl<CTX, INTR: InterpreterTypes, L, R> Inspector<CTX, INTR> for (L, R)
+where
+    L: Inspector<CTX, INTR>,
+    R: Inspector<CTX, INTR>,
+{
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+        self.0.initialize_interp(interp, context);
+        self.1.initialize_interp(interp, context);
+    }
+
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+        self.0.step(interp, context);
+        self.1.step(interp, context);
+    }
+
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
+        self.0.step_end(interp, context);
+        self.1.step_end(interp, context);
+    }
+
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
+        self.0.log(interp, context, log.clone());
+        self.1.log(interp, context, log);
+    }
+
+    fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
+        self.0
+            .call(context, inputs)
+            .or_else(|| self.1.call(context, inputs))
+    }
+
+    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
+        self.0.call_end(context, inputs, outcome);
+        self.1.call_end(context, inputs, outcome);
+    }
+
+    fn create(&mut self, context: &mut CTX, inputs: &mut CreateInputs) -> Option<CreateOutcome> {
+        self.0
+            .create(context, inputs)
+            .or_else(|| self.1.create(context, inputs))
+    }
+
+    fn create_end(
+        &mut self,
+        context: &mut CTX,
+        inputs: &CreateInputs,
+        outcome: &mut CreateOutcome,
+    ) {
+        self.0.create_end(context, inputs, outcome);
+        self.1.create_end(context, inputs, outcome);
+    }
+
+    fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
+        self.0.selfdestruct(contract, target, value);
+        self.1.selfdestruct(contract, target, value);
     }
 }
 

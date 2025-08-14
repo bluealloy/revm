@@ -15,6 +15,13 @@ REVM works in `no_std` environments which means it can be used in zero-knowledge
 
 # Execution API
 
+The Execution API provides the primary interface for running Ethereum transactions and interacting with the EVM. Whether you're building a blockchain client, testing framework, or analysis tool, this API offers multiple execution modes to suit your needs.
+
+The API is designed around four key execution patterns:
+- **Basic execution**: Run transactions and get results
+- **Execution with commit**: Run transactions and automatically persist state changes  
+- **Execution with inspection**: Run transactions with detailed tracing and observation
+
 [`Evm`](https://docs.rs/revm-context/1.0.0/revm_context/evm/struct.Evm.html) the main structure for executing mainnet ethereum transaction is built with a [`Context`](https://docs.rs/revm-context/latest/revm_context/context/struct.Context.html) and a builder, code for it looks like this:
 
 ```rust,ignore
@@ -46,6 +53,19 @@ For inspection API to be enabled, [`Evm`](https://docs.rs/revm-context/1.0.0/rev
 let mut evm = Context::mainnet().with_block(block).build_mainnet().with_inspector(inspector);
 let _ = evm.inspect_tx(tx);
 ```
+
+## Inspector - EVM Execution Tracing
+
+The [`Inspector`](https://docs.rs/revm-inspector/latest/revm_inspector/trait.Inspector.html) trait is REVM's powerful mechanism for observing EVM execution. It provides hooks into every aspect of transaction execution, enabling sophisticated debugging, tracing and custom tooling.
+
+Key capabilities include:
+- **Step-by-step execution tracing**: Hook into every opcode before and after execution
+- **State monitoring**: Track stack, memory, and storage changes in real-time
+- **Call and creation tracing**: Observe contract interactions and deployments  
+- **Event capture**: Record logs, self-destructs, and other EVM events
+- **Execution override**: Optionally modify execution flow and outcomes
+
+The Inspector is ideal for building debuggers, gas analyzers, security tools, testing frameworks, and any application that needs deep visibility into EVM execution. For detailed usage examples and advanced features, see the [Inspector documentation](./inspector.md).
 
 # EVM Framework
 

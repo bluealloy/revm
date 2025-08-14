@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.4](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.3...revm-database-interface-v7.0.4) - 2025-08-12
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-state
+
+## [7.0.3](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.2...revm-database-interface-v7.0.3) - 2025-08-06
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+
+## [7.0.2](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.1...revm-database-interface-v7.0.2) - 2025-07-23
+
+### Other
+
+- impl DatabaseRef for WrapDatabaseRef ([#2726](https://github.com/bluealloy/revm/pull/2726))
+
+## [7.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.0...revm-database-interface-v7.0.1) - 2025-07-03
+
+### Other
+
+- updated the following local packages: revm-state
+
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v6.0.0...revm-database-interface-v7.0.0) - 2025-06-30
+
+### Added
+
+- implement Database traits for either::Either ([#2673](https://github.com/bluealloy/revm/pull/2673))
+
+### Other
+
+- fix copy-pasted inner doc comments ([#2663](https://github.com/bluealloy/revm/pull/2663))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v5.0.0...revm-database-interface-v6.0.0) - 2025-06-19
 
 ### Added

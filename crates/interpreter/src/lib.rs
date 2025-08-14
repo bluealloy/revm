@@ -12,8 +12,6 @@ mod macros;
 
 /// Gas calculation utilities and constants.
 pub mod gas;
-/// Host interface for external blockchain state access.
-pub mod host;
 /// Context passed to instruction implementations.
 pub mod instruction_context;
 /// Instruction execution results and success/error types.
@@ -32,8 +30,8 @@ pub use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     CreateScheme,
 };
+pub use context_interface::{host, Host};
 pub use gas::{Gas, InitialAndFloorGas};
-pub use host::Host;
 pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
@@ -45,4 +43,3 @@ pub use interpreter_action::{
     FrameInput, InterpreterAction,
 };
 pub use interpreter_types::InterpreterTypes;
-pub use primitives::{eip7907::MAX_CODE_SIZE, eip7907::MAX_INITCODE_SIZE};

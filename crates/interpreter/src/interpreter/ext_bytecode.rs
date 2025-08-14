@@ -1,7 +1,7 @@
 use super::{Immediates, Jumps, LegacyBytecode};
 use crate::{interpreter_types::LoopControl, InterpreterAction};
 use bytecode::{utils::read_u16, Bytecode};
-use core::{ops::Deref, ptr};
+use core::ops::Deref;
 use primitives::B256;
 
 #[cfg(feature = "serde")]
@@ -10,16 +10,19 @@ mod serde;
 /// Extended bytecode structure that wraps base bytecode with additional execution metadata.
 #[derive(Debug)]
 pub struct ExtBytecode {
+    /// The current instruction pointer.
+    instruction_pointer: *const u8,
+    /// Whether the execution should continue.
+    continue_execution: bool,
+    /// Bytecode Keccak-256 hash.
+    /// This is `None` if it hasn't been calculated yet.
+    /// Since it's not necessary for execution, it's not calculated by default.
     bytecode_hash: Option<B256>,
     /// Actions that the EVM should do. It contains return value of the Interpreter or inputs for `CALL` or `CREATE` instructions.
     /// For `RETURN` or `REVERT` instructions it contains the result of the instruction.
     pub action: Option<InterpreterAction>,
     /// The base bytecode.
     base: Bytecode,
-    /// The previous instruction pointer.
-    previous_pointer: Option<*const u8>,
-    /// The current instruction pointer.
-    instruction_pointer: *const u8,
 }
 
 impl Deref for ExtBytecode {
@@ -31,6 +34,7 @@ impl Deref for ExtBytecode {
 }
 
 impl Default for ExtBytecode {
+    #[inline]
     fn default() -> Self {
         Self::new(Bytecode::default())
     }
@@ -38,62 +42,91 @@ impl Default for ExtBytecode {
 
 impl ExtBytecode {
     /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
+    ///
+    /// The bytecode hash will not be calculated.
+    #[inline]
     pub fn new(base: Bytecode) -> Self {
-        let instruction_pointer = base.bytecode_ptr();
-        Self {
-            base,
-            instruction_pointer,
-            bytecode_hash: None,
-            action: None,
-            previous_pointer: None,
-        }
+        Self::new_with_optional_hash(base, None)
     }
 
     /// Creates new `ExtBytecode` with the given hash.
+    #[inline]
     pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
+        Self::new_with_optional_hash(base, Some(hash))
+    }
+
+    /// Creates new `ExtBytecode` with the given hash.
+    #[inline]
+    pub fn new_with_optional_hash(base: Bytecode, hash: Option<B256>) -> Self {
         let instruction_pointer = base.bytecode_ptr();
         Self {
             base,
             instruction_pointer,
-            bytecode_hash: Some(hash),
+            bytecode_hash: hash,
             action: None,
-            previous_pointer: None,
+            continue_execution: true,
         }
     }
 
     /// Regenerates the bytecode hash.
+    #[inline]
+    #[deprecated(note = "use `get_or_calculate_hash` or `calculate_hash` instead")]
+    #[doc(hidden)]
     pub fn regenerate_hash(&mut self) -> B256 {
+        self.calculate_hash()
+    }
+
+    /// Re-calculates the bytecode hash.
+    ///
+    /// Prefer [`get_or_calculate_hash`](Self::get_or_calculate_hash) if you just need to get the hash.
+    #[inline]
+    pub fn calculate_hash(&mut self) -> B256 {
         let hash = self.base.hash_slow();
         self.bytecode_hash = Some(hash);
         hash
     }
 
     /// Returns the bytecode hash.
+    #[inline]
     pub fn hash(&mut self) -> Option<B256> {
         self.bytecode_hash
+    }
+
+    /// Returns the bytecode hash or calculates it if it is not set.
+    #[inline]
+    pub fn get_or_calculate_hash(&mut self) -> B256 {
+        *self.bytecode_hash.get_or_insert_with(
+            #[cold]
+            || self.base.hash_slow(),
+        )
     }
 }
 
 impl LoopControl for ExtBytecode {
     #[inline]
-    fn is_end(&self) -> bool {
-        self.instruction_pointer.is_null()
+    fn is_not_end(&self) -> bool {
+        self.continue_execution
     }
 
     #[inline]
-    fn revert_to_previous_pointer(&mut self) {
-        if let Some(previous_pointer) = self.previous_pointer {
-            self.instruction_pointer = previous_pointer;
-        }
+    fn reset_action(&mut self) {
+        self.continue_execution = true;
     }
 
     #[inline]
     fn set_action(&mut self, action: InterpreterAction) {
+        debug_assert_eq!(
+            !self.continue_execution,
+            self.action.is_some(),
+            "has_set_action out of sync"
+        );
+        debug_assert!(
+            self.continue_execution,
+            "action already set;\nold: {:#?}\nnew: {:#?}",
+            self.action, action,
+        );
+        self.continue_execution = false;
         self.action = Some(action);
-        self.previous_pointer = Some(core::mem::replace(
-            &mut self.instruction_pointer,
-            ptr::null(),
-        ));
     }
 
     #[inline]

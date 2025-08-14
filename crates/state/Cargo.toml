@@ -1,13 +1,14 @@
 [package]
 name = "revm-state"
 description = "Revm state types"
-version = "6.0.0"
+version = "7.0.4"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -29,10 +30,5 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = [
-	"serde?/std",
-	"primitives/std",
-	"bitflags/std",
-	"bytecode/std"
-]
+std = ["serde?/std", "primitives/std", "bitflags/std", "bytecode/std"]
 serde = ["dep:serde", "primitives/serde", "bitflags/serde", "bytecode/serde"]

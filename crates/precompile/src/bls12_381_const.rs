@@ -1,7 +1,7 @@
 //! Constants specifying the precompile addresses for each precompile in EIP-2537
 
 use crate::u64_to_address;
-use primitives::Address;
+use primitives::{hex, Address};
 
 /// G1 add precompile address
 pub const G1_ADD_ADDRESS: Address = u64_to_address(0x0b);
@@ -116,6 +116,12 @@ pub const G1_LENGTH: usize = 2 * FP_LENGTH;
 /// a G1 element according to padding rules specified in EIP-2537.
 pub const PADDED_G1_LENGTH: usize = 2 * PADDED_FP_LENGTH;
 
+/// FP2_LENGTH specifies the number of bytes needed to represent a Fp^2 element.
+///
+/// Note: This is the quadratic extension of Fp, and by definition
+/// means we need 2 Fp elements.
+pub const FP2_LENGTH: usize = 2 * FP_LENGTH;
+
 /// PADDED_FP2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a Fp^2 element according to the padding rules specified in EIP-2537.
 ///
@@ -142,6 +148,11 @@ pub const G1_ADD_INPUT_LENGTH: usize = 2 * PADDED_G1_LENGTH;
 /// Note: An MSM pair is a G1 element and a scalar. The input to the MSM precompile will have `n`
 /// of these pairs.
 pub const G1_MSM_INPUT_LENGTH: usize = PADDED_G1_LENGTH + SCALAR_LENGTH;
+
+/// G2_LENGTH specifies the number of bytes needed to represent a G2 element.
+///
+/// Note: A G2 element contains 2 Fp^2 elements.
+pub const G2_LENGTH: usize = 2 * FP2_LENGTH;
 
 /// PADDED_G2_LENGTH specifies the number of bytes that the EVM will use to represent
 /// a G2 element.
@@ -170,6 +181,12 @@ pub const PAIRING_INPUT_LENGTH: usize = PADDED_G1_LENGTH + PADDED_G2_LENGTH;
 ///
 /// Note: This should be equal to PADDED_FP_LENGTH - FP_LENGTH.
 pub const FP_PAD_BY: usize = 16;
+
+/// The trusted setup G2 point `[τ]₂` from the Ethereum KZG ceremony (compressed format)
+/// Taken from: <https://github.com/ethereum/consensus-specs/blob/adc514a1c29532ebc1a67c71dc8741a2fdac5ed4/presets/mainnet/trusted_setups/trusted_setup_4096.json#L8200C6-L8200C200>
+pub const TRUSTED_SETUP_TAU_G2_BYTES: [u8; 96] = hex!(
+        "b5bfd7dd8cdeb128843bc287230af38926187075cbfbefa81009a2ce615ac53d2914e5870cb452d2afaaab24f3499f72185cbfee53492714734429b7b38608e23926c911cceceac9a36851477ba4c60b087041de621000edc98edada20c1def2"
+    );
 
 #[test]
 fn check_discount_table_invariant_holds() {

@@ -1,3 +1,36 @@
+# v85 tag (revm v28.0.1) from v84 tag (revm v28.0.0)
+
+Forward compatible version.
+
+# v84 tag (revm v28.0.0) from v83 tag (revm v27.1.0)
+
+* `SystemCallEvm` functions got renamed and old ones are deprecated. Renaming is done to align it with other API calls.
+   * `transact_system_call_finalize` is now `system_call`.
+   * `transact_system_call` is now `system_call_one`.
+* `ExtBytecode::regenerate_hash` got deprecated in support for `get_or_calculate_hash` or `calculate_hash`.
+* Precompiles:
+  * Bn128 renamed to Bn254. https://github.com/ethereum/EIPs/pull/10029#issue-3240867404
+* `InstructionResult` now starts from 1 (previous 0) for perf purposes.
+* In `JournalInner` previous `precompiles`, `warm_coinbase_address` and `warm_preloaded_addresses` pub fields are now moved to `warm_addresses` to encapsulate addresses that are warm by default. All access list account are all loaded from database.
+
+
+# v83 tag (revm v27.1.0) from v82 tag (revm v27.0.3)
+
+* `ContextTr` gained `Host` supertrait.
+  * Previously Host was implemented for any T that has ContextTr, this restricts specializations.
+  https://github.com/bluealloy/revm/issues/2732
+  * `Host` is moved to `revm-context-interface`
+  * If you custom struct that implement `ContextTr` you would need to manually implement `Host` trait, in most cases no action needed.
+* In `revm-interpreter`, fn `cast_slice_to_u256` was removed and `push_slice` fn is added to `StackTrait`.
+* `PrecompileOutput` now contains revert flag.
+  * It is safe to put to false.
+* In `kzg` and `blake2` modules few internal functions were made private or removed.
+
+# v80 tag (revm v27.0.0) -> v81 tag ( revm v27.0.1)
+
+* Inspector fn `step_end` is now called even if Inspector `step` sets the action. Previously this was not the  case.
+    * https://github.com/bluealloy/revm/pull/2687
+    * this additionally fixes panic bug where `bytecode.opcode()` would panic in `step_end`
 
 # v70 tag (revm v22.0.2) -> v71 tag ( revm v23.0.0)
 

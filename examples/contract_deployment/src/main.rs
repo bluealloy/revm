@@ -1,4 +1,4 @@
-//! Optimism-specific constants, types, and helpers.
+//! Example that deploys a contract by forging and executing a contract creation transaction.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use anyhow::{anyhow, bail};
@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     println!("storage U256(0) at {address}:  {storage0:#?}");
     assert_eq!(
         storage0.present_value(),
-        param.try_into()?,
+        StorageValue::try_from(param)?,
         "{:#?}",
         output.result
     );

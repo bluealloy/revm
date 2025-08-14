@@ -73,6 +73,12 @@ impl Gas {
         self.limit - self.remaining
     }
 
+    /// Returns the final amount of gas used by subtracting the refund from spent gas.
+    #[inline]
+    pub const fn used(&self) -> u64 {
+        self.spent().saturating_sub(self.refunded() as u64)
+    }
+
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
@@ -147,19 +153,15 @@ impl Gas {
         false
     }
 
-    /// Record memory expansion
-    #[inline]
-    #[must_use = "internally uses record_cost that flags out of gas error"]
-    pub fn record_memory_expansion(&mut self, new_len: usize) -> MemoryExtensionResult {
-        let Some(additional_cost) = self.memory.record_new_len(new_len) else {
-            return MemoryExtensionResult::Same;
-        };
-
-        if !self.record_cost(additional_cost) {
-            return MemoryExtensionResult::OutOfGas;
-        }
-
-        MemoryExtensionResult::Extended
+    /// Records an explicit cost. In case of underflow the gas will wrap around cost.
+    ///
+    /// Returns `true` if the gas limit is exceeded.
+    #[inline(always)]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
+    pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
+        let oog = self.remaining < cost;
+        self.remaining = self.remaining.wrapping_sub(cost);
+        oog
     }
 }
 
@@ -189,6 +191,7 @@ pub struct MemoryGas {
 
 impl MemoryGas {
     /// Creates a new `MemoryGas` instance with zero memory allocation.
+    #[inline]
     pub const fn new() -> Self {
         Self {
             words_num: 0,
@@ -196,9 +199,9 @@ impl MemoryGas {
         }
     }
 
-    #[inline]
     /// Records a new memory length and calculates additional cost if memory is expanded.
     /// Returns the additional gas cost required, or None if no expansion is needed.
+    #[inline]
     pub fn record_new_len(&mut self, new_num: usize) -> Option<u64> {
         if new_num <= self.words_num {
             return None;

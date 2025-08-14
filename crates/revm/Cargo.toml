@@ -1,13 +1,14 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "26.0.1"
+version = "28.0.1"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 readme.workspace = true
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -35,7 +36,7 @@ serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "tracer"]
+default = ["std", "secp256k1", "portable", "tracer", "c-kzg", "blst"]
 std = [
 	"interpreter/std",
 	"precompile/std",
@@ -52,6 +53,7 @@ std = [
 	"serde_json/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+map-foldhash = ["primitives/map-foldhash"]
 serde = [
 	"interpreter/serde",
 	"database-interface/serde",
@@ -66,6 +68,7 @@ serde = [
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
+sha3-keccak = ["primitives/sha3-keccak"]
 asyncdb = ["database-interface/asyncdb"]
 
 # Enables alloydb inside database crate
@@ -90,15 +93,18 @@ optional_eip3541 = ["context/optional_eip3541"]
 optional_eip3607 = ["context/optional_eip3607"]
 optional_no_base_fee = ["context/optional_no_base_fee"]
 
-# Precompiles features
+# Precompiles features: Please look at the comments in `precompile` crate for more information.
 
 secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
 c-kzg = [
 	"precompile/c-kzg",
 ] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
+
+# blst will enabled both for bls precompiles and for kzg precompile.
 blst = ["precompile/blst"]
 bn = ["precompile/bn"]
+asm-sha2 = ["precompile/asm-sha2"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.

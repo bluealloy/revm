@@ -43,7 +43,7 @@ impl BlobExcessGasAndPrice {
     /// Calculate this block excess gas and price from the parent excess gas and gas used
     /// and the target blob gas per block.
     ///
-    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
+    /// These fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
     #[deprecated(
         note = "Use `calc_excess_blob_gas` and `BlobExcessGasAndPrice::new` instead. Only works for forks before Osaka."
     )]
@@ -65,7 +65,7 @@ impl BlobExcessGasAndPrice {
 }
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
-/// uses [`calc_excess_blob_gas`] internally.
+/// Uses [`calc_excess_blob_gas_osaka`] internally.
 #[inline]
 pub fn calc_excess_blob_gas(
     parent_excess_blob_gas: u64,

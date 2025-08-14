@@ -1,7 +1,7 @@
 //! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{
-    result::FromStringError, Block, Cfg, Database, JournalTr, LocalContextTr, Transaction,
+    result::FromStringError, Block, Cfg, Database, Host, JournalTr, LocalContextTr, Transaction,
 };
 use auto_impl::auto_impl;
 use primitives::StorageValue;
@@ -13,9 +13,9 @@ use std::string::String;
 /// It is used to access the transaction, block, configuration, database, journal, and chain.
 /// It is also used to set the error of the EVM.
 ///
-/// All function has a `*_mut` variant except the function for [`ContextTr::tx`] and [`ContextTr::block`].
+/// All functions have a `*_mut` variant except the function for [`ContextTr::tx`] and [`ContextTr::block`].
 #[auto_impl(&mut, Box)]
-pub trait ContextTr {
+pub trait ContextTr: Host {
     /// Block type
     type Block: Block;
     /// Transaction type
@@ -79,7 +79,7 @@ pub trait ContextTr {
     fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local);
 }
 
-/// Inner Context error used for Interpreter to set error without returning it frm instruction
+/// Inner Context error used for Interpreter to set error without returning it from instruction
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ContextError<DbError> {

@@ -5,6 +5,87 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [9.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.0...revm-handler-v9.0.1) - 2025-08-12
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-state, revm-context-interface, revm-database, revm-precompile, revm-database-interface, revm-context, revm-interpreter
+
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v8.1.0...revm-handler-v9.0.0) - 2025-08-06
+
+### Added
+
+- short address for journal cold/warm check ([#2849](https://github.com/bluealloy/revm/pull/2849))
+- gastable, record static gas in Interpreter loop ([#2822](https://github.com/bluealloy/revm/pull/2822))
+- fix renamed functions for system_call ([#2824](https://github.com/bluealloy/revm/pull/2824))
+- Align naming of SystemCallEvm function to ExecuteEvm ([#2814](https://github.com/bluealloy/revm/pull/2814))
+
+### Fixed
+
+- nonce changed is not reverted in journal if fail due to insufficient balance ([#2805](https://github.com/bluealloy/revm/pull/2805))
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- rm commented code ([#2839](https://github.com/bluealloy/revm/pull/2839))
+- *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
+- improve ExtBytecode hash handling ([#2826](https://github.com/bluealloy/revm/pull/2826))
+- fix run-tests.sh ([#2801](https://github.com/bluealloy/revm/pull/2801))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- Add dyn Crypto trait to PrecompileFn ([#2772](https://github.com/bluealloy/revm/pull/2772))
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+
+## [8.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v8.0.3...revm-handler-v8.1.0) - 2025-07-23
+
+### Added
+
+- add a way for precompiles to revert ([#2711](https://github.com/bluealloy/revm/pull/2711))
+
+### Fixed
+
+- fully deprecate serde-json ([#2767](https://github.com/bluealloy/revm/pull/2767))
+- system call should have 30M gas limit ([#2755](https://github.com/bluealloy/revm/pull/2755))
+- gas deduction with `disable_balance_check` ([#2699](https://github.com/bluealloy/revm/pull/2699))
+
+### Other
+
+- change gas parameter to immutable reference ([#2702](https://github.com/bluealloy/revm/pull/2702))
+- remove State bound from JournalTr in Handler::Evm ([#2715](https://github.com/bluealloy/revm/pull/2715))
+
+## [8.0.3](https://github.com/bluealloy/revm/compare/revm-handler-v8.0.2...revm-handler-v8.0.3) - 2025-07-14
+
+### Other
+
+- simplify gas calculations by introducing a used() method ([#2703](https://github.com/bluealloy/revm/pull/2703))
+
+## [8.0.2](https://github.com/bluealloy/revm/compare/revm-handler-v8.0.1...revm-handler-v8.0.2) - 2025-07-03
+
+### Other
+
+- document external state transitions for EIP-4788 and EIP-2935 ([#2678](https://github.com/bluealloy/revm/pull/2678))
+- minor fixes ([#2686](https://github.com/bluealloy/revm/pull/2686))
+- fix in pre_execution.rs about nonce bump for CREATE ([#2684](https://github.com/bluealloy/revm/pull/2684))
+
+## [8.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v7.0.1...revm-handler-v8.0.1) - 2025-06-30
+
+### Added
+
+- optional_eip3541 ([#2661](https://github.com/bluealloy/revm/pull/2661))
+
+### Other
+
+- cargo clippy --fix --all ([#2671](https://github.com/bluealloy/revm/pull/2671))
+- use TxEnv::builder ([#2652](https://github.com/bluealloy/revm/pull/2652))
+- fix copy-pasted inner doc comments ([#2663](https://github.com/bluealloy/revm/pull/2663))
 
 ## [7.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v7.0.0...revm-handler-v7.0.1) - 2025-06-20
 

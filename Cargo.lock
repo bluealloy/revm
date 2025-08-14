@@ -1375,7 +1375,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1822,7 +1822,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cea14ef9355e3beab063703aa9dab15afd25f0667c341310c1e5274bb1d0da18"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1858,6 +1858,14 @@ dependencies = [
 name = "example-custom-opcodes"
 version = "0.0.0"
 dependencies = [
+ "revm",
+]
+
+[[package]]
+name = "example-custom-precompile-journal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "revm",
 ]
 
@@ -2590,7 +2598,7 @@ checksum = "e04d7f318608d35d4b61ddd75cbdaee86b023ebe2bd5a66ee0915f0bf93095a9"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3026,12 +3034,11 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "op-revm"
-version = "7.0.1"
+version = "9.0.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "auto_impl",
- "once_cell",
  "revm",
  "rstest",
  "serde",
@@ -3765,7 +3772,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "26.0.1"
+version = "28.0.1"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3784,10 +3791,9 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "5.0.0"
+version = "6.2.1"
 dependencies = [
  "bitvec",
- "once_cell",
  "paste",
  "phf",
  "revm-primitives",
@@ -3796,8 +3802,9 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "7.0.1"
+version = "9.0.1"
 dependencies = [
+ "bitvec",
  "cfg-if",
  "derive-where",
  "revm-bytecode",
@@ -3811,7 +3818,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "7.0.1"
+version = "10.0.1"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -3825,17 +3832,15 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "6.0.0"
+version = "7.0.4"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
  "alloy-transport",
- "anyhow",
  "revm-bytecode",
  "revm-database-interface",
  "revm-primitives",
  "revm-state",
- "rstest",
  "serde",
  "serde_json",
  "tokio",
@@ -3843,20 +3848,33 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "6.0.0"
+version = "7.0.4"
 dependencies = [
- "anyhow",
  "auto_impl",
+ "either",
  "revm-primitives",
  "revm-state",
- "rstest",
  "serde",
  "tokio",
 ]
 
 [[package]]
+name = "revm-ee-tests"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "op-revm",
+ "revm",
+ "rstest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+]
+
+[[package]]
 name = "revm-handler"
-version = "7.0.1"
+version = "9.0.1"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3878,7 +3896,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "7.0.1"
+version = "9.1.0"
 dependencies = [
  "auto_impl",
  "either",
@@ -3895,7 +3913,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "22.0.1"
+version = "25.0.1"
 dependencies = [
  "bincode 2.0.1",
  "revm-bytecode",
@@ -3906,7 +3924,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "23.0.0"
+version = "26.0.1"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",
@@ -3914,6 +3932,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "ark-serialize 0.5.0",
  "ark-std 0.5.0",
+ "arrayref",
  "aurora-engine-modexp",
  "blst",
  "c-kzg",
@@ -3922,7 +3941,6 @@ dependencies = [
  "k256",
  "kzg-rs",
  "libsecp256k1",
- "once_cell",
  "p256",
  "rand 0.9.1",
  "revm-primitives",
@@ -3936,16 +3954,17 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "20.0.0"
+version = "20.2.1"
 dependencies = [
  "alloy-primitives",
  "num_enum",
+ "once_cell",
  "serde",
 ]
 
 [[package]]
 name = "revm-state"
-version = "6.0.0"
+version = "7.0.4"
 dependencies = [
  "bitflags",
  "revm-bytecode",
@@ -3955,7 +3974,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "8.0.1"
+version = "9.0.1"
 dependencies = [
  "k256",
  "revm",
@@ -3966,7 +3985,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "7.0.1"
+version = "7.2.1"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
@@ -4067,9 +4086,9 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11256b5fe8c68f56ac6f39ef0720e592f33d2367a4782740d9c9142e889c7fb4"
+checksum = "9ecb38f82477f20c5c3d62ef52d7c4e536e38ea9b73fb570a20c5cae0e14bcf6"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -4148,7 +4167,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4440,6 +4459,16 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.7",
+ "sha2-asm",
+]
+
+[[package]]
+name = "sha2-asm"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b845214d6175804686b2bd482bcffe96651bb2d1200742b712003504a2dac1ab"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
@@ -4700,7 +4729,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5251,7 +5280,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
