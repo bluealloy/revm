@@ -15,7 +15,7 @@ use primitives::{
     AccountId, Address, AddressAndId, AddressOrId, Log, StorageKey, StorageValue, B256,
     KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{Account, AccountStatus, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -662,11 +662,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 self.state
                     .get_mut_or_fetch(address, |address| -> Result<Account, DB::Error> {
                         db.basic(address).map(|account| {
-                            if let Some(account) = account {
+                            let mut account = if let Some(account) = account {
                                 account.into()
                             } else {
                                 Account::new_not_existing(self.transaction_id)
-                            }
+                            };
+                            account.status |= AccountStatus::Cold;
+                            account
                         })
                     })?
             }

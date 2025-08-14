@@ -403,7 +403,6 @@ impl JournalEntryTr for JournalEntry {
                     // if not zero, reinsert old value to transient storage.
                     transient_storage.insert(tkey, had_value);
                 }
-                todo!()
             }
             JournalEntry::CodeChange { account_id } => {
                 let (acc, _) = state.get_mut(account_id.into()).unwrap();

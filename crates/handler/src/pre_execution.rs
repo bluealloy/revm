@@ -60,6 +60,8 @@ pub fn load_accounts<
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         coinbase.mark_touch();
+    } else {
+        coinbase.mark_cold();
     }
     journal.set_coinbase_address_id(id);
 

@@ -11,7 +11,7 @@ pub type TransientStorage = HashMap<(AccountId, StorageKey), StorageValue>;
 pub type EvmStorage = HashMap<StorageKey, EvmStorageSlot>;
 
 /// First page size is 3 to account for Caller, Target, and Beneficiary.
-const FIRST_PAGE_SIZE: usize = 3;
+const FIRST_PAGE_SIZE: usize = 10;
 
 /// Page size is 100.
 const PAGE_SIZE: usize = 100;
@@ -190,11 +190,7 @@ impl EvmState {
                 let account = fetch(address)?;
                 let id = push_account(&mut self.accounts, account, address);
                 entry.insert(id);
-                let address_and_id = AddressAndId::new(address, id);
-                Ok((
-                    &mut self.accounts.last_mut().unwrap().last_mut().unwrap().0,
-                    address_and_id,
-                ))
+                Ok(get_by_id_mut(&mut self.accounts, id))
             }
         }
     }
