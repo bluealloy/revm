@@ -107,7 +107,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Message call with value transfer to another account.
 pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([local_gas_limit, to, value], context.interpreter);
-    let to = to.into_address().into();
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -178,7 +178,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
-    let to = to.into_address().into();
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -188,7 +188,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -238,7 +238,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = to.into_address().into();
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -247,7 +247,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
@@ -290,7 +290,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = to.into_address().into();
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -299,7 +299,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);

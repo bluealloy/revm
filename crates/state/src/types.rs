@@ -1,8 +1,8 @@
 use crate::{Account, EvmStorageSlot};
-use std::{vec, vec::Vec};
 use primitives::{
     map::Entry, AccountId, Address, AddressAndId, AddressOrId, HashMap, StorageKey, StorageValue,
 };
+use std::{vec, vec::Vec};
 
 /// Structure used for EIP-1153 transient storage
 pub type TransientStorage = HashMap<(AccountId, StorageKey), StorageValue>;
@@ -58,8 +58,7 @@ impl EvmState {
             AddressOrId::Address(address) => self.index.get(&address).and_then(|id| {
                 self.accounts
                     .get_mut(id.0 as usize)
-                    .map(|accounts| accounts.get_mut(id.1 as usize))
-                    .flatten()
+                    .and_then(|accounts| accounts.get_mut(id.1 as usize))
                     .map(|(acc, address)| (acc, AddressAndId::new(*address, *id)))
             }),
         }
@@ -174,7 +173,7 @@ fn push_account(
 /// Get a mutable reference to an account by id.
 #[inline]
 fn get_by_id_mut(
-    accounts: &mut Vec<Vec<(Account, Address)>>,
+    accounts: &mut [Vec<(Account, Address)>],
     id: AccountId,
 ) -> (&mut Account, AddressAndId) {
     let account = unsafe {
@@ -187,7 +186,7 @@ fn get_by_id_mut(
 
 /// Get an immutable reference to an account by id.
 #[inline]
-fn get_by_id(accounts: &Vec<Vec<(Account, Address)>>, id: AccountId) -> (&Account, AddressAndId) {
+fn get_by_id(accounts: &[Vec<(Account, Address)>], id: AccountId) -> (&Account, AddressAndId) {
     let account = unsafe {
         accounts
             .get_unchecked(id.0 as usize)

@@ -102,7 +102,7 @@ impl Account {
         let is_cold = self.status.contains(AccountStatus::Cold);
         self.status -= AccountStatus::Cold;
 
-        (same_id && is_cold) || !same_id
+        !same_id || is_cold
     }
 
     /// Is account locally created

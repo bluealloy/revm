@@ -25,7 +25,7 @@ pub fn create_init_frame(
             gas_limit,
             target_address: target,
             bytecode_address,
-            caller: caller,
+            caller,
             value: CallValue::Transfer(value),
             scheme: CallScheme::Call,
             is_static: false,

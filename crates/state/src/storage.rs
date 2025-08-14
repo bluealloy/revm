@@ -73,7 +73,7 @@ impl EvmStorageSlot {
         self.transaction_id = transaction_id;
         let was_cold = core::mem::take(&mut self.is_cold);
         // only if transaction id is same we are returning was_cold.
-        (same_id && was_cold) || !same_id
+        !same_id || was_cold
     }
 }
 

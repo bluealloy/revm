@@ -191,7 +191,7 @@ impl EthFrame<EthInterpreter> {
         if let Some(result) = precompiles
             .run(
                 ctx,
-                &inputs.bytecode_address.address(),
+                inputs.bytecode_address.address(),
                 &interpreter_input,
                 is_static,
                 gas_limit,
