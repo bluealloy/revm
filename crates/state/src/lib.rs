@@ -15,4 +15,4 @@ pub use account_info::AccountInfo;
 pub use bytecode::{self, Bytecode};
 pub use primitives;
 pub use storage::EvmStorageSlot;
-pub use types::{EvmState, EvmStorage, TransientStorage};
+pub use types::{AccountPages, EvmState, EvmStorage, TransientStorage};

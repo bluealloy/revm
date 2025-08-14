@@ -10,15 +10,24 @@ pub type TransientStorage = HashMap<(AccountId, StorageKey), StorageValue>;
 /// An account's Storage is a mapping from 256-bit integer keys to [EvmStorageSlot]s.
 pub type EvmStorage = HashMap<StorageKey, EvmStorageSlot>;
 
+/// First page size is 3 to account for Caller, Target, and Beneficiary.
+const FIRST_PAGE_SIZE: usize = 3;
+
+/// Page size is 100.
+const PAGE_SIZE: usize = 100;
+
+/// Pages of accounts.
+pub type AccountPages = Vec<Vec<(Account, Address)>>;
+
 /// EVM State with internal account management.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EvmState {
     /// Index of accounts.
-    pub index: HashMap<Address, AccountId>,
+    index: HashMap<Address, AccountId>,
     /// Accounts.
     /// TODO make pushing of new account smarter and introduce a Vec of Vec so we dont need to clone it.
-    pub accounts: Vec<Vec<(Account, Address)>>,
+    accounts: AccountPages,
 }
 
 impl EvmState {
@@ -26,9 +35,55 @@ impl EvmState {
     pub fn new() -> Self {
         Self {
             index: HashMap::default(),
-            // Allocate first with 3 account (Caller, target, beneficiary)
-            accounts: vec![Vec::with_capacity(3)],
+            accounts: vec![Vec::with_capacity(FIRST_PAGE_SIZE)],
         }
+    }
+
+    /// Return pages of accounts.
+    #[inline]
+    pub fn accounts(&self) -> &AccountPages {
+        &self.accounts
+    }
+
+    /// Return mutable reference to accounts.
+    #[inline]
+    pub fn accounts_mut(&mut self) -> &mut AccountPages {
+        &mut self.accounts
+    }
+
+    /// Take accounts.
+    #[inline]
+    pub fn take(&mut self) -> (AccountPages, HashMap<Address, AccountId>) {
+        let accounts = std::mem::replace(
+            &mut self.accounts,
+            vec![Vec::with_capacity(FIRST_PAGE_SIZE)],
+        );
+        let index = std::mem::take(&mut self.index);
+        (accounts, index)
+    }
+
+    /// Take accounts.
+    #[inline]
+    pub fn take_accounts(&mut self) -> AccountPages {
+        self.take().0
+    }
+
+    /// Take index.
+    #[inline]
+    pub fn take_index(&mut self) -> HashMap<Address, AccountId> {
+        self.take().1
+    }
+
+    /// Return index of accounts.
+    #[inline]
+    pub fn index(&self) -> &HashMap<Address, AccountId> {
+        &self.index
+    }
+
+    /// Return mutable reference to index.
+    #[inline]
+    pub fn index_mut(&mut self) -> &mut HashMap<Address, AccountId> {
+        &mut self.index
     }
 
     /// Get the account id for an address or id.
@@ -86,10 +141,8 @@ impl EvmState {
                 AddressAndId::new(address, id)
             }
             None => {
-                // TODO Fix this
-                let id = (self.accounts.len() as u32, 0);
+                let id = push_account(&mut self.accounts, account, address);
                 self.index.insert(address, id);
-                self.accounts.push(vec![(account, address)]);
                 AddressAndId::new(address, id)
             }
         }
@@ -151,23 +204,20 @@ impl EvmState {
 ///
 /// Returns the account id that was assigned to the account.
 #[inline]
-fn push_account(
-    accounts: &mut Vec<Vec<(Account, Address)>>,
-    account: Account,
-    address: Address,
-) -> AccountId {
-    let page_id = accounts.len() as u32;
+fn push_account(accounts: &mut AccountPages, account: Account, address: Address) -> AccountId {
+    let page_len = accounts.len() as u32;
     if let Some(last) = accounts.last_mut() {
-        if last.len() < 100 {
-            let id = (page_id - 1, last.len() as u32);
+        let last_len = last.len();
+        if (page_len == 1 && last_len < FIRST_PAGE_SIZE) || (page_len > 1 && last_len < PAGE_SIZE) {
+            let id = (page_len - 1, last_len as u32);
             last.push((account, address));
             return id;
         }
     }
-    let mut vec = Vec::with_capacity(100);
+    let mut vec = Vec::with_capacity(PAGE_SIZE);
     vec.push((account, address));
     accounts.push(vec);
-    (page_id, 0)
+    (page_len, 0)
 }
 
 /// Get a mutable reference to an account by id.
@@ -208,5 +258,273 @@ impl From<HashMap<Address, Account>> for EvmState {
             state.insert(address, account);
         }
         state
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{AccountInfo, AccountStatus};
+
+    fn create_test_account(nonce: u64) -> Account {
+        Account {
+            info: AccountInfo {
+                balance: primitives::U256::from(1000),
+                nonce,
+                code_hash: primitives::KECCAK_EMPTY,
+                code: None,
+            },
+            storage: HashMap::default(),
+            status: AccountStatus::empty(),
+            transaction_id: 0,
+        }
+    }
+
+    #[test]
+    fn test_get_mut_or_fetch_existing_account() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x01; 20]);
+        let account = create_test_account(1);
+
+        // Insert an account
+        let id = state.insert(address, account.clone());
+
+        // Fetch existing account - should not call the fetch function
+        let result: Result<_, &str> = state.get_mut_or_fetch(address, |_| {
+            panic!("Fetch function should not be called for existing account");
+        });
+
+        assert!(result.is_ok());
+        let (fetched_account, fetched_id) = result.unwrap();
+        assert_eq!(fetched_account.info.nonce, 1);
+        assert_eq!(*fetched_id.address(), address);
+        assert_eq!(fetched_id.id(), id.id());
+    }
+
+    #[test]
+    fn test_get_mut_or_fetch_new_account() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x02; 20]);
+
+        // Fetch new account - should call the fetch function
+        let mut fetch_called = false;
+        let result: Result<_, &str> = state.get_mut_or_fetch(address, |addr| {
+            fetch_called = true;
+            assert_eq!(addr, address);
+            Ok(create_test_account(42))
+        });
+
+        assert!(fetch_called);
+        assert!(result.is_ok());
+
+        let (fetched_account, fetched_id) = result.unwrap();
+        assert_eq!(fetched_account.info.nonce, 42);
+        assert_eq!(*fetched_id.address(), address);
+        assert_eq!(fetched_id.id(), (0, 0));
+
+        // Verify account was added to state
+        assert!(state.contains_key(&address));
+        assert_eq!(state.len(), 1);
+    }
+
+    #[test]
+    fn test_get_mut_or_fetch_error_propagation() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x03; 20]);
+
+        // Test error propagation
+        let result = state.get_mut_or_fetch(address, |_| Err::<Account, &str>("fetch error"));
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "fetch error");
+
+        // Verify account was not added to state
+        assert!(!state.contains_key(&address));
+        assert_eq!(state.len(), 0);
+    }
+
+    #[test]
+    fn test_get_mut_or_fetch_mutability() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x04; 20]);
+
+        // Fetch and modify new account
+        let result: Result<_, &str> =
+            state.get_mut_or_fetch(address, |_| Ok(create_test_account(10)));
+        assert!(result.is_ok());
+
+        let (account, _) = result.unwrap();
+        account.info.nonce = 20;
+
+        // Verify modification persisted
+        let (account, _) = state.get(AddressOrId::Address(address)).unwrap();
+        assert_eq!(account.info.nonce, 20);
+    }
+
+    #[test]
+    fn test_get_mut_or_fetch_multiple_accounts() {
+        let mut state = EvmState::new();
+        let address1 = Address::from([0x05; 20]);
+        let address2 = Address::from([0x06; 20]);
+        let address3 = Address::from([0x07; 20]);
+        let address4 = Address::from([0x08; 20]);
+
+        // Add first account
+        state.insert(address1, create_test_account(1));
+
+        // Fetch existing and new accounts
+        let result1: Result<_, ()> =
+            state.get_mut_or_fetch(address1, |_| panic!("Should not fetch existing account"));
+        assert!(result1.is_ok());
+        assert_eq!(result1.unwrap().1.id(), (0, 0));
+
+        let result2: Result<_, ()> =
+            state.get_mut_or_fetch(address2, |_| Ok(create_test_account(2)));
+        assert!(result2.is_ok());
+        assert_eq!(result2.unwrap().1.id(), (0, 1));
+
+        let result3: Result<_, ()> =
+            state.get_mut_or_fetch(address3, |_| Ok(create_test_account(3)));
+        assert!(result3.is_ok());
+        assert_eq!(result3.unwrap().1.id(), (0, 2));
+
+        let result4: Result<_, ()> =
+            state.get_mut_or_fetch(address4, |_| Ok(create_test_account(4)));
+        assert!(result4.is_ok());
+        assert_eq!(result4.unwrap().1.id(), (1, 0));
+
+        // Verify all accounts are in state
+        assert_eq!(state.len(), 4);
+        assert!(state.contains_key(&address1));
+        assert!(state.contains_key(&address2));
+        assert!(state.contains_key(&address3));
+        assert!(state.contains_key(&address4));
+    }
+
+    #[test]
+    fn test_pagination_behavior() {
+        let mut state = EvmState::new();
+        let mut addresses = Vec::new();
+
+        // Add more than 100 accounts to test pagination
+        for i in 0..150 {
+            let mut bytes = [0u8; 20];
+            bytes[19] = i as u8;
+            let address = Address::from(bytes);
+            addresses.push(address);
+            let _: Result<_, &str> =
+                state.get_mut_or_fetch(address, |_| Ok(create_test_account(i as u64)));
+        }
+
+        // Verify all accounts are accessible
+        assert_eq!(state.len(), 150);
+        for (i, address) in addresses.iter().enumerate() {
+            let (account, _) = state.get(AddressOrId::Address(*address)).unwrap();
+            assert_eq!(account.info.nonce, i as u64);
+        }
+
+        // Verify pagination structure
+        assert!(state.accounts.len() >= 2); // Should have at least 2 pages
+        assert_eq!(state.accounts[0].len(), 100); // First page should be full
+    }
+
+    #[test]
+    fn test_get_by_id_and_address() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x08; 20]);
+
+        // Insert account and get its ID
+        let id_info = state.insert(address, create_test_account(99));
+        let id = id_info.id();
+
+        // Test get by ID
+        let (account_by_id, addr_id) = state.get_by_id(id);
+        assert_eq!(account_by_id.info.nonce, 99);
+        assert_eq!(*addr_id.address(), address);
+        assert_eq!(addr_id.id(), id);
+
+        // Test get by address
+        let (account_by_addr, addr_id2) = state.get(AddressOrId::Address(address)).unwrap();
+        assert_eq!(account_by_addr.info.nonce, 99);
+        assert_eq!(addr_id2, addr_id);
+
+        // Test get_mut by ID
+        let (account_mut_by_id, _) = state.get_by_id_mut(id);
+        account_mut_by_id.info.nonce = 100;
+
+        // Verify modification
+        let (account, _) = state.get_by_id(id);
+        assert_eq!(account.info.nonce, 100);
+    }
+
+    #[test]
+    fn test_insert_update_existing() {
+        let mut state = EvmState::new();
+        let address = Address::from([0x09; 20]);
+
+        // Initial insert
+        let id1 = state.insert(address, create_test_account(1));
+        assert_eq!(state.len(), 1);
+
+        // Update existing account
+        let id2 = state.insert(address, create_test_account(2));
+        assert_eq!(state.len(), 1); // Length should not change
+        assert_eq!(id1.id(), id2.id()); // ID should remain the same
+
+        // Verify update
+        let (account, _) = state.get(AddressOrId::Address(address)).unwrap();
+        assert_eq!(account.info.nonce, 2);
+    }
+
+    #[test]
+    fn test_clear_and_is_empty() {
+        let mut state = EvmState::new();
+        assert!(state.is_empty());
+
+        // Add some accounts
+        for i in 0..5 {
+            let mut bytes = [0u8; 20];
+            bytes[19] = i as u8;
+            let address = Address::from(bytes);
+            state.insert(address, create_test_account(i));
+        }
+
+        assert!(!state.is_empty());
+        assert_eq!(state.len(), 5);
+
+        // Clear state
+        state.clear();
+        assert!(state.is_empty());
+        assert_eq!(state.len(), 0);
+        assert_eq!(state.accounts.len(), 0);
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut state = EvmState::new();
+        let mut expected_addresses = Vec::new();
+
+        // Add accounts
+        for i in 0..10 {
+            let mut bytes = [0u8; 20];
+            bytes[19] = i as u8;
+            let address = Address::from(bytes);
+            expected_addresses.push(address);
+            state.insert(address, create_test_account(i));
+        }
+
+        // Iterate and collect
+        let collected: Vec<_> = state.iter().collect();
+        assert_eq!(collected.len(), 10);
+
+        // Verify all addresses are present
+        for (account, address) in collected {
+            assert!(expected_addresses.contains(&address));
+            let index = expected_addresses
+                .iter()
+                .position(|&a| a == *address)
+                .unwrap();
+            assert_eq!(account.info.nonce, index as u64);
+        }
     }
 }

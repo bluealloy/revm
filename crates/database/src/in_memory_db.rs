@@ -191,8 +191,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: EvmState) {
-        for (mut account, address) in changes.accounts.into_iter().flatten() {
+    fn commit(&mut self, mut changes: EvmState) {
+        for (mut account, address) in changes.take_accounts().into_iter().flatten() {
             if !account.is_touched() {
                 continue;
             }
