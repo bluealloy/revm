@@ -4,6 +4,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 /// Helper that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,

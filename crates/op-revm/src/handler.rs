@@ -210,6 +210,9 @@ where
             caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
         }
 
+        // set caller id
+        journal.set_caller_address_id(caller_id);
+
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.
         journal.caller_accounting_journal_entry(
@@ -1097,7 +1100,15 @@ mod tests {
             },
             0..0,
         ));
-
+        handler.load_accounts(&mut evm).unwrap();
+        // load caller account and id
+        let (_, caller_id) = evm
+            .ctx()
+            .journal_mut()
+            .load_account_code(SENDER.into())
+            .unwrap()
+            .data;
+        evm.ctx().journal_mut().set_caller_address_id(caller_id);
         // Reimburse the caller for the unspent portion of the fees.
         handler
             .reimburse_caller(&mut evm, &mut exec_result)

@@ -7,6 +7,7 @@ use interpreter::{
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
 };
+use primitives::{AddressAndId, TxKind};
 use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -136,6 +137,21 @@ where
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+
+        let (tx, journal) = evm.ctx().tx_journal_mut();
+
+        // set dummy caller id as it is not used in system call.
+        journal.set_caller_address_id(AddressAndId::new(tx.caller(), (0, 0)));
+
+        // load target
+        if let TxKind::Call(to) = tx.kind() {
+            let account_load = journal.load_account_delegated(to.into())?.data;
+            evm.ctx().journal_mut().set_tx_target_address_id(
+                account_load.address_and_id,
+                account_load.delegated_account_address.map(|d| d.data),
+            );
+        }
+
         // call execution with inspection and then output.
         match self
             .inspect_execution(evm, &init_and_floor_gas)

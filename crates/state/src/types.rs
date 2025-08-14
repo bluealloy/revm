@@ -11,7 +11,7 @@ pub type TransientStorage = HashMap<(AccountId, StorageKey), StorageValue>;
 pub type EvmStorage = HashMap<StorageKey, EvmStorageSlot>;
 
 /// First page size is 3 to account for Caller, Target, and Beneficiary.
-const FIRST_PAGE_SIZE: usize = 10;
+const FIRST_PAGE_SIZE: usize = 3;
 
 /// Page size is 100.
 const PAGE_SIZE: usize = 100;
@@ -54,11 +54,11 @@ impl EvmState {
     /// Take accounts.
     #[inline]
     pub fn take(&mut self) -> (AccountPages, HashMap<Address, AccountId>) {
-        let accounts = std::mem::replace(
+        let accounts = core::mem::replace(
             &mut self.accounts,
             vec![Vec::with_capacity(FIRST_PAGE_SIZE)],
         );
-        let index = std::mem::take(&mut self.index);
+        let index = core::mem::take(&mut self.index);
         (accounts, index)
     }
 
@@ -421,7 +421,7 @@ mod tests {
 
         // Verify pagination structure
         assert!(state.accounts.len() >= 2); // Should have at least 2 pages
-        assert_eq!(state.accounts[0].len(), 100); // First page should be full
+        assert_eq!(state.accounts[0].len(), 3); // First page should be full
     }
 
     #[test]

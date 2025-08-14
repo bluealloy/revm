@@ -12,7 +12,7 @@ use context_interface::{
 };
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use primitives::{AddressAndId, TxKind, U256};
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -123,6 +123,19 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        // load caller and target
+        let (tx, journal) = evm.ctx().tx_journal_mut();
+        // set dummy caller id as it is not used in system call.
+        journal.set_caller_address_id(AddressAndId::new(tx.caller(), (0, 0)));
+
+        if let TxKind::Call(to) = tx.kind() {
+            let account_load = journal.load_account_delegated(to.into())?.data;
+            evm.ctx().journal_mut().set_tx_target_address_id(
+                account_load.address_and_id,
+                account_load.delegated_account_address.map(|d| d.data),
+            );
+        }
+
         // call execution and than output.
         match self
             .execution(evm, &init_and_floor_gas)
@@ -175,9 +188,10 @@ pub trait Handler {
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
+        let gas = self.apply_eip7702_auth_list(evm)?;
+
         self.load_accounts(evm)?;
 
-        let gas = self.apply_eip7702_auth_list(evm)?;
         Ok(gas)
     }
 
