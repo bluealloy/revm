@@ -19,7 +19,7 @@ use revm::{
         Interpreter, InterpreterTypes,
     },
     precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
-    primitives::{bytes, eip7825, Address, Bytes, Log, TxKind, U256},
+    primitives::{bytes, eip7825, Address, AddressOrId, Bytes, Log, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
@@ -62,8 +62,8 @@ fn test_deposit_tx() {
     assert_eq!(
         output
             .state
-            .get(&Address::default())
-            .map(|a| a.info.balance),
+            .get(AddressOrId::Address(Address::default()))
+            .map(|a| a.0.info.balance),
         Some(U256::from(100))
     );
     compare_or_save_op_testdata("test_deposit_tx.json", &output);
@@ -103,7 +103,10 @@ fn test_halted_deposit_tx() {
         }
     );
     assert_eq!(
-        output.state.get(&BENCH_CALLER).map(|a| a.info.balance),
+        output
+            .state
+            .get(BENCH_CALLER.into())
+            .map(|a| a.0.info.balance),
         Some(U256::from(100) + BENCH_CALLER_BALANCE)
     );
 
@@ -1137,6 +1140,6 @@ fn test_system_call() {
     let _ = evm.system_call_one(BENCH_TARGET, bytes!("0x0001"));
     let state = evm.finalize();
 
-    assert!(state.get(&SYSTEM_ADDRESS).is_none());
-    assert!(state.get(&BENCH_TARGET).unwrap().is_touched());
+    assert!(state.get(SYSTEM_ADDRESS.into()).is_none());
+    assert!(state.get(BENCH_TARGET.into()).unwrap().0.is_touched());
 }

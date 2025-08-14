@@ -1,5 +1,5 @@
 use crate::{interpreter_types::InputsTr, CallInput};
-use primitives::{Address, U256};
+use primitives::{AddressAndId, U256};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -8,12 +8,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct InputsImpl {
     /// Storage of this account address is being used.
-    pub target_address: Address,
+    pub target_address: AddressAndId,
     /// Address of the bytecode that is being executed. This field is not used inside Interpreter but it is used
     /// by dependent projects that would need to know the address of the bytecode.
-    pub bytecode_address: Option<Address>,
+    pub bytecode_address: Option<AddressAndId>,
     /// Address of the caller of the call.
-    pub caller_address: Address,
+    pub caller_address: AddressAndId,
     /// Input data for the call.
     pub input: CallInput,
     /// Value of the call.
@@ -21,15 +21,15 @@ pub struct InputsImpl {
 }
 
 impl InputsTr for InputsImpl {
-    fn target_address(&self) -> Address {
+    fn target_address(&self) -> AddressAndId {
         self.target_address
     }
 
-    fn caller_address(&self) -> Address {
+    fn caller_address(&self) -> AddressAndId {
         self.caller_address
     }
 
-    fn bytecode_address(&self) -> Option<&Address> {
+    fn bytecode_address(&self) -> Option<&AddressAndId> {
         self.bytecode_address.as_ref()
     }
 

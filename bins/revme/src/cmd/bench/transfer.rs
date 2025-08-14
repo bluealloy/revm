@@ -39,9 +39,10 @@ pub fn run(criterion: &mut Criterion) {
 
     let balance = evm
         .journal_mut()
-        .load_account(BENCH_TARGET)
+        .load_account(BENCH_TARGET.into())
         .unwrap()
         .data
+        .0
         .info
         .balance;
 
