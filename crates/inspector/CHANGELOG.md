@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- *(Inspector)* call_end not calle on first call fast return ([#2697](https://github.com/bluealloy/revm/pull/2697))
+- *(Inspector)* call_end not called on first call fast return ([#2697](https://github.com/bluealloy/revm/pull/2697))
 
 ## [8.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v8.0.1...revm-inspector-v8.0.2) - 2025-07-03
 
@@ -243,9 +243,9 @@ Dependency bump
 - Split inspector.rs (#1958)
 - expose precompile address in Journal, DB::Error: StdError (#1956)
 - Make Ctx journal generic (#1933)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
-- Merge validation/analyzis with Bytecode (#1793)
+- Merge validation/analysis with Bytecode (#1793)
 - Restructuring Part3 inspector crate (#1788)
 - restructure Part2 database crate (#1784)
 - project restructuring Part1 (#1776)
@@ -276,7 +276,7 @@ Dependency bump
 - Move CfgEnv from context-interface to context crate (#1910)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))

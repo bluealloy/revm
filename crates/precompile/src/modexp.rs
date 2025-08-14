@@ -117,7 +117,7 @@ where
     // cast exp len to the max size, it will fail later in gas calculation if it is too large.
     let exp_len = usize::try_from(exp_len).unwrap_or(usize::MAX);
 
-    // for EIP-7823 we need to check size of imputs
+    // for EIP-7823 we need to check size of inputs
     if OSAKA
         && (base_len > eip7823::INPUT_SIZE_LIMIT
             || mod_len > eip7823::INPUT_SIZE_LIMIT

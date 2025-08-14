@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(benches)* rename anaysis-inspector to snailtracer-inspect ([#2834](https://github.com/bluealloy/revm/pull/2834))
+- *(benches)* rename analysis-inspector to snailtracer-inspect ([#2834](https://github.com/bluealloy/revm/pull/2834))
 - *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
 - add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
 - fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
@@ -469,7 +469,7 @@ Dependency bump
 ## [0.2.1](https://github.com/bluealloy/revm/compare/revme-v0.2.0...revme-v0.2.1) - 2024-02-07
 
 ### Added
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - *(revme)* make it runnable by goevmlab ([#990](https://github.com/bluealloy/revm/pull/990))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
 - Loop call stack ([#851](https://github.com/bluealloy/revm/pull/851))

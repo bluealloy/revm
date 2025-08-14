@@ -98,7 +98,7 @@ Dependency bump
 
 ### Other
 
-- clean unsed indicatif ([#2379](https://github.com/bluealloy/revm/pull/2379))
+- clean unused indicatif ([#2379](https://github.com/bluealloy/revm/pull/2379))
 - add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
 - *(database)* remove auto_impl dependency ([#2344](https://github.com/bluealloy/revm/pull/2344))
 

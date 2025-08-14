@@ -256,7 +256,7 @@ Dependency bump
 
 - *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
 - integrate codspeed (#1935)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
 - restructure Part2 database crate (#1784)
 - project restructuring Part1 (#1776)
@@ -593,7 +593,7 @@ Promoting it to stable version, and i dont expect for precompiles to change in a
 # v0.4.0
 date: 20.1.2022
 
-* Added feature for k256 lib. We now have choise to use bitcoin c lib and k256 for ecrecovery.
+* Added feature for k256 lib. We now have choice to use bitcoin c lib and k256 for ecrecovery.
 
 # v0.3.0
 
@@ -601,7 +601,7 @@ date: 20.1.2022
 * Error type is changed to `Return` in revm so it is in precompiles.
 # v0.2.0
 
-Removed parity-crypto and use only needed secp256k1 lib. Added `ecrecover` feature to allow dissabling it for wasm windows builds.
+Removed parity-crypto and use only needed secp256k1 lib. Added `ecrecover` feature to allow disabling it for wasm windows builds.
 
 # v0.1.0
 

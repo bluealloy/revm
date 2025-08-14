@@ -83,7 +83,7 @@ Dependency bump
 
 ### Other
 
-- clean unsed indicatif ([#2379](https://github.com/bluealloy/revm/pull/2379))
+- clean unused indicatif ([#2379](https://github.com/bluealloy/revm/pull/2379))
 - add 0x prefix to b256! and address! calls ([#2345](https://github.com/bluealloy/revm/pull/2345))
 
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v1.0.0...revm-database-interface-v2.0.0) - 2025-03-28

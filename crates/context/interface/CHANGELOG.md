@@ -244,7 +244,7 @@ Stable version
 - Move CfgEnv from context-interface to context crate (#1910)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))

@@ -281,7 +281,7 @@ Dependency bump
 - align Block trait (#1957)
 - expose precompile address in Journal, DB::Error: StdError (#1956)
 - Make Ctx journal generic (#1933)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
 - *(examples)* generate block traces (#895)
 - implement EIP-4844 (#668)
@@ -309,7 +309,7 @@ Dependency bump
 - Move CfgEnv from context-interface to context crate (#1910)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))
@@ -332,7 +332,7 @@ Dependency bump
 - typo fixes
 - fix readme typo
 - Big Refactor. Machine to Interpreter. refactor instructions. call/create struct ([#52](https://github.com/bluealloy/revm/pull/52))
-- readme. debuger update
+- readme. debugger update
 - Bump revm v0.3.0. README updated
 - readme
 - Add time elapsed for tests

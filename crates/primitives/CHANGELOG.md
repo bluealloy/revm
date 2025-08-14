@@ -285,7 +285,7 @@ Stable version
 ### Added
 - *(Precompiles)* Throw fatal error if c-kzg is disabled ([#1589](https://github.com/bluealloy/revm/pull/1589))
 - *(Prague)* Add EIP-7702 ([#1565](https://github.com/bluealloy/revm/pull/1565))
-- add helper function to mape EVMError's Database error variant ([#1567](https://github.com/bluealloy/revm/pull/1567))
+- add helper function to map EVMError's Database error variant ([#1567](https://github.com/bluealloy/revm/pull/1567))
 
 ### Other
 - *(README)* add rbuilder to used-by ([#1585](https://github.com/bluealloy/revm/pull/1585))
@@ -313,7 +313,7 @@ Stable version
 - replace TransactTo with TxKind ([#1542](https://github.com/bluealloy/revm/pull/1542))
 - remove DatabaseWithDebugError ([#1545](https://github.com/bluealloy/revm/pull/1545))
 - avoid cloning precompiles ([#1486](https://github.com/bluealloy/revm/pull/1486))
-- added simular to used-by ([#1521](https://github.com/bluealloy/revm/pull/1521))
+- added similar to used-by ([#1521](https://github.com/bluealloy/revm/pull/1521))
 - derive PartialEq and Hash on EnvKzgSettings ([#1494](https://github.com/bluealloy/revm/pull/1494))
 - remove old deprecated items ([#1489](https://github.com/bluealloy/revm/pull/1489))
 - *(primitives)* rename State/Storage to EvmState/EvmStorage ([#1459](https://github.com/bluealloy/revm/pull/1459))
@@ -563,7 +563,7 @@ One change:
 # v1.1.0
 date: 04.04.2023
 
-Mosty utility functions, additional checks and convenience changes.
+Mostly utility functions, additional checks and convenience changes.
 Old bytecode that supported gas block was replaced with jumpmap only bitvec.
 
 Changelog: 
@@ -574,7 +574,7 @@ Changelog:
 * 3d8ca66 - feat: add Output::into_data (#420) (3 weeks ago) <Matthias Seitz>
 * dd0e227 - feat: Add all internals results to Halt (#413) (4 weeks ago) <rakita>
 * d8dc652 - fix(interpreter): halt on CreateInitcodeSizeLimit (#412) (4 weeks ago) <Roman Krasiuk>
-* a193d79 - chore: enabled primtive default feature in precompile (#409) (4 weeks ago) <Matthias Seitz>
+* a193d79 - chore: enabled primitive default feature in precompile (#409) (4 weeks ago) <Matthias Seitz>
 * 33bf8a8 - feat: use singular bytes for the jumpmap (#402) (4 weeks ago) <Bjerg>
 * 394e8e9 - feat: extend SuccessOrHalt (#405) (4 weeks ago) <Matthias Seitz>
 * cff1070 - Update readmdoc of `perf_analyse_created_bytecodes` (#404) (4 weeks ago) <rakita>

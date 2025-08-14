@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- *(bytecode)* add version getter + make versoin dynamic ([#2751](https://github.com/bluealloy/revm/pull/2751))
+- *(bytecode)* add version getter + make version dynamic ([#2751](https://github.com/bluealloy/revm/pull/2751))
 
 ### Fixed
 
@@ -177,9 +177,9 @@ Stable version
 - EthHandler trait (#2001)
 - *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
 - *(database)* implement order-independent equality for Reverts (#1827)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
-- Merge validation/analyzis with Bytecode (#1793)
+- Merge validation/analysis with Bytecode (#1793)
 - restructure Part2 database crate (#1784)
 - project restructuring Part1 (#1776)
 - *(examples)* generate block traces (#895)
@@ -203,7 +203,7 @@ Stable version
 - fix `constants` module typo (#1801)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))

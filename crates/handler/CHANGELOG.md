@@ -313,7 +313,7 @@ Dependency bump
 - expose precompile address in Journal, DB::Error: StdError (#1956)
 - Make Ctx journal generic (#1933)
 - removed create address collision check (#1928)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - *(examples)* generate block traces (#895)
 - implement EIP-4844 (#668)
 - *(Shanghai)* All EIPs: push0, warm coinbase, limit/measure initcode (#376)
@@ -364,7 +364,7 @@ Dependency bump
 - typo fixes
 - fix readme typo
 - Big Refactor. Machine to Interpreter. refactor instructions. call/create struct ([#52](https://github.com/bluealloy/revm/pull/52))
-- readme. debuger update
+- readme. debugger update
 - Bump revm v0.3.0. README updated
 - readme
 - Add time elapsed for tests

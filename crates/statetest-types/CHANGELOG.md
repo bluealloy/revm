@@ -163,7 +163,7 @@ Stable version
 - *(EIP-7840)* Add blob schedule to execution client cfg (#1980)
 - *(eip7702)* apply latest EIP-7702 changes, backport from v52 (#1969)
 - simplify Transaction trait (#1959)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
 - extract statetest models/structs to standalone crate (#1808)
 - *(examples)* generate block traces (#895)
@@ -186,7 +186,7 @@ Stable version
 - fix comments and docs into more sensible (#1920)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))
@@ -209,7 +209,7 @@ Stable version
 - typo fixes
 - fix readme typo
 - Big Refactor. Machine to Interpreter. refactor instructions. call/create struct ([#52](https://github.com/bluealloy/revm/pull/52))
-- readme. debuger update
+- readme. debugger update
 - Bump revm v0.3.0. README updated
 - readme
 - Add time elapsed for tests

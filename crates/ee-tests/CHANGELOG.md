@@ -17,4 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(op-revm)* Adds caller nonce assertion to op-revm intergation tests ([#2815](https://github.com/bluealloy/revm/pull/2815))
+- *(op-revm)* Adds caller nonce assertion to op-revm integration tests ([#2815](https://github.com/bluealloy/revm/pull/2815))

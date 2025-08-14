@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- manally implementation PartialOrd and Ord for AccountInfo ([#2835](https://github.com/bluealloy/revm/pull/2835))
+- manually implementation PartialOrd and Ord for AccountInfo ([#2835](https://github.com/bluealloy/revm/pull/2835))
 
 ### Other
 
@@ -150,7 +150,7 @@ Stable version
 ### Added
 
 - *(database)* implement order-independent equality for Reverts (#1827)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
 - restructure Part2 database crate (#1784)
 - project restructuring Part1 (#1776)
@@ -173,7 +173,7 @@ Stable version
 - *(primitives)* replace HashMap re-exports with alloy_primitives::map (#1805)
 - Bump new logo (#1735)
 - *(README)* add rbuilder to used-by (#1585)
-- added simular to used-by (#1521)
+- added similar to used-by (#1521)
 - add Trin to used by list (#1393)
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - Add Hardhat to the "Used by" list ([#1164](https://github.com/bluealloy/revm/pull/1164))
@@ -196,7 +196,7 @@ Stable version
 - typo fixes
 - fix readme typo
 - Big Refactor. Machine to Interpreter. refactor instructions. call/create struct ([#52](https://github.com/bluealloy/revm/pull/52))
-- readme. debuger update
+- readme. debugger update
 - Bump revm v0.3.0. README updated
 - readme
 - Add time elapsed for tests

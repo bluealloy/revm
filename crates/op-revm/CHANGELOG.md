@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
 - update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
-- *(op-revm)* Adds caller nonce assertion to op-revm intergation tests ([#2815](https://github.com/bluealloy/revm/pull/2815))
+- *(op-revm)* Adds caller nonce assertion to op-revm integration tests ([#2815](https://github.com/bluealloy/revm/pull/2815))
 - *(op-revm)* Full test coverage `OpTransactionError` ([#2818](https://github.com/bluealloy/revm/pull/2818))
 - Update test data for renamed tests ([#2817](https://github.com/bluealloy/revm/pull/2817))
 - reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
@@ -255,7 +255,7 @@ Dependency bump
 - remove wrong `&mut` and duplicated spec ([#2276](https://github.com/bluealloy/revm/pull/2276))
 - *(op-precompiles)* clean up op tx tests ([#2242](https://github.com/bluealloy/revm/pull/2242))
 - make str to SpecId conversion fallible ([#2236](https://github.com/bluealloy/revm/pull/2236))
-- *(op-precompiles)* Add tests for bls12-381 map fp to g ([#2241](https://github.com/bluealloy/revm/pull/2241))
+- *(op-precompiles)* Add tests for bls12-381 map fp to g1 ([#2241](https://github.com/bluealloy/revm/pull/2241))
 - add a safe blst wrapper ([#2223](https://github.com/bluealloy/revm/pull/2223))
 - *(op-precompiles)* Reuse tests for bls12-381 msm tests for pairing ([#2239](https://github.com/bluealloy/revm/pull/2239))
 - *(op-precompiles)* add bls12-381 g2 add and msm tests ([#2231](https://github.com/bluealloy/revm/pull/2231))

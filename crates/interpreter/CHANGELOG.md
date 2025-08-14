@@ -170,7 +170,7 @@ Dependency bump
 
 ### Added
 
-- *(tests)* Add dupn, swapn and exhange tests ([#2343](https://github.com/bluealloy/revm/pull/2343))
+- *(tests)* Add dupn, swapn and exchange tests ([#2343](https://github.com/bluealloy/revm/pull/2343))
 - support for system calls ([#2350](https://github.com/bluealloy/revm/pull/2350))
 
 ### Other
@@ -435,7 +435,7 @@ Stable version
 - *(EOF)* set CallOrCreate result in EOFCREATE ([#1535](https://github.com/bluealloy/revm/pull/1535))
 - *(EOF)* target needed for EOFCREATE created address ([#1536](https://github.com/bluealloy/revm/pull/1536))
 - *(EOF)* ext*call return values ([#1515](https://github.com/bluealloy/revm/pull/1515))
-- *(EOF)* Remove redundunt ext call gas cost ([#1513](https://github.com/bluealloy/revm/pull/1513))
+- *(EOF)* Remove redundant ext call gas cost ([#1513](https://github.com/bluealloy/revm/pull/1513))
 - *(EOF)* add DATACOPY copy gas ([#1510](https://github.com/bluealloy/revm/pull/1510))
 - *(EOF)* extstaticcall make static ([#1508](https://github.com/bluealloy/revm/pull/1508))
 - *(EOF)* jumpf gas was changes ([#1507](https://github.com/bluealloy/revm/pull/1507))
@@ -445,7 +445,7 @@ Stable version
 - *(EOF)* returncontract immediate is one byte ([#1468](https://github.com/bluealloy/revm/pull/1468))
 - *(Interpreter)* wrong block number used ([#1458](https://github.com/bluealloy/revm/pull/1458))
 - *(interpreter)* avoid overflow when checking if mem limit reached ([#1429](https://github.com/bluealloy/revm/pull/1429))
-- blockchash for devnet-0  ([#1427](https://github.com/bluealloy/revm/pull/1427))
+- blockhash for devnet-0  ([#1427](https://github.com/bluealloy/revm/pull/1427))
 
 ### Other
 - replace TransactTo with TxKind ([#1542](https://github.com/bluealloy/revm/pull/1542))
@@ -573,10 +573,10 @@ Stable version
 
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v1.3.0...revm-interpreter-v2.0.0) - 2024-02-07
 
-Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
+Interpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
 
 ### Added
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - add `BytecodeLocked::original_bytecode` ([#1037](https://github.com/bluealloy/revm/pull/1037))
 - *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))

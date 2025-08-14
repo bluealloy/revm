@@ -221,10 +221,10 @@ Dependency bump
 - expose precompile address in Journal, DB::Error: StdError (#1956)
 - integrate codspeed (#1935)
 - Make Ctx journal generic (#1933)
-- Restucturing Part7 Handler and Context rework (#1865)
+- Restructuring Part7 Handler and Context rework (#1865)
 - restructuring Part6 transaction crate (#1814)
 - push NonceChange to Journal in deduct_caller (#1804)
-- Merge validation/analyzis with Bytecode (#1793)
+- Merge validation/analysis with Bytecode (#1793)
 - Restructuring Part3 inspector crate (#1788)
 - restructure Part2 database crate (#1784)
 - project restructuring Part1 (#1776)
@@ -643,8 +643,8 @@ Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
 
 ### Added
 - *(handler)* Change spec id on &mut ([#1055](https://github.com/bluealloy/revm/pull/1055))
-- *(Handler)* add push and pop of hanler registers ([#1053](https://github.com/bluealloy/revm/pull/1053))
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- *(Handler)* add push and pop of handler registers ([#1053](https://github.com/bluealloy/revm/pull/1053))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
 - *(inspector)* Share call/create inputs in Inspector call_end/create_end ([#1003](https://github.com/bluealloy/revm/pull/1003))
 - Convert optimism panic into graceful error ([#982](https://github.com/bluealloy/revm/pull/982))
@@ -808,7 +808,7 @@ Full git log:
 * 175aaec - Removed the last dependencies breaking no-std build. (#669) (4 weeks ago) <Lucas Clemente Vella>
 * 4272535 - fix(state): retain destroyed account status on bundle extend (#667) (4 weeks ago) <rakita>
 * bef9edd - chore(state): bundle retention (#666) (4 weeks ago) <Roman Krasiuk>
-* 1053d0e - fix(state): Regresion, remove present info on selfdestruct (#664) (4 weeks ago) <rakita>
+* 1053d0e - fix(state): Regression, remove present info on selfdestruct (#664) (4 weeks ago) <rakita>
 * 6c4cd31 - feat: add BundleState::revert_latest (#661) (4 weeks ago) <Matthias Seitz>
 * fd2cc88 - fix(state): state transition regression (#662) (4 weeks ago) <Roman Krasiuk>
 * c14f8a9 - feat(state): add a flag allowing transition merge without reverts (#657) (4 weeks ago) <Roman Krasiuk>
@@ -1173,7 +1173,7 @@ Changes:
 # v1.1.0
 date: 14.1.2022
 
-There is bug introduced in last release with gas blcok optimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
+There is bug introduced in last release with gas block optimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
 
 Changes:
 * Bug fix for unknown OpCode
@@ -1210,7 +1210,7 @@ Changes:
 * clippy/warnings/fmt cleanup
 * Bump auto_impl to v0.5
 * opcode renaming
-* Gas measurment can be removed with rust features.
+* Gas measurement can be removed with rust features.
 
 # v0.4.1
 date: 02.11.2021

@@ -25,7 +25,7 @@ Reverting: "feat: removed padding in case last opcode is terminal (#2816)" (#288
 # v84
 date: 07.08.2025
 
-Small perf and maintainance release.
+Small perf and maintenance release.
 
 revm-inspector@9.0.0 revm@28.0.0 revm-statetest-types@9.0.0
 
@@ -48,7 +48,7 @@ revm-inspector@9.0.0 revm@28.0.0 revm-statetest-types@9.0.0
 # v83 
 date: 23.07.2025
 
-Fusaka devnet-3 support. Performance regresion fixes.
+Fusaka devnet-3 support. Performance regression fixes.
 
 * `revm-primitives`: 20.0.0 -> 20.1.0 (✓ API compatible changes)
 * `revm-bytecode`: 6.0.1 -> 6.1.0 (✓ API compatible changes)
@@ -194,7 +194,7 @@ Introduction of multi transaction.
 # v75 tag
 date: 31.05.2025
 
-Maintainance release.
+Maintenance release.
 
 * `revm-context`: 5.0.0 -> 5.0.1
 * `revm-handler`: 5.0.0 -> 5.0.1
@@ -242,7 +242,7 @@ op-revm fix.
 # v71 tag
 date: 07.05.2025
 
-Maintanance release that fixes last v70 version bump.
+Maintenance release that fixes last v70 version bump.
 
 
 * `revm-state`: 3.0.1 -> 4.0.0 
@@ -262,7 +262,7 @@ Maintanance release that fixes last v70 version bump.
 # v70 tag
 date: 07.05.2025
 
-Yanked release as dependency bump was done incorrectly. Maintanance release.
+Yanked release as dependency bump was done incorrectly. Maintenance release.
 
 * `revm-primitives`: 18.0.0 -> 19.0.0 (⚠️ API breaking changes)
 * `revm-bytecode`: 3.0.0 -> 4.0.0 (⚠️ API breaking changes)
