@@ -515,7 +515,7 @@ mod tests {
 
         // Verify all addresses are present
         for (account, address) in collected {
-            assert!(expected_addresses.contains(&address));
+            assert!(expected_addresses.contains(address));
             let index = expected_addresses
                 .iter()
                 .position(|&a| a == *address)

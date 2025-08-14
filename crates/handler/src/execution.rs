@@ -13,16 +13,18 @@ pub fn create_init_frame(
     gas_limit: u64,
 ) -> FrameInput {
     if let Some((target, delegated_address)) = target {
-        let bytecode_address = if let Some(delegated_address) = delegated_address {
-            delegated_address
-        } else {
-            target
-        };
+        let (bytecode_address, is_bytecode_delegated) =
+            if let Some(delegated_address) = delegated_address {
+                (delegated_address, true)
+            } else {
+                (target, false)
+            };
         FrameInput::Call(Box::new(CallInputs {
             input: CallInput::Bytes(input),
             gas_limit,
             target_address: target,
             bytecode_address,
+            is_bytecode_delegated,
             caller,
             value: CallValue::Transfer(value),
             scheme: CallScheme::Call,

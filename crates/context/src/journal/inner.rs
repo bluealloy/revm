@@ -610,7 +610,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address_or_id, is_eip7702_enabled, [])?;
+        let account = self.load_account_optional(db, address_or_id, true, [])?;
         let is_empty = account.0.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -623,11 +623,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         );
 
         // load delegate code if account is EIP-7702
-        if let Some(Bytecode::Eip7702(code)) = &account.0.info.code {
-            let address = code.address();
-            let delegate_account = self.load_account(db, AddressOrId::Address(address))?;
-            account_load.data.delegated_account_address =
-                Some(StateLoad::new(delegate_account.1, delegate_account.is_cold));
+        if is_eip7702_enabled {
+            if let Some(Bytecode::Eip7702(code)) = &account.0.info.code {
+                let address = code.address();
+                let delegate_account =
+                    self.load_account_optional(db, AddressOrId::Address(address), true, [])?;
+                account_load.data.delegated_account_address =
+                    Some(StateLoad::new(delegate_account.1, delegate_account.is_cold));
+            }
         }
 
         Ok(account_load)
@@ -667,7 +670,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                             } else {
                                 Account::new_not_existing(self.transaction_id)
                             };
-                            account.status |= AccountStatus::Cold;
+                            account.status.insert(AccountStatus::Cold);
                             account
                         })
                     })?

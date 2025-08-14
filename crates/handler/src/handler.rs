@@ -188,11 +188,8 @@ pub trait Handler {
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
-        let gas = self.apply_eip7702_auth_list(evm)?;
-
         self.load_accounts(evm)?;
-
-        Ok(gas)
+        self.apply_eip7702_auth_list(evm)
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.

@@ -317,11 +317,18 @@ impl AccountLoad {
     ///
     /// If the account has a delegated account, it returns the delegated account address.
     /// Otherwise, it returns the account address.
+    #[inline]
     pub fn bytecode_address(&self) -> AddressAndId {
         if let Some(delegated_account_address) = &self.delegated_account_address {
             delegated_account_address.data
         } else {
             self.address_and_id
         }
+    }
+
+    /// Returns whether the account is delegated.
+    #[inline]
+    pub fn is_delegated(&self) -> bool {
+        self.delegated_account_address.is_some()
     }
 }

@@ -55,14 +55,18 @@ pub fn load_accounts<
         );
     }
 
-    let (coinbase, id) = journal.load_account_code(beneficiary)?.data;
+    let mut coinbase = journal.load_account(beneficiary)?;
     // Load coinbase
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if spec.is_enabled_in(SpecId::SHANGHAI) {
-        coinbase.mark_touch();
+        coinbase.0.mark_touch();
     } else {
-        coinbase.mark_cold();
+        // if coinbase was cold mark it cold again. If it was warm it can mean that it was added as part of access list.
+        if coinbase.is_cold {
+            coinbase.0.mark_cold();
+        }
     }
+    let id = coinbase.1;
     journal.set_coinbase_address_id(id);
 
     let (context, precompiles) = evm.ctx_precompiles();

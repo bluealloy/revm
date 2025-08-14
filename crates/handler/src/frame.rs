@@ -187,26 +187,28 @@ impl EthFrame<EthInterpreter> {
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
-
-        if let Some(result) = precompiles
-            .run(
-                ctx,
-                inputs.bytecode_address.address(),
-                &interpreter_input,
-                is_static,
-                gas_limit,
-            )
-            .map_err(ERROR::from_string)?
-        {
-            if result.result.is_ok() {
-                ctx.journal_mut().checkpoint_commit();
-            } else {
-                ctx.journal_mut().checkpoint_revert(checkpoint);
+        // if account is delegate, we skip precompile address check.
+        if !inputs.is_bytecode_delegated {
+            if let Some(result) = precompiles
+                .run(
+                    ctx,
+                    inputs.bytecode_address.address(),
+                    &interpreter_input,
+                    is_static,
+                    gas_limit,
+                )
+                .map_err(ERROR::from_string)?
+            {
+                if result.result.is_ok() {
+                    ctx.journal_mut().checkpoint_commit();
+                } else {
+                    ctx.journal_mut().checkpoint_revert(checkpoint);
+                }
+                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                    result,
+                    memory_offset: inputs.return_memory_offset.clone(),
+                })));
             }
-            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                result,
-                memory_offset: inputs.return_memory_offset.clone(),
-            })));
         }
 
         let (bytecode_account, _) = ctx.journal_mut().get_account(inputs.bytecode_address.id());
@@ -236,49 +238,6 @@ impl EthFrame<EthInterpreter> {
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
-
-    /*
-
-
-    instruction CALL:
-    I want to set all fields that interpreter is going to use?
-    // Should i used InputsImpl, probably yes?
-
-    Additionally i needs some specific data for Call info
-
-    Call specific are:
-        return_memory_offset
-        scheme
-        is_static
-
-    Create specific:
-        Scheme
-        init_code can be data
-
-    CallInput:
-        InputsImpl
-
-
-    FrameInput:
-        Interpreter `Inputs for FrameInput`
-
-    FrameOutput:
-        InterpResult
-        scheme:
-        return_mem:
-        address:
-
-
-    CreateInput:
-        InputsImpl:
-
-
-    What do I want?
-        To consolidate Inputs and CallInput CreateInput.
-
-
-
-     */
 
     /// Make create frame.
     #[inline]

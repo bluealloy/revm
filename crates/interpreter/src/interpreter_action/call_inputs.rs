@@ -78,6 +78,8 @@ pub struct CallInputs {
     ///
     /// Previously `context.code_address`.
     pub bytecode_address: AddressAndId,
+    /// Whether the bytecode address is a delegated address. In this case precompile check will be skipped.
+    pub is_bytecode_delegated: bool,
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.
