@@ -332,9 +332,11 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), // Check for first call is done separately.
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError.into()),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow.into()),
-            InstructionResult::CreateContractSizeLimit
-            | InstructionResult::CreateContractStartingWithEF => {
+            InstructionResult::CreateContractSizeLimit => {
                 Self::Halt(HaltReason::CreateContractSizeLimit.into())
+            }
+            InstructionResult::CreateContractStartingWithEF => {
+                Self::Halt(HaltReason::CreateContractStartingWithEF.into())
             }
             InstructionResult::CreateInitCodeSizeLimit => {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit.into())
