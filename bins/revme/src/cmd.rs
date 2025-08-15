@@ -12,6 +12,8 @@ use clap::Parser;
 pub enum MainCmd {
     /// Execute Ethereum state tests.
     Statetest(statetest::Cmd),
+    /// Execute Ethereum state tests.
+    Stest(statetest::Cmd),
     /// Run arbitrary EVM bytecode.
     Evm(evmrunner::Cmd),
     /// Print the structure of an EVM bytecode.
@@ -20,6 +22,8 @@ pub enum MainCmd {
     Bench(bench::Cmd),
     /// Execute Ethereum blockchain tests.
     Blockchaintest(blockchaintest::Cmd),
+    /// Execute Ethereum blockchain tests.
+    Btest(blockchaintest::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -37,7 +41,7 @@ pub enum Error {
 impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
-            Self::Statetest(cmd) => cmd.run()?,
+            Self::Statetest(cmd) | Self::Stest(cmd) => cmd.run()?,
             Self::Evm(cmd) => cmd.run()?,
             Self::Bytecode(cmd) => {
                 cmd.run();
@@ -45,7 +49,7 @@ impl MainCmd {
             Self::Bench(cmd) => {
                 cmd.run();
             }
-            Self::Blockchaintest(cmd) => cmd.run()?,
+            Self::Blockchaintest(cmd) | Self::Btest(cmd) => cmd.run()?,
         }
         Ok(())
     }

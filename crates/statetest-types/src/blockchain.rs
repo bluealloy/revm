@@ -5,168 +5,79 @@
 
 use revm::{
     context::{BlockEnv, TxEnv},
-    primitives::{Address, Bytes, TxKind, B256, U256},
+    primitives::{Address, Bytes, FixedBytes, TxKind, B256, U256},
 };
-use serde::{de::IntoDeserializer, Deserialize, Deserializer};
-use std::collections::HashMap;
+use serde::Deserialize;
+use std::collections::BTreeMap;
 
 use crate::AccountInfo;
-
-/// Deserialize a hex string to u8
-fn deserialize_hex_u8<'de, D>(deserializer: D) -> Result<u8, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    let s = s.trim_start_matches("0x");
-    u8::from_str_radix(s, 16).map_err(serde::de::Error::custom)
-}
-
-/// Deserialize an empty string as None for Option<Address>
-fn deserialize_option_address<'de, D>(deserializer: D) -> Result<Option<Address>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    if s.is_empty() {
-        Ok(None)
-    } else {
-        Address::deserialize(s.into_deserializer()).map(Some)
-    }
-}
-
-/// Deserialize B256 with proper padding for shorter values
-fn deserialize_b256_pad<'de, D>(deserializer: D) -> Result<B256, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    let s = s.trim_start_matches("0x");
-    
-    // Pad with zeros if the string is shorter than 64 hex chars
-    let padded = if s.len() < 64 {
-        format!("{:0>64}", s)
-    } else {
-        s.to_string()
-    };
-    
-    B256::deserialize(format!("0x{}", padded).into_deserializer())
-}
-
-/// Deserialize Vec<B256> with proper padding for shorter values
-fn deserialize_vec_b256_pad<'de, D>(deserializer: D) -> Result<Vec<B256>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let strings: Vec<String> = Vec::deserialize(deserializer)?;
-    strings
-        .into_iter()
-        .map(|s| {
-            let s = s.trim_start_matches("0x");
-            let padded = if s.len() < 64 {
-                format!("{:0>64}", s)
-            } else {
-                s.to_string()
-            };
-            B256::deserialize(format!("0x{}", padded).into_deserializer())
-        })
-        .collect::<Result<Vec<_>, _>>()
-}
-
-/// Deserialize Option<Vec<B256>> with proper padding for shorter values
-fn deserialize_option_vec_b256_pad<'de, D>(deserializer: D) -> Result<Option<Vec<B256>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt: Option<Vec<String>> = Option::deserialize(deserializer)?;
-    match opt {
-        None => Ok(None),
-        Some(strings) => {
-            let vec = strings
-                .into_iter()
-                .map(|s| {
-                    let s = s.trim_start_matches("0x");
-                    let padded = if s.len() < 64 {
-                        format!("{:0>64}", s)
-                    } else {
-                        s.to_string()
-                    };
-                    B256::deserialize(format!("0x{}", padded).into_deserializer())
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(Some(vec))
-        }
-    }
-}
 
 mod test;
 
 /// Blockchain test suite containing multiple test cases
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-pub struct BlockchainTest(pub HashMap<String, BlockchainTestCase>);
+pub struct BlockchainTest(pub BTreeMap<String, BlockchainTestCase>);
 
 /// Individual blockchain test case
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockchainTestCase {
-    /// Network name/fork identifier
-    pub network: String,
     /// Genesis block header
     pub genesis_block_header: BlockHeader,
-    /// Pre-state accounts
-    pub pre: HashMap<Address, AccountInfo>,
-    /// Post-state accounts
-    pub post_state: HashMap<Address, AccountInfo>,
-    /// Last block hash
-    pub lastblockhash: B256,
-    /// Network configuration
-    pub config: Config,
     /// Genesis block RLP encoding
     #[serde(rename = "genesisRLP")]
-    pub genesis_rlp: Bytes,
+    pub genesis_rlp: Option<Bytes>,
     /// List of blocks in the test
     pub blocks: Vec<Block>,
+    /// Post-state accounts (optional)
+    pub post_state: Option<BTreeMap<Address, Account>>,
+    /// Pre-state accounts
+    pub pre: State,
+    /// Last block hash
+    pub lastblockhash: B256,
+    /// Network specification
+    pub network: ForkSpec,
     /// Seal engine type
-    pub seal_engine: String,
-    /// Test metadata
-    #[serde(rename = "_info")]
-    pub info: TestInfo,
+    #[serde(default)]
+    pub seal_engine: SealEngine,
 }
 
 /// Block header structure
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockHeader {
-    /// Parent block hash
-    pub parent_hash: B256,
-    /// Uncle hash (ommers hash)
-    pub uncle_hash: B256,
-    /// Block coinbase/beneficiary address
-    pub coinbase: Address,
-    /// State root hash after executing this block
-    pub state_root: B256,
-    /// Root hash of the transaction trie
-    pub transactions_trie: B256,
-    /// Root hash of the receipt trie
-    pub receipt_trie: B256,
     /// Bloom filter for logs
     pub bloom: Bytes,
+    /// Block coinbase/beneficiary address
+    pub coinbase: Address,
     /// Block difficulty (pre-merge) or 0 (post-merge)
     pub difficulty: U256,
-    /// Block number
-    pub number: U256,
+    /// Extra data field
+    pub extra_data: Bytes,
     /// Gas limit for this block
     pub gas_limit: U256,
     /// Gas used by all transactions in this block
     pub gas_used: U256,
-    /// Block timestamp
-    pub timestamp: U256,
-    /// Extra data field
-    pub extra_data: Bytes,
+    /// Block hash
+    pub hash: B256,
     /// Mix hash for PoW validation
     pub mix_hash: B256,
     /// PoW nonce
-    pub nonce: U256,
+    pub nonce: FixedBytes<8>,
+    /// Block number
+    pub number: U256,
+    /// Parent block hash
+    pub parent_hash: B256,
+    /// Root hash of the receipt trie
+    pub receipt_trie: B256,
+    /// State root hash after executing this block
+    pub state_root: B256,
+    /// Block timestamp
+    pub timestamp: U256,
+    /// Root hash of the transaction trie
+    pub transactions_trie: B256,
+    /// Uncle hash (ommers hash)
+    pub uncle_hash: B256,
     /// Base fee per gas (EIP-1559)
     pub base_fee_per_gas: Option<U256>,
     /// Withdrawals root hash (post-Shanghai)
@@ -179,96 +90,94 @@ pub struct BlockHeader {
     pub parent_beacon_block_root: Option<B256>,
     /// Requests hash (for future EIPs)
     pub requests_hash: Option<B256>,
-    /// Block hash
-    pub hash: B256,
+    /// Target blobs per block (EIP-4844 related)
+    pub target_blobs_per_block: Option<U256>,
 }
 
 /// Block structure containing header and transactions
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
     /// Block header (when provided directly)
     pub block_header: Option<BlockHeader>,
+    /// RLP-encoded block data
+    pub rlp: Bytes,
+    /// Expected exception for invalid blocks
+    pub expect_exception: Option<String>,
     /// List of transactions in the block
     pub transactions: Option<Vec<Transaction>>,
     /// Uncle/ommer headers
     pub uncle_headers: Option<Vec<BlockHeader>>,
+    /// Transaction sequence (for invalid transaction tests)
+    pub transaction_sequence: Option<Vec<TransactionSequence>>,
     /// Withdrawals in the block (post-Shanghai)
     pub withdrawals: Option<Vec<Withdrawal>>,
-    /// RLP-encoded block data
-    pub rlp: String,
-    /// Block number as string
-    pub blocknumber: Option<U256>,
-    /// Expected exception for invalid blocks
-    #[serde(rename = "expectException")]
-    pub expect_exception: Option<String>,
-    /// Decoded RLP data (for invalid block tests)
-    pub rlp_decoded: Option<BlockRlpDecoded>,
 }
 
-/// Decoded RLP block data
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+/// Transaction sequence in block
+#[derive(Debug, PartialEq, Eq, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
-pub struct BlockRlpDecoded {
-    /// Decoded block header
-    pub block_header: BlockHeader,
-    /// Decoded transactions
-    pub transactions: Vec<Transaction>,
-    /// Decoded uncle headers
-    pub uncle_headers: Vec<BlockHeader>,
-    /// Decoded withdrawals
-    pub withdrawals: Vec<Withdrawal>,
-    /// Block number
-    pub blocknumber: U256,
+pub struct TransactionSequence {
+    /// Exception message
+    pub exception: String,
+    /// Raw transaction bytes
+    pub raw_bytes: Bytes,
+    /// Validity flag
+    pub valid: String,
 }
 
 /// Transaction structure
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Transaction {
-    /// Transaction type (0=Legacy, 1=EIP-2930, 2=EIP-1559, 3=EIP-4844)
-    #[serde(rename = "type", deserialize_with = "deserialize_hex_u8")]
-    pub tx_type: u8,
-    /// Chain ID for replay protection
-    pub chain_id: Option<U256>,
-    /// Transaction nonce
-    pub nonce: U256,
-    /// Gas price (legacy transactions)
-    pub gas_price: Option<U256>,
-    /// Gas limit
-    pub gas_limit: U256,
-    /// Recipient address (None for contract creation)
-    #[serde(deserialize_with = "deserialize_option_address")]
-    pub to: Option<Address>,
-    /// Ether value to transfer
-    pub value: U256,
+    /// Transaction type
+    #[serde(rename = "type")]
+    pub transaction_type: Option<U256>,
     /// Transaction data/input
     pub data: Bytes,
+    /// Gas limit
+    pub gas_limit: U256,
+    /// Gas price (legacy transactions)
+    pub gas_price: Option<U256>,
+    /// Transaction nonce
+    pub nonce: U256,
+    /// ECDSA signature r value
+    pub r: U256,
+    /// ECDSA signature s value
+    pub s: U256,
     /// ECDSA signature v value
     pub v: U256,
-    /// ECDSA signature r value
-    #[serde(deserialize_with = "deserialize_b256_pad")]
-    pub r: B256,
-    /// ECDSA signature s value
-    #[serde(deserialize_with = "deserialize_b256_pad")]
-    pub s: B256,
-    /// Transaction sender address
-    pub sender: Address,
+    /// Ether value to transfer
+    pub value: U256,
+    /// Chain ID for replay protection
+    pub chain_id: Option<U256>,
+    /// Access list (EIP-2930)
+    pub access_list: Option<AccessList>,
     /// Maximum fee per gas (EIP-1559)
-    // EIP-1559 fields
     pub max_fee_per_gas: Option<U256>,
     /// Maximum priority fee per gas (EIP-1559)
     pub max_priority_fee_per_gas: Option<U256>,
-    /// Blob versioned hashes (EIP-4844)
-    // EIP-4844 fields
-    #[serde(default, deserialize_with = "deserialize_option_vec_b256_pad")]
-    pub blob_versioned_hashes: Option<Vec<B256>>,
-    /// Maximum fee per blob gas (EIP-4844)
-    pub max_fee_per_blob_gas: Option<U256>,
+    /// Transaction hash
+    pub hash: Option<B256>,
 }
+
+/// Access list item
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessListItem {
+    /// Account address
+    pub address: Address,
+    /// Storage keys
+    pub storage_keys: Vec<B256>,
+}
+
+/// Access list
+pub type AccessList = Vec<AccessListItem>;
 
 /// Withdrawal structure
 #[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Withdrawal {
     /// Withdrawal index
     pub index: U256,
@@ -280,72 +189,115 @@ pub struct Withdrawal {
     pub amount: U256,
 }
 
-/// Network configuration
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Config {
-    /// Network name/fork
-    pub network: String,
-    /// Chain ID
-    pub chainid: U256,
-    /// Blob gas schedule configuration
-    pub blob_schedule: Option<BlobSchedule>,
+/// Ethereum blockchain test data state
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Default)]
+pub struct State(pub BTreeMap<Address, Account>);
+
+impl State {
+    /// Return state as genesis state
+    pub fn into_genesis_state(self) -> BTreeMap<Address, AccountInfo> {
+        self.0
+            .into_iter()
+            .map(|(address, account)| {
+                let storage = account
+                    .storage
+                    .iter()
+                    .filter(|(_, v)| !v.is_zero())
+                    .map(|(k, v)| (*k, *v))
+                    .collect();
+                let account_info = AccountInfo {
+                    balance: account.balance,
+                    nonce: account.nonce.to::<u64>(),
+                    code: account.code,
+                    storage,
+                };
+                (address, account_info)
+            })
+            .collect::<BTreeMap<_, _>>()
+    }
 }
 
-/// Blob gas schedule configuration
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BlobSchedule(pub HashMap<String, BlobConfig>);
-
-/// Blob configuration for a specific fork
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BlobConfig {
-    /// Target blob count per block
-    pub target: U256,
-    /// Maximum blob count per block
-    pub max: U256,
-    /// Base fee update fraction
-    pub base_fee_update_fraction: U256,
+/// An account
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone, Default)]
+#[serde(deny_unknown_fields)]
+pub struct Account {
+    /// Balance
+    pub balance: U256,
+    /// Code
+    pub code: Bytes,
+    /// Nonce
+    pub nonce: U256,
+    /// Storage
+    pub storage: BTreeMap<U256, U256>,
 }
 
-/// Test metadata information
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct TestInfo {
-    /// Test hash
-    pub hash: B256,
-    /// Test comment
-    pub comment: String,
-    /// Tool used to fill the test
-    pub filling_transition_tool: String,
-    /// Test description
-    pub description: String,
-    /// Test source URL
-    pub url: String,
-    /// Fixture format version
-    pub fixture_format: String,
-    /// Reference specification URL
-    #[serde(rename = "reference-spec")]
-    pub reference_spec: Option<String>,
-    /// Reference specification version
-    #[serde(rename = "reference-spec-version")]
-    pub reference_spec_version: Option<String>,
-    /// EELS resolution information
-    #[serde(rename = "eels-resolution")]
-    pub eels_resolution: Option<EelsResolution>,
+/// Fork specification
+#[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Clone, Copy, Deserialize)]
+pub enum ForkSpec {
+    /// Frontier
+    Frontier,
+    /// Frontier to Homestead
+    FrontierToHomesteadAt5,
+    /// Homestead
+    Homestead,
+    /// Homestead to Tangerine
+    HomesteadToDaoAt5,
+    /// Homestead to Tangerine
+    HomesteadToEIP150At5,
+    /// Tangerine
+    EIP150,
+    /// Spurious Dragon
+    EIP158,
+    /// Spurious Dragon to Byzantium
+    EIP158ToByzantiumAt5,
+    /// Byzantium
+    Byzantium,
+    /// Byzantium to Constantinople
+    ByzantiumToConstantinopleAt5,
+    /// Byzantium to Constantinople
+    ByzantiumToConstantinopleFixAt5,
+    /// Constantinople
+    Constantinople,
+    /// Constantinople fix
+    ConstantinopleFix,
+    /// Istanbul
+    Istanbul,
+    /// Berlin
+    Berlin,
+    /// Berlin to London
+    BerlinToLondonAt5,
+    /// London
+    London,
+    /// Paris aka The Merge
+    #[serde(alias = "Merge")]
+    Paris,
+    /// Paris to Shanghai transition
+    ParisToShanghaiAtTime15k,
+    /// Shanghai
+    Shanghai,
+    /// Shanghai to Cancun transition
+    ShanghaiToCancunAtTime15k,
+    /// Merge EOF test
+    #[serde(alias = "Merge+3540+3670")]
+    MergeEOF,
+    /// After Merge Init Code test
+    #[serde(alias = "Merge+3860")]
+    MergeMeterInitCode,
+    /// After Merge plus new PUSH0 opcode
+    #[serde(alias = "Merge+3855")]
+    MergePush0,
+    /// Cancun
+    Cancun,
+    /// Prague
+    Prague,
 }
 
-/// EELS resolution information
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct EelsResolution {
-    /// Git repository URL
-    pub git_url: String,
-    /// Git branch name
-    pub branch: String,
-    /// Git commit hash
-    pub commit: String,
+/// Possible seal engines
+#[derive(Debug, PartialEq, Eq, Default, Deserialize)]
+pub enum SealEngine {
+    /// No consensus checks
+    #[default]
+    NoProof,
 }
 
 impl BlockHeader {
@@ -384,15 +336,17 @@ impl BlockHeader {
 }
 
 impl Transaction {
-    /// Convert Transaction to TxEnv using the builder pattern
-    pub fn to_tx_env(&self) -> Result<TxEnv, String> {
+    /// Convert Transaction to TxEnv
+    /// Note: The 'to' and 'sender' fields need to be provided separately in the reth model
+    pub fn to_tx_env(&self, sender: Address, to: Option<Address>) -> Result<TxEnv, String> {
         let mut builder = TxEnv::builder();
 
-        // Set transaction type
-        builder = builder.tx_type(Some(self.tx_type));
+        // Determine transaction type
+        let tx_type = self.transaction_type.map(|t| t.to::<u8>()).unwrap_or(0);
+        builder = builder.tx_type(Some(tx_type));
 
         // Set caller
-        builder = builder.caller(self.sender);
+        builder = builder.caller(sender);
 
         // Set gas limit
         let gas_limit = self.gas_limit.to::<u64>();
@@ -409,8 +363,8 @@ impl Transaction {
         builder = builder.data(self.data.clone());
 
         // Set transaction kind (to address)
-        let kind = if let Some(to) = self.to {
-            TxKind::Call(to)
+        let kind = if let Some(to_addr) = to {
+            TxKind::Call(to_addr)
         } else {
             TxKind::Create
         };
@@ -423,7 +377,7 @@ impl Transaction {
         }
 
         // Handle gas pricing based on transaction type
-        match self.tx_type {
+        match tx_type {
             0 | 1 => {
                 // Legacy or EIP-2930 transaction
                 if let Some(gas_price) = self.gas_price {
@@ -431,8 +385,8 @@ impl Transaction {
                     builder = builder.gas_price(gas_price);
                 }
             }
-            2..=4 => {
-                // EIP-1559, EIP-4844, or EIP-7702 transaction
+            2 | 3 => {
+                // EIP-1559 or EIP-4844 transaction
                 if let Some(max_fee) = self.max_fee_per_gas {
                     let max_fee = max_fee.to::<u128>();
                     builder = builder.gas_price(max_fee);
@@ -443,23 +397,14 @@ impl Transaction {
                     builder = builder.gas_priority_fee(Some(priority_fee));
                 }
             }
-            _ => return Err(format!("Unsupported transaction type: {}", self.tx_type)),
-        }
-
-        // Handle blob gas for EIP-4844 transactions
-        if self.tx_type == 3 {
-            if let Some(blob_hashes) = &self.blob_versioned_hashes {
-                builder = builder.blob_hashes(blob_hashes.clone());
-            }
-
-            if let Some(max_blob_fee) = self.max_fee_per_blob_gas {
-                let max_blob_fee = max_blob_fee.to::<u128>();
-                builder = builder.max_fee_per_blob_gas(max_blob_fee);
+            _ => {
+                // For unknown types, try to use gas_price if available
+                if let Some(gas_price) = self.gas_price {
+                    let gas_price = gas_price.to::<u128>();
+                    builder = builder.gas_price(gas_price);
+                }
             }
         }
-
-        // Note: Authorization list for EIP-7702 would need additional handling
-        // but the test format doesn't include the full authorization data
 
         builder
             .build()
@@ -471,10 +416,5 @@ impl BlockchainTestCase {
     /// Get the genesis block environment
     pub fn genesis_block_env(&self) -> BlockEnv {
         self.genesis_block_header.to_block_env()
-    }
-
-    /// Get the chain ID as u64
-    pub fn chain_id(&self) -> u64 {
-        self.config.chainid.to::<u64>()
     }
 }
