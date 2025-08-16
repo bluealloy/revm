@@ -38,12 +38,17 @@ impl Default for Stack {
 
 impl Clone for Stack {
     fn clone(&self) -> Self {
-        // Use `Self::new()` to ensure the cloned Stack maintains the STACK_LIMIT capacity,
-        // and then copy the data. This preserves the invariant that Stack always has
-        // STACK_LIMIT capacity, which is crucial for the safety and correctness of other methods.
-        let mut new_stack = Self::new();
-        new_stack.data.extend_from_slice(&self.data);
-        new_stack
+        let mut data = Vec::with_capacity(STACK_LIMIT);
+        // SAFETY: We know the capacity is sufficient, and we're copying valid data.
+        // `extend_from_slice` will check the capacity for each element, which is not efficient.
+        // We can use `ptr::copy_nonoverlapping` to copy the data directly.
+        unsafe {
+            let src_ptr = self.data.as_ptr();
+            let dst_ptr = data.as_mut_ptr();
+            ptr::copy_nonoverlapping(src_ptr, dst_ptr, self.data.len());
+            data.set_len(self.data.len());
+        }
+        Self { data }
     }
 }
 
@@ -148,7 +153,17 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
-        self.data.pop().ok_or(InstructionResult::StackUnderflow)
+        let len = self.data.len();
+        if len == 0 {
+            return Err(InstructionResult::StackUnderflow);
+        }
+        // SAFETY: len > 0 checked above
+        unsafe {
+            let new_len = len - 1;
+            let value = ptr::read(self.data.as_ptr().add(new_len));
+            self.data.set_len(new_len);
+            Ok(value)
+        }
     }
 
     /// Removes the topmost element from the stack and returns it.
@@ -208,12 +223,16 @@ impl Stack {
     #[must_use]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
-        // Allows the compiler to optimize out the `Vec::push` capacity check.
-        assume!(self.data.capacity() == STACK_LIMIT);
-        if self.data.len() == STACK_LIMIT {
+        let len = self.data.len();
+        if len >= STACK_LIMIT {
             return false;
         }
-        self.data.push(value);
+        // SAFETY: We checked capacity above, and Vec was initialized with STACK_LIMIT capacity
+        unsafe {
+            let ptr = self.data.as_mut_ptr().add(len);
+            ptr.write(value);
+            self.data.set_len(len + 1);
+        }
         true
     }
 
@@ -222,11 +241,12 @@ impl Stack {
     /// `StackError::Underflow` is returned.
     #[inline]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
-        if self.data.len() > no_from_top {
-            Ok(self.data[self.data.len() - no_from_top - 1])
-        } else {
-            Err(InstructionResult::StackUnderflow)
+        let len = self.data.len();
+        if no_from_top >= len {
+            return Err(InstructionResult::StackUnderflow);
         }
+        // SAFETY: bounds checked above
+        unsafe { Ok(*self.data.get_unchecked(len - no_from_top - 1)) }
     }
 
     /// Duplicates the `N`th value from the top of the stack.
@@ -373,13 +393,15 @@ impl Stack {
     /// `StackError::Underflow` is returned.
     #[inline]
     pub fn set(&mut self, no_from_top: usize, val: U256) -> Result<(), InstructionResult> {
-        if self.data.len() > no_from_top {
-            let len = self.data.len();
-            self.data[len - no_from_top - 1] = val;
-            Ok(())
-        } else {
-            Err(InstructionResult::StackUnderflow)
+        let len = self.data.len();
+        if no_from_top >= len {
+            return Err(InstructionResult::StackUnderflow);
         }
+        // SAFETY: bounds checked above
+        unsafe {
+            *self.data.get_unchecked_mut(len - no_from_top - 1) = val;
+        }
+        Ok(())
     }
 }
 
