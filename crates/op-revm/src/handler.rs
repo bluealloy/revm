@@ -436,7 +436,7 @@ where
             let old_balance = acc.info.balance;
 
             // decrement transaction id as it was incremented when we discarded the tx.
-            acc.transaction_id -= acc.transaction_id;
+            acc.transaction_id -= 1;
             acc.info.nonce = acc.info.nonce.saturating_add(1);
             acc.info.balance = acc
                 .info
