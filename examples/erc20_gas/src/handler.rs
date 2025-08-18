@@ -127,6 +127,7 @@ where
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        gas_refund: i64,
     ) -> Result<(), Self::Error> {
         let context = evm.ctx();
         let basefee = context.block().basefee() as u128;
@@ -135,7 +136,7 @@ where
         let gas = exec_result.gas();
 
         let reimbursement =
-            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
+            effective_gas_price.saturating_mul((gas.remaining() + gas_refund as u64) as u128);
         token_operation::<EVM::Context, ERROR>(
             context,
             TREASURY,

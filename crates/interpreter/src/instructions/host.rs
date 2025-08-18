@@ -250,7 +250,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         )
     );
 
-    context.interpreter.gas.record_refund(gas::sstore_refund(
+    context.host.record_refund(gas::sstore_refund(
         context.interpreter.runtime_flag.spec_id(),
         &state_load.data,
     ));
@@ -347,7 +347,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .is_enabled_in(LONDON)
         && !res.previously_destroyed
     {
-        context.interpreter.gas.record_refund(gas::SELFDESTRUCT)
+        context.host.record_refund(gas::SELFDESTRUCT)
     }
 
     gas!(

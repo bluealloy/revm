@@ -501,10 +501,6 @@ impl EthFrame<EthInterpreter> {
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
-
-                if ins_result.is_ok() {
-                    interpreter.gas.record_refund(out_gas.refunded());
-                }
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -532,7 +528,6 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO

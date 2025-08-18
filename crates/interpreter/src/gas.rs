@@ -108,26 +108,6 @@ impl Gas {
         self.remaining = 0;
     }
 
-    /// Records a refund value.
-    ///
-    /// `refund` can be negative but `self.refunded` should always be positive
-    /// at the end of transact.
-    #[inline]
-    pub fn record_refund(&mut self, refund: i64) {
-        self.refunded += refund;
-    }
-
-    /// Set a refund value for final refund.
-    ///
-    /// Max refund value is limited to Nth part (depending of fork) of gas spend.
-    ///
-    /// Related to EIP-3529: Reduction in refunds
-    #[inline]
-    pub fn set_final_refund(&mut self, is_london: bool) {
-        let max_refund_quotient = if is_london { 5 } else { 2 };
-        self.refunded = (self.refunded() as u64).min(self.spent() / max_refund_quotient) as i64;
-    }
-
     /// Set a refund value. This overrides the current refund value.
     #[inline]
     pub fn set_refund(&mut self, refund: i64) {

@@ -60,6 +60,12 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
 
+    /// Creates a journal entry for when gas refund is recorded
+    fn refund_changed(old_refund: i64) -> Self;
+
+    /// Returns the old refund value if this is a RefundChanged entry
+    fn get_refund_revert(&self) -> Option<i64>;
+
     /// Reverts the state change recorded by this journal entry
     ///
     /// More information on what is reverted can be found in [`JournalEntry`] enum.
@@ -213,6 +219,13 @@ pub enum JournalEntry {
         /// Address of account that had its code changed.
         address: Address,
     },
+    /// Gas refund changed
+    /// Action: Gas refund value changed
+    /// Revert: Revert to previous refund value
+    RefundChanged {
+        /// Previous refund value before the change.
+        old_refund: i64,
+    },
 }
 impl JournalEntryTr for JournalEntry {
     fn account_warmed(address: Address) -> Self {
@@ -285,6 +298,17 @@ impl JournalEntryTr for JournalEntry {
 
     fn code_changed(address: Address) -> Self {
         JournalEntry::CodeChange { address }
+    }
+
+    fn refund_changed(old_refund: i64) -> Self {
+        JournalEntry::RefundChanged { old_refund }
+    }
+
+    fn get_refund_revert(&self) -> Option<i64> {
+        match self {
+            JournalEntry::RefundChanged { old_refund } => Some(*old_refund),
+            _ => None,
+        }
     }
 
     fn revert(
@@ -404,6 +428,11 @@ impl JournalEntryTr for JournalEntry {
                 let acc = state.get_mut(&address).unwrap();
                 acc.info.code_hash = KECCAK_EMPTY;
                 acc.info.code = None;
+            }
+            JournalEntry::RefundChanged { old_refund: _ } => {
+                // RefundChanged entries are handled specially in JournalInner
+                // This revert method cannot access the journal's refund field
+                // So RefundChanged entries should be filtered out before calling this
             }
         }
     }
