@@ -5,6 +5,8 @@ use alloy_eips::BlockId;
 use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use anyhow::{anyhow, Result};
+use revm::primitives::alloy_primitives::aliases::U24;
+use revm::primitives::alloy_primitives::U160;
 use revm::{
     context::TxEnv,
     context_interface::result::{ExecutionResult, Output},
@@ -14,7 +16,7 @@ use revm::{
     state::AccountInfo,
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::ops::Div;
+use std::{hint::black_box, ops::Div};
 
 type AlloyCacheDB = CacheDB<WrapDatabaseAsync<AlloyDB<Ethereum, DynProvider>>>;
 
@@ -76,10 +78,12 @@ async fn main() -> Result<()> {
         &mut cache_db,
     )?;
 
-    let acc_weth_balance_after = balance_of(weth, account, &mut cache_db)?;
-    println!("WETH balance after swap: {acc_weth_balance_after}");
-    let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db)?;
-    println!("USDC balance after swap: {acc_usdc_balance_after}");
+    // let acc_weth_balance_after = balance_of(weth, account, &mut cache_db)?;
+    // println!("WETH balance after swap: {acc_weth_balance_after}");
+    // let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db)?;
+    // println!("USDC balance after swap: {acc_usdc_balance_after}");
+
+    swap_v3(account, amount_in, &mut cache_db)?;
 
     println!("OK");
     Ok(())
@@ -139,17 +143,15 @@ async fn get_amount_out(
 
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 
-    let result = evm
-        .transact_one(
-            TxEnv::builder()
-                .caller(address!("0000000000000000000000000000000000000000"))
-                .kind(TxKind::Call(uniswap_v2_router))
-                .data(encoded.into())
-                .value(U256::from(0))
-                .build()
-                .unwrap(),
-        )
+    let tx = TxEnv::builder()
+        .caller(address!("0000000000000000000000000000000000000000"))
+        .kind(TxKind::Call(uniswap_v2_router))
+        .data(encoded.into())
+        .value(U256::from(0))
+        .build()
         .unwrap();
+
+    let result = evm.transact_one(tx.clone()).unwrap();
 
     let value = match result {
         ExecutionResult::Success {
@@ -232,6 +234,18 @@ fn swap(
         .build()
         .unwrap();
 
+    // fetch slots from rpc
+    let time = std::time::Instant::now();
+    let _ = evm.transact(tx.clone()).unwrap();
+    println!("Fetch slots: {:?}", time.elapsed());
+
+    let time = std::time::Instant::now();
+    for _ in 0..1000 {
+        let _ = black_box(evm.transact(tx.clone()).unwrap());
+    }
+    println!("Swap time taken: {:?}", time.elapsed() / 1000);
+    // run it with `cargo run --package example-uniswap-v2-usdc-swap --profile profiling --bin example-uniswap-v2-usdc-swap`
+
     let ref_tx = evm.transact_commit(tx).unwrap();
 
     match ref_tx {
@@ -277,6 +291,92 @@ fn transfer(
     if !success {
         return Err(anyhow!("'transfer' failed"));
     }
+
+    Ok(())
+}
+
+const QUOTER_V2: Address = address!("61fFE014bA17989E743c5F6cB21bF9697530B21e");
+const USDC: Address = address!("A0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
+const WETH: Address = address!("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+
+fn swap_v3(from: Address, amount_in: U256, cache_db: &mut AlloyCacheDB) -> Result<()> {
+    sol! {
+    struct QuoteExactInputSingleParams {
+    address tokenIn;
+    address tokenOut;
+    uint256 amountIn;
+    uint24 fee;
+    uint160 sqrtPriceLimitX96;
+    }
+
+        /// @notice Returns the amount out received for a given exact input but for a swap of a single pool
+        /// @param params The params for the quote, encoded as `QuoteExactInputSingleParams`
+        /// tokenIn The token being swapped in
+        /// tokenOut The token being swapped out
+        /// fee The fee of the token pool to consider for the pair
+        /// amountIn The desired input amount
+        /// sqrtPriceLimitX96 The price limit of the pool that cannot be exceeded by the swap
+        /// @return amountOut The amount of `tokenOut` that would be received
+        /// @return sqrtPriceX96After The sqrt price of the pool after the swap
+        /// @return initializedTicksCrossed The number of initialized ticks that the swap crossed
+        /// @return gasEstimate The estimate of the gas that the swap consumes
+        function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+            external
+            returns (
+                uint256 amountOut,
+                uint160 sqrtPriceX96After,
+                uint32 initializedTicksCrossed,
+                uint256 gasEstimate
+            );
+    }
+
+    let params: QuoteExactInputSingleParams = QuoteExactInputSingleParams {
+        tokenIn: WETH,
+        tokenOut: USDC,
+        amountIn: amount_in,
+        fee: U24::from(500),
+        sqrtPriceLimitX96: U160::ZERO,
+    };
+
+    let encoded = quoteExactInputSingleCall { params }.abi_encode();
+
+    let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
+
+    let tx = TxEnv::builder()
+        .caller(from)
+        .kind(TxKind::Call(QUOTER_V2))
+        .data(encoded.into())
+        .value(U256::from(0))
+        .nonce(2)
+        .build()
+        .unwrap();
+
+    // fetch slots from rpc
+    let time = std::time::Instant::now();
+    let _ = evm.transact(tx.clone()).unwrap();
+    println!("Fetch v3 slots: {:?}", time.elapsed());
+
+    let time = std::time::Instant::now();
+    for _ in 0..1000 {
+        let _ = black_box(evm.transact(tx.clone()).unwrap());
+    }
+    println!("Swap v3 time taken: {:?}", time.elapsed() / 1000);
+    // run it with `cargo run --package example-uniswap-v2-usdc-swap --profile profiling --bin example-uniswap-v2-usdc-swap`
+
+    let ref_tx = evm.transact_commit(tx).unwrap();
+
+    match ref_tx {
+        ExecutionResult::Success { .. } => {
+            let output = ref_tx.output().unwrap();
+            let (amount_out, sqrt_price_x96_after, initialized_ticks_crossed, gas_estimate) =
+                <(U256, U160, u32, U256)>::abi_decode_validate(output)?;
+            println!("Amount out: {amount_out}");
+            println!("Sqrt price after: {sqrt_price_x96_after}");
+            println!("Initialized ticks crossed: {initialized_ticks_crossed}");
+            println!("Gas estimate: {gas_estimate}");
+        }
+        result => return Err(anyhow!("'swap' execution failed: {result:?}")),
+    };
 
     Ok(())
 }
