@@ -83,6 +83,7 @@ where
             .expect("effective balance is always smaller than max balance so it can't overflow");
 
         let account_balance_slot = erc_address_storage(tx.caller());
+        context.journal_mut().load_account(TOKEN)?;
         let account_balance = context
             .journal_mut()
             .sload(TOKEN, account_balance_slot)
