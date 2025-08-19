@@ -3,7 +3,7 @@ use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalCont
 use context_interface::{
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::AccountLoad,
-    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
+    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
