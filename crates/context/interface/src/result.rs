@@ -30,7 +30,7 @@ pub struct ExecResultAndState<R, S = EvmState> {
 }
 
 /// Type alias for backwards compatibility.
-pub type ResultAndState<H = HaltReason> = ExecResultAndState<ExecutionResult<H>>;
+pub type ResultAndState<H = HaltReason, S = EvmState> = ExecResultAndState<ExecutionResult<H>, S>;
 
 /// Tuple containing multiple execution results and state.
 pub type ResultVecAndState<R, S> = ExecResultAndState<Vec<R>, S>;
