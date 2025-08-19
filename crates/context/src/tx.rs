@@ -541,7 +541,7 @@ impl TxEnvBuilder {
 
                     // target is required
                     if !self.kind.is_call() {
-                        return Err(DeriveTxTypeError::MissingTargetForEip4844.into());
+                        return Err(DeriveTxTypeError::MissingTargetForEip7702.into());
                     }
                 }
                 TransactionType::Custom => {
