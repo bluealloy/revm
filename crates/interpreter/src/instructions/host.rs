@@ -1,11 +1,15 @@
 use crate::{
-    gas::{self, warm_cold_cost, CALL_STIPEND},
+    gas::{self, CALL_STIPEND, COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, WARM_STORAGE_READ_COST},
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
 };
+use context_interface::host::LoadError;
 use core::cmp::min;
-use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
+use primitives::{
+    hardfork::SpecId::{self, *},
+    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
+};
 
 use crate::InstructionContext;
 
@@ -15,27 +19,31 @@ use crate::InstructionContext;
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(balance) = context.host.balance(address) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
-    };
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    gas!(
-        context.interpreter,
-        if spec_id.is_enabled_in(BERLIN) {
-            warm_cold_cost(balance.is_cold)
-        } else if spec_id.is_enabled_in(ISTANBUL) {
+    if spec_id.is_enabled_in(BERLIN) {
+        let account = berlin_load_account!(context, address, false);
+        *top = account.balance;
+    } else {
+        let gas = if spec_id.is_enabled_in(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
             700
         } else if spec_id.is_enabled_in(TANGERINE) {
             400
         } else {
             20
-        }
-    );
-    *top = balance.data;
+        };
+        gas!(context.interpreter, gas);
+        let Ok(account) = context
+            .host
+            .load_account_info_skip_cold_load(address, false, false)
+        else {
+            context
+                .interpreter
+                .halt(InstructionResult::FatalExternalError);
+            return;
+        };
+        *top = account.data.balance;
+    };
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
@@ -65,22 +73,30 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code) = context.host.load_account_code(address) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
-    };
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code.is_cold));
-    } else if spec_id.is_enabled_in(TANGERINE) {
-        gas!(context.interpreter, 700);
+        let account = berlin_load_account!(context, address, true);
+        // safe to unwrap because we are loading code
+        *top = U256::from(account.code.unwrap().len());
     } else {
-        gas!(context.interpreter, 20);
+        let gas = if spec_id.is_enabled_in(TANGERINE) {
+            700
+        } else {
+            20
+        };
+        gas!(context.interpreter, gas);
+        let Ok(account) = context
+            .host
+            .load_account_info_skip_cold_load(address, true, false)
+        else {
+            context
+                .interpreter
+                .halt(InstructionResult::FatalExternalError);
+            return;
+        };
+        // safe to unwrap because we are loading code
+        *top = U256::from(account.data.code.unwrap().len());
     }
-
-    *top = U256::from(code.len());
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -90,21 +106,26 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let Some(code_hash) = context.host.load_account_code_hash(address) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
-    };
+
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(context.interpreter, warm_cold_cost(code_hash.is_cold));
-    } else if spec_id.is_enabled_in(ISTANBUL) {
-        gas!(context.interpreter, 700);
+        let account = berlin_load_account!(context, address, true);
+        *top = account.code_hash.into_u256();
     } else {
-        gas!(context.interpreter, 400);
+        let gas = if spec_id.is_enabled_in(ISTANBUL) {
+            700
+        } else {
+            400
+        };
+        gas!(context.interpreter, gas);
+        let Some(code_hash) = context.host.load_account_code_hash(address) else {
+            context
+                .interpreter
+                .halt(InstructionResult::FatalExternalError);
+            return;
+        };
+        *top = code_hash.into_u256();
     }
-    *top = code_hash.into_u256();
 }
 
 /// Implements the EXTCODECOPY instruction.
@@ -118,6 +139,21 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter
     );
     let address = address.into_address();
+
+    let spec_id = context.interpreter.runtime_flag.spec_id();
+
+    if spec_id.is_enabled_in(BERLIN) {
+        let account = berlin_load_account!(context, address, true);
+
+        
+    } else {
+        if spec_id.is_enabled_in(TANGERINE) {
+            700
+        } else {
+            20
+        }
+    }
+
     let Some(code) = context.host.load_account_code(address) else {
         context
             .interpreter

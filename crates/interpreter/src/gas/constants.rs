@@ -88,6 +88,8 @@ pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
 pub const COLD_SLOAD_COST: u64 = 2100;
 /// Gas cost for accessing a cold account (EIP-2929).
 pub const COLD_ACCOUNT_ACCESS_COST: u64 = 2600;
+/// Additional gas cost for accessing a cold account.
+pub const COLD_ACCOUNT_ACCESS_COST_ADDITIONAL: u64 = COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST;
 /// Gas cost for reading from a warm storage slot (EIP-2929).
 pub const WARM_STORAGE_READ_COST: u64 = 100;
 /// Gas cost for SSTORE reset operation on a warm storage slot.
