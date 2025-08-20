@@ -1,4 +1,5 @@
 //! Configuration for the EVM. Containing [`SpecId`].
+use alloy_rpc_types_trace::geth::call::CallKind;
 use auto_impl::auto_impl;
 use core::fmt::Debug;
 use core::hash::Hash;
@@ -91,4 +92,14 @@ pub enum CreateScheme {
         /// Custom contract creation address.
         address: Address,
     },
+}
+
+impl From<CreateScheme> for CallKind {
+    fn from(create: CreateScheme) -> Self {
+        match create {
+            CreateScheme::Create => Self::Create,
+            CreateScheme::Create2 { .. } => Self::Create2,
+            CreateScheme::Custom { .. } => Self::Create,
+        }
+    }
 }

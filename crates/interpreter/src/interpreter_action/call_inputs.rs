@@ -1,6 +1,8 @@
+use alloy_rpc_types_trace::geth::call::CallKind;
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
 use primitives::{Address, Bytes, U256};
+
 /// Input enum for a call.
 ///
 /// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
@@ -181,6 +183,17 @@ impl CallScheme {
     /// Returns true if it is `STATICCALL`.
     pub fn is_static_call(&self) -> bool {
         matches!(self, Self::StaticCall)
+    }
+}
+
+impl From<CallScheme> for CallKind {
+    fn from(scheme: CallScheme) -> Self {
+        match scheme {
+            CallScheme::Call => Self::Call,
+            CallScheme::StaticCall => Self::StaticCall,
+            CallScheme::DelegateCall => Self::DelegateCall,
+            CallScheme::CallCode => Self::CallCode,
+        }
     }
 }
 
