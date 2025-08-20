@@ -1,6 +1,6 @@
 //! BLS12-381 precompiles added in [`EIP-2537`](https://eips.ethereum.org/EIPS/eip-2537)
 //! For more details check modules for each precompile.
-use crate::PrecompileWithAddress;
+use crate::Precompile;
 
 #[allow(dead_code)]
 pub(crate) mod arkworks;
@@ -41,7 +41,7 @@ pub mod pairing;
 mod utils;
 
 /// Returns the BLS12-381 precompiles with their addresses.
-pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
+pub fn precompiles() -> impl Iterator<Item = Precompile> {
     [
         g1_add::PRECOMPILE,
         g1_msm::PRECOMPILE,

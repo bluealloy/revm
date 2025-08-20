@@ -1,11 +1,16 @@
 //! BLS12-381 map fp to g1 precompile. More details in [`map_fp_to_g1`]
 use super::utils::{pad_g1_point, remove_fp_padding};
 use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
-use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
-pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(MAP_FP_TO_G1_ADDRESS, map_fp_to_g1);
+pub const PRECOMPILE: Precompile = Precompile::new(
+    PrecompileId::Bls12MapFpToGp1,
+    MAP_FP_TO_G1_ADDRESS,
+    map_fp_to_g1,
+);
 
 /// Field-to-curve call expects 64 bytes as an input that is interpreted as an
 /// element of Fp. Output of this call is 128 bytes and is an encoded G1 point.
