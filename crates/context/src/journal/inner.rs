@@ -491,12 +491,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.logs.truncate(checkpoint.log_i);
 
         // iterate over last N journals sets and revert our global state
-        self.journal
-            .drain(checkpoint.journal_i..)
-            .rev()
-            .for_each(|entry| {
-                entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
-            });
+        if checkpoint.journal_i < self.journal.len() {
+            self.journal
+                .drain(checkpoint.journal_i..)
+                .rev()
+                .for_each(|entry| {
+                    entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
+                });
+        }
     }
 
     /// Performs selfdestruct action.
