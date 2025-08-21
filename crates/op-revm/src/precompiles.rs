@@ -6,7 +6,7 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{InputsImpl, InterpreterResult},
     precompile::{
-        self, bn254, secp256r1, PrecompileError, PrecompileResult, PrecompileWithAddress,
+        self, bn254, secp256r1, Precompile, PrecompileError, PrecompileId, PrecompileResult,
         Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
@@ -144,10 +144,8 @@ pub mod bn254_pair {
     /// Max input size for the bn254 pair precompile.
     pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
     /// Bn254 pair precompile.
-    pub const GRANITE: PrecompileWithAddress =
-        PrecompileWithAddress(bn254::pair::ADDRESS, |input, gas_limit| {
-            run_pair(input, gas_limit)
-        });
+    pub const GRANITE: Precompile =
+        Precompile::new(PrecompileId::Bn254Pairing, bn254::pair::ADDRESS, run_pair);
 
     /// Run the bn254 pair precompile with Optimism input limit.
     pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -179,14 +177,14 @@ pub mod bls12_381 {
     pub const ISTHMUS_PAIRING_MAX_INPUT_SIZE: usize = 235008;
 
     /// G1 msm precompile.
-    pub const ISTHMUS_G1_MSM: PrecompileWithAddress =
-        PrecompileWithAddress(G1_MSM_ADDRESS, run_g1_msm);
+    pub const ISTHMUS_G1_MSM: Precompile =
+        Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, run_g1_msm);
     /// G2 msm precompile.
-    pub const ISTHMUS_G2_MSM: PrecompileWithAddress =
-        PrecompileWithAddress(G2_MSM_ADDRESS, run_g2_msm);
+    pub const ISTHMUS_G2_MSM: Precompile =
+        Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, run_g2_msm);
     /// Pairing precompile.
-    pub const ISTHMUS_PAIRING: PrecompileWithAddress =
-        PrecompileWithAddress(PAIRING_ADDRESS, run_pair);
+    pub const ISTHMUS_PAIRING: Precompile =
+        Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, run_pair);
 
     /// Run the g1 msm precompile with Optimism input limit.
     pub fn run_g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
