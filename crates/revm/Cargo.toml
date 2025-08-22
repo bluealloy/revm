@@ -96,10 +96,7 @@ optional_no_base_fee = ["context/optional_no_base_fee"]
 # Precompiles features: Please look at the comments in `precompile` crate for more information.
 
 secp256k1 = ["precompile/secp256k1"] # See comments in `precompile`
-c-kzg = [
-	"precompile/c-kzg",
-] # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["precompile/kzg-rs"]
+c-kzg = ["precompile/c-kzg"]
 
 # blst will enabled both for bls precompiles and for kzg precompile.
 blst = ["precompile/blst"]
