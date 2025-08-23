@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.0.1...revm-context-interface-v10.1.0) - 2025-08-23
+
+### Added
+
+- add generic state to ResultAndState ([#2897](https://github.com/bluealloy/revm/pull/2897))
+
 ## [10.0.1](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.0.0...revm-context-interface-v10.0.1) - 2025-08-12
 
 ### Other
