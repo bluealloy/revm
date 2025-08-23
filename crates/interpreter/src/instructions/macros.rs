@@ -94,13 +94,11 @@ macro_rules! berlin_load_account {
                 account.data
             }
             Err(LoadError::ColdLoadSkipped) => {
-                $context.interpreter.halt(InstructionResult::OutOfGas);
+                $context.interpreter.halt_oog();
                 return $ret;
             }
             Err(LoadError::DBError) => {
-                $context
-                    .interpreter
-                    .halt(InstructionResult::FatalExternalError);
+                $context.interpreter.halt_fatal();
                 return $ret;
             }
         }

@@ -513,6 +513,9 @@ impl SharedMemory {
 /// Assumes that dst and src are valid.
 /// Assumes that dst and src do not overlap.
 unsafe fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, len: usize) {
+    if len == 0 {
+        return;
+    }
     if src_offset >= src.len() {
         // Nullify all memory slots
         dst.get_mut(dst_offset..dst_offset + len).unwrap().fill(0);

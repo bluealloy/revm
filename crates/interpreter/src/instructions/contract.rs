@@ -1,6 +1,9 @@
 mod call_helpers;
 
-pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
+pub use call_helpers::{
+    calc_call_gas, get_memory_input_and_out_ranges, load_account_delegated,
+    load_account_delegated_handle_error, resize_memory,
+};
 
 use crate::{
     gas,
@@ -124,6 +127,8 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
+    let remaining_gas =
+        load_account_delegated(context.host, context.interpreter.gas.remaining(), to);
     let Some(account_load) = context.host.load_account_delegated(to) else {
         context
             .interpreter
