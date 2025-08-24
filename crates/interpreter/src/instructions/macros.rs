@@ -91,7 +91,7 @@ macro_rules! berlin_load_account {
                         $ret
                     );
                 }
-                account.data
+                account
             }
             Err(LoadError::ColdLoadSkipped) => {
                 $context.interpreter.halt_oog();

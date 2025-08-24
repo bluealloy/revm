@@ -1,8 +1,8 @@
 mod call_helpers;
 
 pub use call_helpers::{
-    calc_call_gas, get_memory_input_and_out_ranges, load_account_delegated,
-    load_account_delegated_handle_error, resize_memory,
+    get_memory_input_and_out_ranges, load_acc_and_calc_gas, load_account_delegated,
+    load_account_delegated_handle_error, new_account_cost, resize_memory,
 };
 
 use crate::{
@@ -108,13 +108,15 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Implements the CALL instruction.
 ///
 /// Message call with value transfer to another account.
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, WIRE>,
+) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
-
     let has_transfer = !value.is_zero();
+
     if context.interpreter.runtime_flag.is_static() && has_transfer {
         context
             .interpreter
@@ -127,30 +129,11 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
-    let remaining_gas =
-        load_account_delegated(context.host, context.interpreter.gas.remaining(), to);
-    let Some(account_load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
+    let Some(gas_limit) =
+        load_acc_and_calc_gas(&mut context, to, has_transfer, true, local_gas_limit)
+    else {
         return;
     };
-
-    let Some(mut gas_limit) = calc_call_gas(
-        context.interpreter,
-        account_load,
-        has_transfer,
-        local_gas_limit,
-    ) else {
-        return;
-    };
-
-    gas!(context.interpreter, gas_limit);
-
-    // Add call stipend if there is value to be transferred.
-    if has_transfer {
-        gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
-    }
 
     // Call host to interact with target contract
     context
@@ -175,40 +158,24 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
 ///
 /// Message call with alternative account's code.
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = Address::from_word(B256::from(to));
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
+    let has_transfer = !value.is_zero();
 
-    //pop!(context.interpreter, value);
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
-    };
-
-    // Set `is_empty` to false as we are not creating this account.
-    load.is_empty = false;
-    let Some(mut gas_limit) =
-        calc_call_gas(context.interpreter, load, !value.is_zero(), local_gas_limit)
+    let Some(gas_limit) =
+        load_acc_and_calc_gas(&mut context, to, has_transfer, false, local_gas_limit)
     else {
         return;
     };
-
-    gas!(context.interpreter, gas_limit);
-
-    // Add call stipend if there is value to be transferred.
-    if !value.is_zero() {
-        gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
-    }
 
     // Call host to interact with target contract
     context
@@ -233,7 +200,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Message call with alternative account's code but same sender and value.
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
@@ -246,20 +213,10 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
+    let Some(gas_limit) = load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
+    else {
         return;
     };
-
-    // Set is_empty to false as we are not creating this account.
-    load.is_empty = false;
-    let Some(gas_limit) = calc_call_gas(context.interpreter, load, false, local_gas_limit) else {
-        return;
-    };
-
-    gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
     context
@@ -284,7 +241,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ///
 /// Static message call (cannot modify state).
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+    mut context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
@@ -297,18 +254,10 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
+    let Some(gas_limit) = load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
+    else {
         return;
     };
-    // Set `is_empty` to false as we are not creating this account.
-    load.is_empty = false;
-    let Some(gas_limit) = calc_call_gas(context.interpreter, load, false, local_gas_limit) else {
-        return;
-    };
-    gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
     context

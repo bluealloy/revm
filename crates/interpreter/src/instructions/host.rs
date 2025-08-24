@@ -39,7 +39,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
         else {
             return context.interpreter.halt_fatal();
         };
-        *top = account.data.balance;
+        *top = account.balance;
     };
 }
 
@@ -71,7 +71,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if spec_id.is_enabled_in(BERLIN) {
         let account = berlin_load_account!(context, address, true);
         // safe to unwrap because we are loading code
-        *top = U256::from(account.code.unwrap().len());
+        *top = U256::from(account.code.as_ref().unwrap().len());
     } else {
         let gas = if spec_id.is_enabled_in(TANGERINE) {
             700
@@ -86,7 +86,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
             return context.interpreter.halt_fatal();
         };
         // safe to unwrap because we are loading code
-        *top = U256::from(account.data.code.unwrap().len());
+        *top = U256::from(account.code.as_ref().unwrap().len());
     }
 }
 
@@ -145,8 +145,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     let code = if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true, ());
-        account.code.unwrap().original_bytes()
+        let account = berlin_load_account!(context, address, true);
+        account.code.as_ref().unwrap().original_bytes()
     } else {
         let gas = if spec_id.is_enabled_in(TANGERINE) {
             700
@@ -239,10 +239,8 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 
                 *index = storage.data;
             }
-            Err(LoadError::ColdLoadSkipped) => {
-                return context.interpreter.halt_oog();
-            }
-            Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
+            Err(LoadError::ColdLoadSkipped) => context.interpreter.halt_oog(),
+            Err(LoadError::DBError) => context.interpreter.halt_fatal(),
         }
     } else {
         let Some(storage) = context.host.sload(target, *index) else {
@@ -370,6 +368,12 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);
     let target = target.into_address();
+
+    // TODO order of operations should be
+    // * static gas should be spent, 5k gas
+    // * warm load gas
+    // * loading of account and checking cold load.
+    // * if not existing additinal gas for creation.
 
     let Some(res) = context
         .host

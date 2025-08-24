@@ -277,30 +277,18 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
     gas
 }
 
-/// Calculate call gas cost for the call instruction.
+/// Calculate static gas for the call
 ///
-/// There is three types of gas.
-/// * Account access gas. after berlin it can be cold or warm.
-/// * Transfer value gas. If value is transferred and balance of target account is updated.
-/// * If account is not existing and needs to be created. After Spurious dragon
-///   this is only accounted if value is transferred.
+/// Gas depends on:
+/// * Spec. For berlin hardfork only warm gas [`WARM_STORAGE_READ_COST`] is calculated.
+/// * If there is transfer value. additional gas of [`CALLVALUE`] is added.
 ///
-/// account_load.is_empty will be accounted only if hardfork is SPURIOUS_DRAGON and
-/// there is transfer value. [`bytecode::opcode::CALL`] use this field.
-///
-/// While [`bytecode::opcode::STATICCALL`], [`bytecode::opcode::DELEGATECALL`],
-/// [`bytecode::opcode::CALLCODE`] need to have this field hardcoded to false
-/// as they were present before SPURIOUS_DRAGON hardfork.
+/// For rest of gas that depend on the account state please see the [`call_cost`] function.
 #[inline]
-pub const fn call_cost(
-    spec_id: SpecId,
-    transfers_value: bool,
-    account_load: StateLoad<AccountLoad>,
-) -> u64 {
-    let is_empty = account_load.data.is_empty;
+pub fn calc_call_static_gas(spec_id: SpecId, has_transfer: bool) -> u64 {
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost_with_delegation(account_load)
+        WARM_STORAGE_READ_COST
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
@@ -309,21 +297,8 @@ pub const fn call_cost(
     };
 
     // Transfer value cost
-    if transfers_value {
+    if has_transfer {
         gas += CALLVALUE;
-    }
-
-    // New account cost
-    if is_empty {
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-            // Account only if there is value transferred.
-            if transfers_value {
-                gas += NEWACCOUNT;
-            }
-        } else {
-            gas += NEWACCOUNT;
-        }
     }
 
     gas

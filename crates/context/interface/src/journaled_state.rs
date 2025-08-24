@@ -5,7 +5,7 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
-use state::{Account, Bytecode};
+use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the state.
@@ -289,4 +289,45 @@ pub struct AccountLoad {
     pub is_delegate_account_cold: Option<bool>,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
+}
+
+/// Result of the account load from Journal state
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct AccountInfoLoad {
+    /// Account info
+    pub account: AccountInfo,
+    /// Is account cold loaded
+    pub is_cold: bool,
+    /// Is account empty, if `true` account is not created
+    pub is_empty: bool,
+}
+
+impl AccountInfoLoad {
+    /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
+    pub fn new(account: AccountInfo, is_cold: bool, is_empty: bool) -> Self {
+        Self {
+            account,
+            is_cold,
+            is_empty,
+        }
+    }
+
+    /// Maps the account info of the [`AccountInfoLoad`] to a new [`StateLoad`].
+    ///
+    /// Useful for transforming the account info of the [`AccountInfoLoad`] and preserving the cold load status.
+    pub fn into_state_load<F, O>(self, f: F) -> StateLoad<O>
+    where
+        F: FnOnce(AccountInfo) -> O,
+    {
+        StateLoad::new(f(self.account), self.is_cold)
+    }
+}
+
+impl Deref for AccountInfoLoad {
+    type Target = AccountInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.account
+    }
 }

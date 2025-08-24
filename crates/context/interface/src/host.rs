@@ -2,11 +2,11 @@
 
 use crate::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::AccountLoad,
+    journaled_state::{AccountInfoLoad, AccountLoad},
 };
 use auto_impl::auto_impl;
 use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
-use state::{AccountInfo, Bytecode};
+use state::Bytecode;
 
 /// Error that can happen when loading account info.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -120,43 +120,34 @@ pub trait Host {
     ///
     /// If skip_cold_load is true, it will not load the account if it is cold. This is needed to short circuit
     /// the load if there is not enough gas.
+    ///
+    /// Returns AccountInfo, is_cold and is_empty.
     fn load_account_info_skip_cold_load(
         &mut self,
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<AccountInfo>, LoadError>;
+    ) -> Result<AccountInfoLoad, LoadError>;
 
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
         self.load_account_info_skip_cold_load(address, false, false)
             .ok()
-            .map(|load| load.map(|info| info.balance))
+            .map(|load| load.into_state_load(|i| i.balance))
     }
 
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
-    #[deprecated(note = "Use combo of load_account_code to fetch delegate account load status")]
     #[inline]
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         let account = self
             .load_account_info_skip_cold_load(address, true, false)
             .ok()?;
 
-        // TODO
-        let mut is_empty = false;
-        if account.is_empty() {
-            // TODO
-            // if spec is before spurious dragon state clear
-            // fetch from journal if this account is none aka `state_clear_aware_is_empty`
-            // this approach is very unlikely to happen in past, and it is possible in present.
-            is_empty = true
-        }
-
         let mut account_load = StateLoad::new(
             AccountLoad {
                 is_delegate_account_cold: None,
-                is_empty,
+                is_empty: account.is_empty,
             },
             account.is_cold,
         );
@@ -168,6 +159,7 @@ pub trait Host {
                 .load_account_info_skip_cold_load(address, true, false)
                 .ok()?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+            account_load.data.is_empty = delegate_account.is_empty;
         }
 
         Some(account_load)
@@ -178,7 +170,7 @@ pub trait Host {
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.load_account_info_skip_cold_load(address, true, false)
             .ok()
-            .map(|load| load.map(|info| info.code.unwrap_or_default().original_bytes()))
+            .map(|load| load.into_state_load(|i| i.code.unwrap_or_default().original_bytes()))
     }
 
     /// Load account code hash, calls [`Host::load_account_info_skip_cold_load`] with `load_code` set to false.
@@ -186,22 +178,8 @@ pub trait Host {
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.load_account_info_skip_cold_load(address, false, false)
             .ok()
-            .map(|load| load.map(|info| info.code_hash))
+            .map(|load| load.into_state_load(|i| i.code_hash))
     }
-}
-
-/// Loads delegated account info.
-///
-/// If gas is less than warm_gas, it will load the account from journal.
-/// If gas is less than cold_gas, it will load the account from database.
-/// If gas is more than cold_gas, it will return error.
-pub fn load_delegated_account_skip_cold_load(
-    address: Address,
-    gas: u64,
-    warm_gas: u64,
-    cold_gas: u64,
-) -> Result<StateLoad<AccountInfo>, LoadError> {
-    todo!()
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
@@ -299,7 +277,7 @@ impl Host for DummyHost {
         _address: Address,
         _load_code: bool,
         _skip_cold_load: bool,
-    ) -> Result<StateLoad<AccountInfo>, LoadError> {
+    ) -> Result<AccountInfoLoad, LoadError> {
         Err(LoadError::DBError)
     }
 
