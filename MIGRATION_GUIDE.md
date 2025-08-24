@@ -1,3 +1,9 @@
+# v86 tag (revm v29.0.0)
+
+* `PrecompileWithAddress` is renamed to `Precompile` and it became a struct. 
+  * `Precompile` contains`PrecompileId`, `Address` and function.
+  * The reason is adding `PrecompileId` as it is needed for fusaka hardfork
+
 # v85 tag (revm v28.0.1) from v84 tag (revm v28.0.0)
 
 Forward compatible version.
