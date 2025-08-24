@@ -11,7 +11,7 @@ use crate::{
     InterpreterAction,
 };
 use context_interface::CreateScheme;
-use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
+use primitives::{hardfork::SpecId, AddressOrId, Bytes, U256};
 use std::boxed::Box;
 
 use crate::InstructionContext;
@@ -124,12 +124,18 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
         return;
     };
 
-    let Some(account_load) = context.host.load_account_delegated(to) else {
+    let Some(account_load) = context
+        .host
+        .load_account_delegated(AddressOrId::Address(to))
+    else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = account_load.address_and_id;
+    let bytecode_address = account_load.bytecode_address();
+    let is_bytecode_delegated = account_load.is_delegated();
 
     let Some(mut gas_limit) = calc_call_gas(
         context.interpreter,
@@ -157,7 +163,8 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContex
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
+                is_bytecode_delegated,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -173,7 +180,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -183,12 +190,14 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let bytecode_address = load.bytecode_address();
+    let is_bytecode_delegated = load.is_delegated();
 
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
@@ -215,7 +224,8 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
+                is_bytecode_delegated,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -232,7 +242,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -241,12 +251,14 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let bytecode_address = load.bytecode_address();
+    let is_bytecode_delegated = load.is_delegated();
 
     // Set is_empty to false as we are not creating this account.
     load.is_empty = false;
@@ -266,7 +278,8 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.caller_address(),
-                bytecode_address: to,
+                bytecode_address,
+                is_bytecode_delegated,
                 value: CallValue::Apparent(context.interpreter.input.call_value()),
                 scheme: CallScheme::DelegateCall,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -283,7 +296,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
-    let to = Address::from_word(B256::from(to));
+    let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
@@ -292,12 +305,16 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(mut load) = context.host.load_account_delegated(to) else {
+    let Some(mut load) = context.host.load_account_delegated(to.into()) else {
         context
             .interpreter
             .halt(InstructionResult::FatalExternalError);
         return;
     };
+    let to = load.address_and_id;
+    let bytecode_address = load.bytecode_address();
+    let is_bytecode_delegated = load.is_delegated();
+
     // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
     let Some(gas_limit) = calc_call_gas(context.interpreter, load, false, local_gas_limit) else {
@@ -315,7 +332,8 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
-                bytecode_address: to,
+                bytecode_address,
+                is_bytecode_delegated,
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
                 is_static: true,

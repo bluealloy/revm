@@ -434,7 +434,7 @@ mod tests {
         let (call_inputs, call_outcome) = &call_events[0];
         // The test setup might be using BENCH_CALLER as the default target
         // Just verify that a call was made and completed successfully
-        assert_eq!(call_inputs.target_address, BENCH_TARGET);
+        assert_eq!(*call_inputs.target_address.address(), BENCH_TARGET);
         assert!(call_outcome.is_some(), "Call should have completed");
     }
 

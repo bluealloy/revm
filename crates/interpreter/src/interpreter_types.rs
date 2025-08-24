@@ -1,6 +1,7 @@
 use crate::{CallInput, InstructionResult, InterpreterAction};
 use core::cell::Ref;
 use core::ops::{Deref, Range};
+use primitives::AddressAndId;
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
@@ -40,12 +41,12 @@ pub trait Immediates {
 /// Trait for fetching inputs of the call.
 pub trait InputsTr {
     /// Returns target address of the call.
-    fn target_address(&self) -> Address;
+    fn target_address(&self) -> AddressAndId;
     /// Returns bytecode address of the call. For DELEGATECALL this address will be different from target address.
     /// And if initcode is called this address will be [`None`].
-    fn bytecode_address(&self) -> Option<&Address>;
+    fn bytecode_address(&self) -> Option<&AddressAndId>;
     /// Returns caller address of the call.
-    fn caller_address(&self) -> Address;
+    fn caller_address(&self) -> AddressAndId;
     /// Returns input of the call.
     fn input(&self) -> &CallInput;
     /// Returns call value of the call.
