@@ -116,38 +116,38 @@ pub struct SStoreResult {
 impl SStoreResult {
     /// Returns `true` if the new value is equal to the present value.
     #[inline]
-    pub fn is_new_eq_present(&self) -> bool {
-        self.new_value == self.present_value
+    pub const fn is_new_eq_present(&self) -> bool {
+        self.new_value.const_eq(&self.present_value)
     }
 
     /// Returns `true` if the original value is equal to the present value.
     #[inline]
-    pub fn is_original_eq_present(&self) -> bool {
-        self.original_value == self.present_value
+    pub const fn is_original_eq_present(&self) -> bool {
+        self.original_value.const_eq(&self.present_value)
     }
 
     /// Returns `true` if the original value is equal to the new value.
     #[inline]
-    pub fn is_original_eq_new(&self) -> bool {
-        self.original_value == self.new_value
+    pub const fn is_original_eq_new(&self) -> bool {
+        self.original_value.const_eq(&self.new_value)
     }
 
     /// Returns `true` if the original value is zero.
     #[inline]
-    pub fn is_original_zero(&self) -> bool {
-        self.original_value.is_zero()
+    pub const fn is_original_zero(&self) -> bool {
+        self.original_value.const_is_zero()
     }
 
     /// Returns `true` if the present value is zero.
     #[inline]
-    pub fn is_present_zero(&self) -> bool {
-        self.present_value.is_zero()
+    pub const fn is_present_zero(&self) -> bool {
+        self.present_value.const_is_zero()
     }
 
     /// Returns `true` if the new value is zero.
     #[inline]
-    pub fn is_new_zero(&self) -> bool {
-        self.new_value.is_zero()
+    pub const fn is_new_zero(&self) -> bool {
+        self.new_value.const_is_zero()
     }
 }
 
