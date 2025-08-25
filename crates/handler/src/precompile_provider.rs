@@ -2,7 +2,6 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::ContextTr;
 use interpreter::{CallInput, Gas, InputsImpl, InstructionResult, InterpreterResult};
-use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::boxed::Box;
@@ -132,7 +131,6 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 };
                 result.output = output.bytes;
             }
-            Err(PrecompileError::Fatal(e)) => return Err(e),
             Err(e) => {
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG

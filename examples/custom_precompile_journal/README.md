@@ -59,26 +59,26 @@ The example demonstrates how to access the journal from within a precompile:
 let value = context
     .journal_mut()
     .sload(address, key)
-    .map_err(|e| PrecompileError::Other(format!("Storage read failed: {:?}", e)))?
+    .map_err(|_| PrecompileError::StorageOperationFailed)?
     .data;
 
 // Writing storage
 context
     .journal_mut()
     .sstore(address, key, value)
-    .map_err(|e| PrecompileError::Other(format!("Storage write failed: {:?}", e)))?;
+    .map_err(|_| PrecompileError::StorageOperationFailed)?;
 
 // Transferring balance
 context
     .journal_mut()
     .transfer(from, to, amount)
-    .map_err(|e| PrecompileError::Other(format!("Transfer failed: {:?}", e)))?;
+    .map_err(|_| PrecompileError::TransferFailed)?;
 
 // Incrementing balance
 context
     .journal_mut()
     .balance_incr(address, amount)
-    .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {:?}", e)))?;
+    .map_err(|_| PrecompileError::BalanceOperationFailed)?;
 ```
 
 ## Usage
