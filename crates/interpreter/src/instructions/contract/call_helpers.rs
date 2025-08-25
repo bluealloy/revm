@@ -83,7 +83,6 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     };
 
     gas!(interpreter, gas_limit, None);
-
     // Add call stipend if there is value to be transferred.
     if transfers_value {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
@@ -100,6 +99,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     transfers_value: bool,
     create_empty_account: bool,
 ) -> Option<u64> {
+    // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
     match load_account_delegated(
         context.host,
@@ -109,11 +109,13 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
         transfers_value,
         create_empty_account,
     ) {
-        Ok(remaining_gas) => return Some(remaining_gas),
+        Ok(gas_cost) => return Some(gas_cost),
         Err(LoadError::ColdLoadSkipped) => {
             context.interpreter.halt_oog();
         }
-        Err(LoadError::DBError) => context.interpreter.halt_fatal(),
+        Err(LoadError::DBError) => {
+            context.interpreter.halt_fatal();
+        }
     }
     None
 }
@@ -136,11 +138,9 @@ pub fn load_account_delegated<H: Host + ?Sized>(
 
     let skip_cold_load = is_berlin && remaining_gas < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
     let account = host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;
-
     if is_berlin && account.is_cold {
         cost += COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
     }
-
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
         cost += new_account_cost(is_spurioud_dragon, transfers_value);
@@ -164,9 +164,6 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         if delegate_account.is_cold {
             cost += COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
         }
-        if create_empty_account && delegate_account.is_empty {
-            cost += new_account_cost(is_spurioud_dragon, transfers_value);
-        }
     }
 
     Ok(cost)
@@ -176,10 +173,9 @@ pub fn load_account_delegated<H: Host + ?Sized>(
 #[inline]
 pub fn new_account_cost(is_spurioud_dragon: bool, transfers_value: bool) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
-    // Account only if there is value transferred.
+    // Pre-Spurious Dragon: always charge for new account
+    // Post-Spurious Dragon: only charge if value is transferred
     if !is_spurioud_dragon || transfers_value {
-        // before spurious dragon [`NEWACCOUNT`] will be always accounted
-        // After EIP-161 it is only accounted if there is value transferred.
         return NEWACCOUNT;
     }
     0

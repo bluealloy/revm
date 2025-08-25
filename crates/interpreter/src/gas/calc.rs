@@ -248,6 +248,7 @@ const fn frontier_sstore_cost(vals: &SStoreResult) -> u64 {
 /// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
 pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
+    let is_tangerine = spec_id.is_enabled_in(SpecId::TANGERINE);
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
         res.data.had_value && !res.data.target_exists
@@ -256,19 +257,14 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
     };
 
     // EIP-150: Gas cost changes for IO-heavy operations
-    let selfdestruct_gas_topup = if spec_id.is_enabled_in(SpecId::TANGERINE) && should_charge_topup
-    {
+    let selfdestruct_gas_topup = if is_tangerine && should_charge_topup {
         25000
     } else {
         0
     };
 
     // EIP-150: Gas cost changes for IO-heavy operations
-    let selfdestruct_gas = if spec_id.is_enabled_in(SpecId::TANGERINE) {
-        5000
-    } else {
-        0
-    };
+    let selfdestruct_gas = if is_tangerine { 5000 } else { 0 };
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if spec_id.is_enabled_in(SpecId::BERLIN) && res.is_cold {

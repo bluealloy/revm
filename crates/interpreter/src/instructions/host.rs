@@ -227,14 +227,13 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
         50
     };
     gas!(context.interpreter, gas);
-
     if spec_id.is_enabled_in(BERLIN) {
         let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
-        match context.host.sload_skip_cold_load(target, *index, skip_cold) {
+        let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
+        match res {
             Ok(storage) => {
                 if storage.is_cold {
                     gas!(context.interpreter, COLD_SLOAD_COST_ADDITIONAL);
-                    return;
                 }
 
                 *index = storage.data;

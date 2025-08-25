@@ -253,19 +253,6 @@ impl Host for DummyHost {
 
     fn log(&mut self, _log: Log) {}
 
-    fn sstore(
-        &mut self,
-        _address: Address,
-        _key: StorageKey,
-        _value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>> {
-        None
-    }
-
-    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
-        None
-    }
-
     fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
 
     fn tload(&mut self, _address: Address, _key: StorageKey) -> StorageValue {

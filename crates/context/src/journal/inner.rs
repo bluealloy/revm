@@ -636,13 +636,20 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let account = entry.into_mut();
 
                 // skip load if account is cold.
-                if skip_cold_load && account.is_cold_transaction_id(self.transaction_id) {
-                    return Err(JournalLoadError::ColdLoadSkipped);
-                }
-
-                let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
-                // if it is colad loaded we need to clear local flags that can interact with selfdestruct
+                let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
+                    // account can be loaded by we still need to check warm_addresses to see if it is cold.
+                    let should_be_cold = self.warm_addresses.is_cold(&address);
+
+                    // dont load it cold if skiping cold load is true.
+                    if should_be_cold && skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
+                    is_cold = should_be_cold;
+
+                    // mark it warm.
+                    account.mark_warm_with_transaction_id(self.transaction_id);
+
                     // if it is cold loaded and we have selfdestructed locally it means that
                     // account was selfdestructed in previous transaction and we need to clear its information and storage.
                     if account.is_selfdestructed_locally() {
@@ -658,8 +665,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
             Entry::Vacant(vac) => {
+                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
+                let is_cold = self.warm_addresses.is_cold(&address);
+
                 // dont load cold account if skip_cold_load is true
-                if skip_cold_load {
+                if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
                 let account = if let Some(account) = db.basic(address)? {
@@ -667,9 +677,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 } else {
                     Account::new_not_existing(self.transaction_id)
                 };
-
-                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
-                let is_cold = self.warm_addresses.is_cold(&address);
 
                 StateLoad {
                     data: vac.insert(account),
@@ -852,10 +859,11 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
         Entry::Occupied(occ) => {
             let slot = occ.into_mut();
             // skip load if account is cold.
-            if skip_cold_load && slot.is_cold_transaction_id(transaction_id) {
+            let is_cold = slot.is_cold_transaction_id(transaction_id);
+            if skip_cold_load && is_cold {
                 return Err(JournalLoadError::ColdLoadSkipped);
             }
-            let is_cold = slot.mark_warm_with_transaction_id(transaction_id);
+            slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
         }
         Entry::Vacant(vac) => {
@@ -868,7 +876,6 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             } else {
                 db.storage(address, key)?
             };
-
             vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)

@@ -123,12 +123,10 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
-
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
         return;
     };
-
     let Some(gas_limit) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, true, local_gas_limit)
     else {
