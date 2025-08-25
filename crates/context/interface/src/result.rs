@@ -10,6 +10,7 @@
 use crate::{context::ContextError, transaction::TransactionError};
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
+use precompile::PrecompileError;
 use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
@@ -590,7 +591,7 @@ pub enum HaltReason {
     /// Address collision during contract creation.
     CreateCollision,
     /// Precompile error.
-    PrecompileError,
+    PrecompileError(PrecompileError),
     /// Nonce overflow.
     NonceOverflow,
     /// Create init code size exceeds limit (runtime).

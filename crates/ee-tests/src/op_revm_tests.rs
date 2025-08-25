@@ -18,7 +18,9 @@ use revm::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
         Interpreter, InterpreterTypes,
     },
-    precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
+    precompile::{
+        bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address, PrecompileError,
+    },
     primitives::{bytes, eip7825, Address, Bytes, Log, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
@@ -230,7 +232,9 @@ fn test_halted_tx_call_bn254_pair_granite() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bn254PairLength
+            )),
             ..
         }
     ));
@@ -300,7 +304,9 @@ fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381G1AddInputLength
+            )),
             ..
         }
     ));
@@ -379,7 +385,9 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381G1MsmInputLength
+            )),
             ..
         }
     ));
@@ -448,7 +456,9 @@ fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381FpPaddingInvalid
+            )),
             ..
         }
     ));
@@ -522,7 +532,9 @@ fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381G2AddInputLength
+            )),
             ..
         }
     ));
@@ -601,7 +613,9 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381G2MsmInputLength
+            )),
             ..
         }
     ));
@@ -670,7 +684,9 @@ fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381FpPaddingInvalid
+            )),
             ..
         }
     ));
@@ -744,7 +760,9 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381PairingInputLength
+            )),
             ..
         }
     ));
@@ -810,7 +828,9 @@ fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381FpPaddingInvalid
+            )),
             ..
         }
     ));
@@ -894,7 +914,9 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381MapFpToG1InputLength
+            )),
             ..
         }
     ));
@@ -978,7 +1000,9 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
     assert!(matches!(
         output.result,
         ExecutionResult::Halt {
-            reason: OpHaltReason::Base(HaltReason::PrecompileError),
+            reason: OpHaltReason::Base(HaltReason::PrecompileError(
+                PrecompileError::Bls12381MapFp2ToG2InputLength
+            )),
             ..
         }
     ));

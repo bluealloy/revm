@@ -3,6 +3,7 @@ use context_interface::{
     result::{HaltReason, OutOfGasError, SuccessReason},
 };
 use core::fmt::Debug;
+use precompile::PrecompileError;
 
 /// Result of executing an EVM instruction.
 ///
@@ -70,7 +71,7 @@ pub enum InstructionResult {
     /// Payment amount overflow.
     OverflowPayment,
     /// Error in precompiled contract execution.
-    PrecompileError,
+    PrecompileError(PrecompileError),
     /// Nonce overflow.
     NonceOverflow,
     /// Exceeded contract size limit during creation.
@@ -122,7 +123,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::StackUnderflow => Self::StackUnderflow,
             HaltReason::OutOfOffset => Self::OutOfOffset,
             HaltReason::CreateCollision => Self::CreateCollision,
-            HaltReason::PrecompileError => Self::PrecompileError,
+            HaltReason::PrecompileError(e) => Self::PrecompileError(e),
             HaltReason::NonceOverflow => Self::NonceOverflow,
             HaltReason::CreateContractSizeLimit => Self::CreateContractSizeLimit,
             HaltReason::CreateContractStartingWithEF => Self::CreateContractStartingWithEF,
@@ -183,7 +184,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::OutOfOffset
             | $crate::InstructionResult::CreateCollision
             | $crate::InstructionResult::OverflowPayment
-            | $crate::InstructionResult::PrecompileError
+            | $crate::InstructionResult::PrecompileError(_)
             | $crate::InstructionResult::NonceOverflow
             | $crate::InstructionResult::CreateContractSizeLimit
             | $crate::InstructionResult::CreateContractStartingWithEF
@@ -330,7 +331,9 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset.into()),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision.into()),
             InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), // Check for first call is done separately.
-            InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError.into()),
+            InstructionResult::PrecompileError(e) => {
+                Self::Halt(HaltReason::PrecompileError(e).into())
+            }
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow.into()),
             InstructionResult::CreateContractSizeLimit => {
                 Self::Halt(HaltReason::CreateContractSizeLimit.into())
@@ -354,6 +357,7 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
 #[cfg(test)]
 mod tests {
     use crate::InstructionResult;
+    use precompile::PrecompileError;
 
     #[test]
     fn exhaustiveness() {
@@ -405,7 +409,7 @@ mod tests {
             InstructionResult::OutOfOffset,
             InstructionResult::CreateCollision,
             InstructionResult::OverflowPayment,
-            InstructionResult::PrecompileError,
+            InstructionResult::PrecompileError(PrecompileError::OutOfGas),
             InstructionResult::NonceOverflow,
             InstructionResult::CreateContractSizeLimit,
             InstructionResult::CreateContractStartingWithEF,

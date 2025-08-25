@@ -9,7 +9,6 @@ use ::blst::{
     blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
     blst_scalar_fr_check, blst_scalar_from_bendian,
 };
-use std::string::ToString;
 
 /// Verify KZG proof using BLST BLS12-381 implementation.
 ///
@@ -94,21 +93,17 @@ fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<blst_p1_affine, PrecompileErr
     unsafe {
         let result = blst::blst_p1_deserialize(&mut point, bytes.as_ptr());
         if result != blst::BLST_ERROR::BLST_SUCCESS {
-            return Err(PrecompileError::Other(
-                "Invalid compressed G1 point".to_string(),
-            ));
+            return Err(PrecompileError::KzgInvalidG1Point);
         }
 
         // Verify the point is on curve
         if !blst_p1_affine_on_curve(&point) {
-            return Err(PrecompileError::Other("G1 point not on curve".to_string()));
+            return Err(PrecompileError::KzgG1PointNotOnCurve);
         }
 
         // Verify the point is in the correct subgroup
         if !blst_p1_affine_in_g1(&point) {
-            return Err(PrecompileError::Other(
-                "G1 point not in correct subgroup".to_string(),
-            ));
+            return Err(PrecompileError::KzgG1PointNotInSubgroup);
         }
     }
     Ok(point)
@@ -124,9 +119,7 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileErro
     }
 
     if unsafe { !blst_scalar_fr_check(&scalar) } {
-        return Err(PrecompileError::Other(
-            "Non-canonical scalar field element".to_string(),
-        ));
+        return Err(PrecompileError::NonCanonicalFp);
     }
 
     Ok(scalar)

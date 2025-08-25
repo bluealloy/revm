@@ -1164,6 +1164,7 @@ checksum = "4fd49896f12ac9b6dcd7a5998466b9b58263a695a3dd1ecc1aaca2e12a90b080"
 dependencies = [
  "cc",
  "glob",
+ "serde",
  "threadpool",
  "zeroize",
 ]
@@ -2700,6 +2701,7 @@ checksum = "9201effeea3fcc93b587904ae2df9ce97e433184b9d6d299e9ebc9830a546636"
 dependencies = [
  "ff",
  "hex",
+ "serde",
  "serde_arrays",
  "sha2 0.10.9",
  "sp1_bls12_381",
@@ -3105,6 +3107,7 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "primeorder",
+ "serdect",
  "sha2 0.10.9",
 ]
 
@@ -3468,6 +3471,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+ "serdect",
 ]
 
 [[package]]
@@ -3825,6 +3829,7 @@ dependencies = [
  "auto_impl",
  "either",
  "revm-database-interface",
+ "revm-precompile",
  "revm-primitives",
  "revm-state",
  "serde",
@@ -3918,6 +3923,7 @@ dependencies = [
  "bincode 2.0.1",
  "revm-bytecode",
  "revm-context-interface",
+ "revm-precompile",
  "revm-primitives",
  "serde",
 ]
@@ -3948,6 +3954,7 @@ dependencies = [
  "rstest",
  "rug",
  "secp256k1 0.31.0",
+ "serde",
  "sha2 0.10.9",
  "substrate-bn",
 ]
@@ -4082,6 +4089,7 @@ dependencies = [
  "gmp-mpfr-sys",
  "libc",
  "libm",
+ "serde",
 ]
 
 [[package]]
@@ -4275,6 +4283,7 @@ dependencies = [
  "bitcoin_hashes",
  "rand 0.9.1",
  "secp256k1-sys 0.11.0",
+ "serde",
 ]
 
 [[package]]

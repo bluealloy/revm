@@ -71,6 +71,7 @@ serde = [
 	"database-interface/serde",
 	"interpreter/serde",
 	"derive-where/serde",
+	"precompile/serde"
 ]
 
 # Deprecated, please use `serde` feature instead.

@@ -22,6 +22,7 @@ workspace = true
 bytecode.workspace = true
 primitives.workspace = true
 context-interface.workspace = true
+precompile.workspace = true
 
 # optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -31,13 +32,14 @@ bincode.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "context-interface/std", "bytecode/std"]
+std = ["serde?/std", "primitives/std", "context-interface/std", "bytecode/std", "precompile/std"]
 hashbrown = ["primitives/hashbrown"]
 serde = [
 	"dep:serde",
 	"primitives/serde",
 	"bytecode/serde",
 	"context-interface/serde",
+	"precompile/serde",
 	"bincode/serde",
 ]
 arbitrary = ["std", "primitives/arbitrary"]

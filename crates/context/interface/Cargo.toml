@@ -22,6 +22,7 @@ workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
+precompile.workspace = true
 alloy-eip7702 = { workspace = true, features = ["k256"] }
 alloy-eip2930.workspace = true
 
@@ -44,6 +45,7 @@ std = [
 	"database-interface/std",
 	"primitives/std",
 	"state/std",
+	"precompile/std",
 	"either/std",
 ]
 serde = [
@@ -53,6 +55,7 @@ serde = [
 	"alloy-eip7702/serde",
 	"alloy-eip2930/serde",
 	"database-interface/serde",
+	"precompile/serde",
 	"either/serde",
 ]
 

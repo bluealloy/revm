@@ -72,6 +72,11 @@ p256 = { workspace = true, features = ["ecdsa"] }
 cfg-if.workspace = true
 arrayref = "0.3.6"
 
+# optional
+serde = { version = "1.0", default-features = false, features = [
+	"derive",
+], optional = true }
+
 [dev-dependencies]
 criterion.workspace = true
 rand = { workspace = true, features = ["std"] }
@@ -97,6 +102,19 @@ std = [
 	"ark-std/std",
 	"p256/std",
 	"rug?/std",
+	"serde?/std"
+]
+serde = [
+	"dep:serde",
+	"blst?/serde",
+	"c-kzg?/serde",
+	"k256/serde",
+	"kzg-rs?/serde",
+	"p256/serde",
+	"rand/serde",
+	"primitives/serde",
+	"rug?/serde",
+	"secp256k1?/serde"
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]

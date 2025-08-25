@@ -65,6 +65,7 @@ serde = [
 	"database/serde",
 	"inspector/serde",
 	"state/serde",
+	"precompile/serde"
 ]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]

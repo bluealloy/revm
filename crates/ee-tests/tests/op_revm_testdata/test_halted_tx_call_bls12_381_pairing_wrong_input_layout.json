@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 97444,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileError": "Bls12381FpPaddingInvalid"
+        }
       }
     }
   },

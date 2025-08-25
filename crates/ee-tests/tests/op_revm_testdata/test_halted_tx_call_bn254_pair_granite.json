@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 1824024,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileError": "Bn254PairLength"
+        }
       }
     }
   },
