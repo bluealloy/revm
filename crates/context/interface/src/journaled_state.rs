@@ -296,7 +296,7 @@ impl<E> JournalLoadError<E> {
 
     /// Converts the error to a load error.
     #[inline]
-    pub fn into_load_error(self) -> (LoadError, Option<E>) {
+    pub fn into_parts(self) -> (LoadError, Option<E>) {
         match self {
             JournalLoadError::DBError(e) => (LoadError::DBError, Some(e)),
             JournalLoadError::ColdLoadSkipped => (LoadError::ColdLoadSkipped, None),

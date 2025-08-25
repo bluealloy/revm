@@ -282,8 +282,6 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// Gas depends on:
 /// * Spec. For berlin hardfork only warm gas [`WARM_STORAGE_READ_COST`] is calculated.
 /// * If there is transfer value. additional gas of [`CALLVALUE`] is added.
-///
-/// For rest of gas that depend on the account state please see the [`call_cost`] function.
 #[inline]
 pub fn calc_call_static_gas(spec_id: SpecId, has_transfer: bool) -> u64 {
     // Account access.

@@ -629,29 +629,53 @@ impl<
 
     fn sstore_skip_cold_load(
         &mut self,
-        _address: Address,
-        _key: StorageKey,
-        _value: StorageValue,
-        _skip_cold_load: bool,
+        address: Address,
+        key: StorageKey,
+        value: StorageValue,
+        skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, LoadError> {
-        todo!()
+        self.journal_mut()
+            .sstore_skip_cold_load(address, key, value, skip_cold_load)
+            .map_err(|e| {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
+            })
     }
 
     fn sload_skip_cold_load(
         &mut self,
-        _address: Address,
-        _key: StorageKey,
-        _skip_cold_load: bool,
+        address: Address,
+        key: StorageKey,
+        skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, LoadError> {
-        todo!()
+        self.journal_mut()
+            .sload_skip_cold_load(address, key, skip_cold_load)
+            .map_err(|e| {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
+            })
     }
 
     fn load_account_info_skip_cold_load(
         &mut self,
-        _address: Address,
-        _load_code: bool,
-        _skip_cold_load: bool,
+        address: Address,
+        load_code: bool,
+        skip_cold_load: bool,
     ) -> Result<AccountInfoLoad, LoadError> {
-        todo!()
+        self.journal_mut()
+            .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
+            .map_err(|e| {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
+            })
     }
 }

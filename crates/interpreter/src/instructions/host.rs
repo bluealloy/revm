@@ -373,7 +373,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // * static gas should be spent, 5k gas
     // * warm load gas
     // * loading of account and checking cold load.
-    // * if not existing additinal gas for creation.
+    // * if not existing additional gas for creation.
 
     let Some(res) = context
         .host
