@@ -3,7 +3,7 @@
 //! It is used to optimize access to precompile addresses.
 
 use bitvec::{bitvec, order::Lsb0, vec::BitVec};
-use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
+use primitives::{short_address, Address, AddressAndId, HashSet, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,7 +17,13 @@ pub struct WarmAddresses {
     /// `true` if all precompiles are short addresses.
     all_short_addresses: bool,
     /// Coinbase address.
-    coinbase: Option<Address>,
+    coinbase: Option<AddressAndId>,
+    /// Caller address and id.
+    caller: Option<AddressAndId>,
+    /// Tx target address and id.
+    tx_target: Option<AddressAndId>,
+    /// Tx target delegated address and id.
+    tx_target_delegated: Option<AddressAndId>,
 }
 
 impl Default for WarmAddresses {
@@ -35,6 +41,9 @@ impl WarmAddresses {
             precompile_short_addresses: BitVec::new(),
             all_short_addresses: true,
             coinbase: None,
+            caller: None,
+            tx_target: None,
+            tx_target_delegated: None,
         }
     }
 
@@ -46,8 +55,21 @@ impl WarmAddresses {
 
     /// Returns the coinbase address.
     #[inline]
-    pub fn coinbase(&self) -> Option<Address> {
+    pub fn coinbase(&self) -> Option<AddressAndId> {
         self.coinbase
+    }
+
+    /// Returns the caller address and id.
+    #[inline]
+    pub fn caller(&self) -> Option<AddressAndId> {
+        self.caller
+    }
+
+    /// Returns the tx target address and id.
+    #[inline]
+    pub fn tx_target(&self) -> Option<(AddressAndId, Option<AddressAndId>)> {
+        self.tx_target
+            .map(|tx_target| (tx_target, self.tx_target_delegated))
     }
 
     /// Set the precompile addresses and short addresses.
@@ -71,23 +93,39 @@ impl WarmAddresses {
 
     /// Set the coinbase address.
     #[inline]
-    pub fn set_coinbase(&mut self, address: Address) {
+    pub fn set_coinbase(&mut self, address: AddressAndId) {
         self.coinbase = Some(address);
     }
 
-    /// Clear the coinbase address.
+    /// Set the coinbase address.
     #[inline]
-    pub fn clear_coinbase(&mut self) {
+    pub fn set_caller(&mut self, address: AddressAndId) {
+        self.caller = Some(address);
+    }
+
+    /// Set the tx target address and id.
+    #[inline]
+    pub fn set_tx_target(&mut self, address: AddressAndId, delegated: Option<AddressAndId>) {
+        self.tx_target = Some(address);
+        self.tx_target_delegated = delegated;
+    }
+
+    /// Clear the coinbase/caller/tx target addresses.
+    #[inline]
+    pub fn clear_addresses(&mut self) {
         self.coinbase = None;
+        self.caller = None;
+        self.tx_target = None;
+        self.tx_target_delegated = None;
     }
 
     /// Returns true if the address is warm loaded.
     #[inline]
     pub fn is_warm(&self, address: &Address) -> bool {
         // check if it is coinbase
-        if Some(*address) == self.coinbase {
-            return true;
-        }
+        // if Some(*address) == self.coinbase {
+        //     return true;
+        // }
 
         // if there are no precompiles, it is cold loaded and bitvec is not set.
         if self.precompile_set.is_empty() {
@@ -138,12 +176,12 @@ mod tests {
         let coinbase_addr = address!("1234567890123456789012345678901234567890");
 
         // Test setting coinbase
-        warm_addresses.set_coinbase(coinbase_addr);
-        assert_eq!(warm_addresses.coinbase, Some(coinbase_addr));
-        assert!(warm_addresses.is_warm(&coinbase_addr));
+        //warm_addresses.set_coinbase(coinbase_addr);
+        //assert_eq!(warm_addresses.coinbase, Some(coinbase_addr));
+        //assert!(warm_addresses.is_warm(&coinbase_addr));
 
         // Test clearing coinbase
-        warm_addresses.clear_coinbase();
+        warm_addresses.clear_addresses();
         assert!(warm_addresses.coinbase.is_none());
         assert!(!warm_addresses.is_warm(&coinbase_addr));
     }

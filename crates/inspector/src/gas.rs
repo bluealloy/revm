@@ -4,6 +4,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 /// Helper that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
@@ -86,7 +87,7 @@ mod tests {
         interpreter_types::{Jumps, ReturnData},
         CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
     };
-    use primitives::{Address, Bytes, TxKind};
+    use primitives::{Address, AddressAndId, Bytes, TxKind};
     use state::bytecode::{opcode, Bytecode};
 
     #[derive(Default, Debug)]
@@ -222,7 +223,7 @@ mod tests {
         inspector.call_override.push(None);
         inspector.create_override.push(Some(CreateOutcome::new(
             InterpreterResult::new(InstructionResult::Revert, [0x02].into(), Gas::new(100_000)),
-            Some(Address::ZERO),
+            Some(AddressAndId::new(Address::ZERO, (0, 0))),
         )));
 
         let contract_data: Bytes = Bytes::from(vec![

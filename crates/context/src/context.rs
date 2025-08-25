@@ -7,7 +7,9 @@ use context_interface::{
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
-use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{
+    hardfork::SpecId, Address, AddressOrId, Bytes, Log, StorageKey, StorageValue, B256, U256,
+};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -454,53 +456,65 @@ impl<
 {
     /* Block */
 
+    #[inline]
     fn basefee(&self) -> U256 {
         U256::from(self.block().basefee())
     }
 
+    #[inline]
     fn blob_gasprice(&self) -> U256 {
         U256::from(self.block().blob_gasprice().unwrap_or(0))
     }
 
+    #[inline]
     fn gas_limit(&self) -> U256 {
         U256::from(self.block().gas_limit())
     }
 
+    #[inline]
     fn difficulty(&self) -> U256 {
         self.block().difficulty()
     }
 
+    #[inline]
     fn prevrandao(&self) -> Option<U256> {
         self.block().prevrandao().map(|r| r.into())
     }
 
+    #[inline]
     fn block_number(&self) -> U256 {
         self.block().number()
     }
 
+    #[inline]
     fn timestamp(&self) -> U256 {
         U256::from(self.block().timestamp())
     }
 
+    #[inline]
     fn beneficiary(&self) -> Address {
         self.block().beneficiary()
     }
 
+    #[inline]
     fn chain_id(&self) -> U256 {
         U256::from(self.cfg().chain_id())
     }
 
     /* Transaction */
 
+    #[inline]
     fn effective_gas_price(&self) -> U256 {
         let basefee = self.block().basefee();
         U256::from(self.tx().effective_gas_price(basefee as u128))
     }
 
+    #[inline]
     fn caller(&self) -> Address {
         self.tx().caller()
     }
 
+    #[inline]
     fn blob_hash(&self, number: usize) -> Option<U256> {
         let tx = &self.tx();
         if tx.tx_type() != TransactionType::Eip4844 {
@@ -513,12 +527,14 @@ impl<
 
     /* Config */
 
+    #[inline]
     fn max_initcode_size(&self) -> usize {
         self.cfg().max_initcode_size()
     }
 
     /* Database */
 
+    #[inline]
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
         self.db_mut()
             .block_hash(requested_number)
@@ -530,9 +546,14 @@ impl<
 
     /* Journal */
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
+    /// Load account and its delegated account if EIP-7702 is enabled.
+    #[inline]
+    fn load_account_delegated(
+        &mut self,
+        address_or_id: AddressOrId,
+    ) -> Option<StateLoad<AccountLoad>> {
         self.journal_mut()
-            .load_account_delegated(address)
+            .load_account_delegated(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -540,10 +561,11 @@ impl<
     }
 
     /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
+    #[inline]
+    fn balance(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<U256>> {
         self.journal_mut()
-            .load_account(address)
-            .map(|acc| acc.map(|a| a.info.balance))
+            .load_account(address_or_id)
+            .map(|acc| acc.map(|a| a.0.info.balance))
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
@@ -551,27 +573,36 @@ impl<
     }
 
     /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
+    #[inline]
+    fn load_account_code(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<Bytes>> {
         self.journal_mut()
-            .code(address)
+            .code(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
             .ok()
+            .map(|(a, _)| a)
     }
 
     /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
+    #[inline]
+    fn load_account_code_hash(&mut self, address_or_id: AddressOrId) -> Option<StateLoad<B256>> {
         self.journal_mut()
-            .code_hash(address)
+            .code_hash(address_or_id)
             .map_err(|e| {
                 *self.error() = Err(e.into());
             })
             .ok()
+            .map(|(a, _)| a)
     }
 
     /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
+    #[inline]
+    fn sload(
+        &mut self,
+        address: AddressOrId,
+        index: StorageKey,
+    ) -> Option<StateLoad<StorageValue>> {
         self.journal_mut()
             .sload(address, index)
             .map_err(|e| {
@@ -583,9 +614,10 @@ impl<
     /// Sets storage value of account address at index.
     ///
     /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
+    #[inline]
     fn sstore(
         &mut self,
-        address: Address,
+        address: AddressOrId,
         index: StorageKey,
         value: StorageValue,
     ) -> Option<StateLoad<SStoreResult>> {
@@ -598,24 +630,28 @@ impl<
     }
 
     /// Gets the transient storage value of `address` at `index`.
-    fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
+    #[inline]
+    fn tload(&mut self, address: AddressOrId, index: StorageKey) -> StorageValue {
         self.journal_mut().tload(address, index)
     }
 
     /// Sets the transient storage value of `address` at `index`.
-    fn tstore(&mut self, address: Address, index: StorageKey, value: StorageValue) {
+    #[inline]
+    fn tstore(&mut self, address: AddressOrId, index: StorageKey, value: StorageValue) {
         self.journal_mut().tstore(address, index, value)
     }
 
     /// Emits a log owned by `address` with given `LogData`.
+    #[inline]
     fn log(&mut self, log: Log) {
         self.journal_mut().log(log);
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
+    #[inline]
     fn selfdestruct(
         &mut self,
-        address: Address,
+        address: AddressOrId,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
         self.journal_mut()

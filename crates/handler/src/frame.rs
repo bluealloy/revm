@@ -1,7 +1,7 @@
 use crate::evm::FrameTr;
 use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
+use crate::{CallFrame, FrameData, FrameResult};
 use context::result::FromStringError;
 use context_interface::context::ContextError;
 use context_interface::local::{FrameToken, OutFrame};
@@ -25,7 +25,7 @@ use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
 };
-use primitives::{keccak256, Address, Bytes, U256};
+use primitives::{keccak256, AddressAndId, Bytes, U256};
 use state::Bytecode;
 use std::borrow::ToOwned;
 use std::boxed::Box;
@@ -162,11 +162,6 @@ impl EthFrame<EthInterpreter> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // Make account warm and loaded.
-        let _ = ctx
-            .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
-
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
 
@@ -176,7 +171,7 @@ impl EthFrame<EthInterpreter> {
             // Target will get touched even if balance transferred is zero.
             if let Some(i) =
                 ctx.journal_mut()
-                    .transfer(inputs.caller, inputs.target_address, value)?
+                    .transfer(inputs.caller.id(), inputs.target_address.id(), value)
             {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());
@@ -192,43 +187,33 @@ impl EthFrame<EthInterpreter> {
         };
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
-
-        if let Some(result) = precompiles
-            .run(
-                ctx,
-                &inputs.bytecode_address,
-                &interpreter_input,
-                is_static,
-                gas_limit,
-            )
-            .map_err(ERROR::from_string)?
-        {
-            if result.result.is_ok() {
-                ctx.journal_mut().checkpoint_commit();
-            } else {
-                ctx.journal_mut().checkpoint_revert(checkpoint);
+        // if account is delegate, we skip precompile address check.
+        if !inputs.is_bytecode_delegated {
+            if let Some(result) = precompiles
+                .run(
+                    ctx,
+                    inputs.bytecode_address.address(),
+                    &interpreter_input,
+                    is_static,
+                    gas_limit,
+                )
+                .map_err(ERROR::from_string)?
+            {
+                if result.result.is_ok() {
+                    ctx.journal_mut().checkpoint_commit();
+                } else {
+                    ctx.journal_mut().checkpoint_revert(checkpoint);
+                }
+                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                    result,
+                    memory_offset: inputs.return_memory_offset.clone(),
+                })));
             }
-            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                result,
-                memory_offset: inputs.return_memory_offset.clone(),
-            })));
         }
 
-        let account = ctx
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
-
-        let mut code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            let account = &ctx
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
-                .info;
-            bytecode = account.code.clone().unwrap_or_default();
-            code_hash = account.code_hash();
-        }
+        let (bytecode_account, _) = ctx.journal_mut().get_account(inputs.bytecode_address.id());
+        let code_hash = bytecode_account.info.code_hash();
+        let bytecode = bytecode_account.info.code.clone().unwrap_or_default();
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
@@ -283,14 +268,12 @@ impl EthFrame<EthInterpreter> {
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        // Prague EOF
-        // TODO(EOF)
-        // if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
-        //     return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        // }
-
         // Fetch balance of caller.
-        let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
+        let caller_info = &mut context
+            .journal_mut()
+            .get_account_mut(inputs.caller.id())
+            .0
+            .info;
 
         // Check if caller has enough balance to send to the created contract.
         if caller_info.balance < inputs.value {
@@ -305,26 +288,32 @@ impl EthFrame<EthInterpreter> {
         caller_info.nonce = new_nonce;
         context
             .journal_mut()
-            .nonce_bump_journal_entry(inputs.caller);
+            .nonce_bump_journal_entry(inputs.caller.to_id());
 
         // Create address
         let mut init_code_hash = None;
         let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
+            CreateScheme::Create => inputs.caller.address().create(old_nonce),
             CreateScheme::Create2 { salt } => {
                 let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code));
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                inputs
+                    .caller
+                    .address()
+                    .create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
         };
 
         // warm load account.
-        context.journal_mut().load_account(created_address)?;
+        let created_address = context
+            .journal_mut()
+            .load_account(created_address.into())?
+            .1;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller,
-            created_address,
+            inputs.caller.to_id(),
+            created_address.to_id(),
             inputs.value,
             spec,
         ) {
@@ -347,7 +336,7 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit;
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::new_create(created_address),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -533,7 +522,12 @@ impl EthFrame<EthInterpreter> {
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
-                    outcome.address.unwrap_or_default().into_word().into()
+                    outcome
+                        .address
+                        .unwrap_or_default()
+                        .address()
+                        .into_word()
+                        .into()
                 } else {
                     U256::ZERO
                 };
@@ -552,7 +546,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
-    address: Address,
+    address: AddressAndId,
     max_code_size: usize,
     is_eip3541_disabled: bool,
     spec_id: SpecId,
@@ -603,7 +597,7 @@ pub fn return_create<JOURNAL: JournalTr>(
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
     // Set code
-    journal.set_code(address, bytecode);
+    journal.set_code(address.to_id(), bytecode);
 
     interpreter_result.result = InstructionResult::Return;
 }

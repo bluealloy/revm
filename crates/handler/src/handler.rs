@@ -12,7 +12,7 @@ use context_interface::{
 };
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use primitives::{AddressAndId, TxKind, U256};
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -123,6 +123,19 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        // load caller and target
+        let (tx, journal) = evm.ctx().tx_journal_mut();
+        // set dummy caller id as it is not used in system call.
+        journal.set_caller_address_id(AddressAndId::new(tx.caller(), (0, 0)));
+
+        if let TxKind::Call(to) = tx.kind() {
+            let account_load = journal.load_account_delegated(to.into())?.data;
+            evm.ctx().journal_mut().set_tx_target_address_id(
+                account_load.address_and_id,
+                account_load.delegated_account_address.map(|d| d.data),
+            );
+        }
+
         // call execution and than output.
         match self
             .execution(evm, &init_and_floor_gas)
@@ -174,11 +187,14 @@ pub trait Handler {
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+        // nonce gets updated
         self.validate_against_state_and_deduct_caller(evm)?;
+        // nonces of authneticators got updated
+        let eip7702_refund = self.apply_eip7702_auth_list(evm)?;
+        // target/beneficiary accounts got loaded with access list.
         self.load_accounts(evm)?;
 
-        let gas = self.apply_eip7702_auth_list(evm)?;
-        Ok(gas)
+        Ok(eip7702_refund)
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.
@@ -278,6 +294,10 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
     ) -> Result<(), Self::Error> {
+        let caller = evm.ctx().tx().caller().into();
+        let journal = evm.ctx_mut().journal_mut();
+        let (_, id) = journal.load_account_code(caller)?.data;
+        journal.set_caller_address_id(id);
         pre_execution::validate_against_state_and_deduct_caller(evm.ctx())
     }
 
@@ -293,10 +313,17 @@ pub trait Handler {
         let memory =
             SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
         let ctx = evm.ctx_ref();
+
+        let caller = ctx.journal().caller_address_id().expect("caller id is set");
+        // if tx is not call target will be None.
+        let target = ctx.journal().tx_target_address_id();
+        let tx = ctx.tx();
+        let input = tx.input().clone();
+        let value = tx.value();
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(ctx.tx(), gas_limit),
+            frame_input: execution::create_init_frame(caller, target, input, value, gas_limit),
         })
     }
 

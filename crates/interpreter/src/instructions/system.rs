@@ -39,6 +39,7 @@ pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_
             .interpreter
             .input
             .target_address()
+            .address()
             .into_word()
             .into()
     );
@@ -55,6 +56,7 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
             .interpreter
             .input
             .caller_address()
+            .address()
             .into_word()
             .into()
     );
