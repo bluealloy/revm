@@ -193,16 +193,7 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(result) = precompiles
-            .run(
-                ctx,
-                &inputs.bytecode_address,
-                &interpreter_input,
-                is_static,
-                gas_limit,
-            )
-            .map_err(ERROR::from_string)?
-        {
+        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
             } else {
