@@ -90,14 +90,6 @@ pub fn verify_kzg_proof(
 
             let kzg_settings = c_kzg::ethereum_kzg_settings(8);
             kzg_settings.verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof)).unwrap_or(false)
-        } else if #[cfg(feature = "kzg-rs")] {
-            use kzg_rs::{Bytes48, Bytes32, KzgProof};
-            let env = kzg_rs::EnvKzgSettings::default();
-            let as_bytes48 = |bytes: &[u8; 48]| -> &Bytes48 { unsafe { &*bytes.as_ptr().cast() } };
-            let as_bytes32 = |bytes: &[u8; 32]| -> &Bytes32 { unsafe { &*bytes.as_ptr().cast() } };
-
-            let kzg_settings = env.get();
-            KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
         } else if #[cfg(feature = "blst")] {
             blst::verify_kzg_proof(commitment, z, y, proof)
         } else {
