@@ -12,7 +12,7 @@ pub use inner::JournalInner;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalTr, TransferError},
+    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, JournalTr, TransferError},
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -169,7 +169,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         storage_keys: impl IntoIterator<Item = StorageKey>,
     ) -> Result<(), <Self::Database as Database>::Error> {
         self.inner
-            .load_account_optional(&mut self.database, address, false, storage_keys)?;
+            .load_account_optional(&mut self.database, address, false, storage_keys, false)
+            .map_err(JournalLoadError::unwrap_db_error)?;
         Ok(())
     }
 
@@ -295,5 +296,41 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn finalize(&mut self) -> Self::State {
         self.inner.finalize()
+    }
+
+    fn sload_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _skip_cold_load: bool,
+    ) -> Result<
+        StateLoad<StorageValue>,
+        context_interface::journaled_state::JournalLoadError<<Self::Database as Database>::Error>,
+    > {
+    }
+
+    fn sstore_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _value: StorageValue,
+        _skip_cold_load: bool,
+    ) -> Result<
+        StateLoad<SStoreResult>,
+        context_interface::journaled_state::JournalLoadError<<Self::Database as Database>::Error>,
+    > {
+        todo!()
+    }
+
+    fn load_account_info_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _load_code: bool,
+        _skip_cold_load: bool,
+    ) -> Result<
+        context_interface::journaled_state::AccountInfoLoad,
+        context_interface::journaled_state::JournalLoadError<<Self::Database as Database>::Error>,
+    > {
+        todo!()
     }
 }

@@ -105,6 +105,13 @@ impl Account {
         self.status |= AccountStatus::Cold;
     }
 
+    /// Is account warm for given transaction id.
+    #[inline]
+    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+        let is_diff = self.transaction_id != transaction_id;
+        is_diff || (is_diff && self.status.contains(AccountStatus::Cold))
+    }
+
     /// Marks the account as warm and return true if it was previously cold.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {

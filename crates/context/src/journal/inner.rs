@@ -5,7 +5,7 @@ use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
+    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -563,7 +563,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false, [])
+        self.load_account_optional(db, address, false, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -581,7 +582,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
+        let account = self
+            .load_account_optional(db, address, is_eip7702_enabled, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -614,24 +617,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true, [])
+        self.load_account_optional(db, address, true, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<&mut Account>, JournalLoadError<DB::Error>> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
+                if skip_cold_load && account.is_warm_transaction_id(self.transaction_id) {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
                 let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
                 // if it is colad loaded we need to clear local flags that can interact with selfdestruct
                 if is_cold {
+                    if skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
                     // if it is cold loaded and we have selfdestructed locally it means that
                     // account was selfdestructed in previous transaction and we need to clear its information and storage.
                     if account.is_selfdestructed_locally() {
@@ -647,6 +658,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
             Entry::Vacant(vac) => {
+                // dont load cold account if skip_cold_load is true
+                if skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {

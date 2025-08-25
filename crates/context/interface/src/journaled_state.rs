@@ -1,5 +1,8 @@
 //! Journaled state trait [`JournalTr`] and related types.
-use crate::context::{SStoreResult, SelfDestructResult};
+use crate::{
+    context::{SStoreResult, SelfDestructResult},
+    host::LoadError,
+};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
@@ -33,7 +36,19 @@ pub trait JournalTr {
         &mut self,
         address: Address,
         key: StorageKey,
-    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
+        // unwrapping is safe as we only can get DBError
+        self.sload_skip_cold_load(address, key, false)
+            .map_err(JournalLoadError::unwrap_db_error)
+    }
+
+    /// Loads the storage value from Journal state.
+    fn sload_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, JournalLoadError<<Self::Database as Database>::Error>>;
 
     /// Stores the storage value in Journal state.
     fn sstore(
@@ -41,7 +56,20 @@ pub trait JournalTr {
         address: Address,
         key: StorageKey,
         value: StorageValue,
-    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
+        // unwrapping is safe as we only can get DBError
+        self.sstore_skip_cold_load(address, key, value, false)
+            .map_err(JournalLoadError::unwrap_db_error)
+    }
+
+    /// Stores the storage value in Journal state.
+    fn sstore_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _value: StorageValue,
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<<Self::Database as Database>::Error>>;
 
     /// Loads transient storage value.
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
@@ -153,8 +181,7 @@ pub trait JournalTr {
     ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
         let a = self.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let code = a.info.code.as_ref().unwrap();
-        let code = code.original_bytes();
+        let code = a.info.code.as_ref().unwrap().original_bytes();
 
         Ok(StateLoad::new(code, a.is_cold))
     }
@@ -168,11 +195,7 @@ pub trait JournalTr {
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
-        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
-        let _code = acc.info.code.as_ref().unwrap();
-
         let hash = acc.info.code_hash;
-
         Ok(StateLoad::new(hash, acc.is_cold))
     }
 
@@ -217,6 +240,83 @@ pub trait JournalTr {
 
     /// Clear current journal resetting it to initial state and return changes state.
     fn finalize(&mut self) -> Self::State;
+
+    /// Loads the account info from Journal state.
+    fn load_account_info_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _load_code: bool,
+        _skip_cold_load: bool,
+    ) -> Result<AccountInfoLoad, JournalLoadError<<Self::Database as Database>::Error>>;
+}
+
+/// Error that can happen when loading account info.
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+
+pub enum JournalLoadError<E> {
+    /// Database error.
+    DBError(E),
+    /// Cold load skipped.
+    ColdLoadSkipped,
+}
+
+impl<E> JournalLoadError<E> {
+    /// Returns true if the error is a database error.
+    #[inline]
+    pub fn is_db_error(&self) -> bool {
+        matches!(self, JournalLoadError::DBError(_))
+    }
+
+    /// Returns true if the error is a cold load skipped.
+    #[inline]
+    pub fn is_cold_load_skipped(&self) -> bool {
+        matches!(self, JournalLoadError::ColdLoadSkipped)
+    }
+
+    /// Takes the error if it is a database error.
+    #[inline]
+    pub fn take_db_error(self) -> Option<E> {
+        if let JournalLoadError::DBError(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    /// Unwraps the error if it is a database error.
+    #[inline]
+    pub fn unwrap_db_error(self) -> E {
+        if let JournalLoadError::DBError(e) = self {
+            e
+        } else {
+            panic!("Expected DBError");
+        }
+    }
+
+    /// Converts the error to a load error.
+    #[inline]
+    pub fn into_load_error(self) -> (LoadError, Option<E>) {
+        match self {
+            JournalLoadError::DBError(e) => (LoadError::DBError, Some(e)),
+            JournalLoadError::ColdLoadSkipped => (LoadError::ColdLoadSkipped, None),
+        }
+    }
+}
+
+impl<E> From<E> for JournalLoadError<E> {
+    fn from(e: E) -> Self {
+        JournalLoadError::DBError(e)
+    }
+}
+
+impl<E> From<JournalLoadError<E>> for LoadError {
+    fn from(e: JournalLoadError<E>) -> Self {
+        match e {
+            JournalLoadError::DBError(_) => LoadError::DBError,
+            JournalLoadError::ColdLoadSkipped => LoadError::ColdLoadSkipped,
+        }
+    }
 }
 
 /// Transfer and creation result
