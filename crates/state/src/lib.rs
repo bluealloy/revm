@@ -509,7 +509,7 @@ mod tests {
 
     #[test]
     fn test_account_with_storage() {
-        let mut storage = HashMap::default();
+        let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         let key1 = StorageKey::from(1);
         let key2 = StorageKey::from(2);
         let slot1 = EvmStorageSlot::new(StorageValue::from(10), 0);
@@ -621,7 +621,7 @@ mod tests {
 
         let slot_key = StorageKey::from(42);
         let slot_value = EvmStorageSlot::new(StorageValue::from(123), 0);
-        let mut storage = HashMap::default();
+        let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         storage.insert(slot_key, slot_value.clone());
 
         // Chain multiple builder methods together
