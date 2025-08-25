@@ -178,7 +178,15 @@ pub trait Host {
     fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.load_account_info_skip_cold_load(address, false, false)
             .ok()
-            .map(|load| load.into_state_load(|i| i.code_hash))
+            .map(|load| {
+                load.into_state_load(|i| {
+                    if i.is_empty() {
+                        B256::ZERO
+                    } else {
+                        i.code_hash
+                    }
+                })
+            })
     }
 }
 

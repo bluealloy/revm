@@ -99,9 +99,8 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let address = top.into_address();
 
     let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true);
-        *top = account.code_hash.into_u256();
+    let account = if spec_id.is_enabled_in(BERLIN) {
+        berlin_load_account!(context, address, true)
     } else {
         let gas = if spec_id.is_enabled_in(ISTANBUL) {
             700
@@ -109,11 +108,21 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
             400
         };
         gas!(context.interpreter, gas);
-        let Some(code_hash) = context.host.load_account_code_hash(address) else {
+        let Ok(account) = context
+            .host
+            .load_account_info_skip_cold_load(address, true, false)
+        else {
             return context.interpreter.halt_fatal();
         };
-        *top = code_hash.into_u256();
-    }
+        account
+    };
+    // if account is empty, code hash is zero
+    let code_hash = if account.is_empty() {
+        B256::ZERO
+    } else {
+        account.code_hash
+    };
+    *top = code_hash.into_u256();
 }
 
 /// Implements the EXTCODECOPY instruction.
