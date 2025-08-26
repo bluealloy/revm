@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.1...revm-precompile-v27.0.0) - 2025-08-23
+
+### Added
+
+- *(fusaka)* Add PrecompileId ([#2904](https://github.com/bluealloy/revm/pull/2904))
+
 ## [26.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.0...revm-precompile-v26.0.1) - 2025-08-12
 
 ### Fixed

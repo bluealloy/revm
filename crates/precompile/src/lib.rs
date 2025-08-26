@@ -359,6 +359,12 @@ impl Precompile {
         &self.fn_
     }
 
+    /// Consumes the type and returns the precompile implementation.
+    #[inline]
+    pub fn into_precompile(self) -> PrecompileFn {
+        self.fn_
+    }
+
     /// Executes the precompile.
     #[inline]
     pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileResult {

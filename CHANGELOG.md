@@ -1,5 +1,25 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v86
+date: 24.08.2025
+
+Maintainance release. PrecompileId added 
+
+* `revm-bytecode`: 6.2.1 -> 6.2.2 (✓ API compatible changes)
+* `revm-database-interface`: 7.0.4 -> 7.0.5 (✓ API compatible changes)
+* `revm-context-interface`: 10.0.1 -> 10.1.0 (✓ API compatible changes)
+* `revm-context`: 9.0.1 -> 9.0.2 (✓ API compatible changes)
+* `revm-database`: 7.0.4 -> 7.0.5 (✓ API compatible changes)
+* `revm-interpreter`: 25.0.1 -> 25.0.2 (✓ API compatible changes)
+* `revm-precompile`: 26.0.1 -> 27.0.0 (⚠ API breaking changes)
+* `revm-handler`: 9.0.1 -> 10.0.0 (✓ API compatible changes)
+* `op-revm`: 9.0.1 -> 10.0.0 (✓ API compatible changes)
+* `revm-state`: 7.0.4 -> 7.0.5
+* `revm-inspector`: 9.1.0 -> 10.0.0
+* `revm`: 28.0.1 -> 29.0.0
+* `revm-statetest-types`: 9.0.1 -> 9.0.2
+* `revme`: 7.2.1 -> 7.2.2
+
 # v85
 date: 12.08.2025
 

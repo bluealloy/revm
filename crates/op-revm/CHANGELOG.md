@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/op-revm-v9.0.1...op-revm-v10.0.0) - 2025-08-23
+
+### Added
+
+- *(fusaka)* Add PrecompileId ([#2904](https://github.com/bluealloy/revm/pull/2904))
+
+### Fixed
+
+- *(handler)* correct transaction ID decrement logic ([#2892](https://github.com/bluealloy/revm/pull/2892))
+
 ## [9.0.1](https://github.com/bluealloy/revm/compare/op-revm-v9.0.0...op-revm-v9.0.1) - 2025-08-12
 
 ### Other

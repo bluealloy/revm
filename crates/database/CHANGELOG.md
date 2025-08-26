@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.5](https://github.com/bluealloy/revm/compare/revm-database-v7.0.4...revm-database-v7.0.5) - 2025-08-23
+
+### Other
+
+- *(database)* remove unused dependencies ([#2885](https://github.com/bluealloy/revm/pull/2885))
+- add AccountStatus unit test ([#2869](https://github.com/bluealloy/revm/pull/2869))
+
 ## [7.0.4](https://github.com/bluealloy/revm/compare/revm-database-v7.0.3...revm-database-v7.0.4) - 2025-08-12
 
 ### Other
