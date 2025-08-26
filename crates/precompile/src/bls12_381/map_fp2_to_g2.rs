@@ -24,10 +24,7 @@ pub fn map_fp2_to_g2(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     if input.len() != PADDED_FP2_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "MAP_FP2_TO_G2 input should be {PADDED_FP2_LENGTH} bytes, was {}",
-            input.len()
-        )));
+        return Err(PrecompileError::Bls12381MapFp2ToG2InputLength);
     }
 
     let input_p0_x = remove_fp_padding(&input[..PADDED_FP_LENGTH])?;

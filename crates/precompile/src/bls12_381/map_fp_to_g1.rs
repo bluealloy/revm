@@ -21,10 +21,7 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     if input.len() != PADDED_FP_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
-            input.len()
-        )));
+        return Err(PrecompileError::Bls12381MapFpToG1InputLength);
     }
 
     let input_p0 = remove_fp_padding(input)?;
@@ -49,9 +46,6 @@ mod test {
     fn sanity_test() {
         let input = Bytes::from(hex!("000000000000000000000000000000006900000000000000636f6e7472616374595a603f343061cd305a03f40239f5ffff31818185c136bc2595f2aa18e08f17"));
         let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE_GAS_FEE);
-        assert_eq!(
-            fail,
-            Err(PrecompileError::Other("non-canonical fp value".to_string()))
-        );
+        assert_eq!(fail, Err(PrecompileError::NonCanonicalFp));
     }
 }
