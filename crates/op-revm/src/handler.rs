@@ -145,7 +145,7 @@ where
 
         let (tx, journal) = ctx.tx_journal_mut();
 
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let (caller_account, caller_id) = journal.load_account_code(tx.caller().into())?.data;
 
         if !is_deposit {
             // validates account nonce and code
@@ -210,9 +210,16 @@ where
             caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
         }
 
+        // set caller id
+        journal.set_caller_address_id(caller_id);
+
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.
-        journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+        journal.caller_accounting_journal_entry(
+            caller_id.to_id(),
+            old_balance,
+            tx.kind().is_call(),
+        );
 
         Ok(())
     }
@@ -367,7 +374,7 @@ where
             (BASE_FEE_RECIPIENT, base_fee_amount),
             (OPERATOR_FEE_RECIPIENT, operator_fee_cost),
         ] {
-            ctx.journal_mut().balance_incr(recipient, amount)?;
+            ctx.journal_mut().balance_incr(recipient.into(), amount)?;
         }
 
         Ok(())
@@ -414,10 +421,16 @@ where
             let ctx = evm.ctx();
             let spec = ctx.cfg().spec();
             let tx = ctx.tx();
-            let caller = tx.caller();
             let mint = tx.mint();
             let is_system_tx = tx.is_system_transaction();
             let gas_limit = tx.gas_limit();
+
+            let caller_id = evm
+                .ctx()
+                .journal()
+                .caller_address_id()
+                .map(|i| i.to_id())
+                .unwrap_or_else(|| evm.ctx().tx().caller().into());
 
             // discard all changes of this transaction
             evm.ctx().journal_mut().discard_tx();
@@ -431,7 +444,7 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let acc: &mut revm::state::Account = evm.ctx().journal_mut().load_account(caller)?.data;
+            let (acc, _) = evm.ctx().journal_mut().load_account(caller_id)?.data;
 
             let old_balance = acc.info.balance;
 
@@ -447,7 +460,7 @@ where
             // add journal entry for accounts
             evm.ctx()
                 .journal_mut()
-                .caller_accounting_journal_entry(caller, old_balance, true);
+                .caller_accounting_journal_entry(caller_id, old_balance, true);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
@@ -664,8 +677,8 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
-        assert_eq!(account.info.balance, U256::from(1010));
+        let account = evm.ctx().journal_mut().load_account(caller.into()).unwrap();
+        assert_eq!(account.0.info.balance, U256::from(1010));
     }
 
     #[test]
@@ -706,8 +719,8 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
-        assert_eq!(account.info.balance, U256::from(10)); // 1058 - 1048 = 10
+        let account = evm.ctx().journal_mut().load_account(caller.into()).unwrap();
+        assert_eq!(account.0.info.balance, U256::from(10)); // 1058 - 1048 = 10
     }
 
     #[test]
@@ -828,8 +841,8 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
-        assert_eq!(account.info.balance, U256::from(1));
+        let account = evm.ctx().journal_mut().load_account(caller.into()).unwrap();
+        assert_eq!(account.0.info.balance, U256::from(1));
     }
 
     #[test]
@@ -869,8 +882,8 @@ mod tests {
             .unwrap();
 
         // Check the account balance is updated.
-        let account = evm.ctx().journal_mut().load_account(caller).unwrap();
-        assert_eq!(account.info.balance, U256::from(1));
+        let account = evm.ctx().journal_mut().load_account(caller.into()).unwrap();
+        assert_eq!(account.0.info.balance, U256::from(1));
     }
 
     #[test]
@@ -1016,8 +1029,9 @@ mod tests {
             .0
             .ctx
             .journal_mut()
-            .load_account(Address::ZERO)
+            .load_account(Address::ZERO.into())
             .unwrap()
+            .0
             .is_touched());
 
         let handler =
@@ -1031,8 +1045,9 @@ mod tests {
             .0
             .ctx
             .journal_mut()
-            .load_account(Address::ZERO)
+            .load_account(Address::ZERO.into())
             .unwrap()
+            .0
             .is_touched());
     }
 
@@ -1085,7 +1100,15 @@ mod tests {
             },
             0..0,
         ));
-
+        handler.load_accounts(&mut evm).unwrap();
+        // load caller account and id
+        let (_, caller_id) = evm
+            .ctx()
+            .journal_mut()
+            .load_account_code(SENDER.into())
+            .unwrap()
+            .data;
+        evm.ctx().journal_mut().set_caller_address_id(caller_id);
         // Reimburse the caller for the unspent portion of the fees.
         handler
             .reimburse_caller(&mut evm, &mut exec_result)
@@ -1106,8 +1129,8 @@ mod tests {
         }
 
         // Check that the caller was reimbursed the correct amount of ETH.
-        let account = evm.ctx().journal_mut().load_account(SENDER).unwrap();
-        assert_eq!(account.info.balance, expected_refund);
+        let account = evm.ctx().journal_mut().load_account(SENDER.into()).unwrap();
+        assert_eq!(account.0.info.balance, expected_refund);
     }
 
     #[test]
@@ -1135,8 +1158,9 @@ mod tests {
             evm.0
                 .ctx
                 .journal_mut()
-                .load_account(Address::ZERO)
+                .load_account(Address::ZERO.into())
                 .unwrap()
+                .0
                 .info
                 .nonce,
             0

@@ -119,11 +119,13 @@ mod test {
             .unwrap()
             .state;
 
-        let auth_acc = state.get(&signer.address()).unwrap();
-        assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
-        assert_eq!(auth_acc.info.nonce, 1);
+        println!("state: {:#?}", state);
+        let auth_acc = state.get(signer.address().into()).unwrap();
+        assert_eq!(auth_acc.0.info.code, Some(Bytecode::new_eip7702(FFADDRESS)));
+        assert_eq!(auth_acc.0.info.nonce, 1);
         assert_eq!(
             auth_acc
+                .0
                 .storage
                 .get(&StorageKey::from(1))
                 .unwrap()

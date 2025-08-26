@@ -1,5 +1,5 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
-use primitives::{Address, Bytes};
+use primitives::{AddressAndId, Bytes};
 
 /// Represents the outcome of a create operation in an interpreter.
 ///
@@ -12,7 +12,7 @@ pub struct CreateOutcome {
     /// The result of the interpreter operation
     pub result: InterpreterResult,
     /// An optional address associated with the create operation
-    pub address: Option<Address>,
+    pub address: Option<AddressAndId>,
 }
 
 impl CreateOutcome {
@@ -21,12 +21,12 @@ impl CreateOutcome {
     /// # Arguments
     ///
     /// * `result` - An [`InterpreterResult`] representing the result of the interpreter operation.
-    /// * `address` - An optional [`Address`] associated with the create operation.
+    /// * `AddressAndId` - An optional [`AddressAndId`] associated with the create operation.
     ///
     /// # Returns
     ///
     /// A new [`CreateOutcome`] instance.
-    pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
+    pub fn new(result: InterpreterResult, address: Option<AddressAndId>) -> Self {
         Self { result, address }
     }
 

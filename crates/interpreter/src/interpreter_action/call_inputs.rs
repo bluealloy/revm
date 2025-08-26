@@ -1,6 +1,6 @@
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
-use primitives::{Address, Bytes, U256};
+use primitives::{AddressAndId, Bytes, U256};
 /// Input enum for a call.
 ///
 /// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
@@ -77,15 +77,17 @@ pub struct CallInputs {
     /// The account address of bytecode that is going to be executed.
     ///
     /// Previously `context.code_address`.
-    pub bytecode_address: Address,
+    pub bytecode_address: AddressAndId,
+    /// Whether the bytecode address is a delegated address. In this case precompile check will be skipped.
+    pub is_bytecode_delegated: bool,
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.
-    pub target_address: Address,
+    pub target_address: AddressAndId,
     /// This caller is invoking the call.
     ///
     /// Previously `context.caller`.
-    pub caller: Address,
+    pub caller: AddressAndId,
     /// Call value.
     ///
     /// **Note**: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
@@ -127,7 +129,7 @@ impl CallInputs {
     ///
     /// This is only meaningful if `transfers_value` is `true`.
     #[inline]
-    pub const fn transfer_from(&self) -> Address {
+    pub const fn transfer_from(&self) -> AddressAndId {
         self.caller
     }
 
@@ -135,7 +137,7 @@ impl CallInputs {
     ///
     /// This is only meaningful if `transfers_value` is `true`.
     #[inline]
-    pub const fn transfer_to(&self) -> Address {
+    pub const fn transfer_to(&self) -> AddressAndId {
         self.target_address
     }
 

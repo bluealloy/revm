@@ -1,32 +1,43 @@
-use context_interface::Transaction;
 use interpreter::{
     CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
 };
-use primitives::TxKind;
+use primitives::{AddressAndId, Bytes, U256};
 use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
-pub fn create_init_frame(tx: &impl Transaction, gas_limit: u64) -> FrameInput {
-    let input = tx.input().clone();
-
-    match tx.kind() {
-        TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
+pub fn create_init_frame(
+    caller: AddressAndId,
+    target: Option<(AddressAndId, Option<AddressAndId>)>,
+    input: Bytes,
+    value: U256,
+    gas_limit: u64,
+) -> FrameInput {
+    if let Some((target, delegated_address)) = target {
+        let (bytecode_address, is_bytecode_delegated) =
+            if let Some(delegated_address) = delegated_address {
+                (delegated_address, true)
+            } else {
+                (target, false)
+            };
+        FrameInput::Call(Box::new(CallInputs {
             input: CallInput::Bytes(input),
             gas_limit,
-            target_address,
-            bytecode_address: target_address,
-            caller: tx.caller(),
-            value: CallValue::Transfer(tx.value()),
+            target_address: target,
+            bytecode_address,
+            is_bytecode_delegated,
+            caller,
+            value: CallValue::Transfer(value),
             scheme: CallScheme::Call,
             is_static: false,
             return_memory_offset: 0..0,
-        })),
-        TxKind::Create => FrameInput::Create(Box::new(CreateInputs {
-            caller: tx.caller(),
+        }))
+    } else {
+        FrameInput::Create(Box::new(CreateInputs {
+            caller,
             scheme: CreateScheme::Create,
-            value: tx.value(),
+            value,
             init_code: input,
             gas_limit,
-        })),
+        }))
     }
 }

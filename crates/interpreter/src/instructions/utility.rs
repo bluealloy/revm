@@ -18,7 +18,7 @@ impl IntoU256 for B256 {
     }
 }
 
-/// Trait for converting types into Address values.
+/// Trait for converting types into Address values. It ignores excess bytes.
 pub trait IntoAddress {
     /// Converts the implementing type into an Address value.
     fn into_address(self) -> Address;

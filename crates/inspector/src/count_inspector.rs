@@ -5,6 +5,7 @@ use primitives::HashMap;
 
 /// Inspector that counts all opcodes that were called during execution.
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CountInspector {
     /// Map from opcode value to count of times it was executed.
     opcode_counts: HashMap<u8, u64>,
