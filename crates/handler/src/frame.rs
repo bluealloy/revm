@@ -162,10 +162,10 @@ impl EthFrame<EthInterpreter> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // // Make account warm and loaded.
-        // let _ = ctx
-        //     .journal_mut()
-        //     .load_account_delegated(inputs.bytecode_address)?;
+        // Make account warm and loaded.
+        let _ = ctx
+            .journal_mut()
+            .load_account_delegated(inputs.bytecode_address)?;
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();

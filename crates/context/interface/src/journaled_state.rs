@@ -251,9 +251,8 @@ pub trait JournalTr {
 }
 
 /// Error that can happen when loading account info.
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalLoadError<E> {
     /// Database error.
     DBError(E),

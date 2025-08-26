@@ -3,12 +3,12 @@ use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalCont
 use context_interface::{
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
-    journaled_state::{AccountInfoLoad, AccountLoad},
+    journaled_state::AccountInfoLoad,
     Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
-use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{hardfork::SpecId, Address, Log, StorageKey, StorageValue, B256, U256};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -531,73 +531,6 @@ impl<
 
     /* Journal */
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.journal_mut()
-            .load_account_delegated(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.journal_mut()
-            .load_account(address)
-            .map(|acc| acc.map(|a| a.info.balance))
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.journal_mut()
-            .code(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.journal_mut()
-            .code_hash(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
-        self.journal_mut()
-            .sload(address, index)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Sets storage value of account address at index.
-    ///
-    /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: StorageKey,
-        value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.journal_mut()
-            .sstore(address, index, value)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
     /// Gets the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
         self.journal_mut().tload(address, index)
@@ -680,12 +613,5 @@ impl<
                 Err(ret)
             }
         }
-        // .map_err(|e| {
-        //     let (ret, err) = e.into_parts();
-        //     if let Some(err) = err {
-        //         *self.error() = Err(err.into());
-        //     }
-        //     ret
-        // })
     }
 }
