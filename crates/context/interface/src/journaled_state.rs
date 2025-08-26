@@ -9,7 +9,7 @@ use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
-use std::vec::Vec;
+use std::{borrow::Cow, vec::Vec};
 
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
@@ -247,7 +247,7 @@ pub trait JournalTr {
         _address: Address,
         _load_code: bool,
         _skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad, JournalLoadError<<Self::Database as Database>::Error>>;
+    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>>;
 }
 
 /// Error that can happen when loading account info.
@@ -394,20 +394,20 @@ pub struct AccountLoad {
 /// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountInfoLoad {
+pub struct AccountInfoLoad<'a> {
     /// Account info
-    pub account: AccountInfo,
+    pub account: Cow<'a, AccountInfo>,
     /// Is account cold loaded
     pub is_cold: bool,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
 }
 
-impl AccountInfoLoad {
+impl<'a> AccountInfoLoad<'a> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
-    pub fn new(account: AccountInfo, is_cold: bool, is_empty: bool) -> Self {
+    pub fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
         Self {
-            account,
+            account: Cow::Borrowed(account),
             is_cold,
             is_empty,
         }
@@ -418,13 +418,13 @@ impl AccountInfoLoad {
     /// Useful for transforming the account info of the [`AccountInfoLoad`] and preserving the cold load status.
     pub fn into_state_load<F, O>(self, f: F) -> StateLoad<O>
     where
-        F: FnOnce(AccountInfo) -> O,
+        F: FnOnce(Cow<'a, AccountInfo>) -> O,
     {
         StateLoad::new(f(self.account), self.is_cold)
     }
 }
 
-impl Deref for AccountInfoLoad {
+impl<'a> Deref for AccountInfoLoad<'a> {
     type Target = AccountInfo;
 
     fn deref(&self) -> &Self::Target {

@@ -641,7 +641,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     // account can be loaded by we still need to check warm_addresses to see if it is cold.
                     let should_be_cold = self.warm_addresses.is_cold(&address);
 
-                    // dont load it cold if skiping cold load is true.
+                    // dont load it cold if skipping cold load is true.
                     if should_be_cold && skip_cold_load {
                         return Err(JournalLoadError::ColdLoadSkipped);
                     }

@@ -332,16 +332,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad, JournalLoadError<<Self::Database as Database>::Error>> {
+    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>> {
         let spec = self.inner.spec;
         self.inner
             .load_account_optional(&mut self.database, address, load_code, [], skip_cold_load)
             .map(|a| {
-                AccountInfoLoad::new(
-                    a.info.clone(),
-                    a.is_cold,
-                    a.state_clear_aware_is_empty(spec),
-                )
+                AccountInfoLoad::new(&a.data.info, a.is_cold, a.state_clear_aware_is_empty(spec))
             })
     }
 }

@@ -667,15 +667,25 @@ impl<
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad, LoadError> {
-        self.journal_mut()
-            .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
-            .map_err(|e| {
+    ) -> Result<AccountInfoLoad<'_>, LoadError> {
+        let error = &mut self.error;
+        let journal = &mut self.journaled_state;
+        match journal.load_account_info_skip_cold_load(address, load_code, skip_cold_load) {
+            Ok(a) => Ok(a),
+            Err(e) => {
                 let (ret, err) = e.into_parts();
                 if let Some(err) = err {
-                    *self.error() = Err(err.into());
+                    *error = Err(err.into());
                 }
-                ret
-            })
+                Err(ret)
+            }
+        }
+        // .map_err(|e| {
+        //     let (ret, err) = e.into_parts();
+        //     if let Some(err) = err {
+        //         *self.error() = Err(err.into());
+        //     }
+        //     ret
+        // })
     }
 }

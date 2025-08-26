@@ -127,7 +127,7 @@ pub trait Host {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad, LoadError>;
+    ) -> Result<AccountInfoLoad<'_>, LoadError>;
 
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
@@ -170,7 +170,14 @@ pub trait Host {
     fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.load_account_info_skip_cold_load(address, true, false)
             .ok()
-            .map(|load| load.into_state_load(|i| i.code.unwrap_or_default().original_bytes()))
+            .map(|load| {
+                load.into_state_load(|i| {
+                    i.code
+                        .as_ref()
+                        .map(|b| b.original_bytes())
+                        .unwrap_or_default()
+                })
+            })
     }
 
     /// Load account code hash, calls [`Host::load_account_info_skip_cold_load`] with `load_code` set to false.
@@ -272,7 +279,7 @@ impl Host for DummyHost {
         _address: Address,
         _load_code: bool,
         _skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad, LoadError> {
+    ) -> Result<AccountInfoLoad<'_>, LoadError> {
         Err(LoadError::DBError)
     }
 
