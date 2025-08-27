@@ -68,6 +68,43 @@ macro_rules! gas {
     };
 }
 
+/// Loads account and account berlin gas cost accounting.
+#[macro_export]
+#[collapse_debuginfo(yes)]
+macro_rules! berlin_load_account {
+    ($context:expr, $address:expr, $load_code:expr) => {
+        $crate::berlin_load_account!($context, $address, $load_code, ())
+    };
+    ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
+        $crate::gas!($context.interpreter, WARM_STORAGE_READ_COST, $ret);
+        let skip_cold_load =
+            $context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+        match $context
+            .host
+            .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)
+        {
+            Ok(account) => {
+                if account.is_cold {
+                    $crate::gas!(
+                        $context.interpreter,
+                        COLD_ACCOUNT_ACCESS_COST_ADDITIONAL,
+                        $ret
+                    );
+                }
+                account
+            }
+            Err(LoadError::ColdLoadSkipped) => {
+                $context.interpreter.halt_oog();
+                return $ret;
+            }
+            Err(LoadError::DBError) => {
+                $context.interpreter.halt_fatal();
+                return $ret;
+            }
+        }
+    }};
+}
+
 /// Same as [`gas!`], but with `gas` as an option.
 #[macro_export]
 #[collapse_debuginfo(yes)]
