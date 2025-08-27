@@ -66,7 +66,7 @@ alloy-primitives = { version = "1.2.0", default-features = false }
 alloy-rlp = { version = "0.3.12", default-features = false }
 alloy-sol-types = { version = "1.2.0", default-features = false }
 alloy-consensus = { version = "1.0.12", default-features = false }
-alloy-eips = { version = "1.0.17", default-features = false }
+alloy-eips = { version = "1.0.12", default-features = false }
 alloy-provider = { version = "1.0.12", default-features = false }
 alloy-signer = { version = "1.0.12", default-features = false }
 alloy-signer-local = { version = "1.0.12", default-features = false }

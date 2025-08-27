@@ -24,7 +24,6 @@ database-interface.workspace = true
 state.workspace = true
 alloy-eip7702 = { workspace = true, features = ["k256"] }
 alloy-eip2930.workspace = true
-alloy-eips.workspace = true
 
 # misc
 auto_impl.workspace = true
@@ -42,7 +41,6 @@ std = [
 	"serde?/std",
 	"alloy-eip7702/std",
 	"alloy-eip2930/std",
-	"alloy-eips/std",
 	"database-interface/std",
 	"primitives/std",
 	"state/std",
@@ -54,7 +52,6 @@ serde = [
 	"state/serde",
 	"alloy-eip7702/serde",
 	"alloy-eip2930/serde",
-	"alloy-eips/serde",
 	"database-interface/serde",
 	"either/serde",
 ]

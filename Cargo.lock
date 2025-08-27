@@ -3825,7 +3825,6 @@ version = "10.1.0"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
- "alloy-eips",
  "auto_impl",
  "either",
  "revm-database-interface",
