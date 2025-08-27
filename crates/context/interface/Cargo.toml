@@ -24,6 +24,7 @@ database-interface.workspace = true
 state.workspace = true
 alloy-eip7702 = { workspace = true, features = ["k256"] }
 alloy-eip2930.workspace = true
+alloy-eips.workspace = true
 
 # misc
 auto_impl.workspace = true

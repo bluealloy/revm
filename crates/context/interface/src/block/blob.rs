@@ -7,10 +7,11 @@
 //! excess blob gas.
 //!
 //! [`BlobExcessGasAndPrice`] is used to store the blob gas price and excess blob gas.s
+use alloy_eips::eip7840::BLOB_BASE_COST;
 use primitives::{
     eip4844::{GAS_PER_BLOB, MIN_BLOB_GASPRICE},
-    eip7918,
 };
+
 
 /// Structure holding block blob excess gas and it calculates blob fee
 ///
@@ -38,29 +39,6 @@ impl BlobExcessGasAndPrice {
             excess_blob_gas,
             blob_gasprice,
         }
-    }
-
-    /// Calculate this block excess gas and price from the parent excess gas and gas used
-    /// and the target blob gas per block.
-    ///
-    /// These fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
-    #[deprecated(
-        note = "Use `calc_excess_blob_gas` and `BlobExcessGasAndPrice::new` instead. Only works for forks before Osaka."
-    )]
-    pub fn from_parent_and_target(
-        parent_excess_blob_gas: u64,
-        parent_blob_gas_used: u64,
-        parent_target_blob_gas_per_block: u64,
-        blob_base_fee_update_fraction: u64,
-    ) -> Self {
-        Self::new(
-            calc_excess_blob_gas(
-                parent_excess_blob_gas,
-                parent_blob_gas_used,
-                parent_target_blob_gas_per_block,
-            ),
-            blob_base_fee_update_fraction,
-        )
     }
 }
 
@@ -113,7 +91,7 @@ pub fn calc_excess_blob_gas_osaka(
             return 0;
         }
 
-        if (eip7918::BLOB_BASE_COST.saturating_mul(parent_base_fee_per_gas) as u128)
+        if (BLOB_BASE_COST.saturating_mul(parent_base_fee_per_gas) as u128)
             > (GAS_PER_BLOB as u128).saturating_mul(get_base_fee_per_blob_gas(
                 parent_blob_base_fee_per_gas,
                 parent_blob_base_fee_update_fraction,
