@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -xeo pipefail
 
 # Usage: ./scripts/run-tests.sh --help
 
 # Version for the execution spec tests
-VERSION="v4.4.0"
-DEVELOP_VERSION="fusaka-devnet-3@v1.0.0"
+VERSION="v4.5.0"
+DEVELOP_VERSION="fusaka-devnet-5@v1.1.0"
 
 # Directories
 FIXTURES_DIR="test-fixtures"
@@ -16,7 +16,7 @@ LEGACY_DIR="$FIXTURES_DIR/legacytests"
 # URL and filenames
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 STABLE_TAR="fixtures_stable.tar.gz"
-DEVELOP_TAR="fixtures_fusaka-devnet-3.tar.gz"
+DEVELOP_TAR="fixtures_fusaka-devnet-5.tar.gz"
 LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 
 # Print usage information and exit
