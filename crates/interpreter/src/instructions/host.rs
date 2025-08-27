@@ -263,8 +263,10 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 /// Stores a word to storage.
 pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     require_non_staticcall!(context.interpreter);
-
     popn!([index, value], context.interpreter);
+
+    let target = context.interpreter.input.target_address();
+    let spec_id = context.interpreter.runtime_flag.spec_id();
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
     if context
@@ -280,24 +282,40 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         return;
     }
 
-    // TODO spend warm gas before calling sstore.
-    let Some(state_load) =
-        context
-            .host
-            .sstore(context.interpreter.input.target_address(), index, value)
-    else {
-        return context.interpreter.halt_fatal();
-    };
-
+    // static gas
     gas!(
         context.interpreter,
-        gas::sstore_cost(
+        gas::static_sstore_cost(context.interpreter.runtime_flag.spec_id())
+    );
+
+    let state_load = if spec_id.is_enabled_in(BERLIN) {
+        let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
+        let res = context
+            .host
+            .sstore_skip_cold_load(target, index, value, skip_cold);
+        match res {
+            Ok(load) => load,
+            Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
+            Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
+        }
+    } else {
+        let Some(load) = context.host.sstore(target, index, value) else {
+            return context.interpreter.halt_fatal();
+        };
+        load
+    };
+
+    // dynamic gas
+    gas!(
+        context.interpreter,
+        gas::dyn_sstore_cost(
             context.interpreter.runtime_flag.spec_id(),
             &state_load.data,
             state_load.is_cold
         )
     );
 
+    // refund
     context.interpreter.gas.record_refund(gas::sstore_refund(
         context.interpreter.runtime_flag.spec_id(),
         &state_load.data,
@@ -376,12 +394,10 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);
     let target = target.into_address();
+    let spec = context.interpreter.runtime_flag.spec_id();
 
-    // TODO order of operations should be
-    // * static gas should be spent, 5k gas
-    // * warm load gas
-    // * loading of account and checking cold load.
-    // * if not existing additional gas for creation.
+    // static gas
+    gas!(context.interpreter, gas::static_selfdestruct_cost(spec));
 
     let Some(res) = context
         .host
@@ -393,6 +409,8 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
+    gas!(context.interpreter, gas::dyn_selfdestruct_cost(spec, &res));
+
     // EIP-3529: Reduction in refunds
     if !context
         .interpreter
@@ -403,11 +421,6 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     {
         context.interpreter.gas.record_refund(gas::SELFDESTRUCT)
     }
-
-    gas!(
-        context.interpreter,
-        gas::selfdestruct_cost(context.interpreter.runtime_flag.spec_id(), res)
-    );
 
     context.interpreter.halt(InstructionResult::SelfDestruct);
 }

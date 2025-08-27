@@ -199,6 +199,24 @@ pub const fn sstore_cost_dynamic(spec_id: SpecId, vals: &SStoreResult, is_cold: 
     sstore_cost(spec_id, vals, is_cold) - sstore_cost_static(spec_id)
 }
 
+/// Static gas cost for sstore.
+#[inline]
+pub const fn static_sstore_cost(spec_id: SpecId) -> u64 {
+    if spec_id.is_enabled_in(SpecId::BERLIN) {
+        WARM_STORAGE_READ_COST
+    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
+        ISTANBUL_SLOAD_GAS
+    } else {
+        SSTORE_RESET
+    }
+}
+
+/// Dynamic gas cost for sstore.
+#[inline]
+pub const fn dyn_sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
+    sstore_cost(spec_id, vals, is_cold) - static_sstore_cost(spec_id)
+}
+
 /// `SSTORE` opcode cost calculation.
 #[inline]
 pub const fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
@@ -245,10 +263,24 @@ const fn frontier_sstore_cost(vals: &SStoreResult) -> u64 {
     }
 }
 
+/// Static gas cost for selfdestruct.
+#[inline]
+pub const fn static_selfdestruct_cost(spec_id: SpecId) -> u64 {
+    let is_tangerine = spec_id.is_enabled_in(SpecId::TANGERINE);
+    let mut gas = 0;
+
+    // EIP-150: Gas cost changes for IO-heavy operations
+    gas += if is_tangerine { 5000 } else { 0 };
+
+    gas
+}
+
 /// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
-pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
+pub const fn dyn_selfdestruct_cost(spec_id: SpecId, res: &StateLoad<SelfDestructResult>) -> u64 {
     let is_tangerine = spec_id.is_enabled_in(SpecId::TANGERINE);
+    let mut gas = 0;
+
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
         res.data.had_value && !res.data.target_exists
@@ -257,20 +289,20 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
     };
 
     // EIP-150: Gas cost changes for IO-heavy operations
-    let selfdestruct_gas_topup = if is_tangerine && should_charge_topup {
-        25000
-    } else {
-        0
-    };
+    if is_tangerine && should_charge_topup {
+        gas += NEWACCOUNT
+    }
 
-    // EIP-150: Gas cost changes for IO-heavy operations
-    let selfdestruct_gas = if is_tangerine { 5000 } else { 0 };
-
-    let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if spec_id.is_enabled_in(SpecId::BERLIN) && res.is_cold {
         gas += COLD_ACCOUNT_ACCESS_COST
     }
     gas
+}
+
+/// `SELFDESTRUCT` opcode cost calculation.
+#[inline]
+pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
+    static_selfdestruct_cost(spec_id) + dyn_selfdestruct_cost(spec_id, &res)
 }
 
 /// Calculate static gas for the call

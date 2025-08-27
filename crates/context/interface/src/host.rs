@@ -140,9 +140,6 @@ pub trait Host {
 
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
     #[inline]
-    #[deprecated(
-        note = "Unused as it does not account for skiping cold load. Use load_account_info_skip_cold_load instead"
-    )]
     fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         let account = self
             .load_account_info_skip_cold_load(address, true, false)
