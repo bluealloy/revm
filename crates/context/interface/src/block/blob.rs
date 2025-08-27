@@ -90,10 +90,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::eip4844::{
-        self, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
-        TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
-    };
+    use primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN;
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L78
     #[test]
