@@ -7,8 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    crypto, u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    crypto, u64_to_address, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
+    PrecompileResult,
 };
 use p256::{
     ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
@@ -26,17 +26,23 @@ pub const P256VERIFY_BASE_GAS_FEE: u64 = 3450;
 pub const P256VERIFY_BASE_GAS_FEE_OSAKA: u64 = 6900;
 
 /// Returns the secp256r1 precompile with its address.
-pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
+pub fn precompiles() -> impl Iterator<Item = Precompile> {
     [P256VERIFY].into_iter()
 }
 
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
-pub const P256VERIFY: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify);
+pub const P256VERIFY: Precompile = Precompile::new(
+    PrecompileId::P256Verify,
+    u64_to_address(P256VERIFY_ADDRESS),
+    p256_verify,
+);
 
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
-pub const P256VERIFY_OSAKA: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(P256VERIFY_ADDRESS), p256_verify_osaka);
+pub const P256VERIFY_OSAKA: Precompile = Precompile::new(
+    PrecompileId::P256Verify,
+    u64_to_address(P256VERIFY_ADDRESS),
+    p256_verify_osaka,
+);
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the

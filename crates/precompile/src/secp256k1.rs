@@ -20,14 +20,17 @@ pub mod k256;
 pub mod parity_libsecp256k1;
 
 use crate::{
-    crypto, utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
+    PrecompileResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// `ecrecover` precompile, containing address and function to run.
-pub const ECRECOVER: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(1), ec_recover_run);
+pub const ECRECOVER: Precompile = Precompile::new(
+    PrecompileId::EcRec,
+    crate::u64_to_address(1),
+    ec_recover_run,
+);
 
 /// `ecrecover` precompile function. Read more about input and output format in [this module docs](self).
 pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {

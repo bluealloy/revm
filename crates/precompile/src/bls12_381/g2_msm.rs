@@ -5,10 +5,13 @@ use crate::bls12_381_const::{
     PADDED_G2_LENGTH, SCALAR_LENGTH,
 };
 use crate::bls12_381_utils::msm_required_gas;
-use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
-pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRESS, g2_msm);
+pub const PRECOMPILE: Precompile =
+    Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, g2_msm);
 
 /// Implements EIP-2537 G2MSM precompile.
 /// G2 multi-scalar-multiplication call expects `288*k` bytes as an input that is interpreted
@@ -21,9 +24,7 @@ pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G2_MSM_ADDRE
 pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(G2_MSM_INPUT_LENGTH) {
-        return Err(PrecompileError::Other(format!(
-            "G2MSM input length should be multiple of {G2_MSM_INPUT_LENGTH}, was {input_len}",
-        )));
+        return Err(PrecompileError::Bls12381G2MsmInputLength);
     }
 
     let k = input_len / G2_MSM_INPUT_LENGTH;

@@ -3,10 +3,13 @@ use super::utils::{pad_g1_point, remove_g1_padding};
 use crate::bls12_381_const::{
     G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH,
 };
-use crate::{crypto, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
-pub const PRECOMPILE: PrecompileWithAddress = PrecompileWithAddress(G1_ADD_ADDRESS, g1_add);
+pub const PRECOMPILE: Precompile =
+    Precompile::new(PrecompileId::Bls12G1Add, G1_ADD_ADDRESS, g1_add);
 
 /// G1 addition call expects `256` bytes as an input that is interpreted as byte
 /// concatenation of two G1 points (`128` bytes each).
@@ -19,10 +22,7 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     }
 
     if input.len() != G1_ADD_INPUT_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "G1ADD input should be {G1_ADD_INPUT_LENGTH} bytes, was {}",
-            input.len()
-        )));
+        return Err(PrecompileError::Bls12381G1AddInputLength);
     }
 
     // Extract coordinates from padded input

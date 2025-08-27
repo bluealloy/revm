@@ -2,7 +2,7 @@
 use crate::{
     crypto,
     utilities::{bool_to_bytes32, right_pad},
-    Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    Address, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 use std::vec::Vec;
 
@@ -29,8 +29,8 @@ pub mod add {
     pub const ISTANBUL_ADD_GAS_COST: u64 = 150;
 
     /// Bn254 add precompile with ISTANBUL gas rules
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: Precompile =
+        Precompile::new(PrecompileId::Bn254Add, ADDRESS, |input, gas_limit| {
             run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
         });
 
@@ -38,8 +38,8 @@ pub mod add {
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
 
     /// Bn254 add precompile with BYZANTIUM gas rules
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: Precompile =
+        Precompile::new(PrecompileId::Bn254Add, ADDRESS, |input, gas_limit| {
             run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
         });
 }
@@ -55,8 +55,8 @@ pub mod mul {
     pub const ISTANBUL_MUL_GAS_COST: u64 = 6_000;
 
     /// Bn254 mul precompile with ISTANBUL gas rules
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: Precompile =
+        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, |input, gas_limit| {
             run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
         });
 
@@ -64,8 +64,8 @@ pub mod mul {
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;
 
     /// Bn254 mul precompile with BYZANTIUM gas rules
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: Precompile =
+        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, |input, gas_limit| {
             run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
         });
 }
@@ -84,8 +84,8 @@ pub mod pair {
     pub const ISTANBUL_PAIR_BASE: u64 = 45_000;
 
     /// Bn254 pair precompile with ISTANBUL gas rules
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: Precompile =
+        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, |input, gas_limit| {
             run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
@@ -101,8 +101,8 @@ pub mod pair {
     pub const BYZANTIUM_PAIR_BASE: u64 = 100_000;
 
     /// Bn254 pair precompile with BYZANTIUM gas rules
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: Precompile =
+        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, |input, gas_limit| {
             run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
