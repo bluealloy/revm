@@ -8,10 +8,7 @@
 //!
 //! [`BlobExcessGasAndPrice`] is used to store the blob gas price and excess blob gas.s
 use alloy_eips::eip7840::BLOB_BASE_COST;
-use primitives::{
-    eip4844::{GAS_PER_BLOB, MIN_BLOB_GASPRICE},
-};
-
+use primitives::eip4844::{GAS_PER_BLOB, MIN_BLOB_GASPRICE};
 
 /// Structure holding block blob excess gas and it calculates blob fee
 ///
