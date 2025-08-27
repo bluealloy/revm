@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         target: ["riscv32imac-unknown-none-elf", "riscv64imac-unknown-none-elf"]
-        features: ["", "kzg-rs"]
+        features: [""]
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
