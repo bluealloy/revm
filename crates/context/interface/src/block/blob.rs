@@ -3,8 +3,6 @@
 //!
 //! See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 //!
-//! [`calc_blob_gasprice`] and [`calc_excess_blob_gas`] are used to calculate the blob gas price and
-//! excess blob gas.
 //!
 //! [`BlobExcessGasAndPrice`] is used to store the blob gas price and excess blob gas.s
 use primitives::eip4844::MIN_BLOB_GASPRICE;
@@ -28,7 +26,7 @@ pub struct BlobExcessGasAndPrice {
 impl BlobExcessGasAndPrice {
     /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
     ///
-    /// `excess_blob_gas` is the excess blob gas of the block, it can be calculated with [`calc_excess_blob_gas`].
+    /// `excess_blob_gas` is the excess blob gas of the block, it can be calculated with `calc_excess_blob_gas` function from alloy-eips.
     pub fn new(excess_blob_gas: u64, blob_base_fee_update_fraction: u64) -> Self {
         let blob_gasprice = calc_blob_gasprice(excess_blob_gas, blob_base_fee_update_fraction);
         Self {

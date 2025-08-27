@@ -45,8 +45,6 @@ pub trait Block {
     fn prevrandao(&self) -> Option<B256>;
 
     /// Excess blob gas and blob gasprice.
-    /// See also [`calc_excess_blob_gas`]
-    /// and [`calc_blob_gasprice`].
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
