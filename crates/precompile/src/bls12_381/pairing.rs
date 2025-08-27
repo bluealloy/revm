@@ -30,9 +30,7 @@ pub const PRECOMPILE: Precompile =
 pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(PAIRING_INPUT_LENGTH) {
-        return Err(PrecompileError::Other(format!(
-            "Pairing input length should be multiple of {PAIRING_INPUT_LENGTH}, was {input_len}"
-        )));
+        return Err(PrecompileError::Bls12381PairingInputLength);
     }
 
     let k = input_len / PAIRING_INPUT_LENGTH;
