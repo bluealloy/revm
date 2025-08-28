@@ -30,10 +30,7 @@ auto_impl.workspace = true
 either.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-	"derive",
-	"rc",
-], optional = true }
+serde = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
