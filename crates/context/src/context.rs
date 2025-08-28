@@ -2,12 +2,13 @@
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::AccountLoad,
+    host::LoadError,
+    journaled_state::AccountInfoLoad,
     Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
-use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{hardfork::SpecId, Address, Log, StorageKey, StorageValue, B256, U256};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -530,73 +531,6 @@ impl<
 
     /* Journal */
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
-        self.journal_mut()
-            .load_account_delegated(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets balance of `address` and if the account is cold.
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.journal_mut()
-            .load_account(address)
-            .map(|acc| acc.map(|a| a.info.balance))
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code of `address` and if the account is cold.
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
-        self.journal_mut()
-            .code(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets code hash of `address` and if the account is cold.
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
-        self.journal_mut()
-            .code_hash(address)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Gets storage value of `address` at `index` and if the account is cold.
-    fn sload(&mut self, address: Address, index: StorageKey) -> Option<StateLoad<StorageValue>> {
-        self.journal_mut()
-            .sload(address, index)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
-    /// Sets storage value of account address at index.
-    ///
-    /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: StorageKey,
-        value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.journal_mut()
-            .sstore(address, index, value)
-            .map_err(|e| {
-                *self.error() = Err(e.into());
-            })
-            .ok()
-    }
-
     /// Gets the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
         self.journal_mut().tload(address, index)
@@ -624,5 +558,60 @@ impl<
                 *self.error() = Err(e.into());
             })
             .ok()
+    }
+
+    fn sstore_skip_cold_load(
+        &mut self,
+        address: Address,
+        key: StorageKey,
+        value: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, LoadError> {
+        self.journal_mut()
+            .sstore_skip_cold_load(address, key, value, skip_cold_load)
+            .map_err(|e| {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
+            })
+    }
+
+    fn sload_skip_cold_load(
+        &mut self,
+        address: Address,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, LoadError> {
+        self.journal_mut()
+            .sload_skip_cold_load(address, key, skip_cold_load)
+            .map_err(|e| {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
+            })
+    }
+
+    fn load_account_info_skip_cold_load(
+        &mut self,
+        address: Address,
+        load_code: bool,
+        skip_cold_load: bool,
+    ) -> Result<AccountInfoLoad<'_>, LoadError> {
+        let error = &mut self.error;
+        let journal = &mut self.journaled_state;
+        match journal.load_account_info_skip_cold_load(address, load_code, skip_cold_load) {
+            Ok(a) => Ok(a),
+            Err(e) => {
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *error = Err(err.into());
+                }
+                Err(ret)
+            }
+        }
     }
 }

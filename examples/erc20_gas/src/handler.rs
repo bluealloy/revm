@@ -83,6 +83,8 @@ where
             .expect("effective balance is always smaller than max balance so it can't overflow");
 
         let account_balance_slot = erc_address_storage(tx.caller());
+        context.journal_mut().load_account(TOKEN)?.data.mark_touch();
+
         let account_balance = context
             .journal_mut()
             .sload(TOKEN, account_balance_slot)
@@ -101,7 +103,6 @@ where
         // Transfer will be done inside `*_inner` functions.
         if is_balance_check_disabled {
             // ignore balance check.
-            // TODO add transfer value to the erc20 slot.
         } else if max_balance_spending > account_balance {
             return Err(InvalidTransaction::LackOfFundForMaxFee {
                 fee: Box::new(max_balance_spending),
@@ -136,6 +137,7 @@ where
 
         let reimbursement =
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
+
         token_operation::<EVM::Context, ERROR>(
             context,
             TREASURY,

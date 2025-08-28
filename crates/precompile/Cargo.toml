@@ -1,7 +1,7 @@
 [package]
 name = "revm-precompile"
 description = "Revm Precompiles - Ethereum compatible precompiled contracts"
-version = "26.0.1"
+version = "27.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -56,8 +56,6 @@ c-kzg = { workspace = true, optional = true, features = [
 	"ethereum_kzg_settings",
 ] }
 
-# Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
-kzg-rs = { workspace = true, optional = true }
 
 # Use the BLS12-381 implementation of blst for EIP2537
 blst = { workspace = true, optional = true }
@@ -105,8 +103,6 @@ asm-sha2 = ["sha2/asm"]
 
 # Enables the c-kzg point evaluation precompile. Enabled by default as most stable/used implementation.
 c-kzg = ["dep:c-kzg"]
-# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["dep:kzg-rs"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.

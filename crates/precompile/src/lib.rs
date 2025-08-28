@@ -14,6 +14,7 @@ pub mod bls12_381_const;
 pub mod bls12_381_utils;
 pub mod bn254;
 pub mod hash;
+mod id;
 pub mod identity;
 pub mod interface;
 pub mod kzg_point_evaluation;
@@ -22,6 +23,7 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
+pub use id::PrecompileId;
 pub use interface::*;
 
 // silence arkworks lint as bn impl will be used as default if both are enabled.
@@ -35,10 +37,6 @@ cfg_if::cfg_if! {
 }
 
 use arrayref as _;
-
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
-use kzg_rs as _;
 
 // silence arkworks-bls12-381 lint as blst will be used as default if both are enabled.
 cfg_if::cfg_if! {
@@ -69,11 +67,11 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 #[derive(Clone, Debug)]
 pub struct Precompiles {
     /// Precompiles
-    inner: HashMap<Address, PrecompileFn>,
-    /// Addresses of precompile
+    inner: HashMap<Address, Precompile>,
+    /// Addresses of precompiles.
     addresses: HashSet<Address>,
     /// Optimized addresses filter.
-    optimized_access: Vec<Option<PrecompileFn>>,
+    optimized_access: Vec<Option<Precompile>>,
     /// `true` if all precompiles are short addresses.
     all_short_addresses: bool,
 }
@@ -119,7 +117,7 @@ impl Precompiles {
     }
 
     /// Returns inner HashMap of precompiles.
-    pub fn inner(&self) -> &HashMap<Address, PrecompileFn> {
+    pub fn inner(&self) -> &HashMap<Address, Precompile> {
         &self.inner
     }
 
@@ -232,7 +230,7 @@ impl Precompiles {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<&PrecompileFn> {
+    pub fn get(&self, address: &Address) -> Option<&Precompile> {
         if let Some(short_address) = short_address(address) {
             return self.optimized_access[short_address].as_ref();
         }
@@ -241,7 +239,7 @@ impl Precompiles {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get_mut(&mut self, address: &Address) -> Option<&mut PrecompileFn> {
+    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
         self.inner.get_mut(address)
     }
 
@@ -264,18 +262,19 @@ impl Precompiles {
     ///
     /// Other precompiles with overwrite existing precompiles.
     #[inline]
-    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        let items: Vec<PrecompileWithAddress> = other.into_iter().collect::<Vec<_>>();
+    pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
+        let items: Vec<Precompile> = other.into_iter().collect::<Vec<_>>();
         for item in items.iter() {
-            if let Some(short_address) = short_address(&item.0) {
-                self.optimized_access[short_address] = Some(item.1);
+            if let Some(short_address) = short_address(item.address()) {
+                self.optimized_access[short_address] = Some(item.clone());
             } else {
                 self.all_short_addresses = false;
             }
         }
 
         self.addresses.extend(items.iter().map(|p| *p.address()));
-        self.inner.extend(items.into_iter().map(|p| (p.0, p.1)));
+        self.inner
+            .extend(items.into_iter().map(|p| (*p.address(), p.clone())));
     }
 
     /// Returns complement of `other` in `self`.
@@ -287,11 +286,11 @@ impl Precompiles {
         let inner = inner
             .iter()
             .filter(|(a, _)| !other.inner.contains_key(*a))
-            .map(|(a, p)| (*a, *p))
+            .map(|(a, p)| (*a, p.clone()))
             .collect::<HashMap<_, _>>();
 
         let mut precompiles = Self::default();
-        precompiles.extend(inner.into_iter().map(|p| PrecompileWithAddress(p.0, p.1)));
+        precompiles.extend(inner.into_iter().map(|p| p.1));
         precompiles
     }
 
@@ -304,42 +303,72 @@ impl Precompiles {
         let inner = inner
             .iter()
             .filter(|(a, _)| other.inner.contains_key(*a))
-            .map(|(a, p)| (*a, *p))
+            .map(|(a, p)| (*a, p.clone()))
             .collect::<HashMap<_, _>>();
 
         let mut precompiles = Self::default();
-        precompiles.extend(inner.into_iter().map(|p| PrecompileWithAddress(p.0, p.1)));
+        precompiles.extend(inner.into_iter().map(|p| p.1));
         precompiles
     }
 }
 
-/// Precompile with address and function.
+/// Precompile.
 #[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(pub Address, pub PrecompileFn);
+pub struct Precompile {
+    /// Unique identifier.
+    id: PrecompileId,
+    /// Precompile address.
+    address: Address,
+    /// Precompile implementation.
+    fn_: PrecompileFn,
+}
 
-impl From<(Address, PrecompileFn)> for PrecompileWithAddress {
-    fn from(value: (Address, PrecompileFn)) -> Self {
-        PrecompileWithAddress(value.0, value.1)
+impl From<(PrecompileId, Address, PrecompileFn)> for Precompile {
+    fn from((id, address, fn_): (PrecompileId, Address, PrecompileFn)) -> Self {
+        Precompile { id, address, fn_ }
     }
 }
 
-impl From<PrecompileWithAddress> for (Address, PrecompileFn) {
-    fn from(value: PrecompileWithAddress) -> Self {
-        (value.0, value.1)
+impl From<Precompile> for (PrecompileId, Address, PrecompileFn) {
+    fn from(value: Precompile) -> Self {
+        (value.id, value.address, value.fn_)
     }
 }
 
-impl PrecompileWithAddress {
-    /// Returns reference of address.
+impl Precompile {
+    /// Create new precompile.
+    pub const fn new(id: PrecompileId, address: Address, fn_: PrecompileFn) -> Self {
+        Self { id, address, fn_ }
+    }
+
+    /// Returns reference to precompile identifier.
+    #[inline]
+    pub fn id(&self) -> &PrecompileId {
+        &self.id
+    }
+
+    /// Returns reference to address.
     #[inline]
     pub fn address(&self) -> &Address {
-        &self.0
+        &self.address
     }
 
-    /// Returns reference of precompile.
+    /// Returns reference to precompile implementation.
     #[inline]
     pub fn precompile(&self) -> &PrecompileFn {
-        &self.1
+        &self.fn_
+    }
+
+    /// Consumes the type and returns the precompile implementation.
+    #[inline]
+    pub fn into_precompile(self) -> PrecompileFn {
+        self.fn_
+    }
+
+    /// Executes the precompile.
+    #[inline]
+    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileResult {
+        (self.fn_)(input, gas_limit)
     }
 }
 
@@ -430,18 +459,30 @@ mod test {
         assert!(precompiles.optimized_access[9].is_some());
         assert!(precompiles.optimized_access[10].is_none());
 
-        precompiles.extend([PrecompileWithAddress(u64_to_address(100), temp_precompile)]);
-        precompiles.extend([PrecompileWithAddress(u64_to_address(101), temp_precompile)]);
+        precompiles.extend([Precompile::new(
+            PrecompileId::Custom("test".into()),
+            u64_to_address(100),
+            temp_precompile,
+        )]);
+        precompiles.extend([Precompile::new(
+            PrecompileId::Custom("test".into()),
+            u64_to_address(101),
+            temp_precompile,
+        )]);
 
         assert_eq!(
-            precompiles.optimized_access[100].unwrap()(&[], u64::MAX),
+            precompiles.optimized_access[100]
+                .as_ref()
+                .unwrap()
+                .execute(&[], u64::MAX),
             PrecompileResult::Err(PrecompileError::OutOfGas)
         );
 
         assert_eq!(
             precompiles
                 .get(&Address::left_padding_from(&[101]))
-                .unwrap()(&[], u64::MAX),
+                .unwrap()
+                .execute(&[], u64::MAX),
             PrecompileResult::Err(PrecompileError::OutOfGas)
         );
     }

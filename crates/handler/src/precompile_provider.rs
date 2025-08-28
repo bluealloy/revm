@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::ContextTr;
-use interpreter::{CallInput, Gas, InputsImpl, InstructionResult, InterpreterResult};
+use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
@@ -23,10 +23,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     fn run(
         &mut self,
         context: &mut CTX,
-        address: &Address,
-        inputs: &InputsImpl,
-        is_static: bool,
-        gas_limit: u64,
+        inputs: &CallInputs,
     ) -> Result<Option<Self::Output>, String>;
 
     /// Get the warm addresses.
@@ -93,18 +90,15 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
     fn run(
         &mut self,
         context: &mut CTX,
-        address: &Address,
-        inputs: &InputsImpl,
-        _is_static: bool,
-        gas_limit: u64,
+        inputs: &CallInputs,
     ) -> Result<Option<InterpreterResult>, String> {
-        let Some(precompile) = self.precompiles.get(address) else {
+        let Some(precompile) = self.precompiles.get(&inputs.bytecode_address) else {
             return Ok(None);
         };
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
-            gas: Gas::new(gas_limit),
+            gas: Gas::new(inputs.gas_limit),
             output: Bytes::new(),
         };
 
@@ -121,7 +115,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
         };
 
-        match (*precompile)(input_bytes, gas_limit) {
+        match precompile.execute(input_bytes, inputs.gas_limit) {
             Ok(output) => {
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");

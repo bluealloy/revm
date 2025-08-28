@@ -14,7 +14,6 @@ use blst::{
     blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve, blst_p2_from_affine,
     blst_p2_mult, blst_p2_to_affine, blst_scalar, blst_scalar_from_bendian, MultiPoint,
 };
-use std::string::ToString;
 use std::vec::Vec;
 
 // Big-endian non-Montgomery form.
@@ -382,9 +381,7 @@ fn decode_g1_on_curve(
     //
     // SAFETY: Out is a blst value.
     if unsafe { !blst_p1_affine_on_curve(&out) } {
-        return Err(PrecompileError::Other(
-            "Element not on G1 curve".to_string(),
-        ));
+        return Err(PrecompileError::Bls12381G1NotOnCurve);
     }
 
     Ok(out)
@@ -436,7 +433,7 @@ fn _extract_g1_input(
         // As endomorphism acceleration requires input on the correct subgroup, implementers MAY
         // use endomorphism acceleration.
         if unsafe { !blst_p1_affine_in_g1(&out) } {
-            return Err(PrecompileError::Other("Element not in G1".to_string()));
+            return Err(PrecompileError::Bls12381G1NotInSubgroup);
         }
     }
     Ok(out)
@@ -481,9 +478,7 @@ fn decode_g2_on_curve(
     //
     // SAFETY: Out is a blst value.
     if unsafe { !blst_p2_affine_on_curve(&out) } {
-        return Err(PrecompileError::Other(
-            "Element not on G2 curve".to_string(),
-        ));
+        return Err(PrecompileError::Bls12381G2NotOnCurve);
     }
 
     Ok(out)
@@ -559,7 +554,7 @@ fn _extract_g2_input(
         // As endomorphism acceleration requires input on the correct subgroup, implementers MAY
         // use endomorphism acceleration.
         if unsafe { !blst_p2_affine_in_g2(&out) } {
-            return Err(PrecompileError::Other("Element not in G2".to_string()));
+            return Err(PrecompileError::Bls12381G2NotInSubgroup);
         }
     }
     Ok(out)
@@ -571,7 +566,7 @@ fn _extract_g2_input(
 /// Note: The field element is expected to be in big endian format.
 fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileError> {
     if !is_valid_be(input) {
-        return Err(PrecompileError::Other("non-canonical fp value".to_string()));
+        return Err(PrecompileError::NonCanonicalFp);
     }
     let mut fp = blst_fp::default();
     // SAFETY: `input` has fixed length, and `fp` is a blst value.
@@ -595,10 +590,7 @@ fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileError> {
 ///   `q`.
 fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
     if input.len() != SCALAR_LENGTH {
-        return Err(PrecompileError::Other(format!(
-            "Input should be {SCALAR_LENGTH} bytes, was {}",
-            input.len()
-        )));
+        return Err(PrecompileError::Bls12381ScalarInputLength);
     }
 
     let mut out = blst_scalar::default();

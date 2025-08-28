@@ -1,7 +1,7 @@
 [package]
 name = "op-revm"
 description = "Optimism variant of Revm"
-version = "9.0.1"
+version = "10.0.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -65,7 +65,5 @@ optional_no_base_fee = ["revm/optional_no_base_fee"]
 # See comments in `revm-precompile`
 secp256k1 = ["revm/secp256k1"]
 c-kzg = ["revm/c-kzg"]
-# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["revm/kzg-rs"]
 blst = ["revm/blst"]
 bn = ["revm/bn"]

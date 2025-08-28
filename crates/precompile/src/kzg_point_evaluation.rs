@@ -1,7 +1,7 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{
-    crypto, Address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    crypto, Address, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 pub mod arkworks;
 
@@ -11,7 +11,8 @@ pub mod blst;
 use primitives::hex_literal::hex;
 
 /// KZG point evaluation precompile, containing address and function to run.
-pub const POINT_EVALUATION: PrecompileWithAddress = PrecompileWithAddress(ADDRESS, run);
+pub const POINT_EVALUATION: Precompile =
+    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, run);
 
 /// Address of the KZG point evaluation precompile.
 pub const ADDRESS: Address = crate::u64_to_address(0x0A);
@@ -89,14 +90,6 @@ pub fn verify_kzg_proof(
 
             let kzg_settings = c_kzg::ethereum_kzg_settings(8);
             kzg_settings.verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof)).unwrap_or(false)
-        } else if #[cfg(feature = "kzg-rs")] {
-            use kzg_rs::{Bytes48, Bytes32, KzgProof};
-            let env = kzg_rs::EnvKzgSettings::default();
-            let as_bytes48 = |bytes: &[u8; 48]| -> &Bytes48 { unsafe { &*bytes.as_ptr().cast() } };
-            let as_bytes32 = |bytes: &[u8; 32]| -> &Bytes32 { unsafe { &*bytes.as_ptr().cast() } };
-
-            let kzg_settings = env.get();
-            KzgProof::verify_kzg_proof(as_bytes48(commitment), as_bytes32(z), as_bytes32(y), as_bytes48(proof), kzg_settings).unwrap_or(false)
         } else if #[cfg(feature = "blst")] {
             blst::verify_kzg_proof(commitment, z, y, proof)
         } else {

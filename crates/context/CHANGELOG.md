@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.2](https://github.com/bluealloy/revm/compare/revm-context-v9.0.1...revm-context-v9.0.2) - 2025-08-23
+
+### Fixed
+
+- EIP-7702 target check to return correct error ([#2896](https://github.com/bluealloy/revm/pull/2896))
+
+### Other
+
+- skip drain if checkpoing is inconsistent ([#2911](https://github.com/bluealloy/revm/pull/2911))
+
 ## [9.0.1](https://github.com/bluealloy/revm/compare/revm-context-v9.0.0...revm-context-v9.0.1) - 2025-08-12
 
 ### Other

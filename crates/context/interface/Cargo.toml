@@ -1,7 +1,7 @@
 [package]
 name = "revm-context-interface"
 description = "Revm context interface crates"
-version = "10.0.1"
+version = "10.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -30,10 +30,7 @@ auto_impl.workspace = true
 either.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-	"derive",
-	"rc",
-], optional = true }
+serde = { workspace = true, optional = true }
 
 [features]
 default = ["std"]

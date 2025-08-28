@@ -105,19 +105,18 @@ impl Account {
         self.status |= AccountStatus::Cold;
     }
 
+    /// Is account warm for given transaction id.
+    #[inline]
+    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+        self.transaction_id != transaction_id || self.status.contains(AccountStatus::Cold)
+    }
+
     /// Marks the account as warm and return true if it was previously cold.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
-        let same_id = self.transaction_id == transaction_id;
-        let is_cold = self.status.contains(AccountStatus::Cold);
-
+        let is_cold = self.is_cold_transaction_id(transaction_id);
         self.status -= AccountStatus::Cold;
         self.transaction_id = transaction_id;
-
-        if !same_id {
-            return true;
-        }
-
         is_cold
     }
 
@@ -394,21 +393,22 @@ impl EvmStorageSlot {
         self.is_cold = true;
     }
 
+    /// Is storage slot cold for given transaction id.
+    #[inline]
+    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+        self.transaction_id != transaction_id || self.is_cold
+    }
+
     /// Marks the storage slot as warm and sets transaction_id to the given value
     ///
     ///
     /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
-        let same_id = self.transaction_id == transaction_id;
+        let is_cold = self.is_cold_transaction_id(transaction_id);
         self.transaction_id = transaction_id;
-        let was_cold = core::mem::take(&mut self.is_cold);
-
-        if same_id {
-            // only if transaction id is same we are returning was_cold.
-            return was_cold;
-        }
-        true
+        self.is_cold = false;
+        is_cold
     }
 }
 
@@ -509,7 +509,7 @@ mod tests {
 
     #[test]
     fn test_account_with_storage() {
-        let mut storage = HashMap::new();
+        let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         let key1 = StorageKey::from(1);
         let key2 = StorageKey::from(2);
         let slot1 = EvmStorageSlot::new(StorageValue::from(10), 0);
@@ -621,7 +621,7 @@ mod tests {
 
         let slot_key = StorageKey::from(42);
         let slot_value = EvmStorageSlot::new(StorageValue::from(123), 0);
-        let mut storage = HashMap::new();
+        let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         storage.insert(slot_key, slot_value.clone());
 
         // Chain multiple builder methods together
@@ -639,5 +639,18 @@ mod tests {
         assert!(account.is_created());
         assert!(account.is_touched());
         assert!(!account.status.contains(AccountStatus::Cold));
+    }
+
+    #[test]
+    fn test_account_is_cold_transaction_id() {
+        let mut account = Account::default();
+        // only case where it is warm.
+        assert!(!account.is_cold_transaction_id(0));
+
+        // all other cases are cold
+        assert!(account.is_cold_transaction_id(1));
+        account.mark_cold();
+        assert!(account.is_cold_transaction_id(0));
+        assert!(account.is_cold_transaction_id(1));
     }
 }

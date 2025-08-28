@@ -1,7 +1,7 @@
 [package]
 name = "revm-interpreter"
 description = "Revm Interpreter that executes bytecode."
-version = "25.0.1"
+version = "25.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -22,6 +22,7 @@ workspace = true
 bytecode.workspace = true
 primitives.workspace = true
 context-interface.workspace = true
+state.workspace = true
 
 # optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -31,7 +32,13 @@ bincode.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "context-interface/std", "bytecode/std"]
+std = [
+	"serde?/std",
+	"primitives/std",
+	"context-interface/std",
+	"bytecode/std",
+	"state/std",
+]
 hashbrown = ["primitives/hashbrown"]
 serde = [
 	"dep:serde",
@@ -39,6 +46,7 @@ serde = [
 	"bytecode/serde",
 	"context-interface/serde",
 	"bincode/serde",
+	"state/serde",
 ]
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.

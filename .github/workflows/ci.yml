@@ -32,22 +32,23 @@ jobs:
       - run: cargo test --workspace ${{ matrix.flags }}
 
   check-no-std:
-    name: check no_std ${{ matrix.features }}
+    name: check no_std ${{ matrix.target }} ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "kzg-rs"]
+        target: ["riscv32imac-unknown-none-elf", "riscv64imac-unknown-none-elf"]
+        features: [""]
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: riscv32imac-unknown-none-elf
+          targets: ${{ matrix.target }}
       - run: |
-          cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
-          cargo check --target riscv32imac-unknown-none-elf -p op-revm --no-default-features --features=${{ matrix.features }}
-          cargo check --target riscv32imac-unknown-none-elf -p revm-database --no-default-features
+          cargo check --target ${{ matrix.target }} --no-default-features --features=${{ matrix.features }}
+          cargo check --target ${{ matrix.target }} -p op-revm --no-default-features --features=${{ matrix.features }}
+          cargo check --target ${{ matrix.target }} -p revm-database --no-default-features
 
   check:
     name: check ${{ matrix.features }}
