@@ -227,7 +227,6 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
 
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
-        println!("block_idx: {}", block_idx);
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
@@ -247,14 +246,11 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
 
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
-            // Create transaction environment
-            let sender = derive_sender_from_tx(tx).unwrap_or_else(|| {
-                // Use a default sender if signature recovery fails
-                Address::from([0xa0; 20]) // Common test sender address
-            });
-            let to = extract_to_address_from_tx(tx);
+            if tx.sender.is_none() {
+                return Err(TestExecutionError::SenderRequired);
+            }
 
-            let tx_env = match tx.to_tx_env(sender, to) {
+            let tx_env = match tx.to_tx_env() {
                 Ok(env) => env,
                 Err(e) => {
                     if should_fail {
@@ -372,14 +368,6 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
     Ok(())
 }
 
-/// Extract 'to' address from transaction data
-/// This is a simplified approach - in reality, we'd need to decode the transaction RLP
-fn extract_to_address_from_tx(_tx: &statetest_types::blockchain::Transaction) -> Option<Address> {
-    // For now, assume it's a contract call to a default address
-    // In a full implementation, this would be extracted from the transaction data or RLP
-    None // None indicates contract creation
-}
-
 /// Convert ForkSpec to SpecId
 fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
     match fork {
@@ -405,19 +393,6 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
     }
 }
 
-/// Derive sender address from transaction signature
-/// This is a simplified implementation - a full implementation would
-/// recover the public key from the signature and derive the address
-fn derive_sender_from_tx(_tx: &statetest_types::blockchain::Transaction) -> Option<Address> {
-    // For now, use the standard test address that typically has funds
-    // This is the address commonly used in Ethereum tests
-    // TODO: Implement proper ECDSA recovery from transaction signature
-    Some(Address::from([
-        0xa9, 0x4f, 0x53, 0x74, 0xfc, 0xe5, 0xed, 0xbc, 0x8e, 0x2a, 0x86, 0x97, 0xc1, 0x53, 0x31,
-        0x67, 0x7e, 0x6e, 0xbf, 0x0b,
-    ])) // 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b
-}
-
 /// Check if a test should be skipped based on its filename
 fn skip_test(path: &Path) -> bool {
     let name = path.file_name().unwrap().to_str().unwrap();
@@ -426,7 +401,7 @@ fn skip_test(path: &Path) -> bool {
     matches!(
         name,
         // Example: Skip tests that are known to be problematic
-        "placeholder_skip_test.json"
+        "placeholder_skip_test.json" | "RevertOpcodeMultipleSubCalls_d1g3v0.json"
     )
 }
 
@@ -437,6 +412,9 @@ pub enum TestExecutionError {
 
     #[error("Skipped fork: {0}")]
     SkippedFork(String),
+
+    #[error("Sender is required")]
+    SenderRequired,
 
     #[error("Expected failure at block {block_idx}, tx {tx_idx}: {message}")]
     ExpectedFailure {

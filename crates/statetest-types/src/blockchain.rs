@@ -3,6 +3,7 @@
 //! This module contains structures for deserializing blockchain test JSON files
 //! from the Ethereum test suite.
 
+use crate::{deserialize_maybe_empty, AccountInfo};
 use revm::{
     context::{BlockEnv, TxEnv},
     primitives::{
@@ -12,8 +13,6 @@ use revm::{
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
-
-use crate::AccountInfo;
 
 /// Blockchain test suite containing multiple test cases
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -154,6 +153,9 @@ pub struct Transaction {
     pub v: U256,
     /// Ether value to transfer
     pub value: U256,
+    /// Target address
+    #[serde(default, deserialize_with = "deserialize_maybe_empty")]
+    pub to: Option<Address>,
     /// Chain ID for replay protection
     pub chain_id: Option<U256>,
     /// Access list (EIP-2930)
@@ -337,73 +339,66 @@ impl BlockHeader {
 impl Transaction {
     /// Convert Transaction to TxEnv
     /// Note: The 'to' and 'sender' fields need to be provided separately in the reth model
-    pub fn to_tx_env(&self, sender: Address, to: Option<Address>) -> Result<TxEnv, String> {
-        let mut builder = TxEnv::builder();
-
+    pub fn to_tx_env(&self) -> Result<TxEnv, String> {
         // Determine transaction type
         let tx_type = self.transaction_type.map(|t| t.to::<u8>()).unwrap_or(0);
-        builder = builder.tx_type(Some(tx_type));
-
-        // Set caller
-        builder = builder.caller(sender);
-
-        // Set gas limit
-        let gas_limit = self.gas_limit.to::<u64>();
-        builder = builder.gas_limit(gas_limit);
-
-        // Set nonce
-        let nonce = self.nonce.to::<u64>();
-        builder = builder.nonce(nonce);
-
-        // Set value
-        builder = builder.value(self.value);
-
-        // Set data
-        builder = builder.data(self.data.clone());
 
         // Set transaction kind (to address)
-        let kind = if let Some(to_addr) = to {
+        let kind = if let Some(to_addr) = self.to {
             TxKind::Call(to_addr)
         } else {
             TxKind::Create
         };
-        builder = builder.kind(kind);
+
+        let Some(sender) = self.sender else {
+            return Err("Sender is required".to_string());
+        };
+
+        // Build the base transaction
+        let mut builder = TxEnv::builder()
+            .tx_type(Some(tx_type))
+            .caller(sender)
+            .gas_limit(self.gas_limit.to::<u64>())
+            .nonce(self.nonce.to::<u64>())
+            .value(self.value)
+            .data(self.data.clone())
+            .kind(kind);
 
         // Set chain ID if present
         if let Some(chain_id) = self.chain_id {
-            let chain_id = chain_id.to::<u64>();
-            builder = builder.chain_id(Some(chain_id));
+            builder = builder.chain_id(Some(chain_id.to::<u64>()));
         }
 
         // Handle gas pricing based on transaction type
-        match tx_type {
+        builder = match tx_type {
             0 | 1 => {
                 // Legacy or EIP-2930 transaction
                 if let Some(gas_price) = self.gas_price {
-                    let gas_price = gas_price.to::<u128>();
-                    builder = builder.gas_price(gas_price);
+                    builder.gas_price(gas_price.to::<u128>())
+                } else {
+                    builder
                 }
             }
             2 | 3 => {
                 // EIP-1559 or EIP-4844 transaction
+                let mut b = builder;
                 if let Some(max_fee) = self.max_fee_per_gas {
-                    let max_fee = max_fee.to::<u128>();
-                    builder = builder.gas_price(max_fee);
+                    b = b.gas_price(max_fee.to::<u128>());
                 }
-
                 if let Some(priority_fee) = self.max_priority_fee_per_gas {
-                    let priority_fee = priority_fee.to::<u128>();
-                    builder = builder.gas_priority_fee(Some(priority_fee));
+                    b = b.gas_priority_fee(Some(priority_fee.to::<u128>()));
                 }
+                b
             }
             _ => {
                 // For unknown types, try to use gas_price if available
                 if let Some(gas_price) = self.gas_price {
-                    let gas_price = gas_price.to::<u128>();
-                    builder = builder.gas_price(gas_price);
+                    builder.gas_price(gas_price.to::<u128>())
+                } else {
+                    builder
                 }
             }
-        }
+        };
 
         builder
             .build()
@@ -421,7 +416,6 @@ impl BlockchainTestCase {
 #[cfg(test)]
 mod test {
     use super::*;
-    use revm::primitives::Address;
 
     #[test]
     fn test_transaction_deserialization() {
@@ -505,12 +499,11 @@ mod test {
             max_fee_per_gas: None,
             max_priority_fee_per_gas: None,
             hash: None,
+            to: None,
         };
 
         // Test conversion with dummy sender and to address
-        let sender = Address::default();
-        let to = Some(Address::default());
-        let tx_env = tx.to_tx_env(sender, to).unwrap();
+        let tx_env = tx.to_tx_env().unwrap();
 
         assert_eq!(tx_env.tx_type, 0);
         assert_eq!(tx_env.nonce, 0);
