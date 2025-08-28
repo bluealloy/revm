@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.3](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.2...revm-statetest-types-v9.0.3) - 2025-08-28
+
+### Other
+
+- updated the following local packages: revm
+
 ## [9.0.2](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.1...revm-statetest-types-v9.0.2) - 2025-08-23
 
 ### Other
