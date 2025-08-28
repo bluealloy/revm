@@ -127,9 +127,9 @@ where
 
         Ok(res.map_frame(|token| {
             if is_first_init {
-                self.frame_stack.end_init(token);
+                unsafe { self.frame_stack.end_init(token) };
             } else {
-                self.frame_stack.push(token);
+                unsafe { self.frame_stack.push(token) };
             }
             self.frame_stack.get()
         }))
