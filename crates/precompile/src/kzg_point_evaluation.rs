@@ -5,6 +5,9 @@ use crate::{
 };
 pub mod arkworks;
 
+/// Cryptographic operations for KZG point evaluation precompiles
+pub mod crypto;
+
 #[cfg(feature = "blst")]
 pub mod blst;
 
