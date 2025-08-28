@@ -1,8 +1,8 @@
 use crate::FrameResult;
 use context_interface::{
     journaled_state::JournalTr,
-    result::{ExecutionResult, HaltReasonTr},
-    Block, Cfg, ContextTr, Database, Transaction,
+    result::{ExecutionResult, HaltReason, HaltReasonTr},
+    Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
@@ -106,7 +106,21 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
             gas_used,
             output: output.into_data(),
         },
-        SuccessOrHalt::Halt(reason) => ExecutionResult::Halt { reason, gas_used },
+        SuccessOrHalt::Halt(reason) => {
+            // Bubble up precompile errors from context when available
+            if matches!(
+                instruction_result.result,
+                interpreter::InstructionResult::PrecompileError
+            ) {
+                if let Some(message) = context.local_mut().take_precompile_error_context() {
+                    return ExecutionResult::Halt {
+                        reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
+                        gas_used,
+                    };
+                }
+            }
+            ExecutionResult::Halt { reason, gas_used }
+        }
         // Only two internal return flags.
         flag @ (SuccessOrHalt::FatalExternalError | SuccessOrHalt::Internal(_)) => {
             panic!(

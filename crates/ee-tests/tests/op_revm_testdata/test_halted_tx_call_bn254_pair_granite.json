@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 1824024,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bn254 invalid pair length"
+        }
       }
     }
   },

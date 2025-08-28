@@ -568,7 +568,7 @@ pub enum SuccessReason {
 /// Indicates that the EVM has experienced an exceptional halt.
 ///
 /// This causes execution to immediately end with all gas being consumed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HaltReason {
     /// Out of gas error.
@@ -591,6 +591,8 @@ pub enum HaltReason {
     CreateCollision,
     /// Precompile error.
     PrecompileError,
+    /// Precompile error with message from context.
+    PrecompileErrorWithContext(String),
     /// Nonce overflow.
     NonceOverflow,
     /// Create init code size exceeds limit (runtime).
