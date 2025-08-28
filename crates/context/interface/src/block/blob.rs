@@ -154,16 +154,16 @@ pub fn get_base_fee_per_blob_gas(excess_blob_gas: u64, blob_base_fee_update_frac
 ///
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
 /// (`fake_exponential`).
-///
-/// # Panics
-///
-/// This function panics if `denominator` is zero.
 #[inline]
 pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
     assert_ne!(denominator, 0, "attempt to divide by zero");
     let factor = factor as u128;
     let numerator = numerator as u128;
     let denominator = denominator as u128;
+
+    if denominator == 0 {
+        return 0;
+    }
 
     let mut i = 1;
     let mut output = 0;

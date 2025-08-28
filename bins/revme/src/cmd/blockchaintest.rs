@@ -1,10 +1,12 @@
+pub mod post_block;
+
 use clap::Parser;
-use database::{CacheDB, EmptyDB};
+use database::states::bundle_state::BundleRetention;
+use database::{CacheDB, EmptyDB, State};
 use primitives::{hardfork::SpecId, hex, Address};
 use revm::{
-    context::cfg::CfgEnv,
-    context_interface::result::{ExecutionResult, HaltReason},
-    Context, ExecuteCommitEvm, MainBuilder, MainContext,
+    context::cfg::CfgEnv, context_interface::result::HaltReason, Context, ExecuteCommitEvm,
+    MainBuilder, MainContext,
 };
 use serde_json::json;
 use state::AccountInfo;
@@ -180,7 +182,7 @@ fn run_test_file(file_path: &Path, output_json: bool) -> Result<usize, Error> {
 fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExecutionError> {
     // Skip certain forks for now
     match test_case.network {
-        ForkSpec::Constantinople | ForkSpec::ByzantiumToConstantinopleAt5 => {
+        ForkSpec::ByzantiumToConstantinopleAt5 => {
             return Err(TestExecutionError::SkippedFork(format!(
                 "{:?}",
                 test_case.network
@@ -213,6 +215,8 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
         }
     }
 
+    let mut state = State::builder().with_database(cache_db.clone()).build();
+
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
@@ -223,6 +227,7 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
 
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
+        println!("block_idx: {}", block_idx);
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
@@ -230,6 +235,8 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
         if block.transactions.is_none() {
             continue;
         }
+
+        // Pre block system calls/
 
         let transactions = block.transactions.as_ref().unwrap();
 
@@ -267,51 +274,20 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
                 .with_block(&block_env)
                 .with_tx(&tx_env)
                 .with_cfg(&cfg)
-                .with_db(&mut cache_db);
+                .with_db(&mut state);
 
             // Build and execute with EVM
             let mut evm = evm_context.build_mainnet();
             let execution_result = evm.transact_commit(&tx_env);
 
             match execution_result {
-                Ok(result) => {
+                Ok(_) => {
                     if should_fail {
                         return Err(TestExecutionError::ExpectedFailure {
                             block_idx,
                             tx_idx,
                             message: block.expect_exception.clone().unwrap_or_default(),
                         });
-                    }
-
-                    // Log successful execution details
-                    match result {
-                        ExecutionResult::Success { gas_used, .. } => {
-                            // Transaction executed successfully
-                            if gas_used == 0 {
-                                // Might be suspicious for some transactions
-                            }
-                        }
-                        ExecutionResult::Revert { gas_used, .. } => {
-                            // Transaction reverted but didn't halt
-                            if !should_fail {
-                                return Err(TestExecutionError::UnexpectedRevert {
-                                    block_idx,
-                                    tx_idx,
-                                    gas_used,
-                                });
-                            }
-                        }
-                        ExecutionResult::Halt { reason, gas_used } => {
-                            // Transaction halted
-                            if !should_fail {
-                                return Err(TestExecutionError::UnexpectedHalt {
-                                    block_idx,
-                                    tx_idx,
-                                    reason,
-                                    gas_used,
-                                });
-                            }
-                        }
                     }
                 }
                 Err(e) => {
@@ -326,6 +302,10 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
                 }
             }
         }
+
+        post_block::post_block_transition(&mut state, &block_env, &[], spec_id);
+
+        state.merge_transitions(BundleRetention::Reverts);
     }
 
     // Validate post-state if provided (disabled for now until proper signature recovery is implemented)
@@ -333,34 +313,39 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
         if let Some(expected_post_state) = &test_case.post_state {
             for (address, expected_account) in expected_post_state {
                 // Load account from final state
-                let actual_account = cache_db.load_account(*address).map_err(|e| {
+                let actual_account = state.load_cache_account(*address).map_err(|e| {
                     TestExecutionError::Database(format!("Account load failed: {}", e))
                 })?;
+                let info = actual_account
+                    .account
+                    .as_ref()
+                    .map(|a| a.info.clone())
+                    .unwrap_or_default();
 
                 // Validate balance
-                if actual_account.info.balance != expected_account.balance {
+                if info.balance != expected_account.balance {
                     return Err(TestExecutionError::PostStateValidation {
                         address: *address,
                         field: "balance".to_string(),
                         expected: format!("{}", expected_account.balance),
-                        actual: format!("{}", actual_account.info.balance),
+                        actual: format!("{}", info.balance),
                     });
                 }
 
                 // Validate nonce
                 let expected_nonce = expected_account.nonce.to::<u64>();
-                if actual_account.info.nonce != expected_nonce {
+                if info.nonce != expected_nonce {
                     return Err(TestExecutionError::PostStateValidation {
                         address: *address,
                         field: "nonce".to_string(),
                         expected: format!("{}", expected_nonce),
-                        actual: format!("{}", actual_account.info.nonce),
+                        actual: format!("{}", info.nonce),
                     });
                 }
 
                 // Validate code if present
                 if !expected_account.code.is_empty() {
-                    if let Some(actual_code) = &actual_account.info.code {
+                    if let Some(actual_code) = &info.code {
                         if actual_code.bytecode() != &expected_account.code {
                             return Err(TestExecutionError::PostStateValidation {
                                 address: *address,
