@@ -3,7 +3,7 @@ use core::{
     cell::{Ref, RefCell},
     ops::Range,
 };
-use std::{rc::Rc, vec::Vec};
+use std::{rc::Rc, string::String, vec::Vec};
 
 /// Non-empty, item-pooling Vec.
 #[derive(Debug, Clone)]
@@ -202,6 +202,19 @@ pub trait LocalContextTr {
 
     /// Clear the local context.
     fn clear(&mut self);
+
+    /// Set the error message for a precompile error, if any.
+    ///
+    /// This is used to bubble up precompile error messages when the
+    /// transaction directly targets a precompile (depth == 1).
+    fn set_precompile_error_context(&mut self, _output: String) {}
+
+    /// Take and clear the precompile error context, if present.
+    ///
+    /// Returns `Some(String)` if a precompile error message was recorded.
+    fn take_precompile_error_context(&mut self) -> Option<String> {
+        None
+    }
 }
 
 #[cfg(test)]
