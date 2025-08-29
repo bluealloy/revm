@@ -1,4 +1,3 @@
-use alloy_eips::calc_excess_blob_gas;
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
 
@@ -117,14 +116,6 @@ impl TestUnit {
         if let Some(current_excess_blob_gas) = self.env.current_excess_blob_gas {
             block.set_blob_excess_gas_and_price(
                 current_excess_blob_gas.to(),
-                revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
-            );
-        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
-            self.env.parent_blob_gas_used,
-            self.env.parent_excess_blob_gas,
-        ) {
-            block.set_blob_excess_gas_and_price(
-                calc_excess_blob_gas(parent_blob_gas_used.to(), parent_excess_blob_gas.to()),
                 revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
             );
         }
