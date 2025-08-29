@@ -40,6 +40,9 @@ pub mod map_fp_to_g1;
 pub mod pairing;
 mod utils;
 
+/// Cryptographic operations for BLS12-381
+pub mod crypto;
+
 /// Returns the BLS12-381 precompiles with their addresses.
 pub fn precompiles() -> impl Iterator<Item = Precompile> {
     [

@@ -5,6 +5,9 @@ use crate::{
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 
+/// Cryptographic operations for hash precompiles
+pub mod crypto;
+
 /// SHA-256 precompile
 pub const SHA256: Precompile =
     Precompile::new(PrecompileId::Sha256, crate::u64_to_address(2), sha256_run);

@@ -18,6 +18,9 @@ cfg_if::cfg_if! {
     }
 }
 
+/// Cryptographic operations for BN254
+pub mod crypto;
+
 /// Bn254 add precompile
 pub mod add {
     use super::*;

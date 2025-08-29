@@ -19,6 +19,9 @@ pub mod k256;
 #[cfg(feature = "libsecp256k1")]
 pub mod parity_libsecp256k1;
 
+/// Cryptographic operations for secp256k1
+pub mod crypto;
+
 use crate::{
     crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
     PrecompileResult,

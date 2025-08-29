@@ -9,6 +9,9 @@ use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
 use std::vec::Vec;
 
+/// Cryptographic operations for modexp precompiles
+pub mod crypto;
+
 /// `modexp` precompile with BYZANTIUM gas rules.
 pub const BYZANTIUM: Precompile = Precompile::new(
     PrecompileId::ModExp,
