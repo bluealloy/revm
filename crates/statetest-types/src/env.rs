@@ -31,12 +31,6 @@ pub struct Env {
     /// Current withdrawals root
     pub current_withdrawals_root: Option<B256>,
 
-    /// Parent block blob gas used (EIP-4844)
-    pub parent_blob_gas_used: Option<U256>,
-    /// Parent block excess blob gas (EIP-4844)
-    pub parent_excess_blob_gas: Option<U256>,
-    /// Parent block target blobs per block (EIP-4844)
-    pub parent_target_blobs_per_block: Option<U256>,
     /// Current block excess blob gas (EIP-4844)
     pub current_excess_blob_gas: Option<U256>,
 }
