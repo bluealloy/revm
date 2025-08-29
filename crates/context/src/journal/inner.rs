@@ -5,7 +5,7 @@ use super::JournalEntryTr;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
+    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -565,7 +565,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false, [])
+        self.load_account_optional(db, address, false, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account into memory. If account is EIP-7702 type it will additionally
@@ -583,7 +584,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
-        let account = self.load_account_optional(db, address, is_eip7702_enabled, [])?;
+        let account = self
+            .load_account_optional(db, address, is_eip7702_enabled, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = StateLoad::new(
@@ -616,24 +619,39 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true, [])
+        self.load_account_optional(db, address, true, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<&mut Account>, JournalLoadError<DB::Error>> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
-                let is_cold = account.mark_warm_with_transaction_id(self.transaction_id);
-                // if it is colad loaded we need to clear local flags that can interact with selfdestruct
+
+                // skip load if account is cold.
+                let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
+                    // account can be loaded by we still need to check warm_addresses to see if it is cold.
+                    let should_be_cold = self.warm_addresses.is_cold(&address);
+
+                    // dont load it cold if skipping cold load is true.
+                    if should_be_cold && skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
+                    is_cold = should_be_cold;
+
+                    // mark it warm.
+                    account.mark_warm_with_transaction_id(self.transaction_id);
+
                     // if it is cold loaded and we have selfdestructed locally it means that
                     // account was selfdestructed in previous transaction and we need to clear its information and storage.
                     if account.is_selfdestructed_locally() {
@@ -649,14 +667,18 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
             Entry::Vacant(vac) => {
+                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
+                let is_cold = self.warm_addresses.is_cold(&address);
+
+                // dont load cold account if skip_cold_load is true
+                if is_cold && skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
                     Account::new_not_existing(self.transaction_id)
                 };
-
-                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
-                let is_cold = self.warm_addresses.is_cold(&address);
 
                 StateLoad {
                     data: vac.insert(account),
@@ -689,6 +711,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 self.transaction_id,
                 address,
                 storage_key,
+                false,
             )?;
         }
         Ok(load)
@@ -705,7 +728,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
         key: StorageKey,
-    ) -> Result<StateLoad<StorageValue>, DB::Error> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
@@ -716,6 +740,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             self.transaction_id,
             address,
             key,
+            skip_cold_load,
         )
     }
 
@@ -731,9 +756,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address: Address,
         key: StorageKey,
         new: StorageValue,
-    ) -> Result<StateLoad<SStoreResult>, DB::Error> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
         // assume that acc exists and load the slot.
-        let present = self.sload(db, address, key)?;
+        let present = self.sload(db, address, key, skip_cold_load)?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
@@ -828,22 +854,30 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     transaction_id: usize,
     address: Address,
     key: StorageKey,
-) -> Result<StateLoad<StorageValue>, DB::Error> {
+    skip_cold_load: bool,
+) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
     let is_newly_created = account.is_created();
     let (value, is_cold) = match account.storage.entry(key) {
         Entry::Occupied(occ) => {
             let slot = occ.into_mut();
-            let is_cold = slot.mark_warm_with_transaction_id(transaction_id);
+            // skip load if account is cold.
+            let is_cold = slot.is_cold_transaction_id(transaction_id);
+            if skip_cold_load && is_cold {
+                return Err(JournalLoadError::ColdLoadSkipped);
+            }
+            slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
         }
         Entry::Vacant(vac) => {
+            if skip_cold_load {
+                return Err(JournalLoadError::ColdLoadSkipped);
+            }
             // if storage was cleared, we don't need to ping db.
             let value = if is_newly_created {
                 StorageValue::ZERO
             } else {
                 db.storage(address, key)?
             };
-
             vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)

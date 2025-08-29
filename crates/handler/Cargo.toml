@@ -32,10 +32,7 @@ auto_impl.workspace = true
 derive-where.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-	"derive",
-	"rc",
-], optional = true }
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 database.workspace = true

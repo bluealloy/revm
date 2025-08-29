@@ -2,10 +2,21 @@
 
 use crate::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    journaled_state::AccountLoad,
+    journaled_state::{AccountInfoLoad, AccountLoad},
 };
 use auto_impl::auto_impl;
 use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use state::Bytecode;
+
+/// Error that can happen when loading account info.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum LoadError {
+    /// Database error.
+    DBError,
+    /// Cold load skipped.
+    ColdLoadSkipped,
+}
 
 /// Host trait with all methods that are needed by the Interpreter.
 ///
@@ -65,28 +76,126 @@ pub trait Host {
 
     /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
+
+    /// Sstore with optional fetch from database. Return none if the value is cold or if there is db error.
+    fn sstore_skip_cold_load(
+        &mut self,
+        address: Address,
+        key: StorageKey,
+        value: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, LoadError>;
+
     /// Sstore, calls `ContextTr::journal_mut().sstore(address, key, value)`
     fn sstore(
         &mut self,
         address: Address,
         key: StorageKey,
         value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>>;
+    ) -> Option<StateLoad<SStoreResult>> {
+        self.sstore_skip_cold_load(address, key, value, false).ok()
+    }
+
+    /// Sload with optional fetch from database. Return none if the value is cold or if there is db error.
+    fn sload_skip_cold_load(
+        &mut self,
+        address: Address,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, LoadError>;
 
     /// Sload, calls `ContextTr::journal_mut().sload(address, key)`
-    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>>;
+    fn sload(&mut self, address: Address, key: StorageKey) -> Option<StateLoad<StorageValue>> {
+        self.sload_skip_cold_load(address, key, false).ok()
+    }
+
     /// Tstore, calls `ContextTr::journal_mut().tstore(address, key, value)`
     fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue);
+
     /// Tload, calls `ContextTr::journal_mut().tload(address, key)`
     fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue;
+
+    /// Main function to load account info.
+    ///
+    /// If load_code is true, it will load the code fetching it from the database if not done before.
+    ///
+    /// If skip_cold_load is true, it will not load the account if it is cold. This is needed to short circuit
+    /// the load if there is not enough gas.
+    ///
+    /// Returns AccountInfo, is_cold and is_empty.
+    fn load_account_info_skip_cold_load(
+        &mut self,
+        address: Address,
+        load_code: bool,
+        skip_cold_load: bool,
+    ) -> Result<AccountInfoLoad<'_>, LoadError>;
+
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
+    #[inline]
+    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
+        self.load_account_info_skip_cold_load(address, false, false)
+            .ok()
+            .map(|load| load.into_state_load(|i| i.balance))
+    }
+
     /// Load account delegated, calls `ContextTr::journal_mut().load_account_delegated(address)`
-    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
-    /// Load account code, calls `ContextTr::journal_mut().load_account_code(address)`
-    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
-    /// Load account code hash, calls `ContextTr::journal_mut().code_hash(address)`
-    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
+    #[inline]
+    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
+        let account = self
+            .load_account_info_skip_cold_load(address, true, false)
+            .ok()?;
+
+        let mut account_load = StateLoad::new(
+            AccountLoad {
+                is_delegate_account_cold: None,
+                is_empty: account.is_empty,
+            },
+            account.is_cold,
+        );
+
+        // load delegate code if account is EIP-7702
+        if let Some(Bytecode::Eip7702(code)) = &account.code {
+            let address = code.address();
+            let delegate_account = self
+                .load_account_info_skip_cold_load(address, true, false)
+                .ok()?;
+            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+            account_load.data.is_empty = delegate_account.is_empty;
+        }
+
+        Some(account_load)
+    }
+
+    /// Load account code, calls [`Host::load_account_info_skip_cold_load`] with `load_code` set to false.
+    #[inline]
+    fn load_account_code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
+        self.load_account_info_skip_cold_load(address, true, false)
+            .ok()
+            .map(|load| {
+                load.into_state_load(|i| {
+                    i.code
+                        .as_ref()
+                        .map(|b| b.original_bytes())
+                        .unwrap_or_default()
+                })
+            })
+    }
+
+    /// Load account code hash, calls [`Host::load_account_info_skip_cold_load`] with `load_code` set to false.
+    #[inline]
+    fn load_account_code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
+        self.load_account_info_skip_cold_load(address, false, false)
+            .ok()
+            .map(|load| {
+                load.into_state_load(|i| {
+                    if i.is_empty() {
+                        B256::ZERO
+                    } else {
+                        i.code_hash
+                    }
+                })
+            })
+    }
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
@@ -160,38 +269,37 @@ impl Host for DummyHost {
 
     fn log(&mut self, _log: Log) {}
 
-    fn sstore(
-        &mut self,
-        _address: Address,
-        _key: StorageKey,
-        _value: StorageValue,
-    ) -> Option<StateLoad<SStoreResult>> {
-        None
-    }
-
-    fn sload(&mut self, _address: Address, _key: StorageKey) -> Option<StateLoad<StorageValue>> {
-        None
-    }
-
     fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
 
     fn tload(&mut self, _address: Address, _key: StorageKey) -> StorageValue {
         StorageValue::ZERO
     }
 
-    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
-        None
+    fn load_account_info_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _load_code: bool,
+        _skip_cold_load: bool,
+    ) -> Result<AccountInfoLoad<'_>, LoadError> {
+        Err(LoadError::DBError)
     }
 
-    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
-        None
+    fn sstore_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _value: StorageValue,
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, LoadError> {
+        Err(LoadError::DBError)
     }
 
-    fn load_account_code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
-        None
-    }
-
-    fn load_account_code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
-        None
+    fn sload_skip_cold_load(
+        &mut self,
+        _address: Address,
+        _key: StorageKey,
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, LoadError> {
+        Err(LoadError::DBError)
     }
 }

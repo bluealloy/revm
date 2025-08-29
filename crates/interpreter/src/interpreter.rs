@@ -209,6 +209,18 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             .set_action(InterpreterAction::new_halt(result, self.gas));
     }
 
+    /// Halt the interpreter with the given result.
+    ///
+    /// This will set the action to [`InterpreterAction::Return`] and set the gas to the current gas.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_fatal(&mut self) {
+        self.bytecode.set_action(InterpreterAction::new_halt(
+            InstructionResult::FatalExternalError,
+            self.gas,
+        ));
+    }
+
     /// Halt the interpreter with an out-of-gas error.
     #[cold]
     #[inline(never)]

@@ -38,8 +38,12 @@ impl<T> FrameStack<T> {
     }
 
     /// Finishes initialization.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe because it assumes that the `token` is initialized from this FrameStack object.
     #[inline]
-    pub fn end_init(&mut self, token: FrameToken) {
+    pub unsafe fn end_init(&mut self, token: FrameToken) {
         token.assert();
         if self.stack.is_empty() {
             unsafe { self.stack.set_len(1) };
@@ -54,8 +58,13 @@ impl<T> FrameStack<T> {
     }
 
     /// Increments the index.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe because it assumes that the `token` is obtained from `get_next` and
+    /// that `end_init` is called to initialize the FrameStack.
     #[inline]
-    pub fn push(&mut self, token: FrameToken) {
+    pub unsafe fn push(&mut self, token: FrameToken) {
         token.assert();
         let index = self.index.as_mut().unwrap();
         if *index + 1 == self.stack.len() {
@@ -205,7 +214,7 @@ mod tests {
         let mut frame = stack.start_init();
         frame.get(|| 1);
         let token = frame.consume();
-        stack.end_init(token);
+        unsafe { stack.end_init(token) };
 
         assert_eq!(stack.index(), Some(0));
         assert_eq!(stack.stack.len(), 1);
@@ -216,7 +225,7 @@ mod tests {
         assert!(!b.init);
         assert_eq!(b.get(|| 2), &mut 2);
         let token = b.consume(); // TODO: remove
-        stack.push(token);
+        unsafe { stack.push(token) };
 
         assert_eq!(stack.index(), Some(1));
         assert_eq!(stack.stack.len(), 2);

@@ -11,7 +11,7 @@ pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let hash = keccak256(data);
     let secret_key = SecretKey::new(&mut secp256k1::rand::rng());
 
-    let message = Message::from_digest_slice(&hash[..]).unwrap();
+    let message = Message::from_digest(hash.0);
     let s = SECP256K1.sign_ecdsa_recoverable(message, &secret_key);
     let (rec_id, data) = s.serialize_compact();
     let rec_id = i32::from(rec_id) as u8 + 27;
