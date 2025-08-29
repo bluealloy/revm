@@ -3818,6 +3818,7 @@ dependencies = [
 name = "revm-statetest-types"
 version = "9.0.2"
 dependencies = [
+ "alloy-eips",
  "k256",
  "revm",
  "serde",

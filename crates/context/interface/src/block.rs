@@ -3,9 +3,7 @@
 //! [`Block`] trait is used to retrieve block information required for execution.
 pub mod blob;
 
-pub use blob::{
-    calc_blob_gasprice, calc_excess_blob_gas, calc_excess_blob_gas_osaka, BlobExcessGasAndPrice,
-};
+pub use blob::{calc_blob_gasprice, BlobExcessGasAndPrice};
 
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
@@ -47,8 +45,6 @@ pub trait Block {
     fn prevrandao(&self) -> Option<B256>;
 
     /// Excess blob gas and blob gasprice.
-    /// See also [`calc_excess_blob_gas`]
-    /// and [`calc_blob_gasprice`].
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///

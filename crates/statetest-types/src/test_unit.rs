@@ -1,15 +1,12 @@
+use alloy_eips::calc_excess_blob_gas;
 use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
 
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv},
-    context_interface::block::calc_excess_blob_gas,
     database::CacheState,
-    primitives::{
-        eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId, keccak256, Address, Bytes,
-        B256,
-    },
+    primitives::{hardfork::SpecId, keccak256, Address, Bytes, B256},
     state::Bytecode,
 };
 
@@ -127,14 +124,7 @@ impl TestUnit {
             self.env.parent_excess_blob_gas,
         ) {
             block.set_blob_excess_gas_and_price(
-                calc_excess_blob_gas(
-                    parent_blob_gas_used.to(),
-                    parent_excess_blob_gas.to(),
-                    self.env
-                        .parent_target_blobs_per_block
-                        .map(|i| i.to())
-                        .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
-                ),
+                calc_excess_blob_gas(parent_blob_gas_used.to(), parent_excess_blob_gas.to()),
                 revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
             );
         }
