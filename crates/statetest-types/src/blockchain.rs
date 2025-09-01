@@ -298,8 +298,16 @@ pub enum ForkSpec {
     MergePush0,
     /// Cancun
     Cancun,
+    /// Cancun to Prague transition
+    CancunToPragueAtTime15k,
     /// Prague
     Prague,
+    /// Prague to Osaka transition
+    PragueToOsakaAtTime15k,
+    /// Osaka
+    Osaka,
+    /// BPO1 to BPO2 transition
+    BPO1ToBPO2AtTime15k,
 }
 
 /// Possible seal engines
@@ -463,18 +471,21 @@ mod test {
     fn test_fork_spec_deserialization() {
         // Test ForkSpec enum deserialization
         let fork_specs = vec![
-            (r#""Frontier""#, ForkSpec::Frontier),
-            (r#""Homestead""#, ForkSpec::Homestead),
-            (r#""Byzantium""#, ForkSpec::Byzantium),
-            (r#""Constantinople""#, ForkSpec::Constantinople),
-            (r#""Istanbul""#, ForkSpec::Istanbul),
-            (r#""Berlin""#, ForkSpec::Berlin),
-            (r#""London""#, ForkSpec::London),
-            (r#""Paris""#, ForkSpec::Paris),
-            (r#""Merge""#, ForkSpec::Paris), // Alias test
-            (r#""Shanghai""#, ForkSpec::Shanghai),
-            (r#""Cancun""#, ForkSpec::Cancun),
-            (r#""Prague""#, ForkSpec::Prague),
+            ("Frontier", ForkSpec::Frontier),
+            ("Homestead", ForkSpec::Homestead),
+            ("Byzantium", ForkSpec::Byzantium),
+            ("Constantinople", ForkSpec::Constantinople),
+            ("Istanbul", ForkSpec::Istanbul),
+            ("Berlin", ForkSpec::Berlin),
+            ("London", ForkSpec::London),
+            ("Paris", ForkSpec::Paris),
+            ("Merge", ForkSpec::Paris), // Alias test
+            ("Shanghai", ForkSpec::Shanghai),
+            ("Cancun", ForkSpec::Cancun),
+            ("CancunToPragueAtTime15k", ForkSpec::CancunToPragueAtTime15k),
+            ("Prague", ForkSpec::Prague),
+            ("PragueToOsakaAtTime15k", ForkSpec::PragueToOsakaAtTime15k),
+            ("Osaka", ForkSpec::Osaka),
         ];
 
         for (json, expected) in fork_specs {
