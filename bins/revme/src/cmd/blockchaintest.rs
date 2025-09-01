@@ -1,16 +1,17 @@
 pub mod post_block;
+pub mod pre_block;
 
 use clap::Parser;
 use database::states::bundle_state::BundleRetention;
 use database::{CacheDB, EmptyDB, State};
-use primitives::{hardfork::SpecId, hex, Address};
+use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
 use revm::{
     context::cfg::CfgEnv, context_interface::result::HaltReason, Context, ExecuteCommitEvm,
     MainBuilder, MainContext,
 };
 use serde_json::json;
 use state::AccountInfo;
-use statetest_types::blockchain::{BlockchainTest, BlockchainTestCase, ForkSpec};
+use statetest_types::blockchain::{BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -36,6 +37,9 @@ pub struct Cmd {
     /// Keep going after a test failure
     #[arg(long, alias = "no-fail-fast")]
     keep_going: bool,
+    /// Print environment information (pre-state, post-state, env) when an error occurs
+    #[arg(long)]
+    print_env_on_error: bool,
 }
 
 impl Cmd {
@@ -53,7 +57,13 @@ impl Cmd {
                 return Err(Error::NoJsonFiles(path.clone()));
             }
 
-            run_tests(test_files, self.single_thread, self.json, self.keep_going)?;
+            run_tests(
+                test_files,
+                self.single_thread,
+                self.json,
+                self.keep_going,
+                self.print_env_on_error,
+            )?;
         }
         Ok(())
     }
@@ -81,29 +91,43 @@ fn run_tests(
     _single_thread: bool,
     output_json: bool,
     keep_going: bool,
+    print_env_on_error: bool,
 ) -> Result<(), Error> {
     let mut passed = 0;
     let mut failed = 0;
     let mut skipped = 0;
 
     let start_time = Instant::now();
+    let total_files = test_files.len();
 
-    for file_path in test_files {
+    for (file_index, file_path) in test_files.into_iter().enumerate() {
+        let current_file = file_index + 1;
         if skip_test(&file_path) {
             skipped += 1;
             if !output_json {
-                println!("Skipping: {}", file_path.display());
+                println!(
+                    "Skipping ({}/{}): {}",
+                    current_file,
+                    total_files,
+                    file_path.display()
+                );
             }
             continue;
         }
 
-        let result = run_test_file(&file_path, output_json);
+        let result = run_test_file(&file_path, output_json, print_env_on_error);
 
         match result {
             Ok(test_count) => {
                 passed += test_count;
                 if !output_json {
-                    println!("✓ {} ({} tests)", file_path.display(), test_count);
+                    println!(
+                        "✓ ({}/{}) {} ({} tests)",
+                        current_file,
+                        total_files,
+                        file_path.display(),
+                        test_count
+                    );
                 }
             }
             Err(e) => {
@@ -116,7 +140,13 @@ fn run_tests(
                     });
                     println!("{}", serde_json::to_string(&output).unwrap());
                 } else {
-                    eprintln!("✗ {} - {}", file_path.display(), e);
+                    eprintln!(
+                        "✗ ({}/{}) {} - {}",
+                        current_file,
+                        total_files,
+                        file_path.display(),
+                        e
+                    );
                 }
 
                 if !keep_going {
@@ -130,9 +160,9 @@ fn run_tests(
 
     if !output_json {
         println!("\nTest results:");
-        println!("  Passed:  {}", passed);
-        println!("  Failed:  {}", failed);
-        println!("  Skipped: {}", skipped);
+        println!("  Passed:  {passed}");
+        println!("  Failed:  {failed}");
+        println!("  Skipped: {skipped}");
         println!("  Time:    {:.2}s", duration.as_secs_f64());
     } else {
         let summary = json!({
@@ -152,7 +182,11 @@ fn run_tests(
 }
 
 /// Run tests from a single file
-fn run_test_file(file_path: &Path, output_json: bool) -> Result<usize, Error> {
+fn run_test_file(
+    file_path: &Path,
+    output_json: bool,
+    print_env_on_error: bool,
+) -> Result<usize, Error> {
     let content =
         fs::read_to_string(file_path).map_err(|e| Error::FileRead(file_path.to_path_buf(), e))?;
 
@@ -163,13 +197,16 @@ fn run_test_file(file_path: &Path, output_json: bool) -> Result<usize, Error> {
 
     for (test_name, test_case) in blockchain_test.0 {
         if !output_json {
-            println!("  Running: {}", test_name);
+            println!("  Running: {test_name}");
         }
 
         // Execute the blockchain test
-        execute_blockchain_test(&test_case).map_err(|e| Error::TestExecution {
-            test_name: test_name.clone(),
-            error: e.to_string(),
+        execute_blockchain_test(&test_case, print_env_on_error).map_err(|e| {
+            Error::TestExecution {
+                test_name: test_name.clone(),
+                test_path: file_path.to_path_buf(),
+                error: e.to_string(),
+            }
         })?;
 
         test_count += 1;
@@ -178,21 +215,181 @@ fn run_test_file(file_path: &Path, output_json: bool) -> Result<usize, Error> {
     Ok(test_count)
 }
 
-/// Execute a single blockchain test case
-fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExecutionError> {
-    // Skip certain forks for now
-    match test_case.network {
-        ForkSpec::ByzantiumToConstantinopleAt5 => {
-            return Err(TestExecutionError::SkippedFork(format!(
-                "{:?}",
-                test_case.network
-            )));
+/// Debug information captured during test execution
+#[derive(Debug, Clone)]
+struct DebugInfo {
+    /// Initial pre-state before any execution
+    pre_state: HashMap<Address, (AccountInfo, HashMap<U256, U256>)>,
+    /// Current committed state
+    committed_state: HashMap<Address, (AccountInfo, HashMap<U256, U256>)>,
+    /// Transaction environment
+    tx_env: Option<revm::context::tx::TxEnv>,
+    /// Block environment
+    block_env: revm::context::block::BlockEnv,
+    /// Configuration environment
+    cfg_env: CfgEnv,
+    /// Block index where error occurred
+    block_idx: usize,
+    /// Transaction index where error occurred
+    tx_idx: usize,
+    /// Withdrawals in the block
+    withdrawals: Option<Vec<Withdrawal>>,
+}
+
+impl DebugInfo {
+    /// Capture current state from the State database
+    fn capture_committed_state(
+        state: &State<CacheDB<EmptyDB>>,
+    ) -> HashMap<Address, (AccountInfo, HashMap<U256, U256>)> {
+        let mut committed_state = HashMap::new();
+
+        // Access the cache state to get all accounts
+        for (address, cache_account) in &state.cache.accounts {
+            if let Some(plain_account) = &cache_account.account {
+                let mut storage = HashMap::new();
+                for (key, value) in &plain_account.storage {
+                    storage.insert(*key, *value);
+                }
+                committed_state.insert(*address, (plain_account.info.clone(), storage));
+            }
         }
-        _ => {}
+
+        committed_state
+    }
+
+    fn print(&self) {
+        eprintln!("\n========== DEBUG INFORMATION ==========");
+        eprintln!(
+            "\n📍 Error occurred at block {} transaction {}",
+            self.block_idx, self.tx_idx
+        );
+
+        eprintln!("\n📋 Configuration Environment:");
+        eprintln!("  Spec ID: {:?}", self.cfg_env.spec);
+        eprintln!("  Chain ID: {}", self.cfg_env.chain_id);
+        eprintln!(
+            "  Limit contract code size: {:?}",
+            self.cfg_env.limit_contract_code_size
+        );
+        eprintln!(
+            "  Limit contract initcode size: {:?}",
+            self.cfg_env.limit_contract_initcode_size
+        );
+
+        eprintln!("\n🔨 Block Environment:");
+        eprintln!("  Number: {}", self.block_env.number);
+        eprintln!("  Timestamp: {}", self.block_env.timestamp);
+        eprintln!("  Gas limit: {}", self.block_env.gas_limit);
+        eprintln!("  Base fee: {:?}", self.block_env.basefee);
+        eprintln!("  Difficulty: {}", self.block_env.difficulty);
+        eprintln!("  Prevrandao: {:?}", self.block_env.prevrandao);
+        eprintln!("  Beneficiary: {:?}", self.block_env.beneficiary);
+        eprintln!(
+            "  Blob excess gas: {:?}",
+            self.block_env.blob_excess_gas_and_price
+        );
+
+        // Add withdrawals to block environment
+        if let Some(withdrawals) = &self.withdrawals {
+            eprintln!("  Withdrawals: {} items", withdrawals.len());
+            if withdrawals.is_empty() {
+                eprintln!("    (No withdrawals in this block)");
+            } else {
+                for (i, withdrawal) in withdrawals.iter().enumerate() {
+                    eprintln!("    Withdrawal {i}:");
+                    eprintln!("      Index: {}", withdrawal.index);
+                    eprintln!("      Validator Index: {}", withdrawal.validator_index);
+                    eprintln!("      Address: {:?}", withdrawal.address);
+                    eprintln!(
+                        "      Amount: {} Gwei ({:.6} ETH)",
+                        withdrawal.amount,
+                        withdrawal.amount.to::<u128>() as f64 / 1_000_000_000.0
+                    );
+                }
+            }
+        } else {
+            eprintln!("  Withdrawals: Not available (pre-Shanghai fork)");
+        }
+
+        if let Some(tx_env) = &self.tx_env {
+            eprintln!("\n📄 Transaction Environment:");
+            eprintln!("  Caller: {:?}", tx_env.caller);
+            eprintln!("  Gas limit: {}", tx_env.gas_limit);
+            eprintln!("  Gas price: {:?}", tx_env.gas_price);
+            eprintln!("  Transaction kind: {:?}", tx_env.kind);
+            eprintln!("  Value: {}", tx_env.value);
+            eprintln!("  Data length: {} bytes", tx_env.data.len());
+            eprintln!("  Nonce: {:?}", tx_env.nonce);
+            eprintln!("  Chain ID: {:?}", tx_env.chain_id);
+            eprintln!("  Access list: {} entries", tx_env.access_list.len());
+            eprintln!("  Blob hashes: {} blobs", tx_env.blob_hashes.len());
+            eprintln!("  Max fee per blob gas: {:?}", tx_env.max_fee_per_blob_gas);
+        }
+
+        eprintln!("\n💾 Pre-State (Initial):");
+        for (address, (info, storage)) in &self.pre_state {
+            eprintln!("  Account {address:?}:");
+            eprintln!("    Balance: {}", info.balance);
+            eprintln!("    Nonce: {}", info.nonce);
+            eprintln!("    Code hash: {:?}", info.code_hash);
+            eprintln!(
+                "    Code size: {} bytes",
+                info.code.as_ref().map_or(0, |c| c.bytecode().len())
+            );
+            if !storage.is_empty() {
+                eprintln!("    Storage ({} slots):", storage.len());
+                for (key, value) in storage.iter().take(10) {
+                    eprintln!("      {key:?} => {value:?}");
+                }
+                if storage.len() > 10 {
+                    eprintln!("      ... and {} more slots", storage.len() - 10);
+                }
+            }
+        }
+
+        eprintln!("\n📝 Committed State (Current):");
+        for (address, (info, storage)) in &self.committed_state {
+            eprintln!("  Account {address:?}:");
+            eprintln!("    Balance: 0x{:x}", info.balance);
+            eprintln!("    Nonce: {}", info.nonce);
+            eprintln!("    Code hash: {:?}", info.code_hash);
+            eprintln!(
+                "    Code size: {} bytes",
+                info.code.as_ref().map_or(0, |c| c.bytecode().len())
+            );
+            if !storage.is_empty() {
+                eprintln!("    Storage ({} slots):", storage.len());
+                for (key, value) in storage.iter().take(10) {
+                    eprintln!("      {key:?} => {value:?}");
+                }
+                if storage.len() > 10 {
+                    eprintln!("      ... and {} more slots", storage.len() - 10);
+                }
+            }
+        }
+
+        eprintln!("\n========================================\n");
+    }
+}
+
+/// Execute a single blockchain test case
+fn execute_blockchain_test(
+    test_case: &BlockchainTestCase,
+    print_env_on_error: bool,
+) -> Result<(), TestExecutionError> {
+    // Skip certain forks for now
+    if test_case.network == ForkSpec::ByzantiumToConstantinopleAt5 {
+        return Err(TestExecutionError::SkippedFork(format!(
+            "{:?}",
+            test_case.network
+        )));
     }
 
     // Create database with initial state
     let mut cache_db = CacheDB::new(EmptyDB::default());
+
+    // Capture pre-state for debug info
+    let mut pre_state_debug = HashMap::new();
 
     // Insert genesis state into database
     let genesis_state = test_case.pre.clone().into_genesis_state();
@@ -203,6 +400,12 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
             code_hash: primitives::keccak256(&account.code),
             code: Some(bytecode::Bytecode::new_raw(account.code.clone())),
         };
+
+        // Store for debug info
+        if print_env_on_error {
+            pre_state_debug.insert(address, (account_info.clone(), account.storage.clone()));
+        }
+
         cache_db.insert_account_info(address, account_info);
 
         // Insert storage
@@ -210,7 +413,7 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
             cache_db
                 .insert_account_storage(address, key, value)
                 .map_err(|e| {
-                    TestExecutionError::Database(format!("Storage insertion failed: {}", e))
+                    TestExecutionError::Database(format!("Storage insertion failed: {e}"))
                 })?;
         }
     }
@@ -230,14 +433,14 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
-        // Skip blocks without transactions
-        if block.transactions.is_none() {
-            continue;
-        }
+        // Pre block system calls
+        pre_block::pre_block_transition(
+            &mut state,
+            spec_id,
+            block.withdrawals.as_deref().unwrap_or_default(),
+        );
 
-        // Pre block system calls/
-
-        let transactions = block.transactions.as_ref().unwrap();
+        let transactions = block.transactions.as_deref().unwrap_or_default();
 
         // Update block environment for this block
         if let Some(header) = &block.block_header {
@@ -247,7 +450,21 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
             if tx.sender.is_none() {
-                return Err(TestExecutionError::SenderRequired);
+                if print_env_on_error {
+                    let debug_info = DebugInfo {
+                        pre_state: pre_state_debug.clone(),
+                        committed_state: DebugInfo::capture_committed_state(&state),
+                        tx_env: None,
+                        block_env: block_env.clone(),
+                        cfg_env: cfg.clone(),
+                        block_idx,
+                        tx_idx,
+                        withdrawals: block.withdrawals.clone(),
+                    };
+                    debug_info.print();
+                }
+                eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
+                break; // Skip to next block
             }
 
             let tx_env = match tx.to_tx_env() {
@@ -257,11 +474,23 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
                         // Expected failure during tx env creation
                         continue;
                     }
-                    return Err(TestExecutionError::TransactionEnvCreation {
-                        block_idx,
-                        tx_idx,
-                        error: e,
-                    });
+                    if print_env_on_error {
+                        let debug_info = DebugInfo {
+                            pre_state: pre_state_debug.clone(),
+                            committed_state: DebugInfo::capture_committed_state(&state),
+                            tx_env: None,
+                            block_env: block_env.clone(),
+                            cfg_env: cfg.clone(),
+                            block_idx,
+                            tx_idx,
+                            withdrawals: block.withdrawals.clone(),
+                        };
+                        debug_info.print();
+                    }
+                    eprintln!(
+                        "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
+                    );
+                    break; // Skip to next block
                 }
             };
 
@@ -279,20 +508,45 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
             match execution_result {
                 Ok(_) => {
                     if should_fail {
-                        return Err(TestExecutionError::ExpectedFailure {
-                            block_idx,
-                            tx_idx,
-                            message: block.expect_exception.clone().unwrap_or_default(),
-                        });
+                        if print_env_on_error {
+                            let debug_info = DebugInfo {
+                                pre_state: pre_state_debug.clone(),
+                                committed_state: DebugInfo::capture_committed_state(&state),
+                                tx_env: Some(tx_env.clone()),
+                                block_env: block_env.clone(),
+                                cfg_env: cfg.clone(),
+                                block_idx,
+                                tx_idx,
+                                withdrawals: block.withdrawals.clone(),
+                            };
+                            debug_info.print();
+                        }
+                        let exception = block.expect_exception.clone().unwrap_or_default();
+                        eprintln!(
+                            "⚠️  Skipping block {block_idx} due to expected failure: {exception}"
+                        );
+                        break; // Skip to next block
                     }
                 }
                 Err(e) => {
                     if !should_fail {
-                        return Err(TestExecutionError::UnexpectedFailure {
-                            block_idx,
-                            tx_idx,
-                            error: format!("{:?}", e),
-                        });
+                        if print_env_on_error {
+                            let debug_info = DebugInfo {
+                                pre_state: pre_state_debug.clone(),
+                                committed_state: DebugInfo::capture_committed_state(&state),
+                                tx_env: Some(tx_env.clone()),
+                                block_env: block_env.clone(),
+                                cfg_env: cfg.clone(),
+                                block_idx,
+                                tx_idx,
+                                withdrawals: block.withdrawals.clone(),
+                            };
+                            debug_info.print();
+                        }
+                        eprintln!(
+                            "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
+                        );
+                        break; // Skip to next block
                     }
                     // Expected failure
                 }
@@ -310,7 +564,7 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
             for (address, expected_account) in expected_post_state {
                 // Load account from final state
                 let actual_account = state.load_cache_account(*address).map_err(|e| {
-                    TestExecutionError::Database(format!("Account load failed: {}", e))
+                    TestExecutionError::Database(format!("Account load failed: {e}"))
                 })?;
                 let info = actual_account
                     .account
@@ -334,7 +588,7 @@ fn execute_blockchain_test(test_case: &BlockchainTestCase) -> Result<(), TestExe
                     return Err(TestExecutionError::PostStateValidation {
                         address: *address,
                         field: "nonce".to_string(),
-                        expected: format!("{}", expected_nonce),
+                        expected: format!("{expected_nonce}"),
                         actual: format!("{}", info.nonce),
                     });
                 }
@@ -477,8 +731,12 @@ pub enum Error {
     #[error("Failed to decode JSON from {0}: {1}")]
     JsonDecode(PathBuf, serde_json::Error),
 
-    #[error("Test execution failed for {test_name}: {error}")]
-    TestExecution { test_name: String, error: String },
+    #[error("Test execution failed for {test_name} in {test_path}: {error}")]
+    TestExecution {
+        test_name: String,
+        test_path: PathBuf,
+        error: String,
+    },
 
     #[error("Directory traversal error: {0}")]
     WalkDir(#[from] walkdir::Error),
