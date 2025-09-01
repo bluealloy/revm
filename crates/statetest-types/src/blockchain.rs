@@ -471,21 +471,28 @@ mod test {
     fn test_fork_spec_deserialization() {
         // Test ForkSpec enum deserialization
         let fork_specs = vec![
-            ("Frontier", ForkSpec::Frontier),
-            ("Homestead", ForkSpec::Homestead),
-            ("Byzantium", ForkSpec::Byzantium),
-            ("Constantinople", ForkSpec::Constantinople),
-            ("Istanbul", ForkSpec::Istanbul),
-            ("Berlin", ForkSpec::Berlin),
-            ("London", ForkSpec::London),
-            ("Paris", ForkSpec::Paris),
-            ("Merge", ForkSpec::Paris), // Alias test
-            ("Shanghai", ForkSpec::Shanghai),
-            ("Cancun", ForkSpec::Cancun),
-            ("CancunToPragueAtTime15k", ForkSpec::CancunToPragueAtTime15k),
-            ("Prague", ForkSpec::Prague),
-            ("PragueToOsakaAtTime15k", ForkSpec::PragueToOsakaAtTime15k),
-            ("Osaka", ForkSpec::Osaka),
+            ("\"Frontier\"", ForkSpec::Frontier),
+            ("\"Homestead\"", ForkSpec::Homestead),
+            ("\"Byzantium\"", ForkSpec::Byzantium),
+            ("\"Constantinople\"", ForkSpec::Constantinople),
+            ("\"Istanbul\"", ForkSpec::Istanbul),
+            ("\"Berlin\"", ForkSpec::Berlin),
+            ("\"London\"", ForkSpec::London),
+            ("\"Paris\"", ForkSpec::Paris),
+            ("\"Merge\"", ForkSpec::Paris), // Alias test
+            ("\"Shanghai\"", ForkSpec::Shanghai),
+            ("\"Cancun\"", ForkSpec::Cancun),
+            (
+                "\"CancunToPragueAtTime15k\"",
+                ForkSpec::CancunToPragueAtTime15k,
+            ),
+            ("\"Prague\"", ForkSpec::Prague),
+            (
+                "\"PragueToOsakaAtTime15k\"",
+                ForkSpec::PragueToOsakaAtTime15k,
+            ),
+            ("\"Osaka\"", ForkSpec::Osaka),
+            ("\"BPO1ToBPO2AtTime15k\"", ForkSpec::BPO1ToBPO2AtTime15k),
         ];
 
         for (json, expected) in fork_specs {
