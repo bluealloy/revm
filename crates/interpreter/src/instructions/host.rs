@@ -422,7 +422,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context
             .interpreter
             .gas
-            .record_refund(gas::REFUND_SELFDESTRUCT);
+            .record_refund(gas::SELFDESTRUCT_REFUND);
     }
 
     context.interpreter.halt(InstructionResult::SelfDestruct);
