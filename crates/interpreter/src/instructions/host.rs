@@ -419,7 +419,10 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .is_enabled_in(LONDON)
         && !res.previously_destroyed
     {
-        context.interpreter.gas.record_refund(gas::SELFDESTRUCT)
+        context
+            .interpreter
+            .gas
+            .record_refund(gas::SELFDESTRUCT_REFUND);
     }
 
     context.interpreter.halt(InstructionResult::SelfDestruct);
