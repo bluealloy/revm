@@ -108,23 +108,8 @@ pub struct Block {
     pub transactions: Option<Vec<Transaction>>,
     /// Uncle/ommer headers
     pub uncle_headers: Option<Vec<BlockHeader>>,
-    /// Transaction sequence (for invalid transaction tests)
-    pub transaction_sequence: Option<Vec<TransactionSequence>>,
     /// Withdrawals in the block (post-Shanghai)
     pub withdrawals: Option<Vec<Withdrawal>>,
-}
-
-/// Transaction sequence in block
-#[derive(Debug, PartialEq, Eq, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-#[serde(rename_all = "camelCase")]
-pub struct TransactionSequence {
-    /// Exception message
-    pub exception: String,
-    /// Raw transaction bytes
-    pub raw_bytes: Bytes,
-    /// Validity flag
-    pub valid: String,
 }
 
 /// Transaction structure

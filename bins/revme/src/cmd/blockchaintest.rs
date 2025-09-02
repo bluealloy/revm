@@ -2,16 +2,23 @@ pub mod post_block;
 pub mod pre_block;
 
 use clap::Parser;
+use context::ContextTr;
 use database::states::bundle_state::BundleRetention;
-use database::{CacheDB, EmptyDB, State};
+use database::{EmptyDB, State};
+use inspector::inspectors::TracerEip3155;
+use primitives::B256;
 use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
 use revm::{
     context::cfg::CfgEnv, context_interface::result::HaltReason, Context, ExecuteCommitEvm,
     MainBuilder, MainContext,
 };
+use revm::{Database, InspectEvm};
 use serde_json::json;
 use state::AccountInfo;
-use statetest_types::blockchain::{BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal};
+use statetest_types::blockchain::{
+    Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
+};
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -28,12 +35,9 @@ pub struct Cmd {
     /// Folders will be searched recursively for files with the extension `.json`.
     #[arg(required = true, num_args = 1..)]
     paths: Vec<PathBuf>,
-    /// Run tests in a single thread
-    #[arg(short = 's', long)]
-    single_thread: bool,
-    /// Output results in JSON format
+    /// Omit progress output
     #[arg(long)]
-    json: bool,
+    omit_progress: bool,
     /// Keep going after a test failure
     #[arg(long, alias = "no-fail-fast")]
     keep_going: bool,
@@ -59,8 +63,7 @@ impl Cmd {
 
             run_tests(
                 test_files,
-                self.single_thread,
-                self.json,
+                self.omit_progress,
                 self.keep_going,
                 self.print_env_on_error,
             )?;
@@ -88,8 +91,7 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 /// Run all blockchain tests from the given files
 fn run_tests(
     test_files: Vec<PathBuf>,
-    _single_thread: bool,
-    output_json: bool,
+    omit_progress: bool,
     keep_going: bool,
     print_env_on_error: bool,
 ) -> Result<(), Error> {
@@ -104,7 +106,7 @@ fn run_tests(
         let current_file = file_index + 1;
         if skip_test(&file_path) {
             skipped += 1;
-            if !output_json {
+            if !omit_progress {
                 println!(
                     "Skipping ({}/{}): {}",
                     current_file,
@@ -115,12 +117,12 @@ fn run_tests(
             continue;
         }
 
-        let result = run_test_file(&file_path, output_json, print_env_on_error);
+        let result = run_test_file(&file_path, omit_progress, print_env_on_error);
 
         match result {
             Ok(test_count) => {
                 passed += test_count;
-                if !output_json {
+                if !omit_progress {
                     println!(
                         "✓ ({}/{}) {} ({} tests)",
                         current_file,
@@ -132,7 +134,7 @@ fn run_tests(
             }
             Err(e) => {
                 failed += 1;
-                if output_json {
+                if omit_progress {
                     let output = json!({
                         "file": file_path.display().to_string(),
                         "error": e.to_string(),
@@ -158,21 +160,11 @@ fn run_tests(
 
     let duration = start_time.elapsed();
 
-    if !output_json {
-        println!("\nTest results:");
-        println!("  Passed:  {passed}");
-        println!("  Failed:  {failed}");
-        println!("  Skipped: {skipped}");
-        println!("  Time:    {:.2}s", duration.as_secs_f64());
-    } else {
-        let summary = json!({
-            "passed": passed,
-            "failed": failed,
-            "skipped": skipped,
-            "duration_seconds": duration.as_secs_f64()
-        });
-        println!("{}", serde_json::to_string(&summary).unwrap());
-    }
+    println!("\nTest results:");
+    println!("  Passed:  {passed}");
+    println!("  Failed:  {failed}");
+    println!("  Skipped: {skipped}");
+    println!("  Time:    {:.2}s", duration.as_secs_f64());
 
     if failed > 0 {
         Err(Error::TestsFailed { failed })
@@ -239,7 +231,7 @@ struct DebugInfo {
 impl DebugInfo {
     /// Capture current state from the State database
     fn capture_committed_state(
-        state: &State<CacheDB<EmptyDB>>,
+        state: &State<EmptyDB>,
     ) -> HashMap<Address, (AccountInfo, HashMap<U256, U256>)> {
         let mut committed_state = HashMap::new();
 
@@ -372,6 +364,198 @@ impl DebugInfo {
     }
 }
 
+/// Validate post state against expected values
+fn validate_post_state(
+    state: &mut State<EmptyDB>,
+    expected_post_state: &BTreeMap<Address, Account>,
+    pre_state_debug: &HashMap<Address, (AccountInfo, HashMap<U256, U256>)>,
+    print_env_on_error: bool,
+) -> Result<(), TestExecutionError> {
+    for (address, expected_account) in expected_post_state {
+        // Load account from final state
+        let actual_account = state
+            .load_cache_account(*address)
+            .map_err(|e| TestExecutionError::Database(format!("Account load failed: {e}")))?;
+        let info = actual_account
+            .account
+            .as_ref()
+            .map(|a| a.info.clone())
+            .unwrap_or_default();
+
+        // Validate balance
+        if info.balance != expected_account.balance {
+            if print_env_on_error {
+                print_state_comparison(pre_state_debug, state, expected_post_state);
+            }
+            return Err(TestExecutionError::PostStateValidation {
+                address: *address,
+                field: "balance".to_string(),
+                expected: format!("{}", expected_account.balance),
+                actual: format!("{}", info.balance),
+            });
+        }
+
+        // Validate nonce
+        let expected_nonce = expected_account.nonce.to::<u64>();
+        if info.nonce != expected_nonce {
+            if print_env_on_error {
+                print_state_comparison(pre_state_debug, state, expected_post_state);
+            }
+            return Err(TestExecutionError::PostStateValidation {
+                address: *address,
+                field: "nonce".to_string(),
+                expected: format!("{expected_nonce}"),
+                actual: format!("{}", info.nonce),
+            });
+        }
+
+        // Validate code if present
+        if !expected_account.code.is_empty() {
+            if let Some(actual_code) = &info.code {
+                if actual_code.original_bytes() != expected_account.code {
+                    if print_env_on_error {
+                        print_state_comparison(pre_state_debug, state, expected_post_state);
+                    }
+                    return Err(TestExecutionError::PostStateValidation {
+                        address: *address,
+                        field: "code".to_string(),
+                        expected: format!("0x{}", hex::encode(&expected_account.code)),
+                        actual: format!("0x{}", hex::encode(actual_code.bytecode())),
+                    });
+                }
+            } else {
+                if print_env_on_error {
+                    print_state_comparison(pre_state_debug, state, expected_post_state);
+                }
+                return Err(TestExecutionError::PostStateValidation {
+                    address: *address,
+                    field: "code".to_string(),
+                    expected: format!("0x{}", hex::encode(&expected_account.code)),
+                    actual: "empty".to_string(),
+                });
+            }
+        }
+
+        // Check for unexpected storage entries
+        for (slot, actual_value) in actual_account
+            .account
+            .as_ref()
+            .map(|a| &a.storage)
+            .unwrap_or(&HashMap::new())
+            .iter()
+        {
+            let slot = *slot;
+            let actual_value = *actual_value;
+            if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
+                if print_env_on_error {
+                    print_state_comparison(pre_state_debug, state, expected_post_state);
+                }
+                return Err(TestExecutionError::PostStateValidation {
+                    address: *address,
+                    field: format!("storage_unexpected[{slot}]"),
+                    expected: "0x0".to_string(),
+                    actual: format!("{actual_value}"),
+                });
+            }
+        }
+
+        // Validate storage slots
+        for (slot, expected_value) in &expected_account.storage {
+            println!("TWO ddress {address:?} storage[{slot}] = {expected_value}");
+            let actual_value = state.storage(*address, *slot);
+            println!("TWO actual_value {actual_value:?}");
+            let actual_value = actual_value.unwrap_or_default();
+
+            if actual_value != *expected_value {
+                if print_env_on_error {
+                    print_state_comparison(pre_state_debug, state, expected_post_state);
+                }
+
+                return Err(TestExecutionError::PostStateValidation {
+                    address: *address,
+                    field: format!("storage_validation[{slot}]"),
+                    expected: format!("{expected_value}"),
+                    actual: format!("{actual_value}"),
+                });
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Print state comparison for debugging
+fn print_state_comparison(
+    pre_state: &HashMap<Address, (AccountInfo, HashMap<U256, U256>)>,
+    current_state: &State<EmptyDB>,
+    expected_post_state: &BTreeMap<Address, Account>,
+) {
+    eprintln!("\n========== STATE VALIDATION FAILURE ==========");
+
+    eprintln!("\n💾 Pre-State (Initial):");
+    for (address, (info, storage)) in pre_state {
+        eprintln!("  Account {address:?}:");
+        eprintln!("    Balance: 0x{:x}", info.balance);
+        eprintln!("    Nonce: {}", info.nonce);
+        eprintln!("    Code hash: {:?}", info.code_hash);
+        eprintln!(
+            "    Code size: {} bytes",
+            info.code.as_ref().map_or(0, |c| c.bytecode().len())
+        );
+        if !storage.is_empty() {
+            eprintln!("    Storage ({} slots):", storage.len());
+            for (key, value) in storage.iter().take(5) {
+                eprintln!("      {key:?} => {value:?}");
+            }
+            if storage.len() > 5 {
+                eprintln!("      ... and {} more slots", storage.len() - 5);
+            }
+        }
+    }
+
+    eprintln!("\n📝 Current State (Actual):");
+    let committed_state = DebugInfo::capture_committed_state(current_state);
+    for (address, (info, storage)) in &committed_state {
+        eprintln!("  Account {address:?}:");
+        eprintln!("    Balance: 0x{:x}", info.balance);
+        eprintln!("    Nonce: {}", info.nonce);
+        eprintln!("    Code hash: {:?}", info.code_hash);
+        eprintln!(
+            "    Code size: {} bytes",
+            info.code.as_ref().map_or(0, |c| c.bytecode().len())
+        );
+        if !storage.is_empty() {
+            eprintln!("    Storage ({} slots):", storage.len());
+            for (key, value) in storage.iter().take(5) {
+                eprintln!("      {key:?} => {value:?}");
+            }
+            if storage.len() > 5 {
+                eprintln!("      ... and {} more slots", storage.len() - 5);
+            }
+        }
+    }
+
+    eprintln!("\n✅ Expected Post-State:");
+    for (address, account) in expected_post_state {
+        eprintln!("  Account {address:?}:");
+        eprintln!("    Balance: 0x{:x}", account.balance);
+        eprintln!("    Nonce: {}", account.nonce);
+        if !account.code.is_empty() {
+            eprintln!("    Code size: {} bytes", account.code.len());
+        }
+        if !account.storage.is_empty() {
+            eprintln!("    Storage ({} slots):", account.storage.len());
+            for (key, value) in account.storage.iter().take(5) {
+                eprintln!("      {key:?} => {value:?}");
+            }
+            if account.storage.len() > 5 {
+                eprintln!("      ... and {} more slots", account.storage.len() - 5);
+            }
+        }
+    }
+
+    eprintln!("\n==============================================\n");
+}
+
 /// Execute a single blockchain test case
 fn execute_blockchain_test(
     test_case: &BlockchainTestCase,
@@ -386,7 +570,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut cache_db = CacheDB::new(EmptyDB::default());
+    let mut state = State::builder().build();
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::new();
@@ -406,46 +590,53 @@ fn execute_blockchain_test(
             pre_state_debug.insert(address, (account_info.clone(), account.storage.clone()));
         }
 
-        cache_db.insert_account_info(address, account_info);
-
-        // Insert storage
-        for (key, value) in account.storage {
-            cache_db
-                .insert_account_storage(address, key, value)
-                .map_err(|e| {
-                    TestExecutionError::Database(format!("Storage insertion failed: {e}"))
-                })?;
-        }
+        state.insert_account_with_storage(address, account_info, account.storage);
     }
-
-    let mut state = State::builder().with_database(cache_db.clone()).build();
 
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
     cfg.spec = spec_id;
 
-    // Setup genesis block environment
+    // Genesis block is not used yet.
     let mut block_env = test_case.genesis_block_env();
+    let mut parent_block_hash = Some(test_case.genesis_block_header.hash);
 
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
-        // Pre block system calls
-        pre_block::pre_block_transition(
-            &mut state,
-            spec_id,
-            block.withdrawals.as_deref().unwrap_or_default(),
-        );
-
         let transactions = block.transactions.as_deref().unwrap_or_default();
 
+        let mut block_hash = B256::ZERO;
+        let mut beacon_root = None;
         // Update block environment for this block
         if let Some(header) = &block.block_header {
+            block_hash = header.hash;
+            beacon_root = header.parent_beacon_block_root;
             block_env = header.to_block_env();
         }
+
+        println!("STATE BEFORE EXECUTE: {:?}", state.cache.accounts);
+
+        // Create EVM context for each transaction to ensure fresh state access
+        let evm_context = Context::mainnet()
+            .with_block(&block_env)
+            .with_cfg(&cfg)
+            .with_db(&mut state);
+
+        // Build and execute with EVM
+        let mut evm = evm_context.build_mainnet_with_inspector(TracerEip3155::new_stdout());
+
+        // Pre block system calls
+        pre_block::pre_block_transition(
+            &mut evm,
+            spec_id,
+            parent_block_hash,
+            beacon_root,
+            block.withdrawals.as_deref().unwrap_or_default(),
+        );
 
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
@@ -494,19 +685,14 @@ fn execute_blockchain_test(
                 }
             };
 
-            // Create EVM context for each transaction to ensure fresh state access
-            let evm_context = Context::mainnet()
-                .with_block(&block_env)
-                .with_tx(&tx_env)
-                .with_cfg(&cfg)
-                .with_db(&mut state);
-
-            // Build and execute with EVM
-            let mut evm = evm_context.build_mainnet();
-            let execution_result = evm.transact_commit(&tx_env);
+            let execution_result = evm.inspect_tx(tx_env.clone());
 
             match execution_result {
-                Ok(_) => {
+                Ok(exec_res) => {
+                    println!("\nSTATE BEFORE COMMIT: {:?}\n", evm.ctx.db().cache.accounts);
+                    println!("COMMIT: {:?}\n", exec_res.state);
+                    evm.commit(exec_res.state);
+                    println!("STATE AFTER EXECUTE: {:?}\n", evm.ctx.db().cache.accounts);
                     if should_fail {
                         if print_env_on_error {
                             let debug_info = DebugInfo {
@@ -553,70 +739,22 @@ fn execute_blockchain_test(
             }
         }
 
-        post_block::post_block_transition(&mut state, &block_env, &[], spec_id);
+        // uncle rewards are not implemented yet
+        post_block::post_block_transition(&mut state, &block_env, spec_id);
+
+        parent_block_hash = Some(block_hash);
 
         state.merge_transitions(BundleRetention::Reverts);
     }
 
-    // Validate post-state if provided (disabled for now until proper signature recovery is implemented)
-    if false {
-        if let Some(expected_post_state) = &test_case.post_state {
-            for (address, expected_account) in expected_post_state {
-                // Load account from final state
-                let actual_account = state.load_cache_account(*address).map_err(|e| {
-                    TestExecutionError::Database(format!("Account load failed: {e}"))
-                })?;
-                let info = actual_account
-                    .account
-                    .as_ref()
-                    .map(|a| a.info.clone())
-                    .unwrap_or_default();
-
-                // Validate balance
-                if info.balance != expected_account.balance {
-                    return Err(TestExecutionError::PostStateValidation {
-                        address: *address,
-                        field: "balance".to_string(),
-                        expected: format!("{}", expected_account.balance),
-                        actual: format!("{}", info.balance),
-                    });
-                }
-
-                // Validate nonce
-                let expected_nonce = expected_account.nonce.to::<u64>();
-                if info.nonce != expected_nonce {
-                    return Err(TestExecutionError::PostStateValidation {
-                        address: *address,
-                        field: "nonce".to_string(),
-                        expected: format!("{expected_nonce}"),
-                        actual: format!("{}", info.nonce),
-                    });
-                }
-
-                // Validate code if present
-                if !expected_account.code.is_empty() {
-                    if let Some(actual_code) = &info.code {
-                        if actual_code.bytecode() != &expected_account.code {
-                            return Err(TestExecutionError::PostStateValidation {
-                                address: *address,
-                                field: "code".to_string(),
-                                expected: format!("0x{}", hex::encode(&expected_account.code)),
-                                actual: format!("0x{}", hex::encode(actual_code.bytecode())),
-                            });
-                        }
-                    } else {
-                        return Err(TestExecutionError::PostStateValidation {
-                            address: *address,
-                            field: "code".to_string(),
-                            expected: format!("0x{}", hex::encode(&expected_account.code)),
-                            actual: "empty".to_string(),
-                        });
-                    }
-                }
-
-                // TODO: Validate storage slots
-            }
-        }
+    // Validate post state if present
+    if let Some(expected_post_state) = &test_case.post_state {
+        validate_post_state(
+            &mut state,
+            expected_post_state,
+            &pre_state_debug,
+            print_env_on_error,
+        )?;
     }
 
     Ok(())
@@ -654,9 +792,8 @@ fn skip_test(path: &Path) -> bool {
 
     // Add any problematic tests here that should be skipped
     matches!(
-        name,
-        // Example: Skip tests that are known to be problematic
-        "placeholder_skip_test.json" | "RevertOpcodeMultipleSubCalls_d1g3v0.json"
+        name, // Example: Skip tests that are known to be problematic
+        ""
     )
 }
 

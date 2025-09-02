@@ -63,3 +63,6 @@ pub fn short_address(address: &Address) -> Option<usize> {
     }
     None
 }
+
+/// 1 ether = 10^18 wei
+pub const ONE_ETHER: u128 = 1_000_000_000_000_000_000;
