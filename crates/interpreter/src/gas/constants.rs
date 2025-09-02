@@ -23,8 +23,8 @@ pub const MID: u64 = 8;
 pub const HIGH: u64 = 10;
 /// Gas cost for JUMPDEST instruction.
 pub const JUMPDEST: u64 = 1;
-/// Gas cost for SELFDESTRUCT instruction.
-pub const SELFDESTRUCT: i64 = 24000;
+/// Gas cost for REFUND SELFDESTRUCT instruction.
+pub const REFUND_SELFDESTRUCT: i64 = 24000;
 /// Gas cost for CREATE instruction.
 pub const CREATE: u64 = 32000;
 /// Additional gas cost when a call transfers value.
