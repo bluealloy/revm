@@ -5,7 +5,7 @@
 
 use crate::{deserialize_maybe_empty, AccountInfo};
 use revm::{
-    context::{BlockEnv, TxEnv},
+    context::{transaction::AccessList, BlockEnv, TxEnv},
     primitives::{
         eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, Address, Bytes, FixedBytes, TxKind, B256,
         U256,
@@ -156,19 +156,6 @@ pub struct Transaction {
     /// Transaction hash
     pub hash: Option<B256>,
 }
-
-/// Access list item
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct AccessListItem {
-    /// Account address
-    pub address: Address,
-    /// Storage keys
-    pub storage_keys: Vec<B256>,
-}
-
-/// Access list
-pub type AccessList = Vec<AccessListItem>;
 
 /// Withdrawal structure
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
@@ -357,6 +344,7 @@ impl Transaction {
             .nonce(self.nonce.to::<u64>())
             .value(self.value)
             .data(self.data.clone())
+            .access_list(self.access_list.clone().unwrap_or_default())
             .blob_hashes(self.blob_versioned_hashes.clone().unwrap_or_default())
             .max_fee_per_blob_gas(self.max_fee_per_blob_gas.unwrap_or_default().to::<u128>())
             .kind(kind);

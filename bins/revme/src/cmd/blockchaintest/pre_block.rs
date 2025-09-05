@@ -2,7 +2,7 @@
 
 use context::{Block, ContextTr};
 use database::State;
-use primitives::{address, hardfork::SpecId, Address, B256, ONE_ETHER};
+use primitives::{address, hardfork::SpecId, Address, B256, ONE_GWEI};
 use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
 use statetest_types::blockchain::Withdrawal;
 
@@ -30,7 +30,7 @@ pub fn pre_block_transition<
                 .db_mut()
                 .increment_balances(vec![(
                     withdrawal.address,
-                    withdrawal.amount.to::<u128>().saturating_mul(ONE_ETHER),
+                    withdrawal.amount.to::<u128>().saturating_mul(ONE_GWEI),
                 )])
                 .expect("Db actions to pass");
         }

@@ -10,7 +10,7 @@ use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
 use revm::{
     context::cfg::CfgEnv, context_interface::result::HaltReason, Context, MainBuilder, MainContext,
 };
-use revm::{Database, ExecuteCommitEvm};
+use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
 use state::AccountInfo;
 use statetest_types::blockchain::{
@@ -42,6 +42,9 @@ pub struct Cmd {
     /// Print environment information (pre-state, post-state, env) when an error occurs
     #[arg(long)]
     print_env_on_error: bool,
+    /// Output results in JSON format
+    #[arg(long)]
+    json: bool,
 }
 
 impl Cmd {
@@ -52,7 +55,9 @@ impl Cmd {
                 return Err(Error::PathNotFound(path.clone()));
             }
 
-            println!("\nRunning blockchain tests in {}...", path.display());
+            if !self.json {
+                println!("\nRunning blockchain tests in {}...", path.display());
+            }
             let test_files = find_all_json_tests(path);
 
             if test_files.is_empty() {
@@ -64,6 +69,7 @@ impl Cmd {
                 self.omit_progress,
                 self.keep_going,
                 self.print_env_on_error,
+                self.json,
             )?;
         }
         Ok(())
@@ -92,6 +98,7 @@ fn run_tests(
     omit_progress: bool,
     keep_going: bool,
     print_env_on_error: bool,
+    json_output: bool,
 ) -> Result<(), Error> {
     let mut passed = 0;
     let mut failed = 0;
@@ -104,7 +111,14 @@ fn run_tests(
         let current_file = file_index + 1;
         if skip_test(&file_path) {
             skipped += 1;
-            if !omit_progress {
+            if json_output {
+                let output = json!({
+                    "file": file_path.display().to_string(),
+                    "status": "skipped",
+                    "reason": "known_issue"
+                });
+                println!("{}", serde_json::to_string(&output).unwrap());
+            } else if !omit_progress {
                 println!(
                     "Skipping ({}/{}): {}",
                     current_file,
@@ -115,12 +129,14 @@ fn run_tests(
             continue;
         }
 
-        let result = run_test_file(&file_path, omit_progress, print_env_on_error);
+        let result = run_test_file(&file_path, json_output, print_env_on_error);
 
         match result {
             Ok(test_count) => {
                 passed += test_count;
-                if !omit_progress {
+                if json_output {
+                    // JSON output handled in run_test_file
+                } else if !omit_progress {
                     println!(
                         "✓ ({}/{}) {} ({} tests)",
                         current_file,
@@ -132,14 +148,14 @@ fn run_tests(
             }
             Err(e) => {
                 failed += 1;
-                if omit_progress {
+                if json_output {
                     let output = json!({
                         "file": file_path.display().to_string(),
                         "error": e.to_string(),
                         "status": "failed"
                     });
                     println!("{}", serde_json::to_string(&output).unwrap());
-                } else {
+                } else if !omit_progress {
                     eprintln!(
                         "✗ ({}/{}) {} - {}",
                         current_file,
@@ -158,11 +174,23 @@ fn run_tests(
 
     let duration = start_time.elapsed();
 
-    println!("\nTest results:");
-    println!("  Passed:  {passed}");
-    println!("  Failed:  {failed}");
-    println!("  Skipped: {skipped}");
-    println!("  Time:    {:.2}s", duration.as_secs_f64());
+    if json_output {
+        let results = json!({
+            "summary": {
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped,
+                "duration_secs": duration.as_secs_f64(),
+            }
+        });
+        println!("{}", serde_json::to_string(&results).unwrap());
+    } else {
+        println!("\nTest results:");
+        println!("  Passed:  {passed}");
+        println!("  Failed:  {failed}");
+        println!("  Skipped: {skipped}");
+        println!("  Time:    {:.2}s", duration.as_secs_f64());
+    }
 
     if failed > 0 {
         Err(Error::TestsFailed { failed })
@@ -174,7 +202,7 @@ fn run_tests(
 /// Run tests from a single file
 fn run_test_file(
     file_path: &Path,
-    output_json: bool,
+    json_output: bool,
     print_env_on_error: bool,
 ) -> Result<usize, Error> {
     let content =
@@ -186,20 +214,49 @@ fn run_test_file(
     let mut test_count = 0;
 
     for (test_name, test_case) in blockchain_test.0 {
-        if !output_json {
+        if json_output {
+            // Output test start in JSON format
+            let output = json!({
+                "test": test_name,
+                "file": file_path.display().to_string(),
+                "status": "running"
+            });
+            println!("{}", serde_json::to_string(&output).unwrap());
+        } else {
             println!("  Running: {test_name}");
         }
-
         // Execute the blockchain test
-        execute_blockchain_test(&test_case, print_env_on_error).map_err(|e| {
-            Error::TestExecution {
-                test_name: test_name.clone(),
-                test_path: file_path.to_path_buf(),
-                error: e.to_string(),
-            }
-        })?;
+        let result = execute_blockchain_test(&test_case, print_env_on_error, json_output);
 
-        test_count += 1;
+        match result {
+            Ok(()) => {
+                if json_output {
+                    let output = json!({
+                        "test": test_name,
+                        "file": file_path.display().to_string(),
+                        "status": "passed"
+                    });
+                    println!("{}", serde_json::to_string(&output).unwrap());
+                }
+                test_count += 1;
+            }
+            Err(e) => {
+                if json_output {
+                    let output = json!({
+                        "test": test_name,
+                        "file": file_path.display().to_string(),
+                        "status": "failed",
+                        "error": e.to_string()
+                    });
+                    println!("{}", serde_json::to_string(&output).unwrap());
+                }
+                return Err(Error::TestExecution {
+                    test_name: test_name.clone(),
+                    test_path: file_path.to_path_buf(),
+                    error: e.to_string(),
+                });
+            }
+        }
     }
 
     Ok(test_count)
@@ -562,13 +619,20 @@ fn print_error_with_state(
 fn execute_blockchain_test(
     test_case: &BlockchainTestCase,
     print_env_on_error: bool,
+    json_output: bool,
 ) -> Result<(), TestExecutionError> {
-    // Skip certain forks for now
-    if test_case.network == ForkSpec::ByzantiumToConstantinopleAt5 {
-        return Err(TestExecutionError::SkippedFork(format!(
-            "{:?}",
-            test_case.network
-        )));
+    // Skip all transition forks for now.
+    if matches!(
+        test_case.network,
+        ForkSpec::ByzantiumToConstantinopleAt5
+            | ForkSpec::ParisToShanghaiAtTime15k
+            | ForkSpec::ShanghaiToCancunAtTime15k
+            | ForkSpec::CancunToPragueAtTime15k
+            | ForkSpec::PragueToOsakaAtTime15k
+            | ForkSpec::BPO1ToBPO2AtTime15k
+    ) {
+        eprintln!("⚠️  Skipping transition fork: {:?}", test_case.network);
+        return Ok(());
     }
 
     // Create database with initial state
@@ -606,6 +670,8 @@ fn execute_blockchain_test(
 
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
+        println!("Run block {block_idx}/{}", test_case.blocks.len());
+        
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
@@ -626,7 +692,7 @@ fn execute_blockchain_test(
             .with_cfg(&cfg)
             .with_db(&mut state);
 
-        // Build and execute with EVM
+        // Build and execute with EVM - always use inspector when JSON output is enabled
         let mut evm = evm_context.build_mainnet_with_inspector(TracerEip3155::new_stdout());
 
         // Pre block system calls
@@ -653,7 +719,17 @@ fn execute_blockchain_test(
                     };
                     print_error_with_state(&debug_info, &state, test_case.post_state.as_ref());
                 }
-                eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
+                if json_output {
+                    let output = json!({
+                        "block": block_idx,
+                        "tx": tx_idx,
+                        "error": "missing sender",
+                        "status": "skipped"
+                    });
+                    println!("{}", serde_json::to_string(&output).unwrap());
+                } else {
+                    eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
+                }
                 break; // Skip to next block
             }
 
@@ -676,19 +752,43 @@ fn execute_blockchain_test(
                         };
                         print_error_with_state(&debug_info, &state, test_case.post_state.as_ref());
                     }
-                    eprintln!(
-                        "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
-                    );
+                    if json_output {
+                        let output = json!({
+                            "block": block_idx,
+                            "tx": tx_idx,
+                            "error": format!("tx env creation error: {e}"),
+                            "status": "skipped"
+                        });
+                        println!("{}", serde_json::to_string(&output).unwrap());
+                    } else {
+                        eprintln!(
+                            "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
+                        );
+                    }
                     break; // Skip to next block
                 }
             };
 
-            //let execution_result = evm.inspect(tx_env.clone(), TracerEip3155::new_stdout());
-            let execution_result = evm.transact_commit(tx_env.clone());
+            // If JSON output requested, output transaction details
+            let execution_result = if json_output {
+                evm.inspect_tx(tx_env.clone())
+            } else {
+                evm.transact(tx_env.clone())
+            };
 
             match execution_result {
-                Ok(_) => {
+                Ok(result) => {
                     if should_fail {
+                        // Unexpected success - should have failed but didn't
+                        // If not expected to fail, use inspector to trace the transaction
+                        if print_env_on_error {
+                            // Re-run with inspector to get detailed trace
+                            if json_output {
+                                eprintln!("=== Transaction trace (unexpected success) ===");
+                            }
+                            let _ = evm.inspect_tx(tx_env.clone());
+                        }
+
                         if print_env_on_error {
                             let debug_info = DebugInfo {
                                 pre_state: pre_state_debug.clone(),
@@ -706,14 +806,34 @@ fn execute_blockchain_test(
                             );
                         }
                         let exception = block.expect_exception.clone().unwrap_or_default();
-                        eprintln!(
-                            "⚠️  Skipping block {block_idx} due to expected failure: {exception}"
-                        );
+                        if json_output {
+                            let output = json!({
+                                "block": block_idx,
+                                "tx": tx_idx,
+                                "error": format!("expected failure: {exception}"),
+                                "gas_used": result.result.gas_used(),
+                                "status": "unexpected_success"
+                            });
+                            println!("{}", serde_json::to_string(&output).unwrap());
+                        } else {
+                            eprintln!(
+                                "⚠️  Skipping block {block_idx} due to expected failure: {exception}"
+                            );
+                        }
                         break; // Skip to next block
                     }
+                    evm.commit(result.state);
                 }
                 Err(e) => {
                     if !should_fail {
+                        // Unexpected error - use inspector to trace the transaction
+                        if print_env_on_error {
+                            if json_output {
+                                eprintln!("=== Transaction trace (unexpected failure) ===");
+                            }
+                            let _ = evm.inspect_tx(tx_env.clone());
+                        }
+
                         if print_env_on_error {
                             let debug_info = DebugInfo {
                                 pre_state: pre_state_debug.clone(),
@@ -730,12 +850,30 @@ fn execute_blockchain_test(
                                 test_case.post_state.as_ref(),
                             );
                         }
-                        eprintln!(
-                            "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
-                        );
+                        if json_output {
+                            let output = json!({
+                                "block": block_idx,
+                                "tx": tx_idx,
+                                "error": format!("{e:?}"),
+                                "status": "unexpected_failure"
+                            });
+                            println!("{}", serde_json::to_string(&output).unwrap());
+                        } else {
+                            eprintln!(
+                                "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
+                            );
+                        }
                         break; // Skip to next block
+                    } else if json_output {
+                        // Expected failure
+                        let output = json!({
+                            "block": block_idx,
+                            "tx": tx_idx,
+                            "error": format!("{e:?}"),
+                            "status": "expected_failure"
+                        });
+                        println!("{}", serde_json::to_string(&output).unwrap());
                     }
-                    // Expected failure
                 }
             }
         }

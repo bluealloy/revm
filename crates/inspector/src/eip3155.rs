@@ -54,6 +54,11 @@ struct Output<'a> {
     // Required fields:
     /// Program counter
     pc: u64,
+    /// Depth of the call stack
+    depth: u64,
+    /// Name of the operation
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    op_name: Option<&'static str>,
     /// OpCode
     op: u8,
     /// Gas left before executing this operation
@@ -64,8 +69,6 @@ struct Output<'a> {
     gas_cost: u64,
     /// Array of all values on the stack
     stack: &'a [U256],
-    /// Depth of the call stack
-    depth: u64,
     /// Data returned by the function call
     return_data: &'static str,
     /// Amount of **global** gas refunded
@@ -76,9 +79,6 @@ struct Output<'a> {
     mem_size: u64,
 
     // Optional fields:
-    /// Name of the operation
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    op_name: Option<&'static str>,
     /// Description of an error (should contain revert reason if supported)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     error: Option<String>,
