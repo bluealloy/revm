@@ -263,10 +263,6 @@ impl<DB: Database> Database for State<DB> {
         if let Some(account) = self.cache.accounts.get_mut(&address) {
             // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
             let is_storage_known = account.status.is_storage_known();
-            println!(
-                "is_storage_known {is_storage_known} status {:?}",
-                account.status
-            );
             Ok(account
                 .account
                 .as_mut()

@@ -1,6 +1,6 @@
 //! Pre block state transition
 
-use context::ContextTr;
+use context::{Block, ContextTr};
 use database::State;
 use primitives::{address, hardfork::SpecId, Address, B256, ONE_ETHER};
 use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
@@ -36,6 +36,11 @@ pub fn pre_block_transition<
         }
     }
 
+    // skip system calls for block number 0 (Gensis block)
+    if evm.ctx().block().number() == 0 {
+        return;
+    }
+
     // blockhash system call
     if let Some(parent_block_hash) = parent_block_hash {
         system_call_eip2935_blockhash(spec, parent_block_hash, evm);
@@ -63,7 +68,6 @@ pub(crate) fn system_call_eip2935_blockhash(
         Ok(res) => res,
         Err(e) => {
             panic!("System call failed: {e:?}");
-            return false;
         }
     };
 
@@ -86,7 +90,6 @@ pub(crate) fn system_call_eip4844_beacon_root(
         Ok(res) => res,
         Err(e) => {
             panic!("System call failed: {e:?}");
-            return false;
         }
     };
 
