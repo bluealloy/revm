@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [28.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v27.0.0...revm-precompile-v28.0.0) - 2025-09-08
+
+### Added
+
+- [**breaking**] Remove kzg-rs ([#2909](https://github.com/bluealloy/revm/pull/2909))
+
+### Other
+
+- add amsterdam in spec id ([#2934](https://github.com/bluealloy/revm/pull/2934))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+- *(precompile)* add new specific `PrecompileError` variants ([#2907](https://github.com/bluealloy/revm/pull/2907))
+- add Precompil::into_precompile ([#2913](https://github.com/bluealloy/revm/pull/2913))
+
 ## [27.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.1...revm-precompile-v27.0.0) - 2025-08-23
 
 ### Added
