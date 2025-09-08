@@ -266,13 +266,12 @@ const fn frontier_sstore_cost(vals: &SStoreResult) -> u64 {
 /// Static gas cost for selfdestruct.
 #[inline]
 pub const fn static_selfdestruct_cost(spec_id: SpecId) -> u64 {
-    let is_tangerine = spec_id.is_enabled_in(SpecId::TANGERINE);
-    let mut gas = 0;
-
     // EIP-150: Gas cost changes for IO-heavy operations
-    gas += if is_tangerine { 5000 } else { 0 };
-
-    gas
+    if spec_id.is_enabled_in(SpecId::TANGERINE) {
+        5000
+    } else {
+        0
+    }
 }
 
 /// `SELFDESTRUCT` opcode cost calculation.
