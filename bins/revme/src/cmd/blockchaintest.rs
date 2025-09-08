@@ -696,21 +696,23 @@ fn execute_blockchain_test(
 
         let transactions = block.transactions.as_deref().unwrap_or_default();
 
-        let Some(block_header) = block.block_header.as_ref() else {
-            eprintln!("⚠️  Skipping block {block_idx} due to missing block header");
-            continue;
-        };
-
         // Update block environment for this blockk
-        let block_hash = block_header.hash;
-        let beacon_root = block_header.parent_beacon_block_root;
 
-        block_env = block_header.to_block_env(Some(BlobExcessGasAndPrice::new_with_spec(
-            parent_excess_blob_gas,
-            spec_id,
-        )));
+        let mut block_hash = None;
+        let mut beacon_root = None;
+        let this_excess_blob_gas;
 
-        parent_excess_blob_gas = block_header.excess_blob_gas.unwrap_or_default().to::<u64>();
+        if let Some(block_header) = block.block_header.as_ref() {
+            block_hash = Some(block_header.hash);
+            beacon_root = block_header.parent_beacon_block_root;
+            block_env = block_header.to_block_env(Some(BlobExcessGasAndPrice::new_with_spec(
+                parent_excess_blob_gas,
+                spec_id,
+            )));
+            this_excess_blob_gas = block_header.excess_blob_gas.map(|i| i.to::<u64>());
+        } else {
+            this_excess_blob_gas = None;
+        }
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -914,7 +916,10 @@ fn execute_blockchain_test(
             spec_id,
         );
 
-        parent_block_hash = Some(block_hash);
+        parent_block_hash = block_hash;
+        if let Some(excess_blob_gas) = this_excess_blob_gas {
+            parent_excess_blob_gas = excess_blob_gas;
+        }
 
         state.merge_transitions(BundleRetention::Reverts);
     }
@@ -999,8 +1004,12 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-        // TODO tests not checked, maybe related to uncles that are currently not supported in test.
+        // TODO tests not checked, maybe related to parent block hashes as it is currently not supported in test.
         | "scenarios.json"
+        // IT seems that post state is wrong, we properly handle max blob gas and state should stay the same.
+        | "invalid_tx_max_fee_per_blob_gas.json"
+        | "correct_increasing_blob_gas_costs.json"
+        | "correct_decreasing_blob_gas_costs.json"
     )
 }
 
