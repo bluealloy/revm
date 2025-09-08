@@ -68,7 +68,7 @@ impl Default for EthFrame<EthInterpreter> {
 }
 
 impl EthFrame<EthInterpreter> {
-    fn invalid() -> Self {
+    pub fn invalid() -> Self {
         Self::do_default(Interpreter::invalid())
     }
 
