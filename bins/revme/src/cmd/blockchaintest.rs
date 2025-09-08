@@ -103,6 +103,7 @@ fn run_tests(
     let mut passed = 0;
     let mut failed = 0;
     let mut skipped = 0;
+    let mut failed_paths = Vec::new();
 
     let start_time = Instant::now();
     let total_files = test_files.len();
@@ -148,6 +149,9 @@ fn run_tests(
             }
             Err(e) => {
                 failed += 1;
+                if keep_going {
+                    failed_paths.push(file_path.clone());
+                }
                 if json_output {
                     let output = json!({
                         "file": file_path.display().to_string(),
@@ -185,6 +189,14 @@ fn run_tests(
         });
         println!("{}", serde_json::to_string(&results).unwrap());
     } else {
+        // Print failed test paths if keep-going was enabled
+        if keep_going && !failed_paths.is_empty() {
+            println!("\nFailed test files:");
+            for path in &failed_paths {
+                println!("  {}", path.display());
+            }
+        }
+
         println!("\nTest results:");
         println!("  Passed:  {passed}");
         println!("  Failed:  {failed}");
@@ -671,7 +683,7 @@ fn execute_blockchain_test(
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
         println!("Run block {block_idx}/{}", test_case.blocks.len());
-        
+
         // Check if this block should fail
         let should_fail = block.expect_exception.is_some();
 
