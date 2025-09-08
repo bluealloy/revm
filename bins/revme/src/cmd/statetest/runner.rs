@@ -86,7 +86,7 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 /// Check if a test should be skipped based on its filename
 /// Some tests are known to be problematic or take too long
 fn skip_test(path: &Path) -> bool {
-    let Some(name) = path.file_name().and_then(|s| s.to_str()) else {
+    let Some(_name) = path.file_name().and_then(|s| s.to_str()) else {
         // Non-UTF file names or missing file name: do not skip by default.
         return false;
     };
