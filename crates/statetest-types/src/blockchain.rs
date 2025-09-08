@@ -3,7 +3,7 @@
 //! This module contains structures for deserializing blockchain test JSON files
 //! from the Ethereum test suite.
 
-use crate::{deserialize_maybe_empty, AccountInfo};
+use crate::{deserialize_maybe_empty, AccountInfo, TestAuthorization};
 use revm::{
     context::{transaction::AccessList, BlockEnv, TxEnv},
     context_interface::block::BlobExcessGasAndPrice,
@@ -151,6 +151,8 @@ pub struct Transaction {
     pub blob_versioned_hashes: Option<Vec<B256>>,
     /// Maximum fee per blob gas (EIP-4844)
     pub max_fee_per_blob_gas: Option<U256>,
+    /// Authorization list (EIP-7702)
+    pub authorization_list: Option<Vec<TestAuthorization>>,
     /// Transaction hash
     pub hash: Option<B256>,
 }
@@ -342,6 +344,12 @@ impl Transaction {
             .access_list(self.access_list.clone().unwrap_or_default())
             .blob_hashes(self.blob_versioned_hashes.clone().unwrap_or_default())
             .max_fee_per_blob_gas(self.max_fee_per_blob_gas.unwrap_or_default().to::<u128>())
+            .authorization_list_signed(
+                self.authorization_list
+                    .clone()
+                    .map(|auth_list| auth_list.into_iter().map(Into::into).collect::<Vec<_>>())
+                    .unwrap_or_default(),
+            )
             .kind(kind);
 
         // Set chain ID if present
@@ -359,7 +367,7 @@ impl Transaction {
                     builder
                 }
             }
-            2 | 3 => {
+            2..=4 => {
                 // EIP-1559 or EIP-4844 transaction
                 let mut b = builder;
                 if let Some(max_fee) = self.max_fee_per_gas {
@@ -492,6 +500,7 @@ mod test {
             max_fee_per_blob_gas: None,
             hash: None,
             to: None,
+            authorization_list: None,
             blob_versioned_hashes: None,
         };
 

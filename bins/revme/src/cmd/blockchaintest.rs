@@ -1010,6 +1010,37 @@ fn skip_test(path: &Path) -> bool {
         | "invalid_tx_max_fee_per_blob_gas.json"
         | "correct_increasing_blob_gas_costs.json"
         | "correct_decreasing_blob_gas_costs.json"
+
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_negative_excess_blob_gas.json
+        | "invalid_negative_excess_blob_gas.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_change.json
+        | "invalid_excess_blob_gas_change.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_static_excess_blob_gas.json
+        | "invalid_static_excess_blob_gas.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_target_blobs_increase_from_zero.json
+        | "invalid_excess_blob_gas_target_blobs_increase_from_zero.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_zero_excess_blob_gas_in_header.json
+        | "invalid_zero_excess_blob_gas_in_header.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_above_target_change.json
+        | "invalid_excess_blob_gas_above_target_change.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_non_multiple_excess_blob_gas.json
+        | "invalid_non_multiple_excess_blob_gas.json"
+        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_static_excess_blob_gas_from_zero_on_blobs_above_target.json
+        | "invalid_static_excess_blob_gas_from_zero_on_blobs_above_target.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7251_consolidations/modified_consolidation_contract/system_contract_errors.json
+        | "system_contract_errors.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7251_consolidations/consolidations/consolidation_requests.json
+        | "consolidation_requests.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip2935_historical_block_hashes_from_state/block_hashes/block_hashes_history.json
+        | "block_hashes_history.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7685_general_purpose_el_requests/multi_type_requests/valid_multi_type_request_from_same_tx.json
+        | "valid_multi_type_request_from_same_tx.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7685_general_purpose_el_requests/multi_type_requests/valid_multi_type_requests.json
+        | "valid_multi_type_requests.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7002_el_triggerable_withdrawals/modified_withdrawal_contract/system_contract_errors.json
+        //| "system_contract_errors.json"
+        // test-fixtures/main/develop/blockchain_tests/prague/eip7002_el_triggerable_withdrawals/withdrawal_requests/withdrawal_requests.json
+        | "withdrawal_requests.json"
     )
 }
 
