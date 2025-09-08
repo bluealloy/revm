@@ -1,7 +1,8 @@
-use context::Block;
+use context::{Block, ContextTr};
 use database::State;
-use primitives::{hardfork::SpecId, ONE_ETHER};
-use revm::Database;
+use primitives::{hardfork::SpecId, ONE_ETHER, ONE_GWEI};
+use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
+use statetest_types::blockchain::Withdrawal;
 
 /// Post block transition that includes:
 ///   * Block and uncle rewards before the Merge/Paris hardfork.
@@ -11,11 +12,37 @@ use revm::Database;
 ///
 /// Uncle rewards are not implemented yet.
 #[inline]
-pub fn post_block_transition<DB: Database>(state: &mut State<DB>, block: impl Block, spec: SpecId) {
+pub fn post_block_transition<
+    'a,
+    DB: Database + 'a,
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>
+        + EvmTr<Context: ContextTr<Db = &'a mut State<DB>>>,
+>(
+    evm: &mut EVM,
+    block: impl Block,
+    withdrawals: &[Withdrawal],
+    spec: SpecId,
+) {
     // block reward
     let block_reward = block_reward(spec, 0);
     if block_reward != 0 {
-        let _ = state.increment_balances(vec![(block.beneficiary(), block_reward)]);
+        let _ = evm
+            .ctx_mut()
+            .db_mut()
+            .increment_balances(vec![(block.beneficiary(), block_reward)]);
+    }
+
+    // withdrawals
+    if spec.is_enabled_in(SpecId::SHANGHAI) {
+        for withdrawal in withdrawals {
+            evm.ctx_mut()
+                .db_mut()
+                .increment_balances(vec![(
+                    withdrawal.address,
+                    withdrawal.amount.to::<u128>().saturating_mul(ONE_GWEI),
+                )])
+                .expect("Db actions to pass");
+        }
     }
 }
 

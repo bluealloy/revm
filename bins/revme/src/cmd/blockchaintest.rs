@@ -2,11 +2,13 @@ pub mod post_block;
 pub mod pre_block;
 
 use clap::Parser;
+use context::ContextTr;
+use context_interface::block::BlobExcessGasAndPrice;
 use database::states::bundle_state::BundleRetention;
 use database::{EmptyDB, State};
 use inspector::inspectors::TracerEip3155;
-use primitives::B256;
 use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
+use revm::handler::EvmTr;
 use revm::{
     context::cfg::CfgEnv, context_interface::result::HaltReason, Context, MainBuilder, MainContext,
 };
@@ -677,8 +679,13 @@ fn execute_blockchain_test(
     cfg.spec = spec_id;
 
     // Genesis block is not used yet.
-    let mut block_env = test_case.genesis_block_env();
     let mut parent_block_hash = Some(test_case.genesis_block_header.hash);
+    let mut parent_excess_blob_gas = test_case
+        .genesis_block_header
+        .excess_blob_gas
+        .unwrap_or_default()
+        .to::<u64>();
+    let mut block_env = test_case.genesis_block_env();
 
     // Process each block in the test
     for (block_idx, block) in test_case.blocks.iter().enumerate() {
@@ -689,14 +696,21 @@ fn execute_blockchain_test(
 
         let transactions = block.transactions.as_deref().unwrap_or_default();
 
-        let mut block_hash = B256::ZERO;
-        let mut beacon_root = None;
-        // Update block environment for this block
-        if let Some(header) = &block.block_header {
-            block_hash = header.hash;
-            beacon_root = header.parent_beacon_block_root;
-            block_env = header.to_block_env();
-        }
+        let Some(block_header) = block.block_header.as_ref() else {
+            eprintln!("⚠️  Skipping block {block_idx} due to missing block header");
+            continue;
+        };
+
+        // Update block environment for this blockk
+        let block_hash = block_header.hash;
+        let beacon_root = block_header.parent_beacon_block_root;
+
+        block_env = block_header.to_block_env(Some(BlobExcessGasAndPrice::new_with_spec(
+            parent_excess_blob_gas,
+            spec_id,
+        )));
+
+        parent_excess_blob_gas = block_header.excess_blob_gas.unwrap_or_default().to::<u64>();
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -708,13 +722,7 @@ fn execute_blockchain_test(
         let mut evm = evm_context.build_mainnet_with_inspector(TracerEip3155::new_stdout());
 
         // Pre block system calls
-        pre_block::pre_block_transition(
-            &mut evm,
-            spec_id,
-            parent_block_hash,
-            beacon_root,
-            block.withdrawals.as_deref().unwrap_or_default(),
-        );
+        pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root);
 
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
@@ -729,7 +737,11 @@ fn execute_blockchain_test(
                         tx_idx,
                         withdrawals: block.withdrawals.clone(),
                     };
-                    print_error_with_state(&debug_info, &state, test_case.post_state.as_ref());
+                    print_error_with_state(
+                        &debug_info,
+                        evm.ctx().db_ref(),
+                        test_case.post_state.as_ref(),
+                    );
                 }
                 if json_output {
                     let output = json!({
@@ -762,7 +774,11 @@ fn execute_blockchain_test(
                             tx_idx,
                             withdrawals: block.withdrawals.clone(),
                         };
-                        print_error_with_state(&debug_info, &state, test_case.post_state.as_ref());
+                        print_error_with_state(
+                            &debug_info,
+                            evm.ctx().db_ref(),
+                            test_case.post_state.as_ref(),
+                        );
                     }
                     if json_output {
                         let output = json!({
@@ -813,7 +829,7 @@ fn execute_blockchain_test(
                             };
                             print_error_with_state(
                                 &debug_info,
-                                &state,
+                                evm.ctx().db_ref(),
                                 test_case.post_state.as_ref(),
                             );
                         }
@@ -858,7 +874,7 @@ fn execute_blockchain_test(
                             };
                             print_error_with_state(
                                 &debug_info,
-                                &state,
+                                evm.ctx().db_ref(),
                                 test_case.post_state.as_ref(),
                             );
                         }
@@ -891,7 +907,12 @@ fn execute_blockchain_test(
         }
 
         // uncle rewards are not implemented yet
-        post_block::post_block_transition(&mut state, &block_env, spec_id);
+        post_block::post_block_transition(
+            &mut evm,
+            &block_env,
+            block.withdrawals.as_deref().unwrap_or_default(),
+            spec_id,
+        );
 
         parent_block_hash = Some(block_hash);
 

@@ -8,8 +8,12 @@
 //!
 //! [`BlobExcessGasAndPrice`] is used to store the blob gas price and excess blob gas.s
 use primitives::{
-    eip4844::{GAS_PER_BLOB, MIN_BLOB_GASPRICE},
+    eip4844::{
+        BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, GAS_PER_BLOB,
+        MIN_BLOB_GASPRICE,
+    },
     eip7918,
+    hardfork::SpecId,
 };
 
 /// Structure holding block blob excess gas and it calculates blob fee
@@ -38,6 +42,18 @@ impl BlobExcessGasAndPrice {
             excess_blob_gas,
             blob_gasprice,
         }
+    }
+
+    /// Creates a new instance by calculating the blob gas price based on the spec.
+    pub fn new_with_spec(excess_blob_gas: u64, spec: SpecId) -> Self {
+        Self::new(
+            excess_blob_gas,
+            if spec.is_enabled_in(SpecId::PRAGUE) {
+                BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
+            } else {
+                BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+            },
+        )
     }
 
     /// Calculate this block excess gas and price from the parent excess gas and gas used

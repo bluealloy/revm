@@ -2,9 +2,8 @@
 
 use context::{Block, ContextTr};
 use database::State;
-use primitives::{address, hardfork::SpecId, Address, B256, ONE_GWEI};
+use primitives::{address, hardfork::SpecId, Address, B256};
 use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
-use statetest_types::blockchain::Withdrawal;
 
 /// Pre block state transition
 ///
@@ -21,21 +20,7 @@ pub fn pre_block_transition<
     spec: SpecId,
     parent_block_hash: Option<B256>,
     parent_beacon_block_root: Option<B256>,
-    withdrawals: &[Withdrawal],
 ) {
-    // withdrawals
-    if spec.is_enabled_in(SpecId::SHANGHAI) {
-        for withdrawal in withdrawals {
-            evm.ctx_mut()
-                .db_mut()
-                .increment_balances(vec![(
-                    withdrawal.address,
-                    withdrawal.amount.to::<u128>().saturating_mul(ONE_GWEI),
-                )])
-                .expect("Db actions to pass");
-        }
-    }
-
     // skip system calls for block number 0 (Gensis block)
     if evm.ctx().block().number() == 0 {
         return;

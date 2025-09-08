@@ -6,10 +6,8 @@
 use crate::{deserialize_maybe_empty, AccountInfo};
 use revm::{
     context::{transaction::AccessList, BlockEnv, TxEnv},
-    primitives::{
-        eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, Address, Bytes, FixedBytes, TxKind, B256,
-        U256,
-    },
+    context_interface::block::BlobExcessGasAndPrice,
+    primitives::{Address, Bytes, FixedBytes, TxKind, B256, U256},
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -294,8 +292,11 @@ pub enum SealEngine {
 
 impl BlockHeader {
     /// Convert BlockHeader to BlockEnv
-    pub fn to_block_env(&self) -> BlockEnv {
-        let mut block_env = BlockEnv {
+    pub fn to_block_env(
+        &self,
+        blob_excess_gas_and_price: Option<BlobExcessGasAndPrice>,
+    ) -> BlockEnv {
+        BlockEnv {
             number: self.number,
             beneficiary: self.coinbase,
             timestamp: self.timestamp,
@@ -307,14 +308,8 @@ impl BlockHeader {
             } else {
                 None
             },
-            blob_excess_gas_and_price: None,
-        };
-
-        let excess_blob_gas = self.excess_blob_gas.unwrap_or_default().to::<u64>();
-        block_env
-            .set_blob_excess_gas_and_price(excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE);
-
-        block_env
+            blob_excess_gas_and_price,
+        }
     }
 }
 
@@ -394,7 +389,7 @@ impl Transaction {
 impl BlockchainTestCase {
     /// Get the genesis block environment
     pub fn genesis_block_env(&self) -> BlockEnv {
-        self.genesis_block_header.to_block_env()
+        self.genesis_block_header.to_block_env(None)
     }
 }
 
