@@ -31,8 +31,6 @@ pub struct OpHandler<EVM, ERROR, FRAME> {
     /// Mainnet handler allows us to use functions from the mainnet handler inside optimism handler.
     /// So we dont duplicate the logic
     pub mainnet: MainnetHandler<EVM, ERROR, FRAME>,
-    /// Phantom data to avoid type inference issues.
-    pub _phantom: core::marker::PhantomData<(EVM, ERROR, FRAME)>,
 }
 
 impl<EVM, ERROR, FRAME> OpHandler<EVM, ERROR, FRAME> {
@@ -40,7 +38,6 @@ impl<EVM, ERROR, FRAME> OpHandler<EVM, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
             mainnet: MainnetHandler::default(),
-            _phantom: core::marker::PhantomData,
         }
     }
 }

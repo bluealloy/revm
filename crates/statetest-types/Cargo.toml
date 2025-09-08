@@ -24,3 +24,4 @@ serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
 k256 = { workspace = true }
 thiserror = { workspace = true }
+alloy-eips = { workspace = true }

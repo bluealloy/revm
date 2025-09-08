@@ -91,7 +91,7 @@ impl FrameResult {
 
     /// Returns mutable reference to interpreter result.
     #[inline]
-    pub fn interpreter_result_mut(&mut self) -> &InterpreterResult {
+    pub fn interpreter_result_mut(&mut self) -> &mut InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
