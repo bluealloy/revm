@@ -23,7 +23,6 @@ pub struct TracerEip3155 {
     gas: u64,
     refunded: i64,
     mem_size: usize,
-    skip: bool,
     include_memory: bool,
     memory: Option<String>,
 }
@@ -39,7 +38,6 @@ impl std::fmt::Debug for TracerEip3155 {
             .field("gas", &self.gas)
             .field("refunded", &self.refunded)
             .field("mem_size", &self.mem_size)
-            .field("skip", &self.skip)
             .field("include_memory", &self.include_memory)
             .field("memory", &self.memory)
             .finish()
@@ -143,7 +141,6 @@ impl TracerEip3155 {
             gas: 0,
             refunded: 0,
             mem_size: 0,
-            skip: false,
         }
     }
 
@@ -176,7 +173,6 @@ impl TracerEip3155 {
             gas,
             refunded,
             mem_size,
-            skip,
             ..
         } = self;
         *gas_inspector = GasInspector::new();
@@ -186,7 +182,6 @@ impl TracerEip3155 {
         *gas = 0;
         *refunded = 0;
         *mem_size = 0;
-        *skip = false;
     }
 
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut impl ContextTr) {
@@ -250,11 +245,6 @@ where
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step_end(&mut interp.gas);
-        if self.skip {
-            self.skip = false;
-            return;
-        }
-
         let value = Output {
             pc: self.pc,
             op: self.opcode,
