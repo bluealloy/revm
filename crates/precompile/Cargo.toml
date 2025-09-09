@@ -34,9 +34,6 @@ secp256k1 = { workspace = true, features = [
 	"rand",
 	"global-context",
 ], optional = true }
-libsecp256k1 = { workspace = true, features = [
-	"static-context",
-], optional = true }
 
 # SHA2-256 and RIPEMD-160
 sha2.workspace = true
@@ -85,7 +82,6 @@ std = [
 	"sha2/std",
 	"c-kzg?/std",
 	"secp256k1?/std",
-	"libsecp256k1?/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
 	"aurora-engine-modexp/std",
@@ -112,7 +108,6 @@ portable = ["c-kzg?/portable", "blst?/portable"]
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
-libsecp256k1 = ["dep:libsecp256k1"]
 
 # Enables the blst implementation of the BLS12-381 precompile.
 blst = ["dep:blst"]

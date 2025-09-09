@@ -4,9 +4,8 @@
 //! * [`k256`](https://crates.io/crates/k256) - uses maintained pure rust lib `k256`, it is perfect use for no_std environments.
 //! * [`secp256k1`](https://crates.io/crates/secp256k1) - uses `bitcoin_secp256k1` lib, it is a C implementation of secp256k1 used in bitcoin core.
 //!   It is faster than k256 and enabled by default and in std environment.
-//! * [`libsecp256k1`](https://crates.io/crates/libsecp256k1) - is made from parity in pure rust, it is alternative for k256.
-//!
-//! Order of preference is `secp256k1` -> `k256` -> `libsecp256k1`. Where if no features are enabled, it will use `k256`.
+
+//! Order of preference is `secp256k1` -> `k256`. Where if no features are enabled, it will use `k256`.
 //!
 //! Input format:
 //! [32 bytes for message][64 bytes for signature][1 byte for recovery id]
@@ -16,8 +15,6 @@
 #[cfg(feature = "secp256k1")]
 pub mod bitcoin_secp256k1;
 pub mod k256;
-#[cfg(feature = "libsecp256k1")]
-pub mod parity_libsecp256k1;
 
 use crate::{
     crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
@@ -70,8 +67,6 @@ pub(crate) fn ecrecover_bytes(sig: [u8; 64], recid: u8, msg: [u8; 32]) -> Option
 cfg_if::cfg_if! {
     if #[cfg(feature = "secp256k1")] {
         pub use bitcoin_secp256k1::ecrecover;
-    } else if #[cfg(feature = "libsecp256k1")] {
-        pub use parity_libsecp256k1::ecrecover;
     } else {
         pub use k256::ecrecover;
     }
