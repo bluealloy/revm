@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-context-v9.0.2...revm-context-v10.0.0) - 2025-09-09
+
+### Fixed
+
+- FrameStack mark push/end_init as unsafe ([#2929](https://github.com/bluealloy/revm/pull/2929))
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+
 ## [9.0.2](https://github.com/bluealloy/revm/compare/revm-context-v9.0.1...revm-context-v9.0.2) - 2025-08-23
 
 ### Fixed

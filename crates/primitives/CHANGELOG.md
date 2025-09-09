@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.2.1...revm-primitives-v21.0.0) - 2025-09-09
+
+### Other
+
+- add amsterdam in spec id ([#2934](https://github.com/bluealloy/revm/pull/2934))
+- *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+
 ## [20.2.1](https://github.com/bluealloy/revm/compare/revm-primitives-v20.2.0...revm-primitives-v20.2.1) - 2025-08-12
 
 ### Other

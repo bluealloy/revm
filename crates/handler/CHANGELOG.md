@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v10.0.0...revm-handler-v11.0.0) - 2025-09-09
+
+### Fixed
+
+- interpreter_result_mut should return mutable reference ([#2941](https://github.com/bluealloy/revm/pull/2941))
+- FrameStack mark push/end_init as unsafe ([#2929](https://github.com/bluealloy/revm/pull/2929))
+
+### Other
+
+- remove unused generic from validate_tx_env and fix call site ([#2946](https://github.com/bluealloy/revm/pull/2946))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+- *(handler)* provide `&CallInputs`to`PrecompileProvider::run` ([#2921](https://github.com/bluealloy/revm/pull/2921))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.1...revm-handler-v10.0.0) - 2025-08-23
 
 ### Added

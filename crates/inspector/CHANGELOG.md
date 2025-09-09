@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v10.0.0...revm-inspector-v10.0.1) - 2025-09-09
+
+### Other
+
+- update Cargo.toml dependencies
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v9.1.0...revm-inspector-v10.0.0) - 2025-08-23
 
 ### Other

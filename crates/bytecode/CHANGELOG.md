@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.3](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.2...revm-bytecode-v6.2.3) - 2025-09-09
+
+### Other
+
+- update Cargo.toml dependencies
+
 ## [6.2.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.1...revm-bytecode-v6.2.2) - 2025-08-23
 
 ### Other

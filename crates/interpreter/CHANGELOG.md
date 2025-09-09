@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.2...revm-interpreter-v26.0.0) - 2025-09-09
+
+### Fixed
+
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- remove duplicate comment for TOTAL_COST_FLOOR_PER_TOKEN constant ([#2950](https://github.com/bluealloy/revm/pull/2950))
+- clean static_selfdestruct_cost ([#2944](https://github.com/bluealloy/revm/pull/2944))
+- rename SELFDESTRUCT to SELFDESTRUCT_REFUND ([#2937](https://github.com/bluealloy/revm/pull/2937))
+
 ## [25.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.1...revm-interpreter-v25.0.2) - 2025-08-23
 
 ### Fixed
