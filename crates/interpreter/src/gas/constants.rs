@@ -72,7 +72,6 @@ pub const NON_ZERO_BYTE_DATA_COST_ISTANBUL: u64 = 16;
 /// The multiplier for a non zero byte in calldata adjusted by [EIP-2028](https://eips.ethereum.org/EIPS/eip-2028).
 pub const NON_ZERO_BYTE_MULTIPLIER_ISTANBUL: u64 =
     NON_ZERO_BYTE_DATA_COST_ISTANBUL / STANDARD_TOKEN_COST;
-// The cost floor per token as defined by [EIP-2028](https://eips.ethereum.org/EIPS/eip-2028).
 /// The cost floor per token as defined by EIP-2028.
 pub const TOTAL_COST_FLOOR_PER_TOKEN: u64 = 10;
 
