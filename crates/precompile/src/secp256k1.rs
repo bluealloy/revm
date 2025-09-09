@@ -5,7 +5,7 @@
 //! * [`secp256k1`](https://crates.io/crates/secp256k1) - uses `bitcoin_secp256k1` lib, it is a C implementation of secp256k1 used in bitcoin core.
 //!   It is faster than k256 and enabled by default and in std environment.
 
-//! Order of preference is `secp256k1` -> `k256`. Where if no features are enabled, it will use `k256`.
+//!   Order of preference is `secp256k1` -> `k256`. Where if no features are enabled, it will use `k256`.
 //!
 //! Input format:
 //! [32 bytes for message][64 bytes for signature][1 byte for recovery id]
