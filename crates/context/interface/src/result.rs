@@ -400,7 +400,12 @@ pub enum InvalidTransaction {
     /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
     BlobVersionedHashesNotSupported,
     /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
-    BlobGasPriceGreaterThanMax,
+    BlobGasPriceGreaterThanMax {
+        /// Block `blob_gas_price`.
+        block_blob_gas_price: u128,
+        /// Tx-specified `max_fee_per_blob_gas`.
+        tx_max_fee_per_blob_gas: u128,
+    },
     /// There should be at least one blob in Blob transaction.
     EmptyBlobs,
     /// Blob transaction can't be a create transaction.
@@ -506,8 +511,14 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobVersionedHashesNotSupported => {
                 write!(f, "blob versioned hashes not supported")
             }
-            Self::BlobGasPriceGreaterThanMax => {
-                write!(f, "blob gas price is greater than max fee per blob gas")
+            Self::BlobGasPriceGreaterThanMax {
+                block_blob_gas_price,
+                tx_max_fee_per_blob_gas,
+            } => {
+                write!(
+                    f,
+                    "blob gas price ({block_blob_gas_price}) is greater than max fee per blob gas ({tx_max_fee_per_blob_gas})"
+                )
             }
             Self::EmptyBlobs => write!(f, "empty blobs"),
             Self::BlobCreateTransaction => write!(f, "blob create transaction"),

@@ -155,6 +155,15 @@ run_tests() {
 
     echo "Running legacy tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Cancun/GeneralStateTests"
+
+    echo "Running main develop blockchain tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_DEVELOP_DIR/blockchain_tests"
+
+    echo "Running main static blockchain tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_STATIC_DIR/blockchain_tests"
+
+    echo "Running main stable blockchain tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_STABLE_DIR/blockchain_tests"
 }
 
 ##############################

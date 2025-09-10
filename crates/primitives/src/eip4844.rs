@@ -24,7 +24,7 @@ pub const MAX_BLOB_GAS_PER_BLOCK_CANCUN: u64 = MAX_BLOB_NUMBER_PER_BLOCK_CANCUN 
 pub const TARGET_BLOB_GAS_PER_BLOCK_CANCUN: u64 =
     TARGET_BLOB_NUMBER_PER_BLOCK_CANCUN * GAS_PER_BLOB;
 
-/// Controls the maximum rate of change for blob gas price
+/// Controls the maximum rate of change for blob gas price. Hex 0x32f0ed.
 pub const BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN: u64 = 3_338_477;
 
 /// Target number of the blob per block
@@ -40,5 +40,5 @@ pub const MAX_BLOB_GAS_PER_BLOCK_PRAGUE: u64 = MAX_BLOB_NUMBER_PER_BLOCK_PRAGUE 
 pub const TARGET_BLOB_GAS_PER_BLOCK_PRAGUE: u64 =
     TARGET_BLOB_NUMBER_PER_BLOCK_PRAGUE * GAS_PER_BLOB;
 
-/// Controls the maximum rate of change for blob gas price
+/// Controls the maximum rate of change for blob gas price. Hex 0x4c6964.
 pub const BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE: u64 = 5_007_716;

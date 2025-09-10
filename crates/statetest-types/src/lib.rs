@@ -7,6 +7,8 @@
 //! test cases, and transaction data used in Ethereum state tests.
 
 mod account_info;
+/// Blockchain test types
+pub mod blockchain;
 mod deserializer;
 mod env;
 mod error;

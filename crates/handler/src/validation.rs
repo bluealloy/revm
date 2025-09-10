@@ -55,7 +55,10 @@ pub fn validate_eip4844_tx(
 ) -> Result<(), InvalidTransaction> {
     // Ensure that the user was willing to at least pay the current blob gasprice
     if block_blob_gas_price > max_blob_fee {
-        return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
+        return Err(InvalidTransaction::BlobGasPriceGreaterThanMax {
+            block_blob_gas_price,
+            tx_max_fee_per_blob_gas: max_blob_fee,
+        });
     }
 
     // There must be at least one blob
