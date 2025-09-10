@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.2...revm-statetest-types-v10.0.0) - 2025-09-10
+
+### Other
+
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- remove parent blob gas used and excess ([#2933](https://github.com/bluealloy/revm/pull/2933))
+- *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
+
 ## [9.0.2](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.1...revm-statetest-types-v9.0.2) - 2025-08-23
 
 ### Other
