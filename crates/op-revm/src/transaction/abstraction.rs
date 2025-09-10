@@ -275,7 +275,10 @@ impl OpTransactionBuilder {
     /// This is useful for testing and debugging where it is not necessary to
     /// have full [`OpTransaction`] instance.
     ///
-    /// If the source hash is not [`B256::ZERO`], set the transaction type to deposit and remove the enveloped transaction.
+    /// If the transaction is a deposit (either `tx_type == DEPOSIT_TRANSACTION_TYPE` or
+    /// `source_hash != B256::ZERO`), set the transaction type accordingly and ensure the
+    /// `enveloped_tx` is removed (`None`). For non-deposit transactions, ensure
+    /// `enveloped_tx` is set.
     pub fn build_fill(mut self) -> OpTransaction<TxEnv> {
         let tx_type = self.base.get_tx_type();
         if tx_type.is_some() {
@@ -284,6 +287,8 @@ impl OpTransactionBuilder {
                 if self.deposit.source_hash == B256::ZERO {
                     self.deposit.source_hash = B256::from([1u8; 32]);
                 }
+                // deposit transactions should not carry enveloped bytes
+                self.enveloped_tx = None;
             } else {
                 // enveloped is required for non-deposit transactions
                 self.enveloped_tx = Some(vec![0x00].into());
@@ -291,6 +296,8 @@ impl OpTransactionBuilder {
         } else if self.deposit.source_hash != B256::ZERO {
             // if type is not set and source hash is set, set the transaction type to deposit
             self.base = self.base.tx_type(Some(DEPOSIT_TRANSACTION_TYPE));
+            // deposit transactions should not carry enveloped bytes
+            self.enveloped_tx = None;
         } else if self.enveloped_tx.is_none() {
             // if type is not set and source hash is not set, set the enveloped transaction to something.
             self.enveloped_tx = Some(vec![0x00].into());
