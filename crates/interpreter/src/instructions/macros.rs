@@ -19,7 +19,7 @@ macro_rules! require_non_staticcall {
     ($interpreter:expr) => {
         if $interpreter.runtime_flag.is_static() {
             $interpreter.halt($crate::InstructionResult::StateChangeDuringStaticCall);
-            return;
+            return false;
         }
     };
 }
@@ -31,7 +31,7 @@ macro_rules! require_non_staticcall {
 macro_rules! otry {
     ($expression: expr) => {{
         let Some(value) = $expression else {
-            return;
+            return false;
         };
         value
     }};
@@ -48,7 +48,7 @@ macro_rules! check {
             .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
             $interpreter.halt_not_activated();
-            return;
+            return false;
         }
     };
 }
@@ -58,7 +58,7 @@ macro_rules! check {
 #[collapse_debuginfo(yes)]
 macro_rules! gas {
     ($interpreter:expr, $gas:expr) => {
-        $crate::gas!($interpreter, $gas, ())
+        $crate::gas!($interpreter, $gas, false)
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
         if !$interpreter.gas.record_cost($gas) {
@@ -73,7 +73,7 @@ macro_rules! gas {
 #[collapse_debuginfo(yes)]
 macro_rules! berlin_load_account {
     ($context:expr, $address:expr, $load_code:expr) => {
-        $crate::berlin_load_account!($context, $address, $load_code, ())
+        $crate::berlin_load_account!($context, $address, $load_code, false)
     };
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
         $crate::gas!($context.interpreter, WARM_STORAGE_READ_COST, $ret);
@@ -110,7 +110,7 @@ macro_rules! berlin_load_account {
 #[collapse_debuginfo(yes)]
 macro_rules! gas_or_fail {
     ($interpreter:expr, $gas:expr) => {
-        $crate::gas_or_fail!($interpreter, $gas, ())
+        $crate::gas_or_fail!($interpreter, $gas, false)
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
         match $gas {
@@ -129,7 +129,7 @@ macro_rules! gas_or_fail {
 #[collapse_debuginfo(yes)]
 macro_rules! resize_memory {
     ($interpreter:expr, $offset:expr, $len:expr) => {
-        $crate::resize_memory!($interpreter, $offset, $len, ())
+        $crate::resize_memory!($interpreter, $offset, $len, false)
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
         if !$crate::interpreter::resize_memory(
@@ -148,10 +148,13 @@ macro_rules! resize_memory {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn {
-    ([ $($x:ident),* ],$interpreter:expr $(,$ret:expr)? ) => {
+    ([ $($x:ident),* ],$interpreter:expr) => {
+        $crate::popn!([ $($x),* ], $interpreter, false)
+    };
+    ([ $($x:ident),* ], $interpreter:expr, $ret:expr) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
             $interpreter.halt_underflow();
-            return $($ret)?;
+            return $ret;
         };
     };
 }
@@ -169,7 +172,11 @@ macro_rules! _count {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn_top {
-    ([ $($x:ident),* ], $top:ident, $interpreter:expr $(,$ret:expr)? ) => {
+    ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
+        // Workaround for https://github.com/rust-lang/rust/issues/144329.
+        $crate::popn_top!([ $($x),* ], $top, $interpreter, false)
+    };
+    ([ $($x:ident),* ], $top:ident, $interpreter:expr, $ret:expr) => {
         /*
         let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
             $interpreter.halt($crate::InstructionResult::StackUnderflow);
@@ -180,7 +187,7 @@ macro_rules! popn_top {
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
         if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
             $interpreter.halt_underflow();
-            return $($ret)?;
+            return $ret;
         }
         let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
     };
@@ -190,12 +197,15 @@ macro_rules! popn_top {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! push {
-    ($interpreter:expr, $x:expr $(,$ret:item)?) => (
+    ($interpreter:expr, $x:expr) => {
+        $crate::push!($interpreter, $x, false)
+    };
+    ($interpreter:expr, $x:expr, $ret:expr) => {
         if !($interpreter.stack.push($x)) {
             $interpreter.halt_overflow();
-            return $($ret)?;
+            return $ret;
         }
-    )
+    };
 }
 
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
@@ -240,10 +250,10 @@ macro_rules! as_isize_saturated {
 #[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail {
     ($interpreter:expr, $v:expr) => {
-        $crate::as_usize_or_fail_ret!($interpreter, $v, ())
+        $crate::as_usize_or_fail_ret!($interpreter, $v, false)
     };
     ($interpreter:expr, $v:expr, $reason:expr) => {
-        $crate::as_usize_or_fail_ret!($interpreter, $v, $reason, ())
+        $crate::as_usize_or_fail_ret!($interpreter, $v, $reason, false)
     };
 }
 

@@ -32,14 +32,14 @@ use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
 /// EVM opcode function signature.
 #[derive(Debug)]
 pub struct Instruction<W: InterpreterTypes, H: ?Sized> {
-    fn_: fn(InstructionContext<'_, H, W>),
+    fn_: fn(InstructionContext<'_, H, W>) -> bool,
     static_gas: u64,
 }
 
 impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
     /// Creates a new instruction with the given function and static gas cost.
     #[inline]
-    pub const fn new(fn_: fn(InstructionContext<'_, H, W>), static_gas: u64) -> Self {
+    pub const fn new(fn_: fn(InstructionContext<'_, H, W>) -> bool, static_gas: u64) -> Self {
         Self { fn_, static_gas }
     }
 
@@ -54,7 +54,7 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
 
     /// Executes the instruction with the given context.
     #[inline(always)]
-    pub fn execute(self, ctx: InstructionContext<'_, H, W>) {
+    pub fn execute(self, ctx: InstructionContext<'_, H, W>) -> bool {
         (self.fn_)(ctx)
     }
 
@@ -229,11 +229,11 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[SWAP15 as usize] = Instruction::new(stack::swap::<15, _, _>, 3);
     table[SWAP16 as usize] = Instruction::new(stack::swap::<16, _, _>, 3);
 
-    table[LOG0 as usize] = Instruction::new(host::log::<0, _>, 0); // dynamic
-    table[LOG1 as usize] = Instruction::new(host::log::<1, _>, 0); // dynamic
-    table[LOG2 as usize] = Instruction::new(host::log::<2, _>, 0); // dynamic
-    table[LOG3 as usize] = Instruction::new(host::log::<3, _>, 0); // dynamic
-    table[LOG4 as usize] = Instruction::new(host::log::<4, _>, 0); // dynamic
+    table[LOG0 as usize] = Instruction::new(host::log::<0, _, _>, 0); // dynamic
+    table[LOG1 as usize] = Instruction::new(host::log::<1, _, _>, 0); // dynamic
+    table[LOG2 as usize] = Instruction::new(host::log::<2, _, _>, 0); // dynamic
+    table[LOG3 as usize] = Instruction::new(host::log::<3, _, _>, 0); // dynamic
+    table[LOG4 as usize] = Instruction::new(host::log::<4, _, _>, 0); // dynamic
 
     table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>, 0); // dynamic
     table[CALL as usize] = Instruction::new(contract::call, 0); // dynamic

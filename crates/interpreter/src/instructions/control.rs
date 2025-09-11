@@ -10,55 +10,62 @@ use crate::InstructionContext;
 /// Implements the JUMP instruction.
 ///
 /// Unconditional jump to a valid destination.
-pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
+pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) -> bool {
     //gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
+    true
 }
 
 /// Implements the JUMPI instruction.
 ///
 /// Conditional jump to a valid destination if condition is true.
-pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     //gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
 
     if !cond.is_zero() {
         jump_inner(context.interpreter, target);
     }
+    true
 }
 
 /// Internal helper function for jump operations.
 ///
 /// Validates jump target and performs the actual jump.
 #[inline(always)]
-fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
+fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) -> bool {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter.halt(InstructionResult::InvalidJump);
-        return;
+        return false;
     }
     // SAFETY: `is_valid_jump` ensures that `dest` is in bounds.
     interpreter.bytecode.absolute_jump(target);
+    true
 }
 
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
+    _context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::JUMPDEST);
+    true
 }
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
-pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     //gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
         U256::from(context.interpreter.bytecode.pc() - 1)
     );
+    true
 }
 
 #[inline]
@@ -68,7 +75,7 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
-) {
+) -> bool {
     // Zero gas cost
     // //gas!(interpreter, gas::ZERO)
     popn!([offset, len], interpreter);
@@ -88,32 +95,42 @@ fn return_inner(
             output,
             interpreter.gas,
         ));
+    false
 }
 
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
-pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     return_inner(context.interpreter, InstructionResult::Return);
+    false
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     check!(context.interpreter, BYZANTIUM);
     return_inner(context.interpreter, InstructionResult::Revert);
+    false
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     context.interpreter.halt(InstructionResult::Stop);
+    false
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     context.interpreter.halt(InstructionResult::InvalidFEOpcode);
+    false
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     context.interpreter.halt(InstructionResult::OpcodeNotFound);
+    false
 }

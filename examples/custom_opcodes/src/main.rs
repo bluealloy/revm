@@ -42,9 +42,10 @@ pub fn main() {
     instructions.insert_instruction(
         MY_STATIC_JUMP,
         Instruction::new(
-            |ctx: InstructionContext<'_, _, EthInterpreter>| {
+            |ctx: InstructionContext<'_, _, EthInterpreter>| -> bool {
                 let offset = ctx.interpreter.bytecode.read_i16();
                 ctx.interpreter.bytecode.relative_jump(offset as isize);
+                true
             },
             0,
         ),

@@ -276,7 +276,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
-    ) {
+    ) -> bool {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
@@ -288,13 +288,14 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
-            return self.halt_oog();
+            self.halt_oog();
+            return false;
         }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        instruction.execute(context);
+        instruction.execute(context)
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -314,9 +315,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
-        }
+        while self.step(instruction_table, host) {}
         self.take_next_action()
     }
 }

@@ -24,7 +24,7 @@ use crate::InstructionContext;
 /// Creates a new contract with provided bytecode.
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> bool {
     require_non_staticcall!(context.interpreter);
 
     // EIP-1014: Skinny CREATE2
@@ -49,7 +49,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                 context
                     .interpreter
                     .halt(InstructionResult::CreateInitCodeSizeLimit);
-                return;
+                return false;
             }
             gas!(context.interpreter, gas::initcode_cost(len));
         }
@@ -103,14 +103,15 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                 gas_limit,
             },
         ))));
+    true
 }
 
 /// Implements the CALL instruction.
 ///
 /// Message call with value transfer to another account.
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    mut context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn call<IT: InterpreterTypes, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, H, IT>,
+) -> bool {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
     // Max gas limit is not possible in real ethereum situation.
@@ -121,16 +122,16 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context
             .interpreter
             .halt(InstructionResult::CallNotAllowedInsideStatic);
-        return;
+        return false;
     }
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
-        return;
+        return false;
     };
     let Some(gas_limit) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, true, local_gas_limit)
     else {
-        return;
+        return false;
     };
 
     // Call host to interact with target contract
@@ -150,6 +151,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
+    true
 }
 
 /// Implements the CALLCODE instruction.
@@ -157,7 +159,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Message call with alternative account's code.
 pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
-) {
+) -> bool {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = Address::from_word(B256::from(to));
     // Max gas limit is not possible in real ethereum situation.
@@ -166,13 +168,13 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
-        return;
+        return false;
     };
 
     let Some(gas_limit) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, false, local_gas_limit)
     else {
-        return;
+        return false;
     };
 
     // Call host to interact with target contract
@@ -192,6 +194,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
+    true
 }
 
 /// Implements the DELEGATECALL instruction.
@@ -199,7 +202,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Message call with alternative account's code but same sender and value.
 pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
-) {
+) -> bool {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
     let to = Address::from_word(B256::from(to));
@@ -208,12 +211,12 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
-        return;
+        return false;
     };
 
     let Some(gas_limit) = load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
     else {
-        return;
+        return false;
     };
 
     // Call host to interact with target contract
@@ -233,6 +236,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
+    true
 }
 
 /// Implements the STATICCALL instruction.
@@ -240,7 +244,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Static message call (cannot modify state).
 pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     mut context: InstructionContext<'_, H, WIRE>,
-) {
+) -> bool {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);
     let to = Address::from_word(B256::from(to));
@@ -249,12 +253,12 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
-        return;
+        return false;
     };
 
     let Some(gas_limit) = load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
     else {
-        return;
+        return false;
     };
 
     // Call host to interact with target contract
@@ -274,4 +278,5 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
+    true
 }
