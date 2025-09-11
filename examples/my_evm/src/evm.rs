@@ -112,9 +112,10 @@ where
     }
 }
 
-impl<CTX: ContextTr, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
+impl<CTX, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<Journal: JournalExt>,
+    CTX: ContextSetters,
+    <CTX as ContextSetters>::Journal: JournalExt,
     INSP: Inspector<CTX, EthInterpreter>,
 {
     type Inspector = INSP;
