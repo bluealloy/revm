@@ -102,15 +102,13 @@ fn return_inner(
 ///
 /// Halts execution and returns data from memory.
 pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
-    return_inner(context.interpreter, InstructionResult::Return);
-    false
+    return_inner(context.interpreter, InstructionResult::Return)
 }
 
 /// EIP-140: REVERT instruction
 pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
     check!(context.interpreter, BYZANTIUM);
-    return_inner(context.interpreter, InstructionResult::Revert);
-    false
+    return_inner(context.interpreter, InstructionResult::Revert)
 }
 
 /// Stop opcode. This opcode halts the execution.

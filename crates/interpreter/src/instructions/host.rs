@@ -206,7 +206,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let Some(diff) = block_number.checked_sub(requested_number) else {
         *number = U256::ZERO;
-        return false;
+        return true;
     };
 
     let diff = as_u64_saturated!(diff);
@@ -214,7 +214,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // blockhash should push zero if number is same as current block number.
     if diff == 0 {
         *number = U256::ZERO;
-        return false;
+        return true;
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
@@ -461,5 +461,5 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     context.interpreter.halt(InstructionResult::SelfDestruct);
-    true
+    false
 }

@@ -264,8 +264,8 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value, ());
-            push!(interpreter, test.shift, ());
+            let _ = interpreter.stack.push(test.value);
+            let _ = interpreter.stack.push(test.shift);
             let context = InstructionContext {
                 host: &mut DummyHost,
                 interpreter: &mut interpreter,
@@ -347,8 +347,8 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value, ());
-            push!(interpreter, test.shift, ());
+            let _ = interpreter.stack.push(test.value);
+            let _ = interpreter.stack.push(test.shift);
             let context = InstructionContext {
                 host: &mut DummyHost,
                 interpreter: &mut interpreter,
@@ -455,8 +455,8 @@ mod tests {
             }
 
         for test in test_cases {
-            push!(interpreter, test.value, ());
-            push!(interpreter, test.shift, ());
+            let _ = interpreter.stack.push(test.value);
+            let _ = interpreter.stack.push(test.shift);
             let context = InstructionContext {
                 host: &mut DummyHost,
                 interpreter: &mut interpreter,
@@ -493,8 +493,8 @@ mod tests {
             .collect::<Vec<_>>();
 
         for test in test_cases.iter() {
-            push!(interpreter, test.input, ());
-            push!(interpreter, U256::from(test.index), ());
+            let _ = interpreter.stack.push(test.input);
+            let _ = interpreter.stack.push(U256::from(test.index));
             let context = InstructionContext {
                 host: &mut DummyHost,
                 interpreter: &mut interpreter,
@@ -547,7 +547,7 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value, ());
+            let _ = interpreter.stack.push(test.value);
             let context = InstructionContext {
                 host: &mut DummyHost,
                 interpreter: &mut interpreter,

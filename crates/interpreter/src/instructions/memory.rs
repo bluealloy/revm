@@ -73,7 +73,7 @@ pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     // Deduce gas
     gas_or_fail!(context.interpreter, gas::copy_cost_verylow(len));
     if len == 0 {
-        return false;
+        return true;
     }
 
     let dst = as_usize_or_fail!(context.interpreter, dst);

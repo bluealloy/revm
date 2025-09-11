@@ -103,7 +103,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                 gas_limit,
             },
         ))));
-    true
+    false
 }
 
 /// Implements the CALL instruction.
@@ -151,7 +151,7 @@ pub fn call<IT: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
-    true
+    false
 }
 
 /// Implements the CALLCODE instruction.
@@ -194,7 +194,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
-    true
+    false
 }
 
 /// Implements the DELEGATECALL instruction.
@@ -236,7 +236,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
-    true
+    false
 }
 
 /// Implements the STATICCALL instruction.
@@ -278,5 +278,5 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 return_memory_offset,
             },
         ))));
-    true
+    false
 }
