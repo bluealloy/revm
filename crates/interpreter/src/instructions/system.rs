@@ -14,7 +14,9 @@ use crate::InstructionContext;
 /// Implements the KECCAK256 instruction.
 ///
 /// Computes Keccak-256 hash of memory data.
-pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
     gas_or_fail!(context.interpreter, gas::keccak256_cost(len));
@@ -32,7 +34,9 @@ pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
 /// Implements the ADDRESS instruction.
 ///
 /// Pushes the current contract's address onto the stack.
-pub fn address<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn address<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -66,7 +70,9 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the CODESIZE instruction.
 ///
 /// Pushes the size of running contract's bytecode onto the stack.
-pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -78,7 +84,9 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
 /// Implements the CODECOPY instruction.
 ///
 /// Copies running contract's bytecode to memory.
-pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
@@ -99,7 +107,9 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
 /// Implements the CALLDATALOAD instruction.
 ///
 /// Loads 32 bytes of input data from the specified offset.
-pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], offset_ptr, context.interpreter);
     let mut word = B256::ZERO;
@@ -138,7 +148,9 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
 /// Implements the CALLDATASIZE instruction.
 ///
 /// Pushes the size of input data onto the stack.
-pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
@@ -150,7 +162,9 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
 /// Implements the CALLVALUE instruction.
 ///
 /// Pushes the value sent with the current call onto the stack.
-pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::BASE);
     push!(context.interpreter, context.interpreter.input.call_value());
     true
@@ -159,7 +173,9 @@ pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
 /// Implements the CALLDATACOPY instruction.
 ///
 /// Copies input data to memory.
-pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
@@ -187,7 +203,9 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     check!(context.interpreter, BYZANTIUM);
     //gas!(context.interpreter, gas::BASE);
     push!(
@@ -198,7 +216,9 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     check!(context.interpreter, BYZANTIUM);
     popn!([memory_offset, offset, len], context.interpreter);
 

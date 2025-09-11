@@ -38,7 +38,9 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the MSTORE8 instruction.
 ///
 /// Stores a single byte to memory.
-pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) -> bool {
+pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> bool {
     //gas!(context.interpreter, gas::VERYLOW);
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
