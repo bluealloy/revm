@@ -40,7 +40,10 @@ impl<'a> BytecodeIterator<'a> {
     /// Returns the current position in the bytecode.
     #[inline]
     pub fn position(&self) -> usize {
-        // SAFETY: `start` always points to the start of the bytecode.
+        // SAFETY: `start` points to the start of the original bytecode allocation and
+        // `self.bytes.as_slice().as_ptr()` always points within the same allocation
+        // (or one-past) because we only ever re-slice the original buffer. For EIP-7702
+        // both pointers refer to the same empty slice.
         unsafe {
             self.bytes
                 .as_slice()
@@ -58,12 +61,13 @@ impl<'a> BytecodeIterator<'a> {
 
         // Advance the iterator by the immediate size
         if immediate_size > 0 {
-            self.bytes = self
-                .bytes
-                .as_slice()
-                .get(immediate_size..)
-                .unwrap_or_default()
-                .iter();
+            let remaining = self.bytes.as_slice();
+            debug_assert!(
+                immediate_size <= remaining.len(),
+                "immediate exceeds remaining bytes; bytecode padding/invariants broken"
+            );
+            let skip = core::cmp::min(immediate_size, remaining.len());
+            self.bytes = remaining[skip..].iter();
         }
     }
 
