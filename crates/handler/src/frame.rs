@@ -163,11 +163,6 @@ impl EthFrame<EthInterpreter> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // Make account warm and loaded.
-        let _ = ctx
-            .journal_mut()
-            .load_account_delegated(inputs.bytecode_address)?;
-
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();
 
@@ -206,21 +201,7 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        let account = ctx
-            .journal_mut()
-            .load_account_code(inputs.bytecode_address)?;
-
-        let mut code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            let account = &ctx
-                .journal_mut()
-                .load_account_code(eip7702_bytecode.delegated_address)?
-                .info;
-            bytecode = account.code.clone().unwrap_or_default();
-            code_hash = account.code_hash();
-        }
+        let (bytecode, code_hash) = inputs.bytecode.clone().unwrap_or_default();
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
