@@ -279,7 +279,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> bool {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
-
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
@@ -295,7 +294,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             interpreter: self,
             host,
         };
-        instruction.execute(context)
+        let result = instruction.execute(context);
+        result
     }
 
     /// Executes the instruction at the current instruction pointer.

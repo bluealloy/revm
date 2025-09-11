@@ -89,6 +89,9 @@ pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(
 ) -> bool {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
+    if len == 0 {
+        return true;
+    }
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
         return false;
     };
@@ -178,6 +181,9 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(
 ) -> bool {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
+    if len == 0 {
+        return true;
+    }
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
         return false;
     };
@@ -232,6 +238,11 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(
         return false;
     }
 
+    // if len is 0, do nothing
+    if len == 0 {
+        return true;
+    }
+
     let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
         return false;
     };
@@ -261,6 +272,9 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Common logic for copying data from a source buffer to the EVM's memory.
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
+///
+/// Return None if any of operations fail.
+#[inline]
 pub fn memory_resize(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     memory_offset: U256,
@@ -268,10 +282,11 @@ pub fn memory_resize(
 ) -> Option<usize> {
     // Safe to cast usize to u64
     gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
-    if len == 0 {
-        return None;
-    }
+
     let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
+    if len == 0 {
+        return Some(memory_offset);
+    }
     resize_memory!(interpreter, memory_offset, len, None);
 
     Some(memory_offset)
