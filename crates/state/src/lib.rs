@@ -12,7 +12,6 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use core::hash::Hash;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue};
 
