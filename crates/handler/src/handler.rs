@@ -90,7 +90,7 @@ pub trait Handler {
     /// # Returns
     ///
     /// Returns execution result, error, gas spend and logs.
-    #[inline]
+    #[inline(never)]
     fn run(
         &mut self,
         evm: &mut Self::Evm,
@@ -116,7 +116,7 @@ pub trait Handler {
     /// By design system call should not fail and should always succeed.
     /// In case of an error (If fetching account/storage on rpc fails), the journal can be in an inconsistent
     /// state and should be cleared by calling [`JournalTr::discard_tx`] method or dropped.
-    #[inline]
+    #[inline(never)]
     fn run_system_call(
         &mut self,
         evm: &mut Self::Evm,
@@ -139,7 +139,7 @@ pub trait Handler {
     /// [Handler::pre_execution], [Handler::execution], [Handler::post_execution].
     ///
     /// Returns any errors without catching them or calling [`Handler::catch_error`].
-    #[inline]
+    #[inline(never)]
     fn run_without_catch_error(
         &mut self,
         evm: &mut Self::Evm,
@@ -158,7 +158,7 @@ pub trait Handler {
     /// Calculates initial and floor gas requirements and verifies they are covered by the gas limit.
     ///
     /// Validation against state is done later in pre-execution phase in deduct_caller function.
-    #[inline]
+    #[inline(never)]
     fn validate(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         self.validate_env(evm)?;
         self.validate_initial_tx_gas(evm)
@@ -172,7 +172,7 @@ pub trait Handler {
     ///
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
-    #[inline]
+    #[inline(never)]
     fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
@@ -184,7 +184,7 @@ pub trait Handler {
     /// Creates and executes the initial frame, then processes the execution loop.
     ///
     /// Always calls [Handler::last_frame_result] to handle returned gas from the call.
-    #[inline]
+    #[inline(never)]
     fn execution(
         &mut self,
         evm: &mut Self::Evm,
@@ -212,7 +212,7 @@ pub trait Handler {
     ///
     /// Finally, finalizes output by returning the journal state and clearing internal state
     /// for the next execution.
-    #[inline]
+    #[inline(never)]
     fn post_execution(
         &self,
         evm: &mut Self::Evm,
@@ -237,7 +237,7 @@ pub trait Handler {
     ///
     /// Performs all validation checks that can be done without loading state.
     /// For example, verifies transaction gas limit is below block gas limit.
-    #[inline]
+    #[inline(never)]
     fn validate_env(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         validation::validate_env(evm.ctx())
     }
@@ -247,7 +247,7 @@ pub trait Handler {
     /// Includes additional costs for access list and authorization list.
     ///
     /// Verifies the initial cost does not exceed the transaction gas limit.
-    #[inline]
+    #[inline(never)]
     fn validate_initial_tx_gas(&self, evm: &Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
         validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
@@ -256,7 +256,7 @@ pub trait Handler {
     /* PRE EXECUTION */
 
     /// Loads access list and beneficiary account, marking them as warm in the [`context::Journal`].
-    #[inline]
+    #[inline(never)]
     fn load_accounts(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
         pre_execution::load_accounts(evm)
     }
@@ -265,7 +265,7 @@ pub trait Handler {
     /// Applies valid authorizations to accounts.
     ///
     /// Returns the gas refund amount specified by EIP-7702.
-    #[inline]
+    #[inline(never)]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
         pre_execution::apply_eip7702_auth_list(evm.ctx())
     }
@@ -273,7 +273,7 @@ pub trait Handler {
     /// Deducts maximum possible fee and transfer value from caller's balance.
     ///
     /// Unused fees are returned to caller after execution completes.
-    #[inline]
+    #[inline(never)]
     fn validate_against_state_and_deduct_caller(
         &self,
         evm: &mut Self::Evm,
@@ -284,7 +284,7 @@ pub trait Handler {
     /* EXECUTION */
 
     /// Creates initial frame input using transaction parameters, gas limit and configuration.
-    #[inline]
+    #[inline(never)]
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
@@ -301,7 +301,7 @@ pub trait Handler {
     }
 
     /// Processes the result of the initial call and handles returned gas.
-    #[inline]
+    #[inline(never)]
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
@@ -334,7 +334,7 @@ pub trait Handler {
     /// 1. Calls the current frame
     /// 2. Handles the returned frame input or result
     /// 3. Creates new frames or propagates results as needed
-    #[inline]
+    #[inline(never)]
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
@@ -373,7 +373,7 @@ pub trait Handler {
     /// Validates that the minimum gas floor requirements are satisfied.
     ///
     /// Ensures that at least the floor gas amount has been consumed during execution.
-    #[inline]
+    #[inline(never)]
     fn eip7623_check_gas_floor(
         &self,
         _evm: &mut Self::Evm,
@@ -384,7 +384,7 @@ pub trait Handler {
     }
 
     /// Calculates the final gas refund amount, including any EIP-7702 refunds.
-    #[inline]
+    #[inline(never)]
     fn refund(
         &self,
         evm: &mut Self::Evm,
@@ -396,7 +396,7 @@ pub trait Handler {
     }
 
     /// Returns unused gas costs to the transaction sender's account.
-    #[inline]
+    #[inline(never)]
     fn reimburse_caller(
         &self,
         evm: &mut Self::Evm,
@@ -407,7 +407,7 @@ pub trait Handler {
     }
 
     /// Transfers transaction fees to the block beneficiary's account.
-    #[inline]
+    #[inline(never)]
     fn reward_beneficiary(
         &self,
         evm: &mut Self::Evm,
@@ -420,7 +420,7 @@ pub trait Handler {
     ///
     /// This method, retrieves the final state from the journal, converts internal results to the external output format.
     /// Internal state is cleared and EVM is prepared for the next transaction.
-    #[inline]
+    #[inline(never)]
     fn execution_result(
         &mut self,
         evm: &mut Self::Evm,
@@ -446,7 +446,7 @@ pub trait Handler {
     ///
     /// Ensures the journal state is properly cleared before propagating the error.
     /// On happy path journal is cleared in [`Handler::execution_result`] method.
-    #[inline]
+    #[inline(never)]
     fn catch_error(
         &self,
         evm: &mut Self::Evm,
