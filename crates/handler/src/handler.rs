@@ -291,10 +291,8 @@ pub trait Handler {
         evm: &mut Self::Evm,
         gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
-        let memory =
-            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        let ctx = evm.ctx_mut();
         let mut bytecode = None;
+        let ctx = evm.ctx_mut();
         if let Some(&to) = ctx.tx().kind().to() {
             // Make account warm and loaded.
             // TODO: handle unwrap.
@@ -316,6 +314,8 @@ pub trait Handler {
                 bytecode = load.code.clone().map(|c| (c, load.code_hash()));
             }
         }
+
+        let memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
 
         Ok(FrameInit {
             depth: 0,
