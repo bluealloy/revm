@@ -43,6 +43,18 @@ Dependency bump
 
 ## [Unreleased]
 
+## [7.0.6](https://github.com/bluealloy/revm/compare/revm-state-v7.0.5...revm-state-v7.0.6) - 2025-09-12
+
+### Fixed
+
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- *(state)* remove unnecessary core::hash::Hash import from lib.rs ([#2959](https://github.com/bluealloy/revm/pull/2959))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- use primitives::HashMap default ([#2916](https://github.com/bluealloy/revm/pull/2916))
+
 ## [7.0.2](https://github.com/bluealloy/revm/compare/revm-state-v7.0.1...revm-state-v7.0.2) - 2025-07-23
 
 ### Other

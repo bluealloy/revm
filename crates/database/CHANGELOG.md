@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.6](https://github.com/bluealloy/revm/compare/revm-database-v7.0.5...revm-database-v7.0.6) - 2025-09-12
+
+### Other
+
+- *(database)* avoid panic by conditionally using block_in_place ([#2927](https://github.com/bluealloy/revm/pull/2927))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+
 ## [7.0.5](https://github.com/bluealloy/revm/compare/revm-database-v7.0.4...revm-database-v7.0.5) - 2025-08-23
 
 ### Other
