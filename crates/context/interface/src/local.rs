@@ -18,9 +18,22 @@ impl<T> Default for FrameStack<T> {
     }
 }
 
+impl<T: Default> FrameStack<T> {
+    /// Creates a new stack with preallocated items by calling `T::default()` `len` times.
+    /// Index will still be `None` until `end_init` is called.
+    pub fn new_prealloc(len: usize) -> Self {
+        let mut s = Self::new();
+        for _ in 0..len {
+            s.stack.push(T::default());
+        }
+        s
+    }
+}
+
 impl<T> FrameStack<T> {
     /// Creates a new, empty stack. It must be initialized with init before use.
     pub fn new() -> Self {
+        // Init N amount of frames to allocate the stack.
         Self {
             stack: Vec::with_capacity(4),
             index: None,
@@ -32,7 +45,7 @@ impl<T> FrameStack<T> {
     pub fn start_init(&mut self) -> OutFrame<'_, T> {
         self.index = None;
         if self.stack.is_empty() {
-            self.stack.reserve(1);
+            self.stack.reserve(4);
         }
         self.out_frame_at(0)
     }
@@ -90,7 +103,12 @@ impl<T> FrameStack<T> {
     /// Returns the current item.
     #[inline]
     pub fn get(&mut self) -> &mut T {
-        debug_assert!(self.stack.capacity() > self.index.unwrap() + 1);
+        debug_assert!(
+            self.stack.capacity() > self.index.unwrap(),
+            "Stack capacity {} is not enought for index {}",
+            self.stack.capacity(),
+            self.index.unwrap()
+        );
         unsafe { &mut *self.stack.as_mut_ptr().add(self.index.unwrap()) }
     }
 
@@ -210,9 +228,11 @@ mod tests {
 
     #[test]
     fn frame_stack() {
-        let mut stack = FrameStack::new();
+        let mut stack = FrameStack::new_prealloc(1);
         let mut frame = stack.start_init();
-        frame.get(|| 1);
+        // it is already initialized to zero.
+        *frame.get(|| 2) += 1;
+
         let token = frame.consume();
         unsafe { stack.end_init(token) };
 

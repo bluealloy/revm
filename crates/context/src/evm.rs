@@ -22,7 +22,7 @@ pub struct Evm<CTX, INSP, I, P, F> {
     pub frame_stack: FrameStack<F>,
 }
 
-impl<CTX, I, P, F> Evm<CTX, (), I, P, F> {
+impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
     /// Create a new EVM instance with a given context, instruction set, and precompile provider.
     ///
     /// Inspector will be set to `()`.
@@ -32,12 +32,12 @@ impl<CTX, I, P, F> Evm<CTX, (), I, P, F> {
             inspector: (),
             instruction,
             precompiles,
-            frame_stack: FrameStack::new(),
+            frame_stack: FrameStack::new_prealloc(5),
         }
     }
 }
 
-impl<CTX, I, INSP, P, F> Evm<CTX, INSP, I, P, F> {
+impl<CTX, I, INSP, P, F: Default> Evm<CTX, INSP, I, P, F> {
     /// Create a new EVM instance with a given context, inspector, instruction set, and precompile provider.
     pub fn new_with_inspector(ctx: CTX, inspector: INSP, instruction: I, precompiles: P) -> Self {
         Evm {
@@ -45,7 +45,7 @@ impl<CTX, I, INSP, P, F> Evm<CTX, INSP, I, P, F> {
             inspector,
             instruction,
             precompiles,
-            frame_stack: FrameStack::new(),
+            frame_stack: FrameStack::new_prealloc(5),
         }
     }
 }
