@@ -4,6 +4,9 @@ use crate::{
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 
+/// Cryptographic operations for blake2 precompiles
+pub mod crypto;
+
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
