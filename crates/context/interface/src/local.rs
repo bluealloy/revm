@@ -22,11 +22,11 @@ impl<T: Default> FrameStack<T> {
     /// Creates a new stack with preallocated items by calling `T::default()` `len` times.
     /// Index will still be `None` until `end_init` is called.
     pub fn new_prealloc(len: usize) -> Self {
-        let mut s = Self::new();
+        let mut stack = Vec::with_capacity(core::cmp::min(len, 4));
         for _ in 0..len {
-            s.stack.push(T::default());
+            stack.push(T::default());
         }
-        s
+        Self { stack, index: None }
     }
 }
 
@@ -105,7 +105,7 @@ impl<T> FrameStack<T> {
     pub fn get(&mut self) -> &mut T {
         debug_assert!(
             self.stack.capacity() > self.index.unwrap(),
-            "Stack capacity {} is not enought for index {}",
+            "Stack capacity {} is not enough for index {}",
             self.stack.capacity(),
             self.index.unwrap()
         );
