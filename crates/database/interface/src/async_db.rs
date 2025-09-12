@@ -190,7 +190,23 @@ impl HandleOrRuntime {
         F::Output: Send,
     {
         match self {
-            Self::Handle(handle) => tokio::task::block_in_place(move || handle.block_on(f)),
+            Self::Handle(handle) => {
+                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime.
+                // Otherwise, call handle.block_on directly to avoid panicking outside of a runtime.
+                let can_block_in_place = match Handle::try_current() {
+                    Ok(current) => !matches!(
+                        current.runtime_flavor(),
+                        tokio::runtime::RuntimeFlavor::CurrentThread
+                    ),
+                    Err(_) => false,
+                };
+
+                if can_block_in_place {
+                    tokio::task::block_in_place(move || handle.block_on(f))
+                } else {
+                    handle.block_on(f)
+                }
+            }
             Self::Runtime(rt) => rt.block_on(f),
         }
     }
