@@ -44,7 +44,7 @@ impl MainCmd {
             Self::Statetest(cmd) | Self::Stest(cmd) => cmd.run()?,
             Self::Evm(cmd) => cmd.run()?,
             Self::Bytecode(cmd) => {
-                cmd.run();
+                cmd.run()?;
             }
             Self::Bench(cmd) => {
                 cmd.run();
