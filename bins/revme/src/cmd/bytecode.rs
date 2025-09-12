@@ -17,7 +17,7 @@ fn trim_decode(input: &str) -> Option<Bytes> {
 
 impl Cmd {
     /// Runs bytecode command.
-     pub fn run(&self) -> Result<(), super::Error> {
+    pub fn run(&self) -> Result<(), super::Error> {
         if let Some(input_bytes) = &self.bytes {
             let Some(bytes) = trim_decode(input_bytes) else {
                 // Fail on invalid hex to propagate a non-zero exit code
