@@ -139,10 +139,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
     }
 
     fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
-        self.warm_addresses()
+        Self::warm_addresses(self)
     }
 
     fn contains(&self, address: &Address) -> bool {
-        self.contains(address)
+        Self::contains(self, address)
     }
 }
