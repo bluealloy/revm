@@ -78,10 +78,10 @@ pub const TOTAL_COST_FLOOR_PER_TOKEN: u64 = 10;
 /// Gas cost for EOF CREATE instruction.
 pub const EOF_CREATE_GAS: u64 = 32000;
 
-// Berlin eip2929 constants
-/// Gas cost for accessing an address in the access list (EIP-2929).
+// Berlin EIP-2929/EIP-2930 constants
+/// Gas cost for accessing an address in the access list (EIP-2930).
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;
-/// Gas cost for accessing a storage key in the access list (EIP-2929).
+/// Gas cost for accessing a storage key in the access list (EIP-2930).
 pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
 /// Gas cost for SLOAD when accessing a cold storage slot (EIP-2929).
 pub const COLD_SLOAD_COST: u64 = 2100;
