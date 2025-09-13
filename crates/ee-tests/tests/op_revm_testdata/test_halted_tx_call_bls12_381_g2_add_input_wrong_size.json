@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 21600,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bls12-381 g2 add input length error"
+        }
       }
     }
   },

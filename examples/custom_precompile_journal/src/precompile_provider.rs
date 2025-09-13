@@ -125,15 +125,23 @@ fn run_custom_precompile<CTX: ContextTr>(
             }
             Ok(interpreter_result)
         }
-        Err(e) => Ok(InterpreterResult {
-            result: if e.is_oog() {
-                InstructionResult::PrecompileOOG
-            } else {
-                InstructionResult::PrecompileError
-            },
-            gas: Gas::new(inputs.gas_limit),
-            output: Bytes::new(),
-        }),
+        Err(e) => {
+            // If this is a top-level precompile call and error is non-OOG, record the message
+            if !e.is_oog() && context.journal().depth() == 1 {
+                context
+                    .local_mut()
+                    .set_precompile_error_context(e.to_string());
+            }
+            Ok(InterpreterResult {
+                result: if e.is_oog() {
+                    InstructionResult::PrecompileOOG
+                } else {
+                    InstructionResult::PrecompileError
+                },
+                gas: Gas::new(inputs.gas_limit),
+                output: Bytes::new(),
+            })
+        }
     }
 }
 
