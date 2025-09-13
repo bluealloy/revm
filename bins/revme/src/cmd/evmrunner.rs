@@ -75,7 +75,8 @@ impl Cmd {
             unreachable!()
         };
 
-        let bytecode = hex::decode(bytecode_str.trim().trim_start_matches("0x")).map_err(|_| Errors::InvalidBytecode)?;
+        let bytecode = hex::decode(bytecode_str.trim().trim_start_matches("0x"))
+            .map_err(|_| Errors::InvalidBytecode)?;
         let input = hex::decode(self.input.trim().trim_start_matches("0x"))
             .map_err(|_| Errors::InvalidInput)?
             .into();
