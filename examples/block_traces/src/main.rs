@@ -48,7 +48,9 @@ async fn main() -> anyhow::Result<()> {
     create_dir_all("traces")?;
 
     // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+    let rpc_url = std::env::var("ETH_RPC_URL")
+        .map_err(|_| anyhow::anyhow!("Set ETH_RPC_URL (e.g. https://mainnet.infura.io/v3/<PROJECT_ID>)"))?
+        .parse()?;
 
     // Create a provider
     let client = ProviderBuilder::new().connect_http(rpc_url);
