@@ -172,7 +172,7 @@ impl EthFrame<EthInterpreter> {
             // Target will get touched even if balance transferred is zero.
             if let Some(i) =
                 ctx.journal_mut()
-                    .transfer_unsafe(inputs.caller, inputs.target_address, value)
+                    .transfer_loaded(inputs.caller, inputs.target_address, value)
             {
                 ctx.journal_mut().checkpoint_revert(checkpoint);
                 return return_result(i.into());

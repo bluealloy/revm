@@ -321,7 +321,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Panics if from or to are not loaded.
     #[inline]
-    pub fn transfer_unsafe(
+    pub fn transfer_loaded(
         &mut self,
         from: Address,
         to: Address,
@@ -331,16 +331,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             // No need to touch account
             return None;
         }
+
         if balance.is_zero() {
             Self::touch_account(&mut self.journal, to, self.state.get_mut(&to).unwrap());
             return None;
         }
-        let [from_account, to_account] = self.state.get_many_mut([&from, &to]);
-        let from_account = from_account.unwrap();
-        let to_account = to_account.unwrap();
-        //Self::touch_account(&mut self.journal, from, from_account);
-        Self::touch_account(&mut self.journal, to, to_account);
+
         // sub balance from
+        let from_account = self.state.get_mut(&from).unwrap();
+        // no need to touch account
+        // Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
             return Some(TransferError::OutOfFunds);
@@ -348,6 +348,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *from_balance = from_balance_decr;
 
         // add balance to
+        let to_account = self.state.get_mut(&to).unwrap();
+        Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
             return Some(TransferError::OverflowPayment);
@@ -622,7 +624,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
-    #[inline]
+    #[inline(never)]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
