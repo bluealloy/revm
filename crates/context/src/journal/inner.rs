@@ -559,7 +559,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account into memory. return if it is cold or warm accessed
-    #[inline(never)]
+    #[inline]
     pub fn load_account<DB: Database>(
         &mut self,
         db: &mut DB,
