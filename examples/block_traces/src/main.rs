@@ -49,7 +49,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = std::env::var("ETH_RPC_URL")
-        .map_err(|_| anyhow::anyhow!("Set ETH_RPC_URL (e.g. https://mainnet.infura.io/v3/<PROJECT_ID>)"))?
+        .map_err(|_| {
+            anyhow::anyhow!("Set ETH_RPC_URL (e.g. https://mainnet.infura.io/v3/<PROJECT_ID>)")
+        })?
         .parse()?;
 
     // Create a provider
