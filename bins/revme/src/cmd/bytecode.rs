@@ -17,18 +17,18 @@ fn trim_decode(input: &str) -> Option<Bytes> {
 
 impl Cmd {
     /// Runs bytecode command.
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<(), super::Error> {
         if let Some(input_bytes) = &self.bytes {
             let Some(bytes) = trim_decode(input_bytes) else {
-                eprintln!("Invalid hex string");
-                return;
+                // Fail on invalid hex to propagate a non-zero exit code
+                return Err(super::Error::Custom("Invalid hex string"));
             };
 
             if bytes.starts_with(&[0xEF, 0x00]) {
-                eprintln!(
-                    "EOF bytecode is not supported - EOF has been removed from ethereum plan."
-                );
-                return;
+                // Fail on EOF bytecode as it's not supported
+                return Err(super::Error::Custom(
+                    "EOF bytecode is not supported - EOF has been removed from ethereum plan.",
+                ));
             }
 
             println!("Legacy bytecode:");
@@ -55,5 +55,6 @@ impl Cmd {
             println!("No bytecode provided. EOF interactive mode has been removed.");
             println!("Please provide bytecode as a hex string argument.");
         }
+        Ok(())
     }
 }
