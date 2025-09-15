@@ -294,24 +294,22 @@ pub trait Handler {
         let mut bytecode = None;
         let ctx = evm.ctx_mut();
         if let Some(&to) = ctx.tx().kind().to() {
-            // Make account warm and loaded.
-            // TODO: handle unwrap.
-            let load = ctx
-                .journal_mut()
-                .load_account_info_skip_cold_load(to, true, false)
-                .unwrap();
-            if let Some(Bytecode::Eip7702(code)) = &load.code {
-                let delegated_address = code.address();
-                let delegate_account = ctx
+            let account = ctx.journal_mut().load_account_code(to)?;
+
+            bytecode = Some((
+                account.info.code.clone().unwrap_or_default(),
+                account.info.code_hash(),
+            ));
+
+            if let Some((Bytecode::Eip7702(eip7702_bytecode), _)) = bytecode {
+                let account = &ctx
                     .journal_mut()
-                    .load_account_info_skip_cold_load(delegated_address, true, false)
-                    .unwrap();
-                bytecode = delegate_account
-                    .code
-                    .clone()
-                    .map(|c| (c, delegate_account.code_hash()));
-            } else {
-                bytecode = load.code.clone().map(|c| (c, load.code_hash()));
+                    .load_account_code(eip7702_bytecode.delegated_address)?
+                    .info;
+                bytecode = Some((
+                    account.code.clone().unwrap_or_default(),
+                    account.code_hash(),
+                ));
             }
         }
 
