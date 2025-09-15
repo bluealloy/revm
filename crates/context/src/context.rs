@@ -547,7 +547,6 @@ impl<
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
-    #[inline]
     fn selfdestruct(
         &mut self,
         address: Address,

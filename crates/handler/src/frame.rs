@@ -256,12 +256,6 @@ impl EthFrame<EthInterpreter> {
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        // Prague EOF
-        // TODO(EOF)
-        // if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
-        //     return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        // }
-
         // Fetch balance of caller.
         let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
 

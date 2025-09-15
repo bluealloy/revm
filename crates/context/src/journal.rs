@@ -348,13 +348,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>> {
         let spec = self.inner.spec;
         self.inner
-            .load_account_optional_inlined(
-                &mut self.database,
-                address,
-                load_code,
-                [],
-                skip_cold_load,
-            )
+            .load_account_optional(&mut self.database, address, load_code, [], skip_cold_load)
             .map(|a| {
                 AccountInfoLoad::new(&a.data.info, a.is_cold, a.state_clear_aware_is_empty(spec))
             })
