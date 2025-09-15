@@ -576,7 +576,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
-    #[inline(never)]
+    #[inline]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -615,7 +615,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
-    #[inline(always)]
+    #[inline]
     pub fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
