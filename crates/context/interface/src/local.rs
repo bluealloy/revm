@@ -224,8 +224,7 @@ mod tests {
         let mut b = stack.get_next();
         assert!(!b.init);
         assert_eq!(b.get(|| 2), &mut 2);
-        let token = b.consume(); // TODO: remove
-        unsafe { stack.push(token) };
+        unsafe { stack.push(b.consume()) };
 
         assert_eq!(stack.index(), Some(1));
         assert_eq!(stack.stack.len(), 2);
