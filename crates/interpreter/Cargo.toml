@@ -51,3 +51,5 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+# Enable UB-unsafe unreachable in release only when explicitly requested.
+unchecked_unreachable = []
