@@ -4,10 +4,13 @@
 #[collapse_debuginfo(yes)]
 macro_rules! debug_unreachable {
     ($($t:tt)*) => {
-        if cfg!(debug_assertions) {
-            unreachable!($($t)*);
-        } else {
+        #[cfg(all(not(debug_assertions), feature = "unchecked_unreachable"))]
+        {
             unsafe { core::hint::unreachable_unchecked() };
+        }
+        #[cfg(any(debug_assertions, not(feature = "unchecked_unreachable")))]
+        {
+            unreachable!($($t)*);
         }
     };
 }
