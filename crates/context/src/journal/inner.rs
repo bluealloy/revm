@@ -559,13 +559,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account into memory. return if it is cold or warm accessed
-    #[inline]
+    #[inline(never)]
     pub fn load_account<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, false, [], false)
+        self.load_account_optional_inlined(db, address, false, [], false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
@@ -576,7 +576,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
-    #[inline]
+    #[inline(never)]
     pub fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -585,7 +585,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let spec = self.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
         let account = self
-            .load_account_optional(db, address, is_eip7702_enabled, [], false)
+            .load_account_optional_inlined(db, address, is_eip7702_enabled, [], false)
             .map_err(JournalLoadError::unwrap_db_error)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
@@ -600,7 +600,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(db, address)?;
+            let delegate_account = self
+                .load_account_optional_inlined(db, address, true, [], false)
+                .map_err(JournalLoadError::unwrap_db_error)?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
@@ -613,19 +615,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
-    #[inline]
+    #[inline(never)]
     pub fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
-        self.load_account_optional(db, address, true, [], false)
+        self.load_account_optional_inlined(db, address, true, [], false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
     pub fn load_account_optional<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        load_code: bool,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<&mut Account>, JournalLoadError<DB::Error>> {
+        self.load_account_optional_inlined(db, address, load_code, storage_keys, skip_cold_load)
+    }
+
+    /// Loads account. If account is already loaded it will be marked as warm.
+    #[inline(always)]
+    pub fn load_account_optional_inlined<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
