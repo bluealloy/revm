@@ -595,7 +595,6 @@ impl<
             })
     }
 
-    #[inline]
     fn load_account_info_skip_cold_load(
         &mut self,
         address: Address,
