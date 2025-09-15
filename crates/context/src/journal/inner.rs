@@ -615,7 +615,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
-    #[inline(never)]
+    #[inline(always)]
     pub fn load_code<DB: Database>(
         &mut self,
         db: &mut DB,
