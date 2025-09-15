@@ -444,8 +444,25 @@ pub trait Handler {
 
     /// Handles cleanup when an error occurs during execution.
     ///
-    /// Ensures the journal state is properly cleared before propagating the error.
-    /// On happy path journal is cleared in [`Handler::execution_result`] method.
+    /// This method is called automatically by [`Handler::run`] when an error occurs during
+    /// transaction execution. It performs essential cleanup operations to ensure the EVM
+    /// is in a consistent state for the next transaction.
+    ///
+    /// # Cleanup Operations
+    ///
+    /// 1. **Local Context**: Clears the local context, discarding any cached initcode
+    /// 2. **Journal**: Discards the current transaction's state changes using [`JournalTr::discard_tx`]
+    /// 3. **Frame Stack**: Clears the frame stack to reset execution context
+    ///
+    /// # Error Propagation
+    ///
+    /// After cleanup, the original error is propagated unchanged. This ensures that
+    /// error information is preserved while maintaining EVM state consistency.
+    ///
+    /// # Usage
+    ///
+    /// This method is typically called automatically by the handler framework.
+    /// Manual calls should only be made when implementing custom error handling logic.
     #[inline]
     fn catch_error(
         &self,
