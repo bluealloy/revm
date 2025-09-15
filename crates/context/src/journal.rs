@@ -196,6 +196,16 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
+    fn transfer_unsafe(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError> {
+        self.inner.transfer_unsafe(from, to, balance)
+    }
+
+    #[inline]
     fn touch_account(&mut self, address: Address) {
         self.inner.touch(address);
     }

@@ -148,6 +148,15 @@ impl JournalTr for Backend {
         self.journaled_state.transfer(from, to, balance)
     }
 
+    fn transfer_unsafe(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError> {
+        self.journaled_state.transfer_unsafe(from, to, balance)
+    }
+
     fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, Infallible> {
         self.journaled_state.load_account(address)
     }

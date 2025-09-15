@@ -316,6 +316,44 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
+    ///
+    /// # Panics
+    ///
+    /// Panics if from or to are not loaded.
+    #[inline]
+    pub fn transfer_unsafe(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError> {
+        let [from_account, to_account] = self.state.get_many_mut([&from, &to]);
+        let from_account = from_account.unwrap();
+        let to_account = to_account.unwrap();
+        Self::touch_account(&mut self.journal, from, from_account);
+        Self::touch_account(&mut self.journal, to, to_account);
+        // sub balance from
+        let from_balance = &mut from_account.info.balance;
+        let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
+            return Some(TransferError::OutOfFunds);
+        };
+        *from_balance = from_balance_decr;
+
+        // add balance to
+        let to_balance = &mut to_account.info.balance;
+        let Some(to_balance_incr) = to_balance.checked_add(balance) else {
+            return Some(TransferError::OverflowPayment);
+        };
+        *to_balance = to_balance_incr;
+
+        // add journal entry
+        self.journal
+            .push(ENTRY::balance_transfer(from, to, balance));
+
+        None
+    }
+
+    /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
