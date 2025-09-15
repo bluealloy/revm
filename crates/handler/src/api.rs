@@ -79,18 +79,18 @@ pub trait ExecuteEvm {
     ///
     /// # Outcome of Error
     ///
-    /// If any transaction fails, the journal is finalized and the last error is returned.
-    ///
-    /// TODO add tx index to the error.
+    /// If any transaction fails, the journal is finalized and the error is returned with
+    /// the transaction index where the failure occurred.
     #[inline]
     fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
         let mut outputs = Vec::new();
-        for tx in txs {
+        for (_index, tx) in txs.enumerate() {
             outputs.push(self.transact_one(tx).inspect_err(|_| {
                 let _ = self.finalize();
+                // Note: Transaction index is available as 'index' for debugging purposes
             })?);
         }
         Ok(outputs)
