@@ -327,10 +327,18 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         to: Address,
         balance: U256,
     ) -> Option<TransferError> {
+        if from == to {
+            // No need to touch account
+            return None;
+        }
+        if balance.is_zero() {
+            Self::touch_account(&mut self.journal, to, self.state.get_mut(&to).unwrap());
+            return None;
+        }
         let [from_account, to_account] = self.state.get_many_mut([&from, &to]);
         let from_account = from_account.unwrap();
         let to_account = to_account.unwrap();
-        Self::touch_account(&mut self.journal, from, from_account);
+        //Self::touch_account(&mut self.journal, from, from_account);
         Self::touch_account(&mut self.journal, to, to_account);
         // sub balance from
         let from_balance = &mut from_account.info.balance;
