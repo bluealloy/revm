@@ -328,7 +328,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Option<TransferError> {
         if from == to {
-            // No need to touch account
+            let from_balance = self.state.get_mut(&to).unwrap().info.balance;
+            // Check if from balance is enough to transfer the balance.
+            if balance > from_balance {
+                return Some(TransferError::OutOfFunds);
+            }
             return None;
         }
 
@@ -339,7 +343,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // sub balance from
         let from_account = self.state.get_mut(&from).unwrap();
-        // no need to touch account
+        // no need to touch caller account.
         // Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
@@ -352,6 +356,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
+            // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
             return Some(TransferError::OverflowPayment);
         };
         *to_balance = to_balance_incr;
@@ -397,10 +402,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
+            // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
             return Ok(Some(TransferError::OverflowPayment));
         };
         *to_balance = to_balance_incr;
-        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
             .push(ENTRY::balance_transfer(from, to, balance));
