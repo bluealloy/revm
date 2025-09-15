@@ -22,7 +22,7 @@ impl<T: Default> FrameStack<T> {
     /// Creates a new stack with preallocated items by calling `T::default()` `len` times.
     /// Index will still be `None` until `end_init` is called.
     pub fn new_prealloc(len: usize) -> Self {
-        let mut stack = Vec::with_capacity(core::cmp::min(len, 4));
+        let mut stack = Vec::with_capacity(len);
         for _ in 0..len {
             stack.push(T::default());
         }
@@ -35,7 +35,7 @@ impl<T> FrameStack<T> {
     pub fn new() -> Self {
         // Init N amount of frames to allocate the stack.
         Self {
-            stack: Vec::with_capacity(4),
+            stack: Vec::with_capacity(8),
             index: None,
         }
     }
@@ -45,7 +45,7 @@ impl<T> FrameStack<T> {
     pub fn start_init(&mut self) -> OutFrame<'_, T> {
         self.index = None;
         if self.stack.is_empty() {
-            self.stack.reserve(4);
+            self.stack.reserve(8);
         }
         self.out_frame_at(0)
     }
@@ -80,11 +80,16 @@ impl<T> FrameStack<T> {
     pub unsafe fn push(&mut self, token: FrameToken) {
         token.assert();
         let index = self.index.as_mut().unwrap();
-        if *index + 1 == self.stack.len() {
-            unsafe { self.stack.set_len(self.stack.len() + 1) };
-            self.stack.reserve(1);
-        }
         *index += 1;
+        // capacity of stack is incremented in `get_next`
+        debug_assert!(
+            *index < self.stack.capacity(),
+            "Stack capacity is not enough for index"
+        );
+        // If the index is the last one, we need to increase the length.
+        if *index == self.stack.len() {
+            unsafe { self.stack.set_len(self.stack.len() + 1) };
+        }
     }
 
     /// Clears the stack by setting the index to 0.
@@ -105,9 +110,7 @@ impl<T> FrameStack<T> {
     pub fn get(&mut self) -> &mut T {
         debug_assert!(
             self.stack.capacity() > self.index.unwrap(),
-            "Stack capacity {} is not enough for index {}",
-            self.stack.capacity(),
-            self.index.unwrap()
+            "Stack capacity is not enough for index"
         );
         unsafe { &mut *self.stack.as_mut_ptr().add(self.index.unwrap()) }
     }
@@ -115,6 +118,10 @@ impl<T> FrameStack<T> {
     /// Get next uninitialized item.
     #[inline]
     pub fn get_next(&mut self) -> OutFrame<'_, T> {
+        if self.index.unwrap() + 1 == self.stack.capacity() {
+            // allocate 8 more items
+            self.stack.reserve(8);
+        }
         self.out_frame_at(self.index.unwrap() + 1)
     }
 

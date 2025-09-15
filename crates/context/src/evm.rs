@@ -32,7 +32,7 @@ impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
             inspector: (),
             instruction,
             precompiles,
-            frame_stack: FrameStack::new_prealloc(5),
+            frame_stack: FrameStack::new_prealloc(8),
         }
     }
 }
@@ -45,7 +45,7 @@ impl<CTX, I, INSP, P, F: Default> Evm<CTX, INSP, I, P, F> {
             inspector,
             instruction,
             precompiles,
-            frame_stack: FrameStack::new_prealloc(5),
+            frame_stack: FrameStack::new_prealloc(8),
         }
     }
 }

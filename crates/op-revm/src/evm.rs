@@ -34,7 +34,7 @@ impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>
             inspector,
             instruction: EthInstructions::new_mainnet(),
             precompiles: OpPrecompiles::default(),
-            frame_stack: FrameStack::new_prealloc(5),
+            frame_stack: FrameStack::new_prealloc(8),
         })
     }
 }
