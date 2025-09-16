@@ -3,7 +3,7 @@
 
 The git repository can be found at [https://github.com/bluealloy/revm/](https://github.com/bluealloy/revm/)
 
-For questions please open a github issue or join the public telegram group: [https://t.me/+Ig4WDWOzikA3MzA0](https://t.me/+Ig4WDWOzikA3MzA0)
+For questions please open a github issue or join the public [telegram group](https://t.me/+Ig4WDWOzikA3MzA0)
 
 ### Licence
 
