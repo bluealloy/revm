@@ -100,32 +100,36 @@ impl CacheState {
     }
 
     /// Pretty print the cache state for debugging purposes.
-    /// Only available when `std` feature is enabled.
-    #[cfg(feature = "std")]
     pub fn pretty_print(&self) -> String {
         let mut output = String::new();
-        output.push_str("CacheState {\n");
+        output.push_str("CacheState:\n");
         output.push_str(&format!(
-            "  state_clear_enabled: {}\n",
+            "  (state_clear_enabled: {}, ",
             self.has_state_clear
         ));
-        output.push_str(&format!("  accounts: {} total\n", self.accounts.len()));
+        output.push_str(&format!("accounts: {} total)\n", self.accounts.len()));
 
         // Sort accounts by address for consistent output
         let mut accounts: Vec<_> = self.accounts.iter().collect();
         accounts.sort_by_key(|(addr, _)| *addr);
 
+        let mut contracts = self.contracts.clone();
+
         for (address, account) in accounts {
-            output.push_str(&format!("  [{}]:\n", address));
+            output.push_str(&format!("  [{address}]:\n"));
             output.push_str(&format!("    status: {:?}\n", account.status));
 
             if let Some(plain_account) = &account.account {
+                let code_hash = plain_account.info.code_hash;
                 output.push_str(&format!("    balance: {}\n", plain_account.info.balance));
                 output.push_str(&format!("    nonce: {}\n", plain_account.info.nonce));
-                output.push_str(&format!(
-                    "    code_hash: {}\n",
-                    plain_account.info.code_hash
-                ));
+                output.push_str(&format!("    code_hash: {code_hash}\n"));
+
+                if let Some(code) = &plain_account.info.code {
+                    if !code.is_empty() {
+                        contracts.insert(code_hash, code.clone());
+                    }
+                }
 
                 if !plain_account.storage.is_empty() {
                     output.push_str(&format!(
@@ -136,14 +140,8 @@ impl CacheState {
                     let mut storage: Vec<_> = plain_account.storage.iter().collect();
                     storage.sort_by_key(|(key, _)| *key);
 
-                    for (key, value) in storage.iter().take(10) {
-                        output.push_str(&format!("      [{:#x}]: {:#x}\n", key, value));
-                    }
-                    if plain_account.storage.len() > 10 {
-                        output.push_str(&format!(
-                            "      ... and {} more slots\n",
-                            plain_account.storage.len() - 10
-                        ));
+                    for (key, value) in storage.iter() {
+                        output.push_str(&format!("      [{key:#x}]: {value:#x}\n"));
                     }
                 }
             } else {
@@ -151,17 +149,11 @@ impl CacheState {
             }
         }
 
-        if !self.contracts.is_empty() {
-            output.push_str(&format!("  contracts: {} total\n", self.contracts.len()));
-            for (hash, bytecode) in self.contracts.iter().take(5) {
+        if !contracts.is_empty() {
+            output.push_str(&format!("  contracts: {} total\n", contracts.len()));
+            for (hash, bytecode) in contracts.iter() {
                 let len = bytecode.len();
-                output.push_str(&format!("    [{}]: {} bytes\n", hash, len));
-            }
-            if self.contracts.len() > 5 {
-                output.push_str(&format!(
-                    "    ... and {} more contracts\n",
-                    self.contracts.len() - 5
-                ));
+                output.push_str(&format!("    [{hash}]: {len} bytes\n"));
             }
         }
 
