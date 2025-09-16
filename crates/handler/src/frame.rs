@@ -486,9 +486,12 @@ impl EthFrame<EthInterpreter> {
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);
 
-                // Return unspend gas.
+                // Return unspend gas (both success and revert),
+                // but write to memory only on success per EVM semantics.
                 if ins_result.is_ok_or_revert() {
                     interpreter.gas.erase_cost(out_gas.remaining());
+                }
+                if ins_result.is_ok() {
                     interpreter
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
