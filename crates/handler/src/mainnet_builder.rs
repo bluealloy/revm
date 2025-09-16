@@ -41,7 +41,7 @@ where
             inspector: (),
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
-            frame_stack: FrameStack::new(),
+            frame_stack: FrameStack::new_prealloc(8),
         }
     }
 
@@ -54,7 +54,7 @@ where
             inspector,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
-            frame_stack: FrameStack::new(),
+            frame_stack: FrameStack::new_prealloc(8),
         }
     }
 }

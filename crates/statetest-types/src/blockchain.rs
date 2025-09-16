@@ -436,7 +436,7 @@ mod test {
         // than what reth expects (e.g., network is a string instead of ForkSpec enum)
         // This is expected as the formats differ slightly
         if let Err(e) = result {
-            println!("Expected deserialization error due to format differences: {e}",);
+            println!("Expected deserialization error due to format differences: {e}");
         }
     }
 
