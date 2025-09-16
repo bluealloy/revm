@@ -10,7 +10,6 @@ use revm::{
     handler::SystemCallTx,
     primitives::{Address, Bytes, TxKind, B256, U256},
 };
-use std::vec;
 
 /// Optimism Transaction trait.
 #[auto_impl(&, &mut, Box, Arc)]
