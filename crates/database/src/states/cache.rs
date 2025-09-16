@@ -100,6 +100,7 @@ impl CacheState {
     }
 
     /// Pretty print the cache state for debugging purposes.
+    #[cfg(feature = "std")]
     pub fn pretty_print(&self) -> String {
         let mut output = String::new();
         output.push_str("CacheState:\n");
