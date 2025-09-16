@@ -53,7 +53,7 @@ pub fn resize_memory(
 }
 
 /// Calculates gas cost and limit for call instructions.
-#[inline]
+#[inline(never)]
 pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
     to: Address,
