@@ -85,7 +85,7 @@ impl LegacyAnalyzedBytecode {
 
     /// Returns a reference to the bytecode.
     ///
-    /// The bytecode is padded with 32 zero bytes.
+    /// The bytecode is padded with up to 33 zero bytes.
     pub fn bytecode(&self) -> &Bytes {
         &self.bytecode
     }
