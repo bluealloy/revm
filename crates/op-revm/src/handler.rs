@@ -115,7 +115,7 @@ where
         let mut additional_cost = U256::ZERO;
 
         // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        if !is_deposit {
+        if !is_deposit && !ctx.cfg().is_fee_charge_disabled() {
             // L1 block info is stored in the context for later use.
             // and it will be reloaded from the database if it is not for the current block.
             if ctx.chain().l2_block != block_number {
