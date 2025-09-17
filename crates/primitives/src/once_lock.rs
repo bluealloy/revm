@@ -41,6 +41,15 @@ mod no_std_impl {
         pub fn get(&self) -> Option<&T> {
             self.inner.get()
         }
+    
+        /// Sets the value of the OnceLock, returning Err with the value if it was already set.
+        #[inline]
+        pub fn set(&self, value: T) -> Result<(), T>
+        where
+            T: Into<Box<T>>,
+        {
+            self.inner.set(value.into())
+        }
     }
 }
 
@@ -51,3 +60,17 @@ pub use std::sync::OnceLock;
 
 #[cfg(not(feature = "std"))]
 pub use no_std_impl::OnceLock;
+
+#[cfg(feature = "std")]
+pub trait OnceLockExt<T> {
+    /// Sets the value of the OnceLock, returning Err with the value if it was already set.
+    fn set(&self, value: T) -> Result<(), T>;
+}
+
+#[cfg(feature = "std")]
+impl<T> OnceLockExt<T> for OnceLock<T> {
+    #[inline]
+    fn set(&self, value: T) -> Result<(), T> {
+        std::sync::OnceLock::set(self, value)
+    }
+}
