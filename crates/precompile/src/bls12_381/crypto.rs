@@ -1,5 +1,5 @@
 //! BLS12-381 cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for BLS12-381 precompiles.
 //! These functions are called by the Crypto trait and delegate to the appropriate backend.
 
@@ -15,12 +15,7 @@ pub fn g1_add(a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileError> {
 pub fn g1_msm(
     pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileError>>,
 ) -> Result<[u8; 96], PrecompileError> {
-    // Convert the iterator to the expected format
-    let converted_pairs = pairs.map(|result| {
-        result.map(|(point, scalar)| (point, scalar))
-    });
-    
-    super::crypto_backend::p1_msm_bytes(converted_pairs)
+    super::crypto_backend::p1_msm_bytes(pairs)
 }
 
 /// BLS12-381 G2 point addition
@@ -32,17 +27,12 @@ pub fn g2_add(a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileError> {
 pub fn g2_msm(
     pairs: &mut dyn Iterator<Item = Result<G2PointScalar, PrecompileError>>,
 ) -> Result<[u8; 192], PrecompileError> {
-    // Convert the iterator to the expected format
-    let converted_pairs = pairs.map(|result| {
-        result.map(|(point, scalar)| (point, scalar))
-    });
-    
-    super::crypto_backend::p2_msm_bytes(converted_pairs)
+    super::crypto_backend::p2_msm_bytes(pairs)
 }
 
 /// BLS12-381 pairing check
 pub fn pairing_check(pairs: &[(G1Point, G2Point)]) -> Result<bool, PrecompileError> {
-    Ok(super::crypto_backend::pairing_check_bytes(pairs)?)
+    super::crypto_backend::pairing_check_bytes(pairs)
 }
 
 /// BLS12-381 map field element to G1
