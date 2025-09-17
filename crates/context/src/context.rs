@@ -126,6 +126,13 @@ impl<
     }
 
     #[inline]
+    fn tx_block_cfg_journal_mut(
+        &mut self,
+    ) -> (&Self::Tx, &Self::Block, &Self::Cfg, &mut Self::Journal) {
+        (&self.tx, &self.block, &self.cfg, &mut self.journaled_state)
+    }
+
+    #[inline]
     fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local) {
         (&self.tx, &mut self.local)
     }

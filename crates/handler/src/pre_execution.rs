@@ -16,7 +16,6 @@ use core::cmp::Ordering;
 use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
-use std::boxed::Box;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
 pub fn load_accounts<
@@ -67,6 +66,26 @@ pub fn load_accounts<
 }
 
 /// Validates caller account nonce and code according to EIP-3607.
+///
+/// Internally calls [`validate_account_nonce_and_code`] with the components from the configuration.
+#[inline]
+pub fn validate_account_nonce_and_code_with_components(
+    caller_info: &mut AccountInfo,
+    tx: impl Transaction,
+    cfg: impl Cfg,
+) -> Result<(), InvalidTransaction> {
+    let is_eip3607_disabled = cfg.is_eip3607_disabled();
+    let is_nonce_check_disabled = cfg.is_nonce_check_disabled();
+
+    validate_account_nonce_and_code(
+        caller_info,
+        tx.nonce(),
+        is_eip3607_disabled,
+        is_nonce_check_disabled,
+    )
+}
+
+/// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
@@ -106,6 +125,39 @@ pub fn validate_account_nonce_and_code(
     Ok(())
 }
 
+/// Check maximum possible fee and deduct the effective fee. Returns new balance.
+#[inline]
+pub fn deduct_caller_balance_with_components(
+    balance: U256,
+    tx: impl Transaction,
+    block: impl Block,
+    cfg: impl Cfg,
+) -> Result<U256, InvalidTransaction> {
+    let basefee = block.basefee() as u128;
+    let blob_price = block.blob_gasprice().unwrap_or_default();
+    let is_balance_check_disabled = cfg.is_balance_check_disabled();
+
+    if !is_balance_check_disabled {
+        tx.has_enough_balance(balance)?;
+    }
+
+    let effective_balance_spending = tx
+        .effective_balance_spending(basefee, blob_price)
+        .expect("effective balance is always smaller than max balance so it can't overflow");
+
+    let gas_balance_spending = effective_balance_spending - tx.value();
+
+    // new balance
+    let mut new_balance = balance.saturating_sub(gas_balance_spending);
+
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        new_balance = new_balance.max(tx.value());
+    }
+
+    Ok(new_balance)
+}
+
 /// Validates caller state and deducts transaction costs from the caller's balance.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
@@ -114,65 +166,31 @@ pub fn validate_against_state_and_deduct_caller<
 >(
     context: &mut CTX,
 ) -> Result<(), ERROR> {
-    let basefee = context.block().basefee() as u128;
-    let blob_price = context.block().blob_gasprice().unwrap_or_default();
-    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
-    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
-
-    let (tx, journal) = context.tx_journal_mut();
+    let (tx, block, cfg, journal) = context.tx_block_cfg_journal_mut();
 
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
 
-    validate_account_nonce_and_code(
-        &mut caller_account.info,
-        tx.nonce(),
-        is_eip3607_disabled,
-        is_nonce_check_disabled,
-    )?;
+    // validate account nonce and code
+    validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
 
-    let max_balance_spending = tx.max_balance_spending()?;
+    let new_balance =
+        deduct_caller_balance_with_components(caller_account.info.balance, tx, block, cfg)?;
 
-    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-    // Transfer will be done inside `*_inner` functions.
-    if max_balance_spending > caller_account.info.balance && !is_balance_check_disabled {
-        return Err(InvalidTransaction::LackOfFundForMaxFee {
-            fee: Box::new(max_balance_spending),
-            balance: Box::new(caller_account.info.balance),
-        }
-        .into());
-    }
+    // make changes to the account
 
-    let effective_balance_spending = tx
-        .effective_balance_spending(basefee, blob_price)
-        .expect("effective balance is always smaller than max balance so it can't overflow");
-
-    // subtracting max balance spending with value that is going to be deducted later in the call.
-    let gas_balance_spending = effective_balance_spending - tx.value();
-
-    let mut new_balance = caller_account
-        .info
-        .balance
-        .saturating_sub(gas_balance_spending);
-
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        new_balance = new_balance.max(tx.value());
-    }
-
-    let old_balance = caller_account.info.balance;
     // Touch account so we know it is changed.
     caller_account.mark_touch();
-    caller_account.info.balance = new_balance;
-
+    let old_balance = core::mem::replace(&mut caller_account.info.balance, new_balance);
     // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
     if tx.kind().is_call() {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }
 
+    // journal the change
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+
     Ok(())
 }
 

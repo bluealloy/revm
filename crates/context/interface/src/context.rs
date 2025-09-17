@@ -74,6 +74,10 @@ pub trait ContextTr: Host {
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
     fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal);
+    /// Get the transaction, configuration and mutable journal.
+    fn tx_block_cfg_journal_mut(
+        &mut self,
+    ) -> (&Self::Tx, &Self::Block, &Self::Cfg, &mut Self::Journal);
     /// Get the transaction and local context. It is used to efficiently load initcode
     /// into local context without copying them from transaction.
     fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local);
