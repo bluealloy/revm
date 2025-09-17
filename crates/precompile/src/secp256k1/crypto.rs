@@ -1,5 +1,5 @@
 //! secp256k1 cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for secp256k1 precompiles.
 //! These functions are called by the Crypto trait.
 

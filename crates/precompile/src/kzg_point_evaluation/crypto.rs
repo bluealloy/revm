@@ -1,5 +1,5 @@
 //! KZG point evaluation cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for KZG point evaluation precompiles.
 //! These functions are called by the Crypto trait.
 

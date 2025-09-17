@@ -1,5 +1,5 @@
 //! Blake2 cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for blake2 precompiles.
 //! These functions are called by the Crypto trait.
 

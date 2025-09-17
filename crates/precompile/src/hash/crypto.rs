@@ -1,5 +1,5 @@
 //! Hash cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for hash precompiles.
 //! These functions are called by the Crypto trait.
 

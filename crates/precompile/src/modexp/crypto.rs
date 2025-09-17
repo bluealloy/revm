@@ -1,5 +1,5 @@
 //! Modular exponentiation cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for modexp precompiles.
 //! These functions are called by the Crypto trait.
 

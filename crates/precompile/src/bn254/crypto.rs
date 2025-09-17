@@ -1,5 +1,5 @@
 //! BN254 cryptographic operations
-//! 
+//!
 //! This module contains the pure cryptographic implementations for BN254 precompiles.
 //! These functions are called by the Crypto trait.
 
