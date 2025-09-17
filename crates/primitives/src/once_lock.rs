@@ -41,7 +41,7 @@ mod no_std_impl {
         pub fn get(&self) -> Option<&T> {
             self.inner.get()
         }
-    
+        
         /// Sets the value of the OnceLock, returning Err with the value if it was already set.
         #[inline]
         pub fn set(&self, value: T) -> Result<(), T>
