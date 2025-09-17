@@ -67,6 +67,7 @@ dev = [
 	"optional_eip3607",
 	"optional_no_base_fee",
 	"optional_priority_fee_check",
+	"optional_fee_charge",
 ]
 memory_limit = []
 optional_balance_check = []
@@ -75,3 +76,4 @@ optional_eip3541 = []
 optional_eip3607 = []
 optional_no_base_fee = []
 optional_priority_fee_check = []
+optional_fee_charge = []
