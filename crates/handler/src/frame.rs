@@ -201,7 +201,8 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        let (bytecode, code_hash) = inputs.bytecode.clone().unwrap_or_default();
+        let bytecode = inputs.bytecode.clone();
+        let bytecode_hash = inputs.bytecode_hash;
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
@@ -217,7 +218,7 @@ impl EthFrame<EthInterpreter> {
             FrameInput::Call(inputs),
             depth,
             memory,
-            ExtBytecode::new_with_hash(bytecode, code_hash),
+            ExtBytecode::new_with_hash(bytecode, bytecode_hash),
             interpreter_input,
             is_static,
             ctx.cfg().spec().into(),

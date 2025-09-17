@@ -16,18 +16,22 @@ pub fn create_init_frame(
     let input = tx.input().clone();
 
     match tx.kind() {
-        TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
-            input: CallInput::Bytes(input),
-            gas_limit,
-            target_address,
-            bytecode_address: target_address,
-            bytecode,
-            caller: tx.caller(),
-            value: CallValue::Transfer(tx.value()),
-            scheme: CallScheme::Call,
-            is_static: false,
-            return_memory_offset: 0..0,
-        })),
+        TxKind::Call(target_address) => {
+            let (bytecode, bytecode_hash) = bytecode.unwrap_or_default();
+            FrameInput::Call(Box::new(CallInputs {
+                input: CallInput::Bytes(input),
+                gas_limit,
+                target_address,
+                bytecode_address: target_address,
+                bytecode,
+                bytecode_hash,
+                caller: tx.caller(),
+                value: CallValue::Transfer(tx.value()),
+                scheme: CallScheme::Call,
+                is_static: false,
+                return_memory_offset: 0..0,
+            }))
+        }
         TxKind::Create => FrameInput::Create(Box::new(CreateInputs {
             caller: tx.caller(),
             scheme: CreateScheme::Create,

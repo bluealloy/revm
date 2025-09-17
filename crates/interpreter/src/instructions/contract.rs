@@ -127,7 +127,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     else {
         return;
     };
-    let Some((gas_limit, bytecode, code_hash)) =
+    let Some((gas_limit, bytecode, bytecode_hash)) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, true, local_gas_limit)
     else {
         return;
@@ -144,7 +144,8 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
                 bytecode_address: to,
-                bytecode: Some((bytecode, code_hash)),
+                bytecode,
+                bytecode_hash,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::Call,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -170,7 +171,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some((gas_limit, bytecode, code_hash)) =
+    let Some((gas_limit, bytecode, bytecode_hash)) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, false, local_gas_limit)
     else {
         return;
@@ -187,7 +188,8 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.target_address(),
                 bytecode_address: to,
-                bytecode: Some((bytecode, code_hash)),
+                bytecode,
+                bytecode_hash,
                 value: CallValue::Transfer(value),
                 scheme: CallScheme::CallCode,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -213,7 +215,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some((gas_limit, bytecode, code_hash)) =
+    let Some((gas_limit, bytecode, bytecode_hash)) =
         load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
     else {
         return;
@@ -230,7 +232,8 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.caller_address(),
                 bytecode_address: to,
-                bytecode: Some((bytecode, code_hash)),
+                bytecode,
+                bytecode_hash,
                 value: CallValue::Apparent(context.interpreter.input.call_value()),
                 scheme: CallScheme::DelegateCall,
                 is_static: context.interpreter.runtime_flag.is_static(),
@@ -256,7 +259,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some((gas_limit, bytecode, code_hash)) =
+    let Some((gas_limit, bytecode, bytecode_hash)) =
         load_acc_and_calc_gas(&mut context, to, false, false, local_gas_limit)
     else {
         return;
@@ -273,7 +276,8 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
                 bytecode_address: to,
-                bytecode: Some((bytecode, code_hash)),
+                bytecode,
+                bytecode_hash,
                 value: CallValue::Transfer(U256::ZERO),
                 scheme: CallScheme::StaticCall,
                 is_static: true,

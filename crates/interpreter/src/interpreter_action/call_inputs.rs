@@ -80,7 +80,9 @@ pub struct CallInputs {
     /// Previously `context.code_address`.
     pub bytecode_address: Address,
     /// Bytecode that is going to be executed.
-    pub bytecode: Option<(Bytecode, B256)>,
+    pub bytecode: Bytecode,
+    /// Bytecode hash,
+    pub bytecode_hash: B256,
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.
