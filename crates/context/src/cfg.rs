@@ -92,6 +92,14 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
     pub disable_eip3607: bool,
+    /// EIP-7623 increases calldata cost.
+    ///
+    /// This EIP can be considered irrelevant in the context of an EVM-compatible L2 rollup,
+    /// if it does not make use of blobs.
+    ///
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_eip7623")]
+    pub disable_eip7623: bool,
     /// Disables base fee checks for EIP-1559 transactions
     ///
     /// This is useful for testing method calls with zero gas price.
@@ -161,6 +169,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3541: false,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: false,
+            #[cfg(feature = "optional_eip7623")]
+            disable_eip7623: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
             #[cfg(feature = "optional_priority_fee_check")]
@@ -210,6 +220,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_eip3541: self.disable_eip3541,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: self.disable_eip3607,
+            #[cfg(feature = "optional_eip7623")]
+            disable_eip7623: self.disable_eip7623,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: self.disable_base_fee,
             #[cfg(feature = "optional_priority_fee_check")]
@@ -246,6 +258,13 @@ impl<SPEC> CfgEnv<SPEC> {
     #[cfg(feature = "optional_fee_charge")]
     pub fn with_disable_fee_charge(mut self, disable: bool) -> Self {
         self.disable_fee_charge = disable;
+        self
+    }
+
+    /// Sets the disable eip7623 flag.
+    #[cfg(feature = "optional_eip7623")]
+    pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
+        self.disable_eip7623 = disable;
         self
     }
 }
@@ -311,6 +330,16 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optional_eip3607")] {
                 self.disable_eip3607
+            } else {
+                false
+            }
+        }
+    }
+
+    fn is_eip7623_disabled(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_eip7623")] {
+                self.disable_eip7623
             } else {
                 false
             }
