@@ -18,4 +18,3 @@ pub fn verify_kzg_proof(
 
     Ok(())
 }
-н
