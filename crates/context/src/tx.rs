@@ -3,8 +3,7 @@ use crate::TransactionType;
 use context_interface::{
     either::Either,
     transaction::{
-        AccessList, AccessListItem, Authorization, RecoveredAuthority, RecoveredAuthorization,
-        SignedAuthorization, Transaction,
+        AccessList, AccessListItem, RecoveredAuthorization, SignedAuthorization, Transaction,
     },
 };
 use core::fmt::Debug;
@@ -433,20 +432,6 @@ impl TxEnvBuilder {
                         self.gas_priority_fee = Some(0);
                     }
 
-                    // authorization list can be empty
-                    if self.authorization_list.is_empty() {
-                        // add dummy authorization
-                        self.authorization_list =
-                            vec![Either::Right(RecoveredAuthorization::new_unchecked(
-                                Authorization {
-                                    chain_id: U256::from(self.chain_id.unwrap_or(1)),
-                                    address: self.caller,
-                                    nonce: self.nonce,
-                                },
-                                RecoveredAuthority::Invalid,
-                            ))];
-                    }
-
                     // target is required
                     if !self.kind.is_call() {
                         self.kind = TxKind::Call(Address::default());
@@ -649,6 +634,7 @@ impl TxEnv {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use context_interface::transaction::{Authorization, RecoveredAuthority};
 
     fn effective_gas_setup(
         tx_type: TransactionType,
@@ -934,19 +920,6 @@ mod tests {
 
         assert_eq!(tx.tx_type, TransactionType::Eip4844);
         assert_eq!(tx.kind, TxKind::Call(Address::default()));
-    }
-
-    #[test]
-    fn test_tx_env_builder_build_fill_eip7702_missing_auth_list() {
-        // EIP-7702 without authorization list should add dummy auth
-        let tx = TxEnvBuilder::new()
-            .tx_type(Some(4))
-            .gas_priority_fee(Some(10))
-            .kind(TxKind::Call(Address::from([2u8; 20])))
-            .build_fill();
-
-        assert_eq!(tx.tx_type, TransactionType::Eip7702);
-        assert_eq!(tx.authorization_list.len(), 1);
     }
 
     #[test]
