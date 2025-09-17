@@ -316,6 +316,59 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
+    ///
+    /// # Panics
+    ///
+    /// Panics if from or to are not loaded.
+    #[inline]
+    pub fn transfer_loaded(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError> {
+        if from == to {
+            let from_balance = self.state.get_mut(&to).unwrap().info.balance;
+            // Check if from balance is enough to transfer the balance.
+            if balance > from_balance {
+                return Some(TransferError::OutOfFunds);
+            }
+            return None;
+        }
+
+        if balance.is_zero() {
+            Self::touch_account(&mut self.journal, to, self.state.get_mut(&to).unwrap());
+            return None;
+        }
+
+        // sub balance from
+        let from_account = self.state.get_mut(&from).unwrap();
+        // no need to touch caller account.
+        // Self::touch_account(&mut self.journal, from, from_account);
+        let from_balance = &mut from_account.info.balance;
+        let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
+            return Some(TransferError::OutOfFunds);
+        };
+        *from_balance = from_balance_decr;
+
+        // add balance to
+        let to_account = self.state.get_mut(&to).unwrap();
+        Self::touch_account(&mut self.journal, to, to_account);
+        let to_balance = &mut to_account.info.balance;
+        let Some(to_balance_incr) = to_balance.checked_add(balance) else {
+            // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
+            return Some(TransferError::OverflowPayment);
+        };
+        *to_balance = to_balance_incr;
+
+        // add journal entry
+        self.journal
+            .push(ENTRY::balance_transfer(from, to, balance));
+
+        None
+    }
+
+    /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
@@ -349,10 +402,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Self::touch_account(&mut self.journal, to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_incr) = to_balance.checked_add(balance) else {
+            // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
             return Ok(Some(TransferError::OverflowPayment));
         };
         *to_balance = to_balance_incr;
-        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
             .push(ENTRY::balance_transfer(from, to, balance));
@@ -600,7 +653,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(db, address)?;
+            let delegate_account = self
+                .load_account_optional(db, address, true, [], false)
+                .map_err(JournalLoadError::unwrap_db_error)?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 

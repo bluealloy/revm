@@ -11,7 +11,7 @@ use context_interface::{host::LoadError, Host};
 use core::{cmp::min, ops::Range};
 use primitives::{
     hardfork::SpecId::{self, *},
-    Address, U256,
+    Address, B256, U256,
 };
 use state::Bytecode;
 
@@ -53,21 +53,21 @@ pub fn resize_memory(
 }
 
 /// Calculates gas cost and limit for call instructions.
-#[inline]
+#[inline(never)]
 pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
     stack_gas_limit: u64,
-) -> Option<u64> {
+) -> Option<(u64, Bytecode, B256)> {
     let spec = context.interpreter.runtime_flag.spec_id();
     // calculate static gas first. For berlin hardfork it will take warm gas.
     let static_gas = calc_call_static_gas(spec, transfers_value);
     gas!(context.interpreter, static_gas, None);
 
     // load account delegated and deduct dynamic gas.
-    let gas =
+    let (gas, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
     let interpreter = &mut context.interpreter;
 
@@ -88,7 +88,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
 
-    Some(gas_limit)
+    Some((gas_limit, bytecode, code_hash))
 }
 
 /// Loads accounts and its delegate account.
@@ -98,7 +98,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Option<u64> {
+) -> Option<(u64, Bytecode, B256)> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
     match load_account_delegated(
@@ -109,7 +109,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
         transfers_value,
         create_empty_account,
     ) {
-        Ok(gas_cost) => return Some(gas_cost),
+        Ok(out) => return Some(out),
         Err(LoadError::ColdLoadSkipped) => {
             context.interpreter.halt_oog();
         }
@@ -131,7 +131,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     address: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Result<u64, LoadError> {
+) -> Result<(u64, Bytecode, B256), LoadError> {
     let mut cost = 0;
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
     let is_spurioud_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
@@ -141,10 +141,12 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     if is_berlin && account.is_cold {
         cost += COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
     }
+    let mut bytecode = account.code.clone().unwrap_or_default();
+    let mut code_hash = account.code_hash();
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
         cost += new_account_cost(is_spurioud_dragon, transfers_value);
-        return Ok(cost);
+        return Ok((cost, bytecode, code_hash));
     }
 
     // load delegate code if account is EIP-7702
@@ -164,9 +166,11 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         if delegate_account.is_cold {
             cost += COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
         }
+        bytecode = delegate_account.code.clone().unwrap_or_default();
+        code_hash = delegate_account.code_hash();
     }
 
-    Ok(cost)
+    Ok((cost, bytecode, code_hash))
 }
 
 /// Returns new account cost.

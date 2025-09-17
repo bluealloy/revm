@@ -196,6 +196,16 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
+    fn transfer_loaded(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError> {
+        self.inner.transfer_loaded(from, to, balance)
+    }
+
+    #[inline]
     fn touch_account(&mut self, address: Address) {
         self.inner.touch(address);
     }
@@ -304,6 +314,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.finalize()
     }
 
+    #[inline]
     fn sload_skip_cold_load(
         &mut self,
         address: Address,
@@ -315,6 +326,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .sload(&mut self.database, address, key, skip_cold_load)
     }
 
+    #[inline]
     fn sstore_skip_cold_load(
         &mut self,
         address: Address,

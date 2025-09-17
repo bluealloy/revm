@@ -13,6 +13,7 @@ use context_interface::{
 use interpreter::interpreter_action::FrameInit;
 use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
+use state::Bytecode;
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -290,13 +291,34 @@ pub trait Handler {
         evm: &mut Self::Evm,
         gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
-        let memory =
-            SharedMemory::new_with_buffer(evm.ctx().local().shared_memory_buffer().clone());
-        let ctx = evm.ctx_ref();
+        let ctx = evm.ctx_mut();
+        let memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
+
+        let (tx, journal) = ctx.tx_journal_mut();
+        let bytecode = if let Some(&to) = tx.kind().to() {
+            let account = &journal.load_account_code(to)?.info;
+
+            if let Some(Bytecode::Eip7702(eip7702_bytecode)) = &account.code {
+                let delegated_address = eip7702_bytecode.delegated_address;
+                let account = &journal.load_account_code(delegated_address)?.info;
+                Some((
+                    account.code.clone().unwrap_or_default(),
+                    account.code_hash(),
+                ))
+            } else {
+                Some((
+                    account.code.clone().unwrap_or_default(),
+                    account.code_hash(),
+                ))
+            }
+        } else {
+            None
+        };
+
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(ctx.tx(), gas_limit),
+            frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
         })
     }
 

@@ -125,6 +125,14 @@ pub trait JournalTr {
         balance: U256,
     ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
+    /// Transfers the balance from one account to another. Assume form and to are loaded.
+    fn transfer_loaded(
+        &mut self,
+        from: Address,
+        to: Address,
+        balance: U256,
+    ) -> Option<TransferError>;
+
     /// Increments the balance of the account.
     fn caller_accounting_journal_entry(
         &mut self,
