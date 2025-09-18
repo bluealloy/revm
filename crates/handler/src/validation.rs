@@ -224,8 +224,13 @@ pub fn validate_tx_env<CTX: ContextTr>(
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
+    is_eip7623_disabled: bool,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let gas = gas::calculate_initial_tx_gas_for_tx(&tx, spec);
+    let mut gas = gas::calculate_initial_tx_gas_for_tx(&tx, spec);
+
+    if is_eip7623_disabled {
+        gas.floor_gas = 0
+    }
 
     // Additional check to see if limit is big enough to cover initial gas.
     if gas.initial_gas > tx.gas_limit() {

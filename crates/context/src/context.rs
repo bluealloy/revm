@@ -56,63 +56,47 @@ impl<
     type Local = LOCAL;
 
     #[inline]
-    fn tx(&self) -> &Self::Tx {
-        &self.tx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Block,
+        &Self::Tx,
+        &Self::Cfg,
+        &Self::Db,
+        &Self::Journal,
+        &Self::Chain,
+        &Self::Local,
+    ) {
+        let block = &self.block;
+        let tx = &self.tx;
+        let cfg = &self.cfg;
+        let db = &self.journaled_state.db();
+        let journal = &self.journaled_state;
+        let chain = &self.chain;
+        let local = &self.local;
+
+        (block, tx, cfg, db, journal, chain, local)
     }
 
     #[inline]
-    fn block(&self) -> &Self::Block {
-        &self.block
-    }
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &Self::Block,
+        &Self::Tx,
+        &Self::Cfg,
+        &mut Self::Journal,
+        &mut Self::Chain,
+        &mut Self::Local,
+    ) {
+        let block = &self.block;
+        let tx = &self.tx;
+        let cfg = &self.cfg;
+        let journal = &mut self.journaled_state;
+        let chain = &mut self.chain;
+        let local = &mut self.local;
 
-    #[inline]
-    fn cfg(&self) -> &Self::Cfg {
-        &self.cfg
-    }
-
-    #[inline]
-    fn journal(&self) -> &Self::Journal {
-        &self.journaled_state
-    }
-
-    #[inline]
-    fn journal_mut(&mut self) -> &mut Self::Journal {
-        &mut self.journaled_state
-    }
-
-    #[inline]
-    fn journal_ref(&self) -> &Self::Journal {
-        &self.journaled_state
-    }
-
-    #[inline]
-    fn db(&self) -> &Self::Db {
-        self.journaled_state.db()
-    }
-
-    #[inline]
-    fn db_mut(&mut self) -> &mut Self::Db {
-        self.journaled_state.db_mut()
-    }
-
-    #[inline]
-    fn chain(&self) -> &Self::Chain {
-        &self.chain
-    }
-
-    #[inline]
-    fn chain_mut(&mut self) -> &mut Self::Chain {
-        &mut self.chain
-    }
-
-    #[inline]
-    fn local(&self) -> &Self::Local {
-        &self.local
-    }
-
-    #[inline]
-    fn local_mut(&mut self) -> &mut Self::Local {
-        &mut self.local
+        (block, tx, cfg, journal, chain, local)
     }
 
     #[inline]
