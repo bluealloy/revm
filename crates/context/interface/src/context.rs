@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 //! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{
