@@ -497,59 +497,6 @@ impl TxEnvBuilder {
     /// Build the final [`TxEnv`], returns error if some fields are wrongly set.
     /// If it is fine to fill missing fields with default values, use [`TxEnvBuilder::build_fill`] instead.
     pub fn build(self) -> Result<TxEnv, TxEnvBuildError> {
-        // if tx_type is set, check if all needed fields are set correctly.
-        if let Some(tx_type) = self.tx_type {
-            match TransactionType::from(tx_type) {
-                TransactionType::Legacy => {
-                    // do nothing
-                }
-                TransactionType::Eip2930 => {
-                    // do nothing, all fields are set. Access list can be empty.
-                }
-                TransactionType::Eip1559 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
-                    }
-                }
-                TransactionType::Eip4844 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
-                    }
-
-                    // blob hashes can be empty
-                    if self.blob_hashes.is_empty() {
-                        return Err(TxEnvBuildError::MissingBlobHashesForEip4844);
-                    }
-
-                    // target is required
-                    if !self.kind.is_call() {
-                        return Err(TxEnvBuildError::MissingTargetForEip4844);
-                    }
-                }
-                TransactionType::Eip7702 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
-                    }
-
-                    // authorization list can be empty
-                    if self.authorization_list.is_empty() {
-                        return Err(TxEnvBuildError::MissingAuthorizationListForEip7702);
-                    }
-
-                    // target is required
-                    if !self.kind.is_call() {
-                        return Err(DeriveTxTypeError::MissingTargetForEip7702.into());
-                    }
-                }
-                TransactionType::Custom => {
-                    // do nothing, custom transaction type is handled by the caller.
-                }
-            }
-        }
-
         let mut tx = TxEnv {
             tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
@@ -570,6 +517,57 @@ impl TxEnvBuilder {
         // Derive tx type from fields, if some fields are wrongly set it will return an error.
         if self.tx_type.is_none() {
             tx.derive_tx_type()?;
+        }
+
+        // check if all needed fields are set correctly.
+        match TransactionType::from(tx.tx_type) {
+            TransactionType::Legacy => {
+                // do nothing
+            }
+            TransactionType::Eip2930 => {
+                // do nothing, all fields are set. Access list can be empty.
+            }
+            TransactionType::Eip1559 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
+                }
+            }
+            TransactionType::Eip4844 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
+                }
+
+                // blob hashes can be empty
+                if tx.blob_hashes.is_empty() {
+                    return Err(TxEnvBuildError::MissingBlobHashesForEip4844);
+                }
+
+                // target is required
+                if !tx.kind.is_call() {
+                    return Err(TxEnvBuildError::MissingTargetForEip4844);
+                }
+            }
+            TransactionType::Eip7702 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    return Err(TxEnvBuildError::MissingGasPriorityFeeForEip1559);
+                }
+
+                // authorization list can't be empty
+                if tx.authorization_list.is_empty() {
+                    return Err(TxEnvBuildError::MissingAuthorizationListForEip7702);
+                }
+
+                // target is required
+                if !tx.kind.is_call() {
+                    return Err(DeriveTxTypeError::MissingTargetForEip7702.into());
+                }
+            }
+            TransactionType::Custom => {
+                // do nothing, custom transaction type is handled by the caller.
+            }
         }
 
         Ok(tx)
