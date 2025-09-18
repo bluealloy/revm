@@ -787,6 +787,124 @@ mod tests {
     }
 
     #[test]
+    fn test_reload_l1_block_info_regolith() {
+        const BLOCK_NUM: U256 = uint!(200_U256);
+        const L1_BASE_FEE: U256 = uint!(7_U256);
+        const L1_FEE_OVERHEAD: U256 = uint!(9_U256);
+        const L1_BASE_FEE_SCALAR: u64 = 11;
+
+        let mut db = InMemoryDB::default();
+        let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
+        l1_block_contract
+            .storage
+            .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
+        // Pre-ecotone bedrock/regolith slots
+        use crate::constants::{L1_OVERHEAD_SLOT, L1_SCALAR_SLOT};
+        l1_block_contract
+            .storage
+            .insert(L1_OVERHEAD_SLOT, L1_FEE_OVERHEAD);
+        l1_block_contract
+            .storage
+            .insert(L1_SCALAR_SLOT, U256::from(L1_BASE_FEE_SCALAR));
+
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l2_block: BLOCK_NUM + U256::from(1),
+                ..Default::default()
+            })
+            .with_block(BlockEnv {
+                number: BLOCK_NUM,
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH);
+
+        let mut evm = ctx.build_op();
+        assert_ne!(evm.ctx().chain().l2_block, BLOCK_NUM);
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+        handler
+            .validate_against_state_and_deduct_caller(&mut evm)
+            .unwrap();
+
+        assert_eq!(
+            *evm.ctx().chain(),
+            L1BlockInfo {
+                l2_block: BLOCK_NUM,
+                l1_base_fee: L1_BASE_FEE,
+                l1_fee_overhead: Some(L1_FEE_OVERHEAD),
+                l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
+                tx_l1_cost: Some(U256::ZERO),
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn test_reload_l1_block_info_ecotone_pre_isthmus() {
+        const BLOCK_NUM: U256 = uint!(300_U256);
+        const L1_BASE_FEE: U256 = uint!(13_U256);
+        const L1_BLOB_BASE_FEE: U256 = uint!(17_U256);
+        const L1_BASE_FEE_SCALAR: u64 = 19;
+        const L1_BLOB_BASE_FEE_SCALAR: u64 = 23;
+        const L1_FEE_SCALARS: U256 = U256::from_limbs([
+            0,
+            (L1_BASE_FEE_SCALAR << (64 - BASE_FEE_SCALAR_OFFSET * 2)) | L1_BLOB_BASE_FEE_SCALAR,
+            0,
+            0,
+        ]);
+
+        let mut db = InMemoryDB::default();
+        let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
+        l1_block_contract
+            .storage
+            .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
+        l1_block_contract
+            .storage
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+        l1_block_contract
+            .storage
+            .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
+
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l2_block: BLOCK_NUM + U256::from(1),
+                ..Default::default()
+            })
+            .with_block(BlockEnv {
+                number: BLOCK_NUM,
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ECOTONE);
+
+        let mut evm = ctx.build_op();
+        assert_ne!(evm.ctx().chain().l2_block, BLOCK_NUM);
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+        handler
+            .validate_against_state_and_deduct_caller(&mut evm)
+            .unwrap();
+
+        assert_eq!(
+            *evm.ctx().chain(),
+            L1BlockInfo {
+                l2_block: BLOCK_NUM,
+                l1_base_fee: L1_BASE_FEE,
+                l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
+                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
+                empty_ecotone_scalars: false,
+                l1_fee_overhead: None,
+                tx_l1_cost: Some(U256::ZERO),
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
     fn test_remove_l1_cost() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
