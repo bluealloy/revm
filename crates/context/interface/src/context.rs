@@ -30,13 +30,32 @@ pub trait ContextTr: Host {
     type Chain;
     /// Local context type
     type Local: LocalContextTr;
-    
+
     /// Get all contexts
-    fn all(&self) -> (&Self::Block, &Self::Tx, &Self::Cfg, &Self::Db, &Self::Journal, &Self::Chain, &Self::Local);
-    
+    fn all(
+        &self,
+    ) -> (
+        &Self::Block,
+        &Self::Tx,
+        &Self::Cfg,
+        &Self::Db,
+        &Self::Journal,
+        &Self::Chain,
+        &Self::Local,
+    );
+
     /// Get all contexts mutably
-    fn all_mut(&mut self) -> (&mut Self::Block, &mut Self::Tx, &mut Self::Cfg, &mut Self::Journal, &mut Self::Chain, &mut Self::Local);
-    
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Block,
+        &mut Self::Tx,
+        &mut Self::Cfg,
+        &mut Self::Journal,
+        &mut Self::Chain,
+        &mut Self::Local,
+    );
+
     /// Get the transaction
     fn tx(&self) -> &Self::Tx {
         let (_, tx, _, _, _, _, _) = self.all();

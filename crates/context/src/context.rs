@@ -98,7 +98,7 @@ impl<
 
         (block, tx, cfg, journal, chain, local)
     }
-    
+
     #[inline]
     fn db_mut(&mut self) -> &mut Self::Db {
         self.journaled_state.db_mut()
