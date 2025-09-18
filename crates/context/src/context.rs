@@ -100,11 +100,6 @@ impl<
     }
 
     #[inline]
-    fn db_mut(&mut self) -> &mut Self::Db {
-        self.journaled_state.db_mut()
-    }
-
-    #[inline]
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
