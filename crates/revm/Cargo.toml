@@ -84,6 +84,7 @@ dev = [
 	"optional_block_gas_limit",
 	"optional_eip3541",
 	"optional_eip3607",
+	"optional_eip7623",
 	"optional_no_base_fee",
 ]
 memory_limit = ["context/memory_limit", "interpreter/memory_limit"]
@@ -91,6 +92,7 @@ optional_balance_check = ["context/optional_balance_check"]
 optional_block_gas_limit = ["context/optional_block_gas_limit"]
 optional_eip3541 = ["context/optional_eip3541"]
 optional_eip3607 = ["context/optional_eip3607"]
+optional_eip7623 = ["context/optional_eip7623"]
 optional_no_base_fee = ["context/optional_no_base_fee"]
 
 # Precompiles features: Please look at the comments in `precompile` crate for more information.

@@ -224,6 +224,7 @@ pub trait Handler {
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(evm, exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
+        // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
         self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
         // Return unused gas to caller
         self.reimburse_caller(evm, exec_result)?;
@@ -251,7 +252,12 @@ pub trait Handler {
     #[inline]
     fn validate_initial_tx_gas(&self, evm: &Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
-        validation::validate_initial_tx_gas(ctx.tx(), ctx.cfg().spec().into()).map_err(From::from)
+        validation::validate_initial_tx_gas(
+            ctx.tx(),
+            ctx.cfg().spec().into(),
+            ctx.cfg().is_eip7623_disabled(),
+        )
+        .map_err(From::from)
     }
 
     /* PRE EXECUTION */
