@@ -74,6 +74,7 @@ impl L1BlockInfo {
             let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
 
             Ok(L1BlockInfo {
+                l2_block,
                 l1_base_fee,
                 l1_fee_overhead: Some(l1_fee_overhead),
                 l1_base_fee_scalar: l1_fee_scalar,
@@ -137,6 +138,7 @@ impl L1BlockInfo {
             } else {
                 // Pre-isthmus L1 block info
                 Ok(L1BlockInfo {
+                    l2_block,
                     l1_base_fee,
                     l1_base_fee_scalar,
                     l1_blob_base_fee: Some(l1_blob_base_fee),
