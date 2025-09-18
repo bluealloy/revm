@@ -204,6 +204,7 @@ pub trait Transaction {
     /// This is always strictly less than [`Self::max_balance_spending`].
     ///
     /// Return U256 or error if all values overflow U256 number.
+    #[inline]
     fn effective_balance_spending(
         &self,
         base_fee: u128,
