@@ -79,24 +79,12 @@ impl<
     }
 
     #[inline]
-    fn all_mut(
-        &mut self,
-    ) -> (
-        &mut Self::Block,
-        &mut Self::Tx,
-        &mut Self::Cfg,
-        &mut Self::Journal,
-        &mut Self::Chain,
-        &mut Self::Local,
-    ) {
-        let block = &mut self.block;
-        let tx = &mut self.tx;
-        let cfg = &mut self.cfg;
+    fn all_mut(&mut self) -> (&mut Self::Journal, &mut Self::Chain, &mut Self::Local) {
         let journal = &mut self.journaled_state;
         let chain = &mut self.chain;
         let local = &mut self.local;
 
-        (block, tx, cfg, journal, chain, local)
+        (journal, chain, local)
     }
 
     #[inline]

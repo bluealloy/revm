@@ -46,16 +46,7 @@ pub trait ContextTr: Host {
     );
 
     /// Get all contexts mutably
-    fn all_mut(
-        &mut self,
-    ) -> (
-        &mut Self::Block,
-        &mut Self::Tx,
-        &mut Self::Cfg,
-        &mut Self::Journal,
-        &mut Self::Chain,
-        &mut Self::Local,
-    );
+    fn all_mut(&mut self) -> (&mut Self::Journal, &mut Self::Chain, &mut Self::Local);
 
     /// Get the transaction
     fn tx(&self) -> &Self::Tx {
@@ -79,7 +70,7 @@ pub trait ContextTr: Host {
     }
     /// Get the journal mutably
     fn journal_mut(&mut self) -> &mut Self::Journal {
-        let (_, _, _, journal, _, _) = self.all_mut();
+        let (journal, _, _) = self.all_mut();
         journal
     }
     /// Get the journal reference
@@ -107,7 +98,7 @@ pub trait ContextTr: Host {
     }
     /// Get the chain mutably
     fn chain_mut(&mut self) -> &mut Self::Chain {
-        let (_, _, _, _, chain, _) = self.all_mut();
+        let (_, chain, _) = self.all_mut();
         chain
     }
     /// Get the chain reference
@@ -121,7 +112,7 @@ pub trait ContextTr: Host {
     }
     /// Get the local context mutably
     fn local_mut(&mut self) -> &mut Self::Local {
-        let (_, _, _, _, _, local) = self.all_mut();
+        let (_, _, local) = self.all_mut();
         local
     }
     /// Get the local context reference
