@@ -16,7 +16,10 @@ use revm::{
         evm::FrameTr,
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
-        pre_execution::validate_account_nonce_and_code,
+        pre_execution::{
+            caller_touch_and_change, deduct_caller_balance_with_components,
+            validate_account_nonce_and_code_with_components,
+        },
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
@@ -66,8 +69,6 @@ impl<EVM, ERROR, FRAME> Handler for OpHandler<EVM, ERROR, FRAME>
 where
     EVM: EvmTr<Context: OpContextTr, Frame = FRAME>,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
-    // TODO `FrameResult` should be a generic trait.
-    // TODO `FrameInit` should be a generic.
     FRAME: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
 {
     type Evm = EVM;
@@ -95,117 +96,73 @@ where
         &self,
         evm: &mut Self::Evm,
     ) -> Result<(), Self::Error> {
-        let ctx = evm.ctx();
+        let (block, tx, cfg, journal, chain, _) = evm.ctx().all_mut();
+        let spec = cfg.spec();
 
-        let basefee = ctx.block().basefee() as u128;
-        let blob_price = ctx.block().blob_gasprice().unwrap_or_default();
-        let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        let spec = ctx.cfg().spec();
-        let block_number = ctx.block().number();
-        let is_balance_check_disabled = ctx.cfg().is_balance_check_disabled();
-        let is_eip3607_disabled = ctx.cfg().is_eip3607_disabled();
-        let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
+        if tx.tx_type() == DEPOSIT_TRANSACTION_TYPE {
+            let basefee = block.basefee() as u128;
+            let blob_price = block.blob_gasprice().unwrap_or_default();
+            // deposit skips max fee check and just deducts the effective balance spending.
 
-        let mint = if is_deposit {
-            ctx.tx().mint().unwrap_or_default()
-        } else {
-            0
-        };
+            let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        let mut additional_cost = U256::ZERO;
+            let effective_balance_spending = tx
+                .effective_balance_spending_without_value(basefee, blob_price)
+                .expect("Deposit transaction effective balance spending overflow");
 
-        // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        if !is_deposit && !ctx.cfg().is_fee_charge_disabled() {
-            // L1 block info is stored in the context for later use.
-            // and it will be reloaded from the database if it is not for the current block.
-            if ctx.chain().l2_block != block_number {
-                *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
+            let mut new_balance = caller_account
+                .info
+                .balance
+                .saturating_add(U256::from(tx.mint().unwrap_or_default()))
+                .saturating_sub(effective_balance_spending);
+
+            if cfg.is_balance_check_disabled() {
+                // Make sure the caller's balance is at least the value of the transaction.
+                // this is not consensus critical, and it is used in testing.
+                new_balance = new_balance.max(tx.value());
             }
 
-            // account for additional cost of l1 fee and operator fee
-            let enveloped_tx = ctx
-                .tx()
-                .enveloped_tx()
-                .expect("all not deposit tx have enveloped tx")
-                .clone();
+            let old_balance =
+                caller_touch_and_change(caller_account, new_balance, tx.kind().is_call());
 
-            // compute L1 cost
-            additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
+            // NOTE: all changes to the caller account should journaled so in case of error
+            // we can revert the changes.
+            journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
 
-            // compute operator fee
-            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-                let gas_limit = U256::from(ctx.tx().gas_limit());
-                let operator_fee_charge = ctx.chain().operator_fee_charge(&enveloped_tx, gas_limit);
-                additional_cost = additional_cost.saturating_add(operator_fee_charge);
-            }
+            return Ok(());
         }
 
-        let (tx, journal) = ctx.tx_journal_mut();
+        let additional_cost = if !cfg.is_fee_charge_disabled() {
+            // L1 block info is stored in the context for later use.
+            // and it will be reloaded from the database if it is not for the current block.
+            if chain.l2_block != block.number() {
+                *chain = L1BlockInfo::try_fetch(journal.db_mut(), block.number(), spec)?;
+            }
+            chain.tx_cost_with_tx(tx, spec)
+        } else {
+            U256::ZERO
+        };
 
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        if !is_deposit {
-            // validates account nonce and code
-            validate_account_nonce_and_code(
-                &mut caller_account.info,
-                tx.nonce(),
-                is_eip3607_disabled,
-                is_nonce_check_disabled,
-            )?;
-        }
+        validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
 
-        let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
+        let balance = caller_account.info.balance;
 
-        // old balance is journaled before mint is incremented.
-        let old_balance = caller_account.info.balance;
-
-        // If the transaction is a deposit with a `mint` value, add the mint value
-        // in wei to the caller's balance. This should be persisted to the database
-        // prior to the rest of execution.
-        let mut new_balance = caller_account.info.balance.saturating_add(U256::from(mint));
-
-        // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if !is_deposit && max_balance_spending > new_balance && !is_balance_check_disabled {
-            // skip max balance check for deposit transactions.
-            // this check for deposit was skipped previously in `validate_tx_against_state` function
+        // check additional cost and deduct it from the caller's balances
+        let Some(balance) = balance.checked_sub(additional_cost) else {
             return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: Box::new(max_balance_spending),
-                balance: Box::new(new_balance),
+                fee: Box::new(additional_cost),
+                balance: Box::new(balance),
             }
             .into());
-        }
+        };
 
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
+        // deduct from caller balance the cost of tx
+        let new_balance = deduct_caller_balance_with_components(balance, tx, block, cfg)?;
 
-        // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = effective_balance_spending - tx.value();
-
-        // If the transaction is not a deposit transaction, subtract the L1 data fee from the
-        // caller's balance directly after minting the requested amount of ETH.
-        // Additionally deduct the operator fee from the caller's account.
-        //
-        // In case of deposit additional cost will be zero.
-        let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
-
-        new_balance = new_balance.saturating_sub(op_gas_balance_spending);
-
-        if is_balance_check_disabled {
-            // Make sure the caller's balance is at least the value of the transaction.
-            // this is not consensus critical, and it is used in testing.
-            new_balance = new_balance.max(tx.value());
-        }
-
-        // Touch account so we know it is changed.
-        caller_account.mark_touch();
-        caller_account.info.balance = new_balance;
-
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
+        // Make changes to the caller account and return the old balance.
+        let old_balance = caller_touch_and_change(caller_account, new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.

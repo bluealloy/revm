@@ -227,4 +227,16 @@ pub trait Transaction {
 
         Ok(effective_balance_spending)
     }
+
+    /// Returns the effective balance calculated with [`Self::effective_balance_spending`] but without the value.
+    #[inline]
+    fn effective_balance_spending_without_value(
+        &self,
+        base_fee: u128,
+        blob_price: u128,
+    ) -> Result<U256, InvalidTransaction> {
+        Ok(self
+            .effective_balance_spending(base_fee, blob_price)?
+            .saturating_sub(self.value()))
+    }
 }
