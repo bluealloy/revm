@@ -35,6 +35,7 @@ members = [
     "examples/my_evm",
     "examples/custom_opcodes",
     "examples/custom_precompile_journal",
+    "examples/example-cframe",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

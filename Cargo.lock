@@ -1829,6 +1829,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-cframe"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "revm",
+]
+
+[[package]]
 name = "example-cheatcode-inspector"
 version = "0.0.0"
 dependencies = [
