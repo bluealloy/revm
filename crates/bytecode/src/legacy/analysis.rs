@@ -25,7 +25,7 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         opcode = unsafe { *iterator };
         if opcode == opcode::JUMPDEST {
             // SAFETY: Jumps are max length of the code
-            unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
+            unsafe { jumps.set_unchecked(iterator.offset_from_unsigned(start), true) }
             iterator = unsafe { iterator.add(1) };
         } else {
             let push_offset = opcode.wrapping_sub(opcode::PUSH1);
