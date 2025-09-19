@@ -112,6 +112,7 @@ mod test {
                     .gas_limit(100_000)
                     .authorization_list(vec![Either::Left(auth)])
                     .caller(EEADDRESS)
+                    .gas_priority_fee(Some(0))
                     .kind(TxKind::Call(signer.address()))
                     .build()
                     .unwrap(),
