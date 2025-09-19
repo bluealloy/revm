@@ -273,7 +273,7 @@ where
     fn call_end(&mut self, context: &mut CTX, _: &CallInputs, outcome: &mut CallOutcome) {
         self.gas_inspector.call_end(outcome);
 
-        if context.journal_mut().depth() == 0 {
+        if context.journal_mut().depth() == 1 {
             self.print_summary(&outcome.result, context);
             let _ = self.output.flush();
             // Clear the state if we are at the top level.
@@ -284,7 +284,7 @@ where
     fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
         self.gas_inspector.create_end(outcome);
 
-        if context.journal_mut().depth() == 0 {
+        if context.journal_mut().depth() == 1 {
             self.print_summary(&outcome.result, context);
             let _ = self.output.flush();
             // Clear the state if we are at the top level.

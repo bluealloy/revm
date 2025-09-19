@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 48108,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bls12-381 g2 msm input length error"
+        }
       }
     }
   },

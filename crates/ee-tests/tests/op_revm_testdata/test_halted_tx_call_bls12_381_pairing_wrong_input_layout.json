@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 97444,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bls12-381 fp 64 top bytes of input are not zero"
+        }
       }
     }
   },
