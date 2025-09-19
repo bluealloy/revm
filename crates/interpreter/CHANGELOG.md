@@ -51,6 +51,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.2...revm-interpreter-v26.0.0) - 2025-09-19
+
+### Added
+
+- send bytecode with call input ([#2963](https://github.com/bluealloy/revm/pull/2963))
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- rm eof comments ([#2987](https://github.com/bluealloy/revm/pull/2987))
+- comments on EIP-2929/2930 constants ([#2969](https://github.com/bluealloy/revm/pull/2969))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- remove duplicate comment for TOTAL_COST_FLOOR_PER_TOKEN constant ([#2950](https://github.com/bluealloy/revm/pull/2950))
+- clean static_selfdestruct_cost ([#2944](https://github.com/bluealloy/revm/pull/2944))
+- rename SELFDESTRUCT to SELFDESTRUCT_REFUND ([#2937](https://github.com/bluealloy/revm/pull/2937))
+
 ## [24.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v23.0.2...revm-interpreter-v24.0.0) - 2025-07-23
 
 ### Added

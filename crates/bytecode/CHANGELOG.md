@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.2.3](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.2...revm-bytecode-v6.2.3) - 2025-09-19
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+
+### Other
+
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+
 ## [6.2.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.1...revm-bytecode-v6.2.2) - 2025-08-23
 
 ### Other

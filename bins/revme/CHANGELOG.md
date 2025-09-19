@@ -40,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0](https://github.com/bluealloy/revm/compare/revme-v7.2.2...revme-v8.0.0) - 2025-09-19
+
+### Added
+
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- support 0x prefix in evmrunner hex input ([#2970](https://github.com/bluealloy/revm/pull/2970))
+- *(revme)* Avoid panic on non-UTF filenames in statetest runner ([#2948](https://github.com/bluealloy/revm/pull/2948))
+
+### Other
+
+- pretty print state in revme statetest ([#2979](https://github.com/bluealloy/revm/pull/2979))
+- Fix CLI exit code for invalid bytecode input ([#2968](https://github.com/bluealloy/revm/pull/2968))
+
 ## [7.1.0](https://github.com/bluealloy/revm/compare/revme-v7.0.4...revme-v7.1.0) - 2025-07-23
 
 ### Added

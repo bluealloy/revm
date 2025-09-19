@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v10.0.0...revm-handler-v11.0.0) - 2025-09-19
+
+### Added
+
+- allow EIP-7623 to be disabled ([#2985](https://github.com/bluealloy/revm/pull/2985))
+- send bytecode with call input ([#2963](https://github.com/bluealloy/revm/pull/2963))
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+- interpreter_result_mut should return mutable reference ([#2941](https://github.com/bluealloy/revm/pull/2941))
+- FrameStack mark push/end_init as unsafe ([#2929](https://github.com/bluealloy/revm/pull/2929))
+
+### Other
+
+- prealloc few frames ([#2965](https://github.com/bluealloy/revm/pull/2965))
+- Fix infinite recursion in EthPrecompiles PrecompileProvider methods ([#2962](https://github.com/bluealloy/revm/pull/2962))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- update `EthFrame::invalid` visibility ([#2947](https://github.com/bluealloy/revm/pull/2947))
+- remove unused generic from validate_tx_env and fix call site ([#2946](https://github.com/bluealloy/revm/pull/2946))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+- *(handler)* provide `&CallInputs`to`PrecompileProvider::run` ([#2921](https://github.com/bluealloy/revm/pull/2921))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.1...revm-handler-v10.0.0) - 2025-08-23
 
 ### Added
