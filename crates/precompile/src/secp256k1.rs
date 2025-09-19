@@ -16,6 +16,9 @@
 pub mod bitcoin_secp256k1;
 pub mod k256;
 
+/// Cryptographic operations for secp256k1
+pub mod crypto;
+
 use crate::{
     crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
     PrecompileResult,

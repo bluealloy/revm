@@ -16,6 +16,9 @@ use p256::{
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
+/// Cryptographic operations for secp256r1
+pub mod crypto;
+
 /// Address of secp256r1 precompile.
 pub const P256VERIFY_ADDRESS: u64 = 256;
 
