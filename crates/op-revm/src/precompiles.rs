@@ -34,7 +34,7 @@ impl OpPrecompiles {
             | OpSpecId::ECOTONE) => Precompiles::new(spec.into_eth_spec().into()),
             OpSpecId::FJORD => fjord(),
             OpSpecId::GRANITE | OpSpecId::HOLOCENE => granite(),
-            OpSpecId::ISTHMUS | OpSpecId::INTEROP | OpSpecId::OSAKA => isthmus(),
+            OpSpecId::ISTHMUS | OpSpecId::JOVIAN | OpSpecId::INTEROP | OpSpecId::OSAKA => isthmus(),
         };
 
         Self {
