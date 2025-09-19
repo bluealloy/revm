@@ -25,6 +25,8 @@ pub enum OpSpecId {
     /// Isthmus spec id.
     #[default]
     ISTHMUS,
+    /// Jovian spec id.
+    JOVIAN,
     /// Interop spec id.
     INTEROP,
     /// Osaka spec id.
@@ -38,7 +40,7 @@ impl OpSpecId {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
             Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
-            Self::ISTHMUS | Self::INTEROP => SpecId::PRAGUE,
+            Self::ISTHMUS | Self::JOVIAN | Self::INTEROP => SpecId::PRAGUE,
             Self::OSAKA => SpecId::OSAKA,
         }
     }
@@ -68,6 +70,7 @@ impl FromStr for OpSpecId {
             name::GRANITE => Ok(OpSpecId::GRANITE),
             name::HOLOCENE => Ok(OpSpecId::HOLOCENE),
             name::ISTHMUS => Ok(OpSpecId::ISTHMUS),
+            name::JOVIAN => Ok(OpSpecId::JOVIAN),
             name::INTEROP => Ok(OpSpecId::INTEROP),
             eth_name::OSAKA => Ok(OpSpecId::OSAKA),
             _ => Err(UnknownHardfork),
@@ -86,6 +89,7 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::GRANITE => name::GRANITE,
             OpSpecId::HOLOCENE => name::HOLOCENE,
             OpSpecId::ISTHMUS => name::ISTHMUS,
+            OpSpecId::JOVIAN => name::JOVIAN,
             OpSpecId::INTEROP => name::INTEROP,
             OpSpecId::OSAKA => eth_name::OSAKA,
         }
@@ -110,6 +114,8 @@ pub mod name {
     pub const HOLOCENE: &str = "Holocene";
     /// Isthmus spec name.
     pub const ISTHMUS: &str = "Isthmus";
+    /// Jovian spec name.
+    pub const JOVIAN: &str = "Jovian";
     /// Interop spec name.
     pub const INTEROP: &str = "Interop";
 }

@@ -23,6 +23,9 @@ pub const OPERATOR_FEE_CONSTANT_OFFSET: usize = 24;
 /// Allows users to use 6 decimal points of precision when specifying the operator_fee_scalar.
 pub const OPERATOR_FEE_SCALAR_DECIMAL: u64 = 1_000_000;
 
+/// The Jovian multiplier applied to the operator fee scalar component.
+pub const OPERATOR_FEE_JOVIAN_MULTIPLIER: u64 = 100;
+
 /// The L1 base fee slot.
 pub const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 /// The L1 overhead slot.
