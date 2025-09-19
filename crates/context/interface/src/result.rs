@@ -12,7 +12,7 @@ use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
-use std::{boxed::Box, string::String, vec::Vec};
+use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
 
 /// Trait for the halt reason.
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
@@ -439,6 +439,8 @@ pub enum InvalidTransaction {
     Eip7873NotSupported,
     /// EIP-7873 initcode transaction should have `to` address.
     Eip7873MissingTarget,
+    /// Custom string error for flexible error handling
+    Str(Cow<'static, str>),
 }
 
 impl TransactionError for InvalidTransaction {}
@@ -539,6 +541,7 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip7873MissingTarget => {
                 write!(f, "Eip7873 initcode transaction should have `to` address")
             }
+            Self::Str(msg) => f.write_str(msg),
         }
     }
 }
@@ -641,4 +644,16 @@ pub enum OutOfGasError {
     InvalidOperand,
     /// When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
+}
+
+impl From<&'static str> for InvalidTransaction {
+    fn from(s: &'static str) -> Self {
+        Self::Str(Cow::Borrowed(s))
+    }
+}
+
+impl From<String> for InvalidTransaction {
+    fn from(s: String) -> Self {
+        Self::Str(Cow::Owned(s))
+    }
 }
