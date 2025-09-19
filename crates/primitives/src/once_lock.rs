@@ -45,7 +45,7 @@ mod no_std_impl {
         /// Sets the contents of the OnceLock.
         #[inline]
         pub fn set(&self, value: T) -> Result<(), T> {
-            self.inner.set(Box::new(value)).map_err(|e| e.into_inner())
+            self.inner.set(Box::new(value)).map_err(|e| *e)
         }
     }
 }
