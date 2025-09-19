@@ -396,68 +396,7 @@ impl TxEnvBuilder {
     }
 
     /// Build the final [`TxEnv`] with default values for missing fields.
-    pub fn build_fill(mut self) -> TxEnv {
-        if let Some(tx_type) = self.tx_type {
-            match TransactionType::from(tx_type) {
-                TransactionType::Legacy => {
-                    // do nothing
-                }
-                TransactionType::Eip2930 => {
-                    // do nothing, all fields are set. Access list can be empty.
-                }
-                TransactionType::Eip1559 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        self.gas_priority_fee = Some(0);
-                    }
-                }
-                TransactionType::Eip4844 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        self.gas_priority_fee = Some(0);
-                    }
-
-                    // blob hashes can be empty
-                    if self.blob_hashes.is_empty() {
-                        self.blob_hashes = vec![B256::default()];
-                    }
-
-                    // target is required
-                    if !self.kind.is_call() {
-                        self.kind = TxKind::Call(Address::default());
-                    }
-                }
-                TransactionType::Eip7702 => {
-                    // gas priority fee is required
-                    if self.gas_priority_fee.is_none() {
-                        self.gas_priority_fee = Some(0);
-                    }
-
-                    // authorization list can be empty
-                    if self.authorization_list.is_empty() {
-                        // add dummy authorization
-                        self.authorization_list =
-                            vec![Either::Right(RecoveredAuthorization::new_unchecked(
-                                Authorization {
-                                    chain_id: U256::from(self.chain_id.unwrap_or(1)),
-                                    address: self.caller,
-                                    nonce: self.nonce,
-                                },
-                                RecoveredAuthority::Invalid,
-                            ))];
-                    }
-
-                    // target is required
-                    if !self.kind.is_call() {
-                        self.kind = TxKind::Call(Address::default());
-                    }
-                }
-                TransactionType::Custom => {
-                    // do nothing
-                }
-            }
-        }
-
+    pub fn build_fill(self) -> TxEnv {
         let mut tx = TxEnv {
             tx_type: self.tx_type.unwrap_or(0),
             caller: self.caller,
@@ -488,6 +427,65 @@ impl TxEnvBuilder {
                 Err(DeriveTxTypeError::MissingTargetForEip7873) => {
                     tx.kind = TxKind::Call(Address::default());
                 }
+            }
+        }
+
+        match TransactionType::from(tx.tx_type) {
+            TransactionType::Legacy => {
+                // do nothing
+            }
+            TransactionType::Eip2930 => {
+                // do nothing, all fields are set. Access list can be empty.
+            }
+            TransactionType::Eip1559 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    tx.gas_priority_fee = Some(0);
+                }
+            }
+            TransactionType::Eip4844 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    tx.gas_priority_fee = Some(0);
+                }
+
+                // blob hashes can be empty
+                if tx.blob_hashes.is_empty() {
+                    tx.blob_hashes = vec![B256::default()];
+                }
+
+                // target is required
+                if !tx.kind.is_call() {
+                    tx.kind = TxKind::Call(Address::default());
+                }
+            }
+            TransactionType::Eip7702 => {
+                // gas priority fee is required
+                if tx.gas_priority_fee.is_none() {
+                    tx.gas_priority_fee = Some(0);
+                }
+
+                // authorization list can be empty
+                if tx.authorization_list.is_empty() {
+                    // add dummy authorization
+                    tx.authorization_list =
+                        vec![Either::Right(RecoveredAuthorization::new_unchecked(
+                            Authorization {
+                                chain_id: U256::from(tx.chain_id.unwrap_or(1)),
+                                address: tx.caller,
+                                nonce: tx.nonce,
+                            },
+                            RecoveredAuthority::Invalid,
+                        ))];
+                }
+
+                // target is required
+                if !tx.kind.is_call() {
+                    tx.kind = TxKind::Call(Address::default());
+                }
+            }
+            TransactionType::Custom => {
+                // do nothing
             }
         }
 
