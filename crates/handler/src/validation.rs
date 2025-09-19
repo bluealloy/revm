@@ -261,7 +261,7 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind, U256, B256};
+    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind, B256};
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -559,7 +559,7 @@ mod tests {
     #[test]
     fn test_transact_many_with_transaction_index_error() {
         use context::result::TransactionIndexedError;
-        
+
         let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
         let mut evm = ctx.build_mainnet();
 
@@ -570,41 +570,47 @@ mod tests {
             .unwrap();
 
         // Create a valid transaction
-        let valid_tx = TxEnv::builder()
-            .gas_limit(100000)
-            .build()
-            .unwrap();
+        let valid_tx = TxEnv::builder().gas_limit(100000).build().unwrap();
 
         // Test that the first transaction fails with index 0
         let result = evm.transact_many([invalid_tx.clone()].into_iter());
         assert!(matches!(
             result,
-            Err(TransactionIndexedError { transaction_index: 0, .. })
+            Err(TransactionIndexedError {
+                transaction_index: 0,
+                ..
+            })
         ));
 
         // Test that the second transaction fails with index 1
         let result = evm.transact_many([valid_tx, invalid_tx].into_iter());
         assert!(matches!(
             result,
-            Err(TransactionIndexedError { transaction_index: 1, .. })
+            Err(TransactionIndexedError {
+                transaction_index: 1,
+                ..
+            })
         ));
     }
 
     #[test]
     fn test_transact_many_success() {
         use primitives::{address, U256};
-        
+
         let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
         let mut evm = ctx.build_mainnet();
 
         // Add balance to the caller account
         let caller = address!("0x0000000000000000000000000000000000000001");
-        evm.db_mut().insert_account_info(caller, AccountInfo::new(
-            U256::from(1000000000000000000u64), 
-            0, 
-            B256::ZERO, 
-            Bytecode::new()
-        ));
+        evm.db_mut().insert_account_info(
+            caller,
+            AccountInfo::new(
+                U256::from(1000000000000000000u64),
+                0,
+                B256::ZERO,
+                Bytecode::new(),
+            ),
+        );
 
         // Create valid transactions with proper data
         let tx1 = TxEnv::builder()
@@ -628,23 +634,19 @@ mod tests {
         if let Err(e) = &result {
             println!("Error: {:?}", e);
         }
-        assert!(result.is_ok());
-        let outputs = result.unwrap();
+        let outputs = result.expect("All transactions should succeed");
         assert_eq!(outputs.len(), 2);
     }
 
     #[test]
     fn test_transact_many_finalize_with_error() {
         use context::result::TransactionIndexedError;
-        
+
         let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
         let mut evm = ctx.build_mainnet();
 
         // Create transactions where the second one fails
-        let valid_tx = TxEnv::builder()
-            .gas_limit(100000)
-            .build()
-            .unwrap();
+        let valid_tx = TxEnv::builder().gas_limit(100000).build().unwrap();
 
         let invalid_tx = TxEnv::builder()
             .gas_limit(0) // This will cause a validation error
@@ -655,14 +657,17 @@ mod tests {
         let result = evm.transact_many_finalize([valid_tx, invalid_tx].into_iter());
         assert!(matches!(
             result,
-            Err(TransactionIndexedError { transaction_index: 1, .. })
+            Err(TransactionIndexedError {
+                transaction_index: 1,
+                ..
+            })
         ));
     }
 
     #[test]
     fn test_transact_many_commit_with_error() {
         use context::result::TransactionIndexedError;
-        
+
         let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
         let mut evm = ctx.build_mainnet();
 
@@ -672,16 +677,16 @@ mod tests {
             .build()
             .unwrap();
 
-        let valid_tx = TxEnv::builder()
-            .gas_limit(100000)
-            .build()
-            .unwrap();
+        let valid_tx = TxEnv::builder().gas_limit(100000).build().unwrap();
 
         // Test that transact_many_commit returns the error with correct index
         let result = evm.transact_many_commit([invalid_tx, valid_tx].into_iter());
         assert!(matches!(
             result,
-            Err(TransactionIndexedError { transaction_index: 0, .. })
+            Err(TransactionIndexedError {
+                transaction_index: 0,
+                ..
+            })
         ));
     }
 }

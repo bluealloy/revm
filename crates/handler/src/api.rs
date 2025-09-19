@@ -13,6 +13,10 @@ use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
 use std::vec::Vec;
 
+/// Type alias for the result of transact_many_finalize to reduce type complexity.
+type TransactManyFinalizeResult<ExecutionResult, State, Error> =
+    Result<ResultVecAndState<ExecutionResult, State>, TransactionIndexedError<Error>>;
+
 /// Execute EVM transactions. Main trait for transaction execution.
 pub trait ExecuteEvm {
     /// Output of transaction execution.
@@ -88,9 +92,13 @@ pub trait ExecuteEvm {
     ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
         let mut outputs = Vec::new();
         for (index, tx) in txs.enumerate() {
-            outputs.push(self.transact_one(tx).inspect_err(|_| {
-                let _ = self.finalize();
-            }).map_err(|error| TransactionIndexedError::new(error, index))?);
+            outputs.push(
+                self.transact_one(tx)
+                    .inspect_err(|_| {
+                        let _ = self.finalize();
+                    })
+                    .map_err(|error| TransactionIndexedError::new(error, index))?,
+            );
         }
         Ok(outputs)
     }
@@ -102,7 +110,7 @@ pub trait ExecuteEvm {
     fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, TransactionIndexedError<Self::Error>> {
+    ) -> TransactManyFinalizeResult<Self::ExecutionResult, Self::State, Self::Error> {
         // on error transact_multi will clear the journal
         let result = self.transact_many(txs)?;
         let state = self.finalize();

@@ -655,16 +655,12 @@ pub struct TransactionIndexedError<Error> {
 
 impl<Error> TransactionIndexedError<Error> {
     /// Create a new `TransactionIndexedError` with the given error and transaction index.
+    #[must_use]
     pub fn new(error: Error, transaction_index: usize) -> Self {
         Self {
             error,
             transaction_index,
         }
-    }
-
-    /// Get the transaction index.
-    pub fn transaction_index(&self) -> usize {
-        self.transaction_index
     }
 
     /// Get a reference to the underlying error.
@@ -673,6 +669,7 @@ impl<Error> TransactionIndexedError<Error> {
     }
 
     /// Convert into the underlying error.
+    #[must_use]
     pub fn into_error(self) -> Error {
         self.error
     }
@@ -680,7 +677,11 @@ impl<Error> TransactionIndexedError<Error> {
 
 impl<Error: fmt::Display> fmt::Display for TransactionIndexedError<Error> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "transaction {} failed: {}", self.transaction_index, self.error)
+        write!(
+            f,
+            "transaction {} failed: {}",
+            self.transaction_index, self.error
+        )
     }
 }
 
