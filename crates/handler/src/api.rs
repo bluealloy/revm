@@ -4,7 +4,7 @@ use crate::{
 use context::{
     result::{
         EVMError, ExecResultAndState, ExecutionResult, HaltReason, InvalidTransaction,
-        ResultAndState, ResultVecAndState,
+        ResultAndState, ResultVecAndState, TransactionIndexedError,
     },
     Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
@@ -79,19 +79,18 @@ pub trait ExecuteEvm {
     ///
     /// # Outcome of Error
     ///
-    /// If any transaction fails, the journal is finalized and the last error is returned.
-    ///
-    /// TODO add tx index to the error.
+    /// If any transaction fails, the journal is finalized and the error is returned with the
+    /// transaction index that failed.
     #[inline]
     fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
+    ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
         let mut outputs = Vec::new();
-        for tx in txs {
+        for (index, tx) in txs.enumerate() {
             outputs.push(self.transact_one(tx).inspect_err(|_| {
                 let _ = self.finalize();
-            })?);
+            }).map_err(|error| TransactionIndexedError::new(error, index))?);
         }
         Ok(outputs)
     }
@@ -103,7 +102,7 @@ pub trait ExecuteEvm {
     fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, Self::Error> {
+    ) -> Result<ResultVecAndState<Self::ExecutionResult, Self::State>, TransactionIndexedError<Self::Error>> {
         // on error transact_multi will clear the journal
         let result = self.transact_many(txs)?;
         let state = self.finalize();
@@ -145,7 +144,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<Vec<Self::ExecutionResult>, Self::Error> {
+    ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
         let outputs = self.transact_many(txs)?;
         self.commit_inner();
         Ok(outputs)

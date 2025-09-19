@@ -642,3 +642,50 @@ pub enum OutOfGasError {
     /// When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
 }
+
+/// Error that includes transaction index for batch transaction processing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TransactionIndexedError<Error> {
+    /// The original error that occurred.
+    pub error: Error,
+    /// The index of the transaction that failed.
+    pub transaction_index: usize,
+}
+
+impl<Error> TransactionIndexedError<Error> {
+    /// Create a new `TransactionIndexedError` with the given error and transaction index.
+    pub fn new(error: Error, transaction_index: usize) -> Self {
+        Self {
+            error,
+            transaction_index,
+        }
+    }
+
+    /// Get the transaction index.
+    pub fn transaction_index(&self) -> usize {
+        self.transaction_index
+    }
+
+    /// Get a reference to the underlying error.
+    pub fn error(&self) -> &Error {
+        &self.error
+    }
+
+    /// Convert into the underlying error.
+    pub fn into_error(self) -> Error {
+        self.error
+    }
+}
+
+impl<Error: fmt::Display> fmt::Display for TransactionIndexedError<Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "transaction {} failed: {}", self.transaction_index, self.error)
+    }
+}
+
+impl<Error: core::error::Error + 'static> core::error::Error for TransactionIndexedError<Error> {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        Some(&self.error)
+    }
+}
