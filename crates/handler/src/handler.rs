@@ -457,7 +457,7 @@ pub trait Handler {
         match core::mem::replace(evm.ctx().error(), Ok(())) {
             Err(ContextError::Db(e)) => return Err(e.into()),
             Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
-            Ok(_) => (),
+            Ok(()) => (),
         }
 
         let exec_result = post_execution::output(evm.ctx(), result);
