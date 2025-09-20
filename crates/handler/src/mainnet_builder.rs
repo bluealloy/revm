@@ -75,7 +75,8 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, Journal<EmptyDB>,
 mod test {
     use crate::ExecuteEvm;
     use crate::{MainBuilder, MainContext};
-    use alloy_signer::{Either, SignerSync};
+    use context_interface::either::Either;
+    use alloy_signer::SignerSync;
     use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
         opcode::{PUSH1, SSTORE},
