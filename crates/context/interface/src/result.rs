@@ -439,7 +439,7 @@ pub enum InvalidTransaction {
     Eip7873NotSupported,
     /// EIP-7873 initcode transaction should have `to` address.
     Eip7873MissingTarget,
-    /// Custom string error for flexible error handling
+    /// Custom string error for flexible error handling.
     Str(Cow<'static, str>),
 }
 
