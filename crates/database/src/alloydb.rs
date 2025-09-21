@@ -120,10 +120,9 @@ mod tests {
     use super::*;
     use alloy_provider::ProviderBuilder;
     use database_interface::{DatabaseRef, WrapDatabaseAsync};
+    use primitives::KECCAK_EMPTY;
 
-    #[tokio::test]
-    #[ignore = "flaky RPC"]
-    async fn can_get_basic() {
+    async fn get_real_account_info() -> AccountInfo {
         let client = ProviderBuilder::new()
             .connect("https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27")
             .await
@@ -137,7 +136,136 @@ mod tests {
             .parse()
             .unwrap();
 
-        let acc_info = wrapped_alloydb.basic_ref(address).unwrap().unwrap();
+        wrapped_alloydb.basic_ref(address).unwrap().unwrap()
+    }
+
+    #[tokio::test]
+    #[ignore = "flaky RPC"]
+    async fn test_account_info_all_scenarios() {
+        // Get account once
+        let acc_info = get_real_account_info().await;
         assert!(acc_info.exists());
+
+        test_full_roundtrip(&acc_info);
+
+        test_rpc_format(&acc_info);
+
+        test_camel_case_format(&acc_info);
+
+        test_unknown_fields(&acc_info);
+
+        test_partial_data(&acc_info);
+    }
+
+    fn test_full_roundtrip(original: &AccountInfo) {
+        let serialized = serde_json::to_string(original).unwrap();
+        let deserialized: AccountInfo = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(original.balance, deserialized.balance);
+        assert_eq!(original.nonce, deserialized.nonce);
+        assert_eq!(original.code_hash, deserialized.code_hash);
+        assert_eq!(original.code.is_some(), deserialized.code.is_some());
+    }
+
+    fn test_rpc_format(original: &AccountInfo) {
+        let json_rpc_format = serde_json::json!({
+            "balance": original.balance,
+            "nonce": original.nonce,
+            "code": original.code
+        });
+
+        let account: AccountInfo = serde_json::from_value(json_rpc_format).unwrap();
+
+        assert_eq!(account.balance, original.balance);
+        assert_eq!(account.nonce, original.nonce);
+        assert_eq!(account.code_hash, original.code_hash);
+        assert!(account.code.is_some());
+    }
+
+    fn test_camel_case_format(original: &AccountInfo) {
+        let json_rpc_format = serde_json::json!({
+            "balance": original.balance,
+            "nonce": original.nonce,
+            "codeHash": original.code_hash,  // camelCase
+            "code": original.code
+        });
+
+        let account: AccountInfo = serde_json::from_value(json_rpc_format).unwrap();
+
+        assert_eq!(account.balance, original.balance);
+        assert_eq!(account.nonce, original.nonce);
+        assert_eq!(account.code_hash, original.code_hash);
+        assert!(account.code.is_some());
+    }
+
+    fn test_unknown_fields(original: &AccountInfo) {
+        let json_rpc_format = serde_json::json!({
+            "balance": original.balance,
+            "nonce": original.nonce,
+            "code": original.code,
+            "storage_root": "0x1234567890abcdef", // unknown fields
+            "unknown_field": "should_be_ignored",
+            "extra_data": [1, 2, 3, 4]
+        });
+
+        let account: AccountInfo = serde_json::from_value(json_rpc_format).unwrap();
+
+        assert_eq!(account.balance, original.balance);
+        assert_eq!(account.nonce, original.nonce);
+        assert_eq!(account.code_hash, original.code_hash);
+        assert!(account.code.is_some());
+    }
+
+    fn test_partial_data(original: &AccountInfo) {
+        let json_rpc_format = serde_json::json!({
+            "balance": original.balance,
+            "nonce": original.nonce,
+            "code_hash": original.code_hash
+        });
+
+        let account: AccountInfo = serde_json::from_value(json_rpc_format).unwrap();
+
+        assert_eq!(account.balance, original.balance);
+        assert_eq!(account.nonce, original.nonce);
+        assert_eq!(account.code_hash, original.code_hash);
+        assert!(account.code.is_none()); // Code should be None when not provided
+    }
+
+    #[test]
+    fn test_edge_cases() {
+        // Test missing required fields
+        let json_missing_balance = r#"{"nonce": 1}"#;
+        let json_missing_nonce = r#"{"balance": "0x1000"}"#;
+
+        assert!(serde_json::from_str::<AccountInfo>(json_missing_balance).is_err());
+        assert!(serde_json::from_str::<AccountInfo>(json_missing_nonce).is_err());
+        // Test empty account
+        let empty_account = serde_json::json!({
+            "balance": "0x0",
+            "nonce": 0
+        });
+
+        let account: AccountInfo = serde_json::from_value(empty_account).unwrap();
+        assert!(account.is_empty());
+        assert_eq!(account.code_hash, KECCAK_EMPTY);
+        assert!(account.code.is_none());
+    }
+
+    #[test]
+    fn test_account_info_deserialize_edge_cases() {
+        let json_missing_balance = r#"{"nonce": 1}"#;
+        let json_missing_nonce = r#"{"balance": "0x1000"}"#;
+
+        assert!(serde_json::from_str::<AccountInfo>(json_missing_balance).is_err());
+        assert!(serde_json::from_str::<AccountInfo>(json_missing_nonce).is_err());
+
+        let empty_account = serde_json::json!({
+            "balance": "0x0",
+            "nonce": 0
+        });
+
+        let account: AccountInfo = serde_json::from_value(empty_account).unwrap();
+        assert!(account.is_empty());
+        assert_eq!(account.code_hash, KECCAK_EMPTY);
+        assert!(account.code.is_none());
     }
 }
