@@ -35,7 +35,6 @@ members = [
     "examples/my_evm",
     "examples/custom_opcodes",
     "examples/custom_precompile_journal",
-    "examples/example-cframe",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
@@ -101,7 +100,10 @@ clap = { version = "4", features = ["derive"] }
 criterion = { package = "codspeed-criterion-compat", version = "3.0" }
 
 # serde
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"] }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+] }
 serde_json = { version = "1.0", default-features = false }
 
 # misc

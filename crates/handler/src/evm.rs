@@ -20,9 +20,9 @@ pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameR
 #[auto_impl(&mut, Box)]
 pub trait FrameTr {
     /// The result type returned when a frame completes execution.
-    type FrameResult: Into<FrameResult>;
+    type FrameResult: From<FrameResult> + Into<FrameResult>;
     /// The initialization type used to create a new frame.
-    type FrameInit: Into<FrameInit>;
+    type FrameInit: Into<FrameInit> + Clone;
 }
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
@@ -115,7 +115,7 @@ where
         frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<CTX>> {
         let is_first_init = self.frame_stack.index().is_none();
-        let new_frame = if is_first_init {
+        let mut new_frame = if is_first_init {
             self.frame_stack.start_init()
         } else {
             self.frame_stack.get_next()
@@ -123,9 +123,12 @@ where
 
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input)?;
 
-        Ok(res.map_frame(|token| {
+        let frame = new_frame.get(EthFrame::invalid);
+        let res = frame.init(ctx, precompiles, frame_input)?;
+        let token = new_frame.consume();
+
+        Ok(res.map_frame(|_| {
             if is_first_init {
                 unsafe { self.frame_stack.end_init(token) };
             } else {
@@ -146,11 +149,11 @@ where
             .interpreter
             .run_plain(instructions.instruction_table(), context);
 
-        frame.process_next_action(context, action).inspect(|i| {
-            if i.is_result() {
-                frame.set_finished(true);
-            }
-        })
+        let res = frame.process_next_action(context, action);
+        if res.is_result() {
+            frame.set_finished(true);
+        }
+        Ok(res)
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.

@@ -2,9 +2,11 @@ use context::ContextTr;
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrame, EvmTr, FrameInitOrResult, ItemOrResult,
+    EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
-use interpreter::{interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterTypes};
+use interpreter::{
+    interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterAction, InterpreterTypes,
+};
 
 use crate::{
     handler::{frame_end, frame_start},
@@ -18,7 +20,7 @@ use crate::{
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
 pub trait InspectorEvmTr:
     EvmTr<
-    Frame = EthFrame<EthInterpreter>,
+    Frame: InspectorFrame<IT = EthInterpreter>,
     Instructions: InstructionProvider<InterpreterTypes = EthInterpreter, Context = Self::Context>,
     Context: ContextTr<Journal: JournalExt>,
 >
@@ -55,19 +57,20 @@ pub trait InspectorEvmTr:
     #[inline]
     fn inspect_frame_init(
         &mut self,
-        mut frame_init: <Self::Frame as FrameTr>::FrameInit,
+        frame_init: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>> {
+        let mut eth_frame_init = frame_init.clone().into();
         let (ctx, inspector) = self.ctx_inspector();
-        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_init.frame_input) {
-            frame_end(ctx, inspector, &frame_init.frame_input, &mut output);
-            return Ok(ItemOrResult::Result(output));
+        if let Some(mut output) = frame_start(ctx, inspector, &mut eth_frame_init.frame_input) {
+            frame_end(ctx, inspector, &eth_frame_init.frame_input, &mut output);
+            return Ok(ItemOrResult::Result(output.into()));
         }
 
-        let frame_input = frame_init.frame_input.clone();
-        if let ItemOrResult::Result(mut output) = self.frame_init(frame_init)? {
+        if let ItemOrResult::Result(output) = self.frame_init(frame_init)? {
             let (ctx, inspector) = self.ctx_inspector();
-            frame_end(ctx, inspector, &frame_input, &mut output);
-            return Ok(ItemOrResult::Result(output));
+            let mut output = output.into();
+            frame_end(ctx, inspector, &eth_frame_init.frame_input, &mut output);
+            return Ok(ItemOrResult::Result(output.into()));
         }
 
         // if it is new frame, initialize the interpreter.
@@ -113,6 +116,12 @@ pub trait InspectorFrame: FrameTr {
 
     /// Returns a reference to the frame input. Frame input is needed for call/create/eofcreate [`crate::Inspector`] methods
     fn frame_input(&self) -> &FrameInput;
+
+    // fn process_next_action(
+    //     &mut self,
+    //     ctx: &mut Context,
+    //     action: InterpreterAction,
+    // ) -> FrameInitOrResult<Self>;
 }
 
 /// Impl InspectorFrame for EthFrame.
@@ -126,4 +135,12 @@ impl InspectorFrame for EthFrame<EthInterpreter> {
     fn frame_input(&self) -> &FrameInput {
         &self.input
     }
+
+    // fn process_next_action(
+    //     &mut self,
+    //     ctx: &mut Context,
+    //     action: InterpreterAction,
+    // ) -> FrameInitOrResult<Self> {
+    //     self.process_next_action(ctx, action)
+    // }
 }

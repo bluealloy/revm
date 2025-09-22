@@ -4,7 +4,6 @@ use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
 use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
 use context::result::FromStringError;
 use context_interface::context::ContextError;
-use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
@@ -132,20 +131,20 @@ impl EthFrame<EthInterpreter> {
         *checkpoint_ref = checkpoint;
     }
 
-    /// Make call frame
+    /// Initialize call frame
     #[inline]
-    pub fn make_call_frame<
+    pub fn init_call_frame<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        &mut self,
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<(), FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
@@ -211,7 +210,7 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
+        self.clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -225,21 +224,21 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             checkpoint,
         );
-        Ok(ItemOrResult::Item(this.consume()))
+        Ok(ItemOrResult::Item(()))
     }
 
     /// Make create frame.
     #[inline]
-    pub fn make_create_frame<
+    pub fn init_create_frame<
         CTX: ContextTr,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        &mut self,
         context: &mut CTX,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<(), FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -314,7 +313,7 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit;
 
-        this.get(EthFrame::invalid).clear(
+        self.clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -326,20 +325,20 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             checkpoint,
         );
-        Ok(ItemOrResult::Item(this.consume()))
+        Ok(ItemOrResult::Item(()))
     }
 
     /// Initializes a frame with the given context and precompiles.
-    pub fn init_with_context<
+    pub fn init<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
     >(
-        this: OutFrame<'_, Self>,
+        &mut self,
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
     ) -> Result<
-        ItemOrResult<FrameToken, FrameResult>,
+        ItemOrResult<(), FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
         // TODO cleanup inner make functions
@@ -351,9 +350,9 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                self.init_call_frame(ctx, precompiles, depth, memory, inputs)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => self.init_create_frame(ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -361,14 +360,11 @@ impl EthFrame<EthInterpreter> {
 
 impl EthFrame<EthInterpreter> {
     /// Processes the next interpreter action, either creating a new frame or returning a result.
-    pub fn process_next_action<
-        CTX: ContextTr,
-        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
-    >(
+    pub fn process_next_action<CTX: ContextTr>(
         &mut self,
         context: &mut CTX,
         next_action: InterpreterAction,
-    ) -> Result<FrameInitOrResult<Self>, ERROR> {
+    ) -> FrameInitOrResult<Self> {
         let spec = context.cfg().spec().into();
 
         // Run interpreter
@@ -376,11 +372,11 @@ impl EthFrame<EthInterpreter> {
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(frame_input) => {
                 let depth = self.depth + 1;
-                return Ok(ItemOrResult::Item(FrameInit {
+                return ItemOrResult::Item(FrameInit {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
-                }));
+                });
             }
             InterpreterAction::Return(result) => result,
         };
@@ -420,7 +416,7 @@ impl EthFrame<EthInterpreter> {
             }
         };
 
-        Ok(result)
+        result
     }
 
     /// Processes a frame result and updates the interpreter state accordingly.
@@ -564,6 +560,7 @@ pub fn return_create<JOURNAL: JournalTr>(
             interpreter_result.output = Bytes::new();
         }
     }
+
     // If we have enough gas we can commit changes.
     journal.checkpoint_commit();
 
