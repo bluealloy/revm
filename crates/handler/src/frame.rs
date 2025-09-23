@@ -1,5 +1,4 @@
 use crate::evm::FrameTr;
-use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
 use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
 use context::result::FromStringError;
@@ -17,8 +16,8 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::ReturnData,
     CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterResult, InterpreterTypes, SharedMemory,
+    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterResult,
+    InterpreterTypes, SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -359,66 +358,6 @@ impl EthFrame<EthInterpreter> {
 }
 
 impl EthFrame<EthInterpreter> {
-    /// Processes the next interpreter action, either creating a new frame or returning a result.
-    pub fn process_next_action<CTX: ContextTr>(
-        &mut self,
-        context: &mut CTX,
-        next_action: InterpreterAction,
-    ) -> FrameInitOrResult<Self> {
-        let spec = context.cfg().spec().into();
-
-        // Run interpreter
-
-        let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(frame_input) => {
-                let depth = self.depth + 1;
-                return ItemOrResult::Item(FrameInit {
-                    frame_input,
-                    depth,
-                    memory: self.interpreter.memory.new_child_context(),
-                });
-            }
-            InterpreterAction::Return(result) => result,
-        };
-
-        // Handle return from frame
-        let result = match &self.data {
-            FrameData::Call(frame) => {
-                // return_call
-                // Revert changes or not.
-                if interpreter_result.result.is_ok() {
-                    context.journal_mut().checkpoint_commit();
-                } else {
-                    context.journal_mut().checkpoint_revert(self.checkpoint);
-                }
-                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                    interpreter_result,
-                    frame.return_memory_range.clone(),
-                )))
-            }
-            FrameData::Create(frame) => {
-                let max_code_size = context.cfg().max_code_size();
-                let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
-                return_create(
-                    context.journal_mut(),
-                    self.checkpoint,
-                    &mut interpreter_result,
-                    frame.created_address,
-                    max_code_size,
-                    is_eip3541_disabled,
-                    spec,
-                );
-
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
-            }
-        };
-
-        result
-    }
-
     /// Processes a frame result and updates the interpreter state accordingly.
     pub fn return_result<CTX: ContextTr, ERROR: From<ContextTrDbError<CTX>> + FromStringError>(
         &mut self,
@@ -511,40 +450,49 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
+/// Result of frame return
+#[derive(Debug, Clone)]
+pub enum CheckpointResult {
+    // Revert the journal checkpoint.
+    Revert,
+    // Commit the journal checkpoint.
+    Commit,
+    // Set the code for the address and commit the journal checkpoint.
+    SetCode {
+        address: Address,
+        bytecode: Bytecode,
+    },
+}
+
 /// Handles the result of a CREATE operation, including validation and state updates.
-pub fn return_create<JOURNAL: JournalTr>(
-    journal: &mut JOURNAL,
-    checkpoint: JournalCheckpoint,
+pub fn return_create<CFG: Cfg>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
-    max_code_size: usize,
-    is_eip3541_disabled: bool,
-    spec_id: SpecId,
-) {
+    cfg: CFG,
+) -> CheckpointResult {
+    let spec = cfg.spec().into();
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
-        journal.checkpoint_revert(checkpoint);
-        return;
+        return CheckpointResult::Revert;
     }
     // Host error if present on execution
     // If ok, check contract creation limit and calculate gas deduction on output len.
     //
     // EIP-3541: Reject new contract code starting with the 0xEF byte
-    if !is_eip3541_disabled
-        && spec_id.is_enabled_in(LONDON)
+    if !cfg.is_eip3541_disabled()
+        && spec.is_enabled_in(LONDON)
         && interpreter_result.output.first() == Some(&0xEF)
     {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-        return;
+        return CheckpointResult::Revert;
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
     // EIP-7907 increased this limit to 0xc000 (~49kb).
-    if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
+    if spec.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > cfg.max_code_size()
+    {
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
+        return CheckpointResult::Revert;
     }
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
@@ -552,23 +500,17 @@ pub fn return_create<JOURNAL: JournalTr>(
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract
         // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-        if spec_id.is_enabled_in(HOMESTEAD) {
-            journal.checkpoint_revert(checkpoint);
+        if spec.is_enabled_in(HOMESTEAD) {
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return CheckpointResult::Revert;
         } else {
             interpreter_result.output = Bytes::new();
         }
     }
 
-    // If we have enough gas we can commit changes.
-    journal.checkpoint_commit();
-
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
-    journal.set_code(address, bytecode);
-
     interpreter_result.result = InstructionResult::Return;
+    return CheckpointResult::SetCode { address, bytecode };
 }

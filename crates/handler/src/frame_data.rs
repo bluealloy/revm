@@ -1,7 +1,10 @@
+use context::Cfg;
 use context_interface::result::Output;
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
+
+use crate::{frame::CheckpointResult, return_create};
 
 /// Call Frame
 #[derive(Debug, Clone)]
@@ -31,6 +34,45 @@ pub enum FrameData {
     Create(CreateFrame),
 }
 
+impl FrameData {
+    /// Processes the next interpreter action, either creating a new frame or returning a result.
+    pub fn process_next_action<CFG: Cfg>(
+        &self,
+        cfg: CFG,
+        mut interpreter_result: InterpreterResult,
+    ) -> (FrameResult, CheckpointResult) {
+        // Handle return from frame
+        let result = match self {
+            FrameData::Call(frame) => {
+                let is_ok = interpreter_result.result.is_ok();
+                let res = if is_ok {
+                    CheckpointResult::Commit
+                } else {
+                    CheckpointResult::Revert
+                };
+
+                (
+                    FrameResult::new_call(interpreter_result, frame.return_memory_range.clone()),
+                    res,
+                )
+            }
+            FrameData::Create(frame) => {
+                let res = return_create(&mut interpreter_result, frame.created_address, cfg);
+
+                (
+                    FrameResult::Create(CreateOutcome::new(
+                        interpreter_result,
+                        Some(frame.created_address),
+                    )),
+                    res,
+                )
+            }
+        };
+
+        result
+    }
+}
+
 /// Frame Result
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -42,6 +84,19 @@ pub enum FrameResult {
 }
 
 impl FrameResult {
+    /// Creates a new call frame result.
+    pub fn new_call(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
+        Self::Call(CallOutcome {
+            result,
+            memory_offset,
+        })
+    }
+
+    /// Creates a new create frame result.
+    pub fn new_create(outcome: CreateOutcome) -> Self {
+        Self::Create(outcome)
+    }
+
     /// Casts frame result to interpreter result.
     #[inline]
     pub fn into_interpreter_result(self) -> InterpreterResult {

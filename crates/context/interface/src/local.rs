@@ -107,7 +107,17 @@ impl<T> FrameStack<T> {
 
     /// Returns the current item.
     #[inline]
-    pub fn get(&mut self) -> &mut T {
+    pub fn get(&self) -> &T {
+        debug_assert!(
+            self.stack.capacity() > self.index.unwrap(),
+            "Stack capacity is not enough for index"
+        );
+        unsafe { &*self.stack.as_ptr().add(self.index.unwrap()) }
+    }
+
+    /// Returns the current item.
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut T {
         debug_assert!(
             self.stack.capacity() > self.index.unwrap(),
             "Stack capacity is not enough for index"

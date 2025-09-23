@@ -1,11 +1,14 @@
 use crate::{
-    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrame, FrameResult,
-    ItemOrResult, PrecompileProvider,
+    frame::CheckpointResult, instructions::InstructionProvider, item_or_result::FrameInitOrResult,
+    EthFrame, FrameResult, ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameStack};
+use context::{ContextTr, Database, Evm, FrameStack, JournalTr};
 use context_interface::context::ContextError;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{
+    interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterAction,
+    InterpreterResult,
+};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;
@@ -39,27 +42,25 @@ pub trait EvmTr {
     /// The type containing the frame
     type Frame: FrameTr;
 
-    /// Returns a mutable reference to the execution context
-    fn ctx(&mut self) -> &mut Self::Context;
+    /// Returns a tuple of references to the context, the frame and the instructions.
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    );
 
-    /// Returns a mutable reference to the execution context
-    fn ctx_mut(&mut self) -> &mut Self::Context {
-        self.ctx()
-    }
-
-    /// Returns an immutable reference to the execution context
-    fn ctx_ref(&self) -> &Self::Context;
-
-    /// Returns mutable references to both the context and instruction set.
-    /// This enables atomic access to both components when needed.
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
-
-    /// Returns mutable references to both the context and precompiles.
-    /// This enables atomic access to both components when needed.
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
-
-    /// Returns a mutable reference to the frame stack.
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame>;
+    /// Returns a tuple of mutable references to the context, the frame and the instructions.
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    );
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     fn frame_init(
@@ -80,6 +81,41 @@ pub trait EvmTr {
         &mut self,
         result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
+
+    /// Returns a mutable reference to the execution context
+    fn ctx(&mut self) -> &mut Self::Context {
+        self.all_mut().0
+    }
+
+    /// Returns a mutable reference to the execution context
+    fn ctx_mut(&mut self) -> &mut Self::Context {
+        self.all_mut().0
+    }
+
+    /// Returns an immutable reference to the execution context
+    fn ctx_ref(&self) -> &Self::Context {
+        self.all().0
+    }
+
+    /// Returns mutable references to both the context and instruction set.
+    /// This enables atomic access to both components when needed.
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
+        let (ctx, instructions, _, _) = self.all_mut();
+        (ctx, instructions)
+    }
+
+    /// Returns mutable references to both the context and precompiles.
+    /// This enables atomic access to both components when needed.
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
+        let (ctx, _, precompiles, _) = self.all_mut();
+        (ctx, precompiles)
+    }
+
+    /// Returns a mutable reference to the frame stack.
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
+        let (_, _, _, frame_stack) = self.all_mut();
+        frame_stack
+    }
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
@@ -93,19 +129,34 @@ where
     type Precompiles = P;
     type Frame = EthFrame<EthInterpreter>;
 
-    #[inline]
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.ctx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    ) {
+        let ctx = &self.ctx;
+        let instructions = &self.instruction;
+        let precompiles = &self.precompiles;
+        let frame_stack = &self.frame_stack;
+        (ctx, instructions, precompiles, frame_stack)
     }
 
-    #[inline]
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.ctx
-    }
-
-    #[inline]
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        &mut self.frame_stack
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    ) {
+        let ctx = &mut self.ctx;
+        let instructions = &mut self.instruction;
+        let precompiles = &mut self.precompiles;
+        let frame_stack = &mut self.frame_stack;
+        (ctx, instructions, precompiles, frame_stack)
     }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
@@ -134,14 +185,14 @@ where
             } else {
                 unsafe { self.frame_stack.push(token) };
             }
-            self.frame_stack.get()
+            self.frame_stack.get_mut()
         }))
     }
 
     /// Run the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
-        let frame = self.frame_stack.get();
+        let frame = self.frame_stack.get_mut();
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
 
@@ -149,11 +200,33 @@ where
             .interpreter
             .run_plain(instructions.instruction_table(), context);
 
-        let res = frame.process_next_action(context, action);
-        if res.is_result() {
-            frame.set_finished(true);
+        match action {
+            InterpreterAction::NewFrame(frame_input) => {
+                let depth = frame.depth + 1;
+                Ok(FrameInitOrResult::<Self::Frame>::Item(FrameInit {
+                    frame_input,
+                    depth,
+                    memory: frame.interpreter.memory.new_child_context(),
+                }))
+            }
+            InterpreterAction::Return(result) => {
+                let res = frame.data.process_next_action(context.cfg(), result);
+                let (frame_result, checkpoint_result) = res;
+                match checkpoint_result {
+                    CheckpointResult::Commit => {
+                        context.journal_mut().checkpoint_commit();
+                    }
+                    CheckpointResult::Revert => {
+                        context.journal_mut().checkpoint_revert(frame.checkpoint);
+                    }
+                    CheckpointResult::SetCode { address, bytecode } => {
+                        context.journal_mut().set_code(address, bytecode);
+                        context.journal_mut().checkpoint_commit();
+                    }
+                }
+                Ok(FrameInitOrResult::<Self::Frame>::Result(frame_result))
+            }
         }
-        Ok(res)
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
@@ -169,18 +242,8 @@ where
             return Ok(Some(result));
         }
         self.frame_stack
-            .get()
+            .get_mut()
             .return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
         Ok(None)
-    }
-
-    #[inline]
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.ctx, &mut self.instruction)
-    }
-
-    #[inline]
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.ctx, &mut self.precompiles)
     }
 }
