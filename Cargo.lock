@@ -3034,7 +3034,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "op-revm"
-version = "10.0.0"
+version = "10.1.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -3772,7 +3772,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "29.0.0"
+version = "29.0.1"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3802,7 +3802,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "9.0.2"
+version = "9.1.0"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -3818,7 +3818,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context-interface"
-version = "10.1.0"
+version = "10.2.0"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -3874,7 +3874,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "10.0.0"
+version = "10.0.1"
 dependencies = [
  "alloy-eip7702",
  "alloy-provider",
@@ -3896,7 +3896,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "10.0.0"
+version = "10.0.1"
 dependencies = [
  "auto_impl",
  "either",
@@ -3913,7 +3913,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "25.0.2"
+version = "25.0.3"
 dependencies = [
  "bincode 2.0.1",
  "revm-bytecode",
@@ -3974,7 +3974,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "9.0.2"
+version = "9.0.3"
 dependencies = [
  "k256",
  "revm",
@@ -3985,7 +3985,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "7.2.2"
+version = "7.2.3"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
