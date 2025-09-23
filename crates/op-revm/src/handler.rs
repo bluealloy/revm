@@ -115,30 +115,32 @@ where
         let mut additional_cost = U256::ZERO;
 
         // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        if !is_deposit && !ctx.cfg().is_fee_charge_disabled() {
+        if !is_deposit {
             // L1 block info is stored in the context for later use.
             // and it will be reloaded from the database if it is not for the current block.
             if ctx.chain().l2_block != block_number {
                 *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
             }
 
-            // account for additional cost of l1 fee and operator fee
-            let enveloped_tx = ctx
-                .tx()
-                .enveloped_tx()
-                .expect("all not deposit tx have enveloped tx")
-                .clone();
+            if !ctx.cfg().is_fee_charge_disabled() {
+                // account for additional cost of l1 fee and operator fee
+                let enveloped_tx = ctx
+                    .tx()
+                    .enveloped_tx()
+                    .expect("all not deposit tx have enveloped tx")
+                    .clone();
 
-            // compute L1 cost
-            additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
+                // compute L1 cost
+                additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
 
-            // compute operator fee
-            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-                let gas_limit = U256::from(ctx.tx().gas_limit());
-                let operator_fee_charge =
-                    ctx.chain()
-                        .operator_fee_charge(&enveloped_tx, gas_limit, spec);
-                additional_cost = additional_cost.saturating_add(operator_fee_charge);
+                // compute operator fee
+                if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                    let gas_limit = U256::from(ctx.tx().gas_limit());
+                    let operator_fee_charge =
+                        ctx.chain()
+                            .operator_fee_charge(&enveloped_tx, gas_limit, spec);
+                    additional_cost = additional_cost.saturating_add(operator_fee_charge);
+                }
             }
         }
 
@@ -289,7 +291,9 @@ where
     ) -> Result<(), Self::Error> {
         let mut additional_refund = U256::ZERO;
 
-        if evm.ctx().tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
+        if evm.ctx().tx().tx_type() != DEPOSIT_TRANSACTION_TYPE
+            && !evm.ctx().cfg().is_fee_charge_disabled()
+        {
             let spec = evm.ctx().cfg().spec();
             additional_refund = evm
                 .ctx()
