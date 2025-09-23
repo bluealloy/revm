@@ -205,7 +205,8 @@ macro_rules! as_u64_saturated {
     ($v:expr) => {
         match $v.as_limbs() {
             x => {
-                if (x[1] == 0) & (x[2] == 0) & (x[3] == 0) {
+                // Use short-circuiting logical AND for clarity; equivalent to bitwise AND on bools
+                if (x[1] == 0) && (x[2] == 0) && (x[3] == 0) {
                     x[0]
                 } else {
                     u64::MAX
@@ -264,7 +265,8 @@ macro_rules! as_usize_or_fail_ret {
     ($interpreter:expr, $v:expr, $reason:expr, $ret:expr) => {
         match $v.as_limbs() {
             x => {
-                if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
+                // Use short-circuiting logical OR for clarity; equivalent to bitwise OR on bools
+                if (x[0] > usize::MAX as u64) || (x[1] != 0) || (x[2] != 0) || (x[3] != 0) {
                     $interpreter.halt($reason);
                     return $ret;
                 }
