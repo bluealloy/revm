@@ -70,24 +70,36 @@ where
     type Precompiles = EthPrecompiles;
     type Frame = MyFrame<EthInterpreter>;
 
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.ctx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    ) {
+        (
+            &self.ctx,
+            &self.instruction,
+            &self.precompiles,
+            &self.frame_stack,
+        )
     }
 
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.ctx
-    }
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.ctx, &mut self.instruction)
-    }
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.ctx, &mut self.precompiles)
-    }
-
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        &mut self.frame_stack
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    ) {
+        (
+            &mut self.ctx,
+            &mut self.instruction,
+            &mut self.precompiles,
+            &mut self.frame_stack,
+        )
     }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
@@ -117,14 +129,14 @@ where
             } else {
                 unsafe { self.frame_stack.push(token) };
             }
-            self.frame_stack.get()
+            self.frame_stack.get_mut()
         }))
     }
 
     /// Run the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
-        let frame = self.frame_stack.get();
+        let frame = self.frame_stack.get_mut();
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
 
@@ -133,14 +145,15 @@ where
             .interpreter
             .run_plain(instructions.instruction_table(), context);
 
-        frame
-            .eth_frame
-            .process_next_action(context, action)
-            .inspect(|i| {
-                if i.is_result() {
-                    frame.set_finished(true);
-                }
-            })
+        //        frame
+        // .eth_frame
+        // .process_next_action(context.cfg(), action)
+        // .inspect(|i| {
+        //     if i.is_result() {
+        //         frame.set_finished(true);
+        //     }
+        // })
+        todo!()
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
@@ -156,7 +169,7 @@ where
             return Ok(Some(result));
         }
         self.frame_stack
-            .get()
+            .get_mut()
             .eth_frame
             .return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
         Ok(None)

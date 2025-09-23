@@ -464,6 +464,12 @@ pub enum CheckpointResult {
     },
 }
 
+impl CheckpointResult {
+    pub fn is_revert(&self) -> bool {
+        matches!(self, CheckpointResult::Revert)
+    }
+}
+
 /// Handles the result of a CREATE operation, including validation and state updates.
 pub fn return_create<CFG: Cfg>(
     interpreter_result: &mut InterpreterResult,

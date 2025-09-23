@@ -1,6 +1,6 @@
 use crate::{
     frame::CheckpointResult, instructions::InstructionProvider, item_or_result::FrameInitOrResult,
-    EthFrame, FrameResult, ItemOrResult, PrecompileProvider,
+    EthFrame, ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack, JournalTr};
@@ -23,9 +23,9 @@ pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameR
 #[auto_impl(&mut, Box)]
 pub trait FrameTr {
     /// The result type returned when a frame completes execution.
-    type FrameResult: From<FrameResult> + Into<FrameResult>;
+    type FrameResult;
     /// The initialization type used to create a new frame.
-    type FrameInit: Into<FrameInit> + Clone;
+    type FrameInit;
 }
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.

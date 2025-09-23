@@ -2,7 +2,7 @@ use context::{ContextTr, FrameStack, JournalTr};
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrame, EvmTr, FrameInitOrResult, ItemOrResult,
+    EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
 use interpreter::{
     interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterAction, InterpreterTypes,
@@ -112,8 +112,9 @@ pub trait InspectorEvmTr:
 
         // if it is new frame, initialize the interpreter.
         let (ctx, inspector, frame) = self.ctx_inspector_frame();
-        let interp = &mut frame.eth_frame().interpreter;
-        inspector.initialize_interp(interp, ctx);
+        if let Some(frame) = &mut frame.eth_frame() {
+            inspector.initialize_interp(&mut frame.interpreter, ctx);
+        }
         Ok(ItemOrResult::Item(frame))
     }
 
@@ -126,64 +127,70 @@ pub trait InspectorEvmTr:
     ) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector, frame, instructions) = self.ctx_inspector_frame_instructions();
 
-        /*
-        // We can push logic into frame. This is little bit different from ordinary execution.
+        if let Some(eth_frame) = frame.eth_frame() {
+            let action = inspect_instructions(
+                ctx,
+                &mut eth_frame.interpreter,
+                inspector,
+                instructions.instruction_table(),
+            );
 
-        // We can fetch needed fields as option from Frame and do logic on top of it
-
-        Need to leek the interpreter return type and return type to be able to .into() Frame::Result.
-
-
-
-
-         */
-
-        let eth_frame = frame.eth_frame();
-
-        let action = inspect_instructions(
-            ctx,
-            interpreter,
-            inspector,
-            instructions.instruction_table(),
-        );
-
-        match action {
-            InterpreterAction::NewFrame(frame_input) => {
-                Ok(FrameInitOrResult::<Self::Frame>::Item(FrameInit {
-                    frame_input,
-                    depth: depth + 1,
-                    memory: frame.interpreter.memory.new_child_context(),
-                }))
-            }
-            InterpreterAction::Return(result) => {
-                let res = frame_data.process_next_action(ctx.cfg(), result);
-                let (frame_result, checkpoint_result) = res;
-                if checkpoint_result.is_commit() {
-                    ctx.journal_mut().checkpoint_commit();
-                } else {
-                    ctx.journal_mut().checkpoint_revert(checkpoint);
+            match action {
+                InterpreterAction::NewFrame(frame_input) => {
+                    Ok(FrameInitOrResult::<Self::Frame>::Item(
+                        <Self::Frame as FrameTr>::FrameInit::from(FrameInit {
+                            frame_input,
+                            depth: eth_frame.depth + 1,
+                            memory: eth_frame.interpreter.memory.new_child_context(),
+                        }),
+                    ))
                 }
-                let (ctx, inspector, mut frame) = self.ctx_inspector_frame();
-                frame_end(ctx, inspector, frame.frame_input(), frame_result);
-                Ok(FrameInitOrResult::<Self::Frame>::Result(frame_result))
+                InterpreterAction::Return(result) => {
+                    let res = eth_frame.data.process_next_action(ctx.cfg(), result);
+                    let (mut frame_result, checkpoint_result) = res;
+                    if checkpoint_result.is_revert() {
+                        ctx.journal_mut().checkpoint_revert(eth_frame.checkpoint);
+                    } else {
+                        ctx.journal_mut().checkpoint_commit();
+                    }
+                    frame_end(ctx, inspector, &eth_frame.input, &mut frame_result);
+                    Ok(FrameInitOrResult::<Self::Frame>::Result(
+                        frame_result.into(),
+                    ))
+                }
             }
+        } else {
+            self.frame_run()
         }
     }
 }
 
 /// Trait that extends the [`FrameTr`] trait with additional functionality that is needed for inspection.
-pub trait InspectorFrame: FrameTr {
+pub trait InspectorFrame:
+    FrameTr<
+    FrameResult: From<FrameResult> + Into<FrameResult>,
+    FrameInit: From<FrameInit> + Into<FrameInit> + Clone,
+>
+{
     /// The interpreter types used by this frame.
     type IT: InterpreterTypes;
 
-    fn eth_frame(&mut self) -> &mut EthFrame<Self::IT>;
+    /// Returns a mutable reference to the inner EthFrame if it exists.
+    ///
+    /// If EthFrame is not used inside frame following Inspector functions are going to be skipped for this frame:
+    /// * [`crate::Inspector::initialize_interp`]
+    /// * [`crate::Inspector::step`]
+    /// * [`crate::Inspector::step_end`]
+    /// * [`crate::Inspector::log`]
+    /// * [`crate::Inspector::selfdestruct`]
+    fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>>;
 }
 
 /// Impl InspectorFrame for EthFrame.
 impl InspectorFrame for EthFrame<EthInterpreter> {
     type IT = EthInterpreter;
 
-    fn eth_frame(&mut self) -> &mut EthFrame<Self::IT> {
-        self
+    fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>> {
+        Some(self)
     }
 }

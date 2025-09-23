@@ -65,36 +65,34 @@ where
 {
     type Inspector = INSP;
 
-    fn inspector(&mut self) -> &mut Self::Inspector {
-        &mut self.0.inspector
-    }
-
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.0.ctx, &mut self.0.inspector)
-    }
-
-    fn ctx_inspector_frame(
-        &mut self,
-    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Inspector,
+        &Self::Instructions,
+        &FrameStack<Self::Frame>,
+    ) {
         (
-            &mut self.0.ctx,
-            &mut self.0.inspector,
-            self.0.frame_stack.get(),
+            &self.0.ctx,
+            &self.0.inspector,
+            &self.0.instruction,
+            &self.0.frame_stack,
         )
     }
 
-    fn ctx_inspector_frame_instructions(
+    fn all_mut_inspector(
         &mut self,
     ) -> (
         &mut Self::Context,
         &mut Self::Inspector,
-        &mut Self::Frame,
+        &mut FrameStack<Self::Frame>,
         &mut Self::Instructions,
     ) {
         (
             &mut self.0.ctx,
             &mut self.0.inspector,
-            self.0.frame_stack.get(),
+            &mut self.0.frame_stack,
             &mut self.0.instruction,
         )
     }
@@ -111,24 +109,36 @@ where
     type Precompiles = P;
     type Frame = EthFrame<EthInterpreter>;
 
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.0.ctx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    ) {
+        (
+            &self.0.ctx,
+            &self.0.instruction,
+            &self.0.precompiles,
+            &self.0.frame_stack,
+        )
     }
 
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.0.ctx
-    }
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.0.ctx, &mut self.0.instruction)
-    }
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.0.ctx, &mut self.0.precompiles)
-    }
-
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        &mut self.0.frame_stack
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    ) {
+        (
+            &mut self.0.ctx,
+            &mut self.0.instruction,
+            &mut self.0.precompiles,
+            &mut self.0.frame_stack,
+        )
     }
 
     fn frame_init(

@@ -200,7 +200,7 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
 pub fn inspect_instructions<CTX, IT>(
     context: &mut CTX,
     interpreter: &mut Interpreter<IT>,
-    mut inspector: impl Inspector<CTX, IT>,
+    inspector: &mut impl Inspector<CTX, IT>,
     instructions: &InstructionTable<IT, CTX>,
 ) -> InterpreterAction
 where
@@ -217,7 +217,7 @@ where
         interpreter.step(instructions, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
-            inspect_log(interpreter, context, &mut inspector);
+            inspect_log(interpreter, context, inspector);
         }
 
         inspector.step_end(interpreter, context);
@@ -232,7 +232,7 @@ where
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            inspect_selfdestruct(context, &mut inspector);
+            inspect_selfdestruct(context, inspector);
         }
     }
 
