@@ -94,6 +94,7 @@ optional_eip3541 = ["context/optional_eip3541"]
 optional_eip3607 = ["context/optional_eip3607"]
 optional_eip7623 = ["context/optional_eip7623"]
 optional_no_base_fee = ["context/optional_no_base_fee"]
+optional_fee_charge = ["context/optional_fee_charge"]
 
 # Precompiles features: Please look at the comments in `precompile` crate for more information.
 
