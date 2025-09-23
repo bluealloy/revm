@@ -78,7 +78,8 @@ fn return_inner(
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, offset, len);
-        output = interpreter.memory.slice_len(offset, len).to_vec().into()
+        // Avoid intermediate Vec allocation; construct Bytes directly from the slice
+        output = Bytes::copy_from_slice(interpreter.memory.slice_len(offset, len));
     }
 
     interpreter
