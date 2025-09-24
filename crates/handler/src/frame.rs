@@ -107,6 +107,7 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => {
                 let (frame_result, checkpoint_result) = self.data.process_next_action(cfg, result);
                 checkpoint_result.apply_to_journal(journal, self.checkpoint);
+                self.is_finished = true;
                 FrameInitOrResult::<Self>::Result(frame_result)
             }
         }

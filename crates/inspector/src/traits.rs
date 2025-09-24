@@ -141,7 +141,11 @@ pub trait InspectorEvmTr:
             Ok(eth_frame
                 .process_next_action(cfg, journal, action)
                 .map(|frame_init| frame_init.into())
-                .map_result(|r| r.into()))
+                .map_result(|mut r| {
+                    // call inspector.
+                    frame_end(ctx, inspector, &eth_frame.input, &mut r);
+                    r.into()
+                }))
         } else {
             self.frame_run()
         }
