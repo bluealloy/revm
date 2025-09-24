@@ -109,6 +109,8 @@ where
     type Precompiles = P;
     type Frame = EthFrame<EthInterpreter>;
 
+    #[inline]
+    #[allow(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -125,6 +127,8 @@ where
         )
     }
 
+    #[inline]
+    #[allow(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (

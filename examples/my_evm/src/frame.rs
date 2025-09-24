@@ -1,6 +1,7 @@
 use derive_where::derive_where;
 use revm::{
     handler::{EthFrame, FrameResult, FrameTr},
+    inspector::InspectorFrameTr,
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterTypes},
 };
 
@@ -76,5 +77,13 @@ impl MyFrame<EthInterpreter> {
     /// Set the finished state of the frame
     pub fn set_finished(&mut self, finished: bool) {
         self.eth_frame.set_finished(finished);
+    }
+}
+
+impl InspectorFrameTr for MyFrame<EthInterpreter> {
+    type IT = EthInterpreter;
+
+    fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>> {
+        Some(&mut self.eth_frame)
     }
 }

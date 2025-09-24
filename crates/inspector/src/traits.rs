@@ -1,12 +1,10 @@
-use context::{ContextTr, FrameStack, JournalTr};
+use context::{ContextTr, FrameStack};
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
     EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
-use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterAction, InterpreterTypes,
-};
+use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterTypes};
 
 use crate::{
     handler::{frame_end, frame_start},
@@ -20,7 +18,7 @@ use crate::{
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
 pub trait InspectorEvmTr:
     EvmTr<
-    Frame: InspectorFrame<IT = EthInterpreter>,
+    Frame: InspectorFrameTr<IT = EthInterpreter>,
     Instructions: InstructionProvider<InterpreterTypes = EthInterpreter, Context = Self::Context>,
     Context: ContextTr<Journal: JournalExt>,
 >
@@ -31,6 +29,7 @@ pub trait InspectorEvmTr:
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
+    #[allow(clippy::type_complexity)]
     fn all_inspector(
         &self,
     ) -> (
@@ -43,6 +42,7 @@ pub trait InspectorEvmTr:
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
+    #[allow(clippy::type_complexity)]
     fn all_mut_inspector(
         &mut self,
     ) -> (
@@ -135,30 +135,13 @@ pub trait InspectorEvmTr:
                 instructions.instruction_table(),
             );
 
-            match action {
-                InterpreterAction::NewFrame(frame_input) => {
-                    Ok(FrameInitOrResult::<Self::Frame>::Item(
-                        <Self::Frame as FrameTr>::FrameInit::from(FrameInit {
-                            frame_input,
-                            depth: eth_frame.depth + 1,
-                            memory: eth_frame.interpreter.memory.new_child_context(),
-                        }),
-                    ))
-                }
-                InterpreterAction::Return(result) => {
-                    let res = eth_frame.data.process_next_action(ctx.cfg(), result);
-                    let (mut frame_result, checkpoint_result) = res;
-                    if checkpoint_result.is_revert() {
-                        ctx.journal_mut().checkpoint_revert(eth_frame.checkpoint);
-                    } else {
-                        ctx.journal_mut().checkpoint_commit();
-                    }
-                    frame_end(ctx, inspector, &eth_frame.input, &mut frame_result);
-                    Ok(FrameInitOrResult::<Self::Frame>::Result(
-                        frame_result.into(),
-                    ))
-                }
-            }
+            let (_, _, cfg, journal, _, _) = ctx.all_mut();
+
+            // process the next action and cast both FrameInit and FrameResult to the frame type.
+            Ok(eth_frame
+                .process_next_action(cfg, journal, action)
+                .map(|frame_init| frame_init.into())
+                .map_result(|r| r.into()))
         } else {
             self.frame_run()
         }
@@ -166,7 +149,7 @@ pub trait InspectorEvmTr:
 }
 
 /// Trait that extends the [`FrameTr`] trait with additional functionality that is needed for inspection.
-pub trait InspectorFrame:
+pub trait InspectorFrameTr:
     FrameTr<
     FrameResult: From<FrameResult> + Into<FrameResult>,
     FrameInit: From<FrameInit> + Into<FrameInit> + Clone,
@@ -186,8 +169,8 @@ pub trait InspectorFrame:
     fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>>;
 }
 
-/// Impl InspectorFrame for EthFrame.
-impl InspectorFrame for EthFrame<EthInterpreter> {
+/// Impl InspectorFrameTr for EthFrame.
+impl InspectorFrameTr for EthFrame<EthInterpreter> {
     type IT = EthInterpreter;
 
     fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>> {

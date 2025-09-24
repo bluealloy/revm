@@ -1,7 +1,8 @@
 use crate::evm::FrameTr;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
+use crate::{CallFrame, CreateFrame, FrameData, FrameInitOrResult, FrameResult};
 use context::result::FromStringError;
+use context::Host;
 use context_interface::context::ContextError;
 use context_interface::ContextTr;
 use context_interface::{
@@ -19,6 +20,7 @@ use interpreter::{
     FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterResult,
     InterpreterTypes, SharedMemory,
 };
+use interpreter::{InstructionTable, InterpreterAction};
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
@@ -84,6 +86,32 @@ impl EthFrame<EthInterpreter> {
         }
     }
 
+    /// Processes the next interpreter action, either creating a new frame or returning a result.
+    #[inline]
+    pub fn process_next_action<JOURNAL: JournalTr, CFG: Cfg>(
+        &mut self,
+        cfg: &CFG,
+        journal: &mut JOURNAL,
+        action: InterpreterAction,
+    ) -> FrameInitOrResult<Self> {
+        match action {
+            InterpreterAction::NewFrame(frame_input) => {
+                let depth = self.depth + 1;
+                let memory = self.interpreter.memory.new_child_context();
+                FrameInitOrResult::<Self>::Item(FrameInit {
+                    frame_input,
+                    depth,
+                    memory,
+                })
+            }
+            InterpreterAction::Return(result) => {
+                let (frame_result, checkpoint_result) = self.data.process_next_action(cfg, result);
+                checkpoint_result.apply_to_journal(journal, self.checkpoint);
+                FrameInitOrResult::<Self>::Result(frame_result)
+            }
+        }
+    }
+
     /// Returns true if the frame has finished execution.
     pub fn is_finished(&self) -> bool {
         self.is_finished
@@ -92,6 +120,19 @@ impl EthFrame<EthInterpreter> {
     /// Sets the finished state of the frame.
     pub fn set_finished(&mut self, finished: bool) {
         self.is_finished = finished;
+    }
+
+    /// Runs the interpreter and processes the next action.
+    #[inline]
+    pub fn run_and_process_next_action<CTX: ContextTr + Host + ?Sized>(
+        &mut self,
+        ctx: &mut CTX,
+        instruction_table: &InstructionTable<EthInterpreter, CTX>,
+    ) -> FrameInitOrResult<Self> {
+        let action = self.interpreter.run_plain(instruction_table, ctx);
+
+        let (_, _, cfg, journal, _, _) = ctx.all_mut();
+        self.process_next_action(cfg, journal, action)
     }
 }
 
@@ -465,8 +506,21 @@ pub enum CheckpointResult {
 }
 
 impl CheckpointResult {
-    pub fn is_revert(&self) -> bool {
-        matches!(self, CheckpointResult::Revert)
+    /// Apply the checkpoint result to the journal.
+    #[inline]
+    pub fn apply_to_journal<JOURNAL: JournalTr>(
+        &self,
+        journal: &mut JOURNAL,
+        checkpoint: JournalCheckpoint,
+    ) {
+        match self {
+            CheckpointResult::Revert => journal.checkpoint_revert(checkpoint),
+            CheckpointResult::Commit => journal.checkpoint_commit(),
+            CheckpointResult::SetCode { address, bytecode } => {
+                journal.set_code(*address, bytecode.clone());
+                journal.checkpoint_commit();
+            }
+        }
     }
 }
 
@@ -518,5 +572,5 @@ pub fn return_create<CFG: Cfg>(
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
     interpreter_result.result = InstructionResult::Return;
-    return CheckpointResult::SetCode { address, bytecode };
+    CheckpointResult::SetCode { address, bytecode }
 }

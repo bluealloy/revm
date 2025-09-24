@@ -1,11 +1,13 @@
 use revm::{
-    context::{ContextTr, FrameStack},
+    context::{ContextSetters, ContextTr, FrameStack},
     handler::{
         evm::{ContextDbError, FrameInitResult, FrameTr},
         instructions::{EthInstructions, InstructionProvider},
         EthFrame, EthPrecompiles, EvmTr, FrameInitOrResult,
     },
+    inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
+    Inspector,
 };
 
 use crate::frame::MyFrame;
@@ -136,24 +138,12 @@ where
     /// Run the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
-        let frame = self.frame_stack.get_mut();
-        let context = &mut self.ctx;
-        let instructions = &mut self.instruction;
+        let (context, instructions, _, frame_stack) = self.all_mut();
+        let frame = frame_stack.get_mut();
 
-        let action = frame
+        Ok(frame
             .eth_frame
-            .interpreter
-            .run_plain(instructions.instruction_table(), context);
-
-        //        frame
-        // .eth_frame
-        // .process_next_action(context.cfg(), action)
-        // .inspect(|i| {
-        //     if i.is_result() {
-        //         frame.set_finished(true);
-        //     }
-        // })
-        todo!()
+            .run_and_process_next_action(context, instructions.instruction_table()))
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
@@ -176,35 +166,42 @@ where
     }
 }
 
-// impl<CTX: ContextTr, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
-// where
-//     CTX: ContextSetters<Journal: JournalExt>,
-//     INSP: Inspector<CTX, EthInterpreter>,
-// {
-//     type Inspector = INSP;
+impl<CTX: ContextTr, INSP> InspectorEvmTr for MyEvm<CTX, INSP>
+where
+    CTX: ContextSetters<Journal: JournalExt>,
+    INSP: Inspector<CTX, EthInterpreter>,
+{
+    type Inspector = INSP;
 
-//     fn inspector(&mut self) -> &mut Self::Inspector {
-//         self.0.inspector()
-//     }
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Inspector,
+        &Self::Instructions,
+        &FrameStack<Self::Frame>,
+    ) {
+        (
+            &self.ctx,
+            &self.inspector,
+            &self.instruction,
+            &self.frame_stack,
+        )
+    }
 
-//     fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-//         self.0.ctx_inspector()
-//     }
-
-//     fn ctx_inspector_frame(
-//         &mut self,
-//     ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
-//         self.0.ctx_inspector_frame()
-//     }
-
-//     fn ctx_inspector_frame_instructions(
-//         &mut self,
-//     ) -> (
-//         &mut Self::Context,
-//         &mut Self::Inspector,
-//         &mut Self::Frame,
-//         &mut Self::Instructions,
-//     ) {
-//         self.0.ctx_inspector_frame_instructions()
-//     }
-// }
+    fn all_mut_inspector(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Inspector,
+        &mut FrameStack<Self::Frame>,
+        &mut Self::Instructions,
+    ) {
+        (
+            &mut self.ctx,
+            &mut self.inspector,
+            &mut self.frame_stack,
+            &mut self.instruction,
+        )
+    }
+}

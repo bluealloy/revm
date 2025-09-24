@@ -42,34 +42,27 @@ impl FrameData {
         mut interpreter_result: InterpreterResult,
     ) -> (FrameResult, CheckpointResult) {
         // Handle return from frame
-        let result = match self {
+        match self {
             FrameData::Call(frame) => {
                 let is_ok = interpreter_result.result.is_ok();
-                let res = if is_ok {
-                    CheckpointResult::Commit
-                } else {
-                    CheckpointResult::Revert
-                };
-
                 (
                     FrameResult::new_call(interpreter_result, frame.return_memory_range.clone()),
-                    res,
+                    if is_ok {
+                        CheckpointResult::Commit
+                    } else {
+                        CheckpointResult::Revert
+                    },
                 )
             }
             FrameData::Create(frame) => {
                 let res = return_create(&mut interpreter_result, frame.created_address, cfg);
 
                 (
-                    FrameResult::Create(CreateOutcome::new(
-                        interpreter_result,
-                        Some(frame.created_address),
-                    )),
+                    FrameResult::new_create(interpreter_result, Some(frame.created_address)),
                     res,
                 )
             }
-        };
-
-        result
+        }
     }
 }
 
@@ -93,8 +86,8 @@ impl FrameResult {
     }
 
     /// Creates a new create frame result.
-    pub fn new_create(outcome: CreateOutcome) -> Self {
-        Self::Create(outcome)
+    pub fn new_create(result: InterpreterResult, address: Option<Address>) -> Self {
+        Self::Create(CreateOutcome::new(result, address))
     }
 
     /// Casts frame result to interpreter result.

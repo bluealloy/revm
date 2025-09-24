@@ -1,14 +1,11 @@
 use crate::{
-    frame::CheckpointResult, instructions::InstructionProvider, item_or_result::FrameInitOrResult,
-    EthFrame, ItemOrResult, PrecompileProvider,
+    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrame, FrameResult,
+    ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameStack, JournalTr};
+use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
-use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterAction,
-    InterpreterResult,
-};
+use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;
@@ -23,9 +20,9 @@ pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameR
 #[auto_impl(&mut, Box)]
 pub trait FrameTr {
     /// The result type returned when a frame completes execution.
-    type FrameResult;
+    type FrameResult: From<FrameResult>;
     /// The initialization type used to create a new frame.
-    type FrameInit;
+    type FrameInit: From<FrameInit>;
 }
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
@@ -43,6 +40,7 @@ pub trait EvmTr {
     type Frame: FrameTr;
 
     /// Returns a tuple of references to the context, the frame and the instructions.
+    #[allow(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -53,6 +51,7 @@ pub trait EvmTr {
     );
 
     /// Returns a tuple of mutable references to the context, the frame and the instructions.
+    #[allow(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (
@@ -129,6 +128,8 @@ where
     type Precompiles = P;
     type Frame = EthFrame<EthInterpreter>;
 
+    #[inline]
+    #[allow(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -144,6 +145,8 @@ where
         (ctx, instructions, precompiles, frame_stack)
     }
 
+    #[inline]
+    #[allow(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (
@@ -192,41 +195,10 @@ where
     /// Run the frame from the top of the stack. Returns the frame init or result.
     #[inline]
     fn frame_run(&mut self) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<CTX>> {
-        let frame = self.frame_stack.get_mut();
-        let context = &mut self.ctx;
-        let instructions = &mut self.instruction;
+        let (context, instructions, _, frame_stack) = self.all_mut();
+        let frame = frame_stack.get_mut();
 
-        let action = frame
-            .interpreter
-            .run_plain(instructions.instruction_table(), context);
-
-        match action {
-            InterpreterAction::NewFrame(frame_input) => {
-                let depth = frame.depth + 1;
-                Ok(FrameInitOrResult::<Self::Frame>::Item(FrameInit {
-                    frame_input,
-                    depth,
-                    memory: frame.interpreter.memory.new_child_context(),
-                }))
-            }
-            InterpreterAction::Return(result) => {
-                let res = frame.data.process_next_action(context.cfg(), result);
-                let (frame_result, checkpoint_result) = res;
-                match checkpoint_result {
-                    CheckpointResult::Commit => {
-                        context.journal_mut().checkpoint_commit();
-                    }
-                    CheckpointResult::Revert => {
-                        context.journal_mut().checkpoint_revert(frame.checkpoint);
-                    }
-                    CheckpointResult::SetCode { address, bytecode } => {
-                        context.journal_mut().set_code(address, bytecode);
-                        context.journal_mut().checkpoint_commit();
-                    }
-                }
-                Ok(FrameInitOrResult::<Self::Frame>::Result(frame_result))
-            }
-        }
+        Ok(frame.run_and_process_next_action(context, instructions.instruction_table()))
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
