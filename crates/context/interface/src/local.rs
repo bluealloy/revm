@@ -105,7 +105,7 @@ impl<T> FrameStack<T> {
         self.index = self.index.unwrap_or(0).checked_sub(1);
     }
 
-    /// Returns the current item.
+    /// Returns the reference to the last item.
     #[inline]
     pub fn get(&self) -> &T {
         debug_assert!(
@@ -115,7 +115,7 @@ impl<T> FrameStack<T> {
         unsafe { &*self.stack.as_ptr().add(self.index.unwrap()) }
     }
 
-    /// Returns the current item.
+    /// Returns the mutable reference to the last item.
     #[inline]
     pub fn get_mut(&mut self) -> &mut T {
         debug_assert!(
