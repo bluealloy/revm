@@ -22,7 +22,7 @@ use crate::frame::MyFrame;
 /// inspection capabilities while maintaining the standard Ethereum execution semantics.
 #[derive(Debug)]
 pub struct MyEvm<CTX, INSP> {
-    /// [`context_interface::ContextTr`] of the EVM it is used to fetch data from database.
+    /// [`revm::context_interface::ContextTr`] of the EVM, it is used to fetch data from database.
     pub ctx: CTX,
     /// Inspector of the EVM it is used to inspect the EVM.
     /// Its trait are defined in revm-inspector crate.
