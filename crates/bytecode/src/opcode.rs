@@ -182,7 +182,6 @@ impl OpCode {
         matches!(
             *self,
             OpCode::EXTCODECOPY
-                | OpCode::MLOAD
                 | OpCode::MSTORE
                 | OpCode::MSTORE8
                 | OpCode::MCOPY
@@ -769,7 +768,7 @@ mod tests {
 
     #[test]
     fn test_modifies_memory() {
-        assert!(OpCode::new(MLOAD).unwrap().modifies_memory());
+        assert!(!OpCode::new(MLOAD).unwrap().modifies_memory());
         assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
         assert!(!OpCode::new(ADD).unwrap().modifies_memory());
     }
