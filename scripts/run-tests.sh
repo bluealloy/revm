@@ -101,7 +101,7 @@ download_and_extract() {
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
-    mkdir -p "$MAIN_STABLE_DIR" "$MAIN_DEVELOP_DIR" "$MAIN_STATIC_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
+    mkdir -p "$MAIN_STABLE_DIR" "$MAIN_DEVELOP_DIR" "$MAIN_STATIC_DIR" "$DEVNET_DIR"
 
     download_and_extract "$MAIN_STABLE_DIR" "$MAIN_STABLE_TAR" "main stable" "$MAIN_VERSION"
     download_and_extract "$MAIN_DEVELOP_DIR" "$MAIN_DEVELOP_TAR" "main develop" "$MAIN_VERSION"
@@ -111,9 +111,19 @@ download_fixtures() {
     echo "Cleaning up tar files..."
     rm "${FIXTURES_DIR}/${MAIN_STABLE_TAR}" "${FIXTURES_DIR}/${MAIN_DEVELOP_TAR}" "${FIXTURES_DIR}/${MAIN_STATIC_TAR}" "${FIXTURES_DIR}/${DEVNET_TAR}"
     
-    # Clone legacytests repository
-    echo "Cloning legacytests repository..."
-    git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+    # Clone or update legacytests repository safely
+    if [ -d "$LEGACY_DIR/.git" ]; then
+        echo "Updating legacytests repository..."
+        git -C "$LEGACY_DIR" fetch --depth 1 origin
+        git -C "$LEGACY_DIR" reset --hard FETCH_HEAD
+    elif [ -d "$LEGACY_DIR" ]; then
+        echo "Removing non-git legacy directory and recloning..."
+        rm -rf "$LEGACY_DIR"
+        git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+    else
+        echo "Cloning legacytests repository..."
+        git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+    fi
     
     echo "Fixtures download and extraction complete."
 }
