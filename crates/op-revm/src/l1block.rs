@@ -4,7 +4,8 @@ use crate::{
         BASE_FEE_SCALAR_OFFSET, BLOB_BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT,
         ECOTONE_L1_FEE_SCALARS_SLOT, EMPTY_SCALARS, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT,
         L1_OVERHEAD_SLOT, L1_SCALAR_SLOT, NON_ZERO_BYTE_COST, OPERATOR_FEE_CONSTANT_OFFSET,
-        OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL, OPERATOR_FEE_SCALAR_OFFSET,
+        OPERATOR_FEE_JOVIAN_MULTIPLIER, OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL,
+        OPERATOR_FEE_SCALAR_OFFSET,
     },
     transaction::{estimate_tx_compressed_size, OpTxTr},
     OpSpecId,
@@ -154,17 +155,17 @@ impl L1BlockInfo {
     /// Calculate the operator fee for executing this transaction.
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
-    pub fn operator_fee_charge(&self, input: &[u8], gas_limit: U256) -> U256 {
+    pub fn operator_fee_charge(&self, input: &[u8], gas_limit: U256, spec_id: OpSpecId) -> U256 {
         // If the input is a deposit transaction or empty, the default value is zero.
         if input.is_empty() || input.first() == Some(&0x7E) {
             return U256::ZERO;
         }
 
-        self.operator_fee_charge_inner(gas_limit)
+        self.operator_fee_charge_inner(gas_limit, spec_id)
     }
 
     /// Calculate the operator fee for the given `gas`.
-    fn operator_fee_charge_inner(&self, gas: U256) -> U256 {
+    fn operator_fee_charge_inner(&self, gas: U256, spec_id: OpSpecId) -> U256 {
         let operator_fee_scalar = self
             .operator_fee_scalar
             .expect("Missing operator fee scalar for isthmus L1 Block");
@@ -172,8 +173,12 @@ impl L1BlockInfo {
             .operator_fee_constant
             .expect("Missing operator fee constant for isthmus L1 Block");
 
-        let product =
-            gas.saturating_mul(operator_fee_scalar) / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
+        let product = if spec_id.is_enabled_in(OpSpecId::JOVIAN) {
+            gas.saturating_mul(operator_fee_scalar)
+                .saturating_mul(U256::from(OPERATOR_FEE_JOVIAN_MULTIPLIER))
+        } else {
+            gas.saturating_mul(operator_fee_scalar) / U256::from(OPERATOR_FEE_SCALAR_DECIMAL)
+        };
 
         product.saturating_add(operator_fee_constant)
     }
@@ -186,10 +191,12 @@ impl L1BlockInfo {
             return U256::ZERO;
         }
 
-        let operator_cost_gas_limit = self.operator_fee_charge_inner(U256::from(gas.limit()));
-        let operator_cost_gas_used = self.operator_fee_charge_inner(U256::from(
-            gas.limit() - (gas.remaining() + gas.refunded() as u64),
-        ));
+        let operator_cost_gas_limit =
+            self.operator_fee_charge_inner(U256::from(gas.limit()), spec_id);
+        let operator_cost_gas_used = self.operator_fee_charge_inner(
+            U256::from(gas.limit() - (gas.remaining() + gas.refunded() as u64)),
+            spec_id,
+        );
 
         operator_cost_gas_limit.saturating_sub(operator_cost_gas_used)
     }
@@ -273,7 +280,7 @@ impl L1BlockInfo {
 
         // compute operator fee
         if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-            let operator_fee_charge = self.operator_fee_charge(enveloped_tx, gas_limit);
+            let operator_fee_charge = self.operator_fee_charge(enveloped_tx, gas_limit, spec);
             additional_cost = additional_cost.saturating_add(operator_fee_charge);
         }
 
@@ -600,6 +607,25 @@ mod tests {
         let l1_fee = l1_block_info.calculate_tx_l1_cost_fjord(TX);
 
         assert_eq!(l1_fee, expected_l1_fee)
+    }
+
+    #[test]
+    fn test_operator_fee_charge_formulas() {
+        let l1_block_info = L1BlockInfo {
+            operator_fee_scalar: Some(U256::from(1_000u64)),
+            operator_fee_constant: Some(U256::from(10u64)),
+            ..Default::default()
+        };
+
+        let input = [0x01u8];
+
+        let isthmus_fee =
+            l1_block_info.operator_fee_charge(&input, U256::from(1_000u64), OpSpecId::ISTHMUS);
+        assert_eq!(isthmus_fee, U256::from(11u64));
+
+        let jovian_fee =
+            l1_block_info.operator_fee_charge(&input, U256::from(1_000u64), OpSpecId::JOVIAN);
+        assert_eq!(jovian_fee, U256::from(100_000_010u64));
     }
 
     #[test]
