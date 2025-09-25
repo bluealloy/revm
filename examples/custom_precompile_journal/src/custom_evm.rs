@@ -130,9 +130,10 @@ where
         &self,
     ) -> (
         &Self::Context,
-        &Self::Inspector,
-        &Self::Instructions,
         &FrameStack<Self::Frame>,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &Self::Inspector,
     ) {
         self.0.all_inspector()
     }
@@ -141,9 +142,10 @@ where
         &mut self,
     ) -> (
         &mut Self::Context,
-        &mut Self::Inspector,
         &mut FrameStack<Self::Frame>,
         &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut Self::Inspector,
     ) {
         self.0.all_mut_inspector()
     }

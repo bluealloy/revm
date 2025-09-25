@@ -86,7 +86,7 @@ impl EthFrame<EthInterpreter> {
         }
     }
 
-    /// Processes the next interpreter action, either creating a new frame or returning a result.
+    /// Processes the next interpreter action, either creating a new frame init or returning a result.
     #[inline]
     pub fn process_next_action<JOURNAL: JournalTr, CFG: Cfg>(
         &mut self,
@@ -105,7 +105,8 @@ impl EthFrame<EthInterpreter> {
                 })
             }
             InterpreterAction::Return(result) => {
-                let (frame_result, checkpoint_result) = self.data.process_next_action(cfg, result);
+                let (frame_result, checkpoint_result) =
+                    self.data.process_result_action(cfg, result);
                 checkpoint_result.apply_to_journal(journal, self.checkpoint);
                 self.is_finished = true;
                 FrameInitOrResult::<Self>::Result(frame_result)
@@ -526,6 +527,7 @@ impl CheckpointResult {
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
+#[inline]
 pub fn return_create<CFG: Cfg>(
     interpreter_result: &mut InterpreterResult,
     address: Address,

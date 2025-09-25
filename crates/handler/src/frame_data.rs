@@ -35,8 +35,11 @@ pub enum FrameData {
 }
 
 impl FrameData {
-    /// Processes the next interpreter action, either creating a new frame or returning a result.
-    pub fn process_next_action<CFG: Cfg>(
+    /// Processes the result action from [`InterpreterResult`].
+    ///
+    /// Returns the frame result and action needs for journal (revert or commit)
+    #[inline]
+    pub fn process_result_action<CFG: Cfg>(
         &self,
         cfg: CFG,
         mut interpreter_result: InterpreterResult,
@@ -78,6 +81,7 @@ pub enum FrameResult {
 
 impl FrameResult {
     /// Creates a new call frame result.
+    #[inline]
     pub fn new_call(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
         Self::Call(CallOutcome {
             result,
@@ -86,6 +90,7 @@ impl FrameResult {
     }
 
     /// Creates a new create frame result.
+    #[inline]
     pub fn new_create(result: InterpreterResult, address: Option<Address>) -> Self {
         Self::Create(CreateOutcome::new(result, address))
     }

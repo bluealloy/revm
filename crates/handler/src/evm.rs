@@ -82,22 +82,26 @@ pub trait EvmTr {
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
 
     /// Returns a mutable reference to the execution context
+    #[inline]
     fn ctx(&mut self) -> &mut Self::Context {
         self.all_mut().0
     }
 
     /// Returns a mutable reference to the execution context
+    #[inline]
     fn ctx_mut(&mut self) -> &mut Self::Context {
         self.all_mut().0
     }
 
     /// Returns an immutable reference to the execution context
+    #[inline]
     fn ctx_ref(&self) -> &Self::Context {
         self.all().0
     }
 
     /// Returns mutable references to both the context and instruction set.
     /// This enables atomic access to both components when needed.
+    #[inline]
     fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
         let (ctx, instructions, _, _) = self.all_mut();
         (ctx, instructions)
@@ -105,12 +109,14 @@ pub trait EvmTr {
 
     /// Returns mutable references to both the context and precompiles.
     /// This enables atomic access to both components when needed.
+    #[inline]
     fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
         let (ctx, _, precompiles, _) = self.all_mut();
         (ctx, precompiles)
     }
 
     /// Returns a mutable reference to the frame stack.
+    #[inline]
     fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
         let (_, _, _, frame_stack) = self.all_mut();
         frame_stack

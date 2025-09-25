@@ -99,29 +99,33 @@ where
         &self,
     ) -> (
         &Self::Context,
-        &Self::Inspector,
-        &Self::Instructions,
         &FrameStack<Self::Frame>,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &Self::Inspector,
     ) {
         let ctx = &self.ctx;
-        let inspector = &self.inspector;
-        let frame = &self.frame_stack;
         let instructions = &self.instruction;
-        (ctx, inspector, instructions, frame)
+        let precompiles = &self.precompiles;
+        let frame = &self.frame_stack;
+        let inspector = &self.inspector;
+        (ctx, frame, instructions, precompiles, inspector)
     }
 
     fn all_mut_inspector(
         &mut self,
     ) -> (
         &mut Self::Context,
-        &mut Self::Inspector,
         &mut FrameStack<Self::Frame>,
         &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut Self::Inspector,
     ) {
         let ctx = &mut self.ctx;
         let inspector = &mut self.inspector;
         let frame = &mut self.frame_stack;
+        let precompiles = &mut self.precompiles;
         let instructions = &mut self.instruction;
-        (ctx, inspector, frame, instructions)
+        (ctx, frame, instructions, precompiles, inspector)
     }
 }

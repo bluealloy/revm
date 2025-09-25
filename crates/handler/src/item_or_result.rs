@@ -11,6 +11,7 @@ pub enum ItemOrResult<ITEM, RES> {
 
 impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     /// Maps the item variant using the provided function, leaving results unchanged.
+    #[inline]
     pub fn map<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(f(item)),
@@ -19,6 +20,7 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     }
 
     /// Maps the item variant using the provided function, leaving results unchanged.
+    #[inline]
     pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(f(item)),
@@ -27,6 +29,7 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     }
 
     /// Maps the result variant using the provided function, leaving items unchanged.
+    #[inline]
     pub fn map_result<ORES>(self, f: impl FnOnce(RES) -> ORES) -> ItemOrResult<ITEM, ORES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(item),
@@ -37,11 +40,13 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
 
 impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     /// Returns true if this is a result variant.
+    #[inline]
     pub fn is_result(&self) -> bool {
         matches!(self, ItemOrResult::Result(_))
     }
 
     /// Returns true if this is an item variant.
+    #[inline]
     pub fn is_item(&self) -> bool {
         matches!(self, ItemOrResult::Item(_))
     }

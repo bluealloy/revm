@@ -177,15 +177,17 @@ where
         &self,
     ) -> (
         &Self::Context,
-        &Self::Inspector,
-        &Self::Instructions,
         &FrameStack<Self::Frame>,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &Self::Inspector,
     ) {
         (
             &self.ctx,
-            &self.inspector,
-            &self.instruction,
             &self.frame_stack,
+            &self.instruction,
+            &self.precompiles,
+            &self.inspector,
         )
     }
 
@@ -193,15 +195,17 @@ where
         &mut self,
     ) -> (
         &mut Self::Context,
-        &mut Self::Inspector,
         &mut FrameStack<Self::Frame>,
         &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut Self::Inspector,
     ) {
         (
             &mut self.ctx,
-            &mut self.inspector,
             &mut self.frame_stack,
             &mut self.instruction,
+            &mut self.precompiles,
+            &mut self.inspector,
         )
     }
 }
