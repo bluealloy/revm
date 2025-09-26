@@ -10,8 +10,11 @@ use std::fmt::Debug;
 ///
 /// It is immutable, cheap to clone and memory efficient, with one bit per byte in the bytecode.
 #[derive(Clone, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct JumpTable {
+    /// Cached pointer to table data to avoid Arc overhead on lookup
+    #[cfg_attr(feature = "serde", serde(skip))]
+    table_ptr: *const u8,
     /// Actual bit vec
     table: Bytes,
     /// Number of bits in the table.
@@ -59,6 +62,31 @@ impl Default for JumpTable {
     fn default() -> Self {
         static DEFAULT: OnceLock<JumpTable> = OnceLock::new();
         DEFAULT.get_or_init(|| Self::new(BitVec::default())).clone()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for JumpTable {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+
+        #[derive(Deserialize)]
+        struct JumpTableData {
+            table: Bytes,
+            len: usize,
+        }
+
+        let data = JumpTableData::deserialize(deserializer)?;
+        let table_ptr = data.table.as_ptr();
+
+        Ok(Self {
+            table_ptr,
+            table: data.table,
+            len: data.len,
+        })
     }
 }
 
@@ -120,7 +148,10 @@ impl JumpTable {
             bit_len
         );
 
+        let table_ptr = bytes.as_ptr();
+
         Self {
+            table_ptr,
             table: bytes,
             len: bit_len,
         }
@@ -130,7 +161,7 @@ impl JumpTable {
     /// Uses cached pointer and bit operations for faster access
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.len && unsafe { *self.table.as_ptr().add(pc >> 3) & (1 << (pc & 7)) != 0 }
+        pc < self.len && unsafe { *self.table_ptr.add(pc >> 3) & (1 << (pc & 7)) != 0 }
     }
 }
 
