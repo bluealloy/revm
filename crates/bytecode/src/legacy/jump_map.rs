@@ -71,22 +71,14 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::Deserialize;
-
-        #[derive(Deserialize)]
-        struct JumpTableData {
-            table: Bytes,
+        #[derive(serde::Deserialize)]
+        struct JumpTableSerde {
             len: usize,
+            table: Arc<Bytes>,
         }
 
-        let data = JumpTableData::deserialize(deserializer)?;
-        let table_ptr = data.table.as_ptr();
-
-        Ok(Self {
-            table_ptr,
-            table: Arc::new(data.table),
-            len: data.len,
-        })
+        let data = JumpTableSerde::deserialize(deserializer)?;
+        Ok(Self::from_bytes_arc(data.table, data.len))
     }
 }
 
@@ -140,19 +132,29 @@ impl JumpTable {
     /// Panics if bytes length is less than bit_len * 8.
     #[inline]
     pub fn from_bytes(bytes: Bytes, bit_len: usize) -> Self {
+        Self::from_bytes_arc(Arc::new(bytes), bit_len)
+    }
+
+    /// Create new JumpTable directly from an existing Bytes.
+    ///
+    /// Bit length represents number of used bits inside slice.
+    ///
+    /// Panics if bytes length is less than bit_len * 8.
+    #[inline]
+    pub fn from_bytes_arc(table: Arc<Bytes>, bit_len: usize) -> Self {
         const BYTE_LEN: usize = 8;
         assert!(
-            bytes.len() * BYTE_LEN >= bit_len,
+            table.len() * BYTE_LEN >= bit_len,
             "slice bit length {} is less than bit_len {}",
-            bytes.len() * BYTE_LEN,
+            table.len() * BYTE_LEN,
             bit_len
         );
 
-        let table_ptr = bytes.as_ptr();
+        let table_ptr = table.as_ptr();
 
         Self {
             table_ptr,
-            table: Arc::new(bytes),
+            table,
             len: bit_len,
         }
     }
