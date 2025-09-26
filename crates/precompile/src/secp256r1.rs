@@ -179,4 +179,93 @@ mod test {
 
         assert_eq!(result, expect_success);
     }
+
+    #[test]
+    fn test_infinity_point_rejected() {
+        // Take a valid vector and zero out qx,qy (last 64 bytes)
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        // zero last 64 bytes (pk)
+        let len = v.len();
+        v[len - 64..].fill(0);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_signature_r_zero_rejected() {
+        // valid input mutate r to zero
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        // r at bytes [32..64]
+        v[32..64].fill(0);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_signature_s_zero_rejected() {
+        // valid input mutate s to zero
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        // s at bytes [64..96]
+        v[64..96].fill(0);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_signature_r_high_rejected() {
+        // set r to 0xff..ff (>= n) which should be rejected by parser
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        v[32..64].fill(0xff);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_signature_s_high_rejected() {
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        v[64..96].fill(0xff);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_public_key_qx_high_rejected() {
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        v[96..128].fill(0xff);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_public_key_qy_high_rejected() {
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let mut v = input.to_vec();
+        v[128..160].fill(0xff);
+        let out = p256_verify(&v, 10_000).unwrap();
+        assert_eq!(out.bytes.len(), 0);
+    }
+
+    #[test]
+    fn test_osaka_gas_and_success() {
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let out = p256_verify_osaka(&input, 10_000).unwrap();
+        assert_eq!(out.gas_used, P256VERIFY_BASE_GAS_FEE_OSAKA);
+        let expected: Bytes = B256::with_last_byte(1).into();
+        assert_eq!(out.bytes, expected);
+    }
+
+    #[test]
+    fn test_osaka_not_enough_gas() {
+        let input = Bytes::from_hex("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e").unwrap();
+        let res = p256_verify_osaka(&input, 6_800);
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
+    }
+
+    // 모듈러 비교 특성 검증은 재현 케이스 생성이 비용이 커 별도 벤치/프로퍼티 테스트로 다루는 것을 권장합니다.
 }
