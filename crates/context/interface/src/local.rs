@@ -207,14 +207,12 @@ pub trait LocalContextTr {
     ///
     /// This is used to bubble up precompile error messages when the
     /// transaction directly targets a precompile (depth == 1).
-    fn set_precompile_error_context(&mut self, _output: String) {}
+    fn set_precompile_error_context(&mut self, _output: String);
 
     /// Take and clear the precompile error context, if present.
     ///
     /// Returns `Some(String)` if a precompile error message was recorded.
-    fn take_precompile_error_context(&mut self) -> Option<String> {
-        None
-    }
+    fn take_precompile_error_context(&mut self) -> Option<String>;
 }
 
 #[cfg(test)]
