@@ -19,7 +19,7 @@ cargo build
 cargo build --release
 
 # Run all tests
-cargo nexttest run --workspace
+cargo nextest run --workspace
 
 # Lint and format
 cargo clippy --workspace --all-targets --all-features
