@@ -263,18 +263,16 @@ impl Precompiles {
     /// Other precompiles with overwrite existing precompiles.
     #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
-        let items: Vec<Precompile> = other.into_iter().collect::<Vec<_>>();
-        for item in items.iter() {
+        for item in other {
             if let Some(short_address) = short_address(item.address()) {
                 self.optimized_access[short_address] = Some(item.clone());
             } else {
                 self.all_short_addresses = false;
             }
-        }
 
-        self.addresses.extend(items.iter().map(|p| *p.address()));
-        self.inner
-            .extend(items.into_iter().map(|p| (*p.address(), p.clone())));
+            self.addresses.insert(*item.address());
+            self.inner.insert(*item.address(), item);
+        }
     }
 
     /// Returns complement of `other` in `self`.
