@@ -1,7 +1,8 @@
-//! # RIP-7212 secp256r1 Precompile
+//! # secp256r1 Precompile (RIP-7212 compatible, aligns with EIP-7951)
 //!
 //! This module implements the [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md) precompile for
-//! secp256r1 curve support.
+//! secp256r1 curve support and aligns with the [EIP-7951](https://eips.ethereum.org/EIPS/eip-7951) input validation
+//! and verification requirements.
 //!
 //! The main purpose of this precompile is to verify ECDSA signatures that use the secp256r1, or
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
@@ -100,13 +101,25 @@ pub fn verify_impl(input: &[u8]) -> bool {
 }
 
 pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
-    // Can fail only if the input is not exact length.
+    // EIP-7951 input validation additions:
+    // - Reject point-at-infinity explicitly: encoded as 64 zero bytes (qx,qy) == (0,0)
+    if pk.iter().all(|b| *b == 0) {
+        return None;
+    }
+
+    // Signature must be strict: 0 < r,s < n. The `Signature::from_slice` enforces canonical bounds.
     let signature = Signature::from_slice(&sig).ok()?;
-    // Decode the public key bytes (x,y coordinates) using EncodedPoint
+
+    // Decode the public key bytes (x,y coordinates) using EncodedPoint.
+    // VerifyingKey construction will ensure:
+    // - 0 ≤ qx,qy < p (canonical field elements)
+    // - (qx,qy) is on-curve
     let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
-    // Create VerifyingKey from the encoded point
     let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
 
+    // ECDSA verification via `verify_prehash` performs the mathematically correct check which includes
+    // modular comparison of the recovered x-coordinate with `r` modulo `n`, and implicitly fails when
+    // the computed point is at infinity.
     public_key.verify_prehash(&msg, &signature).ok()
 }
 
