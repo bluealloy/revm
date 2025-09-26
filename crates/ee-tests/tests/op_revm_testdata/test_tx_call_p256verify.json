@@ -18,13 +18,8 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
+              "bit_len": 0,
+              "table": "0x"
             },
             "original_len": 0
           }
@@ -43,13 +38,8 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
+              "bit_len": 0,
+              "table": "0x"
             },
             "original_len": 0
           }
@@ -68,13 +58,8 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
+              "bit_len": 0,
+              "table": "0x"
             },
             "original_len": 0
           }
@@ -93,13 +78,8 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
+              "bit_len": 0,
+              "table": "0x"
             },
             "original_len": 0
           }
@@ -118,13 +98,8 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
+              "bit_len": 0,
+              "table": "0x"
             },
             "original_len": 0
           }

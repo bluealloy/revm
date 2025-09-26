@@ -31,6 +31,9 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 paste = { workspace = true, optional = true }
 phf = { workspace = true, features = ["macros"], optional = true }
 
+[dev-dependencies]
+serde_json = { workspace = true, features = ["std"] }
+
 [features]
 default = ["std", "parse"]
 std = [

@@ -48,12 +48,23 @@ impl Ord for JumpTable {
 }
 
 #[cfg(feature = "serde")]
+#[derive(serde::Serialize, serde::Deserialize)]
+struct JumpTableSerde {
+    table: Bytes,
+    bit_len: usize,
+}
+
+#[cfg(feature = "serde")]
 impl serde::Serialize for JumpTable {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.table.serialize(serializer)
+        JumpTableSerde {
+            table: self.table.clone(),
+            bit_len: self.len,
+        }
+        .serialize(serializer)
     }
 }
 
@@ -63,8 +74,8 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
     where
         D: serde::Deserializer<'de>,
     {
-        let bitvec = BitVec::deserialize(deserializer)?;
-        Ok(Self::new(bitvec))
+        let data = JumpTableSerde::deserialize(deserializer)?;
+        Ok(JumpTable::from_bytes(data.table, data.bit_len))
     }
 }
 
@@ -195,6 +206,32 @@ mod tests {
         assert!(jump_table.is_valid(10)); // valid
         assert!(!jump_table.is_valid(11));
         assert!(!jump_table.is_valid(12));
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_serde_roundtrip() {
+        let original = JumpTable::from_slice(&[0x0D, 0x06], 13);
+
+        // Serialize to JSON
+        let serialized = serde_json::to_string(&original).expect("Failed to serialize");
+
+        // Deserialize from JSON
+        let deserialized: JumpTable =
+            serde_json::from_str(&serialized).expect("Failed to deserialize");
+
+        // Check that the deserialized table matches the original
+        assert_eq!(original.len, deserialized.len);
+        assert_eq!(original.table, deserialized.table);
+
+        // Verify functionality is preserved
+        for i in 0..13 {
+            assert_eq!(
+                original.is_valid(i),
+                deserialized.is_valid(i),
+                "Mismatch at index {i}"
+            );
+        }
     }
 }
 
