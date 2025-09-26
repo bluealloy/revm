@@ -33,6 +33,9 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
+    } else {
+        // According to EVM specification, division by zero should return zero
+        *op2 = U256::ZERO;
     }
 }
 
@@ -53,6 +56,9 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
+    } else {
+        // According to EVM specification, modulo by zero should return zero
+        *op2 = U256::ZERO;
     }
 }
 
