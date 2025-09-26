@@ -646,6 +646,54 @@ pub enum OutOfGasError {
     ReentrancySentry,
 }
 
+/// Error that includes transaction index for batch transaction processing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TransactionIndexedError<Error> {
+    /// The original error that occurred.
+    pub error: Error,
+    /// The index of the transaction that failed.
+    pub transaction_index: usize,
+}
+
+impl<Error> TransactionIndexedError<Error> {
+    /// Create a new `TransactionIndexedError` with the given error and transaction index.
+    #[must_use]
+    pub fn new(error: Error, transaction_index: usize) -> Self {
+        Self {
+            error,
+            transaction_index,
+        }
+    }
+
+    /// Get a reference to the underlying error.
+    pub fn error(&self) -> &Error {
+        &self.error
+    }
+
+    /// Convert into the underlying error.
+    #[must_use]
+    pub fn into_error(self) -> Error {
+        self.error
+    }
+}
+
+impl<Error: fmt::Display> fmt::Display for TransactionIndexedError<Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "transaction {} failed: {}",
+            self.transaction_index, self.error
+        )
+    }
+}
+
+impl<Error: core::error::Error + 'static> core::error::Error for TransactionIndexedError<Error> {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        Some(&self.error)
+    }
+}
+
 impl From<&'static str> for InvalidTransaction {
     fn from(s: &'static str) -> Self {
         Self::Str(Cow::Borrowed(s))
