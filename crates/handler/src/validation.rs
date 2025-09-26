@@ -632,7 +632,7 @@ mod tests {
         // Test that all transactions succeed
         let result = evm.transact_many([tx1, tx2].into_iter());
         if let Err(e) = &result {
-            println!("Error: {:?}", e);
+            println!("Error: {e:?}");
         }
         let outputs = result.expect("All transactions should succeed");
         assert_eq!(outputs.len(), 2);

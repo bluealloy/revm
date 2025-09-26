@@ -3,8 +3,8 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{hex, OnceLock};
-use std::{fmt::Debug, sync::Arc};
+use primitives::{hex, Bytes, OnceLock};
+use std::fmt::Debug;
 
 /// A table of valid `jump` destinations.
 ///
@@ -16,7 +16,7 @@ pub struct JumpTable {
     /// Number of bits in the table.
     len: usize,
     /// Actual bit vec
-    table: Arc<BitVec<u8>>,
+    table: Bytes,
 }
 
 // SAFETY: BitVec data is immutable through Arc, pointer won't be invalidated
@@ -71,7 +71,7 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
 impl Debug for JumpTable {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("JumpTable")
-            .field("map", &hex::encode(self.table.as_raw_slice()))
+            .field("map", &hex::encode(&self.table))
             .finish()
     }
 }
@@ -86,22 +86,19 @@ impl Default for JumpTable {
 
 impl JumpTable {
     /// Create new JumpTable directly from an existing BitVec.
+    ///
+    /// Uses [`Self::from_bytes`] internally.
+    #[inline]
     pub fn new(jumps: BitVec<u8>) -> Self {
-        let table = Arc::new(jumps);
-        let table_ptr = table.as_raw_slice().as_ptr();
-        let len = table.len();
-
-        Self {
-            table,
-            table_ptr,
-            len,
-        }
+        let bit_len = jumps.len();
+        let bytes = jumps.into_vec().into();
+        Self::from_bytes(bytes, bit_len)
     }
 
     /// Gets the raw bytes of the jump map.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
-        self.table.as_raw_slice()
+        &self.table
     }
 
     /// Gets the length of the jump map.
@@ -120,21 +117,37 @@ impl JumpTable {
     ///
     /// Bit length represents number of used bits inside slice.
     ///
+    /// Uses [`Self::from_bytes`] internally.
+    ///
     /// # Panics
     ///
     /// Panics if number of bits in slice is less than bit_len.
     #[inline]
     pub fn from_slice(slice: &[u8], bit_len: usize) -> Self {
+        Self::from_bytes(Bytes::from(slice.to_vec()), bit_len)
+    }
+
+    /// Create new JumpTable directly from an existing Bytes.
+    ///
+    /// Bit length represents number of used bits inside slice.
+    ///
+    /// Panics if bytes length is less than bit_len * 8.
+    #[inline]
+    pub fn from_bytes(bytes: Bytes, bit_len: usize) -> Self {
         const BYTE_LEN: usize = 8;
         assert!(
-            slice.len() * BYTE_LEN >= bit_len,
+            bytes.len() * BYTE_LEN >= bit_len,
             "slice bit length {} is less than bit_len {}",
-            slice.len() * BYTE_LEN,
+            bytes.len() * BYTE_LEN,
             bit_len
         );
-        let mut bitvec = BitVec::from_slice(slice);
-        unsafe { bitvec.set_len(bit_len) };
-        Self::new(bitvec)
+        let table_ptr = bytes.as_ptr();
+
+        Self {
+            table: bytes,
+            table_ptr,
+            len: bit_len,
+        }
     }
 
     /// Checks if `pc` is a valid jump destination.
@@ -188,7 +201,7 @@ mod tests {
 #[cfg(test)]
 mod bench_is_valid {
     use super::*;
-    use std::time::Instant;
+    use std::{sync::Arc, time::Instant};
 
     const ITERATIONS: usize = 1_000_000;
     const TEST_SIZE: usize = 10_000;
