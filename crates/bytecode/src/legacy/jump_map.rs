@@ -4,7 +4,7 @@ use core::{
     hash::{Hash, Hasher},
 };
 use primitives::{hex, Bytes, OnceLock};
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
 /// A table of valid `jump` destinations.
 ///
@@ -15,10 +15,10 @@ pub struct JumpTable {
     /// Cached pointer to table data to avoid Arc overhead on lookup
     #[cfg_attr(feature = "serde", serde(skip))]
     table_ptr: *const u8,
-    /// Actual bit vec
-    table: Bytes,
     /// Number of bits in the table.
     len: usize,
+    /// Actual bit vec
+    table: Arc<Bytes>,
 }
 
 // SAFETY: BitVec data is immutable through Arc, pointer won't be invalidated
@@ -52,7 +52,7 @@ impl Ord for JumpTable {
 impl Debug for JumpTable {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("JumpTable")
-            .field("map", &hex::encode(&self.table))
+            .field("map", &hex::encode(self.table.as_ref()))
             .finish()
     }
 }
@@ -84,7 +84,7 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
 
         Ok(Self {
             table_ptr,
-            table: data.table,
+            table: Arc::new(data.table),
             len: data.len,
         })
     }
@@ -152,7 +152,7 @@ impl JumpTable {
 
         Self {
             table_ptr,
-            table: bytes,
+            table: Arc::new(bytes),
             len: bit_len,
         }
     }
