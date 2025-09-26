@@ -262,6 +262,7 @@ impl L1BlockInfo {
 
     /// Calculate additional transaction cost with [OpTxTr].
     #[inline]
+    #[track_caller]
     pub fn tx_cost_with_tx(&mut self, tx: impl OpTxTr, spec: OpSpecId) -> U256 {
         // account for additional cost of l1 fee and operator fee
         let enveloped_tx = tx

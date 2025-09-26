@@ -138,7 +138,7 @@ pub fn deduct_caller_balance_with_components(
     let is_balance_check_disabled = cfg.is_balance_check_disabled();
 
     if !is_balance_check_disabled {
-        tx.has_enough_balance(balance)?;
+        tx.ensure_enough_balance(balance)?;
     }
 
     let effective_balance_spending = tx

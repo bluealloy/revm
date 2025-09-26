@@ -184,7 +184,7 @@ pub trait Transaction {
     ///
     /// Internally calls [`Self::max_balance_spending`] and checks if the balance is enough.
     #[inline]
-    fn has_enough_balance(&self, balance: U256) -> Result<(), InvalidTransaction> {
+    fn ensure_enough_balance(&self, balance: U256) -> Result<(), InvalidTransaction> {
         let max_balance_spending = self.max_balance_spending()?;
         if max_balance_spending > balance {
             return Err(InvalidTransaction::LackOfFundForMaxFee {
