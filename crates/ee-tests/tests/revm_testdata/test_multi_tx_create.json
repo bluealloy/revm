@@ -46,7 +46,7 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bit_len": 0,
+              "len": 0,
               "table": "0x"
             },
             "original_len": 0
@@ -66,7 +66,7 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bit_len": 0,
+              "len": 0,
               "table": "0x"
             },
             "original_len": 0
@@ -86,7 +86,7 @@
           "LegacyAnalyzed": {
             "bytecode": "0x61ffffff00",
             "jump_table": {
-              "bit_len": 5,
+              "len": 5,
               "table": "0x00"
             },
             "original_len": 5
@@ -106,7 +106,7 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "bit_len": 0,
+              "len": 0,
               "table": "0x"
             },
             "original_len": 0

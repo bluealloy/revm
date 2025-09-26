@@ -36,7 +36,13 @@ serde_json = { workspace = true }
 
 [features]
 default = ["std", "parse"]
-std = ["serde?/std", "primitives/std", "bitvec/std", "phf?/std"]
+std = [
+    "serde?/std",
+    "serde_json/std",
+    "primitives/std",
+    "bitvec/std",
+    "phf?/std",
+]
 hashbrown = ["primitives/hashbrown"]
 serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
 parse = ["phf", "paste"]

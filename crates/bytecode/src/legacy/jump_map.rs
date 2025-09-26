@@ -10,13 +10,12 @@ use std::fmt::Debug;
 ///
 /// It is immutable, cheap to clone and memory efficient, with one bit per byte in the bytecode.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpTable {
-    /// Pointer into `table` to avoid `Arc` overhead on lookup.
-    table_ptr: *const u8,
-    /// Number of bits in the table.
-    len: usize,
     /// Actual bit vec
     table: Bytes,
+    /// Number of bits in the table.
+    len: usize,
 }
 
 // SAFETY: BitVec data is immutable through Arc, pointer won't be invalidated
@@ -44,38 +43,6 @@ impl PartialOrd for JumpTable {
 impl Ord for JumpTable {
     fn cmp(&self, other: &Self) -> Ordering {
         self.table.cmp(&other.table)
-    }
-}
-
-#[cfg(feature = "serde")]
-#[derive(serde::Serialize, serde::Deserialize)]
-struct JumpTableSerde {
-    table: Bytes,
-    bit_len: usize,
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for JumpTable {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        JumpTableSerde {
-            table: self.table.clone(),
-            bit_len: self.len,
-        }
-        .serialize(serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for JumpTable {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let data = JumpTableSerde::deserialize(deserializer)?;
-        Ok(JumpTable::from_bytes(data.table, data.bit_len))
     }
 }
 
@@ -152,11 +119,9 @@ impl JumpTable {
             bytes.len() * BYTE_LEN,
             bit_len
         );
-        let table_ptr = bytes.as_ptr();
 
         Self {
             table: bytes,
-            table_ptr,
             len: bit_len,
         }
     }
@@ -165,7 +130,7 @@ impl JumpTable {
     /// Uses cached pointer and bit operations for faster access
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.len && unsafe { *self.table_ptr.add(pc >> 3) & (1 << (pc & 7)) != 0 }
+        pc < self.len && unsafe { *self.table.as_ptr().add(pc >> 3) & (1 << (pc & 7)) != 0 }
     }
 }
 
