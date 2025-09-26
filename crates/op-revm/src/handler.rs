@@ -496,8 +496,9 @@ mod tests {
     use crate::{
         api::default_ctx::OpContext,
         constants::{
-            BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT, ECOTONE_L1_FEE_SCALARS_SLOT,
-            L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT,
+            BASE_FEE_SCALAR_OFFSET, DA_FOOTPRINT_GAS_SCALAR_SLOT, ECOTONE_L1_BLOB_BASE_FEE_SLOT,
+            ECOTONE_L1_FEE_SCALARS_SLOT, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT,
+            OPERATOR_FEE_SCALARS_SLOT,
         },
         DefaultOp, OpBuilder, OpTransaction,
     };
@@ -788,6 +789,105 @@ mod tests {
                 operator_fee_scalar: Some(U256::from(OPERATOR_FEE_SCALAR)),
                 operator_fee_constant: Some(U256::from(OPERATOR_FEE_CONST)),
                 tx_l1_cost: Some(U256::ZERO),
+                da_footprint_gas_scalar: None
+            }
+        );
+    }
+
+    #[test]
+    fn test_parse_da_footprint_gas_scalar_jovian() {
+        const BLOCK_NUM: U256 = uint!(100_U256);
+        const L1_BASE_FEE: U256 = uint!(1_U256);
+        const L1_BLOB_BASE_FEE: U256 = uint!(2_U256);
+        const L1_BASE_FEE_SCALAR: u64 = 3;
+        const L1_BLOB_BASE_FEE_SCALAR: u64 = 4;
+        const L1_FEE_SCALARS: U256 = U256::from_limbs([
+            0,
+            (L1_BASE_FEE_SCALAR << (64 - BASE_FEE_SCALAR_OFFSET * 2)) | L1_BLOB_BASE_FEE_SCALAR,
+            0,
+            0,
+        ]);
+        const OPERATOR_FEE_SCALAR: u64 = 5;
+        const OPERATOR_FEE_CONST: u64 = 6;
+        const OPERATOR_FEE: U256 =
+            U256::from_limbs([OPERATOR_FEE_CONST, OPERATOR_FEE_SCALAR, 0, 0]);
+        const DA_FOOTPRINT_GAS_SCALAR: u16 = 7;
+        const DA_FOOTPRINT_GAS_SCALAR_U64: u64 =
+            u64::from_be_bytes([0, DA_FOOTPRINT_GAS_SCALAR as u8, 0, 0, 0, 0, 0, 0]);
+        const DA_FOOTPRINT_GAS_SCALAR_SLOT_VALUE: U256 =
+            U256::from_limbs([0, 0, 0, DA_FOOTPRINT_GAS_SCALAR_U64]);
+
+        let mut db = InMemoryDB::default();
+        let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
+        l1_block_contract
+            .storage
+            .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
+        l1_block_contract
+            .storage
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+        l1_block_contract
+            .storage
+            .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
+        l1_block_contract
+            .storage
+            .insert(OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE);
+        l1_block_contract.storage.insert(
+            DA_FOOTPRINT_GAS_SCALAR_SLOT,
+            DA_FOOTPRINT_GAS_SCALAR_SLOT_VALUE,
+        );
+        db.insert_account_info(
+            Address::ZERO,
+            AccountInfo {
+                balance: U256::from(6000),
+                ..Default::default()
+            },
+        );
+
+        let ctx = Context::op()
+            .with_db(db)
+            .with_chain(L1BlockInfo {
+                l2_block: BLOCK_NUM + U256::from(1), // ahead by one block
+                operator_fee_scalar: Some(U256::from(2)),
+                operator_fee_constant: Some(U256::from(50)),
+                ..Default::default()
+            })
+            .with_block(BlockEnv {
+                number: BLOCK_NUM,
+                ..Default::default()
+            })
+            .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::JOVIAN)
+            // set the operator fee to a low value
+            .with_tx(
+                OpTransaction::builder()
+                    .base(TxEnv::builder().gas_limit(10))
+                    .enveloped_tx(Some(bytes!("FACADE")))
+                    .build_fill(),
+            );
+
+        let mut evm = ctx.build_op();
+
+        assert_ne!(evm.ctx().chain().l2_block, BLOCK_NUM);
+
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+        handler
+            .validate_against_state_and_deduct_caller(&mut evm)
+            .unwrap();
+
+        assert_eq!(
+            *evm.ctx().chain(),
+            L1BlockInfo {
+                l2_block: BLOCK_NUM,
+                l1_base_fee: L1_BASE_FEE,
+                l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
+                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
+                empty_ecotone_scalars: false,
+                l1_fee_overhead: None,
+                operator_fee_scalar: Some(U256::from(OPERATOR_FEE_SCALAR)),
+                operator_fee_constant: Some(U256::from(OPERATOR_FEE_CONST)),
+                tx_l1_cost: Some(U256::ZERO),
+                da_footprint_gas_scalar: Some(DA_FOOTPRINT_GAS_SCALAR),
             }
         );
     }

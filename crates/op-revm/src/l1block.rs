@@ -1,11 +1,11 @@
 //! Contains the `[L1BlockInfo]` type and its implementation.
 use crate::{
     constants::{
-        BASE_FEE_SCALAR_OFFSET, BLOB_BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT,
-        ECOTONE_L1_FEE_SCALARS_SLOT, EMPTY_SCALARS, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT,
-        L1_OVERHEAD_SLOT, L1_SCALAR_SLOT, NON_ZERO_BYTE_COST, OPERATOR_FEE_CONSTANT_OFFSET,
-        OPERATOR_FEE_JOVIAN_MULTIPLIER, OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL,
-        OPERATOR_FEE_SCALAR_OFFSET,
+        BASE_FEE_SCALAR_OFFSET, BLOB_BASE_FEE_SCALAR_OFFSET, DA_FOOTPRINT_GAS_SCALAR_OFFSET,
+        DA_FOOTPRINT_GAS_SCALAR_SLOT, ECOTONE_L1_BLOB_BASE_FEE_SLOT, ECOTONE_L1_FEE_SCALARS_SLOT,
+        EMPTY_SCALARS, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT, L1_SCALAR_SLOT,
+        NON_ZERO_BYTE_COST, OPERATOR_FEE_CONSTANT_OFFSET, OPERATOR_FEE_JOVIAN_MULTIPLIER,
+        OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL, OPERATOR_FEE_SCALAR_OFFSET,
     },
     transaction::estimate_tx_compressed_size,
     OpSpecId,
@@ -49,13 +49,84 @@ pub struct L1BlockInfo {
     pub operator_fee_scalar: Option<U256>,
     /// The current L1 blob base fee scalar. None if Isthmus is not activated.
     pub operator_fee_constant: Option<U256>,
+    /// Da footprint gas scalar. Used to set the DA footprint block limit on the L2. Always null prior to the Jovian hardfork.
+    pub da_footprint_gas_scalar: Option<u16>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
-    pub(crate) empty_ecotone_scalars: bool,
+    pub empty_ecotone_scalars: bool,
     /// Last calculated l1 fee cost. Uses as a cache between validation and pre execution stages.
     pub tx_l1_cost: Option<U256>,
 }
 
 impl L1BlockInfo {
+    /// Try to fetch the L1 block info from the database, post-Jovian.
+    fn try_fetch_jovian<DB: Database>(&mut self, db: &mut DB) -> Result<(), DB::Error> {
+        let da_footprint_gas_scalar_slot = db
+            .storage(L1_BLOCK_CONTRACT, DA_FOOTPRINT_GAS_SCALAR_SLOT)?
+            .to_be_bytes::<32>();
+
+        // Extract the first 2 bytes directly as a u16 in big-endian format
+        let bytes = [
+            da_footprint_gas_scalar_slot[DA_FOOTPRINT_GAS_SCALAR_OFFSET],
+            da_footprint_gas_scalar_slot[DA_FOOTPRINT_GAS_SCALAR_OFFSET + 1],
+        ];
+        self.da_footprint_gas_scalar = Some(u16::from_be_bytes(bytes));
+
+        Ok(())
+    }
+
+    /// Try to fetch the L1 block info from the database, post-Isthmus.
+    fn try_fetch_isthmus<DB: Database>(&mut self, db: &mut DB) -> Result<(), DB::Error> {
+        // Post-isthmus L1 block info
+        let operator_fee_scalars = db
+            .storage(L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT)?
+            .to_be_bytes::<32>();
+
+        // The `operator_fee_scalar` is stored as a big endian u32 at
+        // OPERATOR_FEE_SCALAR_OFFSET.
+        self.operator_fee_scalar = Some(U256::from_be_slice(
+            operator_fee_scalars[OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
+                .as_ref(),
+        ));
+        // The `operator_fee_constant` is stored as a big endian u64 at
+        // OPERATOR_FEE_CONSTANT_OFFSET.
+        self.operator_fee_constant = Some(U256::from_be_slice(
+            operator_fee_scalars[OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
+                .as_ref(),
+        ));
+
+        Ok(())
+    }
+
+    /// Try to fetch the L1 block info from the database, post-Ecotone.
+    fn try_fetch_ecotone<DB: Database>(&mut self, db: &mut DB) -> Result<(), DB::Error> {
+        self.l1_blob_base_fee = Some(db.storage(L1_BLOCK_CONTRACT, ECOTONE_L1_BLOB_BASE_FEE_SLOT)?);
+
+        let l1_fee_scalars = db
+            .storage(L1_BLOCK_CONTRACT, ECOTONE_L1_FEE_SCALARS_SLOT)?
+            .to_be_bytes::<32>();
+
+        self.l1_base_fee_scalar = U256::from_be_slice(
+            l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BASE_FEE_SCALAR_OFFSET + 4].as_ref(),
+        );
+
+        let l1_blob_base_fee = U256::from_be_slice(
+            l1_fee_scalars[BLOB_BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4].as_ref(),
+        );
+        self.l1_blob_base_fee_scalar = Some(l1_blob_base_fee);
+
+        // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function.
+        // The L1 fee overhead is only necessary if `empty_ecotone_scalars` is true, as it was deprecated in Ecotone.
+        self.empty_ecotone_scalars = l1_blob_base_fee.is_zero()
+            && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
+                == EMPTY_SCALARS;
+        self.l1_fee_overhead = self
+            .empty_ecotone_scalars
+            .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
+            .transpose()?;
+
+        Ok(())
+    }
+
     /// Try to fetch the L1 block info from the database.
     pub fn try_fetch<DB: Database>(
         db: &mut DB,
@@ -68,88 +139,33 @@ impl L1BlockInfo {
             let _ = db.basic(L1_BLOCK_CONTRACT)?;
         }
 
-        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+        let mut out = L1BlockInfo {
+            l2_block,
+            l1_base_fee: db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?,
+            ..Default::default()
+        };
 
+        // Post-Ecotone
         if !spec_id.is_enabled_in(OpSpecId::ECOTONE) {
-            let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
-            let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
+            out.l1_base_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
+            out.l1_fee_overhead = Some(db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?);
 
-            Ok(L1BlockInfo {
-                l2_block,
-                l1_base_fee,
-                l1_fee_overhead: Some(l1_fee_overhead),
-                l1_base_fee_scalar: l1_fee_scalar,
-                ..Default::default()
-            })
-        } else {
-            let l1_blob_base_fee = db.storage(L1_BLOCK_CONTRACT, ECOTONE_L1_BLOB_BASE_FEE_SLOT)?;
-            let l1_fee_scalars = db
-                .storage(L1_BLOCK_CONTRACT, ECOTONE_L1_FEE_SCALARS_SLOT)?
-                .to_be_bytes::<32>();
-
-            let l1_base_fee_scalar = U256::from_be_slice(
-                l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BASE_FEE_SCALAR_OFFSET + 4].as_ref(),
-            );
-            let l1_blob_base_fee_scalar = U256::from_be_slice(
-                l1_fee_scalars[BLOB_BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
-                    .as_ref(),
-            );
-
-            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function.
-            // The L1 fee overhead is only necessary if `empty_ecotone_scalars` is true, as it was deprecated in Ecotone.
-            let empty_ecotone_scalars = l1_blob_base_fee.is_zero()
-                && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
-                    == EMPTY_SCALARS;
-            let l1_fee_overhead = empty_ecotone_scalars
-                .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
-                .transpose()?;
-
-            if spec_id.is_enabled_in(OpSpecId::ISTHMUS) {
-                let operator_fee_scalars = db
-                    .storage(L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT)?
-                    .to_be_bytes::<32>();
-
-                // Post-isthmus L1 block info
-                // The `operator_fee_scalar` is stored as a big endian u32 at
-                // OPERATOR_FEE_SCALAR_OFFSET.
-                let operator_fee_scalar = U256::from_be_slice(
-                    operator_fee_scalars
-                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
-                        .as_ref(),
-                );
-                // The `operator_fee_constant` is stored as a big endian u64 at
-                // OPERATOR_FEE_CONSTANT_OFFSET.
-                let operator_fee_constant = U256::from_be_slice(
-                    operator_fee_scalars
-                        [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
-                        .as_ref(),
-                );
-                Ok(L1BlockInfo {
-                    l2_block,
-                    l1_base_fee,
-                    l1_base_fee_scalar,
-                    l1_blob_base_fee: Some(l1_blob_base_fee),
-                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
-                    empty_ecotone_scalars,
-                    l1_fee_overhead,
-                    operator_fee_scalar: Some(operator_fee_scalar),
-                    operator_fee_constant: Some(operator_fee_constant),
-                    tx_l1_cost: None,
-                })
-            } else {
-                // Pre-isthmus L1 block info
-                Ok(L1BlockInfo {
-                    l2_block,
-                    l1_base_fee,
-                    l1_base_fee_scalar,
-                    l1_blob_base_fee: Some(l1_blob_base_fee),
-                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
-                    empty_ecotone_scalars,
-                    l1_fee_overhead,
-                    ..Default::default()
-                })
-            }
+            return Ok(out);
         }
+
+        out.try_fetch_ecotone(db)?;
+
+        // Post-Isthmus L1 block info
+        if spec_id.is_enabled_in(OpSpecId::ISTHMUS) {
+            out.try_fetch_isthmus(db)?;
+        }
+
+        // Pre-Jovian
+        if spec_id.is_enabled_in(OpSpecId::JOVIAN) {
+            out.try_fetch_jovian(db)?;
+        }
+
+        Ok(out)
     }
 
     /// Calculate the operator fee for executing this transaction.
