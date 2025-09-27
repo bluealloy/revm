@@ -14,5 +14,10 @@ pub mod evm;
 /// including how transactions are processed and how the EVM interacts with inspectors.
 pub mod handler;
 
+/// Custom frame implementation for MyEvm.
+/// This module contains MyFrame, which is a custom variant of the EthFrame that demonstrates
+/// how to create your own frame implementation by wrapping the standard EthFrame components.
+pub mod frame;
+
 pub use evm::*;
 pub use handler::*;

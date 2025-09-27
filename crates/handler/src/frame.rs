@@ -1,10 +1,9 @@
 use crate::evm::FrameTr;
-use crate::item_or_result::FrameInitOrResult;
 use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
+use crate::{CallFrame, CreateFrame, FrameData, FrameInitOrResult, FrameResult};
 use context::result::FromStringError;
+use context::Host;
 use context_interface::context::ContextError;
-use context_interface::local::{FrameToken, OutFrame};
 use context_interface::ContextTr;
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournalTr},
@@ -18,9 +17,10 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_types::ReturnData,
     CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterResult, InterpreterTypes, SharedMemory,
+    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterResult,
+    InterpreterTypes, SharedMemory,
 };
+use interpreter::{InstructionTable, InterpreterAction};
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
@@ -86,6 +86,34 @@ impl EthFrame<EthInterpreter> {
         }
     }
 
+    /// Processes the next interpreter action, either creating a new frame init or returning a result.
+    #[inline]
+    pub fn process_next_action<JOURNAL: JournalTr, CFG: Cfg>(
+        &mut self,
+        cfg: &CFG,
+        journal: &mut JOURNAL,
+        action: InterpreterAction,
+    ) -> FrameInitOrResult<Self> {
+        match action {
+            InterpreterAction::NewFrame(frame_input) => {
+                let depth = self.depth + 1;
+                let memory = self.interpreter.memory.new_child_context();
+                FrameInitOrResult::<Self>::Item(FrameInit {
+                    frame_input,
+                    depth,
+                    memory,
+                })
+            }
+            InterpreterAction::Return(result) => {
+                let (frame_result, checkpoint_result) =
+                    self.data.process_result_action(cfg, result);
+                checkpoint_result.apply_to_journal(journal, self.checkpoint);
+                self.is_finished = true;
+                FrameInitOrResult::<Self>::Result(frame_result)
+            }
+        }
+    }
+
     /// Returns true if the frame has finished execution.
     pub fn is_finished(&self) -> bool {
         self.is_finished
@@ -94,6 +122,19 @@ impl EthFrame<EthInterpreter> {
     /// Sets the finished state of the frame.
     pub fn set_finished(&mut self, finished: bool) {
         self.is_finished = finished;
+    }
+
+    /// Runs the interpreter and processes the next action.
+    #[inline]
+    pub fn run_and_process_next_action<CTX: ContextTr + Host + ?Sized>(
+        &mut self,
+        ctx: &mut CTX,
+        instruction_table: &InstructionTable<EthInterpreter, CTX>,
+    ) -> FrameInitOrResult<Self> {
+        let action = self.interpreter.run_plain(instruction_table, ctx);
+
+        let (_, _, cfg, journal, _, _) = ctx.all_mut();
+        self.process_next_action(cfg, journal, action)
     }
 }
 
@@ -132,20 +173,20 @@ impl EthFrame<EthInterpreter> {
         *checkpoint_ref = checkpoint;
     }
 
-    /// Make call frame
+    /// Initialize call frame
     #[inline]
-    pub fn make_call_frame<
+    pub fn init_call_frame<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        &mut self,
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<(), FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
@@ -211,7 +252,7 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
+        self.clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -225,21 +266,21 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             checkpoint,
         );
-        Ok(ItemOrResult::Item(this.consume()))
+        Ok(ItemOrResult::Item(()))
     }
 
     /// Make create frame.
     #[inline]
-    pub fn make_create_frame<
+    pub fn init_create_frame<
         CTX: ContextTr,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        &mut self,
         context: &mut CTX,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+    ) -> Result<ItemOrResult<(), FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -314,7 +355,7 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit;
 
-        this.get(EthFrame::invalid).clear(
+        self.clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -326,20 +367,20 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             checkpoint,
         );
-        Ok(ItemOrResult::Item(this.consume()))
+        Ok(ItemOrResult::Item(()))
     }
 
     /// Initializes a frame with the given context and precompiles.
-    pub fn init_with_context<
+    pub fn init<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
     >(
-        this: OutFrame<'_, Self>,
+        &mut self,
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
     ) -> Result<
-        ItemOrResult<FrameToken, FrameResult>,
+        ItemOrResult<(), FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
         // TODO cleanup inner make functions
@@ -351,78 +392,15 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                self.init_call_frame(ctx, precompiles, depth, memory, inputs)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => self.init_create_frame(ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
 }
 
 impl EthFrame<EthInterpreter> {
-    /// Processes the next interpreter action, either creating a new frame or returning a result.
-    pub fn process_next_action<
-        CTX: ContextTr,
-        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
-    >(
-        &mut self,
-        context: &mut CTX,
-        next_action: InterpreterAction,
-    ) -> Result<FrameInitOrResult<Self>, ERROR> {
-        let spec = context.cfg().spec().into();
-
-        // Run interpreter
-
-        let mut interpreter_result = match next_action {
-            InterpreterAction::NewFrame(frame_input) => {
-                let depth = self.depth + 1;
-                return Ok(ItemOrResult::Item(FrameInit {
-                    frame_input,
-                    depth,
-                    memory: self.interpreter.memory.new_child_context(),
-                }));
-            }
-            InterpreterAction::Return(result) => result,
-        };
-
-        // Handle return from frame
-        let result = match &self.data {
-            FrameData::Call(frame) => {
-                // return_call
-                // Revert changes or not.
-                if interpreter_result.result.is_ok() {
-                    context.journal_mut().checkpoint_commit();
-                } else {
-                    context.journal_mut().checkpoint_revert(self.checkpoint);
-                }
-                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                    interpreter_result,
-                    frame.return_memory_range.clone(),
-                )))
-            }
-            FrameData::Create(frame) => {
-                let max_code_size = context.cfg().max_code_size();
-                let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
-                return_create(
-                    context.journal_mut(),
-                    self.checkpoint,
-                    &mut interpreter_result,
-                    frame.created_address,
-                    max_code_size,
-                    is_eip3541_disabled,
-                    spec,
-                );
-
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
-            }
-        };
-
-        Ok(result)
-    }
-
     /// Processes a frame result and updates the interpreter state accordingly.
     pub fn return_result<CTX: ContextTr, ERROR: From<ContextTrDbError<CTX>> + FromStringError>(
         &mut self,
@@ -515,40 +493,69 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
+/// Result of frame return
+#[derive(Debug, Clone)]
+pub enum CheckpointResult {
+    // Revert the journal checkpoint.
+    Revert,
+    // Commit the journal checkpoint.
+    Commit,
+    // Set the code for the address and commit the journal checkpoint.
+    SetCode {
+        address: Address,
+        bytecode: Bytecode,
+    },
+}
+
+impl CheckpointResult {
+    /// Apply the checkpoint result to the journal.
+    #[inline]
+    pub fn apply_to_journal<JOURNAL: JournalTr>(
+        &self,
+        journal: &mut JOURNAL,
+        checkpoint: JournalCheckpoint,
+    ) {
+        match self {
+            CheckpointResult::Revert => journal.checkpoint_revert(checkpoint),
+            CheckpointResult::Commit => journal.checkpoint_commit(),
+            CheckpointResult::SetCode { address, bytecode } => {
+                journal.set_code(*address, bytecode.clone());
+                journal.checkpoint_commit();
+            }
+        }
+    }
+}
+
 /// Handles the result of a CREATE operation, including validation and state updates.
-pub fn return_create<JOURNAL: JournalTr>(
-    journal: &mut JOURNAL,
-    checkpoint: JournalCheckpoint,
+#[inline]
+pub fn return_create<CFG: Cfg>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
-    max_code_size: usize,
-    is_eip3541_disabled: bool,
-    spec_id: SpecId,
-) {
+    cfg: CFG,
+) -> CheckpointResult {
+    let spec = cfg.spec().into();
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
-        journal.checkpoint_revert(checkpoint);
-        return;
+        return CheckpointResult::Revert;
     }
     // Host error if present on execution
     // If ok, check contract creation limit and calculate gas deduction on output len.
     //
     // EIP-3541: Reject new contract code starting with the 0xEF byte
-    if !is_eip3541_disabled
-        && spec_id.is_enabled_in(LONDON)
+    if !cfg.is_eip3541_disabled()
+        && spec.is_enabled_in(LONDON)
         && interpreter_result.output.first() == Some(&0xEF)
     {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-        return;
+        return CheckpointResult::Revert;
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
     // EIP-7907 increased this limit to 0xc000 (~49kb).
-    if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
+    if spec.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > cfg.max_code_size()
+    {
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
+        return CheckpointResult::Revert;
     }
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
@@ -556,22 +563,17 @@ pub fn return_create<JOURNAL: JournalTr>(
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract
         // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-        if spec_id.is_enabled_in(HOMESTEAD) {
-            journal.checkpoint_revert(checkpoint);
+        if spec.is_enabled_in(HOMESTEAD) {
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return CheckpointResult::Revert;
         } else {
             interpreter_result.output = Bytes::new();
         }
     }
-    // If we have enough gas we can commit changes.
-    journal.checkpoint_commit();
 
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // Set code
-    journal.set_code(address, bytecode);
-
     interpreter_result.result = InstructionResult::Return;
+    CheckpointResult::SetCode { address, bytecode }
 }

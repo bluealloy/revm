@@ -19,3 +19,4 @@ workspace = true
 
 [dependencies]
 revm = { workspace = true }
+derive-where = { workspace = true }

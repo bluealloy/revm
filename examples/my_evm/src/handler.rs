@@ -52,7 +52,7 @@ where
     fn reward_beneficiary(
         &self,
         _evm: &mut Self::Evm,
-        _exec_result: &mut FrameResult,
+        _exec_result: &mut <EVM::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         // Skip beneficiary reward
         Ok(())
@@ -69,6 +69,7 @@ where
             Context = EVM::Context,
             InterpreterTypes = EthInterpreter,
         >,
+        Frame: FrameTr<FrameResult = FrameResult, FrameInit = FrameInit>,
     >,
 {
     type IT = EthInterpreter;

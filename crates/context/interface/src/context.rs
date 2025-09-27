@@ -1,4 +1,3 @@
-#![allow(clippy::type_complexity)]
 //! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{
@@ -33,6 +32,7 @@ pub trait ContextTr: Host {
     type Local: LocalContextTr;
 
     /// Get all contexts
+    #[allow(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -46,6 +46,7 @@ pub trait ContextTr: Host {
     );
 
     /// Get all contexts mutably
+    #[allow(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (

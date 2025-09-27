@@ -1,10 +1,10 @@
-use context::ContextTr;
+use context::{ContextTr, FrameStack};
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrame, EvmTr, FrameInitOrResult, ItemOrResult,
+    EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
-use interpreter::{interpreter::EthInterpreter, FrameInput, Interpreter, InterpreterTypes};
+use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterTypes};
 
 use crate::{
     handler::{frame_end, frame_start},
@@ -18,7 +18,7 @@ use crate::{
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
 pub trait InspectorEvmTr:
     EvmTr<
-    Frame = EthFrame<EthInterpreter>,
+    Frame: InspectorFrameTr<IT = EthInterpreter>,
     Instructions: InstructionProvider<InterpreterTypes = EthInterpreter, Context = Self::Context>,
     Context: ContextTr<Journal: JournalExt>,
 >
@@ -26,20 +26,56 @@ pub trait InspectorEvmTr:
     /// The inspector type used for EVM execution inspection.
     type Inspector: Inspector<Self::Context, EthInterpreter>;
 
+    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
+    ///
+    /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
+    #[allow(clippy::type_complexity)]
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &FrameStack<Self::Frame>,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &Self::Inspector,
+    );
+
+    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
+    ///
+    /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
+    #[allow(clippy::type_complexity)]
+    fn all_mut_inspector(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut FrameStack<Self::Frame>,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut Self::Inspector,
+    );
+
     /// Returns a mutable reference to the inspector.
-    fn inspector(&mut self) -> &mut Self::Inspector;
+    fn inspector(&mut self) -> &mut Self::Inspector {
+        self.all_mut_inspector().4
+    }
 
     /// Returns a tuple of mutable references to the context and the inspector.
     ///
     /// Useful when you want to allow inspector to modify the context.
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
+        let (ctx, _, _, _, inspector) = self.all_mut_inspector();
+        (ctx, inspector)
+    }
 
     /// Returns a tuple of mutable references to the context, the inspector and the frame.
     ///
     /// Useful when you want to allow inspector to modify the context and the frame.
     fn ctx_inspector_frame(
         &mut self,
-    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame);
+    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
+        let (ctx, frame, _, _, inspector) = self.all_mut_inspector();
+        (ctx, inspector, frame.get_mut())
+    }
 
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     fn ctx_inspector_frame_instructions(
@@ -49,31 +85,36 @@ pub trait InspectorEvmTr:
         &mut Self::Inspector,
         &mut Self::Frame,
         &mut Self::Instructions,
-    );
+    ) {
+        let (ctx, frame, instructions, _, inspector) = self.all_mut_inspector();
+        (ctx, inspector, frame.get_mut(), instructions)
+    }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     #[inline]
     fn inspect_frame_init(
         &mut self,
-        mut frame_init: <Self::Frame as FrameTr>::FrameInit,
+        frame_init: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<Self::Context>> {
+        let mut eth_frame_init = frame_init.clone().into();
         let (ctx, inspector) = self.ctx_inspector();
-        if let Some(mut output) = frame_start(ctx, inspector, &mut frame_init.frame_input) {
-            frame_end(ctx, inspector, &frame_init.frame_input, &mut output);
-            return Ok(ItemOrResult::Result(output));
+        if let Some(mut output) = frame_start(ctx, inspector, &mut eth_frame_init.frame_input) {
+            frame_end(ctx, inspector, &eth_frame_init.frame_input, &mut output);
+            return Ok(ItemOrResult::Result(output.into()));
         }
 
-        let frame_input = frame_init.frame_input.clone();
-        if let ItemOrResult::Result(mut output) = self.frame_init(frame_init)? {
+        if let ItemOrResult::Result(output) = self.frame_init(frame_init)? {
             let (ctx, inspector) = self.ctx_inspector();
-            frame_end(ctx, inspector, &frame_input, &mut output);
-            return Ok(ItemOrResult::Result(output));
+            let mut output = output.into();
+            frame_end(ctx, inspector, &eth_frame_init.frame_input, &mut output);
+            return Ok(ItemOrResult::Result(output.into()));
         }
 
         // if it is new frame, initialize the interpreter.
         let (ctx, inspector, frame) = self.ctx_inspector_frame();
-        let interp = frame.interpreter();
-        inspector.initialize_interp(interp, ctx);
+        if let Some(frame) = &mut frame.eth_frame() {
+            inspector.initialize_interp(&mut frame.interpreter, ctx);
+        }
         Ok(ItemOrResult::Item(frame))
     }
 
@@ -86,44 +127,55 @@ pub trait InspectorEvmTr:
     ) -> Result<FrameInitOrResult<Self::Frame>, ContextDbError<Self::Context>> {
         let (ctx, inspector, frame, instructions) = self.ctx_inspector_frame_instructions();
 
-        let next_action = inspect_instructions(
+        // fetch eth frame if it exist or call frame_run from Handler.
+        let Some(eth_frame) = frame.eth_frame() else {
+            return self.frame_run();
+        };
+
+        let action = inspect_instructions(
             ctx,
-            frame.interpreter(),
+            &mut eth_frame.interpreter,
             inspector,
             instructions.instruction_table(),
         );
-        let mut result = frame.process_next_action(ctx, next_action);
 
-        if let Ok(ItemOrResult::Result(frame_result)) = &mut result {
-            let (ctx, inspector, frame) = self.ctx_inspector_frame();
-            frame_end(ctx, inspector, frame.frame_input(), frame_result);
-            frame.set_finished(true);
-        };
-        result
+        let (_, _, cfg, journal, _, _) = ctx.all_mut();
+
+        // process the next action and cast both FrameInit and FrameResult to the frame type.
+        Ok(eth_frame
+            .process_next_action(cfg, journal, action)
+            .map(|frame_init| frame_init.into())
+            .map_result(|mut r| {
+                // call inspector.
+                frame_end(ctx, inspector, &eth_frame.input, &mut r);
+                r.into()
+            }))
     }
 }
 
 /// Trait that extends the [`FrameTr`] trait with additional functionality that is needed for inspection.
-pub trait InspectorFrame: FrameTr {
+pub trait InspectorFrameTr:
+    FrameTr<FrameResult: Into<FrameResult>, FrameInit: Into<FrameInit> + Clone>
+{
     /// The interpreter types used by this frame.
     type IT: InterpreterTypes;
 
-    /// Returns a mutable reference to the interpreter.
-    fn interpreter(&mut self) -> &mut Interpreter<Self::IT>;
-
-    /// Returns a reference to the frame input. Frame input is needed for call/create/eofcreate [`crate::Inspector`] methods
-    fn frame_input(&self) -> &FrameInput;
+    /// Returns a mutable reference to the inner EthFrame if it exists.
+    ///
+    /// If EthFrame is not used inside frame following Inspector functions are going to be skipped for this frame:
+    /// * [`crate::Inspector::initialize_interp`]
+    /// * [`crate::Inspector::step`]
+    /// * [`crate::Inspector::step_end`]
+    /// * [`crate::Inspector::log`]
+    /// * [`crate::Inspector::selfdestruct`]
+    fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>>;
 }
 
-/// Impl InspectorFrame for EthFrame.
-impl InspectorFrame for EthFrame<EthInterpreter> {
+/// Impl InspectorFrameTr for EthFrame.
+impl InspectorFrameTr for EthFrame<EthInterpreter> {
     type IT = EthInterpreter;
 
-    fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
-        &mut self.interpreter
-    }
-
-    fn frame_input(&self) -> &FrameInput {
-        &self.input
+    fn eth_frame(&mut self) -> Option<&mut EthFrame<Self::IT>> {
+        Some(self)
     }
 }
