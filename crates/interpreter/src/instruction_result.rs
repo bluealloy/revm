@@ -123,6 +123,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::OutOfOffset => Self::OutOfOffset,
             HaltReason::CreateCollision => Self::CreateCollision,
             HaltReason::PrecompileError => Self::PrecompileError,
+            HaltReason::PrecompileErrorWithContext(_) => Self::PrecompileError,
             HaltReason::NonceOverflow => Self::NonceOverflow,
             HaltReason::CreateContractSizeLimit => Self::CreateContractSizeLimit,
             HaltReason::CreateContractStartingWithEF => Self::CreateContractStartingWithEF,
