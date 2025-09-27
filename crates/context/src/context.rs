@@ -103,16 +103,6 @@ impl<
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>> {
         &mut self.error
     }
-
-    #[inline]
-    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal) {
-        (&self.tx, &mut self.journaled_state)
-    }
-
-    #[inline]
-    fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local) {
-        (&self.tx, &mut self.local)
-    }
 }
 
 impl<
