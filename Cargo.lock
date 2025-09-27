@@ -3579,6 +3579,7 @@ dependencies = [
  "phf",
  "revm-primitives",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
