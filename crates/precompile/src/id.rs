@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt;
 
 use primitives::{address, Address};
 
@@ -177,5 +178,11 @@ impl PrecompileId {
         };
 
         Some(precompile)
+    }
+}
+
+impl fmt::Display for PrecompileId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
     }
 }
