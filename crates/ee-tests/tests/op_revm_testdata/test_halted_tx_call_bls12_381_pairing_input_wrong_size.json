@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 97444,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bls12-381 pairing input length error"
+        }
       }
     }
   },

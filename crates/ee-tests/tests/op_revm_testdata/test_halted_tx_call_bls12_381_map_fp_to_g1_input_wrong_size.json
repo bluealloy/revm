@@ -3,7 +3,9 @@
     "Halt": {
       "gas_used": 27524,
       "reason": {
-        "Base": "PrecompileError"
+        "Base": {
+          "PrecompileErrorWithContext": "bls12-381 map fp to g1 input length error"
+        }
       }
     }
   },
