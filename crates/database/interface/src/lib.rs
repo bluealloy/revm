@@ -20,7 +20,7 @@ pub const BENCH_TARGET: Address = FFADDRESS;
 /// Common test balance used for benchmark addresses
 pub const TEST_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 /// BENCH_TARGET_BALANCE balance
-pub const BENCH_TARGET_BALANCE: U256 = COMMON_TEST_BALANCE;
+pub const BENCH_TARGET_BALANCE: U256 = TEST_BALANCE;
 /// Address with all `0xee..ee` in it. Used for testing.
 pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 /// BENCH_CALLER address
