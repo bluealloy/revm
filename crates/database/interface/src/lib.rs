@@ -26,7 +26,7 @@ pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 /// BENCH_CALLER address
 pub const BENCH_CALLER: Address = EEADDRESS;
 /// BENCH_CALLER_BALANCE balance
-pub const BENCH_CALLER_BALANCE: U256 = COMMON_TEST_BALANCE;
+pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
