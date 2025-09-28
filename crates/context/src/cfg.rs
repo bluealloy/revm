@@ -151,7 +151,7 @@ impl<SPEC> CfgEnv<SPEC> {
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
             chain_id: 1,
-            tx_chain_id_check: false,
+            tx_chain_id_check: true,
             limit_contract_code_size: None,
             limit_contract_initcode_size: None,
             spec,
