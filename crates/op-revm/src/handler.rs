@@ -341,6 +341,10 @@ where
         }
 
         self.mainnet.reward_beneficiary(evm, frame_result)?;
+        // If fee charging is disabled (e.g., eth_call simulations), skip OP-specific payouts.
+        if evm.ctx().cfg().is_fee_charge_disabled() {
+            return Ok(());
+        }
         let basefee = evm.ctx().block().basefee() as u128;
 
         // If the transaction is not a deposit transaction, fees are paid out
