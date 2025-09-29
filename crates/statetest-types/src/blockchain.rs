@@ -354,7 +354,11 @@ impl Transaction {
 
         // Set chain ID if present
         if let Some(chain_id) = self.chain_id {
-            builder = builder.chain_id(Some(chain_id.to::<u64>()));
+            let chain_id = chain_id.to::<u64>();
+            // 0 chain id is considered as no chain id
+            if chain_id != 0 {
+                builder = builder.chain_id(Some(chain_id));
+            }
         }
 
         // Handle gas pricing based on transaction type
