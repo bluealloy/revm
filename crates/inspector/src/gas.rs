@@ -109,8 +109,6 @@ mod tests {
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            interp.bytecode.pc();
-            interp.bytecode.opcode();
             self.gas_inspector.step_end(&mut interp.gas);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
