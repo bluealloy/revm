@@ -17,14 +17,16 @@ use std::string::String;
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
 /// BENCH_TARGET address
 pub const BENCH_TARGET: Address = FFADDRESS;
+/// Common test balance used for benchmark addresses
+pub const TEST_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
 /// BENCH_TARGET_BALANCE balance
-pub const BENCH_TARGET_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
+pub const BENCH_TARGET_BALANCE: U256 = TEST_BALANCE;
 /// Address with all `0xee..ee` in it. Used for testing.
 pub const EEADDRESS: Address = address!("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 /// BENCH_CALLER address
 pub const BENCH_CALLER: Address = EEADDRESS;
 /// BENCH_CALLER_BALANCE balance
-pub const BENCH_CALLER_BALANCE: U256 = U256::from_limbs([10_000_000_000_000_000, 0, 0, 0]);
+pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
