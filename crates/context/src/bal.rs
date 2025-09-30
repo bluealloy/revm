@@ -23,19 +23,24 @@ pub struct CompiledBal<T> {
     /// We can linearly search for next index
     last_index: Option<usize>,
 }
-
-let evm = emv.build().evm().with_bal(Bal::new());
-
-evm.transact_bal(tx);
-
-// Database 
+// Database
 
 // fetches all accounts and storages from DB. Prios the requested accounts and storages to not block execution.
 // READS ARE IMPORTANT AND BLOCKING.
 
 // Database can return ERROR if not part of BAL. Database decides the way how it is executed.
-// 
+//
+
 /*
+
+
+let evm = emv.build().evm().with_bal(Bal::new());
+
+evm.transact_bal(tx);
+
+db.fetch_account() -> read Account and its storage in one go!
+
+db.fetch_storage() -> called only if storage is not part of BAL.
 
 
 */
