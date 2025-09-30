@@ -4,7 +4,6 @@ use core::error::Error;
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use primitives::{keccak256, Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
-use std::string::ToString;
 
 /// An empty database that always returns default values when queried
 pub type EmptyDB = EmptyDBTyped<Infallible>;
