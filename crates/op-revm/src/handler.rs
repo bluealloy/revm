@@ -158,8 +158,6 @@ where
             )?;
         }
 
-        let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
-
         // old balance is journaled before mint is incremented.
         let old_balance = caller_account.info.balance;
 
@@ -170,14 +168,16 @@ where
 
         // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if !is_deposit && max_balance_spending > new_balance && !is_balance_check_disabled {
-            // skip max balance check for deposit transactions.
-            // this check for deposit was skipped previously in `validate_tx_against_state` function
-            return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: Box::new(max_balance_spending),
-                balance: Box::new(new_balance),
-            }
-            .into());
+        if !is_deposit && !is_balance_check_disabled {
+            // check additional cost and deduct it from the caller's balances
+            let Some(balance) = new_balance.checked_sub(additional_cost) else {
+                return Err(InvalidTransaction::LackOfFundForMaxFee {
+                    fee: Box::new(additional_cost),
+                    balance: Box::new(new_balance),
+                }
+                .into());
+            };
+            tx.ensure_enough_balance(balance)?;
         }
 
         let effective_balance_spending = tx
