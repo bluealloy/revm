@@ -179,6 +179,21 @@ pub trait Transaction {
         Ok(max_balance_spending)
     }
 
+    /// Checks if the caller has enough balance to cover the maximum balance spending of this transaction.
+    ///
+    /// Internally calls [`Self::max_balance_spending`] and checks if the balance is enough.
+    #[inline]
+    fn ensure_enough_balance(&self, balance: U256) -> Result<(), InvalidTransaction> {
+        let max_balance_spending = self.max_balance_spending()?;
+        if max_balance_spending > balance {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: Box::new(max_balance_spending),
+                balance: Box::new(balance),
+            });
+        }
+        Ok(())
+    }
+
     /// Returns the effective balance that is going to be spent that depends on base_fee
     /// Multiplication for gas are done in u128 type (saturated) and value is added as U256 type.
     ///
@@ -189,6 +204,7 @@ pub trait Transaction {
     /// This is always strictly less than [`Self::max_balance_spending`].
     ///
     /// Return U256 or error if all values overflow U256 number.
+    #[inline]
     fn effective_balance_spending(
         &self,
         base_fee: u128,
@@ -209,5 +225,17 @@ pub trait Transaction {
         }
 
         Ok(effective_balance_spending)
+    }
+
+    /// Returns the effective balance calculated with [`Self::effective_balance_spending`] but without the value.
+    #[inline]
+    fn effective_balance_spending_without_value(
+        &self,
+        base_fee: u128,
+        blob_price: u128,
+    ) -> Result<U256, InvalidTransaction> {
+        Ok(self
+            .effective_balance_spending(base_fee, blob_price)?
+            .saturating_sub(self.value()))
     }
 }

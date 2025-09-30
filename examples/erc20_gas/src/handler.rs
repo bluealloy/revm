@@ -56,7 +56,6 @@ where
         let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
         let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
         let caller = context.tx().caller();
-        let value = context.tx().value();
 
         let (tx, journal) = context.tx_journal_mut();
 
@@ -78,8 +77,10 @@ where
         caller_account.mark_touch();
 
         let max_balance_spending = tx.max_balance_spending()?;
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
+
+        // subtracting max balance spending with value that is going to be deducted later in the call.
+        let gas_balance_spending = tx
+            .effective_balance_spending_without_value(basefee, blob_price)
             .expect("effective balance is always smaller than max balance so it can't overflow");
 
         let account_balance_slot = erc_address_storage(tx.caller());
@@ -110,9 +111,6 @@ where
             }
             .into());
         } else {
-            // subtracting max balance spending with value that is going to be deducted later in the call.
-            let gas_balance_spending = effective_balance_spending - value;
-
             token_operation::<EVM::Context, ERROR>(
                 context,
                 caller,
