@@ -372,7 +372,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         return;
     }
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
-        context.interpreter.halt(InstructionResult::StackUnderflow);
+        context.interpreter.halt_underflow();
         return;
     };
 
