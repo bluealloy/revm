@@ -16,7 +16,7 @@ use revm::{
         evm::FrameTr,
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
-        pre_execution::validate_account_nonce_and_code,
+        pre_execution::{caller_touch_and_change, validate_account_nonce_and_code},
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
@@ -160,9 +160,6 @@ where
 
         let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
 
-        // old balance is journaled before mint is incremented.
-        let old_balance = caller_account.info.balance;
-
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
@@ -202,14 +199,7 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        // Touch account so we know it is changed.
-        caller_account.mark_touch();
-        caller_account.info.balance = new_balance;
-
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
+        let old_balance = caller_touch_and_change(caller_account, new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.

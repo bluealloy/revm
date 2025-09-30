@@ -15,7 +15,7 @@ use context_interface::{
 use core::cmp::Ordering;
 use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
-use state::AccountInfo;
+use state::{Account, AccountInfo};
 use std::boxed::Box;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -106,6 +106,27 @@ pub fn validate_account_nonce_and_code(
     Ok(())
 }
 
+/// Make changes to the caller account.
+///
+/// Returns the old balance.
+#[inline]
+pub fn caller_touch_and_change(
+    caller_account: &mut Account,
+    new_balance: U256,
+    is_call: bool,
+) -> U256 {
+    // Touch account so we know it is changed.
+    caller_account.mark_touch();
+
+    let old_balance = core::mem::replace(&mut caller_account.info.balance, new_balance);
+
+    if is_call {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
+    old_balance
+}
+
 /// Validates caller state and deducts transaction costs from the caller's balance.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
@@ -161,16 +182,7 @@ pub fn validate_against_state_and_deduct_caller<
         new_balance = new_balance.max(tx.value());
     }
 
-    let old_balance = caller_account.info.balance;
-    // Touch account so we know it is changed.
-    caller_account.mark_touch();
-    caller_account.info.balance = new_balance;
-
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
-    if tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
+    let old_balance = caller_touch_and_change(caller_account, new_balance, tx.kind().is_call());
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
