@@ -18,6 +18,7 @@ use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
 use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
+use std::boxed::Box;
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
