@@ -692,6 +692,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
 
+                /*
+                
+                TODO:
+                If item is already here, BAL should not do anything
+                this can happen if account was reverted. But it will still be part of Read BAL. 
+                 */
+
                 // skip load if account is cold.
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
@@ -724,6 +731,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             Entry::Vacant(vac) => {
                 // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
                 let is_cold = self.warm_addresses.is_cold(&address);
+
+                /*
+                TODO
+                If item is not here, Insert it inside BAL.
+                 */
 
                 // dont load cold account if skip_cold_load is true
                 if is_cold && skip_cold_load {
@@ -920,6 +932,11 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             if skip_cold_load && is_cold {
                 return Err(JournalLoadError::ColdLoadSkipped);
             }
+            /*
+            TODO if item is already here, BAL should not do anything
+            Even reverted storage slot is part of BAL read set.
+            
+             */
             slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
         }
@@ -933,6 +950,11 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             } else {
                 db.storage(address, key)?
             };
+            /*
+            TODO
+            Check if BAL is active, and if this item is READ.
+            If item is not here, insert it inside BAL.
+             */
             vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)

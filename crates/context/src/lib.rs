@@ -7,6 +7,7 @@ extern crate alloc as std;
 
 pub use context_interface::*;
 
+pub mod bal;
 pub mod block;
 pub mod cfg;
 pub mod context;
