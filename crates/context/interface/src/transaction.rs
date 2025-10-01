@@ -182,6 +182,9 @@ pub trait Transaction {
     /// Returns the effective balance that is going to be spent that depends on base_fee
     /// Multiplication for gas are done in u128 type (saturated) and value is added as U256 type.
     ///
+    /// It is calculated as `tx.effective_gas_price * tx.gas_limit + tx.value`. Additionally adding
+    /// `blob_price * tx.total_blob_gas` blob fee if transaction is EIP-4844.
+    ///
     /// # Reason
     ///
     /// This is done for performance reasons and it is known to be safe as there is no more that u128::MAX value of eth in existence.
@@ -213,14 +216,16 @@ pub trait Transaction {
     }
 
     /// Returns the effective balance calculated with [`Self::effective_balance_spending`] but without the value.
+    ///
+    /// Effective balance is always strictly less than [`Self::max_balance_spending`].
+    ///
+    /// This functions returns `tx.effective_gas_price * tx.gas_limit + blob_price * tx.total_blob_gas`.
     #[inline]
     fn effective_balance_spending_without_value(
         &self,
         base_fee: u128,
         blob_price: u128,
     ) -> Result<U256, InvalidTransaction> {
-        Ok(self
-            .effective_balance_spending(base_fee, blob_price)?
-            .saturating_sub(self.value()))
+        Ok(self.effective_balance_spending(base_fee, blob_price)? - self.value())
     }
 }
