@@ -16,7 +16,6 @@ use core::cmp::Ordering;
 use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
 use state::AccountInfo;
-use std::boxed::Box;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
 pub fn load_accounts<
@@ -132,16 +131,8 @@ pub fn validate_against_state_and_deduct_caller<
         is_nonce_check_disabled,
     )?;
 
-    let max_balance_spending = tx.max_balance_spending()?;
-
-    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-    // Transfer will be done inside `*_inner` functions.
-    if max_balance_spending > caller_account.info.balance && !is_balance_check_disabled {
-        return Err(InvalidTransaction::LackOfFundForMaxFee {
-            fee: Box::new(max_balance_spending),
-            balance: Box::new(caller_account.info.balance),
-        }
-        .into());
+    if !is_balance_check_disabled {
+        tx.ensure_enough_balance(caller_account.info.balance)?;
     }
 
     // subtracting effective balance spending with value that is going to be deducted later in the call.
