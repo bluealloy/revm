@@ -244,7 +244,7 @@ where
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step_end(&mut interp.gas);
+        self.gas_inspector.step_end(&interp.gas);
         let value = Output {
             pc: self.pc,
             op: self.opcode,
