@@ -16,7 +16,7 @@ use revm::{
         evm::FrameTr,
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
-        pre_execution::{caller_touch_and_change, validate_account_nonce_and_code},
+        pre_execution::validate_account_nonce_and_code,
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
@@ -199,7 +199,7 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        let old_balance = caller_touch_and_change(caller_account, new_balance, tx.kind().is_call());
+        let old_balance = caller_account.caller_touch_and_change(new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.

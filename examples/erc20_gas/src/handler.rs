@@ -5,8 +5,8 @@ use revm::{
         Block, ContextTr, JournalTr, Transaction,
     },
     handler::{
-        pre_execution::{caller_touch_and_change, validate_account_nonce_and_code},
-        EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
+        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, FrameResult, FrameTr,
+        Handler,
     },
     interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
@@ -71,11 +71,7 @@ where
         )?;
 
         // make changes to the account. Account balance stays the same
-        caller_touch_and_change(
-            caller_account,
-            caller_account.info.balance,
-            tx.kind().is_call(),
-        );
+        caller_account.caller_touch_and_change(caller_account.info.balance, tx.kind().is_call());
 
         let max_balance_spending = tx.max_balance_spending()?;
         let effective_balance_spending = tx
