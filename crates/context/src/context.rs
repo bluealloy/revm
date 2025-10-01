@@ -56,6 +56,7 @@ impl<
     type Local = LOCAL;
 
     #[inline]
+    #[allow(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -79,6 +80,7 @@ impl<
     }
 
     #[inline]
+    #[allow(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (

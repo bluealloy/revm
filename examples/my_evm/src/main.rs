@@ -11,6 +11,9 @@ use revm::{
     Context, MainContext,
 };
 
+// unused in binary
+use derive_where as _;
+
 /// Example demonstrating various ways to use a custom EVM implementation.
 ///
 /// This function showcases different usage patterns for MyEvm:

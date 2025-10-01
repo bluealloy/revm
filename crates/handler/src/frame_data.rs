@@ -1,7 +1,10 @@
+use context::Cfg;
 use context_interface::result::Output;
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
+
+use crate::{frame::CheckpointResult, return_create};
 
 /// Call Frame
 #[derive(Debug, Clone)]
@@ -31,6 +34,41 @@ pub enum FrameData {
     Create(CreateFrame),
 }
 
+impl FrameData {
+    /// Processes the result action from [`InterpreterResult`].
+    ///
+    /// Returns the frame result and action needs for journal (revert or commit)
+    #[inline]
+    pub fn process_result_action<CFG: Cfg>(
+        &self,
+        cfg: CFG,
+        mut interpreter_result: InterpreterResult,
+    ) -> (FrameResult, CheckpointResult) {
+        // Handle return from frame
+        match self {
+            FrameData::Call(frame) => {
+                let is_ok = interpreter_result.result.is_ok();
+                (
+                    FrameResult::new_call(interpreter_result, frame.return_memory_range.clone()),
+                    if is_ok {
+                        CheckpointResult::Commit
+                    } else {
+                        CheckpointResult::Revert
+                    },
+                )
+            }
+            FrameData::Create(frame) => {
+                let res = return_create(&mut interpreter_result, frame.created_address, cfg);
+
+                (
+                    FrameResult::new_create(interpreter_result, Some(frame.created_address)),
+                    res,
+                )
+            }
+        }
+    }
+}
+
 /// Frame Result
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -42,6 +80,21 @@ pub enum FrameResult {
 }
 
 impl FrameResult {
+    /// Creates a new call frame result.
+    #[inline]
+    pub fn new_call(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
+        Self::Call(CallOutcome {
+            result,
+            memory_offset,
+        })
+    }
+
+    /// Creates a new create frame result.
+    #[inline]
+    pub fn new_create(result: InterpreterResult, address: Option<Address>) -> Self {
+        Self::Create(CreateOutcome::new(result, address))
+    }
+
     /// Casts frame result to interpreter result.
     #[inline]
     pub fn into_interpreter_result(self) -> InterpreterResult {
