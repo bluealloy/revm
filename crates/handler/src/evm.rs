@@ -20,9 +20,9 @@ pub type FrameInitResult<'a, F> = ItemOrResult<&'a mut F, <F as FrameTr>::FrameR
 #[auto_impl(&mut, Box)]
 pub trait FrameTr {
     /// The result type returned when a frame completes execution.
-    type FrameResult: Into<FrameResult>;
+    type FrameResult: From<FrameResult>;
     /// The initialization type used to create a new frame.
-    type FrameInit: Into<FrameInit>;
+    type FrameInit: From<FrameInit>;
 }
 
 /// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
