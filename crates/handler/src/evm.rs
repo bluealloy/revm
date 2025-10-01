@@ -39,27 +39,70 @@ pub trait EvmTr {
     /// The type containing the frame
     type Frame: FrameTr;
 
-    /// Returns a mutable reference to the execution context
-    fn ctx(&mut self) -> &mut Self::Context;
+    /// Returns a tuple of references to the context, the frame and the instructions.
+    #[allow(clippy::type_complexity)]
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    );
+
+    /// Returns a tuple of mutable references to the context, the frame and the instructions.
+    #[allow(clippy::type_complexity)]
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    );
 
     /// Returns a mutable reference to the execution context
+    #[inline]
+    fn ctx(&mut self) -> &mut Self::Context {
+        let (ctx, _, _, _) = self.all_mut();
+        ctx
+    }
+
+    /// Returns a mutable reference to the execution context
+    #[inline]
     fn ctx_mut(&mut self) -> &mut Self::Context {
         self.ctx()
     }
 
     /// Returns an immutable reference to the execution context
-    fn ctx_ref(&self) -> &Self::Context;
+    #[inline]
+    fn ctx_ref(&self) -> &Self::Context {
+        let (ctx, _, _, _) = self.all();
+        ctx
+    }
 
     /// Returns mutable references to both the context and instruction set.
     /// This enables atomic access to both components when needed.
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions);
+    #[inline]
+    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
+        let (ctx, instructions, _, _) = self.all_mut();
+        (ctx, instructions)
+    }
 
     /// Returns mutable references to both the context and precompiles.
     /// This enables atomic access to both components when needed.
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles);
+    #[inline]
+    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
+        let (ctx, _, precompiles, _) = self.all_mut();
+        (ctx, precompiles)
+    }
 
     /// Returns a mutable reference to the frame stack.
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame>;
+    #[inline]
+    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
+        let (_, _, _, frame_stack) = self.all_mut();
+        frame_stack
+    }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     fn frame_init(
@@ -94,18 +137,35 @@ where
     type Frame = EthFrame<EthInterpreter>;
 
     #[inline]
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.ctx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    ) {
+        let ctx = &self.ctx;
+        let instructions = &self.instruction;
+        let precompiles = &self.precompiles;
+        let frame_stack = &self.frame_stack;
+        (ctx, instructions, precompiles, frame_stack)
     }
 
     #[inline]
-    fn ctx_ref(&self) -> &Self::Context {
-        &self.ctx
-    }
-
-    #[inline]
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        &mut self.frame_stack
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    ) {
+        let ctx = &mut self.ctx;
+        let instructions = &mut self.instruction;
+        let precompiles = &mut self.precompiles;
+        let frame_stack = &mut self.frame_stack;
+        (ctx, instructions, precompiles, frame_stack)
     }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
@@ -169,15 +229,5 @@ where
             .get()
             .return_result::<_, ContextDbError<Self::Context>>(&mut self.ctx, result)?;
         Ok(None)
-    }
-
-    #[inline]
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        (&mut self.ctx, &mut self.instruction)
-    }
-
-    #[inline]
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        (&mut self.ctx, &mut self.precompiles)
     }
 }
