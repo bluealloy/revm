@@ -158,8 +158,6 @@ where
             )?;
         }
 
-        let max_balance_spending = tx.max_balance_spending()?.saturating_add(additional_cost);
-
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
