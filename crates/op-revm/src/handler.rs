@@ -182,7 +182,7 @@ where
 
         // subtracting max balance spending with value that is going to be deducted later in the call.
         let gas_balance_spending = tx
-            .effective_balance_spending_without_value(basefee, blob_price)
+            .gas_balance_spending(basefee, blob_price)
             .expect("effective balance is always smaller than max balance so it can't overflow");
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the

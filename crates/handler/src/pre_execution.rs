@@ -146,7 +146,7 @@ pub fn validate_against_state_and_deduct_caller<
 
     // subtracting effective balance spending with value that is going to be deducted later in the call.
     let gas_balance_spending = tx
-        .effective_balance_spending_without_value(basefee, blob_price)
+        .gas_balance_spending(basefee, blob_price)
         .expect("effective balance is always smaller than max balance so it can't overflow");
 
     let mut new_balance = caller_account

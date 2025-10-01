@@ -221,7 +221,7 @@ pub trait Transaction {
     ///
     /// This functions returns `tx.effective_gas_price * tx.gas_limit + blob_price * tx.total_blob_gas`.
     #[inline]
-    fn effective_balance_spending_without_value(
+    fn gas_balance_spending(
         &self,
         base_fee: u128,
         blob_price: u128,
