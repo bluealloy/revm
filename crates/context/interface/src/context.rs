@@ -130,12 +130,28 @@ pub trait ContextTr: Host {
     }
     /// Get the error
     fn error(&mut self) -> &mut Result<(), ContextError<<Self::Db as Database>::Error>>;
+
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
-    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal);
+    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal) {
+        let (_, tx, _, journal, _, _) = self.all_mut();
+        (tx, journal)
+    }
+
+    /// Get the transaction, configuration and mutable journal.
+    fn tx_block_cfg_journal_mut(
+        &mut self,
+    ) -> (&Self::Tx, &Self::Block, &Self::Cfg, &mut Self::Journal) {
+        let (block, tx, cfg, journal, _, _) = self.all_mut();
+        (tx, block, cfg, journal)
+    }
+
     /// Get the transaction and local context. It is used to efficiently load initcode
     /// into local context without copying them from transaction.
-    fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local);
+    fn tx_local_mut(&mut self) -> (&Self::Tx, &mut Self::Local) {
+        let (_, tx, _, _, _, local) = self.all_mut();
+        (tx, local)
+    }
 }
 
 /// Inner Context error used for Interpreter to set error without returning it from instruction
