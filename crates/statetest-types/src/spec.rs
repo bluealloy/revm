@@ -61,9 +61,8 @@ impl SpecName {
         match self {
             Self::Frontier => SpecId::FRONTIER,
             Self::Homestead | Self::FrontierToHomesteadAt5 => SpecId::HOMESTEAD,
-            Self::EIP150 | Self::HomesteadToDaoAt5 | Self::HomesteadToEIP150At5 => {
-                SpecId::TANGERINE
-            }
+            Self::HomesteadToDaoAt5 => SpecId::DAO_FORK,
+            Self::EIP150 | Self::HomesteadToEIP150At5 => SpecId::TANGERINE,
             Self::EIP158 => SpecId::SPURIOUS_DRAGON,
             Self::Byzantium | Self::EIP158ToByzantiumAt5 => SpecId::BYZANTIUM,
             Self::ConstantinopleFix | Self::ByzantiumToConstantinopleFixAt5 => SpecId::PETERSBURG,
