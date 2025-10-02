@@ -67,24 +67,26 @@ where
     type Precompiles = CustomPrecompileProvider;
     type Frame = EthFrame<EthInterpreter>;
 
-    fn ctx(&mut self) -> &mut Self::Context {
-        &mut self.0.ctx
+    fn all(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+    ) {
+        self.0.all()
     }
 
-    fn ctx_ref(&self) -> &Self::Context {
-        self.0.ctx_ref()
-    }
-
-    fn ctx_instructions(&mut self) -> (&mut Self::Context, &mut Self::Instructions) {
-        self.0.ctx_instructions()
-    }
-
-    fn ctx_precompiles(&mut self) -> (&mut Self::Context, &mut Self::Precompiles) {
-        self.0.ctx_precompiles()
-    }
-
-    fn frame_stack(&mut self) -> &mut FrameStack<Self::Frame> {
-        self.0.frame_stack()
+    fn all_mut(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+    ) {
+        self.0.all_mut()
     }
 
     fn frame_init(
@@ -124,28 +126,27 @@ where
 {
     type Inspector = INSP;
 
-    fn inspector(&mut self) -> &mut Self::Inspector {
-        self.0.inspector()
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+        &Self::Inspector,
+    ) {
+        self.0.all_inspector()
     }
 
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        self.0.ctx_inspector()
-    }
-
-    fn ctx_inspector_frame(
-        &mut self,
-    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
-        self.0.ctx_inspector_frame()
-    }
-
-    fn ctx_inspector_frame_instructions(
+    fn all_mut_inspector(
         &mut self,
     ) -> (
         &mut Self::Context,
-        &mut Self::Inspector,
-        &mut Self::Frame,
         &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+        &mut Self::Inspector,
     ) {
-        self.0.ctx_inspector_frame_instructions()
+        self.0.all_mut_inspector()
     }
 }
