@@ -11,7 +11,6 @@ use context::{
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
-use std::vec::Vec;
 
 /// Type alias for the result of transact_many_finalize to reduce type complexity.
 type TransactManyFinalizeResult<ExecutionResult, State, Error> =
