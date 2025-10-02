@@ -152,16 +152,7 @@ pub fn validate_against_state_and_deduct_caller<
         new_balance = new_balance.max(tx.value());
     }
 
-    let old_balance = caller_account.info.balance;
-    // Touch account so we know it is changed.
-    caller_account.mark_touch();
-    caller_account.info.balance = new_balance;
-
-    // Bump the nonce for calls. Nonce for CREATE will be bumped in `make_create_frame`.
-    if tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
+    let old_balance = caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())

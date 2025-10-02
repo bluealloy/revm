@@ -158,9 +158,6 @@ where
             )?;
         }
 
-        // old balance is journaled before mint is incremented.
-        let old_balance = caller_account.info.balance;
-
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
@@ -202,14 +199,8 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        // Touch account so we know it is changed.
-        caller_account.mark_touch();
-        caller_account.info.balance = new_balance;
-
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
+        let old_balance =
+            caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.

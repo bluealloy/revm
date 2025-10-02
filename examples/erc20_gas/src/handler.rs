@@ -67,12 +67,9 @@ where
             is_nonce_check_disabled,
         )?;
 
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
-
-        // Touch account so we know it is changed.
-        caller_account.mark_touch();
+        // make changes to the account. Account balance stays the same
+        caller_account
+            .caller_initial_modification(caller_account.info.balance, tx.kind().is_call());
 
         let effective_balance_spending = tx
             .effective_balance_spending(basefee, blob_price)
