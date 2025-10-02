@@ -199,7 +199,8 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        let old_balance = caller_account.caller_touch_and_change(new_balance, tx.kind().is_call());
+        let old_balance =
+            caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.
