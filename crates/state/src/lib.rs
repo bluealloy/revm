@@ -42,21 +42,20 @@ impl Account {
 
     /// Make changes to the caller account.
     ///
-    /// It marks the account as touched, changes the balance and bumps the nonce if `bump_nonce` is true.
+    /// It marks the account as touched, changes the balance and bumps the nonce if `is_call` is true.
     ///
     /// Returns the old balance.
     #[inline]
-    pub fn caller_touch_and_change(&mut self, new_balance: U256, bump_nonce: bool) -> U256 {
+    pub fn caller_initial_modification(&mut self, new_balance: U256, is_call: bool) -> U256 {
         // Touch account so we know it is changed.
         self.mark_touch();
 
-        let old_balance = core::mem::replace(&mut self.info.balance, new_balance);
-
-        if bump_nonce {
+        if is_call {
             // Nonce is already checked
             self.info.nonce = self.info.nonce.saturating_add(1);
         }
-        old_balance
+
+        core::mem::replace(&mut self.info.balance, new_balance)
     }
 
     /// Checks if account is empty and check if empty state before spurious dragon hardfork.

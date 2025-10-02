@@ -162,7 +162,7 @@ pub fn validate_against_state_and_deduct_caller<
 
     let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
 
-    let old_balance = caller_account.caller_touch_and_change(new_balance, tx.kind().is_call());
+    let old_balance = caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
