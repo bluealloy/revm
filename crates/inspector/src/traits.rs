@@ -1,4 +1,4 @@
-use context::ContextTr;
+use context::{ContextTr, FrameStack};
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
@@ -26,20 +26,57 @@ pub trait InspectorEvmTr:
     /// The inspector type used for EVM execution inspection.
     type Inspector: Inspector<Self::Context, EthInterpreter>;
 
+    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
+    ///
+    /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
+    #[allow(clippy::type_complexity)]
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+        &Self::Inspector,
+    );
+
+    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
+    ///
+    /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
+    #[allow(clippy::type_complexity)]
+    fn all_mut_inspector(
+        &mut self,
+    ) -> (
+        &mut Self::Context,
+        &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+        &mut Self::Inspector,
+    );
+
     /// Returns a mutable reference to the inspector.
-    fn inspector(&mut self) -> &mut Self::Inspector;
+    fn inspector(&mut self) -> &mut Self::Inspector {
+        let (_, _, _, _, inspector) = self.all_mut_inspector();
+        inspector
+    }
 
     /// Returns a tuple of mutable references to the context and the inspector.
     ///
     /// Useful when you want to allow inspector to modify the context.
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector);
+    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
+        let (ctx, _, _, _, inspector) = self.all_mut_inspector();
+        (ctx, inspector)
+    }
 
     /// Returns a tuple of mutable references to the context, the inspector and the frame.
     ///
     /// Useful when you want to allow inspector to modify the context and the frame.
     fn ctx_inspector_frame(
         &mut self,
-    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame);
+    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
+        let (ctx, _, _, frame, inspector) = self.all_mut_inspector();
+        (ctx, inspector, frame.get())
+    }
 
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     fn ctx_inspector_frame_instructions(
@@ -49,7 +86,10 @@ pub trait InspectorEvmTr:
         &mut Self::Inspector,
         &mut Self::Frame,
         &mut Self::Instructions,
-    );
+    ) {
+        let (ctx, instructions, _, frame, inspector) = self.all_mut_inspector();
+        (ctx, inspector, frame.get(), instructions)
+    }
 
     /// Initializes the frame for the given frame input. Frame is pushed to the frame stack.
     #[inline]
