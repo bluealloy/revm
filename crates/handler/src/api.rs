@@ -88,8 +88,8 @@ pub trait ExecuteEvm {
     fn transact_many(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
-        let mut outputs = Vec::new();
+    ) -> Result<std::vec::Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
+        let mut outputs = std::vec::Vec::new();
         for (index, tx) in txs.enumerate() {
             outputs.push(
                 self.transact_one(tx)
@@ -151,7 +151,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
-    ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
+    ) -> Result<std::vec::Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
         let outputs = self.transact_many(txs)?;
         self.commit_inner();
         Ok(outputs)
