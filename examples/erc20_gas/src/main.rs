@@ -10,10 +10,6 @@ use anyhow::Result;
 use exec::transact_erc20evm_commit;
 use revm::{
     context::TxEnv,
-    context_interface::{
-        result::{InvalidHeader, InvalidTransaction},
-        ContextTr, JournalTr,
-    },
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
     primitives::{
@@ -77,49 +73,6 @@ async fn main() -> Result<()> {
 
     let balance_after = balance_of(account, &mut cache_db)?;
     println!("Balance after: {balance_after}");
-
-    Ok(())
-}
-
-/// Helpers
-pub fn token_operation<CTX, ERROR>(
-    context: &mut CTX,
-    sender: Address,
-    recipient: Address,
-    amount: U256,
-) -> Result<(), ERROR>
-where
-    CTX: ContextTr,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<<CTX::Db as Database>::Error>,
-{
-    let sender_balance_slot = erc_address_storage(sender);
-    let sender_balance = context
-        .journal_mut()
-        .sload(TOKEN, sender_balance_slot)?
-        .data;
-
-    if sender_balance < amount {
-        return Err(ERROR::from(
-            InvalidTransaction::MaxFeePerBlobGasNotSupported,
-        ));
-    }
-    // Subtract the amount from the sender's balance
-    let sender_new_balance = sender_balance.saturating_sub(amount);
-    context
-        .journal_mut()
-        .sstore(TOKEN, sender_balance_slot, sender_new_balance)?;
-
-    // Add the amount to the recipient's balance
-    let recipient_balance_slot = erc_address_storage(recipient);
-    let recipient_balance = context
-        .journal_mut()
-        .sload(TOKEN, recipient_balance_slot)?
-        .data;
-
-    let recipient_new_balance = recipient_balance.saturating_add(amount);
-    context
-        .journal_mut()
-        .sstore(TOKEN, recipient_balance_slot, recipient_new_balance)?;
 
     Ok(())
 }
