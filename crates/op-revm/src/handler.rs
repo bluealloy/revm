@@ -106,41 +106,68 @@ where
         let is_eip3607_disabled = ctx.cfg().is_eip3607_disabled();
         let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
 
-        let mint = if is_deposit {
-            ctx.tx().mint().unwrap_or_default()
-        } else {
-            0
-        };
+        if is_deposit {
+            let (block, tx, cfg, journal, _, _) = evm.ctx().all_mut();
+            let basefee = block.basefee() as u128;
+            let blob_price = block.blob_gasprice().unwrap_or_default();
+            // deposit skips max fee check and just deducts the effective balance spending.
+
+            let caller_account = journal.load_account_code(tx.caller())?.data;
+
+            let effective_balance_spending = tx
+                .effective_balance_spending(basefee, blob_price)
+                .expect("Deposit transaction effective balance spending overflow")
+                - tx.value();
+
+            // Mind value should be added first before subtracting the effective balance spending.
+            let mut new_balance = caller_account
+                .info
+                .balance
+                .saturating_add(U256::from(tx.mint().unwrap_or_default()))
+                .saturating_sub(effective_balance_spending);
+
+            if cfg.is_balance_check_disabled() {
+                // Make sure the caller's balance is at least the value of the transaction.
+                // this is not consensus critical, and it is used in testing.
+                new_balance = new_balance.max(tx.value());
+            }
+
+            let old_balance =
+                caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
+
+            // NOTE: all changes to the caller account should journaled so in case of error
+            // we can revert the changes.
+            journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+
+            return Ok(());
+        }
 
         let mut additional_cost = U256::ZERO;
 
-        // The L1-cost fee is only computed for Optimism non-deposit transactions.
-        if !is_deposit {
-            // L1 block info is stored in the context for later use.
-            // and it will be reloaded from the database if it is not for the current block.
-            if ctx.chain().l2_block != block_number {
-                *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
-            }
+        // L1 block info is stored in the context for later use.
+        // and it will be reloaded from the database if it is not for the current block.
+        if ctx.chain().l2_block != block_number {
+            *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
+        }
 
-            if !ctx.cfg().is_fee_charge_disabled() {
-                // account for additional cost of l1 fee and operator fee
-                let enveloped_tx = ctx
-                    .tx()
-                    .enveloped_tx()
-                    .expect("all not deposit tx have enveloped tx")
-                    .clone();
+        if !ctx.cfg().is_fee_charge_disabled() {
+            // account for additional cost of l1 fee and operator fee
+            let enveloped_tx = ctx
+                .tx()
+                .enveloped_tx()
+                .expect("all not deposit tx have enveloped tx")
+                .clone();
 
-                // compute L1 cost
-                additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
+            // compute L1 cost
+            additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
 
-                // compute operator fee
-                if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-                    let gas_limit = U256::from(ctx.tx().gas_limit());
-                    let operator_fee_charge =
-                        ctx.chain()
-                            .operator_fee_charge(&enveloped_tx, gas_limit, spec);
-                    additional_cost = additional_cost.saturating_add(operator_fee_charge);
-                }
+            // compute operator fee
+            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+                let gas_limit = U256::from(ctx.tx().gas_limit());
+                let operator_fee_charge =
+                    ctx.chain()
+                        .operator_fee_charge(&enveloped_tx, gas_limit, spec);
+                additional_cost = additional_cost.saturating_add(operator_fee_charge);
             }
         }
 
@@ -148,24 +175,19 @@ where
 
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        if !is_deposit {
-            // validates account nonce and code
-            validate_account_nonce_and_code(
-                &mut caller_account.info,
-                tx.nonce(),
-                is_eip3607_disabled,
-                is_nonce_check_disabled,
-            )?;
-        }
+        // validates account nonce and code
+        validate_account_nonce_and_code(
+            &mut caller_account.info,
+            tx.nonce(),
+            is_eip3607_disabled,
+            is_nonce_check_disabled,
+        )?;
 
-        // If the transaction is a deposit with a `mint` value, add the mint value
-        // in wei to the caller's balance. This should be persisted to the database
-        // prior to the rest of execution.
-        let mut new_balance = caller_account.info.balance.saturating_add(U256::from(mint));
+        let mut new_balance = caller_account.info.balance;
 
         // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if !is_deposit && !is_balance_check_disabled {
+        if !is_balance_check_disabled {
             // check additional cost and deduct it from the caller's balances
             let Some(balance) = new_balance.checked_sub(additional_cost) else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
