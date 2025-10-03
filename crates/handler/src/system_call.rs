@@ -114,7 +114,7 @@ pub trait SystemCallEvm: ExecuteEvm {
         self.system_call_with_caller(SYSTEM_ADDRESS, system_contract_address, data)
     }
 
-    /// Internally calls [`SystemCallEvm::system_call_one`] and [`ExecuteEvm::finalize`] functions to obtain the changed state.
+    /// Internally calls [`SystemCallEvm::system_call_one_with_caller`] and [`ExecuteEvm::finalize`] functions to obtain the changed state.
     fn system_call_with_caller(
         &mut self,
         caller: Address,
