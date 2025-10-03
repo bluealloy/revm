@@ -83,7 +83,7 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// Transaction fields are reset and set in [`SystemCallTx`] and data and target are set to
     /// given values.
     ///
-    /// Block values are taken into account and will determent how system call will be executed.
+    /// Block values are taken into account and will determine how system call will be executed.
     fn system_call_one_with_caller(
         &mut self,
         caller: Address,
@@ -96,7 +96,7 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// Transaction fields are reset and set in [`SystemCallTx`] and data and target are set to
     /// given values.
     ///
-    /// Block values are taken into account and will determent how system call will be executed.
+    /// Block values are taken into account and will determine how system call will be executed.
     fn system_call_one(
         &mut self,
         system_contract_address: Address,
@@ -131,7 +131,7 @@ pub trait SystemCallEvm: ExecuteEvm {
     /// Transaction fields are reset and set in [`SystemCallTx`] and data and target are set to
     /// given values.
     ///
-    /// Block values are taken into account and will determent how system call will be executed.
+    /// Block values are taken into account and will determine how system call will be executed.
     #[deprecated(since = "0.1.0", note = "Use `system_call_one_with_caller` instead")]
     fn transact_system_call_with_caller(
         &mut self,
