@@ -50,7 +50,7 @@ impl GasInspector {
 
     /// calculate last gas cost and remaining gas.
     #[inline]
-    pub fn step_end(&mut self, gas: &mut Gas) {
+    pub fn step_end(&mut self, gas: &Gas) {
         let remaining = gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
@@ -109,9 +109,7 @@ mod tests {
         }
 
         fn step_end(&mut self, interp: &mut Interpreter<INTR>, _context: &mut CTX) {
-            interp.bytecode.pc();
-            interp.bytecode.opcode();
-            self.gas_inspector.step_end(&mut interp.gas);
+            self.gas_inspector.step_end(&interp.gas);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
         }

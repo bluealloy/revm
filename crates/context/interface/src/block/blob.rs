@@ -86,10 +86,6 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
     let numerator = numerator as u128;
     let denominator = denominator as u128;
 
-    if denominator == 0 {
-        return 0;
-    }
-
     let mut i = 1;
     let mut output = 0;
     let mut numerator_accum = factor * denominator;

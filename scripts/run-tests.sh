@@ -90,7 +90,8 @@ download_and_extract() {
     local version="$4"
 
     echo "Downloading ${label} fixtures..."
-    curl -L "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
+    # Use -fsSL to fail on HTTP errors; add small retry for transient network issues
+    curl -fsSL --retry 3 --retry-delay 2 "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
     echo "Extracting ${label} fixtures..."
      # strip-components=1 removes the first top level directory from the flepath
      # This is needed because when we extract the tar, it is placed under an

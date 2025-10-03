@@ -673,6 +673,11 @@ fn execute_blockchain_test(
         state.insert_account_with_storage(address, account_info, account.storage);
     }
 
+    // insert genesis hash
+    state
+        .block_hashes
+        .insert(0, test_case.genesis_block_header.hash);
+
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
@@ -915,6 +920,11 @@ fn execute_blockchain_test(
             block.withdrawals.as_deref().unwrap_or_default(),
             spec_id,
         );
+
+        // insert present block hash.
+        state
+            .block_hashes
+            .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {
