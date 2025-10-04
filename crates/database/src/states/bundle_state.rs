@@ -1339,4 +1339,3 @@ mod tests {
         assert!(builder.get_contracts_mut().contains_key(&B256::default()));
     }
 }
-
