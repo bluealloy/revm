@@ -659,12 +659,6 @@ impl BundleState {
         }
     }
 
-    /// Converts the bundle state into a [`StateChangeset`].
-    #[deprecated = "Use `to_plain_state` instead"]
-    pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
-        self.to_plain_state(is_value_known)
-    }
-
     /// Generates a [`StateChangeset`] and [`PlainStateReverts`] from the bundle
     /// state.
     pub fn to_plain_state_and_reverts(
@@ -1345,3 +1339,4 @@ mod tests {
         assert!(builder.get_contracts_mut().contains_key(&B256::default()));
     }
 }
+
