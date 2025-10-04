@@ -448,20 +448,22 @@ mod tests {
         }
     }
 
-    #[test]  
-    fn test_gas_underpayment_bug() {  
-        // Exponent: First 32 bytes = 0x00...01, Last 32 bytes = 0xFF...FF  
-        let revm_gas = osaka_gas_calc(32, 64, 32, &U256::from(1));  
-        let eip_compliant_gas = 12272; // Using last 32 bytes bit_length=256  
-    
-        println!("REVM gas: {} (uses first 32 bytes)", revm_gas);  
-        println!("EIP-7883 compliant gas: {}", eip_compliant_gas);  
-        println!("Underpayment ratio: {:.2}x", eip_compliant_gas as f64 / revm_gas as  
-    f64);  
-    
-        assert_eq!(revm_gas, 8192);  
-        assert_eq!(eip_compliant_gas, revm_gas); // 1.5x underpayment demonstrated  
-    }  
+    #[test]
+    fn test_gas_underpayment_bug() {
+        // Exponent: First 32 bytes = 0x00...01, Last 32 bytes = 0xFF...FF
+        let revm_gas = osaka_gas_calc(32, 64, 32, &U256::from(1));
+        let eip_compliant_gas = 12272; // Using last 32 bytes bit_length=256
+
+        println!("REVM gas: {} (uses first 32 bytes)", revm_gas);
+        println!("EIP-7883 compliant gas: {}", eip_compliant_gas);
+        println!(
+            "Underpayment ratio: {:.2}x",
+            eip_compliant_gas as f64 / revm_gas as f64
+        );
+
+        assert_eq!(revm_gas, 8192);
+        assert_eq!(eip_compliant_gas, revm_gas); // 1.5x underpayment demonstrated
+    }
 
     #[test]
     fn test_osaka_modexp_gas() {

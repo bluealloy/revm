@@ -14,7 +14,10 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{
+    bal::{Bal, BalIndex},
+    Account, EvmState, EvmStorageSlot, TransientStorage,
+};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -40,6 +43,13 @@ pub struct JournalInner<ENTRY> {
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
     pub transaction_id: usize,
+    /// BAL for the state, if None BAL values are not used and it will not be applied on the top
+    /// of loaded account and storages.
+    pub bal: Option<Bal>,
+    /// BAL index for the current transaction
+    pub bal_index: BalIndex,
+    /// Whether BAL creation is enabled.
+    pub bal_enabled: bool,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -75,8 +85,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs: Vec::new(),
             journal: Vec::default(),
             transaction_id: 0,
+            bal_index: 0,
+            bal_enabled: false,
             depth: 0,
             spec: SpecId::default(),
+            bal: None,
             warm_addresses: WarmAddresses::new(),
         }
     }
@@ -104,12 +117,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal_enabled,
+            bal_index,
+            bal,
             spec,
             warm_addresses,
         } = self;
-        // Spec precompiles and state are not changed. It is always set again execution.
+        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
         let _ = state;
+        let _ = bal;
+        let _ = bal_enabled;
         transient_storage.clear();
         *depth = 0;
 
@@ -120,6 +138,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_addresses.clear_coinbase();
         // increment transaction id.
         *transaction_id += 1;
+        *bal_index += 1;
+
         logs.clear();
     }
 
@@ -133,6 +153,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal,
+            bal_index,
+            bal_enabled,
             spec,
             warm_addresses,
         } = self;
@@ -145,6 +168,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
+        let _ = bal_index;
+
+        // do nothing with BAL
+        let _ = bal;
+        let _ = bal_enabled;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
@@ -165,11 +193,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal,
+            bal_index,
+            bal_enabled,
             spec,
             warm_addresses,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
+        let _ = bal_enabled;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
 
@@ -182,6 +214,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         // reset transaction id.
         *transaction_id = 0;
+        *bal_index = 0;
+
+        // reset BAL so it is ready for next transaction.
+        bal.take();
 
         state
     }
@@ -692,13 +728,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
 
-                /*
-                
-                TODO:
-                If item is already here, BAL should not do anything
-                this can happen if account was reverted. But it will still be part of Read BAL. 
-                 */
-
                 // skip load if account is cold.
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
@@ -775,6 +804,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 load.data,
                 db,
                 &mut self.journal,
+                &mut self.bal,
                 self.transaction_id,
                 address,
                 storage_key,
@@ -804,6 +834,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account,
             db,
             &mut self.journal,
+            &mut self.bal,
             self.transaction_id,
             address,
             key,
@@ -833,7 +864,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let slot = acc.storage.get_mut(&key).unwrap();
 
         // new value is same as present, we don't need to do anything
-        if present.data == new {
+        if slot.present_value == new {
             return Ok(StateLoad::new(
                 SStoreResult {
                     original_value: slot.original_value(),
@@ -848,6 +879,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
+        // insert value into bal if enabled.
+        if self.bal_enabled {
+            slot.bal.insert(self.bal_index, &slot.original_value, new);
+        }
+
         Ok(StateLoad::new(
             SStoreResult {
                 original_value: slot.original_value(),
@@ -918,6 +954,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
+    bal: &mut Option<Bal>,
     transaction_id: usize,
     address: Address,
     key: StorageKey,
@@ -935,7 +972,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             /*
             TODO if item is already here, BAL should not do anything
             Even reverted storage slot is part of BAL read set.
-            
+
              */
             slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
@@ -950,11 +987,16 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             } else {
                 db.storage(address, key)?
             };
-            /*
-            TODO
-            Check if BAL is active, and if this item is READ.
-            If item is not here, insert it inside BAL.
-             */
+            if let Some(bal) = bal {
+                bal.accounts
+                    .get(&address)
+                    .unwrap()
+                    .storage
+                    .storage
+                    .get(&key)
+                    .unwrap();
+            }
+
             vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)
