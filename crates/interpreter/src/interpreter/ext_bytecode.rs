@@ -214,4 +214,3 @@ mod tests {
         assert_eq!(ext_bytecode.bytecode_hash, Some(hash));
     }
 }
-
