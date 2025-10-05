@@ -42,7 +42,7 @@ impl Account {
 
     /// Make changes to the caller account.
     ///
-    /// It marks the account as touched, changes the balance and bumps the nonce if `is_call` is true.
+    /// Changes the balance and bumps the nonce if `is_call` is true.
     ///
     /// Returns the old balance.
     #[inline]
