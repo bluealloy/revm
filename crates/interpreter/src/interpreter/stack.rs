@@ -54,6 +54,11 @@ impl StackTr for Stack {
     }
 
     #[inline]
+    fn data(&self) -> &[U256] {
+        &self.data
+    }
+
+    #[inline]
     fn clear(&mut self) {
         self.data.clear();
     }
