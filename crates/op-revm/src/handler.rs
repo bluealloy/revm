@@ -202,8 +202,6 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        // Touch account so we know it is changed.
-        caller_account.mark_touch();
         caller_account.info.balance = new_balance;
 
         // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.

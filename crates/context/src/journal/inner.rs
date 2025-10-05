@@ -274,8 +274,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // account balance changed.
         self.journal
             .push(ENTRY::balance_changed(address, old_balance));
-        // account is touched.
-        self.journal.push(ENTRY::account_touched(address));
+
+        Self::touch_account(&mut self.journal, address, self.state.get_mut(&address).unwrap());
 
         if bump_nonce {
             // nonce changed.
