@@ -9,6 +9,7 @@ use context_interface::{
 };
 use core::mem;
 use database_interface::Database;
+use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
@@ -16,6 +17,7 @@ use primitives::{
 };
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use std::vec::Vec;
+
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -297,7 +299,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
 
-        // march account as touched.
+        // mark account as touched.
         if !account.is_touched() {
             account.mark_touch();
             self.journal.push(ENTRY::account_touched(address));
@@ -455,7 +457,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Bytecode is not empty.
         // Nonce is not zero
         // Account is not precompile.
-        if target_acc.info.code_hash != KECCAK_EMPTY || target_acc.info.nonce != 0 {
+        let precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec_id));
+        if target_acc.info.code_hash != KECCAK_EMPTY
+            || target_acc.info.nonce != 0
+            || precompiles.contains(&target_address)
+        {
             self.checkpoint_revert(checkpoint);
             return Err(TransferError::CreateCollision);
         }

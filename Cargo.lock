@@ -3593,6 +3593,7 @@ dependencies = [
  "revm-context-interface",
  "revm-database",
  "revm-database-interface",
+ "revm-precompile",
  "revm-primitives",
  "revm-state",
  "serde",
