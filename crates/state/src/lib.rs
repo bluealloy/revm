@@ -13,7 +13,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
-use primitives::{HashMap, StorageKey, StorageValue};
+use primitives::{HashMap, StorageKey, StorageValue, U256};
 
 /// Account type used inside Journal to track changed to state.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -38,6 +38,24 @@ impl Account {
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
         }
+    }
+
+    /// Make changes to the caller account.
+    ///
+    /// It marks the account as touched, changes the balance and bumps the nonce if `is_call` is true.
+    ///
+    /// Returns the old balance.
+    #[inline]
+    pub fn caller_initial_modification(&mut self, new_balance: U256, is_call: bool) -> U256 {
+        // Touch account so we know it is changed.
+        self.mark_touch();
+
+        if is_call {
+            // Nonce is already checked
+            self.info.nonce = self.info.nonce.saturating_add(1);
+        }
+
+        core::mem::replace(&mut self.info.balance, new_balance)
     }
 
     /// Checks if account is empty and check if empty state before spurious dragon hardfork.

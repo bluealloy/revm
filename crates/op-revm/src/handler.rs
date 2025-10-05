@@ -158,9 +158,6 @@ where
             )?;
         }
 
-        // old balance is journaled before mint is incremented.
-        let old_balance = caller_account.info.balance;
-
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
@@ -180,12 +177,10 @@ where
             tx.ensure_enough_balance(balance)?;
         }
 
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
-
         // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = effective_balance_spending - tx.value();
+        let gas_balance_spending = tx
+            .gas_balance_spending(basefee, blob_price)
+            .expect("effective balance is always smaller than max balance so it can't overflow");
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
@@ -202,12 +197,8 @@ where
             new_balance = new_balance.max(tx.value());
         }
 
-        caller_account.info.balance = new_balance;
-
-        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-        if tx.kind().is_call() {
-            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-        }
+        let old_balance =
+            caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 
         // NOTE: all changes to the caller account should journaled so in case of error
         // we can revert the changes.

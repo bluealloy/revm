@@ -2,7 +2,7 @@ use crate::{
     inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm},
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
 };
-use context::{ContextSetters, ContextTr, Evm, JournalTr};
+use context::{ContextSetters, ContextTr, Evm, FrameStack, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
     instructions::InstructionProvider, system_call::SystemCallTx, EthFrame, EvmTr, EvmTrError,
@@ -95,33 +95,36 @@ where
 {
     type Inspector = INSP;
 
-    fn inspector(&mut self) -> &mut Self::Inspector {
-        &mut self.inspector
+    fn all_inspector(
+        &self,
+    ) -> (
+        &Self::Context,
+        &Self::Instructions,
+        &Self::Precompiles,
+        &FrameStack<Self::Frame>,
+        &Self::Inspector,
+    ) {
+        let ctx = &self.ctx;
+        let frame = &self.frame_stack;
+        let instructions = &self.instruction;
+        let precompiles = &self.precompiles;
+        let inspector = &self.inspector;
+        (ctx, instructions, precompiles, frame, inspector)
     }
-
-    fn ctx_inspector(&mut self) -> (&mut Self::Context, &mut Self::Inspector) {
-        (&mut self.ctx, &mut self.inspector)
-    }
-
-    fn ctx_inspector_frame(
-        &mut self,
-    ) -> (&mut Self::Context, &mut Self::Inspector, &mut Self::Frame) {
-        (&mut self.ctx, &mut self.inspector, self.frame_stack.get())
-    }
-
-    fn ctx_inspector_frame_instructions(
+    fn all_mut_inspector(
         &mut self,
     ) -> (
         &mut Self::Context,
-        &mut Self::Inspector,
-        &mut Self::Frame,
         &mut Self::Instructions,
+        &mut Self::Precompiles,
+        &mut FrameStack<Self::Frame>,
+        &mut Self::Inspector,
     ) {
-        (
-            &mut self.ctx,
-            &mut self.inspector,
-            self.frame_stack.get(),
-            &mut self.instruction,
-        )
+        let ctx = &mut self.ctx;
+        let frame = &mut self.frame_stack;
+        let instructions = &mut self.instruction;
+        let precompiles = &mut self.precompiles;
+        let inspector = &mut self.inspector;
+        (ctx, instructions, precompiles, frame, inspector)
     }
 }
