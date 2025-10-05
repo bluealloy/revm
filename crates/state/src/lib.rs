@@ -47,9 +47,6 @@ impl Account {
     /// Returns the old balance.
     #[inline]
     pub fn caller_initial_modification(&mut self, new_balance: U256, is_call: bool) -> U256 {
-        // Touch account so we know it is changed.
-        self.mark_touch();
-
         if is_call {
             // Nonce is already checked
             self.info.nonce = self.info.nonce.saturating_add(1);
