@@ -2,7 +2,6 @@ use crate::{
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
-use primitives::U256;
 
 use crate::InstructionContext;
 
@@ -13,10 +12,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     //gas!(context.interpreter, gas::BASE);
-    push!(
-        context.interpreter,
-        context.host.effective_gas_price()
-    );
+    push!(context.interpreter, context.host.effective_gas_price());
 }
 
 /// Implements the ORIGIN instruction.
