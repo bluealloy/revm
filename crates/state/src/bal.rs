@@ -20,7 +20,12 @@ pub use writes::BalWrites;
 
 use bytecode::Bytecode;
 use primitives::{Address, StorageKey, StorageValue, B256, U256};
-use std::collections::{btree_map::Entry, BTreeMap};
+use std::{
+    collections::{btree_map::Entry, BTreeMap},
+    sync::Arc,
+};
+
+use crate::Account;
 
 ///Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
@@ -45,7 +50,7 @@ impl Bal {
     pub fn insert_account(
         &mut self,
         address: Address,
-        nonce: BalWrites<U256>,
+        nonce: BalWrites<u64>,
         balance: BalWrites<U256>,
         code: BalWrites<(B256, Bytecode)>,
         storage: impl Iterator<Item = (StorageKey, BalWrites<StorageValue>)>,
@@ -63,11 +68,37 @@ impl Bal {
                         balance,
                         code,
                     },
-                    storage: StorageBal {
+                    storage: Arc::new(StorageBal {
                         storage: storage.collect(),
-                    },
+                    }),
                 });
             }
         }
     }
+
+    /// Populate account from BAL.
+    pub fn populate_account(
+        &self,
+        address: Address,
+        bal_index: BalIndex,
+        account: &mut Account,
+    ) -> Result<(), BalError> {
+        let Some(bal_account) = self.accounts.get(&address) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        bal_account.populate_account(bal_index, account);
+
+        return Ok(());
+    }
+}
+
+/// BAL error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum BalError {
+    /// Account not found in BAL.
+    AccountNotFound,
+    /// Slot not found in BAL.
+    SlotNotFound,
 }

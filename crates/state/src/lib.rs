@@ -5,6 +5,8 @@
 mod account_info;
 pub mod bal;
 mod types;
+use std::sync::Arc;
+
 pub use bytecode;
 
 pub use account_info::AccountInfo;
@@ -12,13 +14,11 @@ pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
+use crate::bal::writes::BalWrites;
+use crate::bal::{AccountBal, BalIndex, StorageBal};
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
-
-use crate::bal::account::AccountInfoBal;
-use crate::bal::writes::BalWrites;
-use crate::bal::AccountBal;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
 ///
@@ -43,6 +43,8 @@ pub struct Account {
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
+    /// BAL storage used in SLOAD to load storage values.
+    pub bal_storage: Option<Arc<StorageBal>>,
     /// Account status flags
     pub status: AccountStatus,
     /// BAL for account. Contains all writes values of the account info.
@@ -61,7 +63,42 @@ impl Account {
             status: AccountStatus::LoadedAsNotExisting,
             original_info: AccountInfo::default(),
             bal: AccountBal::default(),
+            bal_storage: None,
         }
+    }
+
+    /// Update balance in BAL.
+    ///
+    /// Use present balance and original balance to update BalWrites.
+    #[inline]
+    pub fn bal_balance_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .balance_update(bal_index, &self.original_info.balance, self.info.balance);
+    }
+
+    /// Update balance in BAL.
+    ///
+    /// Use present nonce and original nonce to update BalWrites.
+    #[inline]
+    pub fn bal_nonce_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .nonce_update(bal_index, &self.original_info.nonce, self.info.nonce);
+    }
+
+    /// Update code in BAL.
+    ///
+    /// Use present code and original code to update BalWrites.
+    ///
+    /// Panics if code is not set.
+    #[inline]
+    pub fn bal_code_update(&mut self, bal_index: BalIndex) {
+        assert!(self.info.code.is_some(), "Code is not set");
+        self.bal.code_update(
+            bal_index,
+            &self.original_info.code_hash,
+            self.info.code_hash,
+            self.info.code.clone().unwrap(),
+        );
     }
 
     /// Make changes to the caller account.
@@ -306,6 +343,7 @@ impl From<AccountInfo> for Account {
             status: AccountStatus::empty(),
             original_info: AccountInfo::default(),
             bal: AccountBal::default(),
+            bal_storage: None,
         }
     }
 }
@@ -401,6 +439,15 @@ impl EvmStorageSlot {
             is_cold: false,
             bal: BalWrites::default(),
         }
+    }
+
+    /// Update BAL.
+    ///
+    /// Use present value and original value to update BalWrites.
+    #[inline]
+    pub fn bal_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .update(bal_index, &self.original_value, self.present_value);
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.

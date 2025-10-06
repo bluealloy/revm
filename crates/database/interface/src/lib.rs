@@ -47,11 +47,6 @@ impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
 impl DBErrorMarker for String {}
 
-/*
-
-How to handle same value set.
-*/
-
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
