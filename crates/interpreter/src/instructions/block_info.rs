@@ -2,7 +2,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
-use primitives::{hardfork::SpecId::*, U256};
+use primitives::hardfork::SpecId::*;
 
 use crate::InstructionContext;
 
