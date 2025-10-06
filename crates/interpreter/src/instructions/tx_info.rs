@@ -15,7 +15,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     //gas!(context.interpreter, gas::BASE);
     push!(
         context.interpreter,
-        U256::from(context.host.effective_gas_price())
+        context.host.effective_gas_price()
     );
 }
 
