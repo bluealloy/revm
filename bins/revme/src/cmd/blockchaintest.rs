@@ -7,6 +7,8 @@ use context_interface::block::BlobExcessGasAndPrice;
 use database::states::bundle_state::BundleRetention;
 use database::{EmptyDB, State};
 use inspector::inspectors::TracerEip3155;
+use inspector::NoOpInspector;
+use either::Either;
 use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
 use revm::handler::EvmTr;
 use revm::{
@@ -725,8 +727,16 @@ fn execute_blockchain_test(
             .with_cfg(&cfg)
             .with_db(&mut state);
 
-        // Build and execute with EVM - always use inspector when JSON output is enabled
-        let mut evm = evm_context.build_mainnet_with_inspector(TracerEip3155::new_stdout());
+        // Build EVM
+        // Use inspector only when structured output/diagnostics are required to avoid unnecessary overhead
+        let mut evm = evm_context
+            .build_mainnet_with_inspector(Either::Left(NoOpInspector))
+            .with_inspector(if json_output || print_env_on_error {
+                Either::Right(TracerEip3155::new_stdout())
+            } else {
+                // Keep NoOpInspector in non-inspect mode to unify the EVM type without overhead
+                Either::Left(NoOpInspector)
+            });
 
         // Pre block system calls
         pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root);
