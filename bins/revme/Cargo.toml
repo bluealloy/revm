@@ -39,6 +39,7 @@ triehash.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
 csv = "1.1.6"
+either.workspace = true
 
 [features]
 # Optionally enable gmp because it doesn't work on i686 github actions runners
