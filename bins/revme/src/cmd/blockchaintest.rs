@@ -6,9 +6,9 @@ use context::ContextTr;
 use context_interface::block::BlobExcessGasAndPrice;
 use database::states::bundle_state::BundleRetention;
 use database::{EmptyDB, State};
+use either::Either;
 use inspector::inspectors::TracerEip3155;
 use inspector::NoOpInspector;
-use either::Either;
 use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
 use revm::handler::EvmTr;
 use revm::{
