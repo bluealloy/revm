@@ -124,11 +124,11 @@ where
 
             if !ctx.cfg().is_fee_charge_disabled() {
                 // account for additional cost of l1 fee and operator fee
-                let enveloped_tx = ctx
-                    .tx()
-                    .enveloped_tx()
-                    .expect("all not deposit tx have enveloped tx")
-                    .clone();
+                let Some(enveloped_tx) = ctx.tx().enveloped_tx().cloned() else {
+                    return Err(ERROR::from_string(
+                        "[OPTIMISM] Failed to load enveloped transaction.".into(),
+                    ));
+                };
 
                 // compute L1 cost
                 additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
