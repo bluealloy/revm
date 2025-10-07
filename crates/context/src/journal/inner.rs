@@ -813,6 +813,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 load.data,
                 db,
                 &mut self.journal,
+                self.bal.as_ref(),
                 self.transaction_id,
                 self.bal_index,
                 address,
@@ -843,6 +844,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account,
             db,
             &mut self.journal,
+            self.bal.as_ref(),
             self.transaction_id,
             self.bal_index,
             address,
@@ -963,6 +965,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
+    bal: Option<&Bal>,
     transaction_id: usize,
     bal_index: BalIndex,
     address: Address,
@@ -995,17 +998,13 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             };
 
             // if BAL is present that means Account contains StorageBal.
-            if let Some(bal_storage) = &account.bal_storage {
-                let Some(bal_slot) = bal_storage.storage.get(&key) else {
-                    // TODO handle error.
-                    panic!("Slot not found in BAL");
-                    //return Err(BalError::SlotNotFound);
-                };
-
-                // fetch written value and apply it.
-                if let Some(bal_value) = bal_slot.get(bal_index) {
-                    value = bal_value;
-                }
+            if let Some(bal) = bal {
+                let index = account
+                    .bal_account_index
+                    .expect("If BAL is present, account must have bal_account_index");
+                value = bal
+                    .account_storage(index, key, bal_index)
+                    .expect("TODO handle error");
             }
 
             vac.insert(EvmStorageSlot::new(value, transaction_id));

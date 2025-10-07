@@ -1,13 +1,13 @@
 //! BAL builder module
 
 use crate::{
-    bal::{writes::BalWrites, BalIndex},
+    bal::{writes::BalWrites, BalError, BalIndex},
     Account,
 };
 use bytecode::Bytecode;
 use core::ops::{Deref, DerefMut};
 use primitives::{StorageKey, StorageValue, B256, U256};
-use std::{collections::BTreeMap, sync::Arc};
+use std::collections::BTreeMap;
 
 /// Account BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -16,7 +16,7 @@ pub struct AccountBal {
     /// Account info bal.
     pub account_info: AccountInfoBal,
     /// Storage bal.
-    pub storage: Arc<StorageBal>,
+    pub storage: StorageBal,
 }
 
 impl Deref for AccountBal {
@@ -37,7 +37,6 @@ impl AccountBal {
     /// Populate account from BAL.
     pub fn populate_account(&self, bal_index: BalIndex, account: &mut Account) {
         self.account_info.populate_account_info(bal_index, account);
-        account.bal_storage = Some(self.storage.clone());
     }
 }
 
@@ -117,6 +116,19 @@ pub struct StorageBal {
 }
 
 impl StorageBal {
+    /// Get storage from the builder.
+    pub fn get(
+        &self,
+        key: StorageKey,
+        bal_index: BalIndex,
+    ) -> Result<Option<StorageValue>, BalError> {
+        let Some(value) = self.storage.get(&key) else {
+            return Err(BalError::SlotNotFound);
+        };
+
+        Ok(value.get(bal_index))
+    }
+
     /// Insert storage into the builder.
     pub fn insert_storage(
         &mut self,
@@ -154,8 +166,7 @@ impl AccountBal {
         storage: impl Iterator<Item = (StorageKey, BalWrites<StorageValue>)>,
     ) {
         self.account_info.insert_account(nonce, balance, code);
-        // TODO: fix this
-        // self.storage.insert_storage(storage);
+        self.storage.insert_storage(storage);
     }
 
     /// TODO get struct from somewhere.

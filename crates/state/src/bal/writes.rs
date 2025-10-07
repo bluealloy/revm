@@ -74,29 +74,44 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     pub fn update_with_key<K: PartialEq, F>(
         &mut self,
         index: BalIndex,
-        original_key: &K,
+        original_subvalue: &K,
         value: T,
         f: F,
     ) where
-        F: FnOnce(&T) -> &K,
+        F: Fn(&T) -> &K,
     {
+        // if index is different, we push the new value.
         if let Some(last) = self.writes.last_mut() {
-            if last.0 == index {
-                // if original value is same as newly written value we pop the last value.
-                if original_key == f(&value) {
-                    self.writes.pop();
-                } else {
-                    last.1 = value;
+            if last.0 != index {
+                // we push the new value only if it is changed.
+                if f(&last.1) != f(&value) {
+                    self.writes.push((index, value));
                 }
                 return;
             }
-        } else {
-            // if there is no last, we skip insertion if original valus is same as written value.
-            if original_key == f(&value) {
+        }
+
+        // extract previous (Can be original_subvalue or previous value) and last value.
+        let (previous, last) = match self.writes.as_mut_slice() {
+            [.., previous, last] => (f(&previous.1), last),
+            [last] => (original_subvalue, last),
+            [] => {
+                // if writes are empty check if original value is same as newly set value.
+                if original_subvalue != f(&value) {
+                    self.writes.push((index, value));
+                }
                 return;
             }
+        };
+
+        // if previous value is same, we pop the last value.
+        if previous == f(&value) {
+            self.writes.pop();
+            return;
         }
-        self.writes.push((index, value));
+
+        // if it is different, we update the last value.
+        last.1 = value;
     }
 }
 

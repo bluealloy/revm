@@ -1,8 +1,11 @@
 //! Async database interface.
 use crate::{DBErrorMarker, Database, DatabaseRef};
-use core::{error::Error, future::Future};
+use core::{
+    error::Error,
+    future::{self, Future},
+};
 use primitives::{Address, StorageKey, StorageValue, B256};
-use state::{AccountInfo, Bytecode};
+use state::{bal::Bal, AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
 
 /// The async EVM database interface
@@ -38,6 +41,12 @@ pub trait DatabaseAsync {
         &mut self,
         number: u64,
     ) -> impl Future<Output = Result<B256, Self::Error>> + Send;
+
+    /// Fetch BAL from database. If BAL is not found, execution will continue without it.
+    #[inline]
+    fn bal_async(&mut self) -> impl Future<Output = Option<Bal>> + Send {
+        future::ready(None)
+    }
 }
 
 /// The async EVM database interface
@@ -73,6 +82,12 @@ pub trait DatabaseAsyncRef {
         &self,
         number: u64,
     ) -> impl Future<Output = Result<B256, Self::Error>> + Send;
+
+    /// Fetch BAL from database. If BAL is not found, execution will continue without it.
+    #[inline]
+    fn bal_async_ref(&self) -> impl Future<Output = Option<Bal>> + Send {
+        future::ready(None)
+    }
 }
 
 /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] to provide a [`Database`] implementation.
@@ -145,6 +160,11 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async(number))
     }
+
+    #[inline]
+    fn bal(&mut self) -> Option<Bal> {
+        self.rt.block_on(self.db.bal_async())
+    }
 }
 
 impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
@@ -172,6 +192,11 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async_ref(number))
+    }
+
+    #[inline]
+    fn bal_ref(&self) -> Option<Bal> {
+        self.rt.block_on(self.db.bal_async_ref())
     }
 }
 

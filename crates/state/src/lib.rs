@@ -5,7 +5,6 @@
 mod account_info;
 pub mod bal;
 mod types;
-use std::sync::Arc;
 
 pub use bytecode;
 
@@ -15,7 +14,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use crate::bal::writes::BalWrites;
-use crate::bal::{AccountBal, BalIndex, StorageBal};
+use crate::bal::{AccountBal, BalIndex};
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
@@ -43,14 +42,14 @@ pub struct Account {
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
-    /// BAL storage used in SLOAD to load storage values.
-    pub bal_storage: Option<Arc<StorageBal>>,
     /// Account status flags
     pub status: AccountStatus,
     /// BAL for account. Contains all writes values of the account info.
     ///
     /// If account is cold loaded, values of nonce/balance/code should be read from here.
     pub bal: AccountBal,
+    /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
+    pub bal_account_index: Option<usize>,
 }
 
 impl Account {
@@ -63,7 +62,7 @@ impl Account {
             status: AccountStatus::LoadedAsNotExisting,
             original_info: AccountInfo::default(),
             bal: AccountBal::default(),
-            bal_storage: None,
+            bal_account_index: None,
         }
     }
 
@@ -343,7 +342,7 @@ impl From<AccountInfo> for Account {
             status: AccountStatus::empty(),
             original_info: AccountInfo::default(),
             bal: AccountBal::default(),
-            bal_storage: None,
+            bal_account_index: None,
         }
     }
 }
@@ -500,6 +499,10 @@ impl EvmStorageSlot {
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
+        if is_cold {
+            // if slot is cold original value should be reset to present value.
+            self.original_value = self.present_value;
+        }
         self.transaction_id = transaction_id;
         self.is_cold = false;
         is_cold

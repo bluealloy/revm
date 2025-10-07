@@ -3748,6 +3748,7 @@ name = "revm-state"
 version = "8.0.0"
 dependencies = [
  "bitflags",
+ "indexmap 2.11.0",
  "revm-bytecode",
  "revm-primitives",
  "serde",

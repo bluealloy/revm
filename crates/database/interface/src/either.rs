@@ -3,7 +3,7 @@
 use crate::{Database, DatabaseCommit, DatabaseRef};
 use either::Either;
 use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
-use state::{Account, AccountInfo, Bytecode};
+use state::{bal::Bal, Account, AccountInfo, Bytecode};
 
 impl<L, R> Database for Either<L, R>
 where
@@ -41,6 +41,13 @@ where
         match self {
             Self::Left(db) => db.block_hash(number),
             Self::Right(db) => db.block_hash(number),
+        }
+    }
+
+    fn bal(&mut self) -> Option<Bal> {
+        match self {
+            Self::Left(db) => db.bal(),
+            Self::Right(db) => db.bal(),
         }
     }
 }
@@ -94,6 +101,13 @@ where
         match self {
             Self::Left(db) => db.block_hash_ref(number),
             Self::Right(db) => db.block_hash_ref(number),
+        }
+    }
+
+    fn bal_ref(&self) -> Option<Bal> {
+        match self {
+            Self::Left(db) => db.bal_ref(),
+            Self::Right(db) => db.bal_ref(),
         }
     }
 }

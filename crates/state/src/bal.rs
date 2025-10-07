@@ -16,14 +16,11 @@ pub mod account;
 pub mod writes;
 
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
+use indexmap::{map::Entry, IndexMap};
 pub use writes::BalWrites;
 
 use bytecode::Bytecode;
 use primitives::{Address, StorageKey, StorageValue, B256, U256};
-use std::{
-    collections::{btree_map::Entry, BTreeMap},
-    sync::Arc,
-};
 
 use crate::Account;
 
@@ -35,14 +32,14 @@ pub type BalIndex = u64;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bal {
     /// Accounts bal.
-    pub accounts: BTreeMap<Address, AccountBal>,
+    pub accounts: IndexMap<Address, AccountBal>,
 }
 
 impl Bal {
     /// Create a new BAL builder.
     pub fn new() -> Self {
         Self {
-            accounts: BTreeMap::new(),
+            accounts: IndexMap::new(),
         }
     }
 
@@ -68,9 +65,9 @@ impl Bal {
                         balance,
                         code,
                     },
-                    storage: Arc::new(StorageBal {
+                    storage: StorageBal {
                         storage: storage.collect(),
-                    }),
+                    },
                 });
             }
         }
@@ -83,13 +80,32 @@ impl Bal {
         bal_index: BalIndex,
         account: &mut Account,
     ) -> Result<(), BalError> {
-        let Some(bal_account) = self.accounts.get(&address) else {
+        let Some((index, _, bal_account)) = self.accounts.get_full(&address) else {
             return Err(BalError::AccountNotFound);
         };
 
         bal_account.populate_account(bal_index, account);
+        account.bal_account_index = Some(index);
 
-        return Ok(());
+        Ok(())
+    }
+
+    /// Get storage from BAL.
+    pub fn account_storage(
+        &self,
+        account_index: usize,
+        key: StorageKey,
+        bal_index: BalIndex,
+    ) -> Result<StorageValue, BalError> {
+        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        let Some(storage_value) = bal_account.storage.get(key, bal_index)? else {
+            return Err(BalError::SlotNotFound);
+        };
+
+        Ok(storage_value)
     }
 }
 
