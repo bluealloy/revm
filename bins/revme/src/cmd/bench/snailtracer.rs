@@ -1,7 +1,7 @@
 use context::TxEnv;
 use criterion::Criterion;
 use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-use inspector::CountInspector;
+use inspector::{NoOpInspector};
 use revm::{
     bytecode::Bytecode,
     primitives::{bytes, hex, Bytes, TxKind},
@@ -15,7 +15,7 @@ pub fn run(criterion: &mut Criterion) {
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet()
-        .with_inspector(CountInspector::new());
+        .with_inspector(NoOpInspector{});
 
     let tx = TxEnv::builder()
         .caller(BENCH_CALLER)
