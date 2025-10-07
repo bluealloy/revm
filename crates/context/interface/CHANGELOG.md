@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.2.0...revm-context-interface-v11.0.0) - 2025-10-07
+
+### Added
+
+- Support bubbling up first precompile error messages  ([#2905](https://github.com/bluealloy/revm/pull/2905))
+- add transaction index to batch execution error handling ([#3000](https://github.com/bluealloy/revm/pull/3000))
+- Add Str(Cow<'static, str>) to InvalidTransaction error enum ([#2998](https://github.com/bluealloy/revm/pull/2998))
+- allow EIP-7623 to be disabled ([#2985](https://github.com/bluealloy/revm/pull/2985))
+- Introduced `all_mut` and `all` functions to ContextTr ([#2992](https://github.com/bluealloy/revm/pull/2992))
+- send bytecode with call input ([#2963](https://github.com/bluealloy/revm/pull/2963))
+- *(op-revm)* Add an option to disable "fee-charge" on `op-revm` ([#2980](https://github.com/bluealloy/revm/pull/2980))
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+- FrameStack mark push/end_init as unsafe ([#2929](https://github.com/bluealloy/revm/pull/2929))
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- helper function gas_balance_spending ([#3030](https://github.com/bluealloy/revm/pull/3030))
+- remove unreachable zero-denominator check in fake_exponential ([#3039](https://github.com/bluealloy/revm/pull/3039))
+- add ensure_enough_balance helper ([#3033](https://github.com/bluealloy/revm/pull/3033))
+- add default impl for tx_local_mut and tx_journal_mut ([#3029](https://github.com/bluealloy/revm/pull/3029))
+- prealloc few frames ([#2965](https://github.com/bluealloy/revm/pull/2965))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+
+## [10.2.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.1.0...revm-context-interface-v10.2.0) - 2025-09-23
+
+### Added
+
+- *(op-revm)* Add an option to disable "fee-charge" on `op-revm` ([#2980](https://github.com/bluealloy/revm/pull/2980))
+
 ## [10.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v10.0.1...revm-context-interface-v10.1.0) - 2025-08-23
 
 ### Added

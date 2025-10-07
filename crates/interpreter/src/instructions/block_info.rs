@@ -2,7 +2,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
 };
-use primitives::{hardfork::SpecId::*, U256};
+use primitives::hardfork::SpecId::*;
 
 use crate::InstructionContext;
 
@@ -43,7 +43,7 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     //gas!(context.interpreter, gas::BASE);
-    push!(context.interpreter, U256::from(context.host.block_number()));
+    push!(context.interpreter, context.host.block_number());
 }
 
 /// Implements the DIFFICULTY/PREVRANDAO instruction.
