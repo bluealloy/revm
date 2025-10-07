@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.3...revm-statetest-types-v10.0.0) - 2025-10-07
+
+### Added
+
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- *(btest)* 0 chainid is considered none ([#3022](https://github.com/bluealloy/revm/pull/3022))
+- prealloc few frames ([#2965](https://github.com/bluealloy/revm/pull/2965))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- remove parent blob gas used and excess ([#2933](https://github.com/bluealloy/revm/pull/2933))
+- *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
+
 ## [9.0.3](https://github.com/bluealloy/revm/compare/revm-statetest-types-v9.0.2...revm-statetest-types-v9.0.3) - 2025-09-23
 
 ### Other

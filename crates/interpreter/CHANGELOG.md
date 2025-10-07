@@ -51,6 +51,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.3...revm-interpreter-v26.0.0) - 2025-10-07
+
+### Added
+
+- Support bubbling up first precompile error messages  ([#2905](https://github.com/bluealloy/revm/pull/2905))
+- send bytecode with call input ([#2963](https://github.com/bluealloy/revm/pull/2963))
+
+### Fixed
+
+- remove redundant U256::from on Host getters in instructions ([#3053](https://github.com/bluealloy/revm/pull/3053))
+- *(interpreter)* remove redundant stack underflow check in LOG instruction ([#3028](https://github.com/bluealloy/revm/pull/3028))
+- unsafe stack capacity invariant and serde deserialization assumptions ([#3025](https://github.com/bluealloy/revm/pull/3025))
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+- skip cold load on oog ([#2903](https://github.com/bluealloy/revm/pull/2903))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- expose stack data ([#3047](https://github.com/bluealloy/revm/pull/3047))
+- use offset_from_unsigned ([#2999](https://github.com/bluealloy/revm/pull/2999))
+- rm eof comments ([#2987](https://github.com/bluealloy/revm/pull/2987))
+- comments on EIP-2929/2930 constants ([#2969](https://github.com/bluealloy/revm/pull/2969))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- remove duplicate comment for TOTAL_COST_FLOOR_PER_TOKEN constant ([#2950](https://github.com/bluealloy/revm/pull/2950))
+- clean static_selfdestruct_cost ([#2944](https://github.com/bluealloy/revm/pull/2944))
+- rename SELFDESTRUCT to SELFDESTRUCT_REFUND ([#2937](https://github.com/bluealloy/revm/pull/2937))
+
 ## [25.0.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.2...revm-interpreter-v25.0.3) - 2025-09-23
 
 ### Other

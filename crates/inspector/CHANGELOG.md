@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v10.0.1...revm-inspector-v11.0.0) - 2025-10-07
+
+### Added
+
+- detach EthFrame from InspectorEvmTr ([#3038](https://github.com/bluealloy/revm/pull/3038))
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- *(inspector)* remove redundant pc()/opcode() calls in step_end ([#3023](https://github.com/bluealloy/revm/pull/3023))
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- EvmTr and InspectorEvmTr receive all/all_mut fn ([#3037](https://github.com/bluealloy/revm/pull/3037))
+- *(inspector)* remove unnecessary mutable borrow in GasInspector::step_end ([#3035](https://github.com/bluealloy/revm/pull/3035))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- *(inspector)* remove dead skip flag ([#2951](https://github.com/bluealloy/revm/pull/2951))
+
 ## [10.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v10.0.0...revm-inspector-v10.0.1) - 2025-09-23
 
 ### Other
