@@ -24,98 +24,74 @@ impl Gas {
     /// Creates a new `Gas` struct with the given gas limit.
     #[inline]
     pub const fn new(limit: u64) -> Self {
-        Self {
-            limit,
-            remaining: limit,
-            refunded: 0,
-            memory: MemoryGas::new(),
-        }
+        Self { limit, remaining: limit, refunded: 0, memory: MemoryGas::new() }
     }
 
     /// Creates a new `Gas` struct with the given gas limit, but without any gas remaining.
     #[inline]
     pub const fn new_spent(limit: u64) -> Self {
-        Self {
-            limit,
-            remaining: 0,
-            refunded: 0,
-            memory: MemoryGas::new(),
-        }
+        Self { limit, remaining: 0, refunded: 0, memory: MemoryGas::new() }
     }
 
     /// Returns the gas limit.
     #[inline]
-    pub const fn limit(&self) -> u64 {
-        self.limit
-    }
+    pub const fn limit(&self) -> u64 { self.limit }
 
     /// Returns the memory gas.
     #[inline]
-    pub fn memory(&self) -> &MemoryGas {
-        &self.memory
-    }
+    pub fn memory(&self) -> &MemoryGas { &self.memory }
 
     /// Returns the memory gas.
     #[inline]
-    pub fn memory_mut(&mut self) -> &mut MemoryGas {
-        &mut self.memory
-    }
+    pub fn memory_mut(&mut self) -> &mut MemoryGas { &mut self.memory }
 
     /// Returns the total amount of gas that was refunded.
     #[inline]
-    pub const fn refunded(&self) -> i64 {
-        self.refunded
-    }
+    pub const fn refunded(&self) -> i64 { self.refunded }
 
     /// Returns the total amount of gas spent.
     #[inline]
-    pub const fn spent(&self) -> u64 {
-        self.limit - self.remaining
-    }
+    pub const fn spent(&self) -> u64 { self.limit - self.remaining }
 
     /// Returns the final amount of gas used by subtracting the refund from spent gas.
     #[inline]
-    pub const fn used(&self) -> u64 {
-        self.spent().saturating_sub(self.refunded() as u64)
-    }
+    pub const fn used(&self) -> u64 { self.spent().saturating_sub(self.refunded() as u64) }
 
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
-        self.spent().saturating_sub(self.refunded as u64)
+        let net = self.spent() as i128 - self.refunded as i128;
+
+        if net <= 0 {
+            0
+        } else if net >= u64::MAX as i128 {
+            u64::MAX
+        } else {
+            net as u64
+        }
     }
 
     /// Returns the amount of gas remaining.
     #[inline]
-    pub const fn remaining(&self) -> u64 {
-        self.remaining
-    }
+    pub const fn remaining(&self) -> u64 { self.remaining }
 
     /// Return remaining gas after subtracting 63/64 parts.
-    pub const fn remaining_63_of_64_parts(&self) -> u64 {
-        self.remaining - self.remaining / 64
-    }
+    pub const fn remaining_63_of_64_parts(&self) -> u64 { self.remaining - self.remaining / 64 }
 
     /// Erases a gas cost from the totals.
     #[inline]
-    pub fn erase_cost(&mut self, returned: u64) {
-        self.remaining += returned;
-    }
+    pub fn erase_cost(&mut self, returned: u64) { self.remaining += returned; }
 
     /// Spends all remaining gas.
     #[inline]
-    pub fn spend_all(&mut self) {
-        self.remaining = 0;
-    }
+    pub fn spend_all(&mut self) { self.remaining = 0; }
 
     /// Records a refund value.
     ///
     /// `refund` can be negative but `self.refunded` should always be positive
     /// at the end of transact.
     #[inline]
-    pub fn record_refund(&mut self, refund: i64) {
-        self.refunded += refund;
-    }
+    pub fn record_refund(&mut self, refund: i64) { self.refunded += refund; }
 
     /// Set a refund value for final refund.
     ///
@@ -130,15 +106,11 @@ impl Gas {
 
     /// Set a refund value. This overrides the current refund value.
     #[inline]
-    pub fn set_refund(&mut self, refund: i64) {
-        self.refunded = refund;
-    }
+    pub fn set_refund(&mut self, refund: i64) { self.refunded = refund; }
 
     /// Set a spent value. This overrides the current spent value.
     #[inline]
-    pub fn set_spent(&mut self, spent: u64) {
-        self.remaining = self.limit.saturating_sub(spent);
-    }
+    pub fn set_spent(&mut self, spent: u64) { self.remaining = self.limit.saturating_sub(spent); }
 
     /// Records an explicit cost.
     ///
@@ -192,12 +164,7 @@ pub struct MemoryGas {
 impl MemoryGas {
     /// Creates a new `MemoryGas` instance with zero memory allocation.
     #[inline]
-    pub const fn new() -> Self {
-        Self {
-            words_num: 0,
-            expansion_cost: 0,
-        }
-    }
+    pub const fn new() -> Self { Self { words_num: 0, expansion_cost: 0 } }
 
     /// Records a new memory length and calculates additional cost if memory is expanded.
     /// Returns the additional gas cost required, or None if no expansion is needed.
