@@ -3572,7 +3572,7 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "6.3.0"
+version = "7.0.0"
 dependencies = [
  "bitvec",
  "paste",
@@ -3614,7 +3614,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "7.0.6"
+version = "8.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3630,7 +3630,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database-interface"
-version = "7.0.6"
+version = "8.0.0"
 dependencies = [
  "auto_impl",
  "either",
@@ -3745,7 +3745,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "7.0.6"
+version = "8.0.0"
 dependencies = [
  "bitflags",
  "revm-bytecode",
