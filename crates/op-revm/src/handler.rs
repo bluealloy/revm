@@ -125,9 +125,9 @@ where
             if !ctx.cfg().is_fee_charge_disabled() {
                 // account for additional cost of l1 fee and operator fee
                 let Some(enveloped_tx) = ctx.tx().enveloped_tx().cloned() else {
-                        return Err(ERROR::from_string(
-                            "[OPTIMISM] Failed to load enveloped transaction.".into(),
-                        ));
+                    return Err(ERROR::from_string(
+                        "[OPTIMISM] Failed to load enveloped transaction.".into(),
+                    ));
                 };
 
                 // compute L1 cost
