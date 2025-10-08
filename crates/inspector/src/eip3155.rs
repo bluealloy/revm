@@ -253,7 +253,7 @@ where
             stack: &self.stack,
             depth: context.journal_mut().depth() as u64,
             return_data: "0x",
-            refund: self.refunded as u64,
+            refund: self.refunded.max(0) as u64,
             mem_size: self.mem_size as u64,
 
             op_name: OpCode::new(self.opcode).map(|i| i.as_str()),
