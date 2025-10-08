@@ -1,6 +1,6 @@
 //! CountInspector - Inspector that counts all opcodes that were called.
 use crate::inspector::Inspector;
-use interpreter::{interpreter_types::Jumps, InterpreterTypes};
+use interpreter::InterpreterTypes;
 use primitives::HashMap;
 
 /// Inspector that counts all opcodes that were called during execution.
