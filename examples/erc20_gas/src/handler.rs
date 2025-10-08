@@ -2,15 +2,15 @@ use revm::{
     context::Cfg,
     context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
     handler::{
-        pre_execution::validate_account_nonce_and_code, EvmTr, EvmTrError, FrameResult, FrameTr,
-        Handler,
+        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code},
+        EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
     },
     interpreter::interpreter_action::FrameInit,
     primitives::{hardfork::SpecId, U256},
     state::EvmState,
 };
 
-use crate::{erc_address_storage, token_operation, TOKEN, TREASURY};
+use crate::{erc_address_storage, TOKEN};
 
 /// Custom handler that implements ERC20 token gas payment.
 /// Instead of paying gas in ETH, transactions pay gas using ERC20 tokens.
@@ -46,15 +46,10 @@ where
     type HaltReason = HaltReason;
 
     fn validate_against_state_and_deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), ERROR> {
-        let context = evm.ctx();
-        let basefee = context.block().basefee() as u128;
-        let blob_price = context.block().blob_gasprice().unwrap_or_default();
-        let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-        let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
-        let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
-        let caller = context.tx().caller();
+        let (block, tx, cfg, journal, _, _) = evm.ctx_mut().all_mut();
 
-        let (tx, journal) = context.tx_journal_mut();
+        // load TOKEN contract
+        journal.load_account(TOKEN)?.data.mark_touch();
 
         // Load caller's account.
         let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -62,42 +57,23 @@ where
         validate_account_nonce_and_code(
             &mut caller_account.info,
             tx.nonce(),
-            is_eip3607_disabled,
-            is_nonce_check_disabled,
+            cfg.is_eip3607_disabled(),
+            cfg.is_nonce_check_disabled(),
         )?;
 
         // make changes to the account. Account balance stays the same
         caller_account
             .caller_initial_modification(caller_account.info.balance, tx.kind().is_call());
 
-        let gas_balance_spending = tx
-            .gas_balance_spending(basefee, blob_price)
-            .expect("gas balance is always smaller than max balance so it can't overflow");
-
         let account_balance_slot = erc_address_storage(tx.caller());
-        journal.load_account(TOKEN)?.data.mark_touch();
 
-        let account_balance = journal
-            .sload(TOKEN, account_balance_slot)
-            .map(|v| v.data)
-            .unwrap_or_default();
+        // load account balance
+        let account_balance = journal.sload(TOKEN, account_balance_slot)?.data;
 
-        if !is_balance_check_disabled {
-            tx.ensure_enough_balance(account_balance)?;
-        }
+        let new_balance = calculate_caller_fee(account_balance, tx, block, cfg)?;
 
-        // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if is_balance_check_disabled {
-            // ignore balance check.
-        } else {
-            token_operation::<EVM::Context, ERROR>(
-                context,
-                caller,
-                TREASURY,
-                gas_balance_spending,
-            )?;
-        }
+        // store deducted balance.
+        journal.sstore(TOKEN, account_balance_slot, new_balance)?;
 
         Ok(())
     }
@@ -116,11 +92,19 @@ where
         let reimbursement =
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
 
-        token_operation::<EVM::Context, ERROR>(
-            context,
-            TREASURY,
-            caller,
-            U256::from(reimbursement),
+        let account_balance_slot = erc_address_storage(caller);
+
+        // load account balance
+        let account_balance = context
+            .journal_mut()
+            .sload(TOKEN, account_balance_slot)?
+            .data;
+
+        // reimburse caller
+        context.journal_mut().sstore(
+            TOKEN,
+            account_balance_slot,
+            account_balance + U256::from(reimbursement),
         )?;
 
         Ok(())
@@ -145,7 +129,17 @@ where
         };
 
         let reward = coinbase_gas_price.saturating_mul(gas.used() as u128);
-        token_operation::<EVM::Context, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
+
+        let beneficiary_slot = erc_address_storage(beneficiary);
+        // load account balance
+        let journal = context.journal_mut();
+        let beneficiary_balance = journal.sload(TOKEN, beneficiary_slot)?.data;
+        // reimburse caller
+        journal.sstore(
+            TOKEN,
+            beneficiary_slot,
+            beneficiary_balance + U256::from(reward),
+        )?;
 
         Ok(())
     }
