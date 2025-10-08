@@ -43,6 +43,93 @@ impl Bal {
         }
     }
 
+    /// Pretty print the entire BAL structure in a human-readable format.
+    pub fn pretty_print(&self) {
+        println!("=== Block Access List (BAL) ===");
+        println!("Total accounts: {}", self.accounts.len());
+        println!();
+
+        if self.accounts.is_empty() {
+            println!("(empty)");
+            return;
+        }
+
+        for (idx, (address, account)) in self.accounts.iter().enumerate() {
+            println!("Account #{} - Address: {:?}", idx, address);
+            println!("  Account Info:");
+
+            // Print nonce writes
+            if account.account_info.nonce.is_empty() {
+                println!("    Nonce: (read-only, no writes)");
+            } else {
+                println!("    Nonce writes:");
+                for (bal_index, nonce) in &account.account_info.nonce.writes {
+                    println!("      [{}] -> {}", bal_index, nonce);
+                }
+            }
+
+            // Print balance writes
+            if account.account_info.balance.is_empty() {
+                println!("    Balance: (read-only, no writes)");
+            } else {
+                println!("    Balance writes:");
+                for (bal_index, balance) in &account.account_info.balance.writes {
+                    println!("      [{}] -> {}", bal_index, balance);
+                }
+            }
+
+            // Print code writes
+            if account.account_info.code.is_empty() {
+                println!("    Code: (read-only, no writes)");
+            } else {
+                println!("    Code writes:");
+                for (bal_index, (code_hash, bytecode)) in &account.account_info.code.writes {
+                    println!(
+                        "      [{}] -> hash: {:?}, size: {} bytes",
+                        bal_index,
+                        code_hash,
+                        bytecode.len()
+                    );
+                }
+            }
+
+            // Print storage writes
+            println!("  Storage:");
+            if account.storage.storage.is_empty() {
+                println!("    (no storage slots)");
+            } else {
+                println!("    Total slots: {}", account.storage.storage.len());
+                for (storage_key, storage_writes) in &account.storage.storage {
+                    println!("    Slot: {:#x}", storage_key);
+                    if storage_writes.is_empty() {
+                        println!("      (read-only, no writes)");
+                    } else {
+                        println!("      Writes:");
+                        for (bal_index, value) in &storage_writes.writes {
+                            println!("        [{}] -> {:?}", bal_index, value);
+                        }
+                    }
+                }
+            }
+
+            println!();
+        }
+        println!("=== End of BAL ===");
+    }
+
+    #[inline]
+    /// Extend BAL with account.
+    pub fn extend_account(&mut self, address: Address, account: &mut Account) {
+        match self.accounts.entry(address) {
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().extend_account(account);
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(account.take_account_bal());
+            }
+        }
+    }
+
     /// Insert account into the builder.
     pub fn insert_account(
         &mut self,

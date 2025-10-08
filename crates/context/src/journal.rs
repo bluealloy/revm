@@ -20,8 +20,8 @@ use context_interface::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256};
-use state::{Account, EvmState};
-use std::vec::Vec;
+use state::{bal::Bal, Account, EvmState};
+use std::{sync::Arc, vec::Vec};
 
 /// A journal of state changes internal to the EVM
 ///
@@ -105,6 +105,11 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     fn db_mut(&mut self) -> &mut Self::Database {
         &mut self.database
+    }
+
+    fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
+        self.inner.bal_enabled = true;
+        self.inner.bal = bal;
     }
 
     fn sload(

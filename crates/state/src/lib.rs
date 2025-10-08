@@ -14,7 +14,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use crate::bal::writes::BalWrites;
-use crate::bal::{AccountBal, BalIndex};
+use crate::bal::{AccountBal, AccountInfoBal, BalIndex, StorageBal};
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
@@ -47,7 +47,7 @@ pub struct Account {
     /// BAL for account. Contains all writes values of the account info.
     ///
     /// If account is cold loaded, values of nonce/balance/code should be read from here.
-    pub bal: AccountBal,
+    pub bal: AccountInfoBal,
     /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
     pub bal_account_index: Option<usize>,
 }
@@ -61,7 +61,7 @@ impl Account {
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
             original_info: AccountInfo::default(),
-            bal: AccountBal::default(),
+            bal: AccountInfoBal::default(),
             bal_account_index: None,
         }
     }
@@ -73,6 +73,27 @@ impl Account {
     pub fn bal_balance_update(&mut self, bal_index: BalIndex) {
         self.bal
             .balance_update(bal_index, &self.original_info.balance, self.info.balance);
+    }
+
+    /// Take AccountInfo Bal and Storage Bal. Replace them with default.
+    #[inline]
+    pub fn take_account_bal(&mut self) -> AccountBal {
+        let bal_info = core::mem::take(&mut self.bal);
+        let bal_storage = self.take_storage_bal();
+        AccountBal {
+            account_info: bal_info,
+            storage: bal_storage,
+        }
+    }
+
+    /// Take Storage Bal. Replace it with default.
+    #[inline]
+    pub fn take_storage_bal(&mut self) -> StorageBal {
+        StorageBal::from_iter(
+            self.storage
+                .iter_mut()
+                .map(|(&key, slot)| (key, core::mem::take(&mut slot.bal))),
+        )
     }
 
     /// Update balance in BAL.
@@ -341,7 +362,7 @@ impl From<AccountInfo> for Account {
             transaction_id: 0,
             status: AccountStatus::empty(),
             original_info: AccountInfo::default(),
-            bal: AccountBal::default(),
+            bal: AccountInfoBal::default(),
             bal_account_index: None,
         }
     }

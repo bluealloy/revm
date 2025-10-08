@@ -18,7 +18,7 @@ use state::{
     bal::{Bal, BalIndex},
     Account, EvmState, EvmStorageSlot, TransientStorage,
 };
-use std::vec::Vec;
+use std::{sync::Arc, vec::Vec};
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -45,7 +45,7 @@ pub struct JournalInner<ENTRY> {
     pub transaction_id: usize,
     /// BAL for the state, if None BAL values are not used and it will not be applied on the top
     /// of loaded account and storages.
-    pub bal: Option<Bal>,
+    pub bal: Option<Arc<Bal>>,
     /// BAL index for the current transaction
     pub bal_index: BalIndex,
     /// Whether BAL creation is enabled.
@@ -965,7 +965,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
-    bal: Option<&Bal>,
+    bal: Option<&Arc<Bal>>,
     transaction_id: usize,
     bal_index: BalIndex,
     address: Address,

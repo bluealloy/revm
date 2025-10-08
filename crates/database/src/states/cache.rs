@@ -165,7 +165,7 @@ impl CacheState {
     /// Applies updated account state to the cached account.
     ///
     /// Returns account transition if applicable.
-    fn apply_account_state(
+    pub(crate) fn apply_account_state(
         &mut self,
         address: Address,
         account: Account,

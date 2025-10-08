@@ -650,7 +650,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut state = State::builder().build();
+    let mut state = State::builder().with_bal_builder().build();
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::new();
@@ -925,6 +925,10 @@ fn execute_blockchain_test(
         state
             .block_hashes
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
+
+        if let Some(bal) = state.bal_builder.take() {
+            bal.pretty_print();
+        }
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {

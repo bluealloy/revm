@@ -1,5 +1,7 @@
 //! Database implementations for `either::Either` type.
 
+use std::sync::Arc;
+
 use crate::{Database, DatabaseCommit, DatabaseRef};
 use either::Either;
 use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
@@ -44,7 +46,7 @@ where
         }
     }
 
-    fn bal(&mut self) -> Option<Bal> {
+    fn bal(&mut self) -> Option<Arc<Bal>> {
         match self {
             Self::Left(db) => db.bal(),
             Self::Right(db) => db.bal(),
@@ -104,7 +106,7 @@ where
         }
     }
 
-    fn bal_ref(&self) -> Option<Bal> {
+    fn bal_ref(&self) -> Option<Arc<Bal>> {
         match self {
             Self::Left(db) => db.bal_ref(),
             Self::Right(db) => db.bal_ref(),

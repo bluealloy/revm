@@ -7,7 +7,7 @@ use crate::{
 use bytecode::Bytecode;
 use core::ops::{Deref, DerefMut};
 use primitives::{StorageKey, StorageValue, B256, U256};
-use std::collections::BTreeMap;
+use std::collections::{btree_map::Entry, BTreeMap};
 
 /// Account BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -38,6 +38,21 @@ impl AccountBal {
     pub fn populate_account(&self, bal_index: BalIndex, account: &mut Account) {
         self.account_info.populate_account_info(bal_index, account);
     }
+
+    /// Extend account from another account.
+    #[inline]
+    pub fn extend(&mut self, account: AccountBal) {
+        self.account_info.extend(account.account_info);
+        self.storage.extend(account.storage);
+    }
+
+    /// Extend account from another account.
+    #[inline]
+    pub fn extend_account(&mut self, account: &mut Account) {
+        self.account_info.extend(core::mem::take(&mut account.bal));
+        // TODO optimize this
+        self.storage.extend(account.take_storage_bal());
+    }
 }
 
 /// Account info bal structure.
@@ -65,6 +80,14 @@ impl AccountInfoBal {
             account.info.code_hash = code.0;
             account.info.code = Some(code.1);
         }
+    }
+
+    /// Extend account info from another account info.
+    #[inline]
+    pub fn extend(&mut self, account: AccountInfoBal) {
+        self.nonce.extend(account.nonce);
+        self.balance.extend(account.balance);
+        self.code.extend(account.code);
     }
 
     /// Update account balance in BAL.
@@ -127,6 +150,31 @@ impl StorageBal {
         };
 
         Ok(value.get(bal_index))
+    }
+
+    /// Extend storage from another storage.
+    #[inline]
+    pub fn extend(&mut self, storage: StorageBal) {
+        for (key, value) in storage.storage {
+            match self.storage.entry(key) {
+                Entry::Occupied(mut entry) => {
+                    println!("BAL extend storage: {:?}", value);
+                    entry.get_mut().extend(value);
+                }
+                Entry::Vacant(entry) => {
+                    println!("BAL extend storage vacant: {:?}", value);
+                    entry.insert(value);
+                }
+            }
+        }
+    }
+
+    /// Create storage from iterator.
+    #[inline]
+    pub fn from_iter(storage: impl Iterator<Item = (StorageKey, BalWrites<StorageValue>)>) -> Self {
+        Self {
+            storage: storage.collect(),
+        }
     }
 
     /// Insert storage into the builder.
