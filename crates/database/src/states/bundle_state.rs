@@ -303,12 +303,9 @@ impl BundleBuilder {
                     wipe_storage: false,
                 };
 
-                if reverts_map.contains_key(&block_number) {
+                if let Some(vec) = reverts_map.get_mut(&block_number) {
                     reverts_size += account_revert.size_hint();
-                    reverts_map
-                        .entry(block_number)
-                        .or_insert_with(Vec::new)
-                        .push((address, account_revert));
+                    vec.push((address, account_revert));
                 }
             });
 
