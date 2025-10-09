@@ -33,7 +33,7 @@ use revm::{
 pub struct L1BlockInfo {
     /// The L2 block number. If not same as the one in the context,
     /// L1BlockInfo is not valid and will be reloaded from the database.
-    pub l2_block: Option<U256>,
+    pub l2_block: U256,
     /// The base fee of the L1 origin block.
     pub l1_base_fee: U256,
     /// The current L1 fee overhead. None if Ecotone is activated.
@@ -123,7 +123,7 @@ impl L1BlockInfo {
                         .as_ref(),
                 );
                 Ok(L1BlockInfo {
-                    l2_block: Some(l2_block),
+                    l2_block,
                     l1_base_fee,
                     l1_base_fee_scalar,
                     l1_blob_base_fee: Some(l1_blob_base_fee),
