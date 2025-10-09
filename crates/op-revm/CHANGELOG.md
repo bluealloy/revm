@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/op-revm-v11.0.0...op-revm-v11.0.1) - 2025-10-09
+
+### Fixed
+
+- *(op-revm)* return error instead of panic when enveloped_tx is missing ([#3055](https://github.com/bluealloy/revm/pull/3055))
+
+### Other
+
+- *(op)* backport of #3073 fix for l1block info ([#3076](https://github.com/bluealloy/revm/pull/3076))
+- backport v89 changelog ([#3075](https://github.com/bluealloy/revm/pull/3075))
+- *(op)* split paths for deposit tx in caller deduction ([#3041](https://github.com/bluealloy/revm/pull/3041))
+
 ## [10.1.1](https://github.com/bluealloy/revm/compare/op-revm-v10.0.0...op-revm-v10.1.1) - 2025-09-23
 
 ## [11.0.0](https://github.com/bluealloy/revm/compare/op-revm-v10.1.0...op-revm-v11.0.0) - 2025-10-07
