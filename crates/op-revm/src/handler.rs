@@ -685,8 +685,10 @@ mod tests {
                 l1_base_fee: U256::from(1_000),
                 l1_fee_overhead: Some(U256::from(1_000)),
                 l1_base_fee_scalar: U256::from(1_000),
+                l2_block: U256::from(1),
                 ..Default::default()
             })
+            .modify_block_chained(|block| block.number = U256::from(1))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .with_tx(
                 OpTransaction::builder()
@@ -806,8 +808,10 @@ mod tests {
                 l1_base_fee: U256::from(1_000),
                 l1_fee_overhead: Some(U256::from(1_000)),
                 l1_base_fee_scalar: U256::from(1_000),
+                l2_block: U256::from(1),
                 ..Default::default()
             })
+            .modify_block_chained(|block| block.number = U256::from(1))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .with_tx(
                 OpTransaction::builder()
@@ -848,8 +852,10 @@ mod tests {
             .with_chain(L1BlockInfo {
                 operator_fee_scalar: Some(U256::from(10_000_000)),
                 operator_fee_constant: Some(U256::from(50)),
+                l2_block: U256::from(1),
                 ..Default::default()
             })
+            .modify_block_chained(|block| block.number = U256::from(1))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
             .with_tx(
                 OpTransaction::builder()
@@ -890,8 +896,10 @@ mod tests {
                 l1_base_fee: U256::from(1_000),
                 l1_fee_overhead: Some(U256::from(1_000)),
                 l1_base_fee_scalar: U256::from(1_000),
+                l2_block: U256::from(1),
                 ..Default::default()
             })
+            .modify_block_chained(|block| block.number = U256::from(1))
             .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::REGOLITH)
             .modify_tx_chained(|tx| {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
