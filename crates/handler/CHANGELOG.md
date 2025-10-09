@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v10.0.1...revm-handler-v11.0.0) - 2025-10-07
+
+### Added
+
+- Support bubbling up first precompile error messages  ([#2905](https://github.com/bluealloy/revm/pull/2905))
+- in JumpTable use Bytes instead of BitVec ([#3014](https://github.com/bluealloy/revm/pull/3014))
+- add transaction index to batch execution error handling ([#3000](https://github.com/bluealloy/revm/pull/3000))
+- allow EIP-7623 to be disabled ([#2985](https://github.com/bluealloy/revm/pull/2985))
+- send bytecode with call input ([#2963](https://github.com/bluealloy/revm/pull/2963))
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+- interpreter_result_mut should return mutable reference ([#2941](https://github.com/bluealloy/revm/pull/2941))
+- FrameStack mark push/end_init as unsafe ([#2929](https://github.com/bluealloy/revm/pull/2929))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- helper function gas_balance_spending ([#3030](https://github.com/bluealloy/revm/pull/3030))
+- helper caller_initial_modification added ([#3032](https://github.com/bluealloy/revm/pull/3032))
+- Frame use From in place of Into ([#3036](https://github.com/bluealloy/revm/pull/3036))
+- EvmTr and InspectorEvmTr receive all/all_mut fn ([#3037](https://github.com/bluealloy/revm/pull/3037))
+- add ensure_enough_balance helper ([#3033](https://github.com/bluealloy/revm/pull/3033))
+- prealloc few frames ([#2965](https://github.com/bluealloy/revm/pull/2965))
+- Fix infinite recursion in EthPrecompiles PrecompileProvider methods ([#2962](https://github.com/bluealloy/revm/pull/2962))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- update `EthFrame::invalid` visibility ([#2947](https://github.com/bluealloy/revm/pull/2947))
+- remove unused generic from validate_tx_env and fix call site ([#2946](https://github.com/bluealloy/revm/pull/2946))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+- *(handler)* provide `&CallInputs`to`PrecompileProvider::run` ([#2921](https://github.com/bluealloy/revm/pull/2921))
+
+## [10.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v10.0.0...revm-handler-v10.0.1) - 2025-09-23
+
+### Other
+
+- updated the following local packages: revm-context-interface, revm-context, revm-interpreter
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v9.0.1...revm-handler-v10.0.0) - 2025-08-23
 
 ### Added

@@ -1,6 +1,30 @@
+# v88 tag (revm v30.0.0)
+
+* `ContextTr`, `EvmTr` gained `all_mut()` and `all()` functions.
+  * `InspectorEvmTr` got `all_inspector` and `all_mut_inspector` functions.
+  * For custom Evm, you only need to implement `all_*` functions.
+* `InspectorFrame` got changed to allow CustomFrame to be added.
+  * If there is no need for inspection `fn eth_frame` can return None.
+* `kzg-rs` feature and library removed. Default KZG implementation is now c-kzg.
+  * for no-std variant, arkworks lib is used.
+* Opcodes that load account/storage will not load item if there is not enough gas for cold load.
+  * This is in preparation for BAL.
+  * Journal functions for loading now have skip_cold_load bool.
+* `libsecp256k1` parity library is deprecated and removed.
+* `JumpTable` internal representation changed from `BitVec` to `Bytes`. No changes in API.
+* `SpecId` enum gained new `Amsterdam` variant and `OpSpecId` gained `Jovian` variant.
+* `SELFDESTRUCT` constant renamed to `SELFDESTRUCT_REFUND`.
+* `FrameStack::push` and `FrameStack::end_init` marked as `unsafe` as it can cause UB.
+* First precompile error is now bubble up with detailed error messages. New `PrecompileError` variants added.
+* Batch execution errors now include transaction index.
+* `CallInput` now contains bytecode that is going to be executed (Previously it had address).
+  * This allows skipping double bytecode fetching.
+* `InvalidTransaction` enum gained `Str(Cow<'static, str>)` variant for custom error messages.
+* `calc_excess_blob_gas` and `calc_excess_blob_gas` removes as they are unused and not accurate for Prague.
+
 # v86 tag (revm v29.0.0)
 
-* `PrecompileWithAddress` is renamed to `Precompile` and it became a struct. 
+* `PrecompileWithAddress` is renamed to `Precompile` and it became a struct.
   * `Precompile` contains`PrecompileId`, `Address` and function.
   * The reason is adding `PrecompileId` as it is needed for fusaka hardfork
 

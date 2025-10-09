@@ -152,11 +152,12 @@ where
 
         if !ctx.cfg().is_fee_charge_disabled() {
             // account for additional cost of l1 fee and operator fee
-            let enveloped_tx = ctx
-                .tx()
-                .enveloped_tx()
-                .expect("all not deposit tx have enveloped tx")
-                .clone();
+            // account for additional cost of l1 fee and operator fee
+            let Some(enveloped_tx) = ctx.tx().enveloped_tx().cloned() else {
+                return Err(ERROR::from_string(
+                    "[OPTIMISM] Failed to load enveloped transaction.".into(),
+                ));
+            };
 
             // compute L1 cost
             additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
@@ -199,12 +200,10 @@ where
             tx.ensure_enough_balance(balance)?;
         }
 
-        let effective_balance_spending = tx
-            .effective_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
-
         // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = effective_balance_spending - tx.value();
+        let gas_balance_spending = tx
+            .gas_balance_spending(basefee, blob_price)
+            .expect("effective balance is always smaller than max balance so it can't overflow");
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.

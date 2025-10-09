@@ -105,6 +105,41 @@ pub fn validate_account_nonce_and_code(
     Ok(())
 }
 
+/// Check maximum possible fee and deduct the effective fee.
+///
+/// Returns new balance.
+#[inline]
+pub fn calculate_caller_fee(
+    balance: U256,
+    tx: impl Transaction,
+    block: impl Block,
+    cfg: impl Cfg,
+) -> Result<U256, InvalidTransaction> {
+    let basefee = block.basefee() as u128;
+    let blob_price = block.blob_gasprice().unwrap_or_default();
+    let is_balance_check_disabled = cfg.is_balance_check_disabled();
+
+    if !is_balance_check_disabled {
+        tx.ensure_enough_balance(balance)?;
+    }
+
+    let effective_balance_spending = tx
+        .effective_balance_spending(basefee, blob_price)
+        .expect("effective balance is always smaller than max balance so it can't overflow");
+
+    let gas_balance_spending = effective_balance_spending - tx.value();
+
+    // new balance
+    let mut new_balance = balance.saturating_sub(gas_balance_spending);
+
+    if is_balance_check_disabled {
+        // Make sure the caller's balance is at least the value of the transaction.
+        new_balance = new_balance.max(tx.value());
+    }
+
+    Ok(new_balance)
+}
+
 /// Validates caller state and deducts transaction costs from the caller's balance.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
@@ -113,13 +148,7 @@ pub fn validate_against_state_and_deduct_caller<
 >(
     context: &mut CTX,
 ) -> Result<(), ERROR> {
-    let basefee = context.block().basefee() as u128;
-    let blob_price = context.block().blob_gasprice().unwrap_or_default();
-    let is_balance_check_disabled = context.cfg().is_balance_check_disabled();
-    let is_eip3607_disabled = context.cfg().is_eip3607_disabled();
-    let is_nonce_check_disabled = context.cfg().is_nonce_check_disabled();
-
-    let (tx, journal) = context.tx_journal_mut();
+    let (block, tx, cfg, journal, _, _) = context.all_mut();
 
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
@@ -127,30 +156,11 @@ pub fn validate_against_state_and_deduct_caller<
     validate_account_nonce_and_code(
         &mut caller_account.info,
         tx.nonce(),
-        is_eip3607_disabled,
-        is_nonce_check_disabled,
+        cfg.is_eip3607_disabled(),
+        cfg.is_nonce_check_disabled(),
     )?;
 
-    if !is_balance_check_disabled {
-        tx.ensure_enough_balance(caller_account.info.balance)?;
-    }
-
-    let effective_balance_spending = tx
-        .effective_balance_spending(basefee, blob_price)
-        .expect("effective balance is always smaller than max balance so it can't overflow");
-
-    // subtracting max balance spending with value that is going to be deducted later in the call.
-    let gas_balance_spending = effective_balance_spending - tx.value();
-
-    let mut new_balance = caller_account
-        .info
-        .balance
-        .saturating_sub(gas_balance_spending);
-
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        new_balance = new_balance.max(tx.value());
-    }
+    let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
 
     let old_balance = caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
 

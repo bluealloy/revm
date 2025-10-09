@@ -153,6 +153,9 @@ pub trait StackTr {
     /// Returns stack length.
     fn len(&self) -> usize;
 
+    /// Returns stack content.
+    fn data(&self) -> &[U256];
+
     /// Returns `true` if stack is empty.
     fn is_empty(&self) -> bool {
         self.len() == 0

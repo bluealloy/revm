@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.2...revm-bytecode-v7.0.0) - 2025-10-07
+
+### Added
+
+- in JumpTable use Bytes instead of BitVec ([#3014](https://github.com/bluealloy/revm/pull/3014))
+
+### Fixed
+
+- *(bytecode)* exclude MLOAD from modifies_memory and update test ([#3004](https://github.com/bluealloy/revm/pull/3004))
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+
+### Other
+
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- use offset_from_unsigned ([#2999](https://github.com/bluealloy/revm/pull/2999))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+
 ## [6.2.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.1...revm-bytecode-v6.2.2) - 2025-08-23
 
 ### Other

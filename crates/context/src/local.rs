@@ -9,7 +9,7 @@ pub struct LocalContext {
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
     /// Optional precompile error message to bubble up.
-    precompile_error_message: Option<String>,
+    pub precompile_error_message: Option<String>,
 }
 
 impl Default for LocalContext {

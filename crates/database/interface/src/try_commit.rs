@@ -46,7 +46,7 @@ impl Error for ArcUpgradeError {}
 
 impl<Db> TryDatabaseCommit for Arc<Db>
 where
-    Db: DatabaseCommit + Send + Sync,
+    Db: DatabaseCommit,
 {
     type Error = ArcUpgradeError;
 
