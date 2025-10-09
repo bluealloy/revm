@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [28.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v28.0.0...revm-precompile-v28.0.1) - 2025-10-09
+
+### Fixed
+
+- *(kzg/blst)* use uncompress for compressed G1/G2 inputs ([#3067](https://github.com/bluealloy/revm/pull/3067))
+
 ## [28.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v27.0.0...revm-precompile-v28.0.0) - 2025-10-07
 
 ### Added
