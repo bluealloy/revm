@@ -103,9 +103,11 @@ pub fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
 const DEFAULT_SEED: &str = "0";
 const DEFAULT_ITERATIONS: &str = "0x4E20"; // 20_000 iterations
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
-    let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
+    // Use lazy default to avoid unnecessary allocation when env is set
+    let seed_from_env = std::env::var("SEED").unwrap_or_else(|_| DEFAULT_SEED.to_string());
     let seed: u32 = try_from_hex_to_u32(&seed_from_env)?;
-    let iterations_from_env = std::env::var("ITERATIONS").unwrap_or(DEFAULT_ITERATIONS.to_string());
+    // Use lazy default to avoid unnecessary allocation when env is set
+    let iterations_from_env = std::env::var("ITERATIONS").unwrap_or_else(|_| DEFAULT_ITERATIONS.to_string());
     let iterations = U256::from_str(&iterations_from_env)?;
     Ok((seed, iterations))
 }
