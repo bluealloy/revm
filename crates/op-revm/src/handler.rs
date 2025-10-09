@@ -121,12 +121,7 @@ where
         if !is_deposit && !ctx.cfg().is_fee_charge_disabled() {
             // L1 block info is stored in the context for later use.
             // and it will be reloaded from the database if it is not for the current block.
-            if ctx.chain().l2_block.is_none()
-                || ctx
-                    .chain()
-                    .l2_block
-                    .is_some_and(|l2_block| l2_block != block_number)
-            {
+            if ctx.chain().l2_block != Some(block_number) {
                 *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
             }
 
