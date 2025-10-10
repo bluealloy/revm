@@ -10,8 +10,8 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountInfo, Bytecode};
-use std::string::String;
+use state::{bal::Bal, Account, AccountInfo, Bytecode};
+use std::{string::String, sync::Arc};
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -65,6 +65,12 @@ pub trait Database {
 
     /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
+
+    /// Fetch BAL from database. If BAL is not found, execution will continue without it.
+    #[inline]
+    fn bal(&mut self) -> Option<Arc<Bal>> {
+        None
+    }
 }
 
 /// EVM database commit interface.
@@ -97,6 +103,12 @@ pub trait DatabaseRef {
 
     /// Gets block hash by block number.
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
+
+    /// Fetch BAL from database. If BAL is not found, execution will continue without it.
+    #[inline]
+    fn bal_ref(&self) -> Option<Arc<Bal>> {
+        None
+    }
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
@@ -136,6 +148,11 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
     }
+
+    #[inline]
+    fn bal(&mut self) -> Option<Arc<Bal>> {
+        self.0.bal_ref()
+    }
 }
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
@@ -170,5 +187,10 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
+    }
+
+    #[inline]
+    fn bal_ref(&self) -> Option<Arc<Bal>> {
+        self.0.bal_ref()
     }
 }

@@ -5,10 +5,11 @@ use super::{
 use bytecode::Bytecode;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
-use state::{Account, AccountInfo};
+use state::{bal::Bal, Account, AccountInfo};
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
+    sync::Arc,
     vec::Vec,
 };
 
@@ -63,6 +64,11 @@ pub struct State<DB> {
     ///
     /// The fork block is different or some blocks are not saved inside database.
     pub block_hashes: BTreeMap<u64, B256>,
+    /// BAL used to execute transactions.
+    pub bal: Option<Arc<Bal>>,
+    /// BAL builder that is used to build BAL.
+    /// It is create from State output of transaction execution.
+    pub bal_builder: Option<Bal>,
 }
 
 // Have ability to call State::builder without having to specify the type.
@@ -311,7 +317,16 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, evm_state: HashMap<Address, Account>) {
-        let transitions = self.cache.apply_evm_state(evm_state);
+        let mut transitions = Vec::with_capacity(evm_state.len());
+        for (address, mut account) in evm_state {
+            if let Some(bal) = &mut self.bal_builder {
+                bal.extend_account(address, &mut account);
+            }
+
+            if let Some(transition) = self.cache.apply_account_state(address, account) {
+                transitions.push((address, transition));
+            }
+        }
         self.apply_transition(transitions);
     }
 }

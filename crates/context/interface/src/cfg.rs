@@ -64,6 +64,9 @@ pub trait Cfg {
 
     /// Returns whether the fee charge is disabled.
     fn is_fee_charge_disabled(&self) -> bool;
+
+    /// Returns whether BAL is enabled.
+    fn bal_enabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform

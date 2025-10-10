@@ -145,6 +145,7 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        self.configure(evm)?;
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
@@ -152,6 +153,22 @@ pub trait Handler {
 
         // Prepare the output
         self.execution_result(evm, exec_result)
+    }
+
+    /// Configura Cfg and Journal for this Spec and execution environment.
+    ///
+    /// Called before validation and pre-execution.
+    ///
+    /// It is used to:
+    /// * Load BAL from database.
+    /// * Set SpecId for Journal.
+    #[inline]
+    fn configure(&self, evm: &mut Self::Evm) -> Result<(), Self::Error> {
+        let bal = evm.ctx_mut().db_mut().bal().clone();
+        let journal = evm.ctx_mut().journal_mut();
+        journal.set_bal(bal);
+
+        Ok(())
     }
 
     /// Validates the execution environment and transaction parameters.

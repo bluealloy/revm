@@ -3,7 +3,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod account_info;
+pub mod bal;
 mod types;
+
 pub use bytecode;
 
 pub use account_info::AccountInfo;
@@ -11,22 +13,43 @@ pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
+use crate::bal::writes::BalWrites;
+use crate::bal::{AccountBal, AccountInfoBal, BalIndex, StorageBal};
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
 
-/// Account type used inside Journal to track changed to state.
+/// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
+///
+/// Other than standard Account information it contains its status that can be both cold and warm
+/// additional to that it contains BAL that is used to load data for this particular account.
+///
+/// On loading from database:
+///     * If CompiledBal is present, load values from BAL into Account (Assume account has read data from database)
+///     * In case of parallel execution, AccountInfo would be same over all parallel executions.
+///     * Maybe use transaction_id as a way to notify user that this is obsolete data.
+///     * Database needs to load account and tie to with BAL writes
+/// If CompiledBal is not present, use loaded values
+///     * Account is already up to date (uses present flow).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
+    /// Original account info used by BAL, changed only on cold load by BAL.
+    pub original_info: AccountInfo,
     /// Transaction id, used to track when account was toched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
+    /// BAL for account. Contains all writes values of the account info.
+    ///
+    /// If account is cold loaded, values of nonce/balance/code should be read from here.
+    pub bal: AccountInfoBal,
+    /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
+    pub bal_account_index: Option<usize>,
 }
 
 impl Account {
@@ -37,7 +60,65 @@ impl Account {
             storage: HashMap::default(),
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
+            original_info: AccountInfo::default(),
+            bal: AccountInfoBal::default(),
+            bal_account_index: None,
         }
+    }
+
+    /// Update balance in BAL.
+    ///
+    /// Use present balance and original balance to update BalWrites.
+    #[inline]
+    pub fn bal_balance_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .balance_update(bal_index, &self.original_info.balance, self.info.balance);
+    }
+
+    /// Take AccountInfo Bal and Storage Bal. Replace them with default.
+    #[inline]
+    pub fn take_account_bal(&mut self) -> AccountBal {
+        let bal_info = core::mem::take(&mut self.bal);
+        let bal_storage = self.take_storage_bal();
+        AccountBal {
+            account_info: bal_info,
+            storage: bal_storage,
+        }
+    }
+
+    /// Take Storage Bal. Replace it with default.
+    #[inline]
+    pub fn take_storage_bal(&mut self) -> StorageBal {
+        StorageBal::from_iter(
+            self.storage
+                .iter_mut()
+                .map(|(&key, slot)| (key, core::mem::take(&mut slot.bal))),
+        )
+    }
+
+    /// Update balance in BAL.
+    ///
+    /// Use present nonce and original nonce to update BalWrites.
+    #[inline]
+    pub fn bal_nonce_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .nonce_update(bal_index, &self.original_info.nonce, self.info.nonce);
+    }
+
+    /// Update code in BAL.
+    ///
+    /// Use present code and original code to update BalWrites.
+    ///
+    /// Panics if code is not set.
+    #[inline]
+    pub fn bal_code_update(&mut self, bal_index: BalIndex) {
+        assert!(self.info.code.is_some(), "Code is not set");
+        self.bal.code_update(
+            bal_index,
+            &self.original_info.code_hash,
+            self.info.code_hash,
+            self.info.code.clone().unwrap(),
+        );
     }
 
     /// Make changes to the caller account.
@@ -280,6 +361,9 @@ impl From<AccountInfo> for Account {
             storage: HashMap::default(),
             transaction_id: 0,
             status: AccountStatus::empty(),
+            original_info: AccountInfo::default(),
+            bal: AccountInfoBal::default(),
+            bal_account_index: None,
         }
     }
 }
@@ -350,7 +434,7 @@ impl Default for AccountStatus {
 }
 
 /// This type keeps track of the current value of a storage slot.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EvmStorageSlot {
     /// Original value of the storage slot
@@ -361,6 +445,8 @@ pub struct EvmStorageSlot {
     pub transaction_id: usize,
     /// Represents if the storage slot is cold
     pub is_cold: bool,
+    /// BAL for storage slot.
+    pub bal: BalWrites<StorageValue>,
 }
 
 impl EvmStorageSlot {
@@ -371,7 +457,17 @@ impl EvmStorageSlot {
             present_value: original,
             transaction_id,
             is_cold: false,
+            bal: BalWrites::default(),
         }
+    }
+
+    /// Update BAL.
+    ///
+    /// Use present value and original value to update BalWrites.
+    #[inline]
+    pub fn bal_update(&mut self, bal_index: BalIndex) {
+        self.bal
+            .update(bal_index, &self.original_value, self.present_value);
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
@@ -385,6 +481,7 @@ impl EvmStorageSlot {
             present_value,
             transaction_id,
             is_cold: false,
+            bal: BalWrites::default(),
         }
     }
     /// Returns true if the present value differs from the original value.
@@ -423,6 +520,10 @@ impl EvmStorageSlot {
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
+        if is_cold {
+            // if slot is cold original value should be reset to present value.
+            self.original_value = self.present_value;
+        }
         self.transaction_id = transaction_id;
         self.is_cold = false;
         is_cold
