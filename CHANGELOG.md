@@ -8,16 +8,15 @@ Maintanance release. fix for op-revm
 * `revm-database-interface`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
 * `revm-database`: 8.0.0 -> 9.0.0 (⚠ API breaking changes)
 * `revm-interpreter`: 26.0.0 -> 27.0.0 (⚠ API breaking changes)
-* `revm-precompile`: 28.0.0 -> 28.0.1 (✓ API compatible changes)
-* `revm-handler`: 11.0.0 -> 11.0.1 (✓ API compatible changes)
-* `revm-inspector`: 11.0.0 -> 11.0.1 (✓ API compatible changes)
-* `revme`: 8.0.0 -> 8.0.1 (✓ API compatible changes)
-* `op-revm`: 11.0.0 -> 11.0.1 (✓ API compatible changes)
-* `revm-ee-tests`: 0.1.0
-* `revm-context-interface`: 11.0.0 -> 11.0.1
-* `revm-context`: 10.0.0 -> 10.0.1
-* `revm`: 30.0.0 -> 30.0.1
-* `revm-statetest-types`: 10.0.0 -> 10.0.1
+* `revm-precompile`: 28.0.0 -> 28.1.0 (✓ API compatible changes)
+* `revm-handler`: 11.0.0 -> 11.1.0 (✓ API compatible changes)
+* `revm-inspector`: 11.0.0 -> 11.1.0 (✓ API compatible changes)
+* `revme`: 8.0.0 -> 8.1.0 (✓ API compatible changes)
+* `op-revm`: 11.0.0 -> 11.1.0 (✓ API compatible changes)
+* `revm-context-interface`: 11.0.0 -> 11.1.0
+* `revm-context`: 10.0.0 -> 10.1.0
+* `revm`: 30.0.0 -> 30.1.0
+* `revm-statetest-types`: 10.0.0 -> 10.1.0
 
 # v89
 date: 09.10.2025
