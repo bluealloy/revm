@@ -340,7 +340,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         account.info.balance = account.info.balance.saturating_add(balance);
 
         if bal_enabled {
-            account.bal_nonce_update(bal_index);
+            account.bal_balance_update(bal_index);
         }
 
         // march account as touched.

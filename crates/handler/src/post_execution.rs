@@ -45,6 +45,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
             effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
         ) + additional_refund,
     )?;
+    
 
     Ok(())
 }

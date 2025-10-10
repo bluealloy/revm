@@ -28,7 +28,10 @@ use revm::{
         SelfDestructResult, StateLoad,
     },
     primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
-    state::{bal::Bal, Account, Bytecode, EvmState},
+    state::{
+        bal::{Bal, BalIndex},
+        Account, Bytecode, EvmState,
+    },
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
 use std::{convert::Infallible, fmt::Debug, sync::Arc};
@@ -71,6 +74,14 @@ impl JournalTr for Backend {
 
     fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
         self.journaled_state.set_bal(bal);
+    }
+
+    fn set_bal_index(&mut self, bal_index: BalIndex) {
+        self.journaled_state.set_bal_index(bal_index);
+    }
+
+    fn bal_index(&self) -> Option<BalIndex> {
+        self.journaled_state.bal_index()
     }
 
     fn db_mut(&mut self) -> &mut Self::Database {
