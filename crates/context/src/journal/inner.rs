@@ -320,6 +320,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if bump_nonce {
             // nonce changed.
             self.journal.push(ENTRY::nonce_changed(address));
+            // TODO not efficient.
+            self.state
+                .get_mut(&address)
+                .unwrap()
+                .bal_nonce_update(self.bal_index);
         }
     }
 
