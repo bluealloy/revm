@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.1.0](https://github.com/bluealloy/revm/compare/revme-v8.0.1...revme-v8.1.0) - 2025-10-09
+
+## [8.0.1](https://github.com/bluealloy/revm/compare/revme-v8.0.0...revme-v8.0.1) - 2025-10-09
+
+### Other
+
+- use NoOpInspector for inspector benches ([#3060](https://github.com/bluealloy/revm/pull/3060))
+
+## [8.0.0](https://github.com/bluealloy/revm/compare/revme-v7.2.3...revme-v8.0.0) - 2025-10-07
+
+### Added
+
+- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
+
+### Fixed
+
+- *(revme)* Insert block hashes in State ([#3024](https://github.com/bluealloy/revm/pull/3024))
+- support 0x prefix in evmrunner hex input ([#2970](https://github.com/bluealloy/revm/pull/2970))
+- *(revme)* Avoid panic on non-UTF filenames in statetest runner ([#2948](https://github.com/bluealloy/revm/pull/2948))
+
+### Other
+
+- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
+- pretty print state in revme statetest ([#2979](https://github.com/bluealloy/revm/pull/2979))
+- Fix CLI exit code for invalid bytecode input ([#2968](https://github.com/bluealloy/revm/pull/2968))
+
+## [7.2.3](https://github.com/bluealloy/revm/compare/revme-v7.2.2...revme-v7.2.3) - 2025-09-23
+
+### Other
+
+- updated the following local packages: revm-context-interface, revm-context, revm-inspector, revm, revm-statetest-types
+
 ## [7.2.2](https://github.com/bluealloy/revm/compare/revme-v7.2.1...revme-v7.2.2) - 2025-08-23
 
 ### Other
@@ -37,32 +69,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-## [8.0.0](https://github.com/bluealloy/revm/compare/revme-v7.2.3...revme-v8.0.0) - 2025-10-07
-
-### Added
-
-- *(revme)* ef blockchain tests cli ([#2935](https://github.com/bluealloy/revm/pull/2935))
-
-### Fixed
-
-- *(revme)* Insert block hashes in State ([#3024](https://github.com/bluealloy/revm/pull/3024))
-- support 0x prefix in evmrunner hex input ([#2970](https://github.com/bluealloy/revm/pull/2970))
-- *(revme)* Avoid panic on non-UTF filenames in statetest runner ([#2948](https://github.com/bluealloy/revm/pull/2948))
-
-### Other
-
-- changelog update for v87 ([#3056](https://github.com/bluealloy/revm/pull/3056))
-- pretty print state in revme statetest ([#2979](https://github.com/bluealloy/revm/pull/2979))
-- Fix CLI exit code for invalid bytecode input ([#2968](https://github.com/bluealloy/revm/pull/2968))
-
-## [7.2.3](https://github.com/bluealloy/revm/compare/revme-v7.2.2...revme-v7.2.3) - 2025-09-23
-
-### Other
-
-- updated the following local packages: revm-context-interface, revm-context, revm-inspector, revm, revm-statetest-types
 
 ## [7.1.0](https://github.com/bluealloy/revm/compare/revme-v7.0.4...revme-v7.1.0) - 2025-07-23
 

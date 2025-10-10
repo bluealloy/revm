@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [28.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v28.0.1...revm-precompile-v28.1.0) - 2025-10-09
+
+## [28.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v28.0.0...revm-precompile-v28.0.1) - 2025-10-09
+
+### Fixed
+
+- *(kzg/blst)* use uncompress for compressed G1/G2 inputs ([#3067](https://github.com/bluealloy/revm/pull/3067))
+
+## [28.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v27.0.0...revm-precompile-v28.0.0) - 2025-10-07
+
+### Added
+
+- [**breaking**] Remove kzg-rs ([#2909](https://github.com/bluealloy/revm/pull/2909))
+
+### Fixed
+
+- racecondition return on install_crypto fn ([#2997](https://github.com/bluealloy/revm/pull/2997))
+- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
+
+### Other
+
+- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
+- typo imputs ([#3031](https://github.com/bluealloy/revm/pull/3031))
+- add display for precompileid ([#3018](https://github.com/bluealloy/revm/pull/3018))
+- Remove libsecp256k1 parity lib ([#2954](https://github.com/bluealloy/revm/pull/2954))
+- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
+- add amsterdam in spec id ([#2934](https://github.com/bluealloy/revm/pull/2934))
+- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+- *(precompile)* add new specific `PrecompileError` variants ([#2907](https://github.com/bluealloy/revm/pull/2907))
+- add Precompil::into_precompile ([#2913](https://github.com/bluealloy/revm/pull/2913))
+
 ## [27.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v26.0.1...revm-precompile-v27.0.0) - 2025-08-23
 
 ### Added
@@ -50,31 +82,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-## [28.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v27.0.0...revm-precompile-v28.0.0) - 2025-10-07
-
-### Added
-
-- [**breaking**] Remove kzg-rs ([#2909](https://github.com/bluealloy/revm/pull/2909))
-
-### Fixed
-
-- racecondition return on install_crypto fn ([#2997](https://github.com/bluealloy/revm/pull/2997))
-- Apply spelling corrections from PRs #2926, #2915, #2908 ([#2978](https://github.com/bluealloy/revm/pull/2978))
-
-### Other
-
-- add boundless ([#3043](https://github.com/bluealloy/revm/pull/3043))
-- typo imputs ([#3031](https://github.com/bluealloy/revm/pull/3031))
-- add display for precompileid ([#3018](https://github.com/bluealloy/revm/pull/3018))
-- Remove libsecp256k1 parity lib ([#2954](https://github.com/bluealloy/revm/pull/2954))
-- add SECURITY.md ([#2956](https://github.com/bluealloy/revm/pull/2956))
-- add amsterdam in spec id ([#2934](https://github.com/bluealloy/revm/pull/2934))
-- cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
-- *(precompile)* add new specific `PrecompileError` variants ([#2907](https://github.com/bluealloy/revm/pull/2907))
-- add Precompil::into_precompile ([#2913](https://github.com/bluealloy/revm/pull/2913))
 
 ## [25.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v24.0.1...revm-precompile-v25.0.0) - 2025-07-23
 
