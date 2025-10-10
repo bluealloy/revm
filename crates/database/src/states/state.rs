@@ -283,7 +283,8 @@ impl<DB: Database> Database for State<DB> {
                 .transpose()?
                 .unwrap_or_default())
         } else {
-            unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
+            // Fallback: if the account is unexpectedly not in cache, read directly from the database
+            return self.database.storage(address, index);
         }
     }
 
