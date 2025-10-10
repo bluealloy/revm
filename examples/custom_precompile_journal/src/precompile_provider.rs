@@ -119,8 +119,9 @@ fn run_custom_precompile<CTX: ContextTr>(
                 gas: Gas::new(inputs.gas_limit),
                 output: output.bytes,
             };
-            let underflow = interpreter_result.gas.record_cost(output.gas_used);
-            if !underflow {
+            // Record cost; returns false if not enough gas
+            let cost_recorded = interpreter_result.gas.record_cost(output.gas_used);
+            if !cost_recorded {
                 interpreter_result.result = InstructionResult::PrecompileOOG;
             }
             Ok(interpreter_result)
