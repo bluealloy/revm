@@ -7,38 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [7.2.2](https://github.com/bluealloy/revm/compare/revme-v7.2.1...revme-v7.2.2) - 2025-08-23
-
-### Other
-
-- updated the following local packages: revm-bytecode, revm-database-interface, revm-context-interface, revm-context, revm-database, revm-state, revm-inspector, revm, revm-statetest-types
-
-## [7.2.1](https://github.com/bluealloy/revm/compare/revme-v7.2.0...revme-v7.2.1) - 2025-08-12
-
-### Other
-
-- codspeed sstore sload opcodes ([#2881](https://github.com/bluealloy/revm/pull/2881))
-
-## [7.2.0](https://github.com/bluealloy/revm/compare/revme-v7.1.0...revme-v7.2.0) - 2025-08-06
-
-### Added
-
-- Reuse bls12-381 codepaths to implement kzg point evaluation precompile ([#2809](https://github.com/bluealloy/revm/pull/2809))
-
-### Other
-
-- *(benches)* rename anaysis-inspector to snailtracer-inspect ([#2834](https://github.com/bluealloy/revm/pull/2834))
-- *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
-- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
-- fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
-- add gas_limit to revme evm ([#2779](https://github.com/bluealloy/revm/pull/2779))
-# Changelog
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [8.1.0](https://github.com/bluealloy/revm/compare/revme-v8.0.1...revme-v8.1.0) - 2025-10-09
 
 ## [8.0.1](https://github.com/bluealloy/revm/compare/revme-v8.0.0...revme-v8.0.1) - 2025-10-09
 
@@ -69,6 +38,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
 - updated the following local packages: revm-context-interface, revm-context, revm-inspector, revm, revm-statetest-types
+
+## [7.2.2](https://github.com/bluealloy/revm/compare/revme-v7.2.1...revme-v7.2.2) - 2025-08-23
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-database-interface, revm-context-interface, revm-context, revm-database, revm-state, revm-inspector, revm, revm-statetest-types
+
+## [7.2.1](https://github.com/bluealloy/revm/compare/revme-v7.2.0...revme-v7.2.1) - 2025-08-12
+
+### Other
+
+- codspeed sstore sload opcodes ([#2881](https://github.com/bluealloy/revm/pull/2881))
+
+## [7.2.0](https://github.com/bluealloy/revm/compare/revme-v7.1.0...revme-v7.2.0) - 2025-08-06
+
+### Added
+
+- Reuse bls12-381 codepaths to implement kzg point evaluation precompile ([#2809](https://github.com/bluealloy/revm/pull/2809))
+
+### Other
+
+- *(benches)* rename anaysis-inspector to snailtracer-inspect ([#2834](https://github.com/bluealloy/revm/pull/2834))
+- *(benches)* clean up criterion callsites ([#2833](https://github.com/bluealloy/revm/pull/2833))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- fix clippy ([#2785](https://github.com/bluealloy/revm/pull/2785))
+- add gas_limit to revme evm ([#2779](https://github.com/bluealloy/revm/pull/2779))
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [7.1.0](https://github.com/bluealloy/revm/compare/revme-v7.0.4...revme-v7.1.0) - 2025-07-23
 
