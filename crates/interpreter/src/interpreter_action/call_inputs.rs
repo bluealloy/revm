@@ -43,7 +43,7 @@ impl CallInput {
     ///
     /// If this `CallInput` is a `SharedBuffer`, the slice will be copied
     /// into a fresh `Bytes` buffer, which can pose a performance penalty.
-    pub fn bytes<CTX>(&self, ctx: &mut CTX) -> Bytes
+    pub fn bytes<CTX>(&self, ctx: &CTX) -> Bytes
     where
         CTX: ContextTr,
     {
