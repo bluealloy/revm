@@ -284,7 +284,7 @@ impl<DB: Database> Database for State<DB> {
                 .unwrap_or_default())
         } else {
             // Fallback: if the account is unexpectedly not in cache, read directly from the database
-            return self.database.storage(address, index);
+            self.database.storage(address, index);
         }
     }
 
