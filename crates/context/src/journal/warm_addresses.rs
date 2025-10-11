@@ -2,7 +2,7 @@
 //!
 //! It is used to optimize access to precompile addresses.
 
-use bitvec::{bitvec, order::Lsb0, vec::BitVec};
+use bitvec::{bitvec, vec::BitVec};
 use primitives::{short_address, Address, HashSet, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
@@ -32,7 +32,7 @@ impl WarmAddresses {
     pub fn new() -> Self {
         Self {
             precompile_set: HashSet::default(),
-            precompile_short_addresses: BitVec::new(),
+            precompile_short_addresses: bitvec![0; SHORT_ADDRESS_CAP],
             all_short_addresses: true,
             coinbase: None,
         }
@@ -53,8 +53,7 @@ impl WarmAddresses {
     /// Set the precompile addresses and short addresses.
     #[inline]
     pub fn set_precompile_addresses(&mut self, addresses: HashSet<Address>) {
-        // short address is always smaller than SHORT_ADDRESS_CAP
-        self.precompile_short_addresses = bitvec![usize, Lsb0; 0; SHORT_ADDRESS_CAP];
+        self.precompile_short_addresses.fill(false);
 
         let mut all_short_addresses = true;
         for address in addresses.iter() {
@@ -124,7 +123,11 @@ mod tests {
     fn test_initialization() {
         let warm_addresses = WarmAddresses::new();
         assert!(warm_addresses.precompile_set.is_empty());
-        assert!(warm_addresses.precompile_short_addresses.is_empty());
+        assert_eq!(
+            warm_addresses.precompile_short_addresses.len(),
+            SHORT_ADDRESS_CAP
+        );
+        assert!(!warm_addresses.precompile_short_addresses.any());
         assert!(warm_addresses.coinbase.is_none());
 
         // Test Default trait

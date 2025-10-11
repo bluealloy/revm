@@ -16,7 +16,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
 
     /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will always return true.
     ///
-    /// Returned booling will determine if precompile addresses should be injected into the journal.
+    /// Returns `true` if precompile addresses should be injected into the journal.
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool;
 
     /// Run the precompile.
