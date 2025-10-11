@@ -268,7 +268,7 @@ impl EthFrame<EthInterpreter> {
         // Increase nonce of caller and check if it overflows
         let old_nonce = caller_info.nonce;
         let Some(new_nonce) = old_nonce.checked_add(1) else {
-            return return_error(InstructionResult::Return);
+            return return_error(InstructionResult::NonceOverflow);
         };
         caller_info.nonce = new_nonce;
         context
