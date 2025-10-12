@@ -78,6 +78,9 @@ alloydb = ["database/alloydb"]
 serde-json = ["serde", "inspector/tracer"]
 tracer = ["inspector/tracer"]
 
+# Enables parsing opcodes from strings.
+parse = ["bytecode/parse"]
+
 dev = [
 	"memory_limit",
 	"optional_balance_check",

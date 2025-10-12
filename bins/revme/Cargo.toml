@@ -11,16 +11,16 @@ rust-version.workspace = true
 
 [dependencies]
 # revm
-revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
-primitives.workspace = true
-database.workspace = true
-database-interface.workspace = true
-state.workspace = true
-bytecode = { workspace = true, features = ["std", "parse"] }
-context.workspace = true
-context-interface.workspace = true
-inspector = { workspace = true, features = ["std", "tracer"] }
+revm = { workspace = true, features = [
+    "std",
+    "c-kzg",
+    "blst",
+    "tracer",
+    "parse",
+] }
 statetest-types.workspace = true
+
+# criterion
 criterion.workspace = true
 
 # alloy

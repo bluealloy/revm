@@ -3767,7 +3767,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "8.1.0"
+version = "8.2.0"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
@@ -3779,14 +3779,6 @@ dependencies = [
  "k256",
  "plain_hasher",
  "revm",
- "revm-bytecode",
- "revm-context",
- "revm-context-interface",
- "revm-database",
- "revm-database-interface",
- "revm-inspector",
- "revm-primitives",
- "revm-state",
  "revm-statetest-types",
  "serde",
  "serde_json",
