@@ -258,22 +258,18 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Fetch balance of caller.
-        let caller_info = &mut context.journal_mut().load_account(inputs.caller)?.data.info;
+        let mut caller_info = context.journal_mut().load_account_mut(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_info.balance < inputs.value {
+        if !caller_info.decr_balance(inputs.value) {
             return return_error(InstructionResult::OutOfFunds);
         }
 
         // Increase nonce of caller and check if it overflows
-        let old_nonce = caller_info.nonce;
-        let Some(new_nonce) = old_nonce.checked_add(1) else {
+        let old_nonce = caller_info.nonce();
+        if !caller_info.bump_nonce() {
             return return_error(InstructionResult::Return);
         };
-        caller_info.nonce = new_nonce;
-        context
-            .journal_mut()
-            .nonce_bump_journal_entry(inputs.caller);
 
         // Create address
         let mut init_code_hash = None;

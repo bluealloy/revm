@@ -2,19 +2,18 @@
 //!
 //! Entry submodule contains [`JournalEntry`] and [`JournalEntryTr`] traits.
 //! and inner submodule contains [`JournalInner`] struct that contains state.
-pub mod entry;
 pub mod inner;
 pub mod warm_addresses;
-pub mod account;
 
-pub use entry::{JournalEntry, JournalEntryTr};
+pub use context_interface::journaled_state::entry::{JournalEntry, JournalEntryTr};
 pub use inner::JournalInner;
 
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        AccountInfoLoad, AccountLoad, JournalCheckpoint, JournalLoadError, JournalTr, TransferError,
+        account::JournaledAccount, AccountInfoLoad, AccountLoad, JournalCheckpoint,
+        JournalLoadError, JournalTr, TransferError,
     },
 };
 use core::ops::{Deref, DerefMut};
@@ -91,6 +90,7 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
     type State = EvmState;
+    type JournalEntry = ENTRY;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
@@ -240,15 +240,26 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
+    fn load_account(&mut self, address: Address) -> Result<StateLoad<&Account>, DB::Error> {
         self.inner.load_account(&mut self.database, address)
     }
 
     #[inline]
-    fn load_account_code(
+    fn load_account_mut_optional(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+        load_code: bool,
+    ) -> Result<
+        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
+        <Self::Database as Database>::Error,
+    > {
+        self.inner
+            .load_account_mut_optional(&mut self.database, address, load_code, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
+    }
+
+    #[inline]
+    fn load_account_code(&mut self, address: Address) -> Result<StateLoad<&Account>, DB::Error> {
         self.inner.load_code(&mut self.database, address)
     }
 

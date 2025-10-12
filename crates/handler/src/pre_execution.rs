@@ -68,7 +68,7 @@ pub fn load_accounts<
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code(
-    caller_info: &mut AccountInfo,
+    caller_info: &AccountInfo,
     tx_nonce: u64,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
@@ -151,18 +151,22 @@ pub fn validate_against_state_and_deduct_caller<
     let (block, tx, cfg, journal, _, _) = context.all_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    let mut caller = journal.load_account_code_mut(tx.caller())?.data;
 
     validate_account_nonce_and_code(
-        &mut caller_account.info,
+        &caller.info,
         tx.nonce(),
         cfg.is_eip3607_disabled(),
         cfg.is_nonce_check_disabled(),
     )?;
 
-    let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
+    let old_balance = *caller.balance();
+    let new_balance = calculate_caller_fee(old_balance, tx, block, cfg)?;
 
-    let old_balance = caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
+    caller.set_balance(new_balance);
+    if tx.kind().is_call() {
+        caller.bump_nonce();
+    }
 
     journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
@@ -206,7 +210,7 @@ pub fn apply_eip7702_auth_list<
 
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
-        let mut authority_acc = journal.load_account_code(authority)?;
+        let mut authority_acc = journal.load_account_code_mut(authority)?;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
@@ -237,12 +241,11 @@ pub fn apply_eip7702_auth_list<
             let hash = bytecode.hash_slow();
             (bytecode, hash)
         };
-        authority_acc.info.code_hash = hash;
-        authority_acc.info.code = Some(bytecode);
+        authority_acc.touch();
+        authority_acc.set_code(hash, bytecode);
 
-        // 9. Increase the nonce of `authority` by one.
-        authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
-        authority_acc.mark_touch();
+        // 9. Increase the nonce of `authority` by one.s
+        authority_acc.bump_nonce();
     }
 
     let refunded_gas =

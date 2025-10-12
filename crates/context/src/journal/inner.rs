@@ -1,10 +1,12 @@
 //! Module containing the [`JournalInner`] that is part of [`crate::Journal`].
-use crate::{entry::SelfdestructionRevertStatus, warm_addresses::WarmAddresses};
-
-use super::JournalEntryTr;
+use super::warm_addresses::WarmAddresses;
 use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
+    journaled_state::{
+        account::JournaledAccount,
+        entry::{JournalEntryTr, SelfdestructionRevertStatus},
+    },
     journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
@@ -293,19 +295,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address: Address,
         balance: U256,
     ) -> Result<(), DB::Error> {
-        let account = self.load_account(db, address)?.data;
-        let old_balance = account.info.balance;
-        account.info.balance = account.info.balance.saturating_add(balance);
-
-        // march account as touched.
-        if !account.is_touched() {
-            account.mark_touch();
-            self.journal.push(ENTRY::account_touched(address));
-        }
-
-        // add journal entry for balance increment.
-        self.journal
-            .push(ENTRY::balance_changed(address, old_balance));
+        let mut account = self.load_account_mut(db, address)?.data;
+        account.incr_balance(balance);
         Ok(())
     }
 
@@ -506,7 +497,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Commits the checkpoint.
     #[inline]
     pub fn checkpoint_commit(&mut self) {
-        self.depth -= 1;
+        self.depth = self.depth.saturating_sub(1);
     }
 
     /// Reverts all changes to state until given checkpoint.
@@ -515,7 +506,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
-        self.depth -= 1;
+        self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
 
         // iterate over last N journals sets and revert our global state
@@ -617,7 +608,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+    ) -> Result<StateLoad<&Account>, DB::Error> {
         self.load_account_optional(db, address, false, [], false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
@@ -673,13 +664,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self,
         db: &mut DB,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, DB::Error> {
+    ) -> Result<StateLoad<&Account>, DB::Error> {
         self.load_account_optional(db, address, true, [], false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
-    /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline(never)]
+    /// Loads account into memory. If account is already loaded it will be marked as warm.
+    #[inline]
     pub fn load_account_optional<DB: Database>(
         &mut self,
         db: &mut DB,
@@ -687,7 +678,34 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         load_code: bool,
         storage_keys: impl IntoIterator<Item = StorageKey>,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<&mut Account>, JournalLoadError<DB::Error>> {
+    ) -> Result<StateLoad<&Account>, JournalLoadError<DB::Error>> {
+        let load =
+            self.load_account_mut_optional(db, address, load_code, storage_keys, skip_cold_load)?;
+        let load = load.map(|i| i.into_account_ref());
+        Ok(load)
+    }
+
+    /// Loads account into memory. If account is already loaded it will be marked as warm.
+    #[inline]
+    pub fn load_account_mut<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+    ) -> Result<StateLoad<JournaledAccount<'_, ENTRY>>, DB::Error> {
+        self.load_account_mut_optional(db, address, false, [], false)
+            .map_err(JournalLoadError::unwrap_db_error)
+    }
+
+    /// Loads account. If account is already loaded it will be marked as warm.
+    #[inline(never)]
+    pub fn load_account_mut_optional<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        load_code: bool,
+        storage_keys: impl IntoIterator<Item = StorageKey>,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<JournaledAccount<'_, ENTRY>>, JournalLoadError<DB::Error>> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
@@ -769,6 +787,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 false,
             )?;
         }
+        let load = load.map(|i| JournaledAccount::new(address, i, &mut self.journal));
         Ok(load)
     }
 
