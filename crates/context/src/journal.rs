@@ -5,6 +5,7 @@
 pub mod entry;
 pub mod inner;
 pub mod warm_addresses;
+pub mod account;
 
 pub use entry::{JournalEntry, JournalEntryTr};
 pub use inner::JournalInner;
