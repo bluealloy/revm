@@ -1,4 +1,4 @@
-//! This module contains [`JournaledAccount`] struct a wrapper arround account and journal entries that
+//! This module contains [`JournaledAccount`] struct a wrapper around account and journal entries that
 //! allow updates to the account and journal entries.
 //!
 //! Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
