@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v11.0.0...revm-handler-v11.1.0) - 2025-10-09
+
+### Other
+
+- helper calculate_caller_fee ([#3040](https://github.com/bluealloy/revm/pull/3040))
+
 ## [11.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v10.0.1...revm-handler-v11.0.0) - 2025-10-07
 
 ### Added

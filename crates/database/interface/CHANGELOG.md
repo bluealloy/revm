@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v8.0.0...revm-database-interface-v8.0.1) - 2025-10-09
+
+### Other
+
+- *(database)* remove unnecessary Send+Sync bounds from TryDatabaseCommit for Arc ([#3063](https://github.com/bluealloy/revm/pull/3063))
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v7.0.5...revm-database-interface-v8.0.0) - 2025-10-07
 
 ### Fixed

@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v26.0.0...revm-interpreter-v27.0.0) - 2025-10-09
+
+### Other
+
+- remove deprecated methods ([#3050](https://github.com/bluealloy/revm/pull/3050))
+
 ## [26.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v25.0.3...revm-interpreter-v26.0.0) - 2025-10-07
 
 ### Added

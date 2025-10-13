@@ -68,8 +68,8 @@ fn get_trusted_setup_g2() -> blst_p2_affine {
     let mut g2_affine = blst_p2_affine::default();
     unsafe {
         // The compressed format has x coordinate and a flag bit for y
-        // We use deserialize_compressed which handles this automatically
-        let result = blst::blst_p2_deserialize(&mut g2_affine, TRUSTED_SETUP_TAU_G2_BYTES.as_ptr());
+        // We use uncompress which handles this automatically
+        let result = blst::blst_p2_uncompress(&mut g2_affine, TRUSTED_SETUP_TAU_G2_BYTES.as_ptr());
         if result != blst::BLST_ERROR::BLST_SUCCESS {
             panic!("Failed to deserialize trusted setup G2 point");
         }
@@ -91,7 +91,7 @@ fn get_g2_generator() -> blst_p2_affine {
 fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<blst_p1_affine, PrecompileError> {
     let mut point = blst_p1_affine::default();
     unsafe {
-        let result = blst::blst_p1_deserialize(&mut point, bytes.as_ptr());
+        let result = blst::blst_p1_uncompress(&mut point, bytes.as_ptr());
         if result != blst::BLST_ERROR::BLST_SUCCESS {
             return Err(PrecompileError::KzgInvalidG1Point);
         }
