@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: ["1.88", "stable", "nightly"]
+        rust: ["1.90", "stable", "nightly"]
         flags: ["--no-default-features", "", "--all-features"]
     steps:
       - uses: actions/checkout@v5

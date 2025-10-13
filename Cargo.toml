@@ -137,7 +137,7 @@ repository = "https://github.com/bluealloy/revm"
 documentation = "https://bluealloy.github.io/revm/"
 homepage = "https://github.com/bluealloy/revm"
 edition = "2021"
-rust-version = "1.88.0"
+rust-version = "1.90.0"
 
 [workspace.lints]
 rust.missing_debug_implementations = "warn"
