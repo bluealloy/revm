@@ -24,6 +24,7 @@ pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTra
 }
 
 /// Validate legacy transaction gas price against basefee.
+#[inline]
 pub fn validate_legacy_gas_price(
     gas_price: u128,
     base_fee: Option<u128>,
