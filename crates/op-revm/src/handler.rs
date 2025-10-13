@@ -88,6 +88,12 @@ where
             }
             return Ok(());
         }
+
+        // Check that non-deposit transactions have enveloped_tx set
+        if tx.enveloped_tx().is_none() {
+            return Err(OpTransactionError::MissingEnvelopedTx.into());
+        }
+
         self.mainnet.validate_env(evm)
     }
 
@@ -1498,6 +1504,31 @@ mod tests {
                 .info
                 .nonce,
             0
+        );
+    }
+
+    #[test]
+    fn test_validate_missing_enveloped_tx() {
+        use crate::transaction::deposit::DepositTransactionParts;
+        
+        // Create a non-deposit transaction without enveloped_tx
+        let ctx = Context::op().with_tx(
+            OpTransaction {
+                base: TxEnv::builder().build_fill(),
+                enveloped_tx: None, // Missing enveloped_tx for non-deposit transaction
+                deposit: DepositTransactionParts::default(), // No source_hash means non-deposit
+            },
+        );
+
+        let mut evm = ctx.build_op();
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+
+        assert_eq!(
+            handler.validate_env(&mut evm),
+            Err(EVMError::Transaction(
+                OpTransactionError::MissingEnvelopedTx
+            ))
         );
     }
 }
