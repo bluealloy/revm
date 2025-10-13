@@ -101,7 +101,6 @@ mod tests {
 
     #[test]
     fn test_either_inspector_type_check() {
-        use interpreter::interpreter::EthInterpreter;
 
         // This test verifies that Either<NoOpInspector, NoOpInspector>
         // implements the Inspector trait as required by the issue
