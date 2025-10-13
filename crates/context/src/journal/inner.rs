@@ -430,14 +430,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Enter subroutine
         let checkpoint = self.checkpoint();
 
-        // Fetch balance of caller.
-        let caller_balance = self.state.get(&caller).unwrap().info.balance;
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < balance {
-            self.checkpoint_revert(checkpoint);
-            return Err(TransferError::OutOfFunds);
-        }
-
         // Newly created account is present, as we just loaded it.
         let target_acc = self.state.get_mut(&target_address).unwrap();
         let last_journal = &mut self.journal;

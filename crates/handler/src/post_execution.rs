@@ -39,12 +39,15 @@ pub fn reimburse_caller<CTX: ContextTr>(
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
     // Return balance of not spend gas.
-    context.journal_mut().balance_incr(
-        caller,
-        U256::from(
-            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
-        ) + additional_refund,
-    )?;
+    context
+        .journal_mut()
+        .load_account_mut(caller)?
+        .incr_balance(
+            U256::from(
+                effective_gas_price
+                    .saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
+            ) + additional_refund,
+        );
 
     Ok(())
 }

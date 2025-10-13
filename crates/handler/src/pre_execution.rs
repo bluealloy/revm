@@ -160,15 +160,12 @@ pub fn validate_against_state_and_deduct_caller<
         cfg.is_nonce_check_disabled(),
     )?;
 
-    let old_balance = *caller.balance();
-    let new_balance = calculate_caller_fee(old_balance, tx, block, cfg)?;
+    let new_balance = calculate_caller_fee(*caller.balance(), tx, block, cfg)?;
 
     caller.set_balance(new_balance);
     if tx.kind().is_call() {
         caller.bump_nonce();
     }
-
-    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
     Ok(())
 }
 

@@ -261,7 +261,8 @@ impl EthFrame<EthInterpreter> {
         let mut caller_info = context.journal_mut().load_account_mut(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if !caller_info.decr_balance(inputs.value) {
+        // decrement of balance is done in the create_account_checkpoint.
+        if *caller_info.balance() < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 

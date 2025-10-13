@@ -119,9 +119,9 @@ where
                 .expect("Deposit transaction effective balance spending overflow")
                 - tx.value();
 
-            let old_balance = *caller.balance();
             // Mind value should be added first before subtracting the effective balance spending.
-            let mut new_balance = old_balance
+            let mut new_balance = caller
+                .balance()
                 .saturating_add(U256::from(tx.mint().unwrap_or_default()))
                 .saturating_sub(effective_balance_spending);
 
