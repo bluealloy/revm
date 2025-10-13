@@ -67,7 +67,10 @@ impl Display for OpTransactionError {
                 )
             }
             Self::MissingEnvelopedTx => {
-                write!(f, "missing enveloped transaction bytes for non-deposit transaction")
+                write!(
+                    f,
+                    "missing enveloped transaction bytes for non-deposit transaction"
+                )
             }
         }
     }
