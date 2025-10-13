@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use std::fmt;
 
-use primitives::{address, Address};
-
 use crate::{Precompile, PrecompileSpecId};
 
 /// Precompile with address and function.
