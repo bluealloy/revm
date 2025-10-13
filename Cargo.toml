@@ -136,7 +136,7 @@ keywords = ["revm", "evm", "ethereum", "blockchain", "no_std"]
 repository = "https://github.com/bluealloy/revm"
 documentation = "https://bluealloy.github.io/revm/"
 homepage = "https://github.com/bluealloy/revm"
-edition = "2021"
+edition = "2024"
 rust-version = "1.88.0"
 
 [workspace.lints]
