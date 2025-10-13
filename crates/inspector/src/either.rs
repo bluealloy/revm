@@ -101,7 +101,6 @@ mod tests {
 
     #[test]
     fn test_either_inspector_type_check() {
-
         // This test verifies that Either<NoOpInspector, NoOpInspector>
         // implements the Inspector trait as required by the issue
         fn _requires_inspector<T: Inspector<(), EthInterpreter>>(inspector: T) -> T {
