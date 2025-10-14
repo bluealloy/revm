@@ -83,7 +83,7 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
         #[derive(serde::Deserialize, Debug)]
         #[serde(untagged)]
         enum Table {
-            Data(Vec<u8>),
+            Data(std::vec::Vec<u8>),
             Table(Bytes),
         }
 
