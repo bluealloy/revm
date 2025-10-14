@@ -130,10 +130,7 @@ impl Bal {
     #[inline]
     /// Extend BAL with account.
     pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
-        let bal_account = self
-            .accounts
-            .entry(address)
-            .or_default();
+        let bal_account = self.accounts.entry(address).or_default();
 
         bal_account.update(bal_index, account);
     }

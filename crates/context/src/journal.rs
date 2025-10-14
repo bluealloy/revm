@@ -2,7 +2,6 @@
 //!
 //! Entry submodule contains [`JournalEntry`] and [`JournalEntryTr`] traits.
 //! and inner submodule contains [`JournalInner`] struct that contains state.
-pub mod cfg;
 pub mod entry;
 pub mod inner;
 pub mod warm_addresses;

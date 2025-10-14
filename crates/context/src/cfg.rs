@@ -55,10 +55,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
     /// with initials cap of 30M.
     pub tx_gas_limit_cap: Option<u64>,
-    /// Whether BAL is enabled. If true Account with fill the data for BalBuilder that is used to
-    /// create BAL. If false, BAL creating is going to be skipped and BAL returned from Database
-    /// is not going to be read.x§
-    pub bal_enabled: bool,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -153,7 +149,6 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
 impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
-        let bal_enabled = spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
         Self {
             chain_id: 1,
             tx_chain_id_check: true,
@@ -164,7 +159,6 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
-            bal_enabled,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -206,7 +200,6 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     pub fn with_spec<OSPEC: Into<SpecId> + Clone>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
-        let bal_enabled = spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
         CfgEnv {
             chain_id: self.chain_id,
             tx_chain_id_check: self.tx_chain_id_check,
@@ -217,7 +210,6 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             tx_gas_limit_cap: self.tx_gas_limit_cap,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
-            bal_enabled,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -279,11 +271,6 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
 impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     type Spec = SPEC;
-
-    #[inline]
-    fn bal_enabled(&self) -> bool {
-        self.bal_enabled
-    }
 
     #[inline]
     fn chain_id(&self) -> u64 {
