@@ -44,7 +44,7 @@ pub fn run(criterion: &mut Criterion) {
     let tx = TxEnv::builder()
         .caller(BENCH_CALLER)
         .kind(TxKind::Call(BURNTPIX_MAIN_ADDRESS))
-         .data(run_call_data.into())
+        .data(run_call_data.into())
         .gas_limit(u64::MAX)
         .build()
         .unwrap();
