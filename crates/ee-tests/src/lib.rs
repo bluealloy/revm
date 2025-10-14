@@ -132,3 +132,6 @@ mod op_revm_tests;
 
 #[cfg(test)]
 mod revm_tests;
+
+#[cfg(test)]
+mod persistent_warming_gas_test;
