@@ -202,6 +202,7 @@ impl<DB: Database> StateBuilder<DB> {
             block_hashes: self.with_block_hashes,
             bal: self.with_bal,
             bal_builder: self.with_bal_builder.then(Bal::new),
+            bal_index: 0,
         }
     }
 }

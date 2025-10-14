@@ -28,13 +28,10 @@ use revm::{
         SelfDestructResult, StateLoad,
     },
     primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
-    state::{
-        bal::{Bal, BalIndex},
-        Account, Bytecode, EvmState,
-    },
+    state::{bal::BalWithIndex, Account, Bytecode, EvmState},
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
-use std::{convert::Infallible, fmt::Debug, sync::Arc};
+use std::{convert::Infallible, fmt::Debug};
 
 /// Backend for cheatcodes.
 /// The problematic cheatcodes are only supported in fork mode, so we'll omit the non-fork behavior of the Foundry
@@ -72,16 +69,8 @@ impl JournalTr for Backend {
         self.journaled_state.db()
     }
 
-    fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
+    fn set_bal(&mut self, bal: Option<BalWithIndex>) {
         self.journaled_state.set_bal(bal);
-    }
-
-    fn set_bal_index(&mut self, bal_index: BalIndex) {
-        self.journaled_state.set_bal_index(bal_index);
-    }
-
-    fn bal_index(&self) -> Option<BalIndex> {
-        self.journaled_state.bal_index()
     }
 
     fn db_mut(&mut self) -> &mut Self::Database {

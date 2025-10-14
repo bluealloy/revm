@@ -13,16 +13,18 @@
 //! - **`StorageBal`**: Storage-level BAL data for an account
 
 pub mod account;
+pub mod alloy;
 pub mod writes;
 
+use std::sync::Arc;
+
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
-use indexmap::{map::Entry, IndexMap};
 pub use writes::BalWrites;
 
-use bytecode::Bytecode;
-use primitives::{Address, StorageKey, StorageValue, B256, U256};
-
 use crate::Account;
+use alloy_eip7928::BlockAccessList as AlloyBal;
+use indexmap::IndexMap;
+use primitives::{Address, StorageKey, StorageValue};
 
 ///Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
@@ -33,6 +35,14 @@ pub type BalIndex = u64;
 pub struct Bal {
     /// Accounts bal.
     pub accounts: IndexMap<Address, AccountBal>,
+}
+
+impl FromIterator<(Address, AccountBal)> for Bal {
+    fn from_iter<I: IntoIterator<Item = (Address, AccountBal)>>(iter: I) -> Self {
+        Self {
+            accounts: iter.into_iter().collect(),
+        }
+    }
 }
 
 impl Bal {
@@ -55,7 +65,7 @@ impl Bal {
         }
 
         for (idx, (address, account)) in self.accounts.iter().enumerate() {
-            println!("Account #{} - Address: {:?}", idx, address);
+            println!("Account #{idx} - Address: {address:?}");
             println!("  Account Info:");
 
             // Print nonce writes
@@ -64,7 +74,7 @@ impl Bal {
             } else {
                 println!("    Nonce writes:");
                 for (bal_index, nonce) in &account.account_info.nonce.writes {
-                    println!("      [{}] -> {}", bal_index, nonce);
+                    println!("      [{bal_index}] -> {nonce}");
                 }
             }
 
@@ -74,7 +84,7 @@ impl Bal {
             } else {
                 println!("    Balance writes:");
                 for (bal_index, balance) in &account.account_info.balance.writes {
-                    println!("      [{}] -> {}", bal_index, balance);
+                    println!("      [{bal_index}] -> {balance}");
                 }
             }
 
@@ -100,13 +110,13 @@ impl Bal {
             } else {
                 println!("    Total slots: {}", account.storage.storage.len());
                 for (storage_key, storage_writes) in &account.storage.storage {
-                    println!("    Slot: {:#x}", storage_key);
+                    println!("    Slot: {storage_key:#x}");
                     if storage_writes.is_empty() {
                         println!("      (read-only, no writes)");
                     } else {
                         println!("      Writes:");
                         for (bal_index, value) in &storage_writes.writes {
-                            println!("        [{}] -> {:?}", bal_index, value);
+                            println!("        [{bal_index}] -> {value:?}");
                         }
                     }
                 }
@@ -119,45 +129,13 @@ impl Bal {
 
     #[inline]
     /// Extend BAL with account.
-    pub fn extend_account(&mut self, address: Address, account: &mut Account) {
-        match self.accounts.entry(address) {
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().extend_account(account);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(account.take_account_bal());
-            }
-        }
-    }
+    pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
+        let bal_account = self
+            .accounts
+            .entry(address)
+            .or_default();
 
-    /// Insert account into the builder.
-    pub fn insert_account(
-        &mut self,
-        address: Address,
-        nonce: BalWrites<u64>,
-        balance: BalWrites<U256>,
-        code: BalWrites<(B256, Bytecode)>,
-        storage: impl Iterator<Item = (StorageKey, BalWrites<StorageValue>)>,
-    ) {
-        match self.accounts.entry(address) {
-            Entry::Occupied(mut entry) => {
-                entry
-                    .get_mut()
-                    .insert_account(nonce, balance, code, storage);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(AccountBal {
-                    account_info: AccountInfoBal {
-                        nonce,
-                        balance,
-                        code,
-                    },
-                    storage: StorageBal {
-                        storage: storage.collect(),
-                    },
-                });
-            }
-        }
+        bal_account.update(bal_index, account);
     }
 
     /// Populate account from BAL.
@@ -193,6 +171,65 @@ impl Bal {
         };
 
         Ok(storage_value)
+    }
+
+    /// Consume Bal and create [`AlloyBal`]
+    pub fn into_alloy_bal(self) -> AlloyBal {
+        AlloyBal::from_iter(
+            self.accounts
+                .into_iter()
+                .map(|(address, account)| account.into_alloy_account(address)),
+        )
+    }
+}
+
+/// Arc BAL structure with bal index.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BalWithIndex {
+    /// Bal index.
+    bal_index: BalIndex,
+    /// BAL structure.
+    bal: Arc<Bal>,
+}
+
+impl BalWithIndex {
+    /// Create a new BAL with index.
+    pub fn new(bal_index: BalIndex, bal: Arc<Bal>) -> Self {
+        Self { bal_index, bal }
+    }
+
+    /// Return bal index.
+    pub fn bal_index(&self) -> BalIndex {
+        self.bal_index
+    }
+
+    /// Return BAL.
+    pub fn bal(&self) -> Arc<Bal> {
+        self.bal.clone()
+    }
+
+    /// Set bal index.
+    pub fn set_bal_index(&mut self, bal_index: BalIndex) {
+        self.bal_index = bal_index;
+    }
+
+    /// Populate account from BAL.
+    pub fn populate_account(
+        &self,
+        address: Address,
+        account: &mut Account,
+    ) -> Result<(), BalError> {
+        self.bal.populate_account(address, self.bal_index, account)
+    }
+
+    /// Get storage from BAL.
+    pub fn account_storage(
+        &self,
+        account_index: usize,
+        key: StorageKey,
+    ) -> Result<StorageValue, BalError> {
+        self.bal.account_storage(account_index, key, self.bal_index)
     }
 }
 

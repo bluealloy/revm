@@ -20,11 +20,8 @@ use context_interface::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256};
-use state::{
-    bal::{Bal, BalIndex},
-    Account, EvmState,
-};
-use std::{sync::Arc, vec::Vec};
+use state::{bal::BalWithIndex, Account, EvmState};
+use std::vec::Vec;
 
 /// A journal of state changes internal to the EVM
 ///
@@ -110,19 +107,8 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self.database
     }
 
-    fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
-        self.inner.bal_enabled = true;
+    fn set_bal(&mut self, bal: Option<BalWithIndex>) {
         self.inner.bal = bal;
-    }
-
-    /// Sets BAL index for the state.
-    fn set_bal_index(&mut self, bal_index: BalIndex) {
-        self.inner.bal_index = bal_index;
-    }
-
-    /// Returns BAL index for the state.
-    fn bal_index(&self) -> Option<BalIndex> {
-        self.inner.bal_enabled.then(|| self.inner.bal_index)
     }
 
     fn sload(

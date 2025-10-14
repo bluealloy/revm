@@ -6,7 +6,10 @@ use database_interface::{
 use primitives::{
     hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{bal::Bal, Account, AccountInfo, Bytecode};
+use state::{
+    bal::{Bal, BalIndex},
+    Account, AccountInfo, Bytecode,
+};
 use std::{sync::Arc, vec::Vec};
 
 /// A [Database] implementation that stores all state changes in memory.
@@ -56,6 +59,8 @@ pub struct CacheDB<ExtDB> {
     pub cache: Cache,
     /// BAL used to execute transactions.
     pub bal: Option<Arc<Bal>>,
+    /// BAL index.
+    pub bal_index: BalIndex,
     /// BAL builder that is used to build BAL.
     /// It is create from State output of transaction execution.
     pub bal_builder: Option<Bal>,
@@ -114,6 +119,7 @@ impl<ExtDB> CacheDB<ExtDB> {
         Self {
             cache: Cache::default(),
             bal: None,
+            bal_index: 0,
             bal_builder: None,
             db,
         }
@@ -204,9 +210,11 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         for (address, mut account) in changes {
+            // update BAL.
             if let Some(bal) = &mut self.bal_builder {
-                bal.extend_account(address, &mut account);
+                bal.update_account(self.bal_index, address, &account);
             }
+
             if !account.is_touched() {
                 continue;
             }
@@ -239,6 +247,7 @@ impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
                     .map(|(key, value)| (key, value.present_value())),
             );
         }
+        self.bal_index += 1;
     }
 }
 

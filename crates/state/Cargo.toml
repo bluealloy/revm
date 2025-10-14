@@ -22,6 +22,9 @@ workspace = true
 primitives.workspace = true
 bytecode.workspace = true
 
+# alloy
+alloy-eip7928.workspace = true
+
 # misc
 bitflags.workspace = true
 indexmap = { version = "2.11", default-features = false }

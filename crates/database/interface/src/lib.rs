@@ -10,8 +10,8 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
-use state::{bal::Bal, Account, AccountInfo, Bytecode};
-use std::{string::String, sync::Arc};
+use state::{bal::BalWithIndex, Account, AccountInfo, Bytecode};
+use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -68,7 +68,7 @@ pub trait Database {
 
     /// Fetch BAL from database. If BAL is not found, execution will continue without it.
     #[inline]
-    fn bal(&mut self) -> Option<Arc<Bal>> {
+    fn bal(&mut self) -> Option<BalWithIndex> {
         None
     }
 }
@@ -106,7 +106,7 @@ pub trait DatabaseRef {
 
     /// Fetch BAL from database. If BAL is not found, execution will continue without it.
     #[inline]
-    fn bal_ref(&self) -> Option<Arc<Bal>> {
+    fn bal_ref(&self) -> Option<BalWithIndex> {
         None
     }
 }
@@ -150,7 +150,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 
     #[inline]
-    fn bal(&mut self) -> Option<Arc<Bal>> {
+    fn bal(&mut self) -> Option<BalWithIndex> {
         self.0.bal_ref()
     }
 }
@@ -190,7 +190,7 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     }
 
     #[inline]
-    fn bal_ref(&self) -> Option<Arc<Bal>> {
+    fn bal_ref(&self) -> Option<BalWithIndex> {
         self.0.bal_ref()
     }
 }

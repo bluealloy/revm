@@ -4,9 +4,8 @@ use core::{
     error::Error,
     future::{self, Future},
 };
-use std::sync::Arc;
 use primitives::{Address, StorageKey, StorageValue, B256};
-use state::{bal::Bal, AccountInfo, Bytecode};
+use state::{bal::BalWithIndex, AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
 
 /// The async EVM database interface
@@ -45,7 +44,7 @@ pub trait DatabaseAsync {
 
     /// Fetch BAL from database. If BAL is not found, execution will continue without it.
     #[inline]
-    fn bal_async(&mut self) -> impl Future<Output = Option<Arc<Bal>>> + Send {
+    fn bal_async(&mut self) -> impl Future<Output = Option<BalWithIndex>> + Send {
         future::ready(None)
     }
 }
@@ -86,7 +85,7 @@ pub trait DatabaseAsyncRef {
 
     /// Fetch BAL from database. If BAL is not found, execution will continue without it.
     #[inline]
-    fn bal_async_ref(&self) -> impl Future<Output = Option<Arc<Bal>>> + Send {
+    fn bal_async_ref(&self) -> impl Future<Output = Option<BalWithIndex>> + Send {
         future::ready(None)
     }
 }
@@ -163,7 +162,7 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
     }
 
     #[inline]
-    fn bal(&mut self) -> Option<Arc<Bal>> {
+    fn bal(&mut self) -> Option<BalWithIndex> {
         self.rt.block_on(self.db.bal_async())
     }
 }
@@ -196,7 +195,7 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     }
 
     #[inline]
-    fn bal_ref(&self) -> Option<Arc<Bal>> {
+    fn bal_ref(&self) -> Option<BalWithIndex> {
         self.rt.block_on(self.db.bal_async_ref())
     }
 }

@@ -14,11 +14,8 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{
-    bal::{Bal, BalIndex},
-    Account, EvmState, EvmStorageSlot, TransientStorage,
-};
-use std::{sync::Arc, vec::Vec};
+use state::{bal::BalWithIndex, Account, EvmState, EvmStorageSlot, TransientStorage};
+use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -45,11 +42,7 @@ pub struct JournalInner<ENTRY> {
     pub transaction_id: usize,
     /// BAL for the state, if None BAL values are not used and it will not be applied on the top
     /// of loaded account and storages.
-    pub bal: Option<Arc<Bal>>,
-    /// BAL index for the current transaction
-    pub bal_index: BalIndex,
-    /// Whether BAL creation is enabled.
-    pub bal_enabled: bool,
+    pub bal: Option<BalWithIndex>,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -85,8 +78,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             logs: Vec::new(),
             journal: Vec::default(),
             transaction_id: 0,
-            bal_index: 0,
-            bal_enabled: false,
             depth: 0,
             spec: SpecId::default(),
             bal: None,
@@ -117,8 +108,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            bal_enabled,
-            bal_index,
             bal,
             spec,
             warm_addresses,
@@ -127,7 +116,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let _ = spec;
         let _ = state;
         let _ = bal;
-        let _ = bal_enabled;
         transient_storage.clear();
         *depth = 0;
 
@@ -138,7 +126,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_addresses.clear_coinbase();
         // increment transaction id.
         *transaction_id += 1;
-        *bal_index += 1;
 
         logs.clear();
     }
@@ -154,8 +141,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             bal,
-            bal_index,
-            bal_enabled,
             spec,
             warm_addresses,
         } = self;
@@ -168,11 +153,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
-        let _ = bal_index;
 
         // do nothing with BAL
         let _ = bal;
-        let _ = bal_enabled;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
@@ -194,14 +177,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             bal,
-            bal_index,
-            bal_enabled,
             spec,
             warm_addresses,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
-        let _ = bal_enabled;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
 
@@ -214,7 +194,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         // reset transaction id.
         *transaction_id = 0;
-        *bal_index = 0;
 
         // reset BAL so it is ready for next transaction.
         bal.take();
@@ -279,10 +258,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
-
-        if self.bal_enabled {
-            account.bal_code_update(self.bal_index);
-        }
     }
 
     /// Use it only if you know that acc is warm.
@@ -320,11 +295,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if bump_nonce {
             // nonce changed.
             self.journal.push(ENTRY::nonce_changed(address));
-            // TODO not efficient.
-            self.state
-                .get_mut(&address)
-                .unwrap()
-                .bal_nonce_update(self.bal_index);
         }
     }
 
@@ -338,15 +308,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address: Address,
         balance: U256,
     ) -> Result<(), DB::Error> {
-        let bal_index = self.bal_index;
-        let bal_enabled = self.bal_enabled;
         let account = self.load_account(db, address)?.data;
         let old_balance = account.info.balance;
         account.info.balance = account.info.balance.saturating_add(balance);
-
-        if bal_enabled {
-            account.bal_balance_update(bal_index);
-        }
 
         // march account as touched.
         if !account.is_touched() {
@@ -401,9 +365,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Some(TransferError::OutOfFunds);
         };
         *from_balance = from_balance_decr;
-        if self.bal_enabled {
-            from_account.bal_balance_update(self.bal_index);
-        }
 
         // add balance to
         let to_account = self.state.get_mut(&to).unwrap();
@@ -414,9 +375,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Some(TransferError::OverflowPayment);
         };
         *to_balance = to_balance_incr;
-        if self.bal_enabled {
-            to_account.bal_balance_update(self.bal_index);
-        }
 
         // add journal entry
         self.journal
@@ -496,9 +454,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
             // nonce is going to be reset to zero in AccountCreated journal entry.
             target_acc.info.nonce = 1;
-            if self.bal_enabled {
-                target_acc.bal_nonce_update(self.bal_index);
-            }
         }
 
         // touch account. This is important as for pre SpuriousDragon account could be
@@ -511,16 +466,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Err(TransferError::OverflowPayment);
         };
         target_acc.info.balance = new_balance;
-        if self.bal_enabled {
-            target_acc.bal_balance_update(self.bal_index);
-        }
 
         // safe to decrement for the caller as balance check is already done.
         let caller_account = self.state.get_mut(&caller).unwrap();
         caller_account.info.balance -= balance;
-        if self.bal_enabled {
-            caller_account.bal_balance_update(self.bal_index);
-        }
 
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
@@ -584,7 +533,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
         let spec = self.spec;
-        let bal_index = self.bal_index;
         let account_load = self.load_account(db, target)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
@@ -597,10 +545,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let target_account = self.state.get_mut(&target).unwrap();
             Self::touch_account(&mut self.journal, target, target_account);
             target_account.info.balance += acc_balance;
-            // update bal balance.
-            if self.bal_enabled {
-                target_account.bal_balance_update(bal_index);
-            }
         }
 
         let acc = self.state.get_mut(&address).unwrap();
@@ -628,10 +572,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             ))
         } else if address != target {
             acc.info.balance = U256::ZERO;
-            // bal balance change
-            if self.bal_enabled {
-                acc.bal_balance_update(bal_index);
-            }
             Some(ENTRY::balance_transfer(address, target, balance))
         } else {
             // State is not changed:
@@ -787,7 +727,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 if let Some(bal) = &self.bal {
                     // TODO handle error.
                     // throw error if BAL is present but account is not found.
-                    let _ = bal.populate_account(address, self.bal_index, &mut account);
+                    let _ = bal.populate_account(address, &mut account);
                 }
 
                 StateLoad {
@@ -820,7 +760,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 &mut self.journal,
                 self.bal.as_ref(),
                 self.transaction_id,
-                self.bal_index,
                 address,
                 storage_key,
                 false,
@@ -851,7 +790,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             &mut self.journal,
             self.bal.as_ref(),
             self.transaction_id,
-            self.bal_index,
             address,
             key,
             skip_cold_load,
@@ -895,10 +833,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
-        // insert value into bal if enabled.
-        if self.bal_enabled {
-            slot.bal_update(self.bal_index);
-        }
 
         Ok(StateLoad::new(
             SStoreResult {
@@ -965,14 +899,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 }
 
 /// Loads storage slot with account.
-#[inline]
+#[inline(always)]
+#[allow(clippy::too_many_arguments)]
 pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
-    bal: Option<&Arc<Bal>>,
+    bal: Option<&BalWithIndex>,
     transaction_id: usize,
-    bal_index: BalIndex,
     address: Address,
     key: StorageKey,
     skip_cold_load: bool,
@@ -1007,9 +941,8 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
                 let index = account
                     .bal_account_index
                     .expect("If BAL is present, account must have bal_account_index");
-                value = bal
-                    .account_storage(index, key, bal_index)
-                    .expect("TODO handle error");
+                // TODO handle error.
+                value = bal.account_storage(index, key).expect("TODO handle error");
             }
 
             vac.insert(EvmStorageSlot::new(value, transaction_id));

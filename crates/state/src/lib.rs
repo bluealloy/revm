@@ -13,8 +13,6 @@ pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
-use crate::bal::writes::BalWrites;
-use crate::bal::{AccountBal, AccountInfoBal, BalIndex, StorageBal};
 use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
@@ -44,10 +42,6 @@ pub struct Account {
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
-    /// BAL for account. Contains all writes values of the account info.
-    ///
-    /// If account is cold loaded, values of nonce/balance/code should be read from here.
-    pub bal: AccountInfoBal,
     /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
     pub bal_account_index: Option<usize>,
 }
@@ -61,64 +55,8 @@ impl Account {
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
             original_info: AccountInfo::default(),
-            bal: AccountInfoBal::default(),
             bal_account_index: None,
         }
-    }
-
-    /// Update balance in BAL.
-    ///
-    /// Use present balance and original balance to update BalWrites.
-    #[inline]
-    pub fn bal_balance_update(&mut self, bal_index: BalIndex) {
-        self.bal
-            .balance_update(bal_index, &self.original_info.balance, self.info.balance);
-    }
-
-    /// Take AccountInfo Bal and Storage Bal. Replace them with default.
-    #[inline]
-    pub fn take_account_bal(&mut self) -> AccountBal {
-        let bal_info = core::mem::take(&mut self.bal);
-        let bal_storage = self.take_storage_bal();
-        AccountBal {
-            account_info: bal_info,
-            storage: bal_storage,
-        }
-    }
-
-    /// Take Storage Bal. Replace it with default.
-    #[inline]
-    pub fn take_storage_bal(&mut self) -> StorageBal {
-        StorageBal::from_iter(
-            self.storage
-                .iter_mut()
-                .map(|(&key, slot)| (key, core::mem::take(&mut slot.bal))),
-        )
-    }
-
-    /// Update balance in BAL.
-    ///
-    /// Use present nonce and original nonce to update BalWrites.
-    #[inline]
-    pub fn bal_nonce_update(&mut self, bal_index: BalIndex) {
-        self.bal
-            .nonce_update(bal_index, &self.original_info.nonce, self.info.nonce);
-    }
-
-    /// Update code in BAL.
-    ///
-    /// Use present code and original code to update BalWrites.
-    ///
-    /// Panics if code is not set.
-    #[inline]
-    pub fn bal_code_update(&mut self, bal_index: BalIndex) {
-        assert!(self.info.code.is_some(), "Code is not set");
-        self.bal.code_update(
-            bal_index,
-            &self.original_info.code_hash,
-            self.info.code_hash,
-            self.info.code.clone().unwrap(),
-        );
     }
 
     /// Make changes to the caller account.
@@ -362,7 +300,6 @@ impl From<AccountInfo> for Account {
             transaction_id: 0,
             status: AccountStatus::empty(),
             original_info: AccountInfo::default(),
-            bal: AccountInfoBal::default(),
             bal_account_index: None,
         }
     }
@@ -445,8 +382,6 @@ pub struct EvmStorageSlot {
     pub transaction_id: usize,
     /// Represents if the storage slot is cold
     pub is_cold: bool,
-    /// BAL for storage slot.
-    pub bal: BalWrites<StorageValue>,
 }
 
 impl EvmStorageSlot {
@@ -457,17 +392,7 @@ impl EvmStorageSlot {
             present_value: original,
             transaction_id,
             is_cold: false,
-            bal: BalWrites::default(),
         }
-    }
-
-    /// Update BAL.
-    ///
-    /// Use present value and original value to update BalWrites.
-    #[inline]
-    pub fn bal_update(&mut self, bal_index: BalIndex) {
-        self.bal
-            .update(bal_index, &self.original_value, self.present_value);
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
@@ -481,7 +406,6 @@ impl EvmStorageSlot {
             present_value,
             transaction_id,
             is_cold: false,
-            bal: BalWrites::default(),
         }
     }
     /// Returns true if the present value differs from the original value.
