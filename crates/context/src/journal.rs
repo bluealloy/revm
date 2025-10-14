@@ -4,6 +4,8 @@
 //! and inner submodule contains [`JournalInner`] struct that contains state.
 pub mod entry;
 pub mod inner;
+/// Persistent warming cache for addresses and storage slots.
+pub mod persistent_warm_cache;
 pub mod warm_addresses;
 
 pub use entry::{JournalEntry, JournalEntryTr};
@@ -312,6 +314,21 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     #[inline]
     fn finalize(&mut self) -> Self::State {
         self.inner.finalize()
+    }
+
+    #[inline]
+    fn enable_persistent_warming(&mut self) {
+        self.inner.enable_persistent_warming();
+    }
+
+    #[inline]
+    fn disable_persistent_warming(&mut self) {
+        self.inner.disable_persistent_warming();
+    }
+
+    #[inline]
+    fn is_persistent_warming_enabled(&self) -> bool {
+        self.inner.is_persistent_warming_enabled()
     }
 
     #[inline]
