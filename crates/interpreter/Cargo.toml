@@ -28,7 +28,7 @@ state.workspace = true
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
-serde_json = { version = "1.0", default-features = false, features = ["std"] }
+serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
 default = ["std"]
@@ -38,6 +38,7 @@ std = [
 	"context-interface/std",
 	"bytecode/std",
 	"state/std",
+	"serde_json/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 serde = [
