@@ -117,7 +117,6 @@ either = { version = "1.15.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0.99"
-bincode = { version = "2.0", features = ["serde"] }
 eyre = "0.6.12"
 hash-db = "0.15"
 indicatif = "0.18"

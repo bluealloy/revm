@@ -28,7 +28,7 @@ state.workspace = true
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
-bincode.workspace = true
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 
 [features]
 default = ["std"]
@@ -45,7 +45,6 @@ serde = [
 	"primitives/serde",
 	"bytecode/serde",
 	"context-interface/serde",
-	"bincode/serde",
 	"state/serde",
 ]
 arbitrary = ["std", "primitives/arbitrary"]
