@@ -72,13 +72,28 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
         D: serde::Deserializer<'de>,
     {
         #[derive(serde::Deserialize)]
+
         struct JumpTableSerde {
+            #[serde(alias = "bits")]
             len: usize,
-            table: Arc<Bytes>,
+            #[serde(alias = "data")]
+            table: Table,
+        }
+
+        #[derive(serde::Deserialize, Debug)]
+        #[serde(untagged)]
+        enum Table {
+            Data(Vec<u8>),
+            Table(Bytes),
         }
 
         let data = JumpTableSerde::deserialize(deserializer)?;
-        Ok(Self::from_bytes_arc(data.table, data.len))
+        let table = match data.table {
+            Table::Table(table) => table,
+            Table::Data(data) => Bytes::from(data),
+        };
+
+        Ok(Self::from_bytes_arc(Arc::new(table), data.len))
     }
 }
 
@@ -204,6 +219,37 @@ mod tests {
         assert!(jump_table.is_valid(10)); // valid
         assert!(!jump_table.is_valid(11));
         assert!(!jump_table.is_valid(12));
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_serde_legacy_format() {
+        let legacy_format = r#"
+        {
+            "order": "bitvec::order::Lsb0",
+            "head": {
+                "width": 8,
+                "index": 0
+            },
+            "bits": 4,
+            "data": [5]
+        }"#;
+
+        let new_format = r#"
+        {
+            "len": 4,
+            "table": "0x05"
+        }"#;
+
+        let table: JumpTable = serde_json::from_str(legacy_format).expect("Failed to deserialize");
+        assert_eq!(table.len, 4);
+        assert!(table.is_valid(0));
+        assert!(!table.is_valid(1));
+        assert!(table.is_valid(2));
+        assert!(!table.is_valid(3));
+
+        let new_table: JumpTable = serde_json::from_str(new_format).expect("Failed to deserialize");
+        assert_eq!(new_table, table);
     }
 
     #[test]
