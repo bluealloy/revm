@@ -69,8 +69,7 @@ impl serde::Serialize for JumpTable {
     where
         S: serde::Serializer,
     {
-        use bitvec::order::Lsb0;
-        let mut bitvec = BitVec::<_, Lsb0>::from_vec(self.table.to_vec());
+        let mut bitvec = BitVec::<u8>::from_vec(self.table.to_vec());
         bitvec.resize(self.len, false);
         bitvec.serialize(serializer)
     }
