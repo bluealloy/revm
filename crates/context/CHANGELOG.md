@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.1](https://github.com/bluealloy/revm/compare/revm-context-v10.1.0...revm-context-v10.1.1) - 2025-10-15
+
+### Other
+
+- resize short addresses bitvec instead of reallocating ([#3083](https://github.com/bluealloy/revm/pull/3083))
+
 ## [10.1.0](https://github.com/bluealloy/revm/compare/revm-context-v10.0.0...revm-context-v10.1.0) - 2025-10-09
 
 ### Other
