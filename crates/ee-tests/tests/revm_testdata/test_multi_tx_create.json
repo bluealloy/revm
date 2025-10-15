@@ -16,7 +16,7 @@
   {
     "Success": {
       "gas_refunded": 14301,
-      "gas_used": 14302,
+      "gas_used": 28603,
       "logs": [],
       "output": {
         "Call": "0x"
