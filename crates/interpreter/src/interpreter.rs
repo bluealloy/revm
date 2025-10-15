@@ -27,7 +27,7 @@ use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
@@ -421,13 +421,8 @@ mod tests {
             u64::MAX,
         );
 
-        let serialized =
-            bincode::serde::encode_to_vec(&interpreter, bincode::config::legacy()).unwrap();
-
-        let deserialized: Interpreter<EthInterpreter> =
-            bincode::serde::decode_from_slice(&serialized, bincode::config::legacy())
-                .unwrap()
-                .0;
+        let serialized = serde_json::to_string_pretty(&interpreter).unwrap();
+        let deserialized: Interpreter<EthInterpreter> = serde_json::from_str(&serialized).unwrap();
 
         assert_eq!(
             interpreter.bytecode.pc(),
