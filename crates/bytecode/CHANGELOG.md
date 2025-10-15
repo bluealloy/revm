@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.0.1...revm-bytecode-v7.0.2) - 2025-10-15
+
+### Other
+
+- use JumpTable old serde format ([#3101](https://github.com/bluealloy/revm/pull/3101))
+
+## [7.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.0.0...revm-bytecode-v7.0.1) - 2025-10-15
+
+### Fixed
+
+- support legacy JumpTable serde format ([#3098](https://github.com/bluealloy/revm/pull/3098))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v6.2.2...revm-bytecode-v7.0.0) - 2025-10-07
 
 ### Added

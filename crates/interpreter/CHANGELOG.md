@@ -51,6 +51,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v27.0.1...revm-interpreter-v27.0.2) - 2025-10-15
+
+### Other
+
+- updated the following local packages: revm-bytecode, revm-state, revm-context-interface
+
+## [27.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v27.0.0...revm-interpreter-v27.0.1) - 2025-10-15
+
+### Fixed
+
+- support legacy JumpTable serde format ([#3098](https://github.com/bluealloy/revm/pull/3098))
+
+### Other
+
+- make CallInput::bytes accept immutable ContextTr ([#3082](https://github.com/bluealloy/revm/pull/3082))
+
 ## [27.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v26.0.0...revm-interpreter-v27.0.0) - 2025-10-09
 
 ### Other

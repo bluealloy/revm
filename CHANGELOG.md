@@ -1,5 +1,47 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v92
+date 15.10.2025
+
+Patch release that would revert JumpTable serde serialization/deserialization to before v90 release
+
+* `revm-bytecode`: 7.0.1 -> 7.0.2 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm-state`: 8.0.1 -> 8.0.2
+* `revm-database-interface`: 8.0.2 -> 8.0.3
+* `revm-context-interface`: 11.1.1 -> 11.1.2
+* `revm-context`: 10.1.1 -> 10.1.2
+* `revm-database`: 9.0.1 -> 9.0.2
+* `revm-interpreter`: 27.0.1 -> 27.0.2
+* `revm-handler`: 11.1.1 -> 11.1.2
+* `revm-inspector`: 11.1.1 -> 11.1.2
+* `revm`: 30.1.1 -> 30.1.2
+* `revm-statetest-types`: 10.1.1 -> 10.1.2
+* `revme`: 8.2.1 -> 8.2.2
+* `op-revm`: 11.1.1 -> 11.1.2
+
+# v91
+date: 15.10.2025
+
+Patch release with a JumpTable serde fix
+
+* `revm-primitives`: 21.0.0 -> 21.0.1 (✓ API compatible changes)
+* `revm-bytecode`: 7.0.0 -> 7.0.1 (✓ API compatible changes)
+* `revm-context`: 10.1.0 -> 10.1.1 (✓ API compatible changes)
+* `revm-interpreter`: 27.0.0 -> 27.0.1 (✓ API compatible changes)
+* `revm-precompile`: 28.1.0 -> 28.1.1 (✓ API compatible changes)
+* `revm-handler`: 11.1.0 -> 11.1.1 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm-state`: 8.0.0 -> 8.0.1
+* `revm-database-interface`: 8.0.1 -> 8.0.2
+* `revm-context-interface`: 11.1.0 -> 11.1.1
+* `revm-database`: 9.0.0 -> 9.0.1
+* `revm-inspector`: 11.1.0 -> 11.1.1
+* `revm`: 30.1.0 -> 30.1.1
+* `revm-statetest-types`: 10.1.0 -> 10.1.1
+* `revme`: 8.2.0 -> 8.2.1
+* `op-revm`: 11.1.0 -> 11.1.1
+
 # v90
 date: 10.10.2025
 

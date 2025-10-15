@@ -41,20 +41,20 @@ default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
-revm = { path = "crates/revm", version = "30.1.0", default-features = false }
-primitives = { path = "crates/primitives", package = "revm-primitives", version = "21.0.0", default-features = false }
-bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "7.0.0", default-features = false }
-database = { path = "crates/database", package = "revm-database", version = "9.0.0", default-features = false }
-database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "8.0.1", default-features = false }
-state = { path = "crates/state", package = "revm-state", version = "8.0.0", default-features = false }
-interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "27.0.0", default-features = false }
-inspector = { path = "crates/inspector", package = "revm-inspector", version = "11.1.0", default-features = false }
-precompile = { path = "crates/precompile", package = "revm-precompile", version = "28.1.0", default-features = false }
-statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "10.1.0", default-features = false }
-context = { path = "crates/context", package = "revm-context", version = "10.1.0", default-features = false }
-context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "11.1.0", default-features = false }
-handler = { path = "crates/handler", package = "revm-handler", version = "11.1.0", default-features = false }
-op-revm = { path = "crates/op-revm", package = "op-revm", version = "11.1.0", default-features = false }
+revm = { path = "crates/revm", version = "30.1.2", default-features = false }
+primitives = { path = "crates/primitives", package = "revm-primitives", version = "21.0.1", default-features = false }
+bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "7.0.2", default-features = false }
+database = { path = "crates/database", package = "revm-database", version = "9.0.2", default-features = false }
+database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "8.0.3", default-features = false }
+state = { path = "crates/state", package = "revm-state", version = "8.0.2", default-features = false }
+interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "27.0.2", default-features = false }
+inspector = { path = "crates/inspector", package = "revm-inspector", version = "11.1.2", default-features = false }
+precompile = { path = "crates/precompile", package = "revm-precompile", version = "28.1.1", default-features = false }
+statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "10.1.2", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "10.1.2", default-features = false }
+context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "11.1.2", default-features = false }
+handler = { path = "crates/handler", package = "revm-handler", version = "11.1.2", default-features = false }
+op-revm = { path = "crates/op-revm", package = "op-revm", version = "11.1.2", default-features = false }
 ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.1.0", default-features = false }
 
 # alloy
@@ -117,7 +117,6 @@ either = { version = "1.15.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0.99"
-bincode = { version = "2.0", features = ["serde"] }
 eyre = "0.6.12"
 hash-db = "0.15"
 indicatif = "0.18"
