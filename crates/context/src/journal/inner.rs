@@ -343,7 +343,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // sub balance from
         let from_account = self.state.get_mut(&from).unwrap();
-        // no need to touch caller account.
         Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
