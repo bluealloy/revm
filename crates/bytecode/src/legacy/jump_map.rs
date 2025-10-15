@@ -10,10 +10,8 @@ use std::{fmt::Debug, sync::Arc};
 ///
 /// It is immutable, cheap to clone and memory efficient, with one bit per byte in the bytecode.
 #[derive(Clone, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct JumpTable {
     /// Cached pointer to table data to avoid Arc overhead on lookup
-    #[cfg_attr(feature = "serde", serde(skip))]
     table_ptr: *const u8,
     /// Number of bits in the table.
     len: usize,
@@ -66,34 +64,25 @@ impl Default for JumpTable {
 }
 
 #[cfg(feature = "serde")]
+impl serde::Serialize for JumpTable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut bitvec = BitVec::<u8>::from_vec(self.table.to_vec());
+        bitvec.resize(self.len, false);
+        bitvec.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for JumpTable {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        #[derive(serde::Deserialize)]
-
-        struct JumpTableSerde {
-            #[serde(alias = "bits")]
-            len: usize,
-            #[serde(alias = "data")]
-            table: Table,
-        }
-
-        #[derive(serde::Deserialize, Debug)]
-        #[serde(untagged)]
-        enum Table {
-            Data(std::vec::Vec<u8>),
-            Table(Bytes),
-        }
-
-        let data = JumpTableSerde::deserialize(deserializer)?;
-        let table = match data.table {
-            Table::Table(table) => table,
-            Table::Data(data) => Bytes::from(data),
-        };
-
-        Ok(Self::from_bytes_arc(Arc::new(table), data.len))
+        let bitvec = BitVec::deserialize(deserializer)?;
+        Ok(Self::new(bitvec))
     }
 }
 
@@ -235,21 +224,12 @@ mod tests {
             "data": [5]
         }"#;
 
-        let new_format = r#"
-        {
-            "len": 4,
-            "table": "0x05"
-        }"#;
-
         let table: JumpTable = serde_json::from_str(legacy_format).expect("Failed to deserialize");
         assert_eq!(table.len, 4);
         assert!(table.is_valid(0));
         assert!(!table.is_valid(1));
         assert!(table.is_valid(2));
         assert!(!table.is_valid(3));
-
-        let new_table: JumpTable = serde_json::from_str(new_format).expect("Failed to deserialize");
-        assert_eq!(new_table, table);
     }
 
     #[test]
