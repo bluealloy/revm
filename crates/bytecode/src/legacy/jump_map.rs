@@ -82,8 +82,7 @@ impl<'de> serde::Deserialize<'de> for JumpTable {
     where
         D: serde::Deserializer<'de>,
     {
-        use bitvec::order::Lsb0;
-        let bitvec = BitVec::<_, Lsb0>::deserialize(deserializer)?;
+        let bitvec = BitVec::deserialize(deserializer)?;
         Ok(Self::new(bitvec))
     }
 }
