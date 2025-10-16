@@ -4,6 +4,7 @@
 //! from the Ethereum test suite.
 
 use crate::{deserialize_maybe_empty, AccountInfo, TestAuthorization};
+use alloy_eip7928::BlockAccessList;
 use revm::{
     context::{transaction::AccessList, BlockEnv, TxEnv},
     context_interface::block::BlobExcessGasAndPrice,
@@ -11,7 +12,6 @@ use revm::{
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
-
 /// Blockchain test suite containing multiple test cases
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct BlockchainTest(pub BTreeMap<String, BlockchainTestCase>);
@@ -108,6 +108,8 @@ pub struct Block {
     pub uncle_headers: Option<Vec<BlockHeader>>,
     /// Withdrawals in the block (post-Shanghai)
     pub withdrawals: Option<Vec<Withdrawal>>,
+    /// Block access list
+    pub block_access_list: Option<BlockAccessList>,
 }
 
 /// Transaction structure
@@ -280,6 +282,8 @@ pub enum ForkSpec {
     Osaka,
     /// BPO1 to BPO2 transition
     BPO1ToBPO2AtTime15k,
+    /// Amsterdam
+    Amsterdam,
 }
 
 /// Possible seal engines
@@ -470,6 +474,7 @@ mod test {
             ),
             ("\"Osaka\"", ForkSpec::Osaka),
             ("\"BPO1ToBPO2AtTime15k\"", ForkSpec::BPO1ToBPO2AtTime15k),
+            ("\"Amsterdam\"", ForkSpec::Amsterdam),
         ];
 
         for (json, expected) in fork_specs {

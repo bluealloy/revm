@@ -1,0 +1,318 @@
+{
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py::test_bal_sstore_and_oog[fork_Amsterdam-blockchain_test_engine_x-oog_at_eip2200_stipend]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x32577f929e896c6f432543942c8c919c8b204cc5e1d86b73123978c05a4dffee",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x89dd7edc99b979b7eac5728a4a81c7715c57cb61148fb8e13329a7b7618a24d4",
+                        "receiptsRoot": "0xb4222571666127c360c1a26713678150e0f2d30ce8e9cd3cc9163192d91ea7d4",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x5b0a",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x32577f929e896c6f432543942c8c919c8b204cc5e1d86b73123978c05a4dffee",
+                        "transactions": [
+                            "0xf85f800a825b0a94f5af991149f0550b904b0a05d9f74549807eeee7808025a04ebd9daf58a578dd2e367d8203b86006814120663229b49b104b9054b77b0979a03b03c98d17e65012d6e295dd83ac3dfe2026acb8f233568b1cd5032e11ff4c44"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf90291f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301111ec0c0e9945e1c0ec3df3c6472fa354d6a9a9d6ed2e98afec7c0c0cccb01893635c9adc5de9c719cc3c20101c0da94f5af991149f0550b904b0a05d9f74549807eeee7c0c0c0c0c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x4a3675857edc2d9186d9fa2d999e18e79fc9b648bb85ae86887401a485c83572",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test BAL recording with SSTORE at various OOG boundaries and success.\n\n    1. OOG at EIP-2200 stipend check & implicit SLOAD -> no BAL changes\n    2. OOG post EIP-2200 stipend check & implicit SLOAD -> storage read in BAL\n    3. OOG at exact gas minus 1 -> storage read in BAL\n    4. exact gas (success) -> storage write in BAL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py#L59",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py::test_bal_sstore_and_oog[fork_Amsterdam-blockchain_test_engine_x-oog_at_eip2200_stipend_plus_1]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x63220fd0313bd62587b2dd9d9116ed5c8c442942df1911f865f2493cfb3eb002",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0xa400ebd7e0b33c6c84eddc9b06c482c85628f8dbbbc0136e6e2843ad6eaf636b",
+                        "receiptsRoot": "0xef8dbd9cf15d4ddae28f1cbcbcd89b8f72fa8e5fbfed3026c4d8ea15aad93754",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x5b0b",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x63220fd0313bd62587b2dd9d9116ed5c8c442942df1911f865f2493cfb3eb002",
+                        "transactions": [
+                            "0xf85f800a825b0b94dc9c07363655eeed1f1b38ff04316e88ad4e25d0808025a0d7d0bdad0999c0f73b6f729084850ab20b1da6e8886d6d2ce567405756a24eeda0669c0f17ed0cdc80dcb76dbab8d2cfde5a9b6863f747ffdf95a308627a07c080"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902b3f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c50183011121c0c0e994a550f3d61033d0c1f95aa4f3c758d2cc58a09a45c0c0cccb01893635c9adc5de9c7192c3c20101c0f83b94dc9c07363655eeed1f1b38ff04316e88ad4e25d0c0e1a00000000000000000000000000000000000000000000000000000000000000001c0c0c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x0664a32ccc2e1a365204410e5f38603dcd87af25f796f33dfbb959c1e5c6d9ad",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test BAL recording with SSTORE at various OOG boundaries and success.\n\n    1. OOG at EIP-2200 stipend check & implicit SLOAD -> no BAL changes\n    2. OOG post EIP-2200 stipend check & implicit SLOAD -> storage read in BAL\n    3. OOG at exact gas minus 1 -> storage read in BAL\n    4. exact gas (success) -> storage write in BAL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py#L59",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py::test_bal_sstore_and_oog[fork_Amsterdam-blockchain_test_engine_x-oog_at_exact_gas_minus_1]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0xad1cd6d82b98f0a33de290641845b3950a8cff31adf360cc4672aad4ed27434c",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x3147f16432d477e2cf38ab15b1c2c9b80bf550d044086e0c8223bc05a6738434",
+                        "receiptsRoot": "0x65d2ab0d83cc861ae57f98352472e4c48009434ac90989d6583f551295bf44e9",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0xa861",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0xad1cd6d82b98f0a33de290641845b3950a8cff31adf360cc4672aad4ed27434c",
+                        "transactions": [
+                            "0xf85f800a82a86194f07e680d4e3e9cbcb0326527415d40e5afc54f3c808026a02aaead34e6087b135150bc3b84814631b05188c11bd6765e6a600a535aea244aa03eda9938acb824d75a6c3c7987fb326e76c79daae4084ef85b27ebc4d00727f9"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902b3f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301f923c0c0e994ae81c4b72aae2da4d920d85a08a0786301b09000c0c0cccb01893635c9adc5de996c36c3c20101c0f83b94f07e680d4e3e9cbcb0326527415d40e5afc54f3cc0e1a00000000000000000000000000000000000000000000000000000000000000001c0c0c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0xc30b030a7ed35d4b303166fc0f152f969bd4e6301d00e6e346153b72ce89a934",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test BAL recording with SSTORE at various OOG boundaries and success.\n\n    1. OOG at EIP-2200 stipend check & implicit SLOAD -> no BAL changes\n    2. OOG post EIP-2200 stipend check & implicit SLOAD -> storage read in BAL\n    3. OOG at exact gas minus 1 -> storage read in BAL\n    4. exact gas (success) -> storage write in BAL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py#L59",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py::test_bal_sstore_and_oog[fork_Amsterdam-blockchain_test_engine_x-successful_sstore]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x2d13d527a5a065bf0fe017116129dcd06a1e4163fa8ad7252d7456f64af482fe",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x26d66035c191ac693949ef8d35782b01d8dac9267e62d0be2a15ef2db9a0f80f",
+                        "receiptsRoot": "0xb0c757a6d58893c8db5b0ba3f7aa4420fef0b313c5d91e5512264f4bd315bc98",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0xa862",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x2d13d527a5a065bf0fe017116129dcd06a1e4163fa8ad7252d7456f64af482fe",
+                        "transactions": [
+                            "0xf85f800a82a862940515d63e0990400a2dd7f763a2421a12b5637ccd808026a02d329e792c31360d05ade953eda68b491e5bfd740b77a28d292224ae30596490a00d32c6672ebb4d14393c6e059007e63db122e467067c757c745566eac54df01d"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902daf89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0f862940515d63e0990400a2dd7f763a2421a12b5637ccdf847f845a00000000000000000000000000000000000000000000000000000000000000001e3e201a00000000000000000000000000000000000000000000000000000000000000042c0c0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301f926c0c0e994ba797f11450609ff69ae3d08d5d7a9a7f313b1aac0c0cccb01893635c9adc5de996c2cc3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x4afa897ad9ed2b05d86f44bb557acaadf8aca83fe08540ebfd411d5790c07760",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test BAL recording with SSTORE at various OOG boundaries and success.\n\n    1. OOG at EIP-2200 stipend check & implicit SLOAD -> no BAL changes\n    2. OOG post EIP-2200 stipend check & implicit SLOAD -> storage read in BAL\n    3. OOG at exact gas minus 1 -> storage read in BAL\n    4. exact gas (success) -> storage write in BAL",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_opcodes.py#L59",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    }
+}

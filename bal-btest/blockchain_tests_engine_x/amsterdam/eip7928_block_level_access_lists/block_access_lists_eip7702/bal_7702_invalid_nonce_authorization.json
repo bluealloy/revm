@@ -1,0 +1,81 @@
+{
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_invalid_nonce_authorization[fork_Amsterdam-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x39abae70602b7680cf432c2c3443d3bc58727b75fa9747632b1866d8ea359e0b",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x60c59ea0609489ebcdccf8acb0d9650484a999952ff1d4c7896033a75e713539",
+                        "receiptsRoot": "0x37480b665aeb118ed9bc63e8f9fa16d8b50763ad731aa8e53df8e5ba73098a7e",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0xb3b0",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x39abae70602b7680cf432c2c3443d3bc58727b75fa9747632b1866d8ea359e0b",
+                        "transactions": [
+                            "0x04f8c001808007830f4240949eb55b7625cbbb55f9bb7a2cf4534f69dd05011f0a80c0f85bf8598094a4774919a5f77eae6a6917ce008a5b6072caab440501a0f936cb4a9a9f5a1f7e9f1afbd59d9d56e0739c6852dfb6aec9f9e1d58e2e0d1c9f39616543dc00857fc529b45e536c92d5c15d4ce39df6ce96ed004aabb8537780a0ab1fc4706009110ed28a8883234020e53d6c00410c97bdf3bb190fd2a1a785e5a05ca1297f1ebdfaf5f841e3155ffb13594f9b32f10e35822ff3e2e009116d9efb"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf9028ef89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0dd949eb55b7625cbbb55f9bb7a2cf4534f69dd05011fc0c0c3c2010ac0c0da94ac62a5b55a717e8e8f222ff9030baba51c0b3a71c0c0c0c0c0e994edb3a532f89d1a3613ce91a40894a703d549a70ac0c0cccb01893635c9adc5de9b1626c3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x86889dd9b2644adf28026c610449dbd3c4b2ecfa234bde1043715ee8436c8782",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL handles failed authorization due to wrong nonce.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L413",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    }
+}

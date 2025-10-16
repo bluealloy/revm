@@ -1,0 +1,82 @@
+{
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_invalid.py::test_bal_invalid_storage_value[fork_Amsterdam-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x35dda0dcec9b4658fcaa9e1e7da0811f26bdfcddf0c52aed65be74aa80e89074",
+                        "receiptsRoot": "0xca58d867d20650a82573df9da9f3a8d06947b140558c0daec803f6d43cc0483f",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x8cb2",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x2ca66718d232fc42bff08ed5a2baf651745ca4d0015345f3326726e2acf20dd9",
+                        "transactions": [
+                            "0xf860800a830186a0948a9944a3ccf932c69e29c41a856609826fa18f3f808025a040b6c20638455c7af9db24723a672800647f7b3b5c9d66bb50a3e476b7d37027a044cd12fa828e38c20834c400714ec88e2d67d07b78e38867fcd810391e9dd8b0"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf90367f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301a616c0c0f8f0948a9944a3ccf932c69e29c41a856609826fa18f3ff8d5f845a00000000000000000000000000000000000000000000000000000000000000001e3e201a00000000000000000000000000000000000000000000000000000000000000001f845a00000000000000000000000000000000000000000000000000000000000000002e3e201a000000000000000000000000000000000000000000000000000000000000000fff845a00000000000000000000000000000000000000000000000000000000000000003e3e201a00000000000000000000000000000000000000000000000000000000000000003c0c0c0c0e894d1e55e3bec0384ae0dae71e2ad93c232cde21907c0c0cbca01880de0b6b3a75e810cc3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3",
+                "validationError": "BlockException.INVALID_BLOCK_ACCESS_LIST"
+            }
+        ],
+        "_info": {
+            "hash": "0xae24d006af6aaad3080ee6b643109ada7b3f93634e3f15619fc873ae36754992",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Test that clients reject blocks where BAL contains incorrect storage\n    values.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_invalid.py#L132",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    }
+}

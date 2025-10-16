@@ -25,3 +25,6 @@ serde_json = { workspace = true, features = ["preserve_order"] }
 k256 = { workspace = true }
 thiserror = { workspace = true }
 alloy-eips = { workspace = true }
+
+# alloy
+alloy-eip7928 = { workspace = true, features = ["std", "serde", "rlp"] }

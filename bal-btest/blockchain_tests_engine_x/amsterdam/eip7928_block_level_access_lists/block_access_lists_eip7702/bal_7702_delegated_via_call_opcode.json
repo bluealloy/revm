@@ -1,0 +1,318 @@
+{
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegated_via_call_opcode[fork_Amsterdam-call_opcode_CALL-evm_code_type_LEGACY-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0xea56ec21cf87b3f3cc3115fc7275c1c819e283295a52d90ba552ef7cfc21cf70",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x56078f43ea8b60086a0edf1d25fee7537fef1d3b889f4f4b80bc66fb8a29b0d4",
+                        "receiptsRoot": "0xfd657fc899a5090055435ff63e01c14505e23a96ba958811412282823c2ffac1",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x666c",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0xea56ec21cf87b3f3cc3115fc7275c1c819e283295a52d90ba552ef7cfc21cf70",
+                        "transactions": [
+                            "0xf860800a8398968094f846e70718427a3c8cbbd15c355d506f42161f90808026a04682220d7315a97abf3cb20db4344ff2f8444a270eeeead78dada3b099588e62a060ef8704d2582ac1ee0960a319f6f3d93d39506974438ae98cecb92ab792f40c"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902c7f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c50183013344c0c0e994ccfde2d6d07cf77ace527a42edaca82feb8d324fc0c0cccb01893635c9adc5de9bffc8c3c20101c0da94f846e70718427a3c8cbbd15c355d506f42161d90c0c0c0c0c0da94f846e70718427a3c8cbbd15c355d506f42161e90c0c0c0c0c0da94f846e70718427a3c8cbbd15c355d506f42161f90c0c0c0c0c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0xd7d14ad65480d4c94164909bf5a30afc0298f43987ab64c069bb2564d6cb107c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures delegation target when a contract uses *CALL\n    opcodes to call a delegated account.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L533",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegated_via_call_opcode[fork_Amsterdam-call_opcode_CALLCODE-evm_code_type_LEGACY-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x880335ca8240995922c5fa992ccf71caa2de45d50093639592f9b68c00b75316",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x8617826f78835c74828ea614a523b0a905593d6c3fe52053f494b6544ad4f201",
+                        "receiptsRoot": "0xfd657fc899a5090055435ff63e01c14505e23a96ba958811412282823c2ffac1",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x666c",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x880335ca8240995922c5fa992ccf71caa2de45d50093639592f9b68c00b75316",
+                        "transactions": [
+                            "0xf860800a83989680942fe5c35a12edaeb1d1e48552c48bf5251be2093d808025a0c0de4a3d510b02c1a1e169b052b71b25e4b358dc8f8d70b45eb3e7fe5bda0850a022dfa72a493f15f262d63917d63eb3cd6a79c9fdd528c6b349cdd73b70009fc7"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902c7f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c50183013344c0c0da942fe5c35a12edaeb1d1e48552c48bf5251be2073dc0c0c0c0c0da942fe5c35a12edaeb1d1e48552c48bf5251be2083dc0c0c0c0c0da942fe5c35a12edaeb1d1e48552c48bf5251be2093dc0c0c0c0c0e994416aa4e7ad4036503789a4e2e4ec2a915f9c34f5c0c0cccb01893635c9adc5de9bffc8c3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0xc4d01858958451edd5e3a162beb21860eca2d9df20766214beaf552ceaf3bffe",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures delegation target when a contract uses *CALL\n    opcodes to call a delegated account.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L533",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegated_via_call_opcode[fork_Amsterdam-call_opcode_DELEGATECALL-evm_code_type_LEGACY-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x686dcf076fea45f62dca0c5b150cd2dd380128216a03d91778aa6680aaad17fa",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x913fc2f99f64cad4c72dba6f6a45877586774a9a188c7e19cde452cea7b487dc",
+                        "receiptsRoot": "0xab07c41fc732360e43cc82ea6ec29fc428c7eaa27694509d4168883f61d3eabe",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x6669",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x686dcf076fea45f62dca0c5b150cd2dd380128216a03d91778aa6680aaad17fa",
+                        "transactions": [
+                            "0xf860800a8398968094c7e180a6ce44e4bbd5a3f94697ddcb77fbbc4917808026a0bf5d483457f810f83167fd63da3d4f999e102f584111c334f8e88bbf1f9d5af6a06883f89769529b91344ad1b1da39683514ca1d728789ba8fd2bd54ae68953c02"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902c7f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301333bc0c0da94c7e180a6ce44e4bbd5a3f94697ddcb77fbbc4717c0c0c0c0c0da94c7e180a6ce44e4bbd5a3f94697ddcb77fbbc4817c0c0c0c0c0da94c7e180a6ce44e4bbd5a3f94697ddcb77fbbc4917c0c0c0c0c0e994ca9125d52c8363214a4578739ea995f58089b407c0c0cccb01893635c9adc5de9bffe6c3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0xae8e98b8ad61e6a7d221ad79fb9437fbb4105a9f88d02f91c69768c63a71c225",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures delegation target when a contract uses *CALL\n    opcodes to call a delegated account.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L533",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegated_via_call_opcode[fork_Amsterdam-call_opcode_STATICCALL-evm_code_type_LEGACY-blockchain_test_engine_x]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0xb61b978417a6caabfc5292f378bcaf73f91cefb9d1a20997f942c9ac8c1c9fc2",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0xa1c6c45e744cd37ed889a179efee75a8f387c1035a74419fb52de22c9f50b47f",
+                        "receiptsRoot": "0xab07c41fc732360e43cc82ea6ec29fc428c7eaa27694509d4168883f61d3eabe",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x6669",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0xb61b978417a6caabfc5292f378bcaf73f91cefb9d1a20997f942c9ac8c1c9fc2",
+                        "transactions": [
+                            "0xf860800a83989680943acfb855da9689787c572dab3e620192a7f7da75808025a071bde1719a5a8c67eb1b4c9b3d0eb174c87a57090f5d862346f14f648f832ed2a047d999e6444d3874a663a0f5b1f92a0909cfb1c860fce78204e881709b2c683d"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902c7f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0942adc25665018aa1fe0e6bc666dac8fc2697ff9bac0c0c6c5018301333bc0c0da943acfb855da9689787c572dab3e620192a7f7d875c0c0c0c0c0da943acfb855da9689787c572dab3e620192a7f7d975c0c0c0c0c0da943acfb855da9689787c572dab3e620192a7f7da75c0c0c0c0c0e9946da86004e34cbd6498a2b931a42e492d6f80d0ebc0c0cccb01893635c9adc5de9bffe6c3c20101c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x1c1f8a052be82b78da9ae0b55dc9ed417a898f803abae91bdc42ad736c632d24",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures delegation target when a contract uses *CALL\n    opcodes to call a delegated account.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L533",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    }
+}

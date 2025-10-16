@@ -24,7 +24,7 @@ pub use writes::BalWrites;
 use crate::Account;
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use indexmap::IndexMap;
-use primitives::{Address, StorageKey, StorageValue};
+use primitives::{address, Address, StorageKey, StorageValue};
 
 ///Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
@@ -132,7 +132,22 @@ impl Bal {
     pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
         let bal_account = self.accounts.entry(address).or_default();
 
+        let temp = address!("0xcc5b385bd7b25606d91e32382b38510b39a55e44");
+        println!("--------------------------------");
+        println!("Address: {:?}", address);
+        println!("BEFORE BAL");
+        println!("BAL: {:?}", bal_account);
+        println!("Account: {:?}", account);
+        println!("BAL Index: {:?}", bal_index);
+
+        println!("------diff----------");
+
         bal_account.update(bal_index, account);
+
+        let temp = address!("0xcc5b385bd7b25606d91e32382b38510b39a55e44");
+        println!("AFTER BAL");
+        println!("BAL: {:?}", bal_account);
+        println!("--------------------------------");
     }
 
     /// Populate account from BAL.

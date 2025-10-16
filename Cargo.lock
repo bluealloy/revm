@@ -138,6 +138,7 @@ source = "git+https://github.com/alloy-rs/eips.git#0deb116d5d7417fcaa7ea36240db7
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
+ "serde",
 ]
 
 [[package]]
@@ -3748,6 +3749,7 @@ dependencies = [
 name = "revm-statetest-types"
 version = "10.1.2"
 dependencies = [
+ "alloy-eip7928",
  "alloy-eips",
  "k256",
  "revm",

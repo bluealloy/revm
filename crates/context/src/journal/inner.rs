@@ -698,11 +698,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
+                    // set original info to current info.
+                    account.original_info = account.info.clone();
+
                     // unmark locally created
                     account.unmark_created_locally();
                 }
-
-                // bal does nothing here. Account is already up to date so there is nothing to do.
 
                 StateLoad {
                     data: account,
@@ -728,6 +729,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     // TODO handle error.
                     // throw error if BAL is present but account is not found.
                     let _ = bal.populate_account(address, &mut account);
+                    println!("BAL POPULATED");
+                    println!("Address: {:?}", address);
+                    println!("Account: {:?}", account);
+                    println!("--------------------------------");
                 }
 
                 StateLoad {

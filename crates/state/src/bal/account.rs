@@ -42,6 +42,7 @@ impl AccountBal {
     /// Populate account from BAL.
     pub fn populate_account(&self, bal_index: BalIndex, account: &mut Account) {
         self.account_info.populate_account_info(bal_index, account);
+        account.original_info = account.info.clone();
     }
 
     /// Extend account from another account.
@@ -159,7 +160,7 @@ impl AccountInfoBal {
 
     /// Extend account info from another account info.
     #[inline]
-    pub fn update(&mut self, index: BalIndex, present: &AccountInfo, original: &AccountInfo) {
+    pub fn update(&mut self, index: BalIndex, original: &AccountInfo, present: &AccountInfo) {
         self.nonce.update(index, &original.nonce, present.nonce);
         self.balance
             .update(index, &original.balance, present.balance);

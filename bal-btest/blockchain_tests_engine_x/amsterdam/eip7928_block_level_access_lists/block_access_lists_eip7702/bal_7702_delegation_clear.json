@@ -1,0 +1,162 @@
+{
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegation_clear[fork_Amsterdam-blockchain_test_engine_x-self_funded]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x57cb5e5a369574100667051310f1912578dd6a25dc8c6eeb34292cfccc2f7d7b",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0xe4f53ed0d3ef62538d16d8068229e17805a34c560aad466c048babe94547dbef",
+                        "receiptsRoot": "0x8eceed145984ddf3dfa8179e04666bbe0bb62afbbb3c29ddb3303a002f1e538b",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x11f80",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x57cb5e5a369574100667051310f1912578dd6a25dc8c6eeb34292cfccc2f7d7b",
+                        "transactions": [
+                            "0x04f8c101808007830f4240940d2cc8cf7604e268df7b60620c13cf0f4b721d960a80c0f85cf85a8094aefc55ec0124c638dbd0a98a9636669d3fc37e200101a07789ff594093fa029f112c977840c10f8ed24cbaa66b3154e3cc75d0b127b746a02c9221a9a35fe31dd75fd66ab18a99526c0c63fd98cd04cb717b73ef1a112c3c01a02ae4c90bc8a15e44c84e17b96af9182cfac10b2ae23a6a1381db0a6526432f9da02d6d20baad78e2568c0f9794a6deed85b086ed94f577ecc135f3ea3bcc2a7d57",
+                            "0x04f8c101028007830f4240940d2cc8cf7604e268df7b60620c13cf0f4b721d960a80c0f85cf85a809400000000000000000000000000000000000000000380a03cb504acbadbe0b8b9925446d1036006fcbcf4517649bb67d561fd166ddd0b57a069a6b8752e71515bb48d41c4b19b55e86ac475aac4a8450edb213c29870c2fa780a003c20c4fbb43dbda5003ee5f89916a011ebe62540a94b99df9f8f2937a148223a03a4933f7f4f73325dd0fcd799d1f7f66e79e7af0ea82d0039f6cd4dc34893bc7"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902a3f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0e0940d2cc8cf7604e268df7b60620c13cf0f4b721d96c0c0c6c2010ac20214c0c0f855948e1d9f5dd01ea7ada03c8c44b05c1c6a8cee6c0dc0c0d8cb01893635c9adc5de9c11b6cb02893635c9adc5de98236cc6c20102c20204ddd90197ef0100aefc55ec0124c638dbd0a98a9636669d3fc37e20c20280"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x40203c298ae9c87552932ac658e39f6f6b597f61f6622da3072497c170e6688d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures clearing of EOA delegation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L236",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    },
+    "tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py::test_bal_7702_delegation_clear[fork_Amsterdam-blockchain_test_engine_x-sponsored]": {
+        "network": "Amsterdam",
+        "lastblockhash": "0x2780964bb565cec2ba58eb63af700595062b45a4e215c7a121383ef302dd77a5",
+        "config": {
+            "network": "Amsterdam",
+            "chainid": "0x01",
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Amsterdam": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                }
+            }
+        },
+        "preHash": "0x4a2b3c47d9b9d4db",
+        "engineNewPayloads": [
+            {
+                "params": [
+                    {
+                        "parentHash": "0x06754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933",
+                        "feeRecipient": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+                        "stateRoot": "0x09d00e2ed57fc0c786b738436f94942683b551803f86bb32a6c3ff0a3fdfcbef",
+                        "receiptsRoot": "0x8eceed145984ddf3dfa8179e04666bbe0bb62afbbb3c29ddb3303a002f1e538b",
+                        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "blockNumber": "0x1",
+                        "gasLimit": "0x55d4a80",
+                        "gasUsed": "0x11f80",
+                        "timestamp": "0xc",
+                        "extraData": "0x",
+                        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "baseFeePerGas": "0x7",
+                        "blobGasUsed": "0x0",
+                        "excessBlobGas": "0x0",
+                        "blockHash": "0x2780964bb565cec2ba58eb63af700595062b45a4e215c7a121383ef302dd77a5",
+                        "transactions": [
+                            "0x04f8c101808007830f424094b0a8e7d1d3390c970e8b44d726f4ddb4dd40be110a80c0f85cf85a80940b8599ecac8c1831e87c8da9809262711b6e81868001a035ee6773b1415e2ec16872dc7787d41b1d7967ae0c020840e81af3a11952be29a0755892e3e5259aa051403fca3fd1aa2b5e5cdb243abef6a4add549dcdae0d86901a0115c565c15f2263beec43f123edcd3b4e3c0a232c2831cc8f63e8cf585f4dbdda06760d4ccecc07fe3d6d445090bb3ccccf9a2bf5e83e02c7990d8abcb75836784",
+                            "0x04f8c101018007830f424094b0a8e7d1d3390c970e8b44d726f4ddb4dd40be110a80c0f85cf85a809400000000000000000000000000000000000000000180a0db19a1d07cc210a030d01f5e27fa67b60f88680e678ed6d046b23274785e3a2aa06a02d6072e3cb683479d4314e56c7fda81f9127ae7f870716e16216dc5dd057401a05d2587d94512afeaab67b4bac3d3d32791c54d6c490355d7df0c07f2d11b34dda075f5dc2222424907e3a742e8e0a37d13e77d0c0a0ff3226a4824537bbd653258"
+                        ],
+                        "withdrawals": [],
+                        "blockAccessList": "0xf902c5f89f9400000961ef480eb55e80d19ad83579a64c007002c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f89f940000bbddc7ce488642fb579f8b00f3a590007251c0f884a00000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003c0c0c0f862940000f90827f1c53a10cb7a02335b175320002935f847f845a00000000000000000000000000000000000000000000000000000000000000000e3e280a006754de18ca9936f4eba53caa0d7bde3ffb3d2cc71c7dfffdc4ed643875cf933c0c0c0c0f88394000f3df6d732807ef1319fb7b8bb8522d0beac02f847f845a0000000000000000000000000000000000000000000000000000000000000000ce3e280a0000000000000000000000000000000000000000000000000000000000000000ce1a0000000000000000000000000000000000000000000000000000000000000200bc0c0c0f838941eb13a415a5ab4d24808b787ab3408bc516b6fa4c0c0d8cb01893635c9adc5de9c11b6cb02893635c9adc5de98236cc6c20101c20202c0f83d9443fc8990dd7af1ab2fbd37f0e8944724d5b90969c0c0c0c6c20101c20202ddd90197ef01000b8599ecac8c1831e87c8da9809262711b6e8186c20280e094b0a8e7d1d3390c970e8b44d726f4ddb4dd40be11c0c0c6c2010ac20214c0c0"
+                    },
+                    [],
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    []
+                ],
+                "newPayloadVersion": "5",
+                "forkchoiceUpdatedVersion": "3"
+            }
+        ],
+        "_info": {
+            "hash": "0x89b7588bc9e307214af8ab0833ec96649f7a4ff47d010b635cfc922977ccea40",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.5",
+            "description": "Ensure BAL captures clearing of EOA delegation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/bal@v1.3.0/tests/amsterdam/eip7928_block_level_access_lists/test_block_access_lists_eip7702.py#L236",
+            "fixture-format": "blockchain_test_engine_x",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7928.md",
+            "reference-spec-version": "e7f0963a024b3d0dedc4488a7553bf7c70dedb3e",
+            "eels-resolution": {
+                "git-url": "https://github.com/fselmo/execution-specs.git",
+                "branch": "feat/amsterdam-fork-and-block-access-lists",
+                "commit": "3496e719b515bc82f35c42f83e78d426d31283ba"
+            }
+        }
+    }
+}

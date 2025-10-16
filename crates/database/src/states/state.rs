@@ -4,7 +4,9 @@ use super::{
 };
 use bytecode::Bytecode;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
-use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
+use primitives::{
+    address, hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY,
+};
 use state::{
     bal::{Bal, BalWithIndex},
     Account, AccountInfo,
@@ -405,6 +407,12 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         }
         // If not found, load it from database
         self.database.block_hash_ref(number)
+    }
+
+    fn bal_ref(&self) -> Option<BalWithIndex> {
+        self.bal
+            .clone()
+            .map(|bal| BalWithIndex::new(self.bal_index, bal))
     }
 }
 
