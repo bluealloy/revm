@@ -1,7 +1,7 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "30.1.0"
+version = "30.1.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true

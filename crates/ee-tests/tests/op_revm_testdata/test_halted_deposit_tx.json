@@ -13,8 +13,13 @@
           "LegacyAnalyzed": {
             "bytecode": "0x00",
             "jump_table": {
-              "len": 0,
-              "table": "0x"
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
             },
             "original_len": 0
           }
@@ -33,8 +38,15 @@
           "LegacyAnalyzed": {
             "bytecode": "0x5000",
             "jump_table": {
-              "len": 1,
-              "table": "0x00"
+              "bits": 1,
+              "data": [
+                0
+              ],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
             },
             "original_len": 1
           }
