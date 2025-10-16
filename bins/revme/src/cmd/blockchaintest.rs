@@ -14,7 +14,7 @@ use revm::{
 };
 use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
-use state::bal::{Bal};
+use state::bal::Bal;
 use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
@@ -946,13 +946,15 @@ fn execute_blockchain_test(
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
 
         if let Some(bal) = state.bal_builder.take() {
-            if &bal != state.bal.as_ref().unwrap().as_ref() {
-                println!("Bal mismatch");
-                println!("Test bal");
-                state.bal.as_ref().unwrap().pretty_print();
-                println!("Bal:");
-                bal.pretty_print();
-                panic!("Bal mismatch");
+            if let Some(state_bal) = state.bal.as_ref() {
+                if &bal != state_bal.as_ref() {
+                    println!("Bal mismatch");
+                    println!("Test bal");
+                    state_bal.pretty_print();
+                    println!("Bal:");
+                    bal.pretty_print();
+                    panic!("Bal mismatch");
+                }
             }
         }
 
@@ -1020,9 +1022,9 @@ fn skip_test(path: &Path) -> bool {
     // blobs excess gas calculation is not supported or osaka BPO configuration
     if path_str.contains("paris/eip7610_create_collision")
         || path_str.contains("cancun/eip4844_blobs")
-        || path_str.contains("prague/eip7251_consolidations")
+        // || path_str.contains("prague/eip7251_consolidations")
         || path_str.contains("prague/eip7685_general_purpose_el_requests")
-        || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
+        // || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
         || path_str.contains("osaka/eip7918_blob_reserve_price")
     {
         return true;

@@ -132,7 +132,6 @@ impl Bal {
     pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
         let bal_account = self.accounts.entry(address).or_default();
 
-        let temp = address!("0xcc5b385bd7b25606d91e32382b38510b39a55e44");
         println!("--------------------------------");
         println!("Address: {:?}", address);
         println!("BEFORE BAL");

@@ -110,6 +110,10 @@ pub struct Block {
     pub withdrawals: Option<Vec<Withdrawal>>,
     /// Block access list
     pub block_access_list: Option<BlockAccessList>,
+    /// Withdrawal requests (EIP-7002)
+    pub withdrawal_requests: Option<Vec<WithdrawalRequest>>,
+    /// Consolidation requests (EIP-7251)
+    pub consolidation_requests: Option<Vec<ConsolidationRequest>>,
 }
 
 /// Transaction structure
@@ -171,6 +175,34 @@ pub struct Withdrawal {
     pub address: Address,
     /// Withdrawal amount in gwei
     pub amount: U256,
+}
+
+/// Withdrawal request structure (EIP-7002)
+///
+/// Represents an execution layer triggerable withdrawal request.
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WithdrawalRequest {
+    /// Address of the source of the exit
+    pub source_address: Address,
+    /// Validator public key (48 bytes)
+    pub validator_pubkey: FixedBytes<48>,
+    /// Amount of withdrawn ether in gwei
+    pub amount: U256,
+}
+
+/// Consolidation request structure (EIP-7251)
+///
+/// Represents a consolidation request for validator consolidation.
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ConsolidationRequest {
+    /// Source address
+    pub source_address: Address,
+    /// Source public key (48 bytes)
+    pub source_pubkey: FixedBytes<48>,
+    /// Target public key (48 bytes)
+    pub target_pubkey: FixedBytes<48>,
 }
 
 /// Ethereum blockchain test data state

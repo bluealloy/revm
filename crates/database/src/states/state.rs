@@ -4,9 +4,7 @@ use super::{
 };
 use bytecode::Bytecode;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
-use primitives::{
-    address, hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY,
-};
+use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
 use state::{
     bal::{Bal, BalWithIndex},
     Account, AccountInfo,
