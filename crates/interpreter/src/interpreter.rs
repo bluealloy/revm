@@ -233,6 +233,13 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[cold]
     #[inline(never)]
     pub fn halt_memory_oog(&mut self) {
+        self.halt(InstructionResult::MemoryOOG);
+    }
+
+    /// Halt the interpreter with an out-of-gas error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_memory_limit_oog(&mut self) {
         self.halt(InstructionResult::MemoryLimitOOG);
     }
 
@@ -430,4 +437,79 @@ mod tests {
             "Program counter should be preserved"
         );
     }
+}
+
+#[test]
+fn test_mstore_big_offset_memory_oog() {
+    use super::*;
+    use crate::{host::DummyHost, instructions::instruction_table};
+    use bytecode::Bytecode;
+    use primitives::Bytes;
+
+    let code = Bytes::from(
+        &[
+            0x60, 0x00, // PUSH1 0x00
+            0x61, 0x27, 0x10, // PUSH2 0x2710  (10,000)
+            0x52, // MSTORE
+            0x00, // STOP
+        ][..],
+    );
+    let bytecode = Bytecode::new_raw(code);
+
+    let mut interpreter = Interpreter::<EthInterpreter>::new(
+        SharedMemory::new(),
+        ExtBytecode::new(bytecode),
+        InputsImpl::default(),
+        false,
+        SpecId::default(),
+        1000,
+    );
+
+    let table = instruction_table::<EthInterpreter, DummyHost>();
+    let mut host = DummyHost;
+    let action = interpreter.run_plain(&table, &mut host);
+
+    assert!(action.is_return());
+    assert_eq!(
+        action.instruction_result(),
+        Some(InstructionResult::MemoryOOG)
+    );
+}
+
+#[test]
+#[cfg(feature = "memory_limit")]
+fn test_mstore_big_offset_memory_limit_oog() {
+    use super::*;
+    use crate::{host::DummyHost, instructions::instruction_table};
+    use bytecode::Bytecode;
+    use primitives::Bytes;
+
+    let code = Bytes::from(
+        &[
+            0x60, 0x00, // PUSH1 0x00
+            0x61, 0x27, 0x10, // PUSH2 0x2710  (10,000)
+            0x52, // MSTORE
+            0x00, // STOP
+        ][..],
+    );
+    let bytecode = Bytecode::new_raw(code);
+
+    let mut interpreter = Interpreter::<EthInterpreter>::new(
+        SharedMemory::new_with_memory_limit(1000),
+        ExtBytecode::new(bytecode),
+        InputsImpl::default(),
+        false,
+        SpecId::default(),
+        100000,
+    );
+
+    let table = instruction_table::<EthInterpreter, DummyHost>();
+    let mut host = DummyHost;
+    let action = interpreter.run_plain(&table, &mut host);
+
+    assert!(action.is_return());
+    assert_eq!(
+        action.instruction_result(),
+        Some(InstructionResult::MemoryLimitOOG)
+    );
 }
