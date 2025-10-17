@@ -14,7 +14,10 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{bal::BalWithIndex, Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{
+    bal::{BalError, BalWithIndex},
+    Account, EvmState, EvmStorageSlot, TransientStorage,
+};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -43,6 +46,10 @@ pub struct JournalInner<ENTRY> {
     /// BAL for the state, if None BAL values are not used and it will not be applied on the top
     /// of loaded account and storages.
     pub bal: Option<BalWithIndex>,
+    /// If Account or storage is not found in the BAL, the error is stored here.
+    ///
+    /// Execution will continue even if the error is present and it will be taken at the end of the execution.
+    pub bal_error: Option<BalError>,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -81,6 +88,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth: 0,
             spec: SpecId::default(),
             bal: None,
+            bal_error: None,
             warm_addresses: WarmAddresses::new(),
         }
     }
@@ -109,6 +117,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
@@ -116,6 +125,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let _ = spec;
         let _ = state;
         let _ = bal;
+        // reset bal error
+        *bal_error = None;
         transient_storage.clear();
         *depth = 0;
 
@@ -141,6 +152,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
@@ -156,6 +168,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // do nothing with BAL
         let _ = bal;
+        // reset bal error
+        *bal_error = None;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
@@ -177,6 +191,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal,
             transaction_id,
             bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
@@ -195,8 +210,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // reset transaction id.
         *transaction_id = 0;
 
-        // reset BAL so it is ready for next transaction.
-        bal.take();
+        // Do nothing with BAL.
+        let _ = bal;
+        // reset bal error
+        *bal_error = None;
 
         state
     }
@@ -726,14 +743,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 // when account is loaded and we have BAL present.
                 // We need to populate account with writes that we have in BAL.
                 if let Some(bal) = &self.bal {
-                    // TODO handle error.
-                    // throw error if BAL is present but account is not found.
-                    let _ = bal.populate_account(address, &mut account);
-                    println!("BAL POPULATED");
-                    println!("Address: {:?}", address);
-                    println!("Account: {:?}", account);
-                    println!("--------------------------------");
+                    // populate account with BAL.
+                    if let Err(e) = bal.populate_account(address, &mut account) {
+                        if let Some(bal_error) = self.bal_error.as_mut() {
+                            *bal_error = e
+                        }
+                    }
                 }
+
+                // set original info to current info.
+                account.original_info = account.info.clone();
 
                 StateLoad {
                     data: vac.insert(account),
@@ -764,6 +783,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 db,
                 &mut self.journal,
                 self.bal.as_ref(),
+                self.bal_error.as_mut(),
                 self.transaction_id,
                 address,
                 storage_key,
@@ -794,6 +814,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             db,
             &mut self.journal,
             self.bal.as_ref(),
+            self.bal_error.as_mut(),
             self.transaction_id,
             address,
             key,
@@ -911,6 +932,7 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
     bal: Option<&BalWithIndex>,
+    bal_error: Option<&mut BalError>,
     transaction_id: usize,
     address: Address,
     key: StorageKey,
@@ -946,8 +968,12 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
                 let index = account
                     .bal_account_index
                     .expect("If BAL is present, account must have bal_account_index");
-                // TODO handle error.
-                value = bal.account_storage(index, key).expect("TODO handle error");
+
+                if let Err(e) = bal.populate_storage_slot(index, key, &mut value) {
+                    if let Some(bal_error) = bal_error {
+                        *bal_error = e
+                    }
+                }
             }
 
             vac.insert(EvmStorageSlot::new(value, transaction_id));

@@ -42,7 +42,6 @@ impl AccountBal {
     /// Populate account from BAL.
     pub fn populate_account(&self, bal_index: BalIndex, account: &mut Account) {
         self.account_info.populate_account_info(bal_index, account);
-        account.original_info = account.info.clone();
     }
 
     /// Extend account from another account.

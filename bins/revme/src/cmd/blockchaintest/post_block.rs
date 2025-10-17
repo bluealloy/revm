@@ -94,7 +94,7 @@ pub(crate) fn system_call_eip7002_withdrawal_request(
 }
 
 pub const CONSOLIDATION_REQUEST_ADDRESS: Address =
-    address!("0x00431d76A6B8c7a6F8E4A2C1f9f08E3e3bA8C5f9");
+    address!("0x0000BBdDc7CE488642fb579F8B00f3a590007251");
 
 /// EIP-7251: Consolidation requests system call
 pub(crate) fn system_call_eip7251_consolidation_request(

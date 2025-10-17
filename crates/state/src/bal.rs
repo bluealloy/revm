@@ -24,7 +24,7 @@ pub use writes::BalWrites;
 use crate::Account;
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use indexmap::IndexMap;
-use primitives::{address, Address, StorageKey, StorageValue};
+use primitives::{Address, StorageKey, StorageValue};
 
 ///Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
@@ -131,22 +131,7 @@ impl Bal {
     /// Extend BAL with account.
     pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
         let bal_account = self.accounts.entry(address).or_default();
-
-        println!("--------------------------------");
-        println!("Address: {:?}", address);
-        println!("BEFORE BAL");
-        println!("BAL: {:?}", bal_account);
-        println!("Account: {:?}", account);
-        println!("BAL Index: {:?}", bal_index);
-
-        println!("------diff----------");
-
         bal_account.update(bal_index, account);
-
-        let temp = address!("0xcc5b385bd7b25606d91e32382b38510b39a55e44");
-        println!("AFTER BAL");
-        println!("BAL: {:?}", bal_account);
-        println!("--------------------------------");
     }
 
     /// Populate account from BAL.
@@ -164,6 +149,27 @@ impl Bal {
         account.bal_account_index = Some(index);
 
         Ok(())
+    }
+
+    /// Populate storage slot from BAL.
+    ///
+    /// If slot is not found in BAL, it will return an error.
+    pub fn populate_storage_slot(
+        &self,
+        account_index: usize,
+        bal_index: BalIndex,
+        key: StorageKey,
+        value: &mut StorageValue,
+    ) -> Result<(), BalError> {
+        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+            *value = bal_value;
+        };
+
+        return Ok(());
     }
 
     /// Get storage from BAL.
@@ -234,13 +240,15 @@ impl BalWithIndex {
         self.bal.populate_account(address, self.bal_index, account)
     }
 
-    /// Get storage from BAL.
-    pub fn account_storage(
+    /// Populate storage slot from BAL.
+    pub fn populate_storage_slot(
         &self,
         account_index: usize,
         key: StorageKey,
-    ) -> Result<StorageValue, BalError> {
-        self.bal.account_storage(account_index, key, self.bal_index)
+        value: &mut StorageValue,
+    ) -> Result<(), BalError> {
+        self.bal
+            .populate_storage_slot(account_index, self.bal_index, key, value)
     }
 }
 
