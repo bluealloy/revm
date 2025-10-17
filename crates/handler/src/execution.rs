@@ -17,14 +17,13 @@ pub fn create_init_frame(
 
     match tx.kind() {
         TxKind::Call(target_address) => {
-            let (bytecode, bytecode_hash) = bytecode.unwrap_or_default();
+            let known_bytecode = bytecode.map(|(code, hash)| (hash, code));
             FrameInput::Call(Box::new(CallInputs {
                 input: CallInput::Bytes(input),
                 gas_limit,
                 target_address,
                 bytecode_address: target_address,
-                bytecode,
-                bytecode_hash,
+                known_bytecode,
                 caller: tx.caller(),
                 value: CallValue::Transfer(tx.value()),
                 scheme: CallScheme::Call,
