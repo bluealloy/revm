@@ -41,6 +41,11 @@ pub enum OpTransactionError {
     /// are cause for non-inclusion, so a special [OpHaltReason][crate::OpHaltReason] variant was introduced to handle this
     /// case for failed deposit transactions.
     HaltedDepositPostRegolith,
+    /// Missing enveloped transaction bytes for non-deposit transaction.
+    ///
+    /// Non-deposit transactions on Optimism must have `enveloped_tx` field set
+    /// to properly calculate L1 costs.
+    MissingEnvelopedTx,
 }
 
 impl TransactionError for OpTransactionError {}
@@ -59,6 +64,12 @@ impl Display for OpTransactionError {
                 write!(
                     f,
                     "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
+                )
+            }
+            Self::MissingEnvelopedTx => {
+                write!(
+                    f,
+                    "missing enveloped transaction bytes for non-deposit transaction"
                 )
             }
         }
@@ -98,7 +109,11 @@ mod test {
         assert_eq!(
             OpTransactionError::HaltedDepositPostRegolith.to_string(),
             "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
-        )
+        );
+        assert_eq!(
+            OpTransactionError::MissingEnvelopedTx.to_string(),
+            "missing enveloped transaction bytes for non-deposit transaction"
+        );
     }
 
     #[cfg(feature = "serde")]
