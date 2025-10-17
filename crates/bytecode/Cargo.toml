@@ -1,7 +1,7 @@
 [package]
 name = "revm-bytecode"
 description = "EVM Bytecodes"
-version = "7.0.0"
+version = "7.0.2"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true

@@ -1,4 +1,13 @@
-# v90 tag ( revm v30.0.1)
+
+# v92 tag ( revm v30.1.2)
+
+No breaking changes
+
+# v91 tag ( revm v30.1.1)
+
+No breaking changes
+
+# v90 tag ( revm v30.1.0)
 
 * Removal of some deprecated functions. `into_plain_state`, `regenerate_hash` were deprecated few releases ago.
 

@@ -23,6 +23,21 @@ pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTra
     validate_tx_env::<CTX>(context, spec).map_err(Into::into)
 }
 
+/// Validate legacy transaction gas price against basefee.
+#[inline]
+pub fn validate_legacy_gas_price(
+    gas_price: u128,
+    base_fee: Option<u128>,
+) -> Result<(), InvalidTransaction> {
+    // Gas price must be at least the basefee.
+    if let Some(base_fee) = base_fee {
+        if gas_price < base_fee {
+            return Err(InvalidTransaction::GasPriceLessThanBasefee);
+        }
+    }
+    Ok(())
+}
+
 /// Validate transaction that has EIP-1559 priority fee
 pub fn validate_priority_fee_tx(
     max_fee: u128,
@@ -129,25 +144,14 @@ pub fn validate_tx_env<CTX: ContextTr>(
 
     match tx_type {
         TransactionType::Legacy => {
-            // Gas price must be at least the basefee.
-            if let Some(base_fee) = base_fee {
-                if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
-                }
-            }
+            validate_legacy_gas_price(tx.gas_price(), base_fee)?;
         }
         TransactionType::Eip2930 => {
             // Enabled in BERLIN hardfork
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported);
             }
-
-            // Gas price must be at least the basefee.
-            if let Some(base_fee) = base_fee {
-                if tx.gas_price() < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
-                }
-            }
+            validate_legacy_gas_price(tx.gas_price(), base_fee)?;
         }
         TransactionType::Eip1559 => {
             if !spec_id.is_enabled_in(SpecId::LONDON) {
