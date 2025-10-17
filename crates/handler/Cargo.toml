@@ -28,13 +28,11 @@ primitives.workspace = true
 state.workspace = true
 bytecode.workspace = true
 
-# alloy
-alloy-eip7702.workspace = true
-
 auto_impl.workspace = true
 derive-where.workspace = true
 
 # Optional
+database = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -47,10 +45,10 @@ alloy-signer-local.workspace = true
 default = ["std"]
 std = [
 	"serde?/std",
-	"alloy-eip7702/std",
 	"bytecode/std",
 	"context/std",
 	"context-interface/std",
+	"database?/std",
 	"database-interface/std",
 	"interpreter/std",
 	"precompile/std",
@@ -62,9 +60,9 @@ serde = [
 	"primitives/serde",
 	"state/serde",
 	"context-interface/serde",
-	"alloy-eip7702/serde",
 	"bytecode/serde",
 	"context/serde",
+	"database?/serde",
 	"database-interface/serde",
 	"interpreter/serde",
 	"derive-where/serde",

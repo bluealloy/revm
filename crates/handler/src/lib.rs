@@ -5,6 +5,10 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// database is used in dev-dependencies for tests and as optional dependency
+#[cfg(any(test, feature = "database"))]
+use database as _;
+
 // Mainnet related handlers.
 
 /// EVM execution API traits and implementations.

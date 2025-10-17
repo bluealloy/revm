@@ -3638,7 +3638,6 @@ dependencies = [
 name = "revm-handler"
 version = "11.1.2"
 dependencies = [
- "alloy-eip7702",
  "alloy-provider",
  "alloy-signer",
  "alloy-signer-local",
