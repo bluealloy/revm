@@ -47,7 +47,6 @@ std = [
 	"serde_json?/std",
 	"serde_json?/preserve_order",
 	"context/std",
-	"database/std",
 	"database-interface/std",
 	"handler/std",
 	"interpreter/std",
@@ -57,7 +56,6 @@ std = [
 ]
 serde = [
 	"dep:serde",
-	"database/serde",
 	"context/serde",
 	"database-interface/serde",
 	"handler/serde",
