@@ -49,21 +49,23 @@ where
         let (block, tx, cfg, journal, _, _) = evm.ctx_mut().all_mut();
 
         // load TOKEN contract
-        journal.load_account(TOKEN)?.data.mark_touch();
+        journal.load_account_mut(TOKEN)?.touch();
 
         // Load caller's account.
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let mut caller_account = journal.load_account_code_mut(tx.caller())?.data;
 
         validate_account_nonce_and_code(
-            &mut caller_account.info,
+            &caller_account.info,
             tx.nonce(),
             cfg.is_eip3607_disabled(),
             cfg.is_nonce_check_disabled(),
         )?;
 
         // make changes to the account. Account balance stays the same
-        caller_account
-            .caller_initial_modification(caller_account.info.balance, tx.kind().is_call());
+        caller_account.touch();
+        if tx.kind().is_call() {
+            caller_account.bump_nonce();
+        }
 
         let account_balance_slot = erc_address_storage(tx.caller());
 

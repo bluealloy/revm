@@ -343,6 +343,14 @@ bitflags! {
     }
 }
 
+impl AccountStatus {
+    /// Returns true if the account status is touched.
+    #[inline]
+    pub fn is_touched(&self) -> bool {
+        self.contains(AccountStatus::Touched)
+    }
+}
+
 impl Default for AccountStatus {
     fn default() -> Self {
         AccountStatus::empty()
