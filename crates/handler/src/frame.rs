@@ -201,8 +201,20 @@ impl EthFrame<EthInterpreter> {
             })));
         }
 
-        let bytecode = inputs.bytecode.clone();
-        let bytecode_hash = inputs.bytecode_hash;
+        // Get bytecode and hash - either from known_bytecode or load from account
+        let (bytecode, bytecode_hash) = if let Some((hash, code)) = inputs.known_bytecode.clone() {
+            // Use provided bytecode and hash
+            (code, hash)
+        } else {
+            // Load account and get its bytecode
+            let account = ctx
+                .journal_mut()
+                .load_account_code(inputs.bytecode_address)?;
+            (
+                account.info.code.clone().unwrap_or_default(),
+                account.info.code_hash,
+            )
+        };
 
         // Returns success if bytecode is empty.
         if bytecode.is_empty() {
