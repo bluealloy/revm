@@ -389,26 +389,22 @@ fn validate_post_state(
             }
         }
 
-        // Check for unexpected storage entries
-        for (slot, actual_value) in actual_account
-            .account
-            .as_ref()
-            .map(|a| &a.storage)
-            .unwrap_or(&HashMap::new())
-            .iter()
-        {
-            let slot = *slot;
-            let actual_value = *actual_value;
-            if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
-                if print_env_on_error {
-                    print_error_with_state(debug_info, state, Some(expected_post_state));
+        // Check for unexpected storage entries. Avoid allocating a temporary HashMap when the account is None.
+        if let Some(acc) = actual_account.account.as_ref() {
+            for (slot, actual_value) in &acc.storage {
+                let slot = *slot;
+                let actual_value = *actual_value;
+                if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
+                    if print_env_on_error {
+                        print_error_with_state(debug_info, state, Some(expected_post_state));
+                    }
+                    return Err(TestExecutionError::PostStateValidation {
+                        address: *address,
+                        field: format!("storage_unexpected[{slot}]"),
+                        expected: "0x0".to_string(),
+                        actual: format!("{actual_value}"),
+                    });
                 }
-                return Err(TestExecutionError::PostStateValidation {
-                    address: *address,
-                    field: format!("storage_unexpected[{slot}]"),
-                    expected: "0x0".to_string(),
-                    actual: format!("{actual_value}"),
-                });
             }
         }
 
