@@ -1,9 +1,12 @@
 //! Pre block state transition
 
-use context::{Block, ContextTr};
-use database::State;
-use primitives::{address, hardfork::SpecId, Address, B256};
-use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
+use revm::{
+    context::{Block, ContextTr},
+    database::{Database, State},
+    handler::EvmTr,
+    primitives::{address, hardfork::SpecId, Address, B256},
+    SystemCallCommitEvm,
+};
 
 /// Pre block state transition
 ///

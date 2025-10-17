@@ -1,15 +1,15 @@
 use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
-use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
-use primitives::U256;
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg,
     },
+    database,
     database_interface::EmptyDB,
+    inspector::{inspectors::TracerEip3155, InspectCommitEvm},
+    primitives::U256,
     primitives::{hardfork::SpecId, Bytes, B256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
@@ -222,7 +222,7 @@ fn check_evm_execution(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
-    db: &mut State<EmptyDB>,
+    db: &mut database::State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
 ) -> Result<(), TestErrorKind> {
