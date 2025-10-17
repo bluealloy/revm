@@ -14,7 +14,7 @@ use revm::{
 };
 use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
-use state::bal::Bal;
+use state::bal::{Bal, BalError};
 use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
@@ -953,7 +953,7 @@ fn execute_blockchain_test(
                     state_bal.pretty_print();
                     println!("Bal:");
                     bal.pretty_print();
-                    panic!("Bal mismatch");
+                    return Err(TestExecutionError::BalMismatchError);
                 }
             }
         }
@@ -1116,6 +1116,9 @@ pub enum TestExecutionError {
         reason: HaltReason,
         gas_used: u64,
     },
+
+    #[error("BAL error")]
+    BalMismatchError,
 
     #[error(
         "Post-state validation failed for {address:?}.{field}: expected {expected}, got {actual}"
