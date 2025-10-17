@@ -14,6 +14,7 @@ use revm::{
 };
 use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
+use state::bal::Bal;
 use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
@@ -21,6 +22,7 @@ use statetest_types::blockchain::{
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Instant;
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
@@ -650,7 +652,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut state = State::builder().build();
+    let mut state = State::builder().with_bal_builder().build();
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::new();
@@ -718,6 +720,17 @@ fn execute_blockchain_test(
         } else {
             this_excess_blob_gas = None;
         }
+
+        let bal_test = block
+            .block_access_list
+            .as_ref()
+            .map(|bal| Bal::try_from(bal.clone()).ok())
+            .flatten()
+            .map(|bal| Arc::new(bal));
+
+        state.bal = bal_test;
+        state.bal_index = 0;
+        state.bal_builder = Some(Bal::new());
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -803,6 +816,9 @@ fn execute_blockchain_test(
                     break; // Skip to next block
                 }
             };
+
+            // bump bal index
+            evm.db_mut().bal_index += 1;
 
             // If JSON output requested, output transaction details
             let execution_result = if json_output {
@@ -913,6 +929,9 @@ fn execute_blockchain_test(
             }
         }
 
+        // bump bal index
+        evm.db_mut().bal_index += 1;
+
         // uncle rewards are not implemented yet
         post_block::post_block_transition(
             &mut evm,
@@ -925,6 +944,19 @@ fn execute_blockchain_test(
         state
             .block_hashes
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
+
+        if let Some(bal) = state.bal_builder.take() {
+            if let Some(state_bal) = state.bal.as_ref() {
+                if &bal != state_bal.as_ref() {
+                    println!("Bal mismatch");
+                    println!("Test bal");
+                    state_bal.pretty_print();
+                    println!("Bal:");
+                    bal.pretty_print();
+                    return Err(TestExecutionError::BalMismatchError);
+                }
+            }
+        }
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {
@@ -979,7 +1011,8 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Cancun | ForkSpec::ShanghaiToCancunAtTime15k => SpecId::CANCUN,
         ForkSpec::Prague | ForkSpec::CancunToPragueAtTime15k => SpecId::PRAGUE,
         ForkSpec::Osaka | ForkSpec::PragueToOsakaAtTime15k => SpecId::OSAKA,
-        _ => SpecId::OSAKA, // For any unknown forks, use latest available
+        ForkSpec::Amsterdam => SpecId::AMSTERDAM,
+        _ => SpecId::AMSTERDAM, // For any unknown forks, use latest available
     }
 }
 
@@ -989,9 +1022,9 @@ fn skip_test(path: &Path) -> bool {
     // blobs excess gas calculation is not supported or osaka BPO configuration
     if path_str.contains("paris/eip7610_create_collision")
         || path_str.contains("cancun/eip4844_blobs")
-        || path_str.contains("prague/eip7251_consolidations")
+        // || path_str.contains("prague/eip7251_consolidations")
         || path_str.contains("prague/eip7685_general_purpose_el_requests")
-        || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
+        // || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
         || path_str.contains("osaka/eip7918_blob_reserve_price")
     {
         return true;
@@ -1083,6 +1116,9 @@ pub enum TestExecutionError {
         reason: HaltReason,
         gas_used: u64,
     },
+
+    #[error("BAL error")]
+    BalMismatchError,
 
     #[error(
         "Post-state validation failed for {address:?}.{field}: expected {expected}, got {actual}"

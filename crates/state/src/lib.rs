@@ -3,7 +3,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod account_info;
+pub mod bal;
 mod types;
+
 pub use bytecode;
 
 pub use account_info::AccountInfo;
@@ -15,18 +17,33 @@ use bitflags::bitflags;
 use primitives::hardfork::SpecId;
 use primitives::{HashMap, StorageKey, StorageValue, U256};
 
-/// Account type used inside Journal to track changed to state.
+/// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
+///
+/// Other than standard Account information it contains its status that can be both cold and warm
+/// additional to that it contains BAL that is used to load data for this particular account.
+///
+/// On loading from database:
+///     * If CompiledBal is present, load values from BAL into Account (Assume account has read data from database)
+///     * In case of parallel execution, AccountInfo would be same over all parallel executions.
+///     * Maybe use transaction_id as a way to notify user that this is obsolete data.
+///     * Database needs to load account and tie to with BAL writes
+/// If CompiledBal is not present, use loaded values
+///     * Account is already up to date (uses present flow).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
+    /// Original account info used by BAL, changed only on cold load by BAL.
+    pub original_info: AccountInfo,
     /// Transaction id, used to track when account was toched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
+    /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
+    pub bal_account_index: Option<usize>,
 }
 
 impl Account {
@@ -37,6 +54,8 @@ impl Account {
             storage: HashMap::default(),
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
+            original_info: AccountInfo::default(),
+            bal_account_index: None,
         }
     }
 
@@ -280,6 +299,8 @@ impl From<AccountInfo> for Account {
             storage: HashMap::default(),
             transaction_id: 0,
             status: AccountStatus::empty(),
+            original_info: AccountInfo::default(),
+            bal_account_index: None,
         }
     }
 }
@@ -350,7 +371,7 @@ impl Default for AccountStatus {
 }
 
 /// This type keeps track of the current value of a storage slot.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EvmStorageSlot {
     /// Original value of the storage slot
@@ -423,6 +444,10 @@ impl EvmStorageSlot {
     #[inline]
     pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
+        if is_cold {
+            // if slot is cold original value should be reset to present value.
+            self.original_value = self.present_value;
+        }
         self.transaction_id = transaction_id;
         self.is_cold = false;
         is_cold

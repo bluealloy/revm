@@ -8,7 +8,10 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
-use state::{Account, AccountInfo, Bytecode};
+use state::{
+    bal::{BalError, BalWithIndex},
+    Account, AccountInfo, Bytecode,
+};
 use std::{borrow::Cow, vec::Vec};
 
 /// Trait that contains database and journal of all changes that were made to the state.
@@ -28,6 +31,12 @@ pub trait JournalTr {
 
     /// Returns an immutable reference to the database.
     fn db(&self) -> &Self::Database;
+
+    /// Sets BAL for the state.
+    fn set_bal(&mut self, bal: Option<BalWithIndex>);
+
+    /// Returns the BAL error if it is present.
+    fn take_bal_error(&mut self) -> Option<BalError>;
 
     /// Returns the storage value from Journal state.
     ///

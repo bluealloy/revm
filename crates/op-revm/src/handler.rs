@@ -428,6 +428,7 @@ where
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        let bal_error = evm.ctx().journal_mut().take_bal_error();
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let output = if error.is_tx_error() && is_deposit {
             let ctx = evm.ctx();
@@ -483,6 +484,12 @@ where
                 gas_used,
             })
         } else {
+            if let Some(bal_error) = bal_error {
+                return Err(Self::Error::from_string(format!(
+                    "BAL error: {:?}",
+                    bal_error
+                )));
+            }
             Err(error)
         };
         // do the cleanup

@@ -14,7 +14,10 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{
+    bal::{BalError, BalWithIndex},
+    Account, EvmState, EvmStorageSlot, TransientStorage,
+};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -40,6 +43,13 @@ pub struct JournalInner<ENTRY> {
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
     pub transaction_id: usize,
+    /// BAL for the state, if None BAL values are not used and it will not be applied on the top
+    /// of loaded account and storages.
+    pub bal: Option<BalWithIndex>,
+    /// If Account or storage is not found in the BAL, the error is stored here.
+    ///
+    /// Execution will continue even if the error is present and it will be taken at the end of the execution.
+    pub bal_error: Option<BalError>,
     /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
     /// JournalInner to be functional.
     ///
@@ -77,6 +87,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id: 0,
             depth: 0,
             spec: SpecId::default(),
+            bal: None,
+            bal_error: None,
             warm_addresses: WarmAddresses::new(),
         }
     }
@@ -104,12 +116,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
-        // Spec precompiles and state are not changed. It is always set again execution.
+        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
         let _ = state;
+        let _ = bal;
+        // reset bal error
+        *bal_error = None;
         transient_storage.clear();
         *depth = 0;
 
@@ -120,6 +137,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_addresses.clear_coinbase();
         // increment transaction id.
         *transaction_id += 1;
+
         logs.clear();
     }
 
@@ -133,6 +151,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
@@ -145,6 +165,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
+
+        // do nothing with BAL
+        let _ = bal;
+        // reset bal error
+        *bal_error = None;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase();
@@ -165,6 +190,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
+            bal,
+            bal_error,
             spec,
             warm_addresses,
         } = self;
@@ -182,6 +209,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         // reset transaction id.
         *transaction_id = 0;
+
+        // Do nothing with BAL.
+        let _ = bal;
+        // reset bal error
+        *bal_error = None;
 
         state
     }
@@ -452,7 +484,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target_acc.info.balance = new_balance;
 
         // safe to decrement for the caller as balance check is already done.
-        self.state.get_mut(&caller).unwrap().info.balance -= balance;
+        let caller_account = self.state.get_mut(&caller).unwrap();
+        caller_account.info.balance -= balance;
 
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
@@ -681,9 +714,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
+                    // set original info to current info.
+                    account.original_info = account.info.clone();
+
                     // unmark locally created
                     account.unmark_created_locally();
                 }
+
                 StateLoad {
                     data: account,
                     is_cold,
@@ -697,11 +734,24 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
-                let account = if let Some(account) = db.basic(address)? {
+                let mut account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
                     Account::new_not_existing(self.transaction_id)
                 };
+                // when account is loaded and we have BAL present.
+                // We need to populate account with writes that we have in BAL.
+                if let Some(bal) = &self.bal {
+                    // populate account with BAL.
+                    if let Err(e) = bal.populate_account(address, &mut account) {
+                        if let Some(bal_error) = self.bal_error.as_mut() {
+                            *bal_error = e
+                        }
+                    }
+                }
+
+                // set original info to current info.
+                account.original_info = account.info.clone();
 
                 StateLoad {
                     data: vac.insert(account),
@@ -731,6 +781,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 load.data,
                 db,
                 &mut self.journal,
+                self.bal.as_ref(),
+                self.bal_error.as_mut(),
                 self.transaction_id,
                 address,
                 storage_key,
@@ -760,6 +812,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account,
             db,
             &mut self.journal,
+            self.bal.as_ref(),
+            self.bal_error.as_mut(),
             self.transaction_id,
             address,
             key,
@@ -789,7 +843,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let slot = acc.storage.get_mut(&key).unwrap();
 
         // new value is same as present, we don't need to do anything
-        if present.data == new {
+        if slot.present_value == new {
             return Ok(StateLoad::new(
                 SStoreResult {
                     original_value: slot.original_value(),
@@ -804,6 +858,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
+
         Ok(StateLoad::new(
             SStoreResult {
                 original_value: slot.original_value(),
@@ -869,11 +924,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 }
 
 /// Loads storage slot with account.
-#[inline]
+#[inline(always)]
+#[allow(clippy::too_many_arguments)]
 pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
     account: &mut Account,
     db: &mut DB,
     journal: &mut Vec<ENTRY>,
+    bal: Option<&BalWithIndex>,
+    bal_error: Option<&mut BalError>,
     transaction_id: usize,
     address: Address,
     key: StorageKey,
@@ -888,6 +946,8 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
             if skip_cold_load && is_cold {
                 return Err(JournalLoadError::ColdLoadSkipped);
             }
+            // for bal do nothing here. Slot is already up to date so there is nothing to do.
+
             slot.mark_warm_with_transaction_id(transaction_id);
             (slot.present_value, is_cold)
         }
@@ -896,11 +956,24 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
                 return Err(JournalLoadError::ColdLoadSkipped);
             }
             // if storage was cleared, we don't need to ping db.
-            let value = if is_newly_created {
+            let mut value = if is_newly_created {
                 StorageValue::ZERO
             } else {
                 db.storage(address, key)?
             };
+
+            // if BAL is present that means Account contains StorageBal.
+            if let Some(bal) = bal {
+                // if index is not found, this means there was a error during BAL population.
+                if let Some(index) = account.bal_account_index {
+                    if let Err(e) = bal.populate_storage_slot(index, key, &mut value) {
+                        if let Some(bal_error) = bal_error {
+                            *bal_error = e
+                        }
+                    }
+                }
+            }
+
             vac.insert(EvmStorageSlot::new(value, transaction_id));
 
             (value, true)
