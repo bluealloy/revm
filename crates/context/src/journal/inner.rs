@@ -343,8 +343,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // sub balance from
         let from_account = self.state.get_mut(&from).unwrap();
-        // no need to touch caller account.
-        // Self::touch_account(&mut self.journal, from, from_account);
+        Self::touch_account(&mut self.journal, from, from_account);
         let from_balance = &mut from_account.info.balance;
         let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
             return Some(TransferError::OutOfFunds);
@@ -377,40 +376,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         to: Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        if balance.is_zero() {
-            self.load_account(db, to)?;
-            let to_account = self.state.get_mut(&to).unwrap();
-            Self::touch_account(&mut self.journal, to, to_account);
-            return Ok(None);
-        }
-        // load accounts
         self.load_account(db, from)?;
         self.load_account(db, to)?;
-
-        // sub balance from
-        let from_account = self.state.get_mut(&from).unwrap();
-        Self::touch_account(&mut self.journal, from, from_account);
-        let from_balance = &mut from_account.info.balance;
-
-        let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
-            return Ok(Some(TransferError::OutOfFunds));
-        };
-        *from_balance = from_balance_decr;
-
-        // add balance to
-        let to_account = &mut self.state.get_mut(&to).unwrap();
-        Self::touch_account(&mut self.journal, to, to_account);
-        let to_balance = &mut to_account.info.balance;
-        let Some(to_balance_incr) = to_balance.checked_add(balance) else {
-            // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
-            return Ok(Some(TransferError::OverflowPayment));
-        };
-        *to_balance = to_balance_incr;
-
-        self.journal
-            .push(ENTRY::balance_transfer(from, to, balance));
-
-        Ok(None)
+        Ok(self.transfer_loaded(from, to, balance))
     }
 
     /// Creates account or returns false if collision is detected.

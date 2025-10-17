@@ -132,6 +132,11 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
+        #[cfg(feature = "memory_limit")]
+        if $interpreter.memory.limit_reached($offset, $len) {
+            $interpreter.halt_memory_limit_oog();
+            return $ret;
+        }
         if !$crate::interpreter::resize_memory(
             &mut $interpreter.gas,
             &mut $interpreter.memory,

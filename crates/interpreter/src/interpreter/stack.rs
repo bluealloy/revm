@@ -397,16 +397,21 @@ impl<'de> serde::Deserialize<'de> for Stack {
     where
         D: serde::Deserializer<'de>,
     {
-        let mut data = Vec::<U256>::deserialize(deserializer)?;
-        if data.len() > STACK_LIMIT {
+        #[derive(serde::Deserialize)]
+        struct StackSerde {
+            data: Vec<U256>,
+        }
+
+        let mut stack = StackSerde::deserialize(deserializer)?;
+        if stack.data.len() > STACK_LIMIT {
             return Err(serde::de::Error::custom(std::format!(
                 "stack size exceeds limit: {} > {}",
-                data.len(),
+                stack.data.len(),
                 STACK_LIMIT
             )));
         }
-        data.reserve(STACK_LIMIT - data.len());
-        Ok(Self { data })
+        stack.data.reserve(STACK_LIMIT - stack.data.len());
+        Ok(Self { data: stack.data })
     }
 }
 

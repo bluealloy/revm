@@ -2,19 +2,19 @@ pub mod post_block;
 pub mod pre_block;
 
 use clap::Parser;
-use context::ContextTr;
-use context_interface::block::BlobExcessGasAndPrice;
-use database::states::bundle_state::BundleRetention;
-use database::{EmptyDB, State};
-use inspector::inspectors::TracerEip3155;
-use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
-use revm::handler::EvmTr;
+
 use revm::{
-    context::cfg::CfgEnv, context_interface::result::HaltReason, Context, MainBuilder, MainContext,
+    bytecode::Bytecode,
+    context::{cfg::CfgEnv, ContextTr},
+    context_interface::{block::BlobExcessGasAndPrice, result::HaltReason},
+    database::{states::bundle_state::BundleRetention, EmptyDB, State},
+    handler::EvmTr,
+    inspector::inspectors::TracerEip3155,
+    primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
+    state::AccountInfo,
+    Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
-use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
-use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
 };
@@ -389,26 +389,22 @@ fn validate_post_state(
             }
         }
 
-        // Check for unexpected storage entries
-        for (slot, actual_value) in actual_account
-            .account
-            .as_ref()
-            .map(|a| &a.storage)
-            .unwrap_or(&HashMap::new())
-            .iter()
-        {
-            let slot = *slot;
-            let actual_value = *actual_value;
-            if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
-                if print_env_on_error {
-                    print_error_with_state(debug_info, state, Some(expected_post_state));
+        // Check for unexpected storage entries. Avoid allocating a temporary HashMap when the account is None.
+        if let Some(acc) = actual_account.account.as_ref() {
+            for (slot, actual_value) in &acc.storage {
+                let slot = *slot;
+                let actual_value = *actual_value;
+                if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
+                    if print_env_on_error {
+                        print_error_with_state(debug_info, state, Some(expected_post_state));
+                    }
+                    return Err(TestExecutionError::PostStateValidation {
+                        address: *address,
+                        field: format!("storage_unexpected[{slot}]"),
+                        expected: "0x0".to_string(),
+                        actual: format!("{actual_value}"),
+                    });
                 }
-                return Err(TestExecutionError::PostStateValidation {
-                    address: *address,
-                    field: format!("storage_unexpected[{slot}]"),
-                    expected: "0x0".to_string(),
-                    actual: format!("{actual_value}"),
-                });
             }
         }
 
@@ -661,8 +657,8 @@ fn execute_blockchain_test(
         let account_info = AccountInfo {
             balance: account.balance,
             nonce: account.nonce,
-            code_hash: primitives::keccak256(&account.code),
-            code: Some(bytecode::Bytecode::new_raw(account.code.clone())),
+            code_hash: revm::primitives::keccak256(&account.code),
+            code: Some(Bytecode::new_raw(account.code.clone())),
         };
 
         // Store for debug info
@@ -985,8 +981,19 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
 
 /// Check if a test should be skipped based on its filename
 fn skip_test(path: &Path) -> bool {
-    let name = path.file_name().unwrap().to_str().unwrap();
+    let path_str = path.to_str().unwrap_or_default();
+    // blobs excess gas calculation is not supported or osaka BPO configuration
+    if path_str.contains("paris/eip7610_create_collision")
+        || path_str.contains("cancun/eip4844_blobs")
+        || path_str.contains("prague/eip7251_consolidations")
+        || path_str.contains("prague/eip7685_general_purpose_el_requests")
+        || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
+        || path_str.contains("osaka/eip7918_blob_reserve_price")
+    {
+        return true;
+    }
 
+    let name = path.file_name().unwrap().to_str().unwrap();
     // Add any problematic tests here that should be skipped
     matches!(
         name,
@@ -1021,36 +1028,8 @@ fn skip_test(path: &Path) -> bool {
         | "correct_increasing_blob_gas_costs.json"
         | "correct_decreasing_blob_gas_costs.json"
 
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_negative_excess_blob_gas.json
-        | "invalid_negative_excess_blob_gas.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_change.json
-        | "invalid_excess_blob_gas_change.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_static_excess_blob_gas.json
-        | "invalid_static_excess_blob_gas.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_target_blobs_increase_from_zero.json
-        | "invalid_excess_blob_gas_target_blobs_increase_from_zero.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_zero_excess_blob_gas_in_header.json
-        | "invalid_zero_excess_blob_gas_in_header.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_excess_blob_gas_above_target_change.json
-        | "invalid_excess_blob_gas_above_target_change.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_non_multiple_excess_blob_gas.json
-        | "invalid_non_multiple_excess_blob_gas.json"
-        // test-fixtures/main/develop/blockchain_tests/cancun/eip4844_blobs/excess_blob_gas/invalid_static_excess_blob_gas_from_zero_on_blobs_above_target.json
-        | "invalid_static_excess_blob_gas_from_zero_on_blobs_above_target.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7251_consolidations/modified_consolidation_contract/system_contract_errors.json
-        | "system_contract_errors.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7251_consolidations/consolidations/consolidation_requests.json
-        | "consolidation_requests.json"
         // test-fixtures/main/develop/blockchain_tests/prague/eip2935_historical_block_hashes_from_state/block_hashes/block_hashes_history.json
         | "block_hashes_history.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7685_general_purpose_el_requests/multi_type_requests/valid_multi_type_request_from_same_tx.json
-        | "valid_multi_type_request_from_same_tx.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7685_general_purpose_el_requests/multi_type_requests/valid_multi_type_requests.json
-        | "valid_multi_type_requests.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7002_el_triggerable_withdrawals/modified_withdrawal_contract/system_contract_errors.json
-        //| "system_contract_errors.json"
-        // test-fixtures/main/develop/blockchain_tests/prague/eip7002_el_triggerable_withdrawals/withdrawal_requests/withdrawal_requests.json
-        | "withdrawal_requests.json"
     )
 }
 

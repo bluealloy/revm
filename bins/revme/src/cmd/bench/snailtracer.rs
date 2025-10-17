@@ -1,9 +1,10 @@
-use context::TxEnv;
 use criterion::Criterion;
-use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-use inspector::NoOpInspector;
+
 use revm::{
     bytecode::Bytecode,
+    context::TxEnv,
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    inspector::NoOpInspector,
     primitives::{bytes, hex, Bytes, TxKind},
     Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };

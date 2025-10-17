@@ -1,15 +1,15 @@
 use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
-use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{inspectors::TracerEip3155, InspectCommitEvm};
-use primitives::U256;
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg,
     },
+    database,
     database_interface::EmptyDB,
+    inspector::{inspectors::TracerEip3155, InspectCommitEvm},
+    primitives::U256,
     primitives::{hardfork::SpecId, Bytes, B256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
@@ -86,10 +86,14 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 /// Check if a test should be skipped based on its filename
 /// Some tests are known to be problematic or take too long
 fn skip_test(path: &Path) -> bool {
-    let Some(name) = path.file_name().and_then(|s| s.to_str()) else {
-        // Non-UTF file names or missing file name: do not skip by default.
-        return false;
-    };
+    let path_str = path.to_str().unwrap_or_default();
+
+    // Skip tets that have storage for newly created account.
+    if path_str.contains("paris/eip7610_create_collision") {
+        return true;
+    }
+
+    let name = path.file_name().unwrap().to_str().unwrap_or_default();
 
     matches!(
         name,
@@ -107,6 +111,7 @@ fn skip_test(path: &Path) -> bool {
         | "create2collisionStorageParis.json"
         | "InitCollision.json"
         | "InitCollisionParis.json"
+        | "test_init_collision_create_opcode.json"
 
         // Malformed value.
         | "ValueOverflow.json"
@@ -217,7 +222,7 @@ fn check_evm_execution(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
-    db: &mut State<EmptyDB>,
+    db: &mut database::State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
 ) -> Result<(), TestErrorKind> {

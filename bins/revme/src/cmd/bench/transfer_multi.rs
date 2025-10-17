@@ -1,12 +1,12 @@
-use context::TxEnv;
 use criterion::Criterion;
-use database::{InMemoryDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
+    context::TxEnv,
+    database::{InMemoryDB, BENCH_CALLER, BENCH_TARGET},
     interpreter::instructions::utility::IntoAddress,
     primitives::{TxKind, U256},
+    state::AccountInfo,
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
-use state::AccountInfo;
 
 pub fn run(criterion: &mut Criterion) {
     let mut db = InMemoryDB::default();

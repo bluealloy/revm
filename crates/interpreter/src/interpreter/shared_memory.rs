@@ -125,6 +125,17 @@ impl MemoryTr for SharedMemory {
         self.resize(new_size);
         true
     }
+
+    /// Returns `true` if the `new_size` for the current context memory will
+    /// make the shared buffer length exceed the `memory_limit`.
+    #[cfg(feature = "memory_limit")]
+    #[inline]
+    fn limit_reached(&self, offset: usize, len: usize) -> bool {
+        self.my_checkpoint
+            .saturating_add(offset)
+            .saturating_add(len) as u64
+            > self.memory_limit
+    }
 }
 
 impl SharedMemory {
@@ -198,14 +209,6 @@ impl SharedMemory {
     #[inline]
     fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
         self.buffer().dbg_borrow_mut()
-    }
-
-    /// Returns `true` if the `new_size` for the current context memory will
-    /// make the shared buffer length exceed the `memory_limit`.
-    #[cfg(feature = "memory_limit")]
-    #[inline]
-    pub fn limit_reached(&self, new_size: usize) -> bool {
-        self.my_checkpoint.saturating_add(new_size) as u64 > self.memory_limit
     }
 
     /// Prepares the shared memory for a new child context.

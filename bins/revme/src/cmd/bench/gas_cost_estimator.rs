@@ -1,8 +1,8 @@
-use context::TxEnv;
 use criterion::Criterion;
-use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
 use revm::{
     bytecode::Bytecode,
+    context::TxEnv,
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
     primitives::{hex, Bytes, TxKind},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };

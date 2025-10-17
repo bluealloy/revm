@@ -1,9 +1,9 @@
-use context::{ContextTr, TxEnv};
 use criterion::Criterion;
-use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE};
 use revm::{
     bytecode::Bytecode,
+    context::{ContextTr, TxEnv},
     context_interface::JournalTr,
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE},
     primitives::{TxKind, U256},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
