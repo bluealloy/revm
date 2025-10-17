@@ -965,13 +965,12 @@ pub fn sload_with_account<DB: Database, ENTRY: JournalEntryTr>(
 
             // if BAL is present that means Account contains StorageBal.
             if let Some(bal) = bal {
-                let index = account
-                    .bal_account_index
-                    .expect("If BAL is present, account must have bal_account_index");
-
-                if let Err(e) = bal.populate_storage_slot(index, key, &mut value) {
-                    if let Some(bal_error) = bal_error {
-                        *bal_error = e
+                // if index is not found, this means there was a error during BAL population.
+                if let Some(index) = account.bal_account_index {
+                    if let Err(e) = bal.populate_storage_slot(index, key, &mut value) {
+                        if let Some(bal_error) = bal_error {
+                            *bal_error = e
+                        }
                     }
                 }
             }

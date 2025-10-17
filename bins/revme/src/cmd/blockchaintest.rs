@@ -14,7 +14,7 @@ use revm::{
 };
 use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
-use state::bal::{Bal, BalError};
+use state::bal::Bal;
 use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
