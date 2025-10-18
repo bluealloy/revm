@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.3](https://github.com/bluealloy/revm/compare/revm-context-v10.1.2...revm-context-v10.1.3) - 2025-10-18
+
+### Other
+
+- journal transfer fn cleanup ([#3085](https://github.com/bluealloy/revm/pull/3085))
+
 ## [10.1.2](https://github.com/bluealloy/revm/compare/revm-context-v10.1.1...revm-context-v10.1.2) - 2025-10-15
 
 ### Other

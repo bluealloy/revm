@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.2.1](https://github.com/bluealloy/revm/compare/revm-handler-v11.2.0...revm-handler-v11.2.1) - 2025-10-18
+
+### Other
+
+- remove redundant alloy-eip7702 from handler dev-dependencies ([#3105](https://github.com/bluealloy/revm/pull/3105))
+
 ## [11.2.0](https://github.com/bluealloy/revm/compare/revm-handler-v11.1.2...revm-handler-v11.2.0) - 2025-10-17
 
 ### Added
