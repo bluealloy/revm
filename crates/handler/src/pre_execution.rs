@@ -222,7 +222,7 @@ pub fn apply_eip7702_auth_list<
         }
 
         // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !(authority_acc.is_empty() && authority_acc.is_loaded_as_not_existing_not_touched()) {
+        if !authority_acc.is_empty() {
             refunded_accounts += 1;
         }
 
