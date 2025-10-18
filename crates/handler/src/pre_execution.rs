@@ -67,6 +67,21 @@ pub fn load_accounts<
 
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
+pub fn validate_account_nonce_and_code_with_components(
+    caller_info: &mut AccountInfo,
+    tx: impl Transaction,
+    cfg: impl Cfg,
+) -> Result<(), InvalidTransaction> {
+    validate_account_nonce_and_code(
+        caller_info,
+        tx.nonce(),
+        cfg.is_eip3607_disabled(),
+        cfg.is_nonce_check_disabled(),
+    )
+}
+
+/// Validates caller account nonce and code according to EIP-3607.
+#[inline]
 pub fn validate_account_nonce_and_code(
     caller_info: &mut AccountInfo,
     tx_nonce: u64,
@@ -153,12 +168,7 @@ pub fn validate_against_state_and_deduct_caller<
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
 
-    validate_account_nonce_and_code(
-        &mut caller_account.info,
-        tx.nonce(),
-        cfg.is_eip3607_disabled(),
-        cfg.is_nonce_check_disabled(),
-    )?;
+    validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
 
     let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
 
