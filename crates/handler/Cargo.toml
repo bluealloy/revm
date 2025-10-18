@@ -32,7 +32,6 @@ auto_impl.workspace = true
 derive-where.workspace = true
 
 # Optional
-database = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -48,7 +47,7 @@ std = [
 	"bytecode/std",
 	"context/std",
 	"context-interface/std",
-	"database?/std",
+	"database/std",
 	"database-interface/std",
 	"interpreter/std",
 	"precompile/std",
@@ -62,7 +61,7 @@ serde = [
 	"context-interface/serde",
 	"bytecode/serde",
 	"context/serde",
-	"database?/serde",
+	"database/serde",
 	"database-interface/serde",
 	"interpreter/serde",
 	"derive-where/serde",

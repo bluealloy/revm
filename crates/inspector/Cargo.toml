@@ -30,7 +30,6 @@ auto_impl.workspace = true
 either.workspace = true
 
 # Optional
-database = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 serde_json = { workspace = true, features = [
 	"alloc",
@@ -48,7 +47,7 @@ std = [
 	"serde_json?/std",
 	"serde_json?/preserve_order",
 	"context/std",
-	"database?/std",
+	"database/std",
 	"database-interface/std",
 	"handler/std",
 	"interpreter/std",
@@ -59,7 +58,7 @@ std = [
 serde = [
 	"dep:serde",
 	"context/serde",
-	"database?/serde",
+	"database/serde",
 	"database-interface/serde",
 	"handler/serde",
 	"interpreter/serde",

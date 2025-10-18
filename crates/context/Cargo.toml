@@ -31,7 +31,6 @@ cfg-if.workspace = true
 bitvec.workspace = true
 
 # Optional
-database = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
@@ -43,7 +42,7 @@ std = [
 	"serde?/std",
 	"bytecode/std",
 	"context-interface/std",
-	"database?/std",
+	"database/std",
 	"database-interface/std",
 	"primitives/std",
 	"state/std",
@@ -55,7 +54,7 @@ serde = [
 	"state/serde",
 	"context-interface/serde",
 	"bytecode/serde",
-	"database?/serde",
+	"database/serde",
 	"database-interface/serde",
 	"derive-where/serde",
 	"bitvec/serde",

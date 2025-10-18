@@ -5,10 +5,6 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// database is used in dev-dependencies for tests and as optional dependency
-#[cfg(any(test, feature = "database"))]
-use database as _;
-
 mod count_inspector;
 #[cfg(feature = "tracer")]
 mod eip3155;
