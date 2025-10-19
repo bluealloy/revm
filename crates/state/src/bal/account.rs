@@ -47,6 +47,14 @@ impl AccountBal {
     /// Extend account from another account.
     #[inline]
     pub fn update(&mut self, bal_index: BalIndex, account: &Account) {
+        if account.is_selfdestructed_locally() {
+            let empty_info = AccountInfo::default();
+            self.account_info
+                .update(bal_index, &account.original_info, &empty_info);
+            self.storage.update_reads(account.storage.keys().copied());
+            return;
+        }
+
         self.account_info
             .update(bal_index, &account.original_info, &account.info);
 
@@ -253,6 +261,16 @@ impl StorageBal {
                 &value.original_value,
                 value.present_value,
             );
+        }
+    }
+
+    /// Update reads from [`EvmStorage`].
+    ///
+    /// It will expend inner map with new reads.
+    #[inline]
+    pub fn update_reads(&mut self, storage: impl Iterator<Item = StorageKey>) {
+        for key in storage {
+            self.storage.entry(key).or_default();
         }
     }
 
