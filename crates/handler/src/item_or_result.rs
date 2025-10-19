@@ -10,15 +10,15 @@ pub enum ItemOrResult<ITEM, RES> {
 }
 
 impl<ITEM, RES> ItemOrResult<ITEM, RES> {
-    /// Maps the item variant using the provided function, leaving results unchanged.
-    pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
+    /// Maps the Item variant using the provided function, leaving Result unchanged.
+    pub fn map_item<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(f(item)),
             ItemOrResult::Result(result) => ItemOrResult::Result(result),
         }
     }
 
-    /// Maps the result variant using the provided function, leaving items unchanged.
+    /// Maps the Result variant using the provided function, leaving Item unchanged.
     pub fn map_result<ORES>(self, f: impl FnOnce(RES) -> ORES) -> ItemOrResult<ITEM, ORES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(item),
