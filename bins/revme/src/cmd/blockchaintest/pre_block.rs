@@ -1,9 +1,12 @@
 //! Pre block state transition
 
-use context::{Block, ContextTr};
-use database::State;
-use primitives::{address, hardfork::SpecId, Address, B256};
-use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
+use revm::{
+    context::{Block, ContextTr},
+    database::{Database, State},
+    handler::EvmTr,
+    primitives::{address, hardfork::SpecId, Address, B256},
+    SystemCallCommitEvm,
+};
 
 /// Pre block state transition
 ///
@@ -35,7 +38,7 @@ pub fn pre_block_transition<
 
     if let Some(parent_beacon_block_root) = parent_beacon_block_root {
         if spec.is_enabled_in(SpecId::CANCUN) {
-            system_call_eip4844_beacon_root(evm, parent_beacon_block_root);
+            system_call_eip4788_beacon_root(evm, parent_beacon_block_root);
         }
     }
 }
@@ -59,7 +62,7 @@ pub(crate) fn system_call_eip2935_blockhash(
 pub const BEACON_ROOTS_ADDRESS: Address = address!("000F3df6D732807Ef1319fB7B8bB8522d0Beac02");
 
 /// Beacon root system call EIP-4788
-pub(crate) fn system_call_eip4844_beacon_root(
+pub(crate) fn system_call_eip4788_beacon_root(
     evm: &mut impl SystemCallCommitEvm<Error: core::fmt::Debug>,
     parent_beacon_block_root: B256,
 ) {

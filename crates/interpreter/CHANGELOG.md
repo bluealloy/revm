@@ -51,6 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [28.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v27.0.2...revm-interpreter-v28.0.0) - 2025-10-17
+
+### Added
+
+- Optional Bytecode in CallInput ([#3110](https://github.com/bluealloy/revm/pull/3110))
+
+### Fixed
+
+- return MemoryLimitOOG when memory_limit is enabled ([#3109](https://github.com/bluealloy/revm/pull/3109))
+
+### Other
+
+- *(instructions)* fix typo in spurious_dragon variable ([#3106](https://github.com/bluealloy/revm/pull/3106))
+
 ## [27.0.2](https://github.com/bluealloy/revm/compare/revm-interpreter-v27.0.1...revm-interpreter-v27.0.2) - 2025-10-15
 
 ### Other

@@ -1,5 +1,21 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v93
+date: 17.10.2025
+
+Small release with one breaking change. Bytecode in CallInput is now optional
+
+* `revm-interpreter`: 27.0.2 -> 28.0.0 (⚠ API breaking changes)
+* `revm-handler`: 11.1.2 -> 11.2.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm-inspector`: 11.1.2 -> 11.1.3
+* `revm`: 30.1.2 -> 30.1.3
+* `revm-statetest-types`: 10.1.2 -> 10.1.3
+* `revme`: 8.2.2 -> 8.2.3
+* `op-revm`: 11.1.2 -> 11.1.3
+
+revm-handler revm-inspector revm revm-statetest-types revme op-revm
+
 # v92
 date 15.10.2025
 

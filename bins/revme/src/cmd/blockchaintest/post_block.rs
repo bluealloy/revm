@@ -1,7 +1,10 @@
-use context::{Block, ContextTr, JournalTr};
-use database::State;
-use primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256};
-use revm::{handler::EvmTr, Database, SystemCallCommitEvm};
+use revm::{
+    context::{Block, ContextTr, JournalTr},
+    database::State,
+    handler::EvmTr,
+    primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
+    Database, SystemCallCommitEvm,
+};
 use statetest_types::blockchain::Withdrawal;
 
 /// Post block transition that includes:

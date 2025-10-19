@@ -1,8 +1,6 @@
 pub mod static_data;
 
-use context::TxEnv;
 use criterion::Criterion;
-use primitives::{StorageKey, StorageValue};
 use static_data::{
     BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
     BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
@@ -10,10 +8,12 @@ use static_data::{
 };
 
 use alloy_sol_types::{sol, SolCall};
-use database::{CacheDB, BENCH_CALLER};
 use revm::{
+    context::TxEnv,
+    database::{CacheDB, BENCH_CALLER},
     database_interface::EmptyDB,
     primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
+    primitives::{StorageKey, StorageValue},
     state::{AccountInfo, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };

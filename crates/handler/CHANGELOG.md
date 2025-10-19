@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.2.0](https://github.com/bluealloy/revm/compare/revm-handler-v11.1.2...revm-handler-v11.2.0) - 2025-10-17
+
+### Added
+
+- Optional Bytecode in CallInput ([#3110](https://github.com/bluealloy/revm/pull/3110))
+
 ## [11.1.2](https://github.com/bluealloy/revm/compare/revm-handler-v11.1.1...revm-handler-v11.1.2) - 2025-10-15
 
 ### Other
