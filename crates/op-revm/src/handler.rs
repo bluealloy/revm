@@ -492,8 +492,7 @@ where
         } else {
             if let Some(bal_error) = bal_error {
                 return Err(Self::Error::from_string(format!(
-                    "BAL error: {:?}",
-                    bal_error
+                    "BAL error: {bal_error:?}"
                 )));
             }
             Err(error)

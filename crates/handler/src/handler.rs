@@ -499,8 +499,7 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         if let Some(bal_error) = evm.ctx().journal_mut().take_bal_error() {
             return Err(Self::Error::from_string(format!(
-                "BAL error: {:?}",
-                bal_error
+                "BAL error: {bal_error:?}"
             )));
         }
         // clean up local context. Initcode cache needs to be discarded.

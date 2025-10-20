@@ -30,8 +30,7 @@ pub fn post_block_transition<
     // block reward
     let block_reward = block_reward(spec, 0);
     if block_reward != 0 {
-        let _ = evm
-            .ctx_mut()
+        evm.ctx_mut()
             .journal_mut()
             .balance_incr(block.beneficiary(), U256::from(block_reward))
             .expect("Db actions to pass");
@@ -40,8 +39,7 @@ pub fn post_block_transition<
     // withdrawals
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         for withdrawal in withdrawals {
-            let _ = evm
-                .ctx_mut()
+            evm.ctx_mut()
                 .journal_mut()
                 .balance_incr(
                     withdrawal.address,

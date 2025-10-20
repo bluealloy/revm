@@ -719,9 +719,8 @@ fn execute_blockchain_test(
         let bal_test = block
             .block_access_list
             .as_ref()
-            .map(|bal| Bal::try_from(bal.clone()).ok())
-            .flatten()
-            .map(|bal| Arc::new(bal));
+            .and_then(|bal| Bal::try_from(bal.clone()).ok())
+            .map(Arc::new);
 
         state.bal = bal_test;
         state.bal_index = 0;

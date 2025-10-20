@@ -6,7 +6,7 @@ use crate::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, Bytes, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, Address, Bytes, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
 use state::{
     bal::{BalError, BalWithIndex},
@@ -96,20 +96,8 @@ pub trait JournalTr {
         target: Address,
     ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
-    /// Warms the account and storage.
-    fn warm_account_and_storage(
-        &mut self,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error>;
-
-    /// Warms the account. Internally calls [`JournalTr::warm_account_and_storage`] with empty storage keys.
-    fn warm_account(
-        &mut self,
-        address: Address,
-    ) -> Result<(), <Self::Database as Database>::Error> {
-        self.warm_account_and_storage(address, [])
-    }
+    /// Sets access list inside journal.
+    fn warm_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>);
 
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);

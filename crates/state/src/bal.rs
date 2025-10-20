@@ -169,7 +169,7 @@ impl Bal {
             *value = bal_value;
         };
 
-        return Ok(());
+        Ok(())
     }
 
     /// Get storage from BAL.
