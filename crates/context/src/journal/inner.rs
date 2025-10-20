@@ -754,7 +754,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
                 slot.mark_warm_with_transaction_id(self.transaction_id);
                 (slot.present_value, is_cold)
-            }   
+            }
             Entry::Vacant(vac) => {
                 if skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);

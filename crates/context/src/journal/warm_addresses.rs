@@ -10,10 +10,10 @@ use primitives::{short_address, Address, HashMap, HashSet, StorageKey, SHORT_ADD
 /// It contains precompiles addresses that are not changed frequently and AccessList that
 /// is changed per transaction.
 ///
-/// [WarmAddresses::precompile_set] will always contain all precompile addresses.
+/// [WarmAddresses::precompiles] will always contain all precompile addresses.
 ///
-/// As precompiles addresses are usually very small, [`WarmAddresses::precompile_short_addresses`] will
-/// contain bitset of shrinked precompile address.
+/// As precompiles addresses are usually very small, precompile_short_addresses will
+/// contain bitset of shrunk precompile address.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WarmAddresses {
