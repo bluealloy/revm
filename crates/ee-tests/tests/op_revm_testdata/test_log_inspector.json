@@ -17,7 +17,8 @@
     }
   },
   "state": {
-    "0x0000000000000000000000000000000000000000": {
+    "0x4200000000000000000000000000000000000019": {
+      "bal_account_index": null,
       "info": {
         "balance": "0x0",
         "code": {
@@ -38,12 +39,7 @@
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "nonce": 0
       },
-      "status": "Touched | LoadedAsNotExisting",
-      "storage": {},
-      "transaction_id": 0
-    },
-    "0x4200000000000000000000000000000000000019": {
-      "info": {
+      "original_info": {
         "balance": "0x0",
         "code": {
           "LegacyAnalyzed": {
@@ -68,7 +64,28 @@
       "transaction_id": 0
     },
     "0x420000000000000000000000000000000000001a": {
+      "bal_account_index": null,
       "info": {
+        "balance": "0x0",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "jump_table": {
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
+          }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0
+      },
+      "original_info": {
         "balance": "0x0",
         "code": {
           "LegacyAnalyzed": {
@@ -93,7 +110,28 @@
       "transaction_id": 0
     },
     "0x420000000000000000000000000000000000001b": {
+      "bal_account_index": null,
       "info": {
+        "balance": "0x0",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "jump_table": {
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
+          }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0
+      },
+      "original_info": {
         "balance": "0x0",
         "code": {
           "LegacyAnalyzed": {
@@ -118,6 +156,7 @@
       "transaction_id": 0
     },
     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
+      "bal_account_index": null,
       "info": {
         "balance": "0x2386f26fc10000",
         "code": {
@@ -138,12 +177,41 @@
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "nonce": 1
       },
+      "original_info": {
+        "balance": "0x2386f26fc10000",
+        "code": null,
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0
+      },
       "status": "Touched",
       "storage": {},
       "transaction_id": 0
     },
     "0xffffffffffffffffffffffffffffffffffffffff": {
+      "bal_account_index": null,
       "info": {
+        "balance": "0x2386f26fc10000",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x600080a000",
+            "jump_table": {
+              "bits": 5,
+              "data": [
+                0
+              ],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 5
+          }
+        },
+        "code_hash": "0x8013c386d5a03c3fa0a6ccbfefcf7d91471dedba2bb94eefef57f916e5929a8d",
+        "nonce": 1
+      },
+      "original_info": {
         "balance": "0x2386f26fc10000",
         "code": {
           "LegacyAnalyzed": {
