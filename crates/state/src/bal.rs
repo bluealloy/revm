@@ -21,7 +21,7 @@ use std::sync::Arc;
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use writes::BalWrites;
 
-use crate::Account;
+use crate::{Account, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use indexmap::IndexMap;
 use primitives::{Address, StorageKey, StorageValue};
@@ -134,27 +134,26 @@ impl Bal {
         bal_account.update(bal_index, account);
     }
 
-    /// Populate account from BAL.
-    pub fn populate_account(
+    /// Populate account from BAL. Return true if account info got changed
+    pub fn populate_account_info(
         &self,
         address: Address,
         bal_index: BalIndex,
-        account: &mut Account,
-    ) -> Result<(), BalError> {
+        account: &mut AccountInfo,
+    ) -> Result<bool, BalError> {
         let Some((index, _, bal_account)) = self.accounts.get_full(&address) else {
             return Err(BalError::AccountNotFound);
         };
+        account.storage_id = Some(index);
 
-        bal_account.populate_account(bal_index, account);
-        account.bal_account_index = Some(index);
-
-        Ok(())
+        Ok(bal_account.populate_account_info(bal_index, account))
     }
 
     /// Populate storage slot from BAL.
     ///
     /// If slot is not found in BAL, it will return an error.
-    pub fn populate_storage_slot(
+    #[inline]
+    pub fn populate_storage_slot_by_account_id(
         &self,
         account_index: usize,
         bal_index: BalIndex,
@@ -169,6 +168,25 @@ impl Bal {
             *value = bal_value;
         };
 
+        Ok(())
+    }
+
+    /// Populate storage slot from BAL by account address.
+    #[inline]
+    pub fn populate_storage_slot(
+        &self,
+        account_address: Address,
+        bal_index: BalIndex,
+        key: StorageKey,
+        value: &mut StorageValue,
+    ) -> Result<(), BalError> {
+        let Some(bal_account) = self.accounts.get(&account_address) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+            *value = bal_value;
+        };
         Ok(())
     }
 
@@ -231,24 +249,46 @@ impl BalWithIndex {
         self.bal_index = bal_index;
     }
 
-    /// Populate account from BAL.
+    /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account(
         &self,
         address: Address,
         account: &mut Account,
-    ) -> Result<(), BalError> {
-        self.bal.populate_account(address, self.bal_index, account)
+    ) -> Result<bool, BalError> {
+        self.bal
+            .populate_account_info(address, self.bal_index, &mut account.info)
+    }
+
+    /// Populate account from BAL. Return true if account info got changed
+    pub fn populate_account_info(
+        &self,
+        address: Address,
+        account: &mut AccountInfo,
+    ) -> Result<bool, BalError> {
+        self.bal
+            .populate_account_info(address, self.bal_index, account)
     }
 
     /// Populate storage slot from BAL.
-    pub fn populate_storage_slot(
+    pub fn populate_storage_slot_by_account_id(
         &self,
         account_index: usize,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
         self.bal
-            .populate_storage_slot(account_index, self.bal_index, key, value)
+            .populate_storage_slot_by_account_id(account_index, self.bal_index, key, value)
+    }
+
+    /// Populate storage slot from BAL by account index.
+    pub fn populate_storage_slot(
+        &self,
+        account_address: Address,
+        key: StorageKey,
+        value: &mut StorageValue,
+    ) -> Result<(), BalError> {
+        self.bal
+            .populate_storage_slot(account_address, self.bal_index, key, value)
     }
 }
 
@@ -260,4 +300,13 @@ pub enum BalError {
     AccountNotFound,
     /// Slot not found in BAL.
     SlotNotFound,
+}
+
+impl core::fmt::Display for BalError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::AccountNotFound => write!(f, "Account not found in BAL"),
+            Self::SlotNotFound => write!(f, "Slot not found in BAL"),
+        }
+    }
 }

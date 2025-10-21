@@ -39,9 +39,9 @@ impl DerefMut for AccountBal {
 }
 
 impl AccountBal {
-    /// Populate account from BAL.
-    pub fn populate_account(&self, bal_index: BalIndex, account: &mut Account) {
-        self.account_info.populate_account_info(bal_index, account);
+    /// Populate account from BAL. Return true if account info got changed
+    pub fn populate_account_info(&self, bal_index: BalIndex, account: &mut AccountInfo) -> bool {
+        self.account_info.populate_account_info(bal_index, account)
     }
 
     /// Extend account from another account.
@@ -151,18 +151,23 @@ pub struct AccountInfoBal {
 }
 
 impl AccountInfoBal {
-    /// Populate account info from BAL.
-    pub fn populate_account_info(&self, bal_index: BalIndex, account: &mut Account) {
+    /// Populate account info from BAL. Return true if account info got changed
+    pub fn populate_account_info(&self, bal_index: BalIndex, account: &mut AccountInfo) -> bool {
+        let mut changed = false;
         if let Some(nonce) = self.nonce.get(bal_index) {
-            account.info.nonce = nonce;
+            account.nonce = nonce;
+            changed = true;
         }
         if let Some(balance) = self.balance.get(bal_index) {
-            account.info.balance = balance;
+            account.balance = balance;
+            changed = true;
         }
         if let Some(code) = self.code.get(bal_index) {
-            account.info.code_hash = code.0;
-            account.info.code = Some(code.1);
+            account.code_hash = code.0;
+            account.code = Some(code.1);
+            changed = true;
         }
+        changed
     }
 
     /// Extend account info from another account info.

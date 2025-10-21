@@ -3,7 +3,7 @@
 use crate::{Database, DatabaseCommit, DatabaseRef};
 use either::Either;
 use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
-use state::{bal::BalWithIndex, Account, AccountInfo, Bytecode};
+use state::{Account, AccountInfo, Bytecode};
 
 impl<L, R> Database for Either<L, R>
 where
@@ -44,10 +44,15 @@ where
         }
     }
 
-    fn bal(&mut self) -> Option<BalWithIndex> {
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         match self {
-            Self::Left(db) => db.bal(),
-            Self::Right(db) => db.bal(),
+            Self::Left(db) => db.storage_by_account_id(address, account_id, storage_key),
+            Self::Right(db) => db.storage_by_account_id(address, account_id, storage_key),
         }
     }
 }
@@ -104,10 +109,15 @@ where
         }
     }
 
-    fn bal_ref(&self) -> Option<BalWithIndex> {
+    fn storage_by_account_id_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
         match self {
-            Self::Left(db) => db.bal_ref(),
-            Self::Right(db) => db.bal_ref(),
+            Self::Left(db) => db.storage_by_account_id_ref(address, account_id, storage_key),
+            Self::Right(db) => db.storage_by_account_id_ref(address, account_id, storage_key),
         }
     }
 }

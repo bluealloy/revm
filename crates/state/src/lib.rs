@@ -294,12 +294,13 @@ impl Account {
 
 impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
+        let original_info = info.clone();
         Self {
             info,
             storage: HashMap::default(),
             transaction_id: 0,
             status: AccountStatus::empty(),
-            original_info: AccountInfo::default(),
+            original_info,
             bal_account_index: None,
         }
     }

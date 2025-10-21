@@ -1,8 +1,7 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
 use database_interface::{DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use primitives::B256;
-use state::bal::Bal;
-use std::{collections::BTreeMap, sync::Arc};
+use std::collections::BTreeMap;
 
 /// Allows building of State and initializing it with different options.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,10 +29,6 @@ pub struct StateBuilder<DB> {
     with_background_transition_merge: bool,
     /// If we want to set different block hashes,
     with_block_hashes: BTreeMap<u64, B256>,
-    /// BAL used to execute transactions.
-    with_bal: Option<Arc<Bal>>,
-    /// Should we build bal builder?
-    with_bal_builder: bool,
 }
 
 impl StateBuilder<EmptyDB> {
@@ -63,8 +58,6 @@ impl<DB: Database> StateBuilder<DB> {
             with_bundle_update: false,
             with_background_transition_merge: false,
             with_block_hashes: BTreeMap::new(),
-            with_bal: None,
-            with_bal_builder: false,
         }
     }
 
@@ -80,8 +73,6 @@ impl<DB: Database> StateBuilder<DB> {
             with_bundle_update: self.with_bundle_update,
             with_background_transition_merge: self.with_background_transition_merge,
             with_block_hashes: self.with_block_hashes,
-            with_bal: self.with_bal,
-            with_bal_builder: self.with_bal_builder,
         }
     }
 
@@ -99,22 +90,6 @@ impl<DB: Database> StateBuilder<DB> {
         database: DBBox<'_, Error>,
     ) -> StateBuilder<DBBox<'_, Error>> {
         self.with_database(database)
-    }
-
-    /// With BAL used to execute transactions.
-    pub fn with_bal(self, bal: Arc<Bal>) -> Self {
-        Self {
-            with_bal: Some(bal),
-            ..self
-        }
-    }
-
-    /// With BAL builder that is used to build BAL.
-    pub fn with_bal_builder(self) -> Self {
-        Self {
-            with_bal_builder: true,
-            ..self
-        }
     }
 
     /// By default state clear flag is enabled but for initial sync on mainnet
@@ -200,9 +175,6 @@ impl<DB: Database> StateBuilder<DB> {
             bundle_state: self.with_bundle_prestate.unwrap_or_default(),
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
-            bal: self.with_bal,
-            bal_builder: self.with_bal_builder.then(Bal::new),
-            bal_index: 0,
         }
     }
 }

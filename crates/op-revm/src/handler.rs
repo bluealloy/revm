@@ -434,9 +434,12 @@ where
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let bal_error = evm.ctx().journal_mut().take_bal_error();
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        let output = if error.is_tx_error() && is_deposit {
+        let is_tx_error = error.is_tx_error();
+        let mut output = Err(error);
+
+        // Deposit transaction can't fail so we manually handle it here.
+        if is_tx_error && is_deposit {
             let ctx = evm.ctx();
             let spec = ctx.cfg().spec();
             let tx = ctx.tx();
@@ -485,18 +488,12 @@ where
                 0
             };
             // clear the journal
-            Ok(ExecutionResult::Halt {
+            output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
                 gas_used,
             })
-        } else {
-            if let Some(bal_error) = bal_error {
-                return Err(Self::Error::from_string(format!(
-                    "BAL error: {bal_error:?}"
-                )));
-            }
-            Err(error)
-        };
+        }
+
         // do the cleanup
         evm.ctx().chain_mut().clear_tx_l1_cost();
         evm.ctx().local_mut().clear();

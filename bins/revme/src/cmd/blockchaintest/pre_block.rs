@@ -2,10 +2,10 @@
 
 use revm::{
     context::{Block, ContextTr},
-    database::{Database, State},
+    database::Database,
     handler::EvmTr,
     primitives::{address, hardfork::SpecId, Address, B256},
-    SystemCallCommitEvm,
+    DatabaseCommit, SystemCallCommitEvm,
 };
 
 /// Pre block state transition
@@ -15,9 +15,8 @@ use revm::{
 /// Contains pre-block system calls: EIP-2935 (blockhash) and EIP-4788 (beacon root).
 pub fn pre_block_transition<
     'a,
-    DB: Database + 'a,
-    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>
-        + EvmTr<Context: ContextTr<Db = &'a mut State<DB>>>,
+    DB: Database + DatabaseCommit + 'a,
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug> + EvmTr<Context: ContextTr<Db = DB>>,
 >(
     evm: &mut EVM,
     spec: SpecId,

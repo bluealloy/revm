@@ -1,9 +1,9 @@
 use revm::{
     context::{Block, ContextTr, JournalTr},
-    database::State,
+    database::{Database, DatabaseCommit},
     handler::EvmTr,
     primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
-    Database, SystemCallCommitEvm,
+    SystemCallCommitEvm,
 };
 use statetest_types::blockchain::Withdrawal;
 
@@ -18,9 +18,8 @@ use statetest_types::blockchain::Withdrawal;
 #[inline]
 pub fn post_block_transition<
     'a,
-    DB: Database + 'a,
-    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>
-        + EvmTr<Context: ContextTr<Db = &'a mut State<DB>>>,
+    DB: Database + DatabaseCommit + 'a,
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug> + EvmTr<Context: ContextTr<Db = DB>>,
 >(
     evm: &mut EVM,
     block: impl Block,
@@ -48,6 +47,8 @@ pub fn post_block_transition<
                 .expect("Db actions to pass");
         }
     }
+
+    evm.commit_inner();
 
     // EIP-7002: Withdrawal requests system call
     if spec.is_enabled_in(SpecId::PRAGUE) {

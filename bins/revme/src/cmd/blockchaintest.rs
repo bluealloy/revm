@@ -7,7 +7,7 @@ use revm::{
     bytecode::Bytecode,
     context::{cfg::CfgEnv, ContextTr},
     context_interface::{block::BlobExcessGasAndPrice, result::HaltReason},
-    database::{states::bundle_state::BundleRetention, EmptyDB, State},
+    database::{bal::BalDatabase, states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
     primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
@@ -647,7 +647,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut state = State::builder().with_bal_builder().build();
+    let mut state = BalDatabase::new(State::builder().build());
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::new();
@@ -660,6 +660,7 @@ fn execute_blockchain_test(
             nonce: account.nonce,
             code_hash: revm::primitives::keccak256(&account.code),
             code: Some(Bytecode::new_raw(account.code.clone())),
+            storage_id: None,
         };
 
         // Store for debug info
@@ -722,9 +723,7 @@ fn execute_blockchain_test(
             .and_then(|bal| Bal::try_from(bal.clone()).ok())
             .map(Arc::new);
 
-        state.bal = bal_test;
-        state.bal_index = 0;
-        state.bal_builder = Some(Bal::new());
+        state = state.with_bal_option(bal_test).reset_bal_index();
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -1020,6 +1019,7 @@ fn skip_test(path: &Path) -> bool {
         || path_str.contains("prague/eip7685_general_purpose_el_requests")
         // || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
         || path_str.contains("osaka/eip7918_blob_reserve_price")
+        || path_str.contains("cancun/eip4788_beacon_root")
     {
         return true;
     }
