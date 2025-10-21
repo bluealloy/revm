@@ -8,7 +8,7 @@ use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
     BytecodeDecodeError, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
 };
-use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
+use primitives::{alloy_primitives::Sealable, keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 
 /// Main bytecode structure with all variants.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
@@ -24,6 +24,13 @@ impl Default for Bytecode {
     #[inline]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Sealable for Bytecode {
+    #[inline]
+    fn hash_slow(&self) -> B256 {
+        self.hash_slow()
     }
 }
 
