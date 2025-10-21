@@ -402,6 +402,7 @@ impl<T> DerefMut for StateLoad<T> {
 
 impl<T> StateLoad<T> {
     /// Returns a new [`StateLoad`] with the given data and cold load status.
+    #[inline]
     pub fn new(data: T, is_cold: bool) -> Self {
         Self { data, is_cold }
     }
@@ -409,6 +410,7 @@ impl<T> StateLoad<T> {
     /// Maps the data of the [`StateLoad`] to a new value.
     ///
     /// Useful for transforming the data of the [`StateLoad`] without changing the cold load status.
+    #[inline]
     pub fn map<B, F>(self, f: F) -> StateLoad<B>
     where
         F: FnOnce(T) -> B,

@@ -58,21 +58,22 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
-    let beneficiary = context.block().beneficiary();
-    let basefee = context.block().basefee() as u128;
-    let effective_gas_price = context.tx().effective_gas_price(basefee);
+    let (block, tx, cfg, journal, _, _) = context.all_mut();
+    let basefee = block.basefee() as u128;
+    let effective_gas_price = tx.effective_gas_price(basefee);
 
     // Transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-    let coinbase_gas_price = if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
+    let coinbase_gas_price = if cfg.spec().into().is_enabled_in(SpecId::LONDON) {
         effective_gas_price.saturating_sub(basefee)
     } else {
         effective_gas_price
     };
 
     // reward beneficiary
-    let mut beneficiary = context.journal_mut().load_account_mut(beneficiary)?;
-    beneficiary.incr_balance(U256::from(coinbase_gas_price * gas.used() as u128));
+    journal
+        .load_account_mut(block.beneficiary())?
+        .incr_balance(U256::from(coinbase_gas_price * gas.used() as u128));
 
     Ok(())
 }

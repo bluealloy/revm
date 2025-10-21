@@ -721,20 +721,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             self.journal.push(ENTRY::account_warmed(address));
         }
 
-        if load_code {
+        if load_code && load.data.info.code.is_none() {
             let info = &mut load.data.info;
-            if info.code.is_none() {
-                let code = if info.code_hash == KECCAK_EMPTY {
-                    Bytecode::default()
-                } else {
-                    db.code_by_hash(info.code_hash)?
-                };
-                info.code = Some(code);
-            }
+            let code = if info.code_hash == KECCAK_EMPTY {
+                Bytecode::default()
+            } else {
+                db.code_by_hash(info.code_hash)?
+            };
+            info.code = Some(code);
         }
 
-        let load = load.map(|i| JournaledAccount::new(address, i, &mut self.journal));
-        Ok(load)
+        Ok(load.map(|i| JournaledAccount::new(address, i, &mut self.journal)))
     }
 
     /// Loads storage slot.
