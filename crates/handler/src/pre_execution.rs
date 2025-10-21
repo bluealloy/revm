@@ -55,17 +55,30 @@ pub fn load_accounts<
         if let Some(access_list) = tx.access_list() {
             let mut map: HashMap<Address, HashSet<StorageKey>> = HashMap::default();
             for item in access_list {
-                map.entry(*item.address()).or_default().extend(
-                    item.storage_slots()
-                        .cloned()
-                        .map(|key| U256::from_be_bytes(key.0)),
-                );
+                map.entry(*item.address())
+                    .or_default()
+                    .extend(item.storage_slots().map(|key| U256::from_be_bytes(key.0)));
             }
             journal.warm_access_list(map);
         }
     }
 
     Ok(())
+}
+
+/// Validates caller account nonce and code according to EIP-3607.
+#[inline]
+pub fn validate_account_nonce_and_code_with_components(
+    caller_info: &mut AccountInfo,
+    tx: impl Transaction,
+    cfg: impl Cfg,
+) -> Result<(), InvalidTransaction> {
+    validate_account_nonce_and_code(
+        caller_info,
+        tx.nonce(),
+        cfg.is_eip3607_disabled(),
+        cfg.is_nonce_check_disabled(),
+    )
 }
 
 /// Validates caller account nonce and code according to EIP-3607.
@@ -156,12 +169,7 @@ pub fn validate_against_state_and_deduct_caller<
     // Load caller's account.
     let caller_account = journal.load_account_code(tx.caller())?.data;
 
-    validate_account_nonce_and_code(
-        &mut caller_account.info,
-        tx.nonce(),
-        cfg.is_eip3607_disabled(),
-        cfg.is_nonce_check_disabled(),
-    )?;
+    validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
 
     let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
 

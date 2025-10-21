@@ -2,7 +2,7 @@ use revm::{
     context::Cfg,
     context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
     handler::{
-        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code},
+        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
     },
     interpreter::interpreter_action::FrameInit,
@@ -54,12 +54,7 @@ where
         // Load caller's account.
         let caller_account = journal.load_account_code(tx.caller())?.data;
 
-        validate_account_nonce_and_code(
-            &mut caller_account.info,
-            tx.nonce(),
-            cfg.is_eip3607_disabled(),
-            cfg.is_nonce_check_disabled(),
-        )?;
+        validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
 
         // make changes to the account. Account balance stays the same
         caller_account
