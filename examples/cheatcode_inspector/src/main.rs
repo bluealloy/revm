@@ -110,13 +110,11 @@ impl JournalTr for Backend {
         self.journaled_state.selfdestruct(address, target)
     }
 
-    fn warm_account_and_storage(
+    fn warm_access_list(
         &mut self,
-        address: Address,
-        storage_keys: impl IntoIterator<Item = StorageKey>,
-    ) -> Result<(), <Self::Database as Database>::Error> {
-        self.journaled_state
-            .warm_account_and_storage(address, storage_keys)
+        access_list: revm::primitives::HashMap<Address, HashSet<StorageKey>>,
+    ) {
+        self.journaled_state.warm_access_list(access_list);
     }
 
     fn warm_coinbase_account(&mut self, address: Address) {
