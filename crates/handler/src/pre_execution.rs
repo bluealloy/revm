@@ -55,11 +55,9 @@ pub fn load_accounts<
         if let Some(access_list) = tx.access_list() {
             let mut map: HashMap<Address, HashSet<StorageKey>> = HashMap::default();
             for item in access_list {
-                map.entry(*item.address()).or_default().extend(
-                    item.storage_slots()
-                        .cloned()
-                        .map(|key| U256::from_be_bytes(key.0)),
-                );
+                map.entry(*item.address())
+                    .or_default()
+                    .extend(item.storage_slots().map(|key| U256::from_be_bytes(key.0)));
             }
             journal.warm_access_list(map);
         }
