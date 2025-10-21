@@ -13,8 +13,8 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use primitives::StorageKey;
 use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use primitives::{Address, HashMap, HashSet, StorageKey};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -53,12 +53,13 @@ pub fn load_accounts<
     // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
+            let mut map: HashMap<Address, HashSet<StorageKey>> = HashMap::default();
             for item in access_list {
-                journal.warm_account_and_storage(
-                    *item.address(),
-                    item.storage_slots().map(|i| StorageKey::from_be_bytes(i.0)),
-                )?;
+                map.entry(*item.address())
+                    .or_default()
+                    .extend(item.storage_slots().map(|key| U256::from_be_bytes(key.0)));
             }
+            journal.warm_access_list(map);
         }
     }
 
