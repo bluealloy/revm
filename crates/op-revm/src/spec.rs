@@ -40,8 +40,8 @@ impl OpSpecId {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
             Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE => SpecId::CANCUN,
-            Self::ISTHMUS | Self::INTEROP => SpecId::PRAGUE,
-            Self::JOVIAN | Self::OSAKA => SpecId::OSAKA,
+            Self::ISTHMUS | Self::JOVIAN | Self::INTEROP => SpecId::PRAGUE,
+            Self::OSAKA => SpecId::OSAKA,
         }
     }
 
@@ -201,7 +201,6 @@ mod tests {
                     (SpecId::SHANGHAI, true),
                     (SpecId::CANCUN, true),
                     (SpecId::MERGE, true),
-                    (SpecId::OSAKA, true),
                 ],
                 vec![
                     (OpSpecId::BEDROCK, true),
