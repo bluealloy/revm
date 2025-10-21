@@ -133,7 +133,7 @@ pub trait Host {
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.load_account_info_skip_cold_load(address, false, false)
+        self.load_account_info_skip_cold_load(address, false, true)
             .ok()
             .map(|load| load.into_state_load(|i| i.balance))
     }

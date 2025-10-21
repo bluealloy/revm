@@ -351,6 +351,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .sstore(&mut self.database, address, key, value, skip_cold_load)
     }
 
+    #[inline]
     fn load_account_info_skip_cold_load(
         &mut self,
         address: Address,
