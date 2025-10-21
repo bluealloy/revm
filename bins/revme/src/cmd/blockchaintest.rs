@@ -2,19 +2,19 @@ pub mod post_block;
 pub mod pre_block;
 
 use clap::Parser;
-use context::ContextTr;
-use context_interface::block::BlobExcessGasAndPrice;
-use database::states::bundle_state::BundleRetention;
-use database::{EmptyDB, State};
-use inspector::inspectors::TracerEip3155;
-use primitives::{hardfork::SpecId, hex, Address, HashMap, U256};
-use revm::handler::EvmTr;
+
 use revm::{
-    context::cfg::CfgEnv, context_interface::result::HaltReason, Context, MainBuilder, MainContext,
+    bytecode::Bytecode,
+    context::{cfg::CfgEnv, ContextTr},
+    context_interface::{block::BlobExcessGasAndPrice, result::HaltReason},
+    database::{states::bundle_state::BundleRetention, EmptyDB, State},
+    handler::EvmTr,
+    inspector::inspectors::TracerEip3155,
+    primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
+    state::AccountInfo,
+    Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
-use revm::{Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 use serde_json::json;
-use state::AccountInfo;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
 };
@@ -389,26 +389,22 @@ fn validate_post_state(
             }
         }
 
-        // Check for unexpected storage entries
-        for (slot, actual_value) in actual_account
-            .account
-            .as_ref()
-            .map(|a| &a.storage)
-            .unwrap_or(&HashMap::new())
-            .iter()
-        {
-            let slot = *slot;
-            let actual_value = *actual_value;
-            if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
-                if print_env_on_error {
-                    print_error_with_state(debug_info, state, Some(expected_post_state));
+        // Check for unexpected storage entries. Avoid allocating a temporary HashMap when the account is None.
+        if let Some(acc) = actual_account.account.as_ref() {
+            for (slot, actual_value) in &acc.storage {
+                let slot = *slot;
+                let actual_value = *actual_value;
+                if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
+                    if print_env_on_error {
+                        print_error_with_state(debug_info, state, Some(expected_post_state));
+                    }
+                    return Err(TestExecutionError::PostStateValidation {
+                        address: *address,
+                        field: format!("storage_unexpected[{slot}]"),
+                        expected: "0x0".to_string(),
+                        actual: format!("{actual_value}"),
+                    });
                 }
-                return Err(TestExecutionError::PostStateValidation {
-                    address: *address,
-                    field: format!("storage_unexpected[{slot}]"),
-                    expected: "0x0".to_string(),
-                    actual: format!("{actual_value}"),
-                });
             }
         }
 
@@ -661,8 +657,8 @@ fn execute_blockchain_test(
         let account_info = AccountInfo {
             balance: account.balance,
             nonce: account.nonce,
-            code_hash: primitives::keccak256(&account.code),
-            code: Some(bytecode::Bytecode::new_raw(account.code.clone())),
+            code_hash: revm::primitives::keccak256(&account.code),
+            code: Some(Bytecode::new_raw(account.code.clone())),
         };
 
         // Store for debug info

@@ -134,7 +134,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
 ) -> Result<(u64, Bytecode, B256), LoadError> {
     let mut cost = 0;
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
-    let is_spurioud_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
+    let is_spurious_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
 
     let skip_cold_load = is_berlin && remaining_gas < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
     let account = host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;
@@ -145,7 +145,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let mut code_hash = account.code_hash();
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
-        cost += new_account_cost(is_spurioud_dragon, transfers_value);
+        cost += new_account_cost(is_spurious_dragon, transfers_value);
         return Ok((cost, bytecode, code_hash));
     }
 
@@ -175,11 +175,11 @@ pub fn load_account_delegated<H: Host + ?Sized>(
 
 /// Returns new account cost.
 #[inline]
-pub fn new_account_cost(is_spurioud_dragon: bool, transfers_value: bool) -> u64 {
+pub fn new_account_cost(is_spurious_dragon: bool, transfers_value: bool) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     // Pre-Spurious Dragon: always charge for new account
     // Post-Spurious Dragon: only charge if value is transferred
-    if !is_spurioud_dragon || transfers_value {
+    if !is_spurious_dragon || transfers_value {
         return NEWACCOUNT;
     }
     0

@@ -1,7 +1,7 @@
 [package]
 name = "revm-handler"
 description = "Revm handler crates"
-version = "11.1.0"
+version = "11.2.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -36,7 +36,6 @@ serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 database.workspace = true
-alloy-eip7702.workspace = true
 alloy-provider.workspace = true
 alloy-signer.workspace = true
 alloy-signer-local.workspace = true
@@ -45,7 +44,6 @@ alloy-signer-local.workspace = true
 default = ["std"]
 std = [
 	"serde?/std",
-	"alloy-eip7702/std",
 	"bytecode/std",
 	"context/std",
 	"context-interface/std",
@@ -61,7 +59,6 @@ serde = [
 	"primitives/serde",
 	"state/serde",
 	"context-interface/serde",
-	"alloy-eip7702/serde",
 	"bytecode/serde",
 	"context/serde",
 	"database/serde",

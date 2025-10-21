@@ -2,7 +2,7 @@ use revm::{
     context::Cfg,
     context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
     handler::{
-        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code},
+        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
     },
     interpreter::interpreter_action::FrameInit,
@@ -52,14 +52,9 @@ where
         journal.load_account_mut(TOKEN)?.touch();
 
         // Load caller's account.
-        let mut caller_account = journal.load_account_code_mut(tx.caller())?.data;
+        let mut caller_account = journal.load_account_code_mut(tx.caller())?;
 
-        validate_account_nonce_and_code(
-            &caller_account.info,
-            tx.nonce(),
-            cfg.is_eip3607_disabled(),
-            cfg.is_nonce_check_disabled(),
-        )?;
+        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
 
         // make changes to the account. Account balance stays the same
         caller_account.touch();

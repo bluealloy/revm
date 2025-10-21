@@ -16,7 +16,7 @@ use revm::{
         evm::FrameTr,
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
-        pre_execution::validate_account_nonce_and_code,
+        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
@@ -88,6 +88,12 @@ where
             }
             return Ok(());
         }
+
+        // Check that non-deposit transactions have enveloped_tx set
+        if tx.enveloped_tx().is_none() {
+            return Err(OpTransactionError::MissingEnvelopedTx.into());
+        }
+
         self.mainnet.validate_env(evm)
     }
 
@@ -95,19 +101,10 @@ where
         &self,
         evm: &mut Self::Evm,
     ) -> Result<(), Self::Error> {
-        let ctx = evm.ctx();
+        let (block, tx, cfg, journal, chain, _) = evm.ctx().all_mut();
+        let spec = cfg.spec();
 
-        let basefee = ctx.block().basefee() as u128;
-        let blob_price = ctx.block().blob_gasprice().unwrap_or_default();
-        let is_deposit = ctx.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        let spec = ctx.cfg().spec();
-        let block_number = ctx.block().number();
-        let is_balance_check_disabled = ctx.cfg().is_balance_check_disabled();
-        let is_eip3607_disabled = ctx.cfg().is_eip3607_disabled();
-        let is_nonce_check_disabled = ctx.cfg().is_nonce_check_disabled();
-
-        if is_deposit {
-            let (block, tx, cfg, journal, _, _) = evm.ctx().all_mut();
+        if tx.tx_type() == DEPOSIT_TRANSACTION_TYPE {
             let basefee = block.basefee() as u128;
             let blob_price = block.blob_gasprice().unwrap_or_default();
             // deposit skips max fee check and just deducts the effective balance spending.
@@ -140,85 +137,37 @@ where
             return Ok(());
         }
 
-        let mut additional_cost = U256::ZERO;
-
         // L1 block info is stored in the context for later use.
         // and it will be reloaded from the database if it is not for the current block.
-        if ctx.chain().l2_block != Some(block_number) {
-            *ctx.chain_mut() = L1BlockInfo::try_fetch(ctx.db_mut(), block_number, spec)?;
+        if chain.l2_block != Some(block.number()) {
+            *chain = L1BlockInfo::try_fetch(journal.db_mut(), block.number(), spec)?;
         }
-
-        if !ctx.cfg().is_fee_charge_disabled() {
-            // account for additional cost of l1 fee and operator fee
-            // account for additional cost of l1 fee and operator fee
-            let Some(enveloped_tx) = ctx.tx().enveloped_tx().cloned() else {
-                return Err(ERROR::from_string(
-                    "[OPTIMISM] Failed to load enveloped transaction.".into(),
-                ));
-            };
-
-            // compute L1 cost
-            additional_cost = ctx.chain_mut().calculate_tx_l1_cost(&enveloped_tx, spec);
-
-            // compute operator fee
-            if spec.is_enabled_in(OpSpecId::ISTHMUS) {
-                let gas_limit = U256::from(ctx.tx().gas_limit());
-                let operator_fee_charge =
-                    ctx.chain()
-                        .operator_fee_charge(&enveloped_tx, gas_limit, spec);
-                additional_cost = additional_cost.saturating_add(operator_fee_charge);
-            }
-        }
-
-        let (tx, journal) = ctx.tx_journal_mut();
 
         let mut caller_account = journal.load_account_code_mut(tx.caller())?.data;
 
         // validates account nonce and code
-        validate_account_nonce_and_code(
-            &caller_account.info,
-            tx.nonce(),
-            is_eip3607_disabled,
-            is_nonce_check_disabled,
-        )?;
+        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
 
-        let mut new_balance = caller_account.info.balance;
+        // check additional cost and deduct it from the caller's balances
+        let mut balance = caller_account.info.balance;
 
-        // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if !is_balance_check_disabled {
-            // check additional cost and deduct it from the caller's balances
-            let Some(balance) = new_balance.checked_sub(additional_cost) else {
+        if !cfg.is_fee_charge_disabled() {
+            let additional_cost = chain.tx_cost_with_tx(tx, spec);
+            let Some(new_balance) = balance.checked_sub(additional_cost) else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(additional_cost),
-                    balance: Box::new(new_balance),
+                    balance: Box::new(balance),
                 }
                 .into());
             };
-            tx.ensure_enough_balance(balance)?;
+            balance = new_balance
         }
 
-        // subtracting max balance spending with value that is going to be deducted later in the call.
-        let gas_balance_spending = tx
-            .gas_balance_spending(basefee, blob_price)
-            .expect("effective balance is always smaller than max balance so it can't overflow");
+        let balance = calculate_caller_fee(balance, tx, block, cfg)?;
 
-        // If the transaction is not a deposit transaction, subtract the L1 data fee from the
-        // caller's balance directly after minting the requested amount of ETH.
-        // Additionally deduct the operator fee from the caller's account.
-        //
-        // In case of deposit additional cost will be zero.
-        let op_gas_balance_spending = gas_balance_spending.saturating_add(additional_cost);
-
-        new_balance = new_balance.saturating_sub(op_gas_balance_spending);
-
-        if is_balance_check_disabled {
-            // Make sure the caller's balance is at least the value of the transaction.
-            // this is not consensus critical, and it is used in testing.
-            new_balance = new_balance.max(tx.value());
-        }
-
-        caller_account.set_balance(new_balance);
+        // make changes to the account
+        caller_account.touch();
+        caller_account.set_balance(balance);
         if tx.kind().is_call() {
             caller_account.bump_nonce();
         }
@@ -1485,6 +1434,29 @@ mod tests {
                 .info
                 .nonce,
             0
+        );
+    }
+
+    #[test]
+    fn test_validate_missing_enveloped_tx() {
+        use crate::transaction::deposit::DepositTransactionParts;
+
+        // Create a non-deposit transaction without enveloped_tx
+        let ctx = Context::op().with_tx(OpTransaction {
+            base: TxEnv::builder().build_fill(),
+            enveloped_tx: None, // Missing enveloped_tx for non-deposit transaction
+            deposit: DepositTransactionParts::default(), // No source_hash means non-deposit
+        });
+
+        let mut evm = ctx.build_op();
+        let handler =
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+
+        assert_eq!(
+            handler.validate_env(&mut evm),
+            Err(EVMError::Transaction(
+                OpTransactionError::MissingEnvelopedTx
+            ))
         );
     }
 }

@@ -7,7 +7,7 @@ use crate::{
         NON_ZERO_BYTE_COST, OPERATOR_FEE_CONSTANT_OFFSET, OPERATOR_FEE_JOVIAN_MULTIPLIER,
         OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE_SCALAR_DECIMAL, OPERATOR_FEE_SCALAR_OFFSET,
     },
-    transaction::estimate_tx_compressed_size,
+    transaction::{estimate_tx_compressed_size, OpTxTr},
     OpSpecId,
 };
 use revm::{
@@ -254,6 +254,35 @@ impl L1BlockInfo {
     /// Clears the cached L1 cost of the transaction.
     pub fn clear_tx_l1_cost(&mut self) {
         self.tx_l1_cost = None;
+    }
+
+    /// Calculate additional transaction cost with OpTxTr.
+    ///
+    /// Internally calls [`L1BlockInfo::tx_cost`].
+    #[track_caller]
+    pub fn tx_cost_with_tx(&mut self, tx: impl OpTxTr, spec: OpSpecId) -> U256 {
+        // account for additional cost of l1 fee and operator fee
+        let enveloped_tx = tx
+            .enveloped_tx()
+            .expect("all not deposit tx have enveloped tx")
+            .clone();
+        let gas_limit = U256::from(tx.gas_limit());
+        self.tx_cost(&enveloped_tx, gas_limit, spec)
+    }
+
+    /// Calculate additional transaction cost.
+    #[inline]
+    pub fn tx_cost(&mut self, enveloped_tx: &[u8], gas_limit: U256, spec: OpSpecId) -> U256 {
+        // compute L1 cost
+        let mut additional_cost = self.calculate_tx_l1_cost(enveloped_tx, spec);
+
+        // compute operator fee
+        if spec.is_enabled_in(OpSpecId::ISTHMUS) {
+            let operator_fee_charge = self.operator_fee_charge(enveloped_tx, gas_limit, spec);
+            additional_cost = additional_cost.saturating_add(operator_fee_charge);
+        }
+
+        additional_cost
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [OpSpecId] passed.
