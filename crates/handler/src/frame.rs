@@ -267,6 +267,7 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
+        let is_automation = context.cfg().is_automation_mode();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
@@ -296,17 +297,19 @@ impl EthFrame<EthInterpreter> {
         if caller_info.balance < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
-
-        // Increase nonce of caller and check if it overflows
+        
         let old_nonce = caller_info.nonce;
-        let Some(new_nonce) = old_nonce.checked_add(1) else {
-            return return_error(InstructionResult::Return);
-        };
-        caller_info.nonce = new_nonce;
-        context
-            .journal_mut()
-            .nonce_bump_journal_entry(inputs.caller);
-
+        if !is_automation {
+            // Increase nonce of caller and check if it overflows
+            let Some(new_nonce) = old_nonce.checked_add(1) else {
+                return return_error(InstructionResult::Return);
+            };
+            caller_info.nonce = new_nonce;
+            context
+                .journal_mut()
+                .nonce_bump_journal_entry(inputs.caller);
+        }
+        
         // Create address
         let mut init_code_hash = None;
         let created_address = match inputs.scheme {
@@ -374,6 +377,7 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
+        
         // TODO cleanup inner make functions
         let FrameInit {
             depth,

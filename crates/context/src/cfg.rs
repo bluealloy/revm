@@ -1,4 +1,5 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
+
 pub use context_interface::Cfg;
 
 use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
@@ -104,6 +105,8 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_priority_fee_check")]
     pub disable_priority_fee_check: bool,
+    /// Whether to run the EVM in automation mode.
+    pub automation_mode: bool,
 }
 
 impl CfgEnv {
@@ -159,6 +162,7 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_base_fee: false,
             #[cfg(feature = "optional_priority_fee_check")]
             disable_priority_fee_check: false,
+            automation_mode: false,
         }
     }
 
@@ -206,6 +210,7 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_base_fee: self.disable_base_fee,
             #[cfg(feature = "optional_priority_fee_check")]
             disable_priority_fee_check: self.disable_priority_fee_check,
+            automation_mode: self.automation_mode,
         }
     }
 
@@ -343,6 +348,10 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
                 false
             }
         }
+    }
+    
+    fn is_automation_mode(&self) -> bool {
+        self.automation_mode
     }
 }
 
