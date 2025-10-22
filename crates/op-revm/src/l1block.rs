@@ -58,8 +58,8 @@ pub struct L1BlockInfo {
 }
 
 impl L1BlockInfo {
-    /// Try to fetch the L1 block info from the database, post-Jovian.
-    fn try_fetch_jovian<DB: Database>(&mut self, db: &mut DB) -> Result<(), DB::Error> {
+    /// Fetch the DA footprint gas scalar from the database.
+    pub fn fetch_da_footprint_gas_scalar<DB: Database>(db: &mut DB) -> Result<u16, DB::Error> {
         let da_footprint_gas_scalar_slot = db
             .storage(L1_BLOCK_CONTRACT, DA_FOOTPRINT_GAS_SCALAR_SLOT)?
             .to_be_bytes::<32>();
@@ -69,7 +69,12 @@ impl L1BlockInfo {
             da_footprint_gas_scalar_slot[DA_FOOTPRINT_GAS_SCALAR_OFFSET],
             da_footprint_gas_scalar_slot[DA_FOOTPRINT_GAS_SCALAR_OFFSET + 1],
         ];
-        self.da_footprint_gas_scalar = Some(u16::from_be_bytes(bytes));
+        Ok(u16::from_be_bytes(bytes))
+    }
+
+    /// Try to fetch the L1 block info from the database, post-Jovian.
+    fn try_fetch_jovian<DB: Database>(&mut self, db: &mut DB) -> Result<(), DB::Error> {
+        self.da_footprint_gas_scalar = Some(Self::fetch_da_footprint_gas_scalar(db)?);
 
         Ok(())
     }
