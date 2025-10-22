@@ -33,5 +33,17 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "bitflags/std", "bytecode/std"]
-serde = ["dep:serde", "primitives/serde", "bitflags/serde", "bytecode/serde"]
+std = [
+    "serde?/std",
+    "primitives/std",
+    "bitflags/std",
+    "bytecode/std",
+    "alloy-eip7928/std",
+]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "bitflags/serde",
+    "bytecode/serde",
+    "alloy-eip7928/serde",
+]
