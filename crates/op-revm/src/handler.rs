@@ -512,9 +512,8 @@ mod tests {
     use crate::{
         api::default_ctx::OpContext,
         constants::{
-            BASE_FEE_SCALAR_OFFSET, DA_FOOTPRINT_GAS_SCALAR_SLOT, ECOTONE_L1_BLOB_BASE_FEE_SLOT,
-            ECOTONE_L1_FEE_SCALARS_SLOT, L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT,
-            OPERATOR_FEE_SCALARS_SLOT,
+            BASE_FEE_SCALAR_OFFSET, ECOTONE_L1_BLOB_BASE_FEE_SLOT, ECOTONE_L1_FEE_SCALARS_SLOT,
+            L1_BASE_FEE_SLOT, L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT,
         },
         DefaultOp, OpBuilder, OpTransaction,
     };
@@ -824,15 +823,14 @@ mod tests {
             0,
             0,
         ]);
-        const OPERATOR_FEE_SCALAR: u64 = 5;
-        const OPERATOR_FEE_CONST: u64 = 6;
-        const OPERATOR_FEE: U256 =
-            U256::from_limbs([OPERATOR_FEE_CONST, OPERATOR_FEE_SCALAR, 0, 0]);
-        const DA_FOOTPRINT_GAS_SCALAR: u16 = 7;
-        const DA_FOOTPRINT_GAS_SCALAR_U64: u64 =
-            u64::from_be_bytes([0, DA_FOOTPRINT_GAS_SCALAR as u8, 0, 0, 0, 0, 0, 0]);
-        const DA_FOOTPRINT_GAS_SCALAR_SLOT_VALUE: U256 =
-            U256::from_limbs([0, 0, 0, DA_FOOTPRINT_GAS_SCALAR_U64]);
+        const OPERATOR_FEE_SCALAR: u8 = 5;
+        const OPERATOR_FEE_CONST: u8 = 6;
+        const DA_FOOTPRINT_GAS_SCALAR: u8 = 7;
+        let mut operator_fee_and_da_footprint = [0u8; 32];
+        operator_fee_and_da_footprint[31] = OPERATOR_FEE_CONST;
+        operator_fee_and_da_footprint[23] = OPERATOR_FEE_SCALAR;
+        operator_fee_and_da_footprint[19] = DA_FOOTPRINT_GAS_SCALAR;
+        let operator_fee_and_da_footprint_u256 = U256::from_be_bytes(operator_fee_and_da_footprint);
 
         let mut db = InMemoryDB::default();
         let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
@@ -845,12 +843,9 @@ mod tests {
         l1_block_contract
             .storage
             .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
-        l1_block_contract
-            .storage
-            .insert(OPERATOR_FEE_SCALARS_SLOT, OPERATOR_FEE);
         l1_block_contract.storage.insert(
-            DA_FOOTPRINT_GAS_SCALAR_SLOT,
-            DA_FOOTPRINT_GAS_SCALAR_SLOT_VALUE,
+            OPERATOR_FEE_SCALARS_SLOT,
+            operator_fee_and_da_footprint_u256,
         );
         db.insert_account_info(
             Address::ZERO,
@@ -904,7 +899,7 @@ mod tests {
                 operator_fee_scalar: Some(U256::from(OPERATOR_FEE_SCALAR)),
                 operator_fee_constant: Some(U256::from(OPERATOR_FEE_CONST)),
                 tx_l1_cost: Some(U256::ZERO),
-                da_footprint_gas_scalar: Some(DA_FOOTPRINT_GAS_SCALAR),
+                da_footprint_gas_scalar: Some(DA_FOOTPRINT_GAS_SCALAR as u16),
             }
         );
     }

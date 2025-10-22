@@ -20,7 +20,7 @@ pub const OPERATOR_FEE_CONSTANT_OFFSET: usize = 24;
 
 /// The Jovian daFootprintGasScalar value is packed into a single storage slot. Byte offset within
 /// the storage slot of the 16-byte daFootprintGasScalar attribute.
-pub const DA_FOOTPRINT_GAS_SCALAR_OFFSET: usize = 0;
+pub const DA_FOOTPRINT_GAS_SCALAR_OFFSET: usize = 18;
 
 /// The fixed point decimal scaling factor associated with the operator fee scalar.
 ///
@@ -48,9 +48,9 @@ pub const ECOTONE_L1_FEE_SCALARS_SLOT: U256 = U256::from_limbs([3u64, 0, 0, 0]);
 /// offsets [OPERATOR_FEE_SCALAR_OFFSET] and [OPERATOR_FEE_CONSTANT_OFFSET] respectively.
 pub const OPERATOR_FEE_SCALARS_SLOT: U256 = U256::from_limbs([8u64, 0, 0, 0]);
 
-/// As of the Jovian upgrade, this storage slot stores the 32-bit daFootprintGasScalar attribute at
+/// As of the Jovian upgrade, this storage slot stores the 16-bit daFootprintGasScalar attribute at
 /// offset [DA_FOOTPRINT_GAS_SCALAR_OFFSET].
-pub const DA_FOOTPRINT_GAS_SCALAR_SLOT: U256 = U256::from_limbs([9u64, 0, 0, 0]);
+pub const DA_FOOTPRINT_GAS_SCALAR_SLOT: U256 = U256::from_limbs([8u64, 0, 0, 0]);
 
 /// An empty 64-bit set of scalar values.
 pub const EMPTY_SCALARS: [u8; 8] = [0u8; 8];
