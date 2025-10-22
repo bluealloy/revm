@@ -69,11 +69,7 @@ pub fn reward_beneficiary<CTX: ContextTr>(
 
     // reward beneficiary
     let reward = coinbase_gas_price * gas.used() as u128;
-
-    // TODO this breaks some old tests that have empty but existing accounts.
-    if reward != 0 {
-        journal.balance_incr(block.beneficiary(), U256::from(reward))?;
-    }
+    journal.balance_incr(block.beneficiary(), U256::from(reward))?;
 
     Ok(())
 }

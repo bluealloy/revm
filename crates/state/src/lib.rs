@@ -2,6 +2,9 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
+
 mod account_info;
 pub mod bal;
 mod types;
@@ -42,8 +45,6 @@ pub struct Account {
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
-    /// BAL in Journal contains IndexMap and this index allows to fast fetch account (and its storage) from BAL.
-    pub bal_account_index: Option<usize>,
 }
 
 impl Account {
@@ -55,7 +56,6 @@ impl Account {
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
             original_info: AccountInfo::default(),
-            bal_account_index: None,
         }
     }
 
@@ -301,7 +301,6 @@ impl From<AccountInfo> for Account {
             transaction_id: 0,
             status: AccountStatus::empty(),
             original_info,
-            bal_account_index: None,
         }
     }
 }

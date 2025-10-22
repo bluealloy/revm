@@ -7,7 +7,6 @@
   },
   "state": {
     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
-      "bal_account_index": null,
       "info": {
         "balance": "0x2386f26fc10064",
         "code": {
@@ -26,7 +25,8 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 1
+        "nonce": 1,
+        "storage_id": null
       },
       "original_info": {
         "balance": "0x2386f26fc10000",
@@ -46,14 +46,14 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
+        "nonce": 0,
+        "storage_id": null
       },
       "status": "Touched",
       "storage": {},
       "transaction_id": 0
     },
     "0xffffffffffffffffffffffffffffffffffffffff": {
-      "bal_account_index": null,
       "info": {
         "balance": "0x2386f26fc10000",
         "code": {
@@ -74,7 +74,8 @@
           }
         },
         "code_hash": "0x7b2ab94bb7d45041581aa3757ae020084674ccad6f75dc3750eb2ea8a92c4e9a",
-        "nonce": 1
+        "nonce": 1,
+        "storage_id": null
       },
       "original_info": {
         "balance": "0x2386f26fc10000",
@@ -96,7 +97,8 @@
           }
         },
         "code_hash": "0x7b2ab94bb7d45041581aa3757ae020084674ccad6f75dc3750eb2ea8a92c4e9a",
-        "nonce": 1
+        "nonce": 1,
+        "storage_id": null
       },
       "status": "Cold",
       "storage": {},

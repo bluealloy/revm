@@ -54,6 +54,7 @@ impl Bal {
     }
 
     /// Pretty print the entire BAL structure in a human-readable format.
+    #[cfg(feature = "std")]
     pub fn pretty_print(&self) {
         println!("=== Block Access List (BAL) ===");
         println!("Total accounts: {}", self.accounts.len());

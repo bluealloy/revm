@@ -12,7 +12,10 @@ use alloy_eip7928::{
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
 use primitives::{Address, StorageKey, StorageValue, B256, U256};
-use std::collections::{btree_map::Entry, BTreeMap};
+use std::{
+    collections::{btree_map::Entry, BTreeMap},
+    vec::Vec,
+};
 
 /// Account BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -82,7 +85,7 @@ impl AccountBal {
                             alloy_account
                                 .storage_reads
                                 .into_iter()
-                                .map(|key| AlloySlotChanges::new(key, vec![])),
+                                .map(|key| AlloySlotChanges::new(key, Default::default())),
                         )
                         .map(|slot| (slot.slot.into(), BalWrites::from(slot.changes))),
                 ),
@@ -246,11 +249,9 @@ impl StorageBal {
         for (key, value) in storage.storage {
             match self.storage.entry(key) {
                 Entry::Occupied(mut entry) => {
-                    println!("BAL extend storage: {value:?}");
                     entry.get_mut().extend(value);
                 }
                 Entry::Vacant(entry) => {
-                    println!("BAL extend storage vacant: {value:?}");
                     entry.insert(value);
                 }
             }

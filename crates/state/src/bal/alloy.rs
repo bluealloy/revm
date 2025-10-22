@@ -9,6 +9,7 @@ use alloy_eip7928::{
 use bytecode::{Bytecode, BytecodeDecodeError};
 use indexmap::IndexMap;
 use primitives::{B256, U256};
+use std::vec::Vec;
 
 impl TryFrom<AlloyBal> for Bal {
     type Error = BytecodeDecodeError;

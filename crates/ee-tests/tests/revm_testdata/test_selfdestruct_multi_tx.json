@@ -22,10 +22,9 @@
     }
   },
   {
-    "0x000000000000000000000000000000000000ffff": {
-      "bal_account_index": null,
+    "0x0000000000000000000000000000000000000000": {
       "info": {
-        "balance": "0x2386f26fc10000",
+        "balance": "0x0",
         "code": {
           "LegacyAnalyzed": {
             "bytecode": "0x00",
@@ -42,7 +41,8 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
+        "nonce": 0,
+        "storage_id": null
       },
       "original_info": {
         "balance": "0x0",
@@ -62,14 +62,61 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
+        "nonce": 0,
+        "storage_id": null
+      },
+      "status": "Touched | LoadedAsNotExisting",
+      "storage": {},
+      "transaction_id": 1
+    },
+    "0x000000000000000000000000000000000000ffff": {
+      "info": {
+        "balance": "0x2386f26fc10000",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "jump_table": {
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
+          }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0,
+        "storage_id": null
+      },
+      "original_info": {
+        "balance": "0x0",
+        "code": {
+          "LegacyAnalyzed": {
+            "bytecode": "0x00",
+            "jump_table": {
+              "bits": 0,
+              "data": [],
+              "head": {
+                "index": 0,
+                "width": 8
+              },
+              "order": "bitvec::order::Lsb0"
+            },
+            "original_len": 0
+          }
+        },
+        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "nonce": 0,
+        "storage_id": null
       },
       "status": "Touched | LoadedAsNotExisting",
       "storage": {},
       "transaction_id": 0
     },
     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": {
-      "bal_account_index": null,
       "info": {
         "balance": "0x2386f26fc10000",
         "code": {
@@ -88,7 +135,8 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 2
+        "nonce": 2,
+        "storage_id": null
       },
       "original_info": {
         "balance": "0x2386f26fc10000",
@@ -108,14 +156,14 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 1
+        "nonce": 1,
+        "storage_id": null
       },
       "status": "Touched",
       "storage": {},
       "transaction_id": 1
     },
     "0xffffffffffffffffffffffffffffffffffffffff": {
-      "bal_account_index": null,
       "info": {
         "balance": "0x0",
         "code": {
@@ -134,7 +182,8 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
+        "nonce": 0,
+        "storage_id": null
       },
       "original_info": {
         "balance": "0x0",
@@ -154,7 +203,8 @@
           }
         },
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
+        "nonce": 0,
+        "storage_id": null
       },
       "status": "SelfDestructed | Touched",
       "storage": {},

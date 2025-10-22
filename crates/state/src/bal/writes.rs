@@ -1,6 +1,7 @@
 //! BAL containing writes.
 
 use crate::bal::BalIndex;
+use std::vec::Vec;
 
 /// Use to store values
 ///
@@ -19,8 +20,9 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         Self { writes }
     }
 
-    /// Get value from BAL.
-    pub fn get(&self, bal_index: BalIndex) -> Option<T> {
+    /// Linear search is used for small number of writes. It is faster than binary search.
+    #[inline(never)]
+    pub fn get_linear_search(&self, bal_index: BalIndex) -> Option<T> {
         let mut last_item = None;
         for (index, item) in self.writes.iter() {
             // if index is greater than bal_index we return the last item.
@@ -30,6 +32,19 @@ impl<T: PartialEq + Clone> BalWrites<T> {
             last_item = Some(item.clone());
         }
         last_item
+    }
+
+    /// Get value from BAL.
+    pub fn get(&self, bal_index: BalIndex) -> Option<T> {
+        if self.writes.len() < 5 {
+            return self.get_linear_search(bal_index);
+        }
+        // else do binary search.
+        let index = self
+            .writes
+            .binary_search_by_key(&bal_index, |(index, _)| *index)
+            .ok()?;
+        Some(self.writes[index].1.clone())
     }
 
     /// Extend the builder with another builder.
@@ -52,7 +67,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     #[inline]
     pub fn force_update(&mut self, index: BalIndex, value: T) {
         if let Some(last) = self.writes.last_mut() {
-            if last.0 == index {
+            if index == last.0 {
                 last.1 = value;
                 return;
             }
@@ -70,6 +85,8 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     /// Insert a value into the builder.
     ///
     /// If BalIndex is same as last it will override the value.
+    ///
+    /// Assumes that index is always greated than last one and that Writes are updated in proper order.
     #[inline]
     pub fn update_with_key<K: PartialEq, F>(
         &mut self,
