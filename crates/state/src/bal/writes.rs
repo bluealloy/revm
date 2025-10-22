@@ -63,7 +63,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     /// If it is, we override the value.
     /// If it is not, we push the value to the end of the vector.
     ///
-    /// No checks for original value is done. This is usefull when we know that value is different.
+    /// No checks for original value is done. This is useful when we know that value is different.
     #[inline]
     pub fn force_update(&mut self, index: BalIndex, value: T) {
         if let Some(last) = self.writes.last_mut() {
@@ -86,7 +86,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ///
     /// If BalIndex is same as last it will override the value.
     ///
-    /// Assumes that index is always greated than last one and that Writes are updated in proper order.
+    /// Assumes that index is always greater than last one and that Writes are updated in proper order.
     #[inline]
     pub fn update_with_key<K: PartialEq, F>(
         &mut self,
