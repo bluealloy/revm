@@ -1,5 +1,12 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v94
+date: 22.10.2025
+
+op-revm bump.
+
+* `op-revm`: 11.1.2-> 11.2.0
+
 # v93
 date: 17.10.2025
 
