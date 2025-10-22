@@ -23,10 +23,9 @@ pub use writes::BalWrites;
 
 use crate::{Account, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
-use indexmap::IndexMap;
-use primitives::{Address, StorageKey, StorageValue};
+use primitives::{Address, IndexMap, StorageKey, StorageValue};
 
-///Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
+/// Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
 
 /// BAL structure.
@@ -49,7 +48,7 @@ impl Bal {
     /// Create a new BAL builder.
     pub fn new() -> Self {
         Self {
-            accounts: IndexMap::new(),
+            accounts: IndexMap::default(),
         }
     }
 

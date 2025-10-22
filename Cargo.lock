@@ -3738,7 +3738,6 @@ version = "8.0.2"
 dependencies = [
  "alloy-eip7928",
  "bitflags",
- "indexmap 2.11.0",
  "revm-bytecode",
  "revm-primitives",
  "serde",

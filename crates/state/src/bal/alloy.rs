@@ -7,8 +7,7 @@ use alloy_eip7928::{
     NonceChange as AlloyNonceChange, StorageChange as AlloyStorageChange,
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
-use indexmap::IndexMap;
-use primitives::{B256, U256};
+use primitives::{IndexMap, B256, U256};
 use std::vec::Vec;
 
 impl TryFrom<AlloyBal> for Bal {
