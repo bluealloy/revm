@@ -1,7 +1,12 @@
 //! Journaled state trait [`JournalTr`] and related types.
+
+pub mod account;
+pub mod entry;
+
 use crate::{
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
+    journaled_state::{account::JournaledAccount, entry::JournalEntryTr},
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -17,6 +22,8 @@ pub trait JournalTr {
     type Database: Database;
     /// State type that is returned by the journal after finalization.
     type State;
+    /// Journal Entry type that is used in the journal.
+    type JournalEntry: JournalEntryTr;
 
     /// Creates new Journaled state.
     ///
@@ -143,19 +150,63 @@ pub trait JournalTr {
     fn load_account(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
 
-    /// Loads the account code.
+    /// Loads the account code, use `load_account_with_code` instead.
+    #[inline]
+    #[deprecated(note = "Use `load_account_with_code` instead")]
     fn load_account_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error> {
+        self.load_account_with_code(address)
+    }
+
+    /// Loads the account with code.
+    fn load_account_with_code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
 
     /// Loads the account delegated.
     fn load_account_delegated(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, <Self::Database as Database>::Error>;
+
+    /// Loads the journaled account.
+    #[inline]
+    fn load_account_mut(
+        &mut self,
+        address: Address,
+    ) -> Result<
+        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
+        <Self::Database as Database>::Error,
+    > {
+        self.load_account_mut_optional_code(address, false)
+    }
+
+    /// Loads the journaled account.
+    #[inline]
+    fn load_account_with_code_mut(
+        &mut self,
+        address: Address,
+    ) -> Result<
+        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
+        <Self::Database as Database>::Error,
+    > {
+        self.load_account_mut_optional_code(address, true)
+    }
+
+    /// Loads the journaled account.
+    fn load_account_mut_optional_code(
+        &mut self,
+        address: Address,
+        load_code: bool,
+    ) -> Result<
+        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
+        <Self::Database as Database>::Error,
+    >;
 
     /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
@@ -175,7 +226,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
-        let a = self.load_account_code(address)?;
+        let a = self.load_account_with_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap().original_bytes();
 
@@ -187,7 +238,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
-        let acc = self.load_account_code(address)?;
+        let acc = self.load_account_with_code(address)?;
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
@@ -361,6 +412,7 @@ impl<T> DerefMut for StateLoad<T> {
 
 impl<T> StateLoad<T> {
     /// Returns a new [`StateLoad`] with the given data and cold load status.
+    #[inline]
     pub fn new(data: T, is_cold: bool) -> Self {
         Self { data, is_cold }
     }
@@ -368,6 +420,7 @@ impl<T> StateLoad<T> {
     /// Maps the data of the [`StateLoad`] to a new value.
     ///
     /// Useful for transforming the data of the [`StateLoad`] without changing the cold load status.
+    #[inline]
     pub fn map<B, F>(self, f: F) -> StateLoad<B>
     where
         F: FnOnce(T) -> B,

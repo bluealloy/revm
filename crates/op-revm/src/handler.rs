@@ -6,7 +6,7 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::{result::InvalidTransaction, LocalContextTr},
+    context::{journaled_state::JournalCheckpoint, result::InvalidTransaction, LocalContextTr},
     context_interface::{
         context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
@@ -109,7 +109,7 @@ where
             let blob_price = block.blob_gasprice().unwrap_or_default();
             // deposit skips max fee check and just deducts the effective balance spending.
 
-            let caller_account = journal.load_account_code(tx.caller())?.data;
+            let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
             let effective_balance_spending = tx
                 .effective_balance_spending(basefee, blob_price)
@@ -117,9 +117,8 @@ where
                 - tx.value();
 
             // Mind value should be added first before subtracting the effective balance spending.
-            let mut new_balance = caller_account
-                .info
-                .balance
+            let mut new_balance = caller
+                .balance()
                 .saturating_add(U256::from(tx.mint().unwrap_or_default()))
                 .saturating_sub(effective_balance_spending);
 
@@ -129,12 +128,11 @@ where
                 new_balance = new_balance.max(tx.value());
             }
 
-            let old_balance =
-                caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
-
-            // NOTE: all changes to the caller account should journaled so in case of error
-            // we can revert the changes.
-            journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+            // set the new balance and bump the nonce if it is a call
+            caller.set_balance(new_balance);
+            if tx.kind().is_call() {
+                caller.bump_nonce();
+            }
 
             return Ok(());
         }
@@ -145,10 +143,10 @@ where
             *chain = L1BlockInfo::try_fetch(journal.db_mut(), block.number(), spec)?;
         }
 
-        let caller_account = journal.load_account_code(tx.caller())?.data;
+        let mut caller_account = journal.load_account_with_code_mut(tx.caller())?.data;
 
         // validates account nonce and code
-        validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
+        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
 
         // check additional cost and deduct it from the caller's balances
         let mut balance = caller_account.info.balance;
@@ -167,10 +165,11 @@ where
 
         let balance = calculate_caller_fee(balance, tx, block, cfg)?;
 
-        let old_balance = caller_account.caller_initial_modification(balance, tx.kind().is_call());
-        // NOTE: all changes to the caller account should journaled so in case of error
-        // we can revert the changes.
-        journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+        // make changes to the account
+        caller_account.set_balance(balance);
+        if tx.kind().is_call() {
+            caller_account.bump_nonce();
+        }
 
         Ok(())
     }
@@ -382,9 +381,11 @@ where
             let mint = tx.mint();
             let is_system_tx = tx.is_system_transaction();
             let gas_limit = tx.gas_limit();
+            let journal = evm.ctx().journal_mut();
 
             // discard all changes of this transaction
-            evm.ctx().journal_mut().discard_tx();
+            // Default JournalCheckpoint is the first checkpoint and will wipe all changes.
+            journal.checkpoint_revert(JournalCheckpoint::default());
 
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
@@ -395,23 +396,12 @@ where
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
-            let acc: &mut revm::state::Account = evm.ctx().journal_mut().load_account(caller)?.data;
+            let mut acc = journal.load_account_mut(caller)?;
+            acc.bump_nonce();
+            acc.incr_balance(U256::from(mint.unwrap_or_default()));
 
-            let old_balance = acc.info.balance;
-
-            // decrement transaction id as it was incremented when we discarded the tx.
-            acc.transaction_id -= 1;
-            acc.info.nonce = acc.info.nonce.saturating_add(1);
-            acc.info.balance = acc
-                .info
-                .balance
-                .saturating_add(U256::from(mint.unwrap_or_default()));
-            acc.mark_touch();
-
-            // add journal entry for accounts
-            evm.ctx()
-                .journal_mut()
-                .caller_accounting_journal_entry(caller, old_balance, true);
+            // We can now commit the changes.
+            journal.commit_tx();
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
