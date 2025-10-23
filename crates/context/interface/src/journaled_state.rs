@@ -152,6 +152,16 @@ pub trait JournalTr {
         address: Address,
     ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
 
+    /// Loads the account code, use `load_account_with_code` instead.
+    #[inline]
+    #[deprecated(note = "Use `load_account_with_code` instead")]
+    fn load_account_code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error> {
+        self.load_account_with_code(address)
+    }
+
     /// Loads the account with code.
     fn load_account_with_code(
         &mut self,
@@ -178,7 +188,7 @@ pub trait JournalTr {
 
     /// Loads the journaled account.
     #[inline]
-    fn load_account_code_mut(
+    fn load_account_with_code_mut(
         &mut self,
         address: Address,
     ) -> Result<

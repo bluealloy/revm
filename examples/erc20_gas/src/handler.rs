@@ -52,7 +52,7 @@ where
         journal.load_account_mut(TOKEN)?.touch();
 
         // Load caller's account.
-        let mut caller_account = journal.load_account_code_mut(tx.caller())?;
+        let mut caller_account = journal.load_account_with_code_mut(tx.caller())?;
 
         validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
 

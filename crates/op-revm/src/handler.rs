@@ -109,7 +109,7 @@ where
             let blob_price = block.blob_gasprice().unwrap_or_default();
             // deposit skips max fee check and just deducts the effective balance spending.
 
-            let mut caller = journal.load_account_code_mut(tx.caller())?.data;
+            let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
             let effective_balance_spending = tx
                 .effective_balance_spending(basefee, blob_price)
@@ -143,7 +143,7 @@ where
             *chain = L1BlockInfo::try_fetch(journal.db_mut(), block.number(), spec)?;
         }
 
-        let mut caller_account = journal.load_account_code_mut(tx.caller())?.data;
+        let mut caller_account = journal.load_account_with_code_mut(tx.caller())?.data;
 
         // validates account nonce and code
         validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
