@@ -545,7 +545,7 @@ unsafe fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: us
 /// i.e. it rounds up the number bytes to number of words.
 #[inline]
 pub const fn num_words(len: usize) -> usize {
-    len.saturating_add(31) / 32
+    len.div_ceil(32)
 }
 
 /// Performs EVM memory resize.

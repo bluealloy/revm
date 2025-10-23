@@ -76,7 +76,6 @@ macro_rules! berlin_load_account {
         $crate::berlin_load_account!($context, $address, $load_code, ())
     };
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
-        $crate::gas!($context.interpreter, WARM_STORAGE_READ_COST, $ret);
         let skip_cold_load =
             $context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
         match $context

@@ -8,25 +8,20 @@ use primitives::U256;
 
 /// Implements the LT instruction - less than comparison.
 pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
 /// Implements the GT instruction - greater than comparison.
 pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = U256::from(op1 > *op2);
 }
 
 /// Implements the CLZ instruction - count leading zeros.
 pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, OSAKA);
-    //gas!(context.interpreter, gas::LOW);
     popn_top!([], op1, context.interpreter);
-
     let leading_zeros = op1.leading_zeros();
     *op1 = U256::from(leading_zeros);
 }
@@ -35,9 +30,7 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Signed less than comparison of two values from stack.
 pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
@@ -45,9 +38,7 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Signed greater than comparison of two values from stack.
 pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
@@ -55,9 +46,7 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Equality comparison of two values from stack.
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = U256::from(op1 == *op2);
 }
 
@@ -65,7 +54,6 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 ///
 /// Checks if the top stack value is zero.
 pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
     *op1 = U256::from(op1.is_zero());
 }
@@ -74,7 +62,6 @@ pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 ///
 /// Bitwise AND of two values from stack.
 pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1 & *op2;
 }
@@ -83,9 +70,7 @@ pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 ///
 /// Bitwise OR of two values from stack.
 pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = op1 | *op2;
 }
 
@@ -93,9 +78,7 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 ///
 /// Bitwise XOR of two values from stack.
 pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     *op2 = op1 ^ *op2;
 }
 
@@ -103,9 +86,7 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 ///
 /// Bitwise NOT (negation) of the top stack value.
 pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([], op1, context.interpreter);
-
     *op1 = !*op1;
 }
 
@@ -113,9 +94,7 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Extracts a single byte from a word at a given index.
 pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
         // `31 - o1` because `byte` returns LE, while we want BE
@@ -128,9 +107,7 @@ pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 << shift
@@ -142,9 +119,7 @@ pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 >> shift
@@ -156,9 +131,7 @@ pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
-    //gas!(context.interpreter, gas::VERYLOW);
     popn_top!([op1], op2, context.interpreter);
-
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         op2.arithmetic_shr(shift)

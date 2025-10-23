@@ -1,8 +1,5 @@
 use crate::{
-    gas::{
-        self, CALL_STIPEND, COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL,
-        ISTANBUL_SLOAD_GAS, WARM_STORAGE_READ_COST,
-    },
+    gas::{self, CALL_STIPEND, COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL},
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
@@ -24,15 +21,6 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
         let account = berlin_load_account!(context, address, false);
         *top = account.balance;
     } else {
-        let gas = if spec_id.is_enabled_in(ISTANBUL) {
-            // EIP-1884: Repricing for trie-size-dependent opcodes
-            700
-        } else if spec_id.is_enabled_in(TANGERINE) {
-            400
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, false, false)
@@ -48,7 +36,6 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
-    //gas!(context.interpreter, gas::LOW);
 
     let Some(balance) = context
         .host
@@ -67,18 +54,13 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
+
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
         let account = berlin_load_account!(context, address, true);
         // safe to unwrap because we are loading code
         *top = U256::from(account.code.as_ref().unwrap().len());
     } else {
-        let gas = if spec_id.is_enabled_in(TANGERINE) {
-            700
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, true, false)
@@ -102,12 +84,6 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let account = if spec_id.is_enabled_in(BERLIN) {
         berlin_load_account!(context, address, true)
     } else {
-        let gas = if spec_id.is_enabled_in(ISTANBUL) {
-            700
-        } else {
-            400
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, true, false)
@@ -142,7 +118,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas!(
         context.interpreter,
-        gas::copy_cost(0, len).unwrap_or(u64::MAX)
+        context.interpreter.gas_table.extcodecopy(len)
     );
 
     let mut memory_offset_usize = 0;
@@ -157,13 +133,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         let account = berlin_load_account!(context, address, true);
         account.code.as_ref().unwrap().original_bytes()
     } else {
-        let gas = if spec_id.is_enabled_in(TANGERINE) {
-            700
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
-
         let Some(code) = context.host.load_account_code(address) else {
             return context.interpreter.halt_fatal();
         };
@@ -186,7 +155,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
-    //gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
 
     let requested_number = *number;
@@ -223,19 +191,6 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let target = context.interpreter.input.target_address();
 
-    // `SLOAD` opcode cost calculation.
-    let gas = if spec_id.is_enabled_in(BERLIN) {
-        WARM_STORAGE_READ_COST
-    } else if spec_id.is_enabled_in(ISTANBUL) {
-        // EIP-1884: Repricing for trie-size-dependent opcodes
-        ISTANBUL_SLOAD_GAS
-    } else if spec_id.is_enabled_in(TANGERINE) {
-        // EIP-150: Gas cost changes for IO-heavy operations
-        200
-    } else {
-        50
-    };
-    gas!(context.interpreter, gas);
     if spec_id.is_enabled_in(BERLIN) {
         let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
@@ -268,14 +223,9 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     let target = context.interpreter.input.target_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
 
-    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
-    if context
-        .interpreter
-        .runtime_flag
-        .spec_id()
-        .is_enabled_in(ISTANBUL)
-        && context.interpreter.gas.remaining() <= CALL_STIPEND
-    {
+    // EIP-2200: Structured Definitions for Net Gas Metering
+    // If gasleft is less than or equal to gas stipend, fail the current call frame with ‘out of gas’ exception.
+    if spec_id.is_enabled_in(ISTANBUL) && context.interpreter.gas.remaining() <= CALL_STIPEND {
         context
             .interpreter
             .halt(InstructionResult::ReentrancySentryOOG);
@@ -285,7 +235,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // static gas
     gas!(
         context.interpreter,
-        gas::static_sstore_cost(context.interpreter.runtime_flag.spec_id())
+        context.interpreter.gas_table.sstore_static_gas()
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
@@ -327,8 +277,6 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
-    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
-
     popn!([index, value], context.interpreter);
 
     context
@@ -340,8 +288,6 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 /// Load value from transient storage
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
-    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
-
     popn_top!([], index, context.interpreter);
 
     *index = context
@@ -359,7 +305,10 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 
     popn!([offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    gas_or_fail!(context.interpreter, gas::log_cost(N as u8, len as u64));
+    gas_or_fail!(
+        context.interpreter,
+        context.interpreter.gas_table.log_cost(N as u8, len as u64)
+    );
     let data = if len == 0 {
         Bytes::new()
     } else {
@@ -391,9 +340,6 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     popn!([target], context.interpreter);
     let target = target.into_address();
     let spec = context.interpreter.runtime_flag.spec_id();
-
-    // static gas
-    gas!(context.interpreter, gas::static_selfdestruct_cost(spec));
 
     let Some(res) = context
         .host

@@ -64,7 +64,7 @@ pub const fn create2_cost(len: usize) -> Option<u64> {
 }
 
 #[inline]
-const fn log2floor(value: U256) -> u64 {
+pub(crate) const fn log2floor(value: U256) -> u64 {
     let mut l: u64 = 256;
     let mut i = 3;
     loop {
@@ -111,35 +111,10 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
     copy_cost(VERYLOW, len)
 }
 
-/// `EXTCODECOPY` opcode cost calculation.
-#[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool) -> Option<u64> {
-    let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(is_cold)
-    } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
-        700
-    } else {
-        20
-    };
-    copy_cost(base_gas, len)
-}
-
 #[inline]
 /// Calculates the gas cost for copy operations based on data length.
 pub const fn copy_cost(base_cost: u64, len: usize) -> Option<u64> {
     base_cost.checked_add(tri!(cost_per_word(len, COPY)))
-}
-
-/// `LOG` opcode cost calculation.
-#[inline]
-pub const fn log_cost(n: u8, len: u64) -> Option<u64> {
-    tri!(LOG.checked_add(tri!(LOGDATA.checked_mul(len)))).checked_add(LOGTOPIC * n as u64)
-}
-
-/// `KECCAK256` opcode cost calculation.
-#[inline]
-pub const fn keccak256_cost(len: usize) -> Option<u64> {
-    KECCAK256.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
 }
 
 /// Calculate the cost of buffer per word.

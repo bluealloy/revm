@@ -19,8 +19,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    gas::table::GasTable, host::DummyHost, instruction_context::InstructionContext,
+    interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -29,6 +29,8 @@ use primitives::{hardfork::SpecId, Bytes};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
+    /// Gas table for dynamic gas constants.
+    pub gas_table: GasTable,
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
@@ -103,6 +105,8 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
+            // TODO get it from host;
+            gas_table: GasTable::new_spec(spec_id),
             stack,
             return_data: Default::default(),
             memory,
@@ -126,6 +130,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         let Self {
             bytecode: bytecode_ref,
             gas,
+            gas_table,
             stack,
             return_data,
             memory: memory_ref,
@@ -145,6 +150,8 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
         *extend = EXT::default();
+        // do nothing
+        _ = gas_table;
     }
 
     /// Sets the bytecode that is going to be executed
