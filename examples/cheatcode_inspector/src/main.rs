@@ -160,7 +160,10 @@ impl JournalTr for Backend {
         self.journaled_state.load_account(address)
     }
 
-    fn load_account_with_code(&mut self, address: Address) -> Result<StateLoad<&Account>, Infallible> {
+    fn load_account_with_code(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<&Account>, Infallible> {
         self.journaled_state.load_account_with_code(address)
     }
 
