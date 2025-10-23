@@ -1019,7 +1019,6 @@ fn skip_test(path: &Path) -> bool {
         || path_str.contains("prague/eip7685_general_purpose_el_requests")
         || path_str.contains("prague/eip7002_el_triggerable_withdrawals")
         || path_str.contains("osaka/eip7918_blob_reserve_price")
-        || path_str.contains("cancun/eip4788_beacon_root")
     {
         return true;
     }
