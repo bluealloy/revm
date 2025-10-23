@@ -152,8 +152,8 @@ pub trait JournalTr {
         address: Address,
     ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
 
-    /// Loads the account code.
-    fn load_account_code(
+    /// Loads the account with code.
+    fn load_account_with_code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
@@ -173,7 +173,7 @@ pub trait JournalTr {
         StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
         <Self::Database as Database>::Error,
     > {
-        self.load_account_mut_optional(address, false)
+        self.load_account_mut_optional_code(address, false)
     }
 
     /// Loads the journaled account.
@@ -185,11 +185,11 @@ pub trait JournalTr {
         StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
         <Self::Database as Database>::Error,
     > {
-        self.load_account_mut_optional(address, true)
+        self.load_account_mut_optional_code(address, true)
     }
 
     /// Loads the journaled account.
-    fn load_account_mut_optional(
+    fn load_account_mut_optional_code(
         &mut self,
         address: Address,
         load_code: bool,
@@ -216,7 +216,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<Bytes>, <Self::Database as Database>::Error> {
-        let a = self.load_account_code(address)?;
+        let a = self.load_account_with_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap().original_bytes();
 
@@ -228,7 +228,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<B256>, <Self::Database as Database>::Error> {
-        let acc = self.load_account_code(address)?;
+        let acc = self.load_account_with_code(address)?;
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }

@@ -166,7 +166,6 @@ where
         let balance = calculate_caller_fee(balance, tx, block, cfg)?;
 
         // make changes to the account
-        caller_account.touch();
         caller_account.set_balance(balance);
         if tx.kind().is_call() {
             caller_account.bump_nonce();

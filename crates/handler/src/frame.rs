@@ -209,7 +209,7 @@ impl EthFrame<EthInterpreter> {
             // Load account and get its bytecode
             let account = ctx
                 .journal_mut()
-                .load_account_code(inputs.bytecode_address)?;
+                .load_account_with_code(inputs.bytecode_address)?;
             (
                 account.info.code.clone().unwrap_or_default(),
                 account.info.code_hash,

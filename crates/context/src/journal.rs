@@ -240,7 +240,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn load_account_mut_optional(
+    fn load_account_mut_optional_code(
         &mut self,
         address: Address,
         load_code: bool,
@@ -249,12 +249,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         <Self::Database as Database>::Error,
     > {
         self.inner
-            .load_account_mut_optional(&mut self.database, address, load_code, false)
+            .load_account_mut_optional_code(&mut self.database, address, load_code, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     #[inline]
-    fn load_account_code(&mut self, address: Address) -> Result<StateLoad<&Account>, DB::Error> {
+    fn load_account_with_code(&mut self, address: Address) -> Result<StateLoad<&Account>, DB::Error> {
         self.inner.load_code(&mut self.database, address)
     }
 

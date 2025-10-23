@@ -5,7 +5,7 @@
 
 use super::entry::JournalEntryTr;
 use core::ops::Deref;
-use primitives::{Address, B256, U256};
+use primitives::{Address, B256, KECCAK_EMPTY, U256};
 use state::{Account, Bytecode};
 use std::vec::Vec;
 
@@ -155,6 +155,24 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     pub fn set_code_and_hash_slow(&mut self, code: Bytecode) {
         let code_hash = code.hash_slow();
         self.set_code(code_hash, code);
+    }
+
+    /// Delegates the account to another address (EIP-7702).
+    ///
+    /// This touches the account, sets the code to the delegation designation,
+    /// and bumps the nonce.
+    #[inline]
+    pub fn delegate(&mut self, address: Address) {
+        let (bytecode, hash) = if address.is_zero() {
+            (Bytecode::default(), KECCAK_EMPTY)
+        } else {
+            let bytecode = Bytecode::new_eip7702(address);
+            let hash = bytecode.hash_slow();
+            (bytecode, hash)
+        };
+        self.touch();
+        self.set_code(hash, bytecode);
+        self.bump_nonce();
     }
 }
 

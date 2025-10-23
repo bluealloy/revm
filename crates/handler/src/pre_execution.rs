@@ -13,7 +13,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use primitives::{eip7702, hardfork::SpecId, U256};
 use primitives::{Address, HashMap, HashSet, StorageKey};
 use state::AccountInfo;
 
@@ -241,19 +241,8 @@ pub fn apply_eip7702_auth_list<
         // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
         //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation.
         //    Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
-        let address = authorization.address();
-        let (bytecode, hash) = if address.is_zero() {
-            (Bytecode::default(), KECCAK_EMPTY)
-        } else {
-            let bytecode = Bytecode::new_eip7702(address);
-            let hash = bytecode.hash_slow();
-            (bytecode, hash)
-        };
-        authority_acc.touch();
-        authority_acc.set_code(hash, bytecode);
-
-        // 9. Increase the nonce of `authority` by one.s
-        authority_acc.bump_nonce();
+        // 9. Increase the nonce of `authority` by one.
+        authority_acc.delegate(authorization.address());
     }
 
     let refunded_gas =

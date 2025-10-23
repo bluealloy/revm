@@ -638,7 +638,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         load_code: bool,
         skip_cold_load: bool,
     ) -> Result<StateLoad<&Account>, JournalLoadError<DB::Error>> {
-        let load = self.load_account_mut_optional(db, address, load_code, skip_cold_load)?;
+        let load = self.load_account_mut_optional_code(db, address, load_code, skip_cold_load)?;
         Ok(load.map(|i| i.into_account_ref()))
     }
 
@@ -649,13 +649,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<JournaledAccount<'_, ENTRY>>, DB::Error> {
-        self.load_account_mut_optional(db, address, false, false)
+        self.load_account_mut_optional_code(db, address, false, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
-    pub fn load_account_mut_optional<DB: Database>(
+    pub fn load_account_mut_optional_code<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,

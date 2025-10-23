@@ -160,8 +160,8 @@ impl JournalTr for Backend {
         self.journaled_state.load_account(address)
     }
 
-    fn load_account_code(&mut self, address: Address) -> Result<StateLoad<&Account>, Infallible> {
-        self.journaled_state.load_account_code(address)
+    fn load_account_with_code(&mut self, address: Address) -> Result<StateLoad<&Account>, Infallible> {
+        self.journaled_state.load_account_with_code(address)
     }
 
     fn load_account_delegated(
@@ -293,7 +293,7 @@ impl JournalTr for Backend {
             .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
     }
 
-    fn load_account_mut_optional(
+    fn load_account_mut_optional_code(
         &mut self,
         address: Address,
         load_code: bool,
@@ -304,7 +304,7 @@ impl JournalTr for Backend {
         <Self::Database as Database>::Error,
     > {
         self.journaled_state
-            .load_account_mut_optional(address, load_code)
+            .load_account_mut_optional_code(address, load_code)
     }
 }
 
