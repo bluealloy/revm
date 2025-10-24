@@ -74,6 +74,7 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
     /// - Contracts are overridden with outer contracts
     /// - Logs are appended
     /// - Block hashes are overridden with outer block hashes
+    /// - BAL is
     pub fn flatten(self) -> CacheDB<ExtDb> {
         let CacheDB {
             cache:
@@ -84,6 +85,7 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
                     block_hashes,
                 },
             db: mut inner,
+            ..
         } = self;
 
         inner.cache.accounts.extend(accounts);
@@ -468,6 +470,7 @@ impl Database for BenchmarkDB {
                 balance: BENCH_TARGET_BALANCE,
                 code: Some(self.0.clone()),
                 code_hash: self.1,
+                ..Default::default()
             }));
         }
         if address == BENCH_CALLER {
@@ -476,6 +479,7 @@ impl Database for BenchmarkDB {
                 balance: BENCH_CALLER_BALANCE,
                 code: None,
                 code_hash: KECCAK_EMPTY,
+                ..Default::default()
             }));
         }
         Ok(None)

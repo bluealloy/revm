@@ -311,7 +311,13 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, evm_state: HashMap<Address, Account>) {
-        let transitions = self.cache.apply_evm_state(evm_state);
+        let mut transitions = Vec::with_capacity(evm_state.len());
+        for (address, account) in evm_state {
+            // apply account state.
+            if let Some(transition) = self.cache.apply_account_state(address, account) {
+                transitions.push((address, transition));
+            }
+        }
         self.apply_transition(transitions);
     }
 }
