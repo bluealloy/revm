@@ -72,3 +72,4 @@ serde = [
 
 # Deprecated, please use `serde` feature instead.
 serde-json = ["serde"]
+memory_limit = ["context/memory_limit", "interpreter/memory_limit"]

@@ -31,6 +31,18 @@ impl<T: Default> FrameStack<T> {
 }
 
 impl<T> FrameStack<T> {
+    /// Creates a new stack with preallocated items by calling the provided closure `len` times.
+    /// Index will still be `None` until `end_init` is called.
+    pub fn new_prealloc_with<F>(len: usize, mut f: F) -> Self
+    where
+        F: FnMut() -> T,
+    {
+        let mut stack = Vec::with_capacity(len);
+        for _ in 0..len {
+            stack.push(f());
+        }
+        Self { stack, index: None }
+    }
     /// Creates a new, empty stack. It must be initialized with init before use.
     pub fn new() -> Self {
         // Init N amount of frames to allocate the stack.

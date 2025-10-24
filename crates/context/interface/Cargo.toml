@@ -43,6 +43,7 @@ std = [
 	"state/std",
 	"either/std",
 ]
+memory_limit = []
 serde = [
 	"dep:serde",
 	"primitives/serde",

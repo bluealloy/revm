@@ -400,6 +400,11 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
             }
         }
     }
+
+    #[cfg(feature = "memory_limit")]
+    fn memory_limit(&self) -> u64 {
+        self.memory_limit
+    }
 }
 
 impl<SPEC: Default> Default for CfgEnv<SPEC> {
