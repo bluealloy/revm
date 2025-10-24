@@ -1,0 +1,7 @@
+*.a
+*.so
+*.dylib
+*.dll
+*.h
+*.lib
+go.sum

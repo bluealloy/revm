@@ -19,6 +19,7 @@ members = [
     # variants
     "crates/op-revm",
     "crates/inspector",
+    "crates/gnark-bn254",
 
     # utility
     "crates/statetest-types",
@@ -56,6 +57,7 @@ context-interface = { path = "crates/context/interface", package = "revm-context
 handler = { path = "crates/handler", package = "revm-handler", version = "11.2.0", default-features = false }
 op-revm = { path = "crates/op-revm", package = "op-revm", version = "11.2.0", default-features = false }
 ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.1.0", default-features = false }
+revm-gnark-bn254 = { path = "crates/gnark-bn254", version = "0.1.0", default-features = false }
 
 # alloy
 alloy-eip2930 = { version = "0.2.1", default-features = false }
