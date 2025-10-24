@@ -1,0 +1,25 @@
+[package]
+name = "revm-gnark-bn254"
+version = "0.1.0"
+description = "Gnark-crypto BN254 backend for REVM precompiles"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# Just the error types
+primitives = { workspace = true, default-features = false }
+
+[build-dependencies]
+# For build.rs if needed
+which = "6.0"
+
+[features]
+default = ["std"]
+std = ["primitives/std"]
+
+[lib]
+# This crate provides a C-compatible library
+crate-type = ["lib", "staticlib"]
