@@ -3,6 +3,8 @@ use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
+#[cfg(feature = "memory_limit")]
+use interpreter::interpreter::{ExtBytecode, InputsImpl, Interpreter, SharedMemory};
 use primitives::hardfork::SpecId;
 
 /// Type alias for a mainnet EVM instance with standard Ethereum components.
@@ -25,6 +27,30 @@ pub trait MainBuilder: Sized {
         -> MainnetEvm<Self::Context, INSP>;
 }
 
+#[cfg(feature = "memory_limit")]
+fn build_frame<CFG: Cfg>(cfg: &CFG) -> EthFrame {
+    // Build interpreter with custom memory limit (same as in crates/interpreter/src/interpreter.rs:88)
+    let interpreter = Interpreter::new(
+        SharedMemory::new_with_memory_limit(cfg.memory_limit()),
+        ExtBytecode::default(),
+        InputsImpl::default(),
+        false,
+        SpecId::default(),
+        u64::MAX,
+    );
+
+    EthFrame {
+        data: crate::FrameData::Call(crate::CallFrame {
+            return_memory_range: 0..0,
+        }),
+        input: interpreter::interpreter_action::FrameInput::Empty,
+        depth: 0,
+        checkpoint: context_interface::journaled_state::JournalCheckpoint::default(),
+        interpreter,
+        is_finished: false,
+    }
+}
+
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 where
     BLOCK: Block,
@@ -36,25 +62,24 @@ where
     type Context = Self;
 
     fn build_mainnet(self) -> MainnetEvm<Self::Context> {
-        Evm {
-            ctx: self,
-            inspector: (),
-            instruction: EthInstructions::default(),
-            precompiles: EthPrecompiles::default(),
-            frame_stack: FrameStack::new_prealloc(8),
-        }
+        self.build_mainnet_with_inspector(())
     }
 
     fn build_mainnet_with_inspector<INSP>(
         self,
         inspector: INSP,
     ) -> MainnetEvm<Self::Context, INSP> {
+        #[cfg(feature = "memory_limit")]
+        let frame_stack = FrameStack::new_prealloc_with(8, || build_frame(&self.cfg));
+        #[cfg(not(feature = "memory_limit"))]
+        let frame_stack = FrameStack::new_prealloc(8);
+
         Evm {
             ctx: self,
             inspector,
             instruction: EthInstructions::default(),
             precompiles: EthPrecompiles::default(),
-            frame_stack: FrameStack::new_prealloc(8),
+            frame_stack,
         }
     }
 }

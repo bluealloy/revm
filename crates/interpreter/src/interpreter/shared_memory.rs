@@ -184,14 +184,28 @@ impl SharedMemory {
 
     /// Creates a new memory instance that can be shared between calls,
     /// with `memory_limit` as upper bound for allocation size.
-    ///
-    /// The default initial capacity is 4KiB.
     #[cfg(feature = "memory_limit")]
     #[inline]
     pub fn new_with_memory_limit(memory_limit: u64) -> Self {
         Self {
             memory_limit,
             ..Self::new()
+        }
+    }
+
+    /// Creates a new memory instance that can be shared between calls,
+    /// with `memory_limit` as upper bound for allocation size.
+    #[cfg(feature = "memory_limit")]
+    #[inline]
+    pub fn new_with_buffer_and_memory_limit(
+        buffer: Rc<RefCell<Vec<u8>>>,
+        memory_limit: u64,
+    ) -> Self {
+        Self {
+            buffer: Some(buffer),
+            my_checkpoint: 0,
+            child_checkpoint: None,
+            memory_limit,
         }
     }
 

@@ -298,6 +298,12 @@ pub trait Handler {
         gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
+        #[cfg(feature = "memory_limit")]
+        let memory = SharedMemory::new_with_buffer_and_memory_limit(
+            ctx.local().shared_memory_buffer().clone(),
+            ctx.cfg().memory_limit(),
+        );
+        #[cfg(not(feature = "memory_limit"))]
         let memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
 
         let (tx, journal) = ctx.tx_journal_mut();
