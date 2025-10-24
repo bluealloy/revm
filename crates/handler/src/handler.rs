@@ -302,11 +302,11 @@ pub trait Handler {
 
         let (tx, journal) = ctx.tx_journal_mut();
         let bytecode = if let Some(&to) = tx.kind().to() {
-            let account = &journal.load_account_code(to)?.info;
+            let account = &journal.load_account_with_code(to)?.info;
 
             if let Some(Bytecode::Eip7702(eip7702_bytecode)) = &account.code {
                 let delegated_address = eip7702_bytecode.delegated_address;
-                let account = &journal.load_account_code(delegated_address)?.info;
+                let account = &journal.load_account_with_code(delegated_address)?.info;
                 Some((
                     account.code.clone().unwrap_or_default(),
                     account.code_hash(),

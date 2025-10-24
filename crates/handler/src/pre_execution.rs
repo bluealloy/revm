@@ -13,7 +13,7 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use primitives::{eip7702, hardfork::SpecId, KECCAK_EMPTY, U256};
+use primitives::{eip7702, hardfork::SpecId, U256};
 use primitives::{Address, HashMap, HashSet, StorageKey};
 use state::AccountInfo;
 
@@ -69,7 +69,7 @@ pub fn load_accounts<
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code_with_components(
-    caller_info: &mut AccountInfo,
+    caller_info: &AccountInfo,
     tx: impl Transaction,
     cfg: impl Cfg,
 ) -> Result<(), InvalidTransaction> {
@@ -84,7 +84,7 @@ pub fn validate_account_nonce_and_code_with_components(
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
 pub fn validate_account_nonce_and_code(
-    caller_info: &mut AccountInfo,
+    caller_info: &AccountInfo,
     tx_nonce: u64,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
@@ -167,15 +167,16 @@ pub fn validate_against_state_and_deduct_caller<
     let (block, tx, cfg, journal, _, _) = context.all_mut();
 
     // Load caller's account.
-    let caller_account = journal.load_account_code(tx.caller())?.data;
+    let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
-    validate_account_nonce_and_code_with_components(&mut caller_account.info, tx, cfg)?;
+    validate_account_nonce_and_code_with_components(&caller.info, tx, cfg)?;
 
-    let new_balance = calculate_caller_fee(caller_account.info.balance, tx, block, cfg)?;
+    let new_balance = calculate_caller_fee(*caller.balance(), tx, block, cfg)?;
 
-    let old_balance = caller_account.caller_initial_modification(new_balance, tx.kind().is_call());
-
-    journal.caller_accounting_journal_entry(tx.caller(), old_balance, tx.kind().is_call());
+    caller.set_balance(new_balance);
+    if tx.kind().is_call() {
+        caller.bump_nonce();
+    }
     Ok(())
 }
 
@@ -217,7 +218,7 @@ pub fn apply_eip7702_auth_list<
 
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
-        let mut authority_acc = journal.load_account_code(authority)?;
+        let mut authority_acc = journal.load_account_with_code_mut(authority)?;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
@@ -240,20 +241,8 @@ pub fn apply_eip7702_auth_list<
         // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
         //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation.
         //    Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
-        let address = authorization.address();
-        let (bytecode, hash) = if address.is_zero() {
-            (Bytecode::default(), KECCAK_EMPTY)
-        } else {
-            let bytecode = Bytecode::new_eip7702(address);
-            let hash = bytecode.hash_slow();
-            (bytecode, hash)
-        };
-        authority_acc.info.code_hash = hash;
-        authority_acc.info.code = Some(bytecode);
-
         // 9. Increase the nonce of `authority` by one.
-        authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
-        authority_acc.mark_touch();
+        authority_acc.delegate(authorization.address());
     }
 
     let refunded_gas =

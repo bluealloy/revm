@@ -521,6 +521,7 @@ impl<
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
+    #[inline]
     fn selfdestruct(
         &mut self,
         address: Address,
@@ -534,6 +535,7 @@ impl<
             .ok()
     }
 
+    #[inline]
     fn sstore_skip_cold_load(
         &mut self,
         address: Address,
@@ -552,6 +554,7 @@ impl<
             })
     }
 
+    #[inline]
     fn sload_skip_cold_load(
         &mut self,
         address: Address,
@@ -569,6 +572,7 @@ impl<
             })
     }
 
+    #[inline]
     fn load_account_info_skip_cold_load(
         &mut self,
         address: Address,
