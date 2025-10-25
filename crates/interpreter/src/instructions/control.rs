@@ -69,7 +69,9 @@ fn return_inner(
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        resize_memory!(interpreter, offset, len);
+        if !interpreter.resize_memory(offset, len) {
+            return;
+        }
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 

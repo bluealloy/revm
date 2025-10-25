@@ -77,7 +77,8 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
 pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
+    else {
         return;
     };
     let code_offset = as_usize_saturated!(code_offset);
@@ -151,7 +152,8 @@ pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
 pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
+    else {
         return;
     };
 
@@ -198,7 +200,8 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
         return;
     }
 
-    let Some(memory_offset) = memory_resize(context.interpreter, memory_offset, len) else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
+    else {
         return;
     };
 
@@ -224,13 +227,13 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Common logic for copying data from a source buffer to the EVM's memory.
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
-pub fn memory_resize(
+pub fn copy_cost_and_memory_resize(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {
     // Safe to cast usize to u64
-    gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
+    gas!(interpreter, interpreter.gas_table.copy_cost(len), None);
     if len == 0 {
         return None;
     }

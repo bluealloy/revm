@@ -1,4 +1,5 @@
 use super::MemoryTr;
+use crate::{gas::table::GasTable, InstructionResult};
 use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,
@@ -554,15 +555,21 @@ pub const fn num_words(len: usize) -> usize {
 pub fn resize_memory<Memory: MemoryTr>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
+    gas_table: &GasTable,
     offset: usize,
     len: usize,
-) -> bool {
+) -> Result<(), InstructionResult> {
+    #[cfg(feature = "memory_limit")]
+    if self.memory.limit_reached(offset, len) {
+        return Err(InstructionResult::MemoryLimitOOG);
+    }
+
     let new_num_words = num_words(offset.saturating_add(len));
     if new_num_words > gas.memory().words_num {
-        resize_memory_cold(gas, memory, new_num_words)
-    } else {
-        true
+        return resize_memory_cold(gas, memory, gas_table, new_num_words);
     }
+
+    Ok(())
 }
 
 #[cold]
@@ -570,18 +577,21 @@ pub fn resize_memory<Memory: MemoryTr>(
 fn resize_memory_cold<Memory: MemoryTr>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
+    gas_table: &GasTable,
     new_num_words: usize,
-) -> bool {
+) -> Result<(), InstructionResult> {
+    let cost = gas_table.memory_cost(new_num_words);
     let cost = unsafe {
         gas.memory_mut()
-            .record_new_len(new_num_words)
+            .set_words_num(new_num_words, cost)
             .unwrap_unchecked()
     };
+
     if !gas.record_cost(cost) {
-        return false;
+        return Err(InstructionResult::OutOfGas);
     }
     memory.resize(new_num_words * 32);
-    true
+    Ok(())
 }
 
 #[cfg(test)]

@@ -194,7 +194,17 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[inline]
     #[must_use]
     pub fn resize_memory(&mut self, offset: usize, len: usize) -> bool {
-        resize_memory(&mut self.gas, &mut self.memory, offset, len)
+        if let Err(result) = resize_memory(
+            &mut self.gas,
+            &mut self.memory,
+            &self.gas_table,
+            offset,
+            len,
+        ) {
+            self.halt(result);
+            return false;
+        }
+        true
     }
 
     /// Takes the next action from the control and returns it.

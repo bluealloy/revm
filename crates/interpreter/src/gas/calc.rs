@@ -1,5 +1,5 @@
 use super::constants::*;
-use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
+use crate::{num_words, SStoreResult, SelfDestructResult, StateLoad};
 use context_interface::{
     journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction, TransactionType,
 };
@@ -57,12 +57,6 @@ pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
     }
 }
 
-/// `CREATE2` opcode cost calculation.
-#[inline]
-pub const fn create2_cost(len: usize) -> Option<u64> {
-    CREATE.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
-}
-
 #[inline]
 pub(crate) const fn log2floor(value: U256) -> u64 {
     let mut l: u64 = 256;
@@ -84,37 +78,6 @@ pub(crate) const fn log2floor(value: U256) -> u64 {
         i -= 1;
     }
     l
-}
-
-/// `EXP` opcode cost calculation.
-#[inline]
-pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
-    if power.is_zero() {
-        Some(EXP)
-    } else {
-        // EIP-160: EXP cost increase
-        let gas_byte = U256::from(if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-            50
-        } else {
-            10
-        });
-        let gas = U256::from(EXP)
-            .checked_add(gas_byte.checked_mul(U256::from(log2floor(power) / 8 + 1))?)?;
-
-        u64::try_from(gas).ok()
-    }
-}
-
-/// `*COPY` opcodes cost calculation.
-#[inline]
-pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
-    copy_cost(VERYLOW, len)
-}
-
-#[inline]
-/// Calculates the gas cost for copy operations based on data length.
-pub const fn copy_cost(base_cost: u64, len: usize) -> Option<u64> {
-    base_cost.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
 /// Calculate the cost of buffer per word.
@@ -156,99 +119,6 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
     }
 }
 
-/// Static gas cost for sstore.
-#[inline]
-pub const fn sstore_cost_static(spec_id: SpecId) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        WARM_STORAGE_READ_COST
-    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        ISTANBUL_SLOAD_GAS
-    } else {
-        SSTORE_RESET
-    }
-}
-
-/// Dynamic gas cost for sstore.
-#[inline]
-pub const fn sstore_cost_dynamic(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
-    sstore_cost(spec_id, vals, is_cold) - sstore_cost_static(spec_id)
-}
-
-/// Static gas cost for sstore.
-#[inline]
-pub const fn static_sstore_cost(spec_id: SpecId) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        WARM_STORAGE_READ_COST
-    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        ISTANBUL_SLOAD_GAS
-    } else {
-        SSTORE_RESET
-    }
-}
-
-/// Dynamic gas cost for sstore.
-#[inline]
-pub const fn dyn_sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
-    sstore_cost(spec_id, vals, is_cold) - static_sstore_cost(spec_id)
-}
-
-/// `SSTORE` opcode cost calculation.
-#[inline]
-pub const fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        // Berlin specification logic
-        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(vals);
-
-        if is_cold {
-            gas_cost += COLD_SLOAD_COST;
-        }
-        gas_cost
-    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        // Istanbul logic
-        istanbul_sstore_cost::<ISTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
-    } else {
-        // Frontier logic
-        frontier_sstore_cost(vals)
-    }
-}
-
-/// EIP-2200: Structured Definitions for Net Gas Metering
-#[inline]
-const fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
-    vals: &SStoreResult,
-) -> u64 {
-    if vals.is_new_eq_present() {
-        SLOAD_GAS
-    } else if vals.is_original_eq_present() && vals.is_original_zero() {
-        SSTORE_SET
-    } else if vals.is_original_eq_present() {
-        SSTORE_RESET_GAS
-    } else {
-        SLOAD_GAS
-    }
-}
-
-/// Frontier sstore cost just had two cases set and reset values.
-#[inline]
-const fn frontier_sstore_cost(vals: &SStoreResult) -> u64 {
-    if vals.is_present_zero() && !vals.is_new_zero() {
-        SSTORE_SET
-    } else {
-        SSTORE_RESET
-    }
-}
-
-/// Static gas cost for selfdestruct.
-#[inline]
-pub const fn static_selfdestruct_cost(spec_id: SpecId) -> u64 {
-    // EIP-150: Gas cost changes for IO-heavy operations
-    if spec_id.is_enabled_in(SpecId::TANGERINE) {
-        5000
-    } else {
-        0
-    }
-}
-
 /// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
 pub const fn dyn_selfdestruct_cost(spec_id: SpecId, res: &StateLoad<SelfDestructResult>) -> u64 {
@@ -273,66 +143,13 @@ pub const fn dyn_selfdestruct_cost(spec_id: SpecId, res: &StateLoad<SelfDestruct
     gas
 }
 
-/// `SELFDESTRUCT` opcode cost calculation.
-#[inline]
-pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
-    static_selfdestruct_cost(spec_id) + dyn_selfdestruct_cost(spec_id, &res)
-}
-
-/// Calculate static gas for the call
-///
-/// Gas depends on:
-/// * Spec. For berlin hardfork only warm gas [`WARM_STORAGE_READ_COST`] is calculated.
-/// * If there is transfer value. additional gas of [`CALLVALUE`] is added.
-#[inline]
-pub fn calc_call_static_gas(spec_id: SpecId, has_transfer: bool) -> u64 {
-    // Account access.
-    let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        WARM_STORAGE_READ_COST
-    } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
-        // EIP-150: Gas cost changes for IO-heavy operations
-        700
-    } else {
-        40
-    };
-
-    // Transfer value cost
-    if has_transfer {
-        gas += CALLVALUE;
-    }
-
-    gas
-}
-
-/// Berlin warm and cold storage access cost for account access.
-#[inline]
-pub const fn warm_cold_cost(is_cold: bool) -> u64 {
-    if is_cold {
-        COLD_ACCOUNT_ACCESS_COST
-    } else {
-        WARM_STORAGE_READ_COST
-    }
-}
-
-/// Berlin warm and cold storage access cost for account access.
-///
-/// If delegation is Some, add additional cost for delegation account load.
-#[inline]
-pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64 {
-    let mut gas = warm_cold_cost(load.is_cold);
-    if let Some(is_cold) = load.data.is_delegate_account_cold {
-        gas += warm_cold_cost(is_cold);
-    }
-    gas
-}
-
 /// Memory expansion cost calculation for a given number of words.
 #[inline]
-pub const fn memory_gas(num_words: usize) -> u64 {
+pub const fn memory_gas(num_words: usize, linear_cost: u64, quadratic_cost: u64) -> u64 {
     let num_words = num_words as u64;
-    MEMORY
+    linear_cost
         .saturating_mul(num_words)
-        .saturating_add(num_words.saturating_mul(num_words) / 512)
+        .saturating_add(num_words.saturating_mul(num_words) / quadratic_cost)
 }
 
 /// Init and floor gas from transaction
@@ -393,6 +210,8 @@ pub fn calculate_initial_tx_gas(
     } else {
         21000
     };
+
+    // TODO init gas
 
     // EIP-3860: Limit and meter initcode
     // Init code stipend for bytecode analysis

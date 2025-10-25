@@ -195,6 +195,18 @@ impl SStoreResult {
         self.new_value.const_eq(&self.present_value)
     }
 
+    /// Returns `true` if the new values changes the present value.
+    #[inline]
+    pub const fn new_values_changes_present(&self) -> bool {
+        !self.is_new_eq_present()
+    }
+
+    /// Returns `true` if the original value is zero and the new value is not zero.
+    #[inline]
+    pub const fn have_changed_from_zero(&self) -> bool {
+        self.is_original_zero() && !self.is_new_zero()
+    }
+
     /// Returns `true` if the original value is equal to the present value.
     #[inline]
     pub const fn is_original_eq_present(&self) -> bool {

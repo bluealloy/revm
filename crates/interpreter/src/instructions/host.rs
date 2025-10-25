@@ -126,7 +126,9 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if len != 0 {
         // fail on casting of memory_offset only if len is not zero.
         memory_offset_usize = as_usize_or_fail!(context.interpreter, memory_offset);
-        resize_memory!(context.interpreter, memory_offset_usize, len);
+        if !context.interpreter.resize_memory(memory_offset_usize, len) {
+            return;
+        }
     }
 
     let code = if spec_id.is_enabled_in(BERLIN) {
@@ -192,12 +194,13 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let target = context.interpreter.input.target_address();
 
     if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
+        let additional_cold_cost = context.interpreter.gas_table.additional_cold_cost();
+        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
         match res {
             Ok(storage) => {
                 if storage.is_cold {
-                    gas!(context.interpreter, COLD_SLOAD_COST_ADDITIONAL);
+                    gas!(context.interpreter, additional_cold_cost);
                 }
 
                 *index = storage.data;
@@ -239,12 +242,18 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
+        let additional_cold_cost = context.interpreter.gas_table.additional_cold_cost();
+        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold);
         match res {
-            Ok(load) => load,
+            Ok(load) => {
+                if load.is_cold {
+                    gas!(context.interpreter, additional_cold_cost);
+                }
+                load
+            }
             Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
             Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
         }
@@ -258,8 +267,8 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // dynamic gas
     gas!(
         context.interpreter,
-        gas::dyn_sstore_cost(
-            context.interpreter.runtime_flag.spec_id(),
+        context.interpreter.gas_table.sstore_dynamic_gas(
+            spec_id.is_enabled_in(ISTANBUL),
             &state_load.data,
             state_load.is_cold
         )
@@ -305,7 +314,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 
     popn!([offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    gas_or_fail!(
+    gas!(
         context.interpreter,
         context.interpreter.gas_table.log_cost(N as u8, len as u64)
     );
@@ -313,7 +322,9 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, offset, len);
+        if !context.interpreter.resize_memory(offset, len) {
+            return;
+        }
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     let Some(topics) = context.interpreter.stack.popn::<N>() else {

@@ -2,7 +2,7 @@ mod call_helpers;
 
 pub use call_helpers::{
     get_memory_input_and_out_ranges, load_acc_and_calc_gas, load_account_delegated,
-    load_account_delegated_handle_error, new_account_cost, resize_memory,
+    load_account_delegated_handle_error, resize_memory,
 };
 
 use crate::{
@@ -51,11 +51,16 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                     .halt(InstructionResult::CreateInitCodeSizeLimit);
                 return;
             }
-            gas!(context.interpreter, gas::initcode_cost(len));
+            gas!(
+                context.interpreter,
+                context.interpreter.gas_table.initcode_cost(len)
+            );
         }
 
         let code_offset = as_usize_or_fail!(context.interpreter, code_offset);
-        resize_memory!(context.interpreter, code_offset, len);
+        if !context.interpreter.resize_memory(code_offset, len) {
+            return;
+        }
         code = Bytes::copy_from_slice(
             context
                 .interpreter
@@ -69,10 +74,16 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     let scheme = if IS_CREATE2 {
         popn!([salt], context.interpreter);
         // SAFETY: `len` is reasonable in size as gas for it is already deducted.
-        gas_or_fail!(context.interpreter, gas::create2_cost(len));
+        gas!(
+            context.interpreter,
+            context.interpreter.gas_table.create2_cost(len)
+        );
         CreateScheme::Create2 { salt }
     } else {
-        gas!(context.interpreter, gas::CREATE);
+        gas!(
+            context.interpreter,
+            context.interpreter.gas_table.create_cost()
+        );
         CreateScheme::Create
     };
 
@@ -86,7 +97,10 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         .is_enabled_in(SpecId::TANGERINE)
     {
         // Take remaining gas and deduce l64 part of it.
-        gas_limit -= gas_limit / 64
+        gas_limit = context
+            .interpreter
+            .gas_table
+            .call_stipend_reduction(gas_limit);
     }
     gas!(context.interpreter, gas_limit);
 
