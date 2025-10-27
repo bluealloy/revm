@@ -199,9 +199,9 @@ impl L1BlockInfo {
     ///
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
     /// account for the empty signature.
-    pub fn data_gas(&self, input: &[u8], spec_id: OpSpecId) -> U256 {
+    pub fn data_gas(input: &[u8], spec_id: OpSpecId) -> U256 {
         if spec_id.is_enabled_in(OpSpecId::FJORD) {
-            let estimated_size = self.tx_estimated_size_fjord(input);
+            let estimated_size = Self::tx_estimated_size_fjord(input);
 
             return estimated_size
                 .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
@@ -222,7 +222,7 @@ impl L1BlockInfo {
     // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
-    fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
+    fn tx_estimated_size_fjord(input: &[u8]) -> U256 {
         U256::from(estimate_tx_compressed_size(input))
     }
 
@@ -253,7 +253,7 @@ impl L1BlockInfo {
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, pre-Ecotone.
     fn calculate_tx_l1_cost_bedrock(&self, input: &[u8], spec_id: OpSpecId) -> U256 {
-        let rollup_data_gas_cost = self.data_gas(input, spec_id);
+        let rollup_data_gas_cost = Self::data_gas(input, spec_id);
         rollup_data_gas_cost
             .saturating_add(self.l1_fee_overhead.unwrap_or_default())
             .saturating_mul(self.l1_base_fee)
@@ -279,7 +279,7 @@ impl L1BlockInfo {
             return self.calculate_tx_l1_cost_bedrock(input, spec_id);
         }
 
-        let rollup_data_gas_cost = self.data_gas(input, spec_id);
+        let rollup_data_gas_cost = Self::data_gas(input, spec_id);
         let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
 
         l1_fee_scaled
@@ -293,7 +293,7 @@ impl L1BlockInfo {
     /// `estimatedSize*(baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee)/1e12`
     fn calculate_tx_l1_cost_fjord(&self, input: &[u8]) -> U256 {
         let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
-        let estimated_size = self.tx_estimated_size_fjord(input);
+        let estimated_size = Self::tx_estimated_size_fjord(input);
 
         estimated_size
             .saturating_mul(l1_fee_scaled)
@@ -322,13 +322,6 @@ mod tests {
 
     #[test]
     fn test_data_gas_non_zero_bytes() {
-        let l1_block_info = L1BlockInfo {
-            l1_base_fee: U256::from(1_000_000),
-            l1_fee_overhead: Some(U256::from(1_000_000)),
-            l1_base_fee_scalar: U256::from(1_000_000),
-            ..Default::default()
-        };
-
         // 0xFACADE = 6 nibbles = 3 bytes
         // 0xFACADE = 1111 1010 . 1100 1010 . 1101 1110
 
@@ -336,29 +329,22 @@ mod tests {
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 68 * 16 = 1136
         let input = bytes!("FACADE");
-        let bedrock_data_gas = l1_block_info.data_gas(&input, OpSpecId::BEDROCK);
+        let bedrock_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(1136));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 = 48
-        let regolith_data_gas = l1_block_info.data_gas(&input, OpSpecId::REGOLITH);
+        let regolith_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(48));
 
         // Fjord has a minimum compressed size of 100 bytes
         // gas cost = 100 * 16 = 1600
-        let fjord_data_gas = l1_block_info.data_gas(&input, OpSpecId::FJORD);
+        let fjord_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::FJORD);
         assert_eq!(fjord_data_gas, U256::from(1600));
     }
 
     #[test]
     fn test_data_gas_zero_bytes() {
-        let l1_block_info = L1BlockInfo {
-            l1_base_fee: U256::from(1_000_000),
-            l1_fee_overhead: Some(U256::from(1_000_000)),
-            l1_base_fee_scalar: U256::from(1_000_000),
-            ..Default::default()
-        };
-
         // 0xFA00CA00DE = 10 nibbles = 5 bytes
         // 0xFA00CA00DE = 1111 1010 . 0000 0000 . 1100 1010 . 0000 0000 . 1101 1110
 
@@ -366,17 +352,17 @@ mod tests {
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
         let input = bytes!("FA00CA00DE");
-        let bedrock_data_gas = l1_block_info.data_gas(&input, OpSpecId::BEDROCK);
+        let bedrock_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(1144));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 + 2 * 4 = 56
-        let regolith_data_gas = l1_block_info.data_gas(&input, OpSpecId::REGOLITH);
+        let regolith_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(56));
 
         // Fjord has a minimum compressed size of 100 bytes
         // gas cost = 100 * 16 = 1600
-        let fjord_data_gas = l1_block_info.data_gas(&input, OpSpecId::FJORD);
+        let fjord_data_gas = L1BlockInfo::data_gas(&input, OpSpecId::FJORD);
         assert_eq!(fjord_data_gas, U256::from(1600));
     }
 
@@ -479,7 +465,7 @@ mod tests {
 
         // test
 
-        let gas_used = l1_block_info.data_gas(TX, OpSpecId::ECOTONE);
+        let gas_used = L1BlockInfo::data_gas(TX, OpSpecId::ECOTONE);
 
         assert_eq!(gas_used, expected_l1_gas_used);
 
@@ -564,7 +550,7 @@ mod tests {
 
         // test
 
-        let data_gas = l1_block_info.data_gas(TX, OpSpecId::FJORD);
+        let data_gas = L1BlockInfo::data_gas(TX, OpSpecId::FJORD);
 
         assert_eq!(data_gas, expected_data_gas);
 
