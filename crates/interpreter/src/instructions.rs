@@ -101,7 +101,7 @@ pub const fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>
     table[CALLCODE as usize].static_gas = 20;
     table[DELEGATECALL as usize].static_gas = 20;
     table[STATICCALL as usize].static_gas = 20;
-    // SSTORE static gas can be found in GasTable as check for minimal stipend
+    // SSTORE static gas can be found in GasParams as check for minimal stipend
     // needs to be done before deduction of static gas.
 
     if spec.is_enabled_in(TANGERINE) {

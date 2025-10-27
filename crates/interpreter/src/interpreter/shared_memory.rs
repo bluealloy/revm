@@ -1,5 +1,5 @@
 use super::MemoryTr;
-use crate::{gas::table::GasTable, InstructionResult};
+use crate::{gas::table::GasParams, InstructionResult};
 use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,
@@ -555,7 +555,7 @@ pub const fn num_words(len: usize) -> usize {
 pub fn resize_memory<Memory: MemoryTr>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
-    gas_table: &GasTable,
+    gas_table: &GasParams,
     offset: usize,
     len: usize,
 ) -> Result<(), InstructionResult> {
@@ -577,7 +577,7 @@ pub fn resize_memory<Memory: MemoryTr>(
 fn resize_memory_cold<Memory: MemoryTr>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
-    gas_table: &GasTable,
+    gas_table: &GasParams,
     new_num_words: usize,
 ) -> Result<(), InstructionResult> {
     let cost = gas_table.memory_cost(new_num_words);

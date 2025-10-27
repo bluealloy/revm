@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, table::GasTable},
+    gas::{self, table::GasParams},
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     InstructionContext,
@@ -132,7 +132,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(
     host: &mut H,
-    gas_table: &GasTable,
+    gas_table: &GasParams,
     spec: SpecId,
     remaining_gas: u64,
     address: Address,

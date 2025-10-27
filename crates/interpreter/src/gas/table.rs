@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 /// Gas table for dynamic gas constants.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct GasTable {
+pub struct GasParams {
     /// Table of gas costs for operations
     table: Arc<[u64; 256]>,
     /// Pointer to the table.
@@ -26,32 +26,32 @@ pub struct GasTable {
 
 #[cfg(feature = "serde")]
 mod serde {
-    use super::{Arc, GasTable};
+    use super::{Arc, GasParams};
 
     #[derive(serde::Serialize, serde::Deserialize)]
-    struct GasTableSerde {
+    struct GasParamsSerde {
         table: Vec<u64>,
     }
 
     #[cfg(feature = "serde")]
-    impl serde::Serialize for GasTable {
+    impl serde::Serialize for GasParams {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,
         {
-            GasTableSerde {
+            GasParamsSerde {
                 table: self.table.to_vec(),
             }
             .serialize(serializer)
         }
     }
 
-    impl<'de> serde::Deserialize<'de> for GasTable {
+    impl<'de> serde::Deserialize<'de> for GasParams {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: serde::Deserializer<'de>,
         {
-            let table = GasTableSerde::deserialize(deserializer)?;
+            let table = GasParamsSerde::deserialize(deserializer)?;
             if table.table.len() != 256 {
                 return Err(serde::de::Error::custom("Invalid gas table length"));
             }
@@ -60,14 +60,14 @@ mod serde {
     }
 }
 
-impl Default for GasTable {
+impl Default for GasParams {
     fn default() -> Self {
         let table = Arc::new([0; 256]);
         Self::new(table)
     }
 }
 
-impl GasTable {
+impl GasParams {
     /// Constants ids
 
     /// EXP gas cost per byte
@@ -108,7 +108,7 @@ impl GasTable {
     /// Copy copy per word
     pub const COPY_PER_WORD: GasId = 17;
 
-    /// Creates a new `GasTable` with the given table.
+    /// Creates a new `GasParams` with the given table.
     #[inline]
     pub fn new(table: Arc<[u64; 256]>) -> Self {
         Self {
@@ -122,10 +122,10 @@ impl GasTable {
     /// Use to override default gas cost
     ///
     /// ```rust
-    /// let mut gas_table = GasTable::new_spec(SpecId::default());
-    /// gas_table.override_gas([(GasTable::MEMORY_LINEAR_COST, 2), (GasTable::MEMORY_QUADRATIC_REDUCTION, 512)].into_iter());
-    /// assert_eq!(gas_table.get(GasTable::MEMORY_LINEAR_COST), 2);
-    /// assert_eq!(gas_table.get(GasTable::MEMORY_QUADRATIC_REDUCTION), 512);
+    /// let mut gas_table = GasParams::new_spec(SpecId::default());
+    /// gas_table.override_gas([(GasParams::MEMORY_LINEAR_COST, 2), (GasParams::MEMORY_QUADRATIC_REDUCTION, 512)].into_iter());
+    /// assert_eq!(gas_table.get(GasParams::MEMORY_LINEAR_COST), 2);
+    /// assert_eq!(gas_table.get(GasParams::MEMORY_QUADRATIC_REDUCTION), 512);
     /// ```
     pub fn override_gas(&mut self, values: impl IntoIterator<Item = (GasId, u64)>) {
         let mut table = self.table.as_ref().clone();
@@ -141,7 +141,7 @@ impl GasTable {
         &self.table
     }
 
-    /// Creates a new `GasTable` for the given spec.
+    /// Creates a new `GasParams` for the given spec.
     #[inline]
     pub fn new_spec(spec: SpecId) -> Self {
         let mut table = [0; 256];

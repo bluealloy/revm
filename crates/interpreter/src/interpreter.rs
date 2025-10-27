@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas::table::GasTable, host::DummyHost, instruction_context::InstructionContext,
+    gas::table::GasParams, host::DummyHost, instruction_context::InstructionContext,
     interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -30,7 +30,7 @@ use primitives::{hardfork::SpecId, Bytes};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     /// Gas table for dynamic gas constants.
-    pub gas_table: GasTable,
+    pub gas_table: GasParams,
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
@@ -106,7 +106,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             bytecode,
             gas: Gas::new(gas_limit),
             // TODO get it from host;
-            gas_table: GasTable::new_spec(spec_id),
+            gas_table: GasParams::new_spec(spec_id),
             stack,
             return_data: Default::default(),
             memory,
