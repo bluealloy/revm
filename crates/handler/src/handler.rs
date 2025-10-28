@@ -298,7 +298,8 @@ pub trait Handler {
         gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
-        let memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
+        let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
+        memory.set_memory_limit(ctx.cfg().memory_limit());
 
         let (tx, journal) = ctx.tx_journal_mut();
         let bytecode = if let Some(&to) = tx.kind().to() {
