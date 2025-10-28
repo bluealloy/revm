@@ -1,8 +1,6 @@
 use super::constants::*;
 use crate::{num_words, SStoreResult, SelfDestructResult, StateLoad};
-use context_interface::{
-    journaled_state::AccountLoad, transaction::AccessListItemTr as _, Transaction, TransactionType,
-};
+use context_interface::{transaction::AccessListItemTr as _, Transaction, TransactionType};
 use primitives::{eip7702, hardfork::SpecId, U256};
 
 /// `SSTORE` opcode refund calculation.
@@ -21,14 +19,20 @@ pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
     } else {
         let mut refund = 0;
 
+        // If original value is not 0
         if !vals.is_original_zero() {
+            // If current value is 0 (also means that new value is not 0),
             if vals.is_present_zero() {
+                // remove SSTORE_CLEARS_SCHEDULE gas from refund counter.
                 refund -= sstore_clears_schedule;
+            // If new value is 0 (also means that current value is not 0),
             } else if vals.is_new_zero() {
+                // add SSTORE_CLEARS_SCHEDULE gas to refund counter.
                 refund += sstore_clears_schedule;
             }
         }
 
+        // If original value equals new value (this storage slot is reset
         if vals.is_original_eq_new() {
             let (gas_sstore_reset, gas_sload) = if spec_id.is_enabled_in(SpecId::BERLIN) {
                 (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)

@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, CALL_STIPEND, COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL},
+    gas::{self, CALL_STIPEND},
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
@@ -248,12 +248,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold);
         match res {
-            Ok(load) => {
-                if load.is_cold {
-                    gas!(context.interpreter, additional_cold_cost);
-                }
-                load
-            }
+            Ok(load) => load,
             Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
             Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
         }

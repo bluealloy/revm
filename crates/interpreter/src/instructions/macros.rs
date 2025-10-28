@@ -51,19 +51,15 @@ macro_rules! berlin_load_account {
         $crate::berlin_load_account!($context, $address, $load_code, ())
     };
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
-        let skip_cold_load =
-            $context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+        let cold_load_gas = $context.interpreter.gas_table.additional_cold_cost();
+        let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
         match $context
             .host
             .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)
         {
             Ok(account) => {
                 if account.is_cold {
-                    $crate::gas!(
-                        $context.interpreter,
-                        COLD_ACCOUNT_ACCESS_COST_ADDITIONAL,
-                        $ret
-                    );
+                    $crate::gas!($context.interpreter, cold_load_gas, $ret);
                 }
                 account
             }

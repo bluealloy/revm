@@ -1,10 +1,7 @@
 //! Gas table for dynamic gas constants.
 
 use crate::{
-    gas::{
-        self, log2floor, COLD_SLOAD_COST, ISTANBUL_SLOAD_GAS, SSTORE_RESET, SSTORE_SET,
-        WARM_SSTORE_RESET, WARM_STORAGE_READ_COST,
-    },
+    gas::{self, log2floor, ISTANBUL_SLOAD_GAS, SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET},
     num_words,
 };
 use context_interface::context::SStoreResult;
@@ -74,9 +71,8 @@ impl GasParams {
     pub const EXP_BYTE_GAS: GasId = 1;
     /// EXTCODECOPY gas cost per word
     pub const EXTCODECOPY_PER_WORD: GasId = 2;
-    /// Static gas cost for SSTORE opcode. This gas in comparison with other gas const needs
-    /// to be deducted after check for minimal stipend gas check. This is a reason why it is here.
-    pub const SSTORE: GasId = 3;
+    /// Copy copy per word
+    pub const COPY_PER_WORD: GasId = 3;
     /// Log data gas cost per byte
     pub const LOGDATA: GasId = 4;
     /// Log topic gas cost per topic
@@ -105,12 +101,15 @@ impl GasParams {
     ///
     /// Used in delegated account access to specify delegated account warm gas cost.
     pub const WARM_STORAGE_READ_COST: GasId = 16;
-    /// Copy copy per word
-    pub const COPY_PER_WORD: GasId = 17;
-    /// SSTORE set cost
-    pub const SSTORE_SET: GasId = 18;
+    /// Static gas cost for SSTORE opcode. This gas in comparison with other gas const needs
+    /// to be deducted after check for minimal stipend gas cost. This is a reason why it is here.
+    pub const SSTORE_STATIC: GasId = 17;
+    /// SSTORE set cost additional amount after SSTORE_RESET is added.
+    pub const SSTORE_SET_WITHOUT_LOAD_COST: GasId = 18;
     /// SSTORE reset cost
-    pub const SSTORE_RESET: GasId = 19;
+    pub const SSTORE_RESET_WITHOUT_COLD_LOAD_COST: GasId = 19;
+    /// SSTORE clearing slot refund
+    pub const SSTORE_CLEARING_SLOT_REFUND: GasId = 20;
 
     /// Creates a new `GasParams` with the given table.
     #[inline]
@@ -150,7 +149,6 @@ impl GasParams {
     pub fn new_spec(spec: SpecId) -> Self {
         let mut table = [0; 256];
 
-        table[Self::SSTORE as usize] = gas::SSTORE_RESET;
         table[Self::EXP_BYTE_GAS as usize] = 10;
         table[Self::LOGDATA as usize] = gas::LOGDATA;
         table[Self::LOGTOPIC as usize] = gas::LOGTOPIC;
@@ -167,25 +165,43 @@ impl GasParams {
         table[Self::NEW_ACCOUNT_COST as usize] = gas::NEWACCOUNT;
         table[Self::WARM_STORAGE_READ_COST as usize] = gas::WARM_STORAGE_READ_COST;
         table[Self::COPY_PER_WORD as usize] = gas::COPY;
-        table[Self::SSTORE_SET as usize] = SSTORE_SET - SSTORE_RESET;
-        // resset is not used in frontier fork.
-        table[Self::SSTORE_RESET as usize] = 0;
+        // Frontiers had fixed 5k cost.
+        table[Self::SSTORE_STATIC as usize] = 5000;
+        // SSTORE SET
+        table[Self::SSTORE_SET_WITHOUT_LOAD_COST as usize] = SSTORE_SET - 5000;
+        // SSTORE RESET Is covered in SSTORE_STATIC.
+        table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] = 0;
+
+        // SSTORE CLEARING SLOT REFUND
+        table[Self::SSTORE_CLEARING_SLOT_REFUND as usize] = 15000;
 
         if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             table[Self::EXP_BYTE_GAS as usize] = 50;
         }
 
         if spec.is_enabled_in(SpecId::ISTANBUL) {
-            table[Self::SSTORE as usize] = gas::ISTANBUL_SLOAD_GAS;
-            table[Self::SSTORE_SET as usize] = SSTORE_SET - ISTANBUL_SLOAD_GAS;
-            table[Self::SSTORE_RESET as usize] = SSTORE_RESET - ISTANBUL_SLOAD_GAS;
+            table[Self::SSTORE_STATIC as usize] = gas::ISTANBUL_SLOAD_GAS;
+            table[Self::SSTORE_SET_WITHOUT_LOAD_COST as usize] = SSTORE_SET - ISTANBUL_SLOAD_GAS;
+            table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] =
+                SSTORE_RESET - ISTANBUL_SLOAD_GAS;
         }
 
         if spec.is_enabled_in(SpecId::BERLIN) {
-            table[Self::SSTORE as usize] = gas::WARM_STORAGE_READ_COST;
+            table[Self::SSTORE_STATIC as usize] = gas::WARM_STORAGE_READ_COST;
             table[Self::ADDITIONAL_COLD_COST as usize] = gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
-            table[Self::SSTORE_SET as usize] = SSTORE_SET - gas::WARM_STORAGE_READ_COST;
-            table[Self::SSTORE_RESET as usize] = SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
+
+            table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] =
+                WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
+            table[Self::SSTORE_SET_WITHOUT_LOAD_COST as usize] =
+                SSTORE_SET - gas::WARM_STORAGE_READ_COST;
+        }
+
+        if spec.is_enabled_in(SpecId::LONDON) {
+            // EIP-3529: Reduction in refunds
+            // Replace SSTORE_CLEARS_SCHEDULE (as defined in EIP-2200) with
+            // SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_KEY_COST (4,800 gas as of EIP-2929 + EIP-2930)
+            table[Self::SSTORE_CLEARING_SLOT_REFUND as usize] =
+                WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
         }
 
         Self::new(Arc::new(table))
@@ -225,24 +241,47 @@ impl GasParams {
     /// Static gas cost for SSTORE opcode
     #[inline]
     pub fn sstore_static_gas(&self) -> u64 {
-        self.get(Self::SSTORE)
+        self.get(Self::SSTORE_STATIC)
     }
 
     /// SSTORE set cost
     #[inline]
-    pub fn sstore_set_cost(&self) -> u64 {
-        self.get(Self::SSTORE_SET)
+    pub fn sstore_set_without_load_cost(&self) -> u64 {
+        self.get(Self::SSTORE_SET_WITHOUT_LOAD_COST)
     }
 
     /// SSTORE reset cost
     #[inline]
-    pub fn sstore_reset_cost(&self) -> u64 {
-        self.get(Self::SSTORE_RESET)
+    pub fn sstore_reset_without_cold_load_cost(&self) -> u64 {
+        self.get(Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST)
     }
 
-    /// Dynamic gas cost for SSTORE opcode
+    /// SSTORE clearing slot refund
     #[inline]
-    pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
+    pub fn sstore_clearing_slot_refund(&self) -> u64 {
+        self.get(Self::SSTORE_CLEARING_SLOT_REFUND)
+    }
+
+    /// Dynamic gas cost for SSTORE opcode.
+    ///
+    /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
+    #[inline]
+    pub fn sstore_dynamic_gas(
+        &self,
+        is_pre_istanbul: bool,
+        vals: &SStoreResult,
+        is_cold: bool,
+    ) -> u64 {
+        // frontier logic gets charged for every SSTORE operation if original value is zero.
+        // this behaviour is fixed in istanbul fork.
+        if is_pre_istanbul {
+            if vals.is_original_zero() && !vals.is_new_zero() {
+                return self.sstore_set_without_load_cost();
+            } else {
+                return self.sstore_reset_without_cold_load_cost();
+            }
+        }
+
         let mut gas = 0;
 
         // this will be zero before berlin fork.
@@ -250,23 +289,16 @@ impl GasParams {
             gas += self.additional_cold_cost();
         }
 
-        if vals.new_values_changes_present() {
-            let sstore_set = self.sstore_set_cost();
-            if is_istanbul {
-                if vals.is_original_eq_present() {
-                    let sstore_reset = self.sstore_reset_cost();
-                    // cost for changing storage slot (called in EIP as reset gas)
-                    gas += sstore_reset;
-                    if vals.is_original_zero() {
-                        // add additional gas for creating storage slot (Zero slot means it is not existing).
-                        gas += sstore_set - sstore_reset;
-                    }
-                }
-            } else if vals.is_original_zero() {
-                // frontier logic gets charged for every SSTORE operation if original value is zero.
-                // this behaviour is fixed in istanbul fork.
-                gas = sstore_set;
-            }
+        // if new values changed present value and present value is unchanged from original.
+        if vals.new_values_changes_present() && vals.is_original_eq_present() {
+            gas += if vals.is_original_zero() {
+                // set cost for creating storage slot (Zero slot means it is not existing).
+                // and previous condition says present is same as original.
+                self.sstore_set_without_load_cost()
+            } else {
+                // if new value is not zero, this means we are setting some value to it.
+                self.sstore_reset_without_cold_load_cost()
+            };
         }
         gas
     }
@@ -275,18 +307,17 @@ impl GasParams {
     #[inline]
     pub fn sstore_refund(&self, before_istanbul: bool, vals: &SStoreResult) -> i64 {
         // EIP-3529: Reduction in refunds
-        let sstore_clears_schedule = 0;
-        let sstore_set = self.sstore_set_cost() as i64;
-        let sstore_reset = self.sstore_reset_cost() as i64;
+        let sstore_clearing_slot_refund = self.sstore_clearing_slot_refund() as i64;
 
         if before_istanbul {
+            // // before instanbul fork, refund was always awarded without checking original state.
             if !vals.is_present_zero() && vals.is_new_zero() {
-                return sstore_clears_schedule;
+                return sstore_clearing_slot_refund;
             }
             return 0;
         }
 
-        // If current value equals new value (this is a no-op), SLOAD_GAS is deducted.
+        // If current value equals new value (this is a no-op)
         if vals.is_new_eq_present() {
             return 0;
         }
@@ -294,27 +325,33 @@ impl GasParams {
         // refund for the clearing of storage slot.
         // As new is not equal to present, new values zero means that original and present values are not zero
         if vals.is_original_eq_present() && vals.is_new_zero() {
-            return sstore_clears_schedule;
+            return sstore_clearing_slot_refund;
         }
 
         let mut refund = 0;
+        // If original value is not 0
         if !vals.is_original_zero() {
-            // if present is zero (and new is not zero), we are removing the refund
-            // that was previously added for clearing the storage slot.
+            // If current value is 0 (also means that new value is not 0),
             if vals.is_present_zero() {
-                refund -= sstore_clears_schedule;
+                // remove SSTORE_CLEARS_SCHEDULE gas from refund counter.
+                refund -= sstore_clearing_slot_refund;
+            // If new value is 0 (also means that current value is not 0),
             } else if vals.is_new_zero() {
-                // if new is zero (and present is not zero), we are adding the refund for clearing the storage slot.
-                refund += sstore_clears_schedule;
+                // add SSTORE_CLEARS_SCHEDULE gas to refund counter.
+                refund += sstore_clearing_slot_refund;
             }
         }
 
-        // if original is equal to new.
+        // If original value equals new value (this storage slot is reset)
         if vals.is_original_eq_new() {
+            // If original value is 0
             if vals.is_original_zero() {
-                refund += sstore_set;
+                // add SSTORE_SET_GAS - SLOAD_GAS to refund counter.
+                refund += self.sstore_set_without_load_cost() as i64;
+            // Otherwise
             } else {
-                refund += sstore_reset;
+                // add SSTORE_RESET_GAS - SLOAD_GAS gas to refund counter.
+                refund += self.sstore_reset_without_cold_load_cost() as i64;
             }
         }
         return refund;
