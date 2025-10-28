@@ -254,7 +254,10 @@ impl GasParams {
         }
 
         if is_cold {
-            gas += self.cold_account_additional_cost();
+            // Note: SELFDESTRUCT does not charge a WARM_STORAGE_READ_COST in case the recipient is already warm,
+            // which differs from how the other call-variants work. The reasoning behind this is to keep
+            // the changes small, a SELFDESTRUCT already costs 5K and is a no-op if invoked more than once.
+            gas += self.cold_account_additional_cost() + self.warm_storage_read_cost();
         }
         gas
     }
