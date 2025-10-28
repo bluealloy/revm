@@ -139,11 +139,6 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
         table[STATICCALL as usize].static_gas = gas::WARM_STORAGE_READ_COST;
     }
 
-    println!(
-        "INSTRUCTION CALL TABLE: {:?}",
-        table[CALL as usize].static_gas
-    );
-
     table
 }
 

@@ -67,23 +67,14 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
         );
     }
 
-    println!(
-        "GAS BEFORE LOAD OF ACCOUNT: {}",
-        context.interpreter.gas.remaining()
-    );
     // load account delegated and deduct dynamic gas.
     let (gas, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
     let interpreter = &mut context.interpreter;
 
-    println!("GAS calc LOAD OF ACCOUNT: {}", gas);
-
     // deduct dynamic gas.
     gas!(interpreter, gas, None);
-    println!(
-        "GAS AFTer LOAD OF ACCOUNT: {}",
-        context.interpreter.gas.remaining()
-    );
+
     let interpreter = &mut context.interpreter;
 
     // EIP-150: Gas cost changes for IO-heavy operations
@@ -92,19 +83,12 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
         let reduced_gas_limit = interpreter
             .gas_table
             .call_stipend_reduction(interpreter.gas.remaining());
-        println!("REDUCED GAS LIMIT: {}", reduced_gas_limit);
-        println!("STACK GAS LIMIT: {}", stack_gas_limit);
         min(reduced_gas_limit, stack_gas_limit)
     } else {
-        println!("STACK GAS LIMIT: {}", stack_gas_limit);
         stack_gas_limit
     };
-
-    println!("CALL stipend before: {}", interpreter.gas.remaining());
-
     gas!(interpreter, gas_limit, None);
 
-    println!("CALL stipend after: {}", interpreter.gas.remaining());
     // Add call stipend if there is value to be transferred.
     if transfers_value {
         gas_limit = gas_limit.saturating_add(interpreter.gas_table.call_stipend());

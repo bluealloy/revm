@@ -322,19 +322,13 @@ impl GasParams {
 
         // if new values changed present value and present value is unchanged from original.
         if vals.new_values_changes_present() && vals.is_original_eq_present() {
-            println!("new values changes present and original eq present");
             gas += if vals.is_original_zero() {
-                println!("original is zero");
                 // set cost for creating storage slot (Zero slot means it is not existing).
                 // and previous condition says present is same as original.
-                let t = self.sstore_set_without_load_cost();
-                println!("sstore set without load cost: {:?}", t);
-                t
+                self.sstore_set_without_load_cost()
             } else {
                 // if new value is not zero, this means we are setting some value to it.
-                let t = self.sstore_reset_without_cold_load_cost();
-                println!("sstore reset without cold load cost: {:?}", t);
-                t
+                self.sstore_reset_without_cold_load_cost()
             };
         }
         gas
