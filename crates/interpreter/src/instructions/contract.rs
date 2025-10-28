@@ -137,15 +137,21 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .halt(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
+
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
     else {
         return;
     };
+
+    println!("CALL before: {}", context.interpreter.gas.remaining());
     let Some((gas_limit, bytecode, bytecode_hash)) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, true, local_gas_limit)
     else {
         return;
     };
+
+    println!("CALL after: {}", context.interpreter.gas.remaining());
+    println!("new GAS LIMIST after: {}", gas_limit);
 
     // Call host to interact with target contract
     context

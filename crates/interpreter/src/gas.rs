@@ -1,7 +1,7 @@
 //! EVM gas calculation utilities.
 
 mod calc;
-pub mod config;
+pub mod params;
 mod constants;
 
 pub use calc::*;
@@ -199,11 +199,10 @@ impl MemoryGas {
     ///
     /// Returns the difference between the new and old expansion cost.
     #[inline]
-    pub fn set_words_num(&mut self, words_num: usize, expansion_cost: u64) -> Option<u64> {
+    pub fn set_words_num(&mut self, words_num: usize, mut expansion_cost: u64) -> Option<u64> {
         self.words_num = words_num;
-        let diff = self.expansion_cost.checked_sub(expansion_cost);
-        self.expansion_cost = expansion_cost;
-        diff
+        core::mem::swap(&mut self.expansion_cost, &mut expansion_cost);
+        self.expansion_cost.checked_sub(expansion_cost)
     }
 
     /// Records a new memory length and calculates additional cost if memory is expanded.

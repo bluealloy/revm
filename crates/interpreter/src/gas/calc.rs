@@ -1,54 +1,7 @@
 use super::constants::*;
-use crate::{num_words, SStoreResult, SelfDestructResult, StateLoad};
+use crate::num_words;
 use context_interface::{transaction::AccessListItemTr as _, Transaction, TransactionType};
 use primitives::{eip7702, hardfork::SpecId, U256};
-
-/// `SSTORE` opcode refund calculation.
-#[allow(clippy::collapsible_else_if)]
-#[inline]
-pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
-    // EIP-3529: Reduction in refunds
-    let sstore_clears_schedule = if spec_id.is_enabled_in(SpecId::LONDON) {
-        (SSTORE_RESET - COLD_SLOAD_COST + ACCESS_LIST_STORAGE_KEY) as i64
-    } else {
-        REFUND_SSTORE_CLEARS
-    };
-
-    if vals.is_original_eq_present() && vals.is_new_zero() {
-        sstore_clears_schedule
-    } else {
-        let mut refund = 0;
-
-        // If original value is not 0
-        if !vals.is_original_zero() {
-            // If current value is 0 (also means that new value is not 0),
-            if vals.is_present_zero() {
-                // remove SSTORE_CLEARS_SCHEDULE gas from refund counter.
-                refund -= sstore_clears_schedule;
-            // If new value is 0 (also means that current value is not 0),
-            } else if vals.is_new_zero() {
-                // add SSTORE_CLEARS_SCHEDULE gas to refund counter.
-                refund += sstore_clears_schedule;
-            }
-        }
-
-        // If original value equals new value (this storage slot is reset
-        if vals.is_original_eq_new() {
-            let (gas_sstore_reset, gas_sload) = if spec_id.is_enabled_in(SpecId::BERLIN) {
-                (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)
-            } else {
-                (SSTORE_RESET, sload_cost(spec_id, false))
-            };
-            if vals.is_original_zero() {
-                refund += (SSTORE_SET - gas_sload) as i64;
-            } else {
-                refund += (gas_sstore_reset - gas_sload) as i64;
-            }
-        }
-
-        refund
-    }
-}
 
 #[inline]
 pub(crate) const fn log2floor(value: U256) -> u64 {
@@ -90,50 +43,6 @@ pub const fn initcode_cost(len: usize) -> u64 {
         panic!("initcode cost overflow")
     };
     cost
-}
-
-/// `SLOAD` opcode cost calculation.
-#[inline]
-pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        if is_cold {
-            COLD_SLOAD_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
-    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        // EIP-1884: Repricing for trie-size-dependent opcodes
-        ISTANBUL_SLOAD_GAS
-    } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
-        // EIP-150: Gas cost changes for IO-heavy operations
-        200
-    } else {
-        50
-    }
-}
-
-/// `SELFDESTRUCT` opcode cost calculation.
-#[inline]
-pub const fn dyn_selfdestruct_cost(spec_id: SpecId, res: &StateLoad<SelfDestructResult>) -> u64 {
-    let is_tangerine = spec_id.is_enabled_in(SpecId::TANGERINE);
-    let mut gas = 0;
-
-    // EIP-161: State trie clearing (invariant-preserving alternative)
-    let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-        res.data.had_value && !res.data.target_exists
-    } else {
-        !res.data.target_exists
-    };
-
-    // EIP-150: Gas cost changes for IO-heavy operations
-    if is_tangerine && should_charge_topup {
-        gas += NEWACCOUNT
-    }
-
-    if spec_id.is_enabled_in(SpecId::BERLIN) && res.is_cold {
-        gas += COLD_ACCOUNT_ACCESS_COST
-    }
-    gas
 }
 
 /// Memory expansion cost calculation for a given number of words.

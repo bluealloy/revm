@@ -85,7 +85,7 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host>() -> [Instructio
 
 /// Create a instruction table with applied spec changes to static gas cost.
 #[inline]
-pub const fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
+pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     spec: SpecId,
 ) -> [Instruction<WIRE, H>; 256] {
     use bytecode::opcode::*;
@@ -114,6 +114,8 @@ pub const fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>
         table[CALLCODE as usize].static_gas = 700;
         table[DELEGATECALL as usize].static_gas = 700;
         table[STATICCALL as usize].static_gas = 700;
+        // EIP-150: Gas cost changes for IO-heavy operations
+        //
         table[SELFDESTRUCT as usize].static_gas = 5000;
     }
 
@@ -136,6 +138,11 @@ pub const fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>
         table[DELEGATECALL as usize].static_gas = gas::WARM_STORAGE_READ_COST;
         table[STATICCALL as usize].static_gas = gas::WARM_STORAGE_READ_COST;
     }
+
+    println!(
+        "INSTRUCTION CALL TABLE: {:?}",
+        table[CALL as usize].static_gas
+    );
 
     table
 }

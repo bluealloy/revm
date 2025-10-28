@@ -85,7 +85,8 @@ pub trait JournalTr {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<<Self::Database as Database>::Error>>;
 
     /// Sets access list inside journal.
     fn warm_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>);

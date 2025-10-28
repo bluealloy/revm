@@ -106,8 +106,10 @@ impl JournalTr for Backend {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Result<StateLoad<SelfDestructResult>, Infallible> {
-        self.journaled_state.selfdestruct(address, target)
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<Infallible>> {
+        self.journaled_state
+            .selfdestruct(address, target, skip_cold_load)
     }
 
     fn warm_access_list(

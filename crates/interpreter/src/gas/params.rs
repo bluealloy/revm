@@ -94,7 +94,7 @@ impl GasParams {
     /// Transafer value cost
     pub const TRANSFER_VALUE_COST: GasId = 13;
     /// Additional cold cost. Additional cold cost is added to the gas cost if the account is cold loaded.
-    pub const ADDITIONAL_COLD_COST: GasId = 14;
+    pub const COLD_ACCOUNT_ADDITIONAL_COST: GasId = 14;
     /// New account cost. New account cost is added to the gas cost if the account is empty.
     pub const NEW_ACCOUNT_COST: GasId = 15;
     /// Warm storage read cost. Warm storage read cost is added to the gas cost if the account is warm loaded.
@@ -110,6 +110,12 @@ impl GasParams {
     pub const SSTORE_RESET_WITHOUT_COLD_LOAD_COST: GasId = 19;
     /// SSTORE clearing slot refund
     pub const SSTORE_CLEARING_SLOT_REFUND: GasId = 20;
+    /// Selfdestruct refund.
+    pub const SELFDESTRUCT_REFUND: GasId = 21;
+    /// Call stipend checked in sstore.
+    pub const CALL_STIPEND: GasId = 22;
+    /// Cold storage additional cost.
+    pub const COLD_STORAGE_ADDITIONAL_COST: GasId = 23;
 
     /// Creates a new `GasParams` with the given table.
     #[inline]
@@ -152,6 +158,7 @@ impl GasParams {
         table[Self::EXP_BYTE_GAS as usize] = 10;
         table[Self::LOGDATA as usize] = gas::LOGDATA;
         table[Self::LOGTOPIC as usize] = gas::LOGTOPIC;
+        table[Self::COPY_PER_WORD as usize] = gas::COPY;
         table[Self::EXTCODECOPY_PER_WORD as usize] = gas::COPY;
         table[Self::MCOPY_PER_WORD as usize] = gas::COPY;
         table[Self::KECCAK256_PER_WORD as usize] = gas::KECCAK256WORD;
@@ -161,19 +168,20 @@ impl GasParams {
         table[Self::CREATE as usize] = gas::CREATE;
         table[Self::CALL_STIPEND_REDUCTION as usize] = 64;
         table[Self::TRANSFER_VALUE_COST as usize] = gas::CALLVALUE;
-        table[Self::ADDITIONAL_COLD_COST as usize] = 0;
+        table[Self::COLD_ACCOUNT_ADDITIONAL_COST as usize] = 0;
         table[Self::NEW_ACCOUNT_COST as usize] = gas::NEWACCOUNT;
         table[Self::WARM_STORAGE_READ_COST as usize] = gas::WARM_STORAGE_READ_COST;
-        table[Self::COPY_PER_WORD as usize] = gas::COPY;
         // Frontiers had fixed 5k cost.
         table[Self::SSTORE_STATIC as usize] = 5000;
         // SSTORE SET
         table[Self::SSTORE_SET_WITHOUT_LOAD_COST as usize] = SSTORE_SET - 5000;
         // SSTORE RESET Is covered in SSTORE_STATIC.
         table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] = 0;
-
         // SSTORE CLEARING SLOT REFUND
         table[Self::SSTORE_CLEARING_SLOT_REFUND as usize] = 15000;
+        table[Self::SELFDESTRUCT_REFUND as usize] = 24000;
+        table[Self::CALL_STIPEND as usize] = gas::CALL_STIPEND;
+        table[Self::COLD_STORAGE_ADDITIONAL_COST as usize] = 0;
 
         if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             table[Self::EXP_BYTE_GAS as usize] = 50;
@@ -188,7 +196,9 @@ impl GasParams {
 
         if spec.is_enabled_in(SpecId::BERLIN) {
             table[Self::SSTORE_STATIC as usize] = gas::WARM_STORAGE_READ_COST;
-            table[Self::ADDITIONAL_COLD_COST as usize] = gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+            table[Self::COLD_ACCOUNT_ADDITIONAL_COST as usize] =
+                gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+            table[Self::COLD_STORAGE_ADDITIONAL_COST as usize] = gas::COLD_SLOAD_COST;
 
             table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] =
                 WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
@@ -202,6 +212,9 @@ impl GasParams {
             // SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_KEY_COST (4,800 gas as of EIP-2929 + EIP-2930)
             table[Self::SSTORE_CLEARING_SLOT_REFUND as usize] =
                 WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
+
+            // EIP-3529: Reduction in refunds
+            table[Self::SELFDESTRUCT_REFUND as usize] = 0;
         }
 
         Self::new(Arc::new(table))
@@ -222,6 +235,28 @@ impl GasParams {
         // EIP-160: EXP cost increase
         self.get(Self::EXP_BYTE_GAS)
             .saturating_mul(log2floor(power) / 8 + 1)
+    }
+
+    /// Selfdestruct refund.
+    #[inline]
+    pub fn selfdestruct_refund(&self) -> i64 {
+        self.get(Self::SELFDESTRUCT_REFUND) as i64
+    }
+
+    /// Selfdestruct cost.
+    #[inline]
+    pub fn selfdestruct_cost(&self, should_charge_topup: bool, is_cold: bool) -> u64 {
+        let mut gas = 0;
+
+        // EIP-150: Gas cost changes for IO-heavy operations
+        if should_charge_topup {
+            gas += self.get(Self::NEW_ACCOUNT_COST);
+        }
+
+        if is_cold {
+            gas += self.cold_account_additional_cost();
+        }
+        gas
     }
 
     /// EXTCODECOPY gas cost
@@ -266,15 +301,10 @@ impl GasParams {
     ///
     /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
     #[inline]
-    pub fn sstore_dynamic_gas(
-        &self,
-        is_pre_istanbul: bool,
-        vals: &SStoreResult,
-        is_cold: bool,
-    ) -> u64 {
+    pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
         // frontier logic gets charged for every SSTORE operation if original value is zero.
         // this behaviour is fixed in istanbul fork.
-        if is_pre_istanbul {
+        if !is_istanbul {
             if vals.is_original_zero() && !vals.is_new_zero() {
                 return self.sstore_set_without_load_cost();
             } else {
@@ -286,18 +316,25 @@ impl GasParams {
 
         // this will be zero before berlin fork.
         if is_cold {
-            gas += self.additional_cold_cost();
+            //println!("is cold {}", self.additional_cold_cost());
+            gas += self.cold_storage_additional_cost();
         }
 
         // if new values changed present value and present value is unchanged from original.
         if vals.new_values_changes_present() && vals.is_original_eq_present() {
+            println!("new values changes present and original eq present");
             gas += if vals.is_original_zero() {
+                println!("original is zero");
                 // set cost for creating storage slot (Zero slot means it is not existing).
                 // and previous condition says present is same as original.
-                self.sstore_set_without_load_cost()
+                let t = self.sstore_set_without_load_cost();
+                println!("sstore set without load cost: {:?}", t);
+                t
             } else {
                 // if new value is not zero, this means we are setting some value to it.
-                self.sstore_reset_without_cold_load_cost()
+                let t = self.sstore_reset_without_cold_load_cost();
+                println!("sstore reset without cold load cost: {:?}", t);
+                t
             };
         }
         gas
@@ -305,11 +342,11 @@ impl GasParams {
 
     /// SSTORE refund calculation.
     #[inline]
-    pub fn sstore_refund(&self, before_istanbul: bool, vals: &SStoreResult) -> i64 {
+    pub fn sstore_refund(&self, is_istanbul: bool, vals: &SStoreResult) -> i64 {
         // EIP-3529: Reduction in refunds
         let sstore_clearing_slot_refund = self.sstore_clearing_slot_refund() as i64;
 
-        if before_istanbul {
+        if !is_istanbul {
             // // before instanbul fork, refund was always awarded without checking original state.
             if !vals.is_present_zero() && vals.is_new_zero() {
                 return sstore_clearing_slot_refund;
@@ -379,7 +416,7 @@ impl GasParams {
         self.get(Self::MEMORY_LINEAR_COST)
             .saturating_mul(len)
             .saturating_add(
-                len.saturating_mul(len)
+                (len.saturating_mul(len))
                     .saturating_div(self.get(Self::MEMORY_QUADRATIC_REDUCTION)),
             )
     }
@@ -406,10 +443,16 @@ impl GasParams {
         )
     }
 
+    /// Call stipend.
+    #[inline]
+    pub fn call_stipend(&self) -> u64 {
+        self.get(Self::CALL_STIPEND)
+    }
+
     /// Call stipend reduction. Call stipend is reduced by 1/64 of the gas limit.
     #[inline]
     pub fn call_stipend_reduction(&self, gas_limit: u64) -> u64 {
-        gas_limit.saturating_sub(gas_limit.saturating_div(self.get(Self::CALL_STIPEND_REDUCTION)))
+        gas_limit - gas_limit / self.get(Self::CALL_STIPEND_REDUCTION)
     }
 
     /// Transfer value cost
@@ -420,8 +463,14 @@ impl GasParams {
 
     /// Additional cold cost. Additional cold cost is added to the gas cost if the account is cold loaded.
     #[inline]
-    pub fn additional_cold_cost(&self) -> u64 {
-        self.get(Self::ADDITIONAL_COLD_COST)
+    pub fn cold_account_additional_cost(&self) -> u64 {
+        self.get(Self::COLD_ACCOUNT_ADDITIONAL_COST)
+    }
+
+    /// Cold storage additional cost.
+    #[inline]
+    pub fn cold_storage_additional_cost(&self) -> u64 {
+        self.get(Self::COLD_STORAGE_ADDITIONAL_COST)
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.

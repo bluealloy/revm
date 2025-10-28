@@ -72,7 +72,8 @@ pub trait Host {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>>;
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, LoadError>;
 
     /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
@@ -263,8 +264,9 @@ impl Host for DummyHost {
         &mut self,
         _address: Address,
         _target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        None
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, LoadError> {
+        Err(LoadError::DBError)
     }
 
     fn log(&mut self, _log: Log) {}

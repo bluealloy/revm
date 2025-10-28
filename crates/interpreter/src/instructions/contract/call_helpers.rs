@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, config::GasParams},
+    gas::params::GasParams,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     InstructionContext,
@@ -67,29 +67,47 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
         );
     }
 
+    println!(
+        "GAS BEFORE LOAD OF ACCOUNT: {}",
+        context.interpreter.gas.remaining()
+    );
     // load account delegated and deduct dynamic gas.
     let (gas, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
     let interpreter = &mut context.interpreter;
 
+    println!("GAS calc LOAD OF ACCOUNT: {}", gas);
+
     // deduct dynamic gas.
     gas!(interpreter, gas, None);
+    println!(
+        "GAS AFTer LOAD OF ACCOUNT: {}",
+        context.interpreter.gas.remaining()
+    );
+    let interpreter = &mut context.interpreter;
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let mut gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // On mainnet this will take return 63/64 of gas_limit.
         let reduced_gas_limit = interpreter
             .gas_table
-            .call_stipend_reduction(interpreter.gas.limit());
+            .call_stipend_reduction(interpreter.gas.remaining());
+        println!("REDUCED GAS LIMIT: {}", reduced_gas_limit);
+        println!("STACK GAS LIMIT: {}", stack_gas_limit);
         min(reduced_gas_limit, stack_gas_limit)
     } else {
+        println!("STACK GAS LIMIT: {}", stack_gas_limit);
         stack_gas_limit
     };
 
+    println!("CALL stipend before: {}", interpreter.gas.remaining());
+
     gas!(interpreter, gas_limit, None);
+
+    println!("CALL stipend after: {}", interpreter.gas.remaining());
     // Add call stipend if there is value to be transferred.
     if transfers_value {
-        gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
+        gas_limit = gas_limit.saturating_add(interpreter.gas_table.call_stipend());
     }
 
     Some((gas_limit, bytecode, code_hash))
@@ -143,7 +161,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
     let is_spurious_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
 
-    let additional_cold_cost = gas_table.additional_cold_cost();
+    let additional_cold_cost = gas_table.cold_account_additional_cost();
 
     let skip_cold_load = is_berlin && remaining_gas < additional_cold_cost;
     let account = host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;

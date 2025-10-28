@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas::config::GasParams, host::DummyHost, instruction_context::InstructionContext,
+    gas::params::GasParams, host::DummyHost, instruction_context::InstructionContext,
     interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -149,9 +149,8 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *memory_ref = memory;
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
+        *gas_table = GasParams::new_spec(spec_id);
         *extend = EXT::default();
-        // do nothing
-        _ = gas_table;
     }
 
     /// Sets the bytecode that is going to be executed
@@ -162,6 +161,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Sets the specid for the interpreter.
     pub fn set_spec_id(&mut self, spec_id: SpecId) {
+        self.gas_table = GasParams::new_spec(spec_id);
         self.runtime_flag.spec_id = spec_id;
     }
 }
@@ -311,6 +311,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
+        //println!("op: {opcode:x?} STATIC GAS: {:?}", instruction.static_gas());
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
             return self.halt_oog();
         }
