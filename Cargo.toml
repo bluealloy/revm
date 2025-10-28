@@ -54,7 +54,7 @@ statetest-types = { path = "crates/statetest-types", package = "revm-statetest-t
 context = { path = "crates/context", package = "revm-context", version = "10.1.2", default-features = false }
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "11.1.2", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "11.2.0", default-features = false }
-op-revm = { path = "crates/op-revm", package = "op-revm", version = "11.2.0", default-features = false }
+op-revm = { path = "crates/op-revm", package = "op-revm", version = "11.3.0", default-features = false }
 ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.1.0", default-features = false }
 
 # alloy
