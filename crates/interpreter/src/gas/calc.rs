@@ -9,51 +9,40 @@ use primitives::{eip7702, hardfork::SpecId, U256};
 #[allow(clippy::collapsible_else_if)]
 #[inline]
 pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
-    if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        // EIP-3529: Reduction in refunds
-        let sstore_clears_schedule = if spec_id.is_enabled_in(SpecId::LONDON) {
-            (SSTORE_RESET - COLD_SLOAD_COST + ACCESS_LIST_STORAGE_KEY) as i64
-        } else {
-            REFUND_SSTORE_CLEARS
-        };
-        if vals.is_new_eq_present() {
-            0
-        } else {
-            if vals.is_original_eq_present() && vals.is_new_zero() {
-                sstore_clears_schedule
-            } else {
-                let mut refund = 0;
+    // EIP-3529: Reduction in refunds
+    let sstore_clears_schedule = if spec_id.is_enabled_in(SpecId::LONDON) {
+        (SSTORE_RESET - COLD_SLOAD_COST + ACCESS_LIST_STORAGE_KEY) as i64
+    } else {
+        REFUND_SSTORE_CLEARS
+    };
 
-                if !vals.is_original_zero() {
-                    if vals.is_present_zero() {
-                        refund -= sstore_clears_schedule;
-                    } else if vals.is_new_zero() {
-                        refund += sstore_clears_schedule;
-                    }
-                }
+    if vals.is_original_eq_present() && vals.is_new_zero() {
+        sstore_clears_schedule
+    } else {
+        let mut refund = 0;
 
-                if vals.is_original_eq_new() {
-                    let (gas_sstore_reset, gas_sload) = if spec_id.is_enabled_in(SpecId::BERLIN) {
-                        (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)
-                    } else {
-                        (SSTORE_RESET, sload_cost(spec_id, false))
-                    };
-                    if vals.is_original_zero() {
-                        refund += (SSTORE_SET - gas_sload) as i64;
-                    } else {
-                        refund += (gas_sstore_reset - gas_sload) as i64;
-                    }
-                }
-
-                refund
+        if !vals.is_original_zero() {
+            if vals.is_present_zero() {
+                refund -= sstore_clears_schedule;
+            } else if vals.is_new_zero() {
+                refund += sstore_clears_schedule;
             }
         }
-    } else {
-        if !vals.is_present_zero() && vals.is_new_zero() {
-            REFUND_SSTORE_CLEARS
-        } else {
-            0
+
+        if vals.is_original_eq_new() {
+            let (gas_sstore_reset, gas_sload) = if spec_id.is_enabled_in(SpecId::BERLIN) {
+                (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)
+            } else {
+                (SSTORE_RESET, sload_cost(spec_id, false))
+            };
+            if vals.is_original_zero() {
+                refund += (SSTORE_SET - gas_sload) as i64;
+            } else {
+                refund += (gas_sstore_reset - gas_sload) as i64;
+            }
         }
+
+        refund
     }
 }
 

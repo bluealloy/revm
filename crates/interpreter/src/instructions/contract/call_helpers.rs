@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, table::GasParams},
+    gas::{self, config::GasParams},
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     InstructionContext,

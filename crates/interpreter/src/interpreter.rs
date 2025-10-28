@@ -19,7 +19,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas::table::GasParams, host::DummyHost, instruction_context::InstructionContext,
+    gas::config::GasParams, host::DummyHost, instruction_context::InstructionContext,
     interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;

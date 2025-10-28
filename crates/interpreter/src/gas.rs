@@ -2,7 +2,7 @@
 
 mod calc;
 mod constants;
-pub mod table;
+pub mod config;
 
 pub use calc::*;
 pub use constants::*;

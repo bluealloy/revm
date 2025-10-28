@@ -53,7 +53,7 @@ mod serde {
         {
             let table = GasParamsSerde::deserialize(deserializer)?;
             if table.table.len() != 256 {
-                return Err(serde::de::Error::custom("Invalid gas table length"));
+                return Err(serde::de::Error::custom("Invalid gas params length"));
             }
             Ok(Self::new(Arc::new(table.table.try_into().unwrap())))
         }
@@ -107,6 +107,10 @@ impl GasParams {
     pub const WARM_STORAGE_READ_COST: GasId = 16;
     /// Copy copy per word
     pub const COPY_PER_WORD: GasId = 17;
+    /// SSTORE set cost
+    pub const SSTORE_SET: GasId = 18;
+    /// SSTORE reset cost
+    pub const SSTORE_RESET: GasId = 19;
 
     /// Creates a new `GasParams` with the given table.
     #[inline]
@@ -159,10 +163,13 @@ impl GasParams {
         table[Self::CREATE as usize] = gas::CREATE;
         table[Self::CALL_STIPEND_REDUCTION as usize] = 64;
         table[Self::TRANSFER_VALUE_COST as usize] = gas::CALLVALUE;
-        table[Self::ADDITIONAL_COLD_COST as usize] = gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+        table[Self::ADDITIONAL_COLD_COST as usize] = 0;
         table[Self::NEW_ACCOUNT_COST as usize] = gas::NEWACCOUNT;
         table[Self::WARM_STORAGE_READ_COST as usize] = gas::WARM_STORAGE_READ_COST;
         table[Self::COPY_PER_WORD as usize] = gas::COPY;
+        table[Self::SSTORE_SET as usize] = SSTORE_SET - SSTORE_RESET;
+        // resset is not used in frontier fork.
+        table[Self::SSTORE_RESET as usize] = 0;
 
         if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             table[Self::EXP_BYTE_GAS as usize] = 50;
@@ -170,10 +177,15 @@ impl GasParams {
 
         if spec.is_enabled_in(SpecId::ISTANBUL) {
             table[Self::SSTORE as usize] = gas::ISTANBUL_SLOAD_GAS;
+            table[Self::SSTORE_SET as usize] = SSTORE_SET - ISTANBUL_SLOAD_GAS;
+            table[Self::SSTORE_RESET as usize] = SSTORE_RESET - ISTANBUL_SLOAD_GAS;
         }
 
         if spec.is_enabled_in(SpecId::BERLIN) {
             table[Self::SSTORE as usize] = gas::WARM_STORAGE_READ_COST;
+            table[Self::ADDITIONAL_COLD_COST as usize] = gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+            table[Self::SSTORE_SET as usize] = SSTORE_SET - gas::WARM_STORAGE_READ_COST;
+            table[Self::SSTORE_RESET as usize] = SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
         }
 
         Self::new(Arc::new(table))
@@ -216,40 +228,96 @@ impl GasParams {
         self.get(Self::SSTORE)
     }
 
+    /// SSTORE set cost
+    #[inline]
+    pub fn sstore_set_cost(&self) -> u64 {
+        self.get(Self::SSTORE_SET)
+    }
+
+    /// SSTORE reset cost
+    #[inline]
+    pub fn sstore_reset_cost(&self) -> u64 {
+        self.get(Self::SSTORE_RESET)
+    }
+
     /// Dynamic gas cost for SSTORE opcode
     #[inline]
     pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
         let mut gas = 0;
-        let berlin = true;
 
-        let mut sstore_set = SSTORE_SET - ISTANBUL_SLOAD_GAS;
-        let mut sstore_reset = SSTORE_RESET - ISTANBUL_SLOAD_GAS;
-
-        if berlin {
-            if is_cold {
-                gas += self.additional_cold_cost();
-            }
-            sstore_set = SSTORE_SET - WARM_STORAGE_READ_COST;
-            sstore_reset = SSTORE_RESET - COLD_SLOAD_COST - WARM_STORAGE_READ_COST;
+        // this will be zero before berlin fork.
+        if is_cold {
+            gas += self.additional_cold_cost();
         }
 
         if vals.new_values_changes_present() {
+            let sstore_set = self.sstore_set_cost();
             if is_istanbul {
                 if vals.is_original_eq_present() {
-                    // reset storage slot
+                    let sstore_reset = self.sstore_reset_cost();
+                    // cost for changing storage slot (called in EIP as reset gas)
                     gas += sstore_reset;
                     if vals.is_original_zero() {
-                        // add additional gas for creating storage slot.
+                        // add additional gas for creating storage slot (Zero slot means it is not existing).
                         gas += sstore_set - sstore_reset;
                     }
                 }
             } else if vals.is_original_zero() {
                 // frontier logic gets charged for every SSTORE operation if original value is zero.
-                // somehow broken
-                gas = SSTORE_SET - SSTORE_RESET;
+                // this behaviour is fixed in istanbul fork.
+                gas = sstore_set;
             }
         }
         gas
+    }
+
+    /// SSTORE refund calculation.
+    #[inline]
+    pub fn sstore_refund(&self, before_istanbul: bool, vals: &SStoreResult) -> i64 {
+        // EIP-3529: Reduction in refunds
+        let sstore_clears_schedule = 0;
+        let sstore_set = self.sstore_set_cost() as i64;
+        let sstore_reset = self.sstore_reset_cost() as i64;
+
+        if before_istanbul {
+            if !vals.is_present_zero() && vals.is_new_zero() {
+                return sstore_clears_schedule;
+            }
+            return 0;
+        }
+
+        // If current value equals new value (this is a no-op), SLOAD_GAS is deducted.
+        if vals.is_new_eq_present() {
+            return 0;
+        }
+
+        // refund for the clearing of storage slot.
+        // As new is not equal to present, new values zero means that original and present values are not zero
+        if vals.is_original_eq_present() && vals.is_new_zero() {
+            return sstore_clears_schedule;
+        }
+
+        let mut refund = 0;
+        if !vals.is_original_zero() {
+            // if present is zero (and new is not zero), we are removing the refund
+            // that was previously added for clearing the storage slot.
+            if vals.is_present_zero() {
+                refund -= sstore_clears_schedule;
+            } else if vals.is_new_zero() {
+                // if new is zero (and present is not zero), we are adding the refund for clearing the storage slot.
+                refund += sstore_clears_schedule;
+            }
+        }
+
+        // if original is equal to new.
+        if vals.is_original_eq_new() {
+            if vals.is_original_zero() {
+                refund += sstore_set;
+            } else {
+                refund += sstore_reset;
+            }
+        }
+        return refund;
     }
 
     /// `LOG` opcode cost calculation.
