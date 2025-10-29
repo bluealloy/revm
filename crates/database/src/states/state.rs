@@ -3,9 +3,15 @@ use super::{
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
 use bytecode::Bytecode;
-use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
+use database_interface::{
+    bal::{BalDatabaseError, BalState},
+    Database, DatabaseCommit, DatabaseRef, EmptyDB,
+};
 use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
-use state::{Account, AccountInfo};
+use state::{
+    bal::{alloy::AlloyBal, Bal},
+    Account, AccountInfo,
+};
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
@@ -63,6 +69,10 @@ pub struct State<DB> {
     ///
     /// The fork block is different or some blocks are not saved inside database.
     pub block_hashes: BTreeMap<u64, B256>,
+    /// BAL state.
+    ///
+    /// Can contain both the BAL for reads and BAL builder that is used to build BAL.
+    pub bal_state: BalState,
 }
 
 // Have ability to call State::builder without having to specify the type.
@@ -225,45 +235,28 @@ impl<DB: Database> State<DB> {
     pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }
-}
 
-impl<DB: Database> Database for State<DB> {
-    type Error = DB::Error;
-
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.load_cache_account(address).map(|a| a.account_info())
+    /// Takes build bal from bal state.
+    #[inline]
+    pub fn take_built_bal(&mut self) -> Option<Bal> {
+        self.bal_state.take_built_bal()
     }
 
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        let res = match self.cache.contracts.entry(code_hash) {
-            hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
-            hash_map::Entry::Vacant(entry) => {
-                if self.use_preloaded_bundle {
-                    if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
-                        entry.insert(code.clone());
-                        return Ok(code.clone());
-                    }
-                }
-                // If not found in bundle ask database
-                let code = self.database.code_by_hash(code_hash)?;
-                entry.insert(code.clone());
-                Ok(code)
-            }
-        };
-        res
+    /// Takes built alloy bal from bal state.
+    #[inline]
+    pub fn take_built_alloy_bal(&mut self) -> Option<AlloyBal> {
+        self.bal_state.take_built_alloy_bal()
     }
 
-    fn storage(
-        &mut self,
-        address: Address,
-        index: StorageKey,
-    ) -> Result<StorageValue, Self::Error> {
+    /// Gets storage value of address at index.
+    #[inline]
+    fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
         // Account is guaranteed to be loaded.
         // Note that storage from bundle is already loaded with account.
-        if let Some(account) = self.cache.accounts.get_mut(&address) {
+        let storage = if let Some(account) = self.cache.accounts.get_mut(&address) {
             // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
             let is_storage_known = account.status.is_storage_known();
-            Ok(account
+            account
                 .account
                 .as_mut()
                 .map(|account| match account.storage.entry(index) {
@@ -281,17 +274,87 @@ impl<DB: Database> Database for State<DB> {
                     }
                 })
                 .transpose()?
-                .unwrap_or_default())
+                .unwrap_or_default()
         } else {
             unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
-        }
+        };
+        Ok(storage)
+    }
+}
+
+impl<DB: Database> Database for State<DB> {
+    type Error = BalDatabaseError<DB::Error>;
+
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        let basic = self
+            .load_cache_account(address)
+            .map(|a| a.account_info())
+            .map_err(BalDatabaseError::Database)?;
+        // will populate account code if there was a bal change to it. If there is no change
+        // it will be fetched in code_by_hash.
+        self.bal_state
+            .basic(address, basic)
+            .map_err(Self::Error::from)
+    }
+
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        let res = match self.cache.contracts.entry(code_hash) {
+            hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
+            hash_map::Entry::Vacant(entry) => {
+                if self.use_preloaded_bundle {
+                    if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
+                        entry.insert(code.clone());
+                        return Ok(code.clone());
+                    }
+                }
+                // If not found in bundle ask database
+                let code = self
+                    .database
+                    .code_by_hash(code_hash)
+                    .map_err(BalDatabaseError::Database)?;
+                entry.insert(code.clone());
+                Ok(code)
+            }
+        };
+        res
+    }
+
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        let storage = self
+            .storage(address, index)
+            .map_err(BalDatabaseError::Database)?;
+        self.bal_state
+            .storage(address, index, storage)
+            .map_err(BalDatabaseError::Bal)
+    }
+
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        let storage = self
+            .storage(address, index)
+            .map_err(BalDatabaseError::Database)?;
+        self.bal_state
+            .storage_by_account_id(account_id, index, storage)
+            .map_err(BalDatabaseError::Bal)
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         match self.block_hashes.entry(number) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
-                let ret = *entry.insert(self.database.block_hash(number)?);
+                let ret = *entry.insert(
+                    self.database
+                        .block_hash(number)
+                        .map_err(BalDatabaseError::Database)?,
+                );
 
                 // Prune all hashes that are older than BLOCK_HASH_HISTORY
                 let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);

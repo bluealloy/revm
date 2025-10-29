@@ -12,6 +12,7 @@ use revm::{
 };
 use serde::Deserialize;
 use std::collections::BTreeMap;
+
 /// Blockchain test suite containing multiple test cases
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct BlockchainTest(pub BTreeMap<String, BlockchainTestCase>);

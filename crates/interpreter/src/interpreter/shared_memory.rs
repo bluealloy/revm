@@ -202,6 +202,7 @@ impl SharedMemory {
         {
             self.memory_limit = limit;
         }
+        let _ = limit;
     }
 
     #[inline]

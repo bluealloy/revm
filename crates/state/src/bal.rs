@@ -16,8 +16,6 @@ pub mod account;
 pub mod alloy;
 pub mod writes;
 
-use std::sync::Arc;
-
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use writes::BalWrites;
 
@@ -210,85 +208,13 @@ impl Bal {
 
     /// Consume Bal and create [`AlloyBal`]
     pub fn into_alloy_bal(self) -> AlloyBal {
-        AlloyBal::from_iter(
+        let mut alloy_bal = AlloyBal::from_iter(
             self.accounts
                 .into_iter()
                 .map(|(address, account)| account.into_alloy_account(address)),
-        )
-    }
-}
-
-/// Arc BAL structure with bal index.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BalWithIndex {
-    /// Bal index.
-    bal_index: BalIndex,
-    /// BAL structure.
-    bal: Arc<Bal>,
-}
-
-impl BalWithIndex {
-    /// Create a new BAL with index.
-    pub fn new(bal_index: BalIndex, bal: Arc<Bal>) -> Self {
-        Self { bal_index, bal }
-    }
-
-    /// Return bal index.
-    pub fn bal_index(&self) -> BalIndex {
-        self.bal_index
-    }
-
-    /// Return BAL.
-    pub fn bal(&self) -> Arc<Bal> {
-        self.bal.clone()
-    }
-
-    /// Set bal index.
-    pub fn set_bal_index(&mut self, bal_index: BalIndex) {
-        self.bal_index = bal_index;
-    }
-
-    /// Populate account from BAL. Return true if account info got changed
-    pub fn populate_account(
-        &self,
-        address: Address,
-        account: &mut Account,
-    ) -> Result<bool, BalError> {
-        self.bal
-            .populate_account_info(address, self.bal_index, &mut account.info)
-    }
-
-    /// Populate account from BAL. Return true if account info got changed
-    pub fn populate_account_info(
-        &self,
-        address: Address,
-        account: &mut AccountInfo,
-    ) -> Result<bool, BalError> {
-        self.bal
-            .populate_account_info(address, self.bal_index, account)
-    }
-
-    /// Populate storage slot from BAL.
-    pub fn populate_storage_slot_by_account_id(
-        &self,
-        account_index: usize,
-        key: StorageKey,
-        value: &mut StorageValue,
-    ) -> Result<(), BalError> {
-        self.bal
-            .populate_storage_slot_by_account_id(account_index, self.bal_index, key, value)
-    }
-
-    /// Populate storage slot from BAL by account index.
-    pub fn populate_storage_slot(
-        &self,
-        account_address: Address,
-        key: StorageKey,
-        value: &mut StorageValue,
-    ) -> Result<(), BalError> {
-        self.bal
-            .populate_storage_slot(account_address, self.bal_index, key, value)
+        );
+        alloy_bal.sort_by_key(|a| a.address);
+        alloy_bal
     }
 }
 

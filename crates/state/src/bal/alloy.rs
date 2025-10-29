@@ -1,11 +1,13 @@
 //! Alloy BAL types conversions.
 
-use crate::bal::{AccountBal, Bal, BalWrites};
-use alloy_eip7928::BlockAccessList as AlloyBal;
-use alloy_eip7928::{
-    BalanceChange as AlloyBalanceChange, CodeChange as AlloyCodeChange,
-    NonceChange as AlloyNonceChange, StorageChange as AlloyStorageChange,
+// Re-export Alloy BAL types.
+pub use alloy_eip7928::{
+    BalanceChange as AlloyBalanceChange, BlockAccessList as AlloyBal,
+    CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+    StorageChange as AlloyStorageChange,
 };
+
+use crate::bal::{AccountBal, Bal, BalWrites};
 use bytecode::{Bytecode, BytecodeDecodeError};
 use primitives::{IndexMap, B256, U256};
 use std::vec::Vec;

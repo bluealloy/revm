@@ -146,7 +146,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
+impl<SPEC> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
@@ -199,7 +199,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
-    pub fn with_spec<OSPEC: Into<SpecId> + Clone>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
+    pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,
             tx_chain_id_check: self.tx_chain_id_check,
@@ -269,7 +269,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
+impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     type Spec = SPEC;
 
     #[inline]
@@ -279,7 +279,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
 
     #[inline]
     fn spec(&self) -> Self::Spec {
-        self.spec.clone()
+        self.spec
     }
 
     #[inline]
@@ -290,7 +290,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn tx_gas_limit_cap(&self) -> u64 {
         self.tx_gas_limit_cap
-            .unwrap_or(if self.spec.clone().into().is_enabled_in(SpecId::OSAKA) {
+            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
                 eip7825::TX_GAS_LIMIT_CAP
             } else {
                 u64::MAX
@@ -412,7 +412,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
+impl<SPEC: Default> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self::new_with_spec(SPEC::default())
     }

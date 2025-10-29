@@ -1,5 +1,4 @@
 //! Database implementation for BAL.
-
 use core::{
     error::Error,
     fmt::Display,
@@ -7,24 +6,166 @@ use core::{
 };
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
-    bal::{Bal, BalError},
+    bal::{alloy::AlloyBal, Bal, BalError},
     AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
 
 use crate::{DBErrorMarker, Database, DatabaseCommit};
 
-/// Database implementation for BAL.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// Contans both the BAL for reads and BAL builders.
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BalDatabase<DB> {
+pub struct BalState {
     /// BAL used to execute transactions.
     pub bal: Option<Arc<Bal>>,
     /// BAL builder that is used to build BAL.
     /// It is create from State output of transaction execution.
     pub bal_builder: Option<Bal>,
-    /// BAL index.
+    /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
+    /// to submit changes.
     pub bal_index: u64,
+}
+
+impl BalState {
+    /// Create a new BAL manager.
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Reset BAL index.
+    #[inline]
+    pub fn reset_bal_index(&mut self) {
+        self.bal_index = 0;
+    }
+
+    /// Bump BAL index.
+    #[inline]
+    pub fn bump_bal_index(&mut self) {
+        self.bal_index += 1;
+    }
+
+    /// Get BAL index.
+    #[inline]
+    pub fn bal_index(&self) -> u64 {
+        self.bal_index
+    }
+
+    /// Get BAL.
+    #[inline]
+    pub fn bal(&self) -> Option<Arc<Bal>> {
+        self.bal.clone()
+    }
+
+    /// Get BAL builder.
+    #[inline]
+    pub fn bal_builder(&self) -> Option<Bal> {
+        self.bal_builder.clone()
+    }
+
+    /// Set BAL.
+    #[inline]
+    pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
+        self.bal = Some(bal);
+        self
+    }
+
+    /// Set BAL builder.
+    #[inline]
+    pub fn with_bal_builder(mut self) -> Self {
+        self.bal_builder = Some(Bal::new());
+        self
+    }
+
+    /// Take BAL builder.
+    #[inline]
+    pub fn take_built_bal(&mut self) -> Option<Bal> {
+        self.reset_bal_index();
+        self.bal_builder.take()
+    }
+
+    /// Take built BAL as AlloyBAL.
+    #[inline]
+    pub fn take_built_alloy_bal(&mut self) -> Option<AlloyBal> {
+        self.take_built_bal().map(|bal| bal.into_alloy_bal())
+    }
+
+    /// Fetch account from database and apply bal changes to it.
+    #[inline]
+    pub fn basic(
+        &mut self,
+        address: Address,
+        mut basic: Option<AccountInfo>,
+    ) -> Result<Option<AccountInfo>, BalError> {
+        if let Some(bal) = &self.bal {
+            let is_none = basic.is_none();
+            let mut bal_basic = basic.unwrap_or_default();
+            if bal.populate_account_info(address, self.bal_index, &mut bal_basic)? {
+                // return new basic if it got changed.
+                return Ok(Some(bal_basic));
+            }
+
+            // if it is not changed, check if it is none and return it.
+            if is_none {
+                return Ok(None);
+            }
+
+            basic = Some(bal_basic);
+        }
+
+        Ok(basic)
+    }
+
+    /// Fetch storage from database and apply bal changes to it.
+    pub fn storage(
+        &mut self,
+        address: Address,
+        key: StorageKey,
+        mut value: StorageValue,
+    ) -> Result<StorageValue, BalError> {
+        if let Some(bal) = &self.bal {
+            bal.populate_storage_slot(address, self.bal_index, key, &mut value)?;
+        }
+        Ok(value)
+    }
+
+    /// Fetch the storage changes from database and apply bal change to it.
+    #[inline]
+    pub fn storage_by_account_id(
+        &mut self,
+        account_id: usize,
+        storage_key: StorageKey,
+        mut value: StorageValue,
+    ) -> Result<StorageValue, BalError> {
+        if let Some(bal) = &self.bal {
+            bal.populate_storage_slot_by_account_id(
+                account_id,
+                self.bal_index,
+                storage_key,
+                &mut value,
+            )?;
+        }
+        Ok(value)
+    }
+
+    /// Apply changed from EvmState to the bal_builder
+    #[inline]
+    pub fn commit(&mut self, changes: &EvmState) {
+        if let Some(bal_builder) = &mut self.bal_builder {
+            for (address, account) in changes.iter() {
+                bal_builder.update_account(self.bal_index, *address, account);
+            }
+        }
+    }
+}
+
+/// Database implementation for BAL.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BalDatabase<DB> {
+    /// BAL manager.
+    pub bal_state: BalState,
     /// Database.
     pub db: DB,
 }
@@ -48,9 +189,7 @@ impl<DB> BalDatabase<DB> {
     #[inline]
     pub fn new(db: DB) -> Self {
         Self {
-            bal: None,
-            bal_builder: None,
-            bal_index: 0,
+            bal_state: BalState::default(),
             db,
         }
     }
@@ -58,31 +197,35 @@ impl<DB> BalDatabase<DB> {
     /// With BAL.
     #[inline]
     pub fn with_bal_option(self, bal: Option<Arc<Bal>>) -> Self {
-        Self { bal, ..self }
+        Self {
+            bal_state: BalState {
+                bal,
+                ..self.bal_state
+            },
+            ..self
+        }
     }
 
     /// With BAL builder.
     #[inline]
     pub fn with_bal_builder(self) -> Self {
         Self {
-            bal_builder: Some(Bal::new()),
+            bal_state: self.bal_state.with_bal_builder(),
             ..self
         }
     }
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(self) -> Self {
-        Self {
-            bal_index: 0,
-            ..self
-        }
+    pub fn reset_bal_index(mut self) -> Self {
+        self.bal_state.reset_bal_index();
+        self
     }
 
     /// Bump BAL index.
     #[inline]
     pub fn bump_bal_index(&mut self) {
-        self.bal_index += 1;
+        self.bal_state.bump_bal_index();
     }
 }
 
@@ -115,28 +258,30 @@ impl<ERROR: Display> Display for BalDatabaseError<ERROR> {
 
 impl<ERROR: Error> Error for BalDatabaseError<ERROR> {}
 
+impl<ERROR> BalDatabaseError<ERROR> {
+    /// Convert BAL database error to database error.
+    ///
+    /// Panics if BAL error is present.
+    pub fn into_db_error(self) -> ERROR {
+        match self {
+            Self::Bal(_) => panic!("Expected database error, got BAL error"),
+            Self::Database(error) => error,
+        }
+    }
+}
+
 impl<DB: Database> Database for BalDatabase<DB> {
     type Error = BalDatabaseError<DB::Error>;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        let mut basic = self.db.basic(address).map_err(BalDatabaseError::Database)?;
-        if let Some(bal) = &self.bal {
-            let is_none = basic.is_none();
-            let mut bal_basic = basic.unwrap_or_default();
-            if bal.populate_account_info(address, self.bal_index, &mut bal_basic)? {
-                // return new basic if it got changed.
-                return Ok(Some(bal_basic));
-            }
-
-            // if it is not changed, check if it is none and return it.
-            if is_none {
-                return Ok(None);
-            }
-
-            basic = Some(bal_basic);
-        }
-
-        Ok(basic)
+        self.db
+            .basic(address)
+            .map_err(BalDatabaseError::Database)
+            .and_then(|basic| {
+                self.bal_state
+                    .basic(address, basic)
+                    .map_err(BalDatabaseError::Bal)
+            })
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -145,42 +290,34 @@ impl<DB: Database> Database for BalDatabase<DB> {
             .map_err(BalDatabaseError::Database)
     }
 
-    #[doc = " Gets storage value of address at index."]
     fn storage(&mut self, address: Address, key: StorageKey) -> Result<StorageValue, Self::Error> {
-        let mut value = self
-            .db
+        self.db
             .storage(address, key)
-            .map_err(BalDatabaseError::Database)?;
-        if let Some(bal) = &self.bal {
-            bal.populate_storage_slot(address, self.bal_index, key, &mut value)
-                .map_err(BalDatabaseError::Bal)?;
-        }
-        Ok(value)
+            .map_err(BalDatabaseError::Database)
+            .and_then(|value| {
+                self.bal_state
+                    .storage(address, key, value)
+                    .map_err(BalDatabaseError::Bal)
+            })
     }
 
+    /// Storage id is used to access BAL index not for database index.
     fn storage_by_account_id(
         &mut self,
         address: Address,
         account_id: usize,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
-        let mut value = self
-            .db
+        self.db
             .storage(address, storage_key)
-            .map_err(BalDatabaseError::Database)?;
-        if let Some(bal) = &self.bal {
-            bal.populate_storage_slot_by_account_id(
-                account_id,
-                self.bal_index,
-                storage_key,
-                &mut value,
-            )
-            .map_err(BalDatabaseError::Bal)?;
-        }
-        Ok(value)
+            .map_err(BalDatabaseError::Database)
+            .and_then(|value| {
+                self.bal_state
+                    .storage_by_account_id(account_id, storage_key, value)
+                    .map_err(BalDatabaseError::Bal)
+            })
     }
 
-    #[doc = " Gets block hash by block number."]
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.db
             .block_hash(number)
@@ -190,11 +327,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
 
 impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
     fn commit(&mut self, changes: EvmState) {
-        if let Some(bal_builder) = &mut self.bal_builder {
-            for (address, account) in changes.iter() {
-                bal_builder.update_account(self.bal_index, *address, account);
-            }
-        }
+        self.bal_state.commit(&changes);
         self.db.commit(changes);
     }
 }

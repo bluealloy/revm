@@ -811,7 +811,7 @@ fn execute_blockchain_test(
             };
 
             // bump bal index
-            evm.db_mut().bal_index += 1;
+            evm.db_mut().bump_bal_index();
 
             // If JSON output requested, output transaction details
             let execution_result = if json_output {
@@ -923,7 +923,7 @@ fn execute_blockchain_test(
         }
 
         // bump bal index
-        evm.db_mut().bal_index += 1;
+        evm.db_mut().bump_bal_index();
 
         // uncle rewards are not implemented yet
         post_block::post_block_transition(
@@ -938,8 +938,8 @@ fn execute_blockchain_test(
             .block_hashes
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
 
-        if let Some(bal) = state.bal_builder.take() {
-            if let Some(state_bal) = state.bal.as_ref() {
+        if let Some(bal) = state.bal_state.bal_builder.take() {
+            if let Some(state_bal) = state.bal_state.bal.as_ref() {
                 if &bal != state_bal.as_ref() {
                     println!("Bal mismatch");
                     println!("Test bal");

@@ -74,7 +74,6 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
     /// - Contracts are overridden with outer contracts
     /// - Logs are appended
     /// - Block hashes are overridden with outer block hashes
-    /// - BAL is
     pub fn flatten(self) -> CacheDB<ExtDb> {
         let CacheDB {
             cache:

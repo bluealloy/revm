@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
-use state::{bal::BalWithIndex, Account, AccountInfo, Bytecode};
+use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.
@@ -126,12 +126,6 @@ pub trait DatabaseRef {
 
     /// Gets block hash by block number.
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
-
-    /// Fetch BAL from database. If BAL is not found, execution will continue without it.
-    #[inline]
-    fn bal_ref(&self) -> Option<BalWithIndex> {
-        None
-    }
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
@@ -205,10 +199,5 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
-    }
-
-    #[inline]
-    fn bal_ref(&self) -> Option<BalWithIndex> {
-        self.0.bal_ref()
     }
 }
