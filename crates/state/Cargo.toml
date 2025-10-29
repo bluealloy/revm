@@ -38,6 +38,7 @@ serde_json = { workspace = true, features = ["alloc"] }
 default = ["std"]
 std = [
     "serde?/std",
+    "serde_json/std",
     "primitives/std",
     "bitflags/std",
     "bytecode/std",
