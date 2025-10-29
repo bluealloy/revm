@@ -33,7 +33,7 @@ use primitives::{HashMap, StorageKey, StorageValue, U256};
 /// If CompiledBal is not present, use loaded values
 ///     * Account is already up to date (uses present flow).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
@@ -301,6 +301,47 @@ impl From<AccountInfo> for Account {
             transaction_id: 0,
             status: AccountStatus::empty(),
             original_info,
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+mod serde_impl {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    struct AccountSerde {
+        info: AccountInfo,
+        original_info: Option<AccountInfo>,
+        storage: HashMap<StorageKey, EvmStorageSlot>,
+        transaction_id: usize,
+        status: AccountStatus,
+    }
+
+    impl<'de> Deserialize<'de> for super::Account {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let AccountSerde {
+                info,
+                original_info,
+                storage,
+                transaction_id,
+                status,
+            } = Deserialize::deserialize(deserializer)?;
+
+            // If original info is not present, use info as original info
+            let original_info = original_info.unwrap_or_else(|| info.clone());
+
+            Ok(Account {
+                info,
+                original_info,
+                storage,
+                transaction_id,
+                status,
+            })
         }
     }
 }
@@ -582,6 +623,27 @@ mod tests {
         assert!(account.is_selfdestructed());
         assert!(!account.is_touched());
         assert!(!account.is_created());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_account_serialize_deserialize() {
+        let account = Account::default().with_selfdestruct_mark();
+        let serialized = serde_json::to_string(&account).unwrap();
+        let deserialized: Account = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(account, deserialized);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_account_serialize_deserialize_without_original_info() {
+        let deserialize_without_original_info = r#"
+        {"info":{"balance":"0x0","nonce":0,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","storage_id":null,"code":{"LegacyAnalyzed":{"bytecode":"0x00","original_len":0,"jump_table":{"order":"bitvec::order::Lsb0","head":{"width":8,"index":0},"bits":0,"data":[]}}}},"transaction_id":0,"storage":{},"status":"SelfDestructed"}"#;
+
+        let account = Account::default().with_selfdestruct_mark();
+        let deserialized: Account =
+            serde_json::from_str(deserialize_without_original_info).unwrap();
+        assert_eq!(account, deserialized);
     }
 
     #[test]

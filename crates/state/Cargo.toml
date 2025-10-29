@@ -31,6 +31,9 @@ bitflags.workspace = true
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
+[dev-dependencies]
+serde_json = { workspace = true, features = ["alloc"] }
+
 [features]
 default = ["std"]
 std = [

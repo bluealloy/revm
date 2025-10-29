@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use crate::{DBErrorMarker, Database, DatabaseCommit};
 
-/// Contans both the BAL for reads and BAL builders.
+/// Contains both the BAL for reads and BAL builders.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BalState {
