@@ -195,6 +195,15 @@ impl SharedMemory {
         }
     }
 
+    /// Sets the memory limit in bytes.
+    #[inline]
+    pub fn set_memory_limit(&mut self, limit: u64) {
+        #[cfg(feature = "memory_limit")]
+        {
+            self.memory_limit = limit;
+        }
+    }
+
     #[inline]
     fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
