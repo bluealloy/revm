@@ -42,6 +42,9 @@ ripemd.workspace = true
 # Optionally use substrate implementation for eip1962
 bn = { workspace = true, optional = true }
 
+# Optionally use gnark-crypto (Go) implementation for BN254
+revm-gnark-bn254 = { path = "../gnark-bn254", optional = true }
+
 # Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
@@ -114,6 +117,10 @@ blst = ["dep:blst"]
 
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
+
+# Enables the gnark-crypto (Go) implementation of BN254.
+# Requires Go 1.21+ and CGO support. Only works with std.
+gnark = ["dep:revm-gnark-bn254", "std"]
 
 # Use rug (that wraps gmp) for modexp precompile.
 # It is faster library but licences as GPL code, if enabled please make sure to follow the license.

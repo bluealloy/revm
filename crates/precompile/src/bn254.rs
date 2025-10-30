@@ -10,7 +10,10 @@ use std::vec::Vec;
 pub mod arkworks;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
+    if #[cfg(feature = "gnark")] {
+        pub(crate) mod gnark;
+        pub(crate) use gnark as crypto_backend;
+    } else if #[cfg(feature = "bn")]{
         pub(crate) mod substrate;
         pub(crate) use substrate as crypto_backend;
     } else {

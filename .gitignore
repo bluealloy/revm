@@ -26,3 +26,5 @@ rustc-ice-*
 
 # Fixtures
 /test-fixtures
+
+.claude
