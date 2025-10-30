@@ -132,6 +132,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-eip7928"
+version = "0.1.0"
+source = "git+https://github.com/alloy-rs/eips.git#0deb116d5d7417fcaa7ea36240db7378a9f4a87b"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rlp",
+ "serde",
+]
+
+[[package]]
 name = "alloy-eips"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3726,16 +3736,19 @@ dependencies = [
 name = "revm-state"
 version = "8.1.0"
 dependencies = [
+ "alloy-eip7928",
  "bitflags",
  "revm-bytecode",
  "revm-primitives",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "revm-statetest-types"
 version = "10.2.1"
 dependencies = [
+ "alloy-eip7928",
  "alloy-eips",
  "k256",
  "revm",
