@@ -70,7 +70,7 @@ impl<
         let block = &self.block;
         let tx = &self.tx;
         let cfg = &self.cfg;
-        let db = &self.journaled_state.db();
+        let db = self.journaled_state.db();
         let journal = &self.journaled_state;
         let chain = &self.chain;
         let local = &self.local;
