@@ -289,7 +289,7 @@ fn test_bal_selfdestruct_cold_target() {
     // Test case for BAL selfdestruct cold target edge case
     // This test verifies that when selfdestruct targets a cold account,
     // the additional cold account access cost is properly charged.
-    
+
     // Build runtime bytecode: PUSH20 <cold_target> ; SELFDESTRUCT ; STOP
     let cold_target = address!("0x1234567890123456789012345678901234567890");
     let mut runtime: Vec<u8> = vec![opcode::PUSH20];
@@ -299,26 +299,22 @@ fn test_bal_selfdestruct_cold_target() {
 
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
-        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(runtime.into())))
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            runtime.into(),
+        )))
         .build_mainnet();
 
     // Execute selfdestruct with cold target (target is not in warm set)
     let result = evm
-        .transact_one(
-            TxEnv::builder_for_bench()
-                .build_fill(),
-        )
+        .transact_one(TxEnv::builder_for_bench().build_fill())
         .unwrap();
 
     // The test should pass if the cold account access cost is properly charged
     // and the selfdestruct operation completes successfully
     assert!(result.is_success());
-    
+
     let output = evm.finalize();
-    compare_or_save_revm_testdata(
-        "test_bal_selfdestruct_cold_target.json",
-        &(result, output),
-    );
+    compare_or_save_revm_testdata("test_bal_selfdestruct_cold_target.json", &(result, output));
 }
 
 #[test]
@@ -343,7 +339,9 @@ fn test_bal_selfdestruct_warm_vs_cold_target_gas() {
     // Execute cold case
     let mut evm_cold = Context::mainnet()
         .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
-        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(cold_rt.clone().into())))
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            cold_rt.clone().into(),
+        )))
         .build_mainnet();
     let cold_res = evm_cold
         .transact_one(TxEnv::builder_for_bench().build_fill())
@@ -353,7 +351,9 @@ fn test_bal_selfdestruct_warm_vs_cold_target_gas() {
     // Execute warm case
     let mut evm_warm = Context::mainnet()
         .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
-        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(warm_rt.clone().into())))
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+            warm_rt.clone().into(),
+        )))
         .build_mainnet();
     let warm_res = evm_warm
         .transact_one(TxEnv::builder_for_bench().build_fill())
