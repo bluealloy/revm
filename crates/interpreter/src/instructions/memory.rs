@@ -64,7 +64,7 @@ pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     // Deduce gas
     gas!(
         context.interpreter,
-        context.interpreter.gas_table.mcopy_cost(len)
+        context.interpreter.gas_params.mcopy_cost(len)
     );
 
     if len == 0 {

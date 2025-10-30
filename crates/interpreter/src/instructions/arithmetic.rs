@@ -78,7 +78,7 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     popn_top!([op1], op2, context.interpreter);
     gas!(
         context.interpreter,
-        context.interpreter.gas_table.exp_cost(*op2)
+        context.interpreter.gas_params.exp_cost(*op2)
     );
     *op2 = op1.pow(*op2);
 }

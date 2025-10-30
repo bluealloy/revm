@@ -19,7 +19,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
     let len = as_usize_or_fail!(context.interpreter, top);
     gas!(
         context.interpreter,
-        context.interpreter.gas_table.keccak256_cost(len)
+        context.interpreter.gas_params.keccak256_cost(len)
     );
     let hash = if len == 0 {
         KECCAK_EMPTY
@@ -233,7 +233,7 @@ pub fn copy_cost_and_memory_resize(
     len: usize,
 ) -> Option<usize> {
     // Safe to cast usize to u64
-    gas!(interpreter, interpreter.gas_table.copy_cost(len), None);
+    gas!(interpreter, interpreter.gas_params.copy_cost(len), None);
     if len == 0 {
         return None;
     }

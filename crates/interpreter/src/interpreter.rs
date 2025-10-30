@@ -30,7 +30,7 @@ use primitives::{hardfork::SpecId, Bytes};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     /// Gas table for dynamic gas constants.
-    pub gas_table: GasParams,
+    pub gas_params: GasParams,
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
@@ -105,8 +105,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
-            // TODO get it from host;
-            gas_table: GasParams::new_spec(spec_id),
+            gas_params: GasParams::new_spec(spec_id),
             stack,
             return_data: Default::default(),
             memory,
@@ -130,7 +129,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         let Self {
             bytecode: bytecode_ref,
             gas,
-            gas_table,
+            gas_params,
             stack,
             return_data,
             memory: memory_ref,
@@ -149,7 +148,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *memory_ref = memory;
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
-        *gas_table = GasParams::new_spec(spec_id);
+        *gas_params = GasParams::new_spec(spec_id);
         *extend = EXT::default();
     }
 
@@ -161,7 +160,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Sets the specid for the interpreter.
     pub fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.gas_table = GasParams::new_spec(spec_id);
+        self.gas_params = GasParams::new_spec(spec_id);
         self.runtime_flag.spec_id = spec_id;
     }
 }
@@ -197,7 +196,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         if let Err(result) = resize_memory(
             &mut self.gas,
             &mut self.memory,
-            &self.gas_table,
+            &self.gas_params,
             offset,
             len,
         ) {
@@ -303,6 +302,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
+
+        //println!("step {opcode:x?} gas remaining: {:?}", self.gas.remaining());
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction

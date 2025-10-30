@@ -297,8 +297,9 @@ fn write_value(
     output: &mut dyn std::io::Write,
     value: &impl serde::Serialize,
 ) -> std::io::Result<()> {
-    serde_json::to_writer(&mut *output, value)?;
-    output.write_all(b"\n")
+    let mut stdout = std::io::stdout();
+    serde_json::to_writer(&mut stdout, value)?;
+    stdout.write_all(b"\n")
 }
 
 fn serde_hex_u64<S: serde::Serializer>(n: &u64, serializer: S) -> Result<S::Ok, S::Error> {

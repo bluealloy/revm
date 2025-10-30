@@ -53,7 +53,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             }
             gas!(
                 context.interpreter,
-                context.interpreter.gas_table.initcode_cost(len)
+                context.interpreter.gas_params.initcode_cost(len)
             );
         }
 
@@ -76,13 +76,13 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // SAFETY: `len` is reasonable in size as gas for it is already deducted.
         gas!(
             context.interpreter,
-            context.interpreter.gas_table.create2_cost(len)
+            context.interpreter.gas_params.create2_cost(len)
         );
         CreateScheme::Create2 { salt }
     } else {
         gas!(
             context.interpreter,
-            context.interpreter.gas_table.create_cost()
+            context.interpreter.gas_params.create_cost()
         );
         CreateScheme::Create
     };
@@ -99,7 +99,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // Take remaining gas and deduce l64 part of it.
         gas_limit = context
             .interpreter
-            .gas_table
+            .gas_params
             .call_stipend_reduction(gas_limit);
     }
     gas!(context.interpreter, gas_limit);

@@ -54,7 +54,7 @@ macro_rules! berlin_load_account {
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
         let cold_load_gas = $context
             .interpreter
-            .gas_table
+            .gas_params
             .cold_account_additional_cost();
         let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
         match $context
@@ -91,7 +91,7 @@ macro_rules! resize_memory {
         if let Err(result) = $crate::interpreter::resize_memory(
             &mut $interpreter.gas,
             &mut $interpreter.memory,
-            &$interpreter.gas_table,
+            &$interpreter.gas_params,
             $offset,
             $len,
         ) {

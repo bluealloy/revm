@@ -18,11 +18,14 @@ pub struct GasParams {
     table: Arc<[u64; 256]>,
     /// Pointer to the table.
     ptr: *const u64,
-    // TODO should we have spec or not.
+    /// SPEC ID
+    spec: SpecId,
 }
 
 #[cfg(feature = "serde")]
 mod serde {
+    use primitives::hardfork::SpecId;
+
     use super::{Arc, GasParams};
 
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -52,7 +55,10 @@ mod serde {
             if table.table.len() != 256 {
                 return Err(serde::de::Error::custom("Invalid gas params length"));
             }
-            Ok(Self::new(Arc::new(table.table.try_into().unwrap())))
+            Ok(Self::new(
+                SpecId::default(),
+                Arc::new(table.table.try_into().unwrap()),
+            ))
         }
     }
 }
@@ -60,7 +66,7 @@ mod serde {
 impl Default for GasParams {
     fn default() -> Self {
         let table = Arc::new([0; 256]);
-        Self::new(table)
+        Self::new(SpecId::default(), table)
     }
 }
 
@@ -121,30 +127,37 @@ impl GasParams {
 
     /// Creates a new `GasParams` with the given table.
     #[inline]
-    pub fn new(table: Arc<[u64; 256]>) -> Self {
+    pub fn new(spec: SpecId, table: Arc<[u64; 256]>) -> Self {
         Self {
             ptr: table.as_ptr(),
             table,
+            spec,
         }
     }
 
-    /// Overrides the gas cost for the given gas id.
-    ///
-    /// Use to override default gas cost
-    ///
-    /// ```rust
-    /// let mut gas_table = GasParams::new_spec(SpecId::default());
-    /// gas_table.override_gas([(GasParams::MEMORY_LINEAR_COST, 2), (GasParams::MEMORY_QUADRATIC_REDUCTION, 512)].into_iter());
-    /// assert_eq!(gas_table.get(GasParams::MEMORY_LINEAR_COST), 2);
-    /// assert_eq!(gas_table.get(GasParams::MEMORY_QUADRATIC_REDUCTION), 512);
-    /// ```
-    pub fn override_gas(&mut self, values: impl IntoIterator<Item = (GasId, u64)>) {
-        let mut table = self.table.as_ref().clone();
-        for (id, value) in values.into_iter() {
-            table[id as usize] = value;
-        }
-        *self = Self::new(Arc::new(table));
+    /// Returns the spec id.
+    #[inline]
+    pub fn spec(&self) -> SpecId {
+        self.spec
     }
+
+    // /// Overrides the gas cost for the given gas id.
+    // ///
+    // /// Use to override default gas cost
+    // ///
+    // /// ```rust
+    // /// let mut gas_table = GasParams::new_spec(SpecId::default());
+    // /// gas_table.override_gas([(GasParams::MEMORY_LINEAR_COST, 2), (GasParams::MEMORY_QUADRATIC_REDUCTION, 512)].into_iter());
+    // /// assert_eq!(gas_table.get(GasParams::MEMORY_LINEAR_COST), 2);
+    // /// assert_eq!(gas_table.get(GasParams::MEMORY_QUADRATIC_REDUCTION), 512);
+    // /// ```
+    // pub fn override_gas(&mut self, values: impl IntoIterator<Item = (GasId, u64)>) {
+    //     let mut table = self.table.as_ref().clone();
+    //     for (id, value) in values.into_iter() {
+    //         table[id as usize] = value;
+    //     }
+    //     *self = Self::new(Arc::new(table));
+    // }
 
     /// Returns the table.
     #[inline]
@@ -222,7 +235,7 @@ impl GasParams {
             table[Self::SELFDESTRUCT_REFUND as usize] = 0;
         }
 
-        Self::new(Arc::new(table))
+        Self::new(spec, Arc::new(table))
     }
 
     /// Gets the gas cost for the given gas id.

@@ -27,7 +27,6 @@ pub fn get_memory_input_and_out_ranges(
     }
 
     let ret_range = resize_memory(interpreter, out_offset, out_len)?;
-
     Some((in_range, ret_range))
 }
 
@@ -63,7 +62,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     if transfers_value {
         gas!(
             context.interpreter,
-            context.interpreter.gas_table.transfer_value_cost(),
+            context.interpreter.gas_params.transfer_value_cost(),
             None
         );
     }
@@ -82,7 +81,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     let mut gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // On mainnet this will take return 63/64 of gas_limit.
         let reduced_gas_limit = interpreter
-            .gas_table
+            .gas_params
             .call_stipend_reduction(interpreter.gas.remaining());
         min(reduced_gas_limit, stack_gas_limit)
     } else {
@@ -92,7 +91,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
     // Add call stipend if there is value to be transferred.
     if transfers_value {
-        gas_limit = gas_limit.saturating_add(interpreter.gas_table.call_stipend());
+        gas_limit = gas_limit.saturating_add(interpreter.gas_params.call_stipend());
     }
 
     Some((gas_limit, bytecode, code_hash))
@@ -108,7 +107,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 ) -> Option<(u64, Bytecode, B256)> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
-    let gas_table = &context.interpreter.gas_table;
+    let gas_table = &context.interpreter.gas_params;
     match load_account_delegated(
         context.host,
         gas_table,

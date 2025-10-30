@@ -97,10 +97,10 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     table[EXTCODECOPY as usize].static_gas = 20;
     table[SLOAD as usize].static_gas = 50;
     table[BALANCE as usize].static_gas = 20;
-    table[CALL as usize].static_gas = 20;
-    table[CALLCODE as usize].static_gas = 20;
-    table[DELEGATECALL as usize].static_gas = 20;
-    table[STATICCALL as usize].static_gas = 20;
+    table[CALL as usize].static_gas = 40;
+    table[CALLCODE as usize].static_gas = 40;
+    table[DELEGATECALL as usize].static_gas = 40;
+    table[STATICCALL as usize].static_gas = 40;
     // SSTORE static gas can be found in GasParams as check for minimal stipend
     // needs to be done before deduction of static gas.
 
