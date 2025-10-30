@@ -116,6 +116,8 @@ impl GasParams {
     pub const CALL_STIPEND: GasId = 22;
     /// Cold storage additional cost.
     pub const COLD_STORAGE_ADDITIONAL_COST: GasId = 23;
+    /// Colst storage cost
+    pub const COLD_STORAGE_COST: GasId = 24;
 
     /// Creates a new `GasParams` with the given table.
     #[inline]
@@ -182,6 +184,7 @@ impl GasParams {
         table[Self::SELFDESTRUCT_REFUND as usize] = 24000;
         table[Self::CALL_STIPEND as usize] = gas::CALL_STIPEND;
         table[Self::COLD_STORAGE_ADDITIONAL_COST as usize] = 0;
+        table[Self::COLD_STORAGE_COST as usize] = 0;
 
         if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             table[Self::EXP_BYTE_GAS as usize] = 50;
@@ -198,7 +201,9 @@ impl GasParams {
             table[Self::SSTORE_STATIC as usize] = gas::WARM_STORAGE_READ_COST;
             table[Self::COLD_ACCOUNT_ADDITIONAL_COST as usize] =
                 gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
-            table[Self::COLD_STORAGE_ADDITIONAL_COST as usize] = gas::COLD_SLOAD_COST;
+            table[Self::COLD_STORAGE_ADDITIONAL_COST as usize] =
+                gas::COLD_SLOAD_COST - gas::WARM_STORAGE_READ_COST;
+            table[Self::COLD_STORAGE_COST as usize] = gas::COLD_SLOAD_COST;
 
             table[Self::SSTORE_RESET_WITHOUT_COLD_LOAD_COST as usize] =
                 WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
@@ -319,8 +324,7 @@ impl GasParams {
 
         // this will be zero before berlin fork.
         if is_cold {
-            //println!("is cold {}", self.additional_cold_cost());
-            gas += self.cold_storage_additional_cost();
+            gas += self.cold_storage_cost();
         }
 
         // if new values changed present value and present value is unchanged from original.
@@ -468,6 +472,12 @@ impl GasParams {
     #[inline]
     pub fn cold_storage_additional_cost(&self) -> u64 {
         self.get(Self::COLD_STORAGE_ADDITIONAL_COST)
+    }
+
+    /// Cold storage cost.
+    #[inline]
+    pub fn cold_storage_cost(&self) -> u64 {
+        self.get(Self::COLD_STORAGE_COST)
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.

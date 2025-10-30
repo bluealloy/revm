@@ -27,6 +27,7 @@ pub fn get_memory_input_and_out_ranges(
     }
 
     let ret_range = resize_memory(interpreter, out_offset, out_len)?;
+
     Some((in_range, ret_range))
 }
 

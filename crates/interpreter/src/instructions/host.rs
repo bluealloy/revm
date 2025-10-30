@@ -196,7 +196,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let target = context.interpreter.input.target_address();
 
     if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context.interpreter.gas_table.cold_account_additional_cost();
+        let additional_cold_cost = context.interpreter.gas_table.cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
         match res {
@@ -240,14 +240,11 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     }
 
     // println!(
-    //     "SSTORE remaining: {:?}",
-    //     context.interpreter.gas.remaining()
-    // );
-    // println!(
     //     "SSTORE static: {:?}",
     //     context.interpreter.gas_table.sstore_static_gas()
     // );
-    // static gas
+    // // static gas
+
     gas!(
         context.interpreter,
         context.interpreter.gas_table.sstore_static_gas()
@@ -259,7 +256,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context.interpreter.gas_table.cold_account_additional_cost();
+        let additional_cold_cost = context.interpreter.gas_table.cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context
             .host
