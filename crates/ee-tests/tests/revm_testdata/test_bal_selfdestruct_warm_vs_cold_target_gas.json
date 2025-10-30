@@ -1,0 +1,24 @@
+[
+  {
+    "Success": {
+      "gas_refunded": 24000,
+      "gas_used": 29603,
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "SelfDestruct"
+    }
+  },
+  {
+    "Success": {
+      "gas_refunded": 24000,
+      "gas_used": 29608,
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "SelfDestruct"
+    }
+  }
+]
