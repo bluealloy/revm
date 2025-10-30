@@ -7,33 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [20.2.1](https://github.com/bluealloy/revm/compare/revm-primitives-v20.2.0...revm-primitives-v20.2.1) - 2025-08-12
-
-### Other
-
-- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
-
-## [20.2.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.1.0...revm-primitives-v20.2.0) - 2025-08-06
-
-### Added
-
-- short address for journal cold/warm check ([#2849](https://github.com/bluealloy/revm/pull/2849))
-
-### Other
-
-- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
-- improve primitives crate documentation and consistency ([#2829](https://github.com/bluealloy/revm/pull/2829))
-- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
-- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
-- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
-# Changelog
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
 ## [21.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.0...revm-primitives-v21.0.1) - 2025-10-15
 
 ### Other
@@ -59,6 +32,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add amsterdam in spec id ([#2934](https://github.com/bluealloy/revm/pull/2934))
 - *(cleanup)* Remove EIP-7918 related functions and EIP file  ([#2925](https://github.com/bluealloy/revm/pull/2925))
 - cargo update ([#2930](https://github.com/bluealloy/revm/pull/2930))
+
+## [20.2.1](https://github.com/bluealloy/revm/compare/revm-primitives-v20.2.0...revm-primitives-v20.2.1) - 2025-08-12
+
+### Other
+
+- small performance and safety improvements ([#2868](https://github.com/bluealloy/revm/pull/2868))
+
+## [20.2.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.1.0...revm-primitives-v20.2.0) - 2025-08-06
+
+### Added
+
+- short address for journal cold/warm check ([#2849](https://github.com/bluealloy/revm/pull/2849))
+
+### Other
+
+- update README.md ([#2842](https://github.com/bluealloy/revm/pull/2842))
+- improve primitives crate documentation and consistency ([#2829](https://github.com/bluealloy/revm/pull/2829))
+- reuse global crypto provide idea ([#2786](https://github.com/bluealloy/revm/pull/2786))
+- add rust-version and note about MSRV ([#2789](https://github.com/bluealloy/revm/pull/2789))
+- add OnceLock re-export with no_std support ([#2787](https://github.com/bluealloy/revm/pull/2787))
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [20.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v20.0.0...revm-primitives-v20.1.0) - 2025-07-23
 

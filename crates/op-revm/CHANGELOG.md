@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - *(op)* use helper function in validate against state ([#3069](https://github.com/bluealloy/revm/pull/3069))
 
+
+## [11.3.0](https://github.com/bluealloy/revm/compare/op-revm-v11.2.0...op-revm-v11.3.0) - 2025-10-28
+
+### Added
+
+- *(precompiles/jovian)* add jovian precompiles to revm ([#3128](https://github.com/bluealloy/revm/pull/3128))
+
+
 ## [11.2.0](https://github.com/bluealloy/revm/compare/op-revm-v11.1.2...op-revm-v11.2.0) - 2025-10-17
 
 ### Other
