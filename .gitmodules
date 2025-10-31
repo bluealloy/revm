@@ -1,0 +1,6 @@
+[submodule "solidity/automation_registry/lib/openzeppelin-contracts"]
+	path = solidity/automation_registry/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "solidity/automation_registry/lib/openzeppelin-contracts-upgradeable"]
+	path = solidity/automation_registry/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
