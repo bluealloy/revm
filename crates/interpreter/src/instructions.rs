@@ -122,7 +122,7 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     if spec.is_enabled_in(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
         table[SLOAD as usize].static_gas = gas::ISTANBUL_SLOAD_GAS;
-        table[BALANCE as usize].static_gas = 400;
+        table[BALANCE as usize].static_gas = 700;
         table[EXTCODEHASH as usize].static_gas = 700;
     }
 

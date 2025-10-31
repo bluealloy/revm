@@ -196,7 +196,10 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let target = context.interpreter.input.target_address();
 
     if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context.interpreter.gas_params.cold_storage_additional_cost();
+        let additional_cold_cost = context
+            .interpreter
+            .gas_params
+            .cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
         match res {
@@ -239,24 +242,16 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         return;
     }
 
-    // println!(
-    //     "SSTORE static: {:?}",
-    //     context.interpreter.gas_params.sstore_static_gas()
-    // );
-    // // static gas
-
     gas!(
         context.interpreter,
         context.interpreter.gas_params.sstore_static_gas()
     );
 
-    // println!(
-    //     "SSTORE after static: {:?}",
-    //     context.interpreter.gas.remaining()
-    // );
-
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context.interpreter.gas_params.cold_storage_additional_cost();
+        let additional_cold_cost = context
+            .interpreter
+            .gas_params
+            .cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context
             .host
@@ -275,15 +270,6 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
-    // println!(
-    //     "SSTORE dynamic gas: {:?}",
-    //     context.interpreter.gas_params.sstore_dynamic_gas(
-    //         is_istanbul,
-    //         &state_load.data,
-    //         state_load.is_cold
-    //     )
-    // );
-
     // dynamic gas
     gas!(
         context.interpreter,
@@ -293,11 +279,6 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             state_load.is_cold
         )
     );
-
-    // println!(
-    //     "SSTORE after dynamic: {:?}",
-    //     context.interpreter.gas.remaining()
-    // );
 
     // refund
     context.interpreter.gas.record_refund(
@@ -379,7 +360,10 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let target = target.into_address();
     let spec = context.interpreter.runtime_flag.spec_id();
 
-    let cold_load_gas = context.interpreter.gas_params.cold_account_additional_cost();
+    let cold_load_gas = context
+        .interpreter
+        .gas_params
+        .cold_account_additional_cost();
 
     let skip_cold_load = context.interpreter.gas.remaining() < cold_load_gas;
     let res = match context.host.selfdestruct(
