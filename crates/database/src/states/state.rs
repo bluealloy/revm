@@ -15,6 +15,7 @@ use state::{
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
+    sync::Arc,
     vec::Vec,
 };
 
@@ -248,6 +249,24 @@ impl<DB: Database> State<DB> {
         self.bal_state.take_built_alloy_bal()
     }
 
+    /// Bump BAL index.
+    #[inline]
+    pub fn bump_bal_index(&mut self) {
+        self.bal_state.bump_bal_index();
+    }
+
+    /// Reset BAL index.
+    #[inline]
+    pub fn reset_bal_index(&mut self) {
+        self.bal_state.reset_bal_index();
+    }
+
+    /// Set BAL.
+    #[inline]
+    pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
+        self.bal_state.bal = bal;
+    }
+
     /// Gets storage value of address at index.
     #[inline]
     fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
@@ -374,6 +393,7 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, evm_state: HashMap<Address, Account>) {
+        self.bal_state.commit(&evm_state);
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
             // apply account state.
@@ -386,7 +406,7 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 }
 
 impl<DB: DatabaseRef> DatabaseRef for State<DB> {
-    type Error = DB::Error;
+    type Error = BalDatabaseError<DB::Error>;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         // Account is already in cache
@@ -400,7 +420,13 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        self.database.basic_ref(address)
+        let account = self
+            .database
+            .basic_ref(address)
+            .map_err(BalDatabaseError::Database)?;
+        self.bal_state
+            .basic(address, account)
+            .map_err(BalDatabaseError::Bal)
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -415,7 +441,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        self.database.code_by_hash_ref(code_hash)
+        self.database
+            .code_by_hash_ref(code_hash)
+            .map_err(BalDatabaseError::Database)
     }
 
     fn storage_ref(
@@ -438,7 +466,13 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        self.database.storage_ref(address, index)
+        let storage = self
+            .database
+            .storage_ref(address, index)
+            .map_err(BalDatabaseError::Database)?;
+        self.bal_state
+            .storage(address, index, storage)
+            .map_err(BalDatabaseError::Bal)
     }
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
@@ -446,7 +480,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             return Ok(*entry);
         }
         // If not found, load it from database
-        self.database.block_hash_ref(number)
+        self.database
+            .block_hash_ref(number)
+            .map_err(BalDatabaseError::Database)
     }
 }
 

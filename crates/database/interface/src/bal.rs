@@ -94,7 +94,7 @@ impl BalState {
     /// Fetch account from database and apply bal changes to it.
     #[inline]
     pub fn basic(
-        &mut self,
+        &self,
         address: Address,
         mut basic: Option<AccountInfo>,
     ) -> Result<Option<AccountInfo>, BalError> {
@@ -119,7 +119,7 @@ impl BalState {
 
     /// Fetch storage from database and apply bal changes to it.
     pub fn storage(
-        &mut self,
+        &self,
         address: Address,
         key: StorageKey,
         mut value: StorageValue,
@@ -133,7 +133,7 @@ impl BalState {
     /// Fetch the storage changes from database and apply bal change to it.
     #[inline]
     pub fn storage_by_account_id(
-        &mut self,
+        &self,
         account_id: usize,
         storage_key: StorageKey,
         mut value: StorageValue,

@@ -7,7 +7,7 @@ use revm::{
     bytecode::Bytecode,
     context::{cfg::CfgEnv, ContextTr},
     context_interface::{block::BlobExcessGasAndPrice, result::HaltReason},
-    database::{bal::BalDatabase, states::bundle_state::BundleRetention, EmptyDB, State},
+    database::{states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
     primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
@@ -647,7 +647,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut state = BalDatabase::new(State::builder().build());
+    let mut state = State::builder().with_bal_builder().build();
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::new();
@@ -723,7 +723,8 @@ fn execute_blockchain_test(
             .and_then(|bal| Bal::try_from(bal.clone()).ok())
             .map(Arc::new);
 
-        state = state.with_bal_option(bal_test).reset_bal_index();
+        //state.set_bal(bal_test);
+        state.reset_bal_index();
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -939,7 +940,7 @@ fn execute_blockchain_test(
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
 
         if let Some(bal) = state.bal_state.bal_builder.take() {
-            if let Some(state_bal) = state.bal_state.bal.as_ref() {
+            if let Some(state_bal) = bal_test {
                 if &bal != state_bal.as_ref() {
                     println!("Bal mismatch");
                     println!("Test bal");
