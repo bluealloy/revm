@@ -42,6 +42,7 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        self.configure(evm);
         match self.inspect_run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
@@ -136,6 +137,8 @@ where
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        // configure
+        self.configure(evm);
         // call execution with inspection and then output.
         match self
             .inspect_execution(evm, &init_and_floor_gas)

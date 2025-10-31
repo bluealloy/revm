@@ -1,12 +1,13 @@
 use auto_impl::auto_impl;
 use interpreter::{
-    instructions::{instruction_table, InstructionTable},
+    instructions::{instruction_table, instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
+use primitives::hardfork::SpecId;
 use std::boxed::Box;
 
 /// Stores instructions for EVM.
-#[auto_impl(&, Arc, Rc)]
+#[auto_impl(&mut, Box)]
 pub trait InstructionProvider {
     /// Context type.
     type Context;
@@ -15,6 +16,9 @@ pub trait InstructionProvider {
 
     /// Returns the instruction table that is used by EvmTr to execute instructions.
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
+
+    /// Sets the spec id.
+    fn set_spec_id(&mut self, spec_id: SpecId);
 }
 
 /// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
@@ -70,6 +74,10 @@ where
 
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table
+    }
+
+    fn set_spec_id(&mut self, spec_id: SpecId) {
+        self.instruction_table = Box::new(instruction_table_gas_changes_spec(spec_id));
     }
 }
 
