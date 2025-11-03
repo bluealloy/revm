@@ -157,16 +157,32 @@ mod tests {
         assert_eq!(bal_writes.get(4), Some(3));
     }
 
+    fn get_binary_search(threshold: BalIndex) {
+        // Construct test data up to (threshold - 1), skipping one key to simulate a gap.
+        let entries: Vec<_> = (0..threshold - 1)
+            .map(|i| (i, i + 1))
+            .chain(std::iter::once((threshold, threshold + 1)))
+            .collect();
+
+        let bal_writes = BalWrites::new(entries);
+
+        // Case 1: lookup before any entries
+        assert_eq!(bal_writes.get(0), None);
+
+        // Case 2: lookups for existing keys before the gap
+        for i in 1..threshold - 1 {
+            assert_eq!(bal_writes.get(i), Some(i));
+        }
+
+        // Case 3: lookup at the skipped key — should return the previous value
+        assert_eq!(bal_writes.get(threshold), Some(threshold - 1));
+
+        // Case 4: lookup after the skipped key — should return the next valid value
+        assert_eq!(bal_writes.get(threshold + 1), Some(threshold + 1));
+    }
+
     #[test]
     fn test_get_binary_search() {
-        // skip (4, 5) to verify lookup behavior when a key falls between existing entries.
-        let bal_writes = BalWrites::new(vec![(0, 1), (1, 2), (2, 3), (3, 4), (5, 6)]);
-        assert_eq!(bal_writes.get(0), None);
-        assert_eq!(bal_writes.get(1), Some(1));
-        assert_eq!(bal_writes.get(2), Some(2));
-        assert_eq!(bal_writes.get(3), Some(3));
-        assert_eq!(bal_writes.get(4), Some(4));
-        assert_eq!(bal_writes.get(5), Some(4));
-        assert_eq!(bal_writes.get(6), Some(6));
+        get_binary_search(5);
     }
 }
