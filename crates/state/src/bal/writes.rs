@@ -40,11 +40,22 @@ impl<T: PartialEq + Clone> BalWrites<T> {
             return self.get_linear_search(bal_index);
         }
         // else do binary search.
-        let index = self
+        match self
             .writes
             .binary_search_by_key(&bal_index, |(index, _)| *index)
-            .ok()?;
-        Some(self.writes[index].1.clone())
+        {
+            Ok(i) => {
+                if i > 0 {
+                    Some(self.writes[i - 1].1.clone()) // exact match
+                } else {
+                    None
+                }
+            }
+            Err(0) => None, // all entries greater
+            Err(i) => {
+                Some(self.writes[i - 1].1.clone()) // previous entry before insertion point
+            }
+        }
     }
 
     /// Extend the builder with another builder.
@@ -144,5 +155,18 @@ mod tests {
         assert_eq!(bal_writes.get(2), Some(2));
         assert_eq!(bal_writes.get(3), Some(3));
         assert_eq!(bal_writes.get(4), Some(3));
+    }
+
+    #[test]
+    fn test_get_binary_search() {
+        // skip (4, 5) to verify lookup behavior when a key falls between existing entries.
+        let bal_writes = BalWrites::new(vec![(0, 1), (1, 2), (2, 3), (3, 4), (5, 6)]);
+        assert_eq!(bal_writes.get(0), None);
+        assert_eq!(bal_writes.get(1), Some(1));
+        assert_eq!(bal_writes.get(2), Some(2));
+        assert_eq!(bal_writes.get(3), Some(3));
+        assert_eq!(bal_writes.get(4), Some(4));
+        assert_eq!(bal_writes.get(5), Some(4));
+        assert_eq!(bal_writes.get(6), Some(6));
     }
 }
