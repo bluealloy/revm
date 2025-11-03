@@ -40,22 +40,15 @@ impl<T: PartialEq + Clone> BalWrites<T> {
             return self.get_linear_search(bal_index);
         }
         // else do binary search.
-        match self
+        let i = match self
             .writes
             .binary_search_by_key(&bal_index, |(index, _)| *index)
         {
-            Ok(i) => {
-                if i > 0 {
-                    Some(self.writes[i - 1].1.clone()) // exact match
-                } else {
-                    None
-                }
-            }
-            Err(0) => None, // all entries greater
-            Err(i) => {
-                Some(self.writes[i - 1].1.clone()) // previous entry before insertion point
-            }
-        }
+            Ok(i) => i,
+            Err(i) => i,
+        };
+        // only if i is not zero, we return the previous value.
+        (i != 0).then(|| self.writes[i - 1].1.clone())
     }
 
     /// Extend the builder with another builder.
@@ -183,6 +176,9 @@ mod tests {
 
     #[test]
     fn test_get_binary_search() {
+        get_binary_search(4);
         get_binary_search(5);
+        get_binary_search(6);
+        get_binary_search(7);
     }
 }
