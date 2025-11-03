@@ -395,14 +395,15 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // static gas
     gas!(context.interpreter, gas::static_selfdestruct_cost(spec));
 
-    let Some(res) = context
-        .host
-        .selfdestruct(context.interpreter.input.target_address(), target)
-    else {
-        context
-            .interpreter
-            .halt(InstructionResult::FatalExternalError);
-        return;
+    let skip_cold = context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+    let res = match context.host.selfdestruct(
+        context.interpreter.input.target_address(),
+        target,
+        skip_cold,
+    ) {
+        Ok(res) => res,
+        Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
+        Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
     };
 
     gas!(context.interpreter, gas::dyn_selfdestruct_cost(spec, &res));
