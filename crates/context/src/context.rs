@@ -526,13 +526,17 @@ impl<
         &mut self,
         address: Address,
         target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, LoadError> {
         self.journal_mut()
-            .selfdestruct(address, target)
+            .selfdestruct(address, target, skip_cold_load)
             .map_err(|e| {
-                *self.error() = Err(e.into());
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    *self.error() = Err(err.into());
+                }
+                ret
             })
-            .ok()
     }
 
     #[inline]

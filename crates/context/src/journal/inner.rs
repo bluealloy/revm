@@ -497,9 +497,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
         target: Address,
-    ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<<DB as Database>::Error>> {
         let spec = self.spec;
-        let account_load = self.load_account(db, target)?;
+        let account_load = self.load_account_optional(db, target, false, skip_cold_load)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
 
