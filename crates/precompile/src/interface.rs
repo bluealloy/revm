@@ -273,7 +273,7 @@ pub enum PrecompileError {
     Fatal(String),
     /// Catch-all variant for other errors
     ///
-    /// Prefere using `OtherStr` instead of `Other` if possible as it is more performant.
+    /// Prefer using `OtherStr` instead of `Other` as it is more performant.
     Other(String),
     /// Catch-all variant with a custom error message
     OtherStr(&'static str),
