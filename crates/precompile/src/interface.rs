@@ -272,7 +272,11 @@ pub enum PrecompileError {
     /// Fatal error with a custom error message
     Fatal(String),
     /// Catch-all variant for other errors
+    ///
+    /// Prefere using `OtherStr` instead of `Other` if possible as it is more performant.
     Other(String),
+    /// Catch-all variant with a custom error message
+    OtherStr(&'static str),
 }
 
 impl PrecompileError {
@@ -329,6 +333,7 @@ impl fmt::Display for PrecompileError {
             Self::Secp256k1RecoverFailed => "secp256k1 signature recovery failed",
             Self::Fatal(s) => s,
             Self::Other(s) => s,
+            Self::OtherStr(s) => s,
         };
         f.write_str(s)
     }
