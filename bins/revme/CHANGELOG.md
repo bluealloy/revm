@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/revme-v8.3.0...revme-v9.0.0) - 2025-10-30
+
+### Other
+
+- consolidate revme imports ([#3088](https://github.com/bluealloy/revm/pull/3088))
+- Update blockchaintest.rs ([#3107](https://github.com/bluealloy/revm/pull/3107))
+- typo eip4788  ([#3111](https://github.com/bluealloy/revm/pull/3111))
+
 ## [8.3.0](https://github.com/bluealloy/revm/compare/revme-v8.2.2...revme-v8.3.0) - 2025-10-17
 
 ### Other

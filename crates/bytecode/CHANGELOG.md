@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.0.2...revm-bytecode-v7.1.0) - 2025-10-30
+
+### Added
+
+- impl `Sealable` for `Bytecode` ([#3118](https://github.com/bluealloy/revm/pull/3118))
+
 ## [7.0.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.0.1...revm-bytecode-v7.0.2) - 2025-10-15
 
 ### Other

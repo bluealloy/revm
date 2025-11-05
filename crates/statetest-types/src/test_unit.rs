@@ -1,13 +1,12 @@
-use serde::Deserialize;
-use std::collections::{BTreeMap, HashMap};
-
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv},
     database::CacheState,
-    primitives::{hardfork::SpecId, keccak256, Address, Bytes, B256},
+    primitives::{hardfork::SpecId, keccak256, Address, Bytes, HashMap, B256},
     state::Bytecode,
 };
+use serde::Deserialize;
+use std::collections::BTreeMap;
 
 /// Single test unit struct
 #[derive(Debug, PartialEq, Eq, Deserialize)]
