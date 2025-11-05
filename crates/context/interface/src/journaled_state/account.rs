@@ -137,6 +137,17 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
         true
     }
 
+    /// Sets the nonce of the account.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    pub fn set_nonce(&mut self, nonce: u64) {
+        self.touch();
+        self.account.info.set_nonce(nonce);
+        self.journal_entries
+            .push(ENTRY::nonce_changed(self.address));
+    }
+
     /// Sets the code of the account.
     ///
     /// Touches the account in all cases.
