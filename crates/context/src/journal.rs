@@ -231,6 +231,17 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
             .balance_incr(&mut self.database, address, balance)
     }
 
+    /// Decrements the balance of the account.
+    #[inline]
+    fn balance_decr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error> {
+        self.inner
+            .balance_decr(&mut self.database, address, balance)
+    }
+
     /// Increments the nonce of the account.
     #[inline]
     fn nonce_bump_journal_entry(&mut self, address: Address) {

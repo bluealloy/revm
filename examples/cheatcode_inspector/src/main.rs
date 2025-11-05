@@ -249,6 +249,14 @@ impl JournalTr for Backend {
         self.journaled_state.balance_incr(address, balance)
     }
 
+    fn balance_decr(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), <Self::Database as Database>::Error> {
+        self.journaled_state.balance_decr(address, balance)
+    }
+
     fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journaled_state.nonce_bump_journal_entry(address)
     }

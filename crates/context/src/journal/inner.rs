@@ -300,6 +300,21 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(())
     }
 
+    /// Decrements the balance of the account.
+    ///
+    /// Mark account as touched.
+    #[inline]
+    pub fn balance_decr<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), DB::Error> {
+        let mut account = self.load_account_mut(db, address)?.data;
+        account.decr_balance(balance);
+        Ok(())
+    }
+
     /// Increments the nonce of the account.
     #[inline]
     pub fn nonce_bump_journal_entry(&mut self, address: Address) {

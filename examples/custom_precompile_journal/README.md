@@ -79,6 +79,12 @@ context
     .journal_mut()
     .balance_incr(address, amount)
     .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {:?}", e)))?;
+
+/// Decrementing balance
+context
+    .journal_mut()
+    .balance_decr(address, amount)
+    .map_err(|e| PrecompileError::Other(format!("Balance decrement failed: {:?}", e)))?;
 ```
 
 ## Usage
