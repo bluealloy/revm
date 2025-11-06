@@ -16,6 +16,19 @@ use primitives::{
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
 
+/// Result type that contains database error.
+pub type JournaledAccountLoadResult<'a, 'b, JOURNAL> = Result<
+    StateLoad<
+        JournaledAccount<
+            'a,
+            'b,
+            <JOURNAL as JournalTr>::JournalEntry,
+            <JOURNAL as JournalTr>::Database,
+        >,
+    >,
+    <<JOURNAL as JournalTr>::Database as Database>::Error,
+>;
+
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     /// Database type that is used in the journal.
@@ -177,13 +190,7 @@ pub trait JournalTr {
 
     /// Loads the journaled account.
     #[inline]
-    fn load_account_mut(
-        &mut self,
-        address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    fn load_account_mut(&mut self, address: Address) -> JournaledAccountLoadResult<'_, '_, Self> {
         self.load_account_mut_optional_code(address, false)
     }
 
@@ -192,10 +199,7 @@ pub trait JournalTr {
     fn load_account_with_code_mut(
         &mut self,
         address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> JournaledAccountLoadResult<'_, '_, Self> {
         self.load_account_mut_optional_code(address, true)
     }
 
@@ -204,10 +208,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    >;
+    ) -> JournaledAccountLoadResult<'_, '_, Self>;
 
     /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);

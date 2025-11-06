@@ -12,8 +12,8 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        account::JournaledAccount, AccountInfoLoad, AccountLoad, JournalCheckpoint,
-        JournalLoadError, JournalTr, TransferError,
+        AccountInfoLoad, AccountLoad, JournalCheckpoint, JournalLoadError, JournalTr,
+        JournaledAccountLoadResult, TransferError,
     },
 };
 use core::ops::{Deref, DerefMut};
@@ -247,10 +247,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> JournaledAccountLoadResult<'_, '_, Self> {
         self.inner
             .load_account_mut_optional_code(&mut self.database, address, load_code, false)
             .map_err(JournalLoadError::unwrap_db_error)

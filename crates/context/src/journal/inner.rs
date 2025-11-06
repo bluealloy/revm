@@ -16,7 +16,7 @@ use primitives::{
     hash_map::Entry,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+use state::{Account, EvmState, TransientStorage};
 use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
@@ -645,24 +645,24 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Loads account into memory. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_mut<DB: Database>(
-        &mut self,
-        db: &mut DB,
+    pub fn load_account_mut<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'b mut DB,
         address: Address,
-    ) -> Result<StateLoad<JournaledAccount<'_, ENTRY>>, DB::Error> {
+    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, DB::Error> {
         self.load_account_mut_optional_code(db, address, false, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
-    pub fn load_account_mut_optional_code<DB: Database>(
-        &mut self,
-        db: &mut DB,
+    pub fn load_account_mut_optional_code<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'b mut DB,
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<JournaledAccount<'_, ENTRY>>, JournalLoadError<DB::Error>> {
+    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
@@ -732,7 +732,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             info.code = Some(code);
         }
 
-        Ok(load.map(|i| JournaledAccount::new(address, i, &mut self.journal)))
+        Ok(load.map(|i| {
+            JournaledAccount::new(
+                address,
+                i,
+                &mut self.journal,
+                db,
+                self.warm_addresses.access_list(),
+                self.transaction_id,
+            )
+        }))
     }
 
     /// Loads storage slot.
@@ -748,46 +757,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
-        // assume acc is warm
-        let account = self.state.get_mut(&address).unwrap();
-
-        let is_newly_created = account.is_created();
-        let (value, is_cold) = match account.storage.entry(key) {
-            Entry::Occupied(occ) => {
-                let slot = occ.into_mut();
-                // skip load if account is cold.
-                let is_cold = slot.is_cold_transaction_id(self.transaction_id);
-                if skip_cold_load && is_cold {
-                    return Err(JournalLoadError::ColdLoadSkipped);
-                }
-                slot.mark_warm_with_transaction_id(self.transaction_id);
-                (slot.present_value, is_cold)
-            }
-            Entry::Vacant(vac) => {
-                if skip_cold_load {
-                    return Err(JournalLoadError::ColdLoadSkipped);
-                }
-                // if storage was cleared, we don't need to ping db.
-                let value = if is_newly_created {
-                    StorageValue::ZERO
-                } else {
-                    db.storage(address, key)?
-                };
-                vac.insert(EvmStorageSlot::new(value, self.transaction_id));
-
-                // is storage cold
-                let is_cold = !self.warm_addresses.is_storage_warm(&address, &key);
-
-                (value, is_cold)
-            }
-        };
-
-        if is_cold {
-            // add it to journal as cold loaded.
-            self.journal.push(ENTRY::storage_warmed(address, key));
-        }
-
-        Ok(StateLoad::new(value, is_cold))
+        self.load_account_mut(db, address)?
+            .sload(key, skip_cold_load)
     }
 
     /// Stores storage slot.
@@ -804,37 +775,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
-        // assume that acc exists and load the slot.
-        let present = self.sload(db, address, key, skip_cold_load)?;
-        let acc = self.state.get_mut(&address).unwrap();
-
-        // if there is no original value in dirty return present value, that is our original.
-        let slot = acc.storage.get_mut(&key).unwrap();
-
-        // new value is same as present, we don't need to do anything
-        if present.data == new {
-            return Ok(StateLoad::new(
-                SStoreResult {
-                    original_value: slot.original_value(),
-                    present_value: present.data,
-                    new_value: new,
-                },
-                present.is_cold,
-            ));
-        }
-
-        self.journal
-            .push(ENTRY::storage_changed(address, key, present.data));
-        // insert value into present state.
-        slot.present_value = new;
-        Ok(StateLoad::new(
-            SStoreResult {
-                original_value: slot.original_value(),
-                present_value: present.data,
-                new_value: new,
-            },
-            present.is_cold,
-        ))
+        self.load_account_mut(db, address)?
+            .sstore(key, new, skip_cold_load)
     }
 
     /// Read transient storage tied to the account.

@@ -3,26 +3,120 @@
 //!
 //! Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 
+use crate::{
+    context::{SStoreResult, StateLoad},
+    journaled_state::JournalLoadError,
+};
+
 use super::entry::JournalEntryTr;
 use core::ops::Deref;
-use primitives::{Address, B256, KECCAK_EMPTY, U256};
-use state::{Account, Bytecode};
-use std::vec::Vec;
+use database_interface::Database;
+use primitives::{Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256};
+use state::{Account, Bytecode, EvmStorageSlot};
+use std::{collections::hash_map::Entry, vec::Vec};
 
 /// Journaled account contains both mutable account and journal entries.
 ///
 /// Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 #[derive(Debug, PartialEq, Eq)]
-pub struct JournaledAccount<'a, ENTRY: JournalEntryTr> {
+pub struct JournaledAccount<'a, 'b, ENTRY: JournalEntryTr, DB> {
     /// Address of the account.
     address: Address,
     /// Mutable account.
     account: &'a mut Account,
     /// Journal entries.
     journal_entries: &'a mut Vec<ENTRY>,
+    /// Access list.
+    access_list: &'a HashMap<Address, HashSet<StorageKey>>,
+    /// Transaction ID.
+    transaction_id: usize,
+    /// Database used to load storage.
+    db: &'b mut DB,
 }
 
-impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
+impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY, DB> {
+    /// Creates a new journaled account.
+    #[inline]
+    pub fn sload(
+        &mut self,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, JournalLoadError<<DB as Database>::Error>> {
+        let is_newly_created = self.account.is_created();
+        let (value, is_cold) = match self.account.storage.entry(key) {
+            Entry::Occupied(occ) => {
+                let slot = occ.into_mut();
+                // skip load if account is cold.
+                let is_cold = slot.is_cold_transaction_id(self.transaction_id);
+                if skip_cold_load && is_cold {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
+                slot.mark_warm_with_transaction_id(self.transaction_id);
+                (slot.present_value, is_cold)
+            }
+            Entry::Vacant(vac) => {
+                if skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
+                // if storage was cleared, we don't need to ping db.
+                let value = if is_newly_created {
+                    StorageValue::ZERO
+                } else {
+                    self.db.storage(self.address, key)?
+                };
+                vac.insert(EvmStorageSlot::new(value, self.transaction_id));
+
+                // is storage cold
+                let is_cold = self
+                    .access_list
+                    .get(&self.address)
+                    .and_then(|v| v.get(&key))
+                    .is_none();
+
+                (value, is_cold)
+            }
+        };
+
+        if is_cold {
+            // add it to journal as cold loaded.
+            self.journal_entries
+                .push(ENTRY::storage_warmed(self.address, key));
+        }
+
+        Ok(StateLoad::new(value, is_cold))
+    }
+
+    /// Warm loads storage slot and stores the new value
+    pub fn sstore(
+        &mut self,
+        key: StorageKey,
+        new: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<<DB as Database>::Error>> {
+        // assume that acc exists and load the slot.
+        let present = self.sload(key, skip_cold_load)?;
+        let slot = self.account.storage.get_mut(&key).unwrap();
+
+        // when new value is different from present, we need to add a journal entry and make a change.
+        if present.data != new {
+            self.journal_entries
+                .push(ENTRY::storage_changed(self.address, key, present.data));
+            // insert value into present state.
+            slot.present_value = new;
+        }
+
+        Ok(StateLoad::new(
+            SStoreResult {
+                original_value: slot.original_value(),
+                present_value: present.data,
+                new_value: new,
+            },
+            present.is_cold,
+        ))
+    }
+}
+
+impl<'a, 'b, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, 'b, ENTRY, DB> {
     /// Consumes the journaled account and returns the mutable account.
     #[inline]
     pub fn into_account_ref(self) -> &'a Account {
@@ -35,11 +129,17 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
         address: Address,
         account: &'a mut Account,
         journal_entries: &'a mut Vec<ENTRY>,
+        db: &'b mut DB,
+        access_list: &'a HashMap<Address, HashSet<StorageKey>>,
+        transaction_id: usize,
     ) -> Self {
         Self {
             address,
             account,
             journal_entries,
+            db,
+            access_list,
+            transaction_id,
         }
     }
 
@@ -176,7 +276,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     }
 }
 
-impl<'a, ENTRY: JournalEntryTr> Deref for JournaledAccount<'a, ENTRY> {
+impl<'a, 'b, ENTRY: JournalEntryTr, DB> Deref for JournaledAccount<'a, 'b, ENTRY, DB> {
     type Target = Account;
 
     fn deref(&self) -> &Self::Target {

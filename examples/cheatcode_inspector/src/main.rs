@@ -8,7 +8,7 @@
 
 use revm::{
     context::{
-        journaled_state::{AccountInfoLoad, JournalLoadError},
+        journaled_state::{AccountInfoLoad, JournalLoadError, JournaledAccountLoadResult},
         result::InvalidTransaction,
         BlockEnv, Cfg, CfgEnv, ContextTr, Evm, LocalContext, TxEnv,
     },
@@ -302,12 +302,7 @@ impl JournalTr for Backend {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<
-            revm::context::journaled_state::account::JournaledAccount<'_, Self::JournalEntry>,
-        >,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> JournaledAccountLoadResult<'_, '_, Self> {
         self.journaled_state
             .load_account_mut_optional_code(address, load_code)
     }
