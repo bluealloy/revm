@@ -1,6 +1,7 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
 use core::ops::Range;
 use primitives::{Bytes, Log};
+use std::vec::Vec;
 
 /// Represents the outcome of a call operation in a virtual machine.
 ///

@@ -2,7 +2,6 @@
 
 pub mod custom_evm;
 pub mod precompile_provider;
-mod tests;
 
 pub use custom_evm::CustomEvm;
 pub use precompile_provider::CustomPrecompileProvider;

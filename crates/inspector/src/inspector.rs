@@ -65,7 +65,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// `logs` will be added if precompile reverted or halted.
     /// While logs_range will present range of logs inside journal.logs() if precompile called successfully.
     ///
-    /// `logs_range` is used to not clone all the logs every time.
+    /// Range is used to not clone logs from journal every time.
     fn log_without_interpreter(
         &mut self,
         context: &mut CTX,
@@ -76,17 +76,6 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = logs;
         let _ = logs_range;
     }
-
-    // /// Called at the end of the call or if current frame needs to pass the execution to sub call.
-    // ///
-    // /// Idea for this is to allow inspector to access all set journaled logs for a given part of the call.
-    // ///
-    // #[inline]
-    // fn log_grouped(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log_index_range: Range<usize>) {
-    //     let _ = interp;
-    //     let _ = context;
-    //     let _ = log_index_range;
-    // }
 
     /// Called whenever a call to a contract is about to start.
     ///
