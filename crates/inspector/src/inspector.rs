@@ -8,6 +8,7 @@ use interpreter::{
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
+use std::vec::Vec;
 
 /// EVM hooks into execution.
 ///
