@@ -1,6 +1,6 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
 use core::ops::Range;
-use primitives::Bytes;
+use primitives::{Bytes, Log};
 
 /// Represents the outcome of a call operation in a virtual machine.
 ///
@@ -18,6 +18,12 @@ pub struct CallOutcome {
     pub result: InterpreterResult,
     /// The range in memory where the output data is located
     pub memory_offset: Range<usize>,
+    /// Flag to indicate if the call is precompile call.
+    /// Used by inspector so it can copy the logs for Inspector::logs call.
+    pub was_precompile_called: bool,
+    /// Precompile call logs. Needs as revert/halt would delete them from Journal.
+    /// So they can't be accessed by inspector.
+    pub precompile_call_logs: Vec<Log>,
 }
 
 impl CallOutcome {
@@ -33,6 +39,8 @@ impl CallOutcome {
         Self {
             result,
             memory_offset,
+            was_precompile_called: false,
+            precompile_call_logs: Vec::new(),
         }
     }
 

@@ -1,3 +1,5 @@
+use core::ops::Range;
+
 use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
 use interpreter::{
@@ -54,6 +56,37 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = context;
         let _ = log;
     }
+
+    /// Called when a log is emitted without the interpreter context.
+    ///
+    /// Used when precompile pushes new logs to the journal without the interpreter context.
+    /// At the end of the precompile call, all logs will be aggregated and passed to the inspector.
+    ///
+    /// `logs` will be added if precompile reverted or halted.
+    /// While logs_range will present range of logs inside journal.logs() if precompile called successfully.
+    ///
+    /// `logs_range` is used to not clone all the logs every time.
+    fn log_without_interpreter(
+        &mut self,
+        context: &mut CTX,
+        logs: Vec<Log>,
+        logs_range: Range<usize>,
+    ) {
+        let _ = context;
+        let _ = logs;
+        let _ = logs_range;
+    }
+
+    // /// Called at the end of the call or if current frame needs to pass the execution to sub call.
+    // ///
+    // /// Idea for this is to allow inspector to access all set journaled logs for a given part of the call.
+    // ///
+    // #[inline]
+    // fn log_grouped(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log_index_range: Range<usize>) {
+    //     let _ = interp;
+    //     let _ = context;
+    //     let _ = log_index_range;
+    // }
 
     /// Called whenever a call to a contract is about to start.
     ///
@@ -174,9 +207,6 @@ where
 /// Extends the journal with additional methods that are used by the inspector.
 #[auto_impl(&mut, Box)]
 pub trait JournalExt {
-    /// Get all logs from the journal.
-    fn logs(&self) -> &[Log];
-
     /// Get the journal entries that are created from last checkpoint.
     /// new checkpoint is created when sub call is made.
     fn journal(&self) -> &[JournalEntry];
@@ -189,11 +219,6 @@ pub trait JournalExt {
 }
 
 impl<DB: Database> JournalExt for Journal<DB> {
-    #[inline]
-    fn logs(&self) -> &[Log] {
-        &self.logs
-    }
-
     #[inline]
     fn journal(&self) -> &[JournalEntry] {
         &self.journal

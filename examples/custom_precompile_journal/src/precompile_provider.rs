@@ -6,7 +6,7 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult},
     precompile::{PrecompileError, PrecompileOutput, PrecompileResult},
-    primitives::{address, hardfork::SpecId, Address, Bytes, U256},
+    primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
 use std::boxed::Box;
 use std::string::String;
@@ -210,6 +210,29 @@ fn handle_write_storage<CTX: ContextTr>(
     if let Some(error) = transfer_result {
         return Err(PrecompileError::Other(format!("Transfer error: {error:?}")));
     }
+
+    // Create a log to record the storage write operation
+    // Topic 0: keccak256("StorageWritten(address,uint256)")
+    let topic0 = B256::from_slice(&[
+        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
+        0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc,
+        0xde, 0xf0,
+    ]);
+    // Topic 1: caller address (indexed) - left-padded to 32 bytes
+    let mut topic1_bytes = [0u8; 32];
+    topic1_bytes[12..32].copy_from_slice(caller.as_slice());
+    let topic1 = B256::from(topic1_bytes);
+    // Data: the value that was written
+    let log_data = value.to_be_bytes_vec();
+
+    let log = Log::new(
+        CUSTOM_PRECOMPILE_ADDRESS,
+        vec![topic0, topic1],
+        log_data.into(),
+    )
+    .expect("Failed to create log");
+
+    context.journal_mut().log(log);
 
     // Return success with empty output
     Ok(PrecompileOutput::new(BASE_GAS + SSTORE_GAS, Bytes::new()))

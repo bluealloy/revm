@@ -27,7 +27,8 @@ pub trait Inspector<CTX, INTR: InterpreterTypes> {
     fn create_end(&mut self, context: &mut CTX, inputs: &CreateInputs, outcome: &mut CreateOutcome) {}
     
     // Event tracing
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {}
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {}
+    fn log_without_inspector(&mut self, context &mut CTX, logs: Vec<Log>, logs_range: Range<usize>) {}
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {}
 }
 ```

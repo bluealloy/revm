@@ -1,10 +1,12 @@
-use context::{ContextTr, FrameStack};
+use context::{ContextTr, FrameStack, JournalTr};
 use handler::{
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
     EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterTypes};
+use interpreter::{
+    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, InterpreterTypes,
+};
 
 use crate::{
     handler::{frame_end, frame_start},
@@ -104,8 +106,22 @@ pub trait InspectorEvmTr:
         }
 
         let frame_input = frame_init.frame_input.clone();
+        let logs_i = ctx.journal().logs().len();
         if let ItemOrResult::Result(mut output) = self.frame_init(frame_init)? {
             let (ctx, inspector) = self.ctx_inspector();
+            // for precompiles send logs to inspector.
+            if let FrameResult::Call(CallOutcome {
+                was_precompile_called,
+                precompile_call_logs,
+                ..
+            }) = &mut output
+            {
+                if *was_precompile_called {
+                    let logs_range = logs_i..ctx.journal_mut().logs().len();
+                    let logs = core::mem::take(precompile_call_logs);
+                    inspector.log_without_interpreter(ctx, logs, logs_range);
+                }
+            }
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }
