@@ -361,7 +361,8 @@ pub const fn memory_gas(num_words: usize) -> u64 {
 }
 
 /// Init and floor gas from transaction
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitialAndFloorGas {
     /// Initial gas for transaction.
     pub initial_gas: u64,
