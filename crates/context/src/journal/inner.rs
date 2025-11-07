@@ -663,8 +663,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &'a mut self,
         db: &'b mut DB,
         address: Address,
-        skip_cold_load: bool,
         load_code: bool,
+        skip_cold_load: bool,
     ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
         let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
         if load_code {
@@ -755,6 +755,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
         self.load_account_mut(db, address)?
             .sload(key, skip_cold_load)
+            .map(|s| s.map(|s| s.present_value))
     }
 
     /// Stores storage slot.

@@ -41,9 +41,9 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<StorageValue>, JournalLoadError<<DB as Database>::Error>> {
+    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadError<<DB as Database>::Error>> {
         let is_newly_created = self.account.is_created();
-        let (value, is_cold) = match self.account.storage.entry(key) {
+        let (slot, is_cold) = match self.account.storage.entry(key) {
             Entry::Occupied(occ) => {
                 let slot = occ.into_mut();
                 // skip load if account is cold.
@@ -54,10 +54,17 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                         return Err(JournalLoadError::ColdLoadSkipped);
                     }
                 }
-                (slot.present_value, is_cold)
+                (slot, is_cold)
             }
             Entry::Vacant(vac) => {
-                if skip_cold_load {
+                // is storage cold
+                let is_cold = self
+                    .access_list
+                    .get(&self.address)
+                    .and_then(|v| v.get(&key))
+                    .is_none();
+
+                if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
                 // if storage was cleared, we don't need to ping db.
@@ -66,16 +73,11 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                 } else {
                     self.db.storage(self.address, key)?
                 };
-                vac.insert(EvmStorageSlot::new(value, self.transaction_id));
 
-                // is storage cold
-                let is_cold = self
-                    .access_list
-                    .get(&self.address)
-                    .and_then(|v| v.get(&key))
-                    .is_none();
-
-                (value, is_cold)
+                (
+                    vac.insert(EvmStorageSlot::new(value, self.transaction_id)),
+                    is_cold,
+                )
             }
         };
 
@@ -85,10 +87,11 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                 .push(ENTRY::storage_warmed(self.address, key));
         }
 
-        Ok(StateLoad::new(value, is_cold))
+        Ok(StateLoad::new(slot, is_cold))
     }
 
     /// Warm loads storage slot and stores the new value
+    #[inline]
     pub fn sstore(
         &mut self,
         key: StorageKey,
@@ -96,25 +99,29 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<<DB as Database>::Error>> {
         // assume that acc exists and load the slot.
-        let present = self.sload(key, skip_cold_load)?;
-        let slot = self.account.storage.get_mut(&key).unwrap();
+        let slot = self.sload(key, skip_cold_load)?;
 
-        // when new value is different from present, we need to add a journal entry and make a change.
-        if present.data != new {
-            self.journal_entries
-                .push(ENTRY::storage_changed(self.address, key, present.data));
-            // insert value into present state.
-            slot.present_value = new;
-        }
-
-        Ok(StateLoad::new(
+        let ret = Ok(StateLoad::new(
             SStoreResult {
                 original_value: slot.original_value(),
-                present_value: present.data,
+                present_value: slot.present_value(),
                 new_value: new,
             },
-            present.is_cold,
-        ))
+            slot.is_cold,
+        ));
+
+        // when new value is different from present, we need to add a journal entry and make a change.
+        if slot.present_value != new {
+            let previous_value = slot.present_value;
+            // insert value into present state.
+            slot.data.present_value = new;
+
+            // add journal entry.
+            self.journal_entries
+                .push(ENTRY::storage_changed(self.address, key, previous_value));
+        }
+
+        ret
     }
 
     /// Loads the code of the account. and returns it as reference.
@@ -131,7 +138,7 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
             self.account.info.code = Some(code);
         }
 
-        Ok(&self.account.info.code.as_ref().unwrap())
+        Ok(self.account.info.code.as_ref().unwrap())
     }
 }
 
