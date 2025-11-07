@@ -764,7 +764,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 (slot.present_value, is_cold)
             }
             Entry::Vacant(vac) => {
-                if skip_cold_load {
+                // is storage cold
+                let is_cold = !self.warm_addresses.is_storage_warm(&address, &key);
+
+                if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
                 // if storage was cleared, we don't need to ping db.
@@ -774,9 +777,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     db.storage(address, key)?
                 };
                 vac.insert(EvmStorageSlot::new(value, self.transaction_id));
-
-                // is storage cold
-                let is_cold = !self.warm_addresses.is_storage_warm(&address, &key);
 
                 (value, is_cold)
             }
