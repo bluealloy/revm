@@ -11,9 +11,11 @@ use crate::{
 use super::entry::JournalEntryTr;
 use core::ops::Deref;
 use database_interface::Database;
-use primitives::{Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256};
+use primitives::{
+    hash_map::Entry, Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+};
 use state::{Account, Bytecode, EvmStorageSlot};
-use std::{collections::hash_map::Entry, vec::Vec};
+use std::vec::Vec;
 
 /// Journaled account contains both mutable account and journal entries.
 ///
