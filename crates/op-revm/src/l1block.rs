@@ -16,7 +16,7 @@ use revm::{
         gas::{get_tokens_in_calldata, NON_ZERO_BYTE_MULTIPLIER_ISTANBUL, STANDARD_TOKEN_COST},
         Gas,
     },
-    primitives::{hardfork::SpecId, U256},
+    primitives::U256,
 };
 
 /// L1 block info
@@ -138,11 +138,8 @@ impl L1BlockInfo {
         l2_block: U256,
         spec_id: OpSpecId,
     ) -> Result<L1BlockInfo, DB::Error> {
-        // Ensure the L1 Block account is loaded into the cache after Ecotone. With EIP-4788, it is no longer the case
-        // that the L1 block account is loaded into the cache prior to the first inquiry for the L1 block info.
-        if spec_id.into_eth_spec().is_enabled_in(SpecId::CANCUN) {
-            let _ = db.basic(L1_BLOCK_CONTRACT)?;
-        }
+        // Ensure the L1 Block account is loaded into the cache.
+        let _ = db.basic(L1_BLOCK_CONTRACT)?;
 
         let mut out = L1BlockInfo {
             l2_block: Some(l2_block),
