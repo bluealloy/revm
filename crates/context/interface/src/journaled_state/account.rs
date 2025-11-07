@@ -116,6 +116,23 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
             present.is_cold,
         ))
     }
+
+    /// Loads the code of the account. and returns it as reference.
+    #[inline]
+    pub fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<<DB as Database>::Error>> {
+        if self.account.info.code.is_none() {
+            let hash = *self.code_hash();
+
+            let code = if hash == KECCAK_EMPTY {
+                Bytecode::default()
+            } else {
+                self.db.code_by_hash(hash)?
+            };
+            self.account.info.code = Some(code);
+        }
+
+        Ok(&self.account.info.code.as_ref().unwrap())
+    }
 }
 
 impl<'a, 'b, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, 'b, ENTRY, DB> {

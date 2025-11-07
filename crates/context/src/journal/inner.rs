@@ -639,7 +639,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         load_code: bool,
         skip_cold_load: bool,
     ) -> Result<StateLoad<&Account>, JournalLoadError<DB::Error>> {
-        let load = self.load_account_mut_optional_code(db, address, load_code, skip_cold_load)?;
+        let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
+        if load_code {
+            load.data.load_code()?;
+        }
         Ok(load.map(|i| i.into_account_ref()))
     }
 
@@ -650,17 +653,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &'b mut DB,
         address: Address,
     ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, DB::Error> {
-        self.load_account_mut_optional_code(db, address, false, false)
+        self.load_account_mut_optional(db, address, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline(never)]
+    #[inline]
     pub fn load_account_mut_optional_code<'a, 'b, DB: Database>(
         &'a mut self,
         db: &'b mut DB,
         address: Address,
+        skip_cold_load: bool,
         load_code: bool,
+    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
+        let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
+        if load_code {
+            load.data.load_code()?;
+        }
+        Ok(load)
+    }
+
+    /// Loads account. If account is already loaded it will be marked as warm.
+    #[inline]
+    pub fn load_account_mut_optional<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'b mut DB,
+        address: Address,
         skip_cold_load: bool,
     ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
         let load = match self.state.entry(address) {
@@ -670,26 +688,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 // skip load if account is cold.
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
-                    // account can be loaded by we still need to check warm_addresses to see if it is cold.
-                    let should_be_cold = self.warm_addresses.is_cold(&address);
-
-                    // dont load it cold if skipping cold load is true.
-                    if should_be_cold && skip_cold_load {
-                        return Err(JournalLoadError::ColdLoadSkipped);
-                    }
-                    is_cold = should_be_cold;
-
-                    // mark it warm.
-                    account.mark_warm_with_transaction_id(self.transaction_id);
-
-                    // if it is cold loaded and we have selfdestructed locally it means that
-                    // account was selfdestructed in previous transaction and we need to clear its information and storage.
-                    if account.is_selfdestructed_locally() {
-                        account.selfdestruct();
-                        account.unmark_selfdestructed_locally();
-                    }
-                    // unmark locally created
-                    account.unmark_created_locally();
+                    is_cold = cold_account_load(
+                        account,
+                        &self.warm_addresses,
+                        address,
+                        skip_cold_load,
+                        self.transaction_id,
+                    )
+                    .ok_or(JournalLoadError::ColdLoadSkipped)?;
                 }
                 StateLoad {
                     data: account,
@@ -720,16 +726,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // journal loading of cold account.
         if load.is_cold {
             self.journal.push(ENTRY::account_warmed(address));
-        }
-
-        if load_code && load.data.info.code.is_none() {
-            let info = &mut load.data.info;
-            let code = if info.code_hash == KECCAK_EMPTY {
-                Bytecode::default()
-            } else {
-                db.code_by_hash(info.code_hash)?
-            };
-            info.code = Some(code);
         }
 
         Ok(load.map(|i| {
@@ -831,4 +827,36 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
+}
+
+#[cold]
+#[inline(never)]
+fn cold_account_load(
+    account: &mut Account,
+    warm_addresses: &WarmAddresses,
+    address: Address,
+    skip_cold_load: bool,
+    transaction_id: usize,
+) -> Option<bool> {
+    // account can be loaded by we still need to check warm_addresses to see if it is cold.
+    let should_be_cold = warm_addresses.is_cold(&address);
+
+    // dont load it cold if skipping cold load is true.
+    if should_be_cold && skip_cold_load {
+        return None;
+    }
+    let is_cold = should_be_cold;
+
+    // mark it warm.
+    account.mark_warm_with_transaction_id(transaction_id);
+
+    // if it is cold loaded and we have selfdestructed locally it means that
+    // account was selfdestructed in previous transaction and we need to clear its information and storage.
+    if account.is_selfdestructed_locally() {
+        account.selfdestruct();
+        account.unmark_selfdestructed_locally();
+    }
+    // unmark locally created
+    account.unmark_created_locally();
+    Some(is_cold)
 }
