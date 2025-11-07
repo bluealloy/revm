@@ -38,7 +38,7 @@ pub struct JournaledAccount<'a, 'b, ENTRY: JournalEntryTr, DB> {
 
 impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY, DB> {
     /// Creates a new journaled account.
-    #[inline]
+    #[inline(never)]
     pub fn sload(
         &mut self,
         key: StorageKey,
