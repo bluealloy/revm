@@ -890,3 +890,47 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.logs.push(log);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use context_interface::journaled_state::entry::JournalEntry;
+    use database_interface::EmptyDB;
+    use primitives::{address, HashSet, U256};
+    use state::AccountInfo;
+
+    #[test]
+    fn test_sload_skip_cold_load() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let test_address = address!("1000000000000000000000000000000000000000");
+        let test_key = U256::from(1);
+
+        // Insert account into state
+        let account_info = AccountInfo {
+            balance: U256::from(1000),
+            nonce: 1,
+            code_hash: KECCAK_EMPTY,
+            code: Some(Bytecode::default()),
+        };
+        journal
+            .state
+            .insert(test_address, Account::from(account_info));
+
+        // Add storage slot to access list (make it warm)
+        let mut access_list = HashMap::default();
+        let mut storage_keys = HashSet::default();
+        storage_keys.insert(test_key);
+        access_list.insert(test_address, storage_keys);
+        journal.warm_addresses.set_access_list(access_list);
+
+        // Try to sload with skip_cold_load=true - should succeed because slot is in access list
+        let mut db = EmptyDB::new();
+        let result = journal.sload(&mut db, test_address, test_key, true);
+
+        // Should succeed and return as warm
+        assert!(result.is_ok());
+        let state_load = result.unwrap();
+        assert!(!state_load.is_cold); // Should be warm
+        assert_eq!(state_load.data, U256::ZERO); // Empty slot
+    }
+}
