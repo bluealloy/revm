@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/revm-statetest-types-v11.0.0...revm-statetest-types-v11.0.1) - 2025-11-07
+
+### Fixed
+
+- *(revme)* use primitive hashmap in statetest ([#3137](https://github.com/bluealloy/revm/pull/3137))
+
 ## [11.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v10.2.0...revm-statetest-types-v11.0.0) - 2025-10-30
 
 ### Other
