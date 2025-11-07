@@ -48,10 +48,12 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                 let slot = occ.into_mut();
                 // skip load if account is cold.
                 let is_cold = slot.is_cold_transaction_id(self.transaction_id);
-                if skip_cold_load && is_cold {
-                    return Err(JournalLoadError::ColdLoadSkipped);
+                if is_cold {
+                    slot.mark_warm_with_transaction_id(self.transaction_id);
+                    if skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
                 }
-                slot.mark_warm_with_transaction_id(self.transaction_id);
                 (slot.present_value, is_cold)
             }
             Entry::Vacant(vac) => {
