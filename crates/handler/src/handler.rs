@@ -305,19 +305,16 @@ pub trait Handler {
         let bytecode = if let Some(&to) = tx.kind().to() {
             let account = &journal.load_account_with_code(to)?.info;
 
-            if let Some(Bytecode::Eip7702(eip7702_bytecode)) = &account.code {
-                let delegated_address = eip7702_bytecode.delegated_address;
-                let account = &journal.load_account_with_code(delegated_address)?.info;
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
+            let target_account = if let Some(Bytecode::Eip7702(eip7702_bytecode)) = &account.code {
+                &journal.load_account_with_code(eip7702_bytecode.delegated_address)?.info
             } else {
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
-            }
+                account
+            };
+
+            Some((
+                target_account.code.clone().unwrap_or_default(),
+                target_account.code_hash(),
+            ))
         } else {
             None
         };
