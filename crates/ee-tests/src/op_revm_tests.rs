@@ -12,14 +12,14 @@ use revm::{
         BlockEnv, CfgEnv, TxEnv,
     },
     context_interface::result::HaltReason,
-    database::{BenchmarkDB, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
+    database::{BenchmarkDB, EmptyDB, State, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
     handler::system_call::SYSTEM_ADDRESS,
     interpreter::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
         Interpreter, InterpreterTypes,
     },
     precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
-    primitives::{bytes, eip7825, Address, Bytes, Log, TxKind, U256},
+    primitives::{address, bytes, eip7825, Address, Bytes, Log, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
@@ -945,6 +945,44 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         "test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas.json",
         &output,
     );
+}
+
+#[test]
+fn test_l1block_load_for_pre_regolith() {
+    const SPEC_ID: OpSpecId = OpSpecId::REGOLITH;
+
+    let ctx = Context::op()
+        .with_tx(
+            OpTransaction::builder()
+                .base(
+                    TxEnv::builder()
+                        .caller(BENCH_CALLER)
+                        .kind(TxKind::Call(address!(
+                            "0x0000000000000000000000000000000000100000"
+                        )))
+                        .value(U256::from(1))
+                        .gas_limit(100_000),
+                )
+                .build_fill(),
+        )
+        .modify_chain_chained(|l1_block| {
+            l1_block.l2_block = None;
+        })
+        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+
+    let mut evm = ctx
+        .with_db(
+            State::builder()
+                .with_database(BenchmarkDB::default())
+                .build(),
+        )
+        .build_op();
+    let output = evm.replay().unwrap();
+
+    // assert out of gas
+    assert!(output.result.is_success());
+
+    compare_or_save_op_testdata("test_l1block_load_for_pre_regolith.json", &output);
 }
 
 #[test]
