@@ -105,7 +105,7 @@ fn run_custom_precompile<CTX: ContextTr>(
         // Write storage operation
         handle_write_storage(context, &input_bytes, inputs.gas_limit)
     } else {
-        Err(PrecompileError::Other("Invalid input length".to_string()))
+        Err(PrecompileError::Other("Invalid input length".into()))
     };
 
     match result {
@@ -158,7 +158,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
     let value = context
         .journal_mut()
         .sload(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY)
-        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}")))?
+        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}").into()))?
         .data;
 
     // Return the value as output
@@ -189,7 +189,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .sstore(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY, value)
-        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}").into()))?;
 
     // Get the caller address
     let caller = context.tx().caller();
@@ -199,16 +199,18 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .balance_incr(CUSTOM_PRECOMPILE_ADDRESS, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}").into()))?;
 
     // Then transfer to caller
     let transfer_result = context
         .journal_mut()
         .transfer(CUSTOM_PRECOMPILE_ADDRESS, caller, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}").into()))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(format!("Transfer error: {error:?}")));
+        return Err(PrecompileError::Other(
+            format!("Transfer error: {error:?}").into(),
+        ));
     }
 
     // Return success with empty output

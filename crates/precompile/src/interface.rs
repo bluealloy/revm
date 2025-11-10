@@ -271,17 +271,13 @@ pub enum PrecompileError {
     Secp256k1RecoverFailed,
     /// Fatal error with a custom error message
     Fatal(String),
-    /// Catch-all variant for other errors
-    ///
-    /// Prefer using `OtherCowStr` instead of `Other` as it is more performant.
-    Other(String),
     /// Catch-all variant with a custom error message
-    OtherCowStr(Cow<'static, str>),
+    Other(Cow<'static, str>),
 }
 
 impl PrecompileError {
     /// Returns another error with the given message.
-    pub fn other(err: impl Into<String>) -> Self {
+    pub fn other(err: impl Into<Cow<'static, str>>) -> Self {
         Self::Other(err.into())
     }
 
@@ -333,7 +329,6 @@ impl fmt::Display for PrecompileError {
             Self::Secp256k1RecoverFailed => "secp256k1 signature recovery failed",
             Self::Fatal(s) => s,
             Self::Other(s) => s,
-            Self::OtherCowStr(s) => s,
         };
         f.write_str(s)
     }
