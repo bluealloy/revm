@@ -121,6 +121,7 @@ impl InterpreterAction {
     }
 
     /// Create new stop action.
+    #[deprecated(note = "Use new_halt(InstructionResult::Stop, gas).")]
     #[inline]
     pub fn new_stop() -> Self {
         Self::Return(InterpreterResult::new(
