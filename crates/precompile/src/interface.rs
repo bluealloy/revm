@@ -2,7 +2,7 @@
 //! the precompile output type, and the precompile error type.
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
-use std::{boxed::Box, string::String, vec::Vec};
+use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
@@ -273,10 +273,10 @@ pub enum PrecompileError {
     Fatal(String),
     /// Catch-all variant for other errors
     ///
-    /// Prefer using `OtherStr` instead of `Other` as it is more performant.
+    /// Prefer using `OtherCowStr` instead of `Other` as it is more performant.
     Other(String),
     /// Catch-all variant with a custom error message
-    OtherStr(&'static str),
+    OtherCowStr(Cow<'static, str>),
 }
 
 impl PrecompileError {
@@ -333,7 +333,7 @@ impl fmt::Display for PrecompileError {
             Self::Secp256k1RecoverFailed => "secp256k1 signature recovery failed",
             Self::Fatal(s) => s,
             Self::Other(s) => s,
-            Self::OtherStr(s) => s,
+            Self::OtherCowStr(s) => s,
         };
         f.write_str(s)
     }
