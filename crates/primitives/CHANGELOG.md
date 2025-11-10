@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.0.2](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.1...revm-primitives-v21.0.2) - 2025-11-07
+
+### Other
+
+- tag v96 revm v31.0.0 ([#3135](https://github.com/bluealloy/revm/pull/3135))
+
 ## [21.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.0...revm-primitives-v21.0.1) - 2025-10-15
 
 ### Other
