@@ -1,4 +1,26 @@
 
+# v99 tag ( revm v32.0.0 )
+
+* Added support for transmiting Logs set from precompiles.
+   * `Inspector::log` function got renamed to `log` and `log_full`
+   * `log_full` default impl will call `log`
+   * difference is that `log_full` has `Interpreter` input while `log` does not
+     and `log` will be called in places where Interpreter is not found.
+* `PrecompileError` now contains `Other` as `Cow<'static, str>`
+   * It allows allows setting both `&'static str` that is without perf penalty and `String` if needed.
+
+# v98 tag
+
+No breaking changes.
+
+# v97 tag
+
+No breaking changes.
+
+# v96 tag
+
+No breaking changes.
+
 # v95 tag ( revm v31.0.0)
 
 * Cfg added `memory_limit()` function

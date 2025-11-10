@@ -1,5 +1,22 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v99
+date 10.11.2025
+
+Maintainance release.
+
+* `revm-context-interface`: 12.0.1 -> 12.1.0 (✓ API compatible changes)
+* `revm-context`: 11.0.2 -> 11.1.0 (✓ API compatible changes)
+* `revm-interpreter`: 29.0.1 -> 30.0.0 (✓ API compatible changes)
+* `revm-precompile`: 29.0.1 -> 30.0.0 (✓ API compatible changes)
+* `revm-handler`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `revm-inspector`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `op-revm`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 31.0.2 -> 32.0.0
+* `revm-statetest-types`: 11.0.2 -> 12.0.0
+* `revme`: 9.0.2 -> 9.1.0
+
 # v98
 date: 10.11.2025
 
