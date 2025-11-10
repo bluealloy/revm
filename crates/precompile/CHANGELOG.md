@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v29.0.1...revm-precompile-v29.1.0) - 2025-11-10
+
+### Added
+
+- *(precompiles)* add performant PrecompileError::OtherCowStr variant ([#3144](https://github.com/bluealloy/revm/pull/3144))
+- add gas refund to PrecompileOutput ([#3152](https://github.com/bluealloy/revm/pull/3152))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+
 ## [29.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v29.0.0...revm-precompile-v29.0.1) - 2025-11-07
 
 ### Other
