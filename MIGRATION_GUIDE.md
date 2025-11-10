@@ -1,7 +1,7 @@
 
 # v99 tag ( revm v32.0.0 )
 
-* Added support for transmiting Logs set from precompiles.
+* Added support for transmitting Logs set from precompiles.
    * `Inspector::log` function got renamed to `log` and `log_full`
    * `log_full` default impl will call `log`
    * difference is that `log_full` has `Interpreter` input while `log` does not
