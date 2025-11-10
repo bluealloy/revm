@@ -277,8 +277,13 @@ pub enum PrecompileError {
 
 impl PrecompileError {
     /// Returns another error with the given message.
-    pub fn other(err: impl Into<Cow<'static, str>>) -> Self {
-        Self::Other(err.into())
+    pub fn other(err: String) -> Self {
+        Self::Other(Cow::Owned(err))
+    }
+
+    /// Returns another error with the given static string.
+    pub const fn other_static(err: &'static str) -> Self {
+        Self::Other(Cow::Borrowed(err))
     }
 
     /// Returns `true` if the error is out of gas.
