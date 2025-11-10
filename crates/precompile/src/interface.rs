@@ -29,6 +29,8 @@ pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 pub struct PrecompileOutput {
     /// Gas used by the precompile
     pub gas_used: u64,
+    /// Gas refunded by the precompile.
+    pub gas_refunded: i64,
     /// Output bytes
     pub bytes: Bytes,
     /// Whether the precompile reverted
@@ -40,6 +42,7 @@ impl PrecompileOutput {
     pub fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self {
             gas_used,
+            gas_refunded: 0,
             bytes,
             reverted: false,
         }
@@ -49,6 +52,7 @@ impl PrecompileOutput {
     pub fn new_reverted(gas_used: u64, bytes: Bytes) -> Self {
         Self {
             gas_used,
+            gas_refunded: 0,
             bytes,
             reverted: true,
         }
