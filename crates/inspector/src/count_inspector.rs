@@ -133,7 +133,7 @@ impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for CountInspector {
         self.step_end_count += 1;
     }
 
-    fn log(&mut self, _context: &mut CTX, _log: &Log) {
+    fn log(&mut self, _context: &mut CTX, _log: Log) {
         self.log_count += 1;
     }
 

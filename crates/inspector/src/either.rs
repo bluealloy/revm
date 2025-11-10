@@ -35,17 +35,17 @@ where
     }
 
     #[inline]
-    fn log(&mut self, context: &mut CTX, log: &Log) {
+    fn log(&mut self, context: &mut CTX, log: Log) {
         match self {
-            Either::Left(inspector) => inspector.log(context, log),
+            Either::Left(inspector) => inspector.log(context, log.clone()),
             Either::Right(inspector) => inspector.log(context, log),
         }
     }
 
     #[inline]
-    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
+    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         match self {
-            Either::Left(inspector) => inspector.log_full(interp, context, log),
+            Either::Left(inspector) => inspector.log_full(interp, context, log.clone()),
             Either::Right(inspector) => inspector.log_full(interp, context, log),
         }
     }

@@ -1045,8 +1045,8 @@ struct LogInspector {
 }
 
 impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for LogInspector {
-    fn log(&mut self, _context: &mut CTX, log: &Log) {
-        self.logs.push(log.clone());
+    fn log(&mut self, _context: &mut CTX, log: Log) {
+        self.logs.push(log);
     }
 }
 

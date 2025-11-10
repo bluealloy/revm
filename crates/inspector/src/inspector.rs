@@ -50,7 +50,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     /// Called when a log is emitted, called on every new log.
     /// If there is a needs for Interpreter context, use [`Inspector::log_full`] instead.
     #[inline]
-    fn log(&mut self, context: &mut CTX, log: &Log) {
+    fn log(&mut self, context: &mut CTX, log: Log) {
         let _ = context;
         let _ = log;
     }
@@ -59,7 +59,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     ///
     /// This will not happen only if custom precompiles where logs will be
     /// gethered after precompile call.
-    fn log_full(&mut self, interpreter: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
+    fn log_full(&mut self, interpreter: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         let _ = interpreter;
         self.log(context, log);
     }
@@ -142,13 +142,13 @@ where
         self.1.step_end(interp, context);
     }
 
-    fn log(&mut self, context: &mut CTX, log: &Log) {
-        self.0.log(context, log);
+    fn log(&mut self, context: &mut CTX, log: Log) {
+        self.0.log(context, log.clone());
         self.1.log(context, log);
     }
 
-    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
-        self.0.log_full(interp, context, log);
+    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
+        self.0.log_full(interp, context, log.clone());
         self.1.log_full(interp, context, log);
     }
 

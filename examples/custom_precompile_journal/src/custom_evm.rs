@@ -189,9 +189,9 @@ mod tests {
     where
         CTX: ContextTr + ContextSetters<Journal: JournalExt>,
     {
-        fn log(&mut self, _context: &mut CTX, log: &Log) {
+        fn log(&mut self, _context: &mut CTX, log: Log) {
             // Capture logs as they're created
-            self.captured_logs.push(log.clone());
+            self.captured_logs.push(log);
         }
     }
 
