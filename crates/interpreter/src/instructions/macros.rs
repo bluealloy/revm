@@ -28,6 +28,10 @@ macro_rules! require_non_staticcall {
 /// Similar to the `?` operator but for use in instruction implementations.
 #[macro_export]
 #[collapse_debuginfo(yes)]
+#[deprecated(
+    since = "29.0.0",
+    note = "Prefer `let Some(x) = expr else { return; };` for early return in instruction functions"
+)]
 macro_rules! otry {
     ($expression: expr) => {{
         let Some(value) = $expression else {

@@ -258,33 +258,36 @@ impl<DB: Database> Database for State<DB> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
-        // Account is guaranteed to be loaded.
-        // Note that storage from bundle is already loaded with account.
-        if let Some(account) = self.cache.accounts.get_mut(&address) {
-            // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
-            let is_storage_known = account.status.is_storage_known();
-            Ok(account
-                .account
-                .as_mut()
-                .map(|account| match account.storage.entry(index) {
-                    hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
-                    hash_map::Entry::Vacant(entry) => {
-                        // If account was destroyed or account is newly built
-                        // we return zero and don't ask database.
-                        let value = if is_storage_known {
-                            StorageValue::ZERO
-                        } else {
-                            self.database.storage(address, index)?
-                        };
-                        entry.insert(value);
-                        Ok(value)
-                    }
-                })
-                .transpose()?
-                .unwrap_or_default())
+        // If account is not found in cache, it will be loaded from database.
+        let account = if let Some(account) = self.cache.accounts.get_mut(&address) {
+            account
         } else {
-            unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
-        }
+            self.load_cache_account(address)?;
+            // safe to unwrap as account is loaded a line above.
+            self.cache.accounts.get_mut(&address).unwrap()
+        };
+
+        // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
+        let is_storage_known = account.status.is_storage_known();
+        Ok(account
+            .account
+            .as_mut()
+            .map(|account| match account.storage.entry(index) {
+                hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
+                hash_map::Entry::Vacant(entry) => {
+                    // If account was destroyed or account is newly built
+                    // we return zero and don't ask database.
+                    let value = if is_storage_known {
+                        StorageValue::ZERO
+                    } else {
+                        self.database.storage(address, index)?
+                    };
+                    entry.insert(value);
+                    Ok(value)
+                }
+            })
+            .transpose()?
+            .unwrap_or_default())
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
