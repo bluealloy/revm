@@ -1279,14 +1279,14 @@ mod tests {
         assert_eq!(
             handler.execution_result(
                 &mut evm,
-                FrameResult::Call(CallOutcome {
-                    result: InterpreterResult {
+                FrameResult::Call(CallOutcome::new(
+                    InterpreterResult {
                         result: InstructionResult::OutOfGas,
                         output: Default::default(),
                         gas: Default::default(),
                     },
-                    memory_offset: Default::default(),
-                })
+                    Default::default()
+                ))
             ),
             Err(EVMError::Transaction(
                 OpTransactionError::HaltedDepositPostRegolith
