@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v98
+date: 10.11.2025
+
+Patch for loading of account on storage fetch, needed for op-reth
+
+* `revm-database`: 9.0.4 -> 9.0.5 (✓ API compatible changes)
+* `op-revm`: 12.0.1 -> 12.0.2 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm-context`: 11.0.1 -> 11.0.2
+* `revm-handler`: 12.0.1 -> 12.0.2
+* `revm-inspector`: 12.0.1 -> 12.0.2
+* `revm`: 31.0.1 -> 31.0.2
+* `revm-statetest-types`: 11.0.1 -> 11.0.2
+* `revme`: 9.0.1 -> 9.0.2
+
 # v97
 date 07.11.2025
 
