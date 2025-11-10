@@ -131,14 +131,15 @@ impl<
         JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
         LOCAL: LocalContextTr + Default,
-    > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN, LOCAL>
+        SPEC: Default + Copy + Into<SpecId>,
+    > Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
     ///
     /// This will create a new [`Journal`] object.
-    pub fn new(db: DB, spec: SpecId) -> Self {
+    pub fn new(db: DB, spec: SPEC) -> Self {
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(spec);
+        journaled_state.set_spec_id(spec.into());
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
