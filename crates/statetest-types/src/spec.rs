@@ -48,8 +48,10 @@ pub enum SpecName {
     Cancun,
     /// Prague hardfork (future)
     Prague,
-    /// Osaka hardfork (skipped)
-    Osaka, // SKIPPED
+    /// Osaka hardfork
+    Osaka,
+    /// Amsterdam hardfork
+    Amsterdam,
     /// Unknown or unsupported specification
     #[serde(other)]
     Unknown,
@@ -75,6 +77,7 @@ impl SpecName {
             Self::Cancun => SpecId::CANCUN,
             Self::Prague => SpecId::PRAGUE,
             Self::Osaka => SpecId::OSAKA,
+            Self::Amsterdam => SpecId::AMSTERDAM,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overridden with PETERSBURG")
             }

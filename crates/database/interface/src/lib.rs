@@ -30,6 +30,7 @@ pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
+pub mod bal;
 pub mod either;
 pub mod empty_db;
 pub mod try_commit;
@@ -63,6 +64,20 @@ pub trait Database {
     fn storage(&mut self, address: Address, index: StorageKey)
         -> Result<StorageValue, Self::Error>;
 
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`Database::storage`] method.
+    #[inline]
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        let _ = account_id;
+        self.storage(address, storage_key)
+    }
+
     /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
@@ -94,6 +109,20 @@ pub trait DatabaseRef {
     /// Gets storage value of address at index.
     fn storage_ref(&self, address: Address, index: StorageKey)
         -> Result<StorageValue, Self::Error>;
+
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseRef::storage_ref`] method.
+    #[inline]
+    fn storage_by_account_id_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        let _ = account_id;
+        self.storage_ref(address, storage_key)
+    }
 
     /// Gets block hash by block number.
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;

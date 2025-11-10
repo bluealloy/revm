@@ -109,7 +109,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             spec,
             warm_addresses,
         } = self;
-        // Spec precompiles and state are not changed. It is always set again execution.
+        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
         let _ = state;
         transient_storage.clear();
@@ -122,6 +122,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_addresses.clear_coinbase_and_access_list();
         // increment transaction id.
         *transaction_id += 1;
+
         logs.clear();
     }
 
@@ -435,7 +436,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target_acc.info.balance = new_balance;
 
         // safe to decrement for the caller as balance check is already done.
-        self.state.get_mut(&caller).unwrap().info.balance -= balance;
+        let caller_account = self.state.get_mut(&caller).unwrap();
+        caller_account.info.balance -= balance;
 
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
@@ -688,9 +690,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
+                    // set original info to current info.
+                    account.original_info = account.info.clone();
+
                     // unmark locally created
                     account.unmark_created_locally();
                 }
+
                 StateLoad {
                     data: account,
                     is_cold,
@@ -776,6 +782,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 } else {
                     db.storage(address, key)?
                 };
+
                 vac.insert(EvmStorageSlot::new(value, self.transaction_id));
 
                 (value, is_cold)
@@ -812,7 +819,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let slot = acc.storage.get_mut(&key).unwrap();
 
         // new value is same as present, we don't need to do anything
-        if present.data == new {
+        if slot.present_value == new {
             return Ok(StateLoad::new(
                 SStoreResult {
                     original_value: slot.original_value(),
@@ -827,6 +834,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .push(ENTRY::storage_changed(address, key, present.data));
         // insert value into present state.
         slot.present_value = new;
+
         Ok(StateLoad::new(
             SStoreResult {
                 original_value: slot.original_value(),

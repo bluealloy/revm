@@ -9,8 +9,7 @@ use revm::{
     database,
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::U256,
-    primitives::{hardfork::SpecId, Bytes, B256},
+    primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
@@ -438,6 +437,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     };
     *ctx.elapsed.lock().unwrap() += timer.elapsed();
 
+    let exec_result = exec_result.map_err(|b| b.map_db_err(|db| db.into_db_error()));
     // Check results
     check_evm_execution(
         ctx.test,
