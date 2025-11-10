@@ -160,7 +160,7 @@ mod tests {
         database::InMemoryDB,
         handler::{Handler, MainnetHandler},
         inspector::{Inspector, JournalExt},
-        interpreter::{interpreter::EthInterpreter, Interpreter},
+        interpreter::interpreter::EthInterpreter,
         primitives::{address, Log, TxKind, U256},
         state::AccountInfo,
         MainContext,
@@ -189,9 +189,9 @@ mod tests {
     where
         CTX: ContextTr + ContextSetters<Journal: JournalExt>,
     {
-        fn log(&mut self, _interp: &mut Interpreter<EthInterpreter>, _context: &mut CTX, log: Log) {
+        fn log(&mut self, _context: &mut CTX, log: &Log) {
             // Capture logs as they're created
-            self.captured_logs.push(log);
+            self.captured_logs.push(log.clone());
         }
     }
 

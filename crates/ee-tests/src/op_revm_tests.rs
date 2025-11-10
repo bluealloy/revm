@@ -16,7 +16,7 @@ use revm::{
     handler::system_call::SYSTEM_ADDRESS,
     interpreter::{
         gas::{calculate_initial_tx_gas, InitialAndFloorGas},
-        Interpreter, InterpreterTypes,
+        InterpreterTypes,
     },
     precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
     primitives::{bytes, eip7825, Address, Bytes, Log, TxKind, U256},
@@ -1045,8 +1045,8 @@ struct LogInspector {
 }
 
 impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for LogInspector {
-    fn log(&mut self, _interp: &mut Interpreter<INTR>, _context: &mut CTX, log: Log) {
-        self.logs.push(log)
+    fn log(&mut self, _context: &mut CTX, log: &Log) {
+        self.logs.push(log.clone());
     }
 }
 

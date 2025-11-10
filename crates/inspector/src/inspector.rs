@@ -1,5 +1,3 @@
-use core::ops::Range;
-
 use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
 use interpreter::{
@@ -8,7 +6,6 @@ use interpreter::{
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
-use std::vec::Vec;
 
 /// EVM hooks into execution.
 ///
@@ -50,32 +47,21 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = context;
     }
 
-    /// Called when a log is emitted.
+    /// Called when a log is emitted, called on every new log.
+    /// If there is a needs for Interpreter context, use [`Inspector::log_full`] instead.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
-        let _ = interp;
+    fn log(&mut self, context: &mut CTX, log: &Log) {
         let _ = context;
         let _ = log;
     }
 
-    /// Called when a log is emitted without the interpreter context.
+    /// Called when a log is emitted with the interpreter context.
     ///
-    /// Used when precompile pushes new logs to the journal without the interpreter context.
-    /// At the end of the precompile call, all logs will be aggregated and passed to the inspector.
-    ///
-    /// `logs` will be added if precompile reverted or halted.
-    /// While logs_range will present range of logs inside journal.logs() if precompile called successfully.
-    ///
-    /// Range is used to not clone logs from journal every time.
-    fn log_without_interpreter(
-        &mut self,
-        context: &mut CTX,
-        logs: Vec<Log>,
-        logs_range: Range<usize>,
-    ) {
-        let _ = context;
-        let _ = logs;
-        let _ = logs_range;
+    /// This will not happen only if custom precompiles where logs will be
+    /// gethered after precompile call.
+    fn log_full(&mut self, interpreter: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
+        let _ = interpreter;
+        self.log(context, log);
     }
 
     /// Called whenever a call to a contract is about to start.
@@ -156,9 +142,14 @@ where
         self.1.step_end(interp, context);
     }
 
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
-        self.0.log(interp, context, log.clone());
-        self.1.log(interp, context, log);
+    fn log(&mut self, context: &mut CTX, log: &Log) {
+        self.0.log(context, log);
+        self.1.log(context, log);
+    }
+
+    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
+        self.0.log_full(interp, context, log);
+        self.1.log_full(interp, context, log);
     }
 
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {

@@ -117,9 +117,10 @@ pub trait InspectorEvmTr:
             }) = &mut output
             {
                 if *was_precompile_called {
-                    let logs_range = logs_i..ctx.journal_mut().logs().len();
-                    let logs = core::mem::take(precompile_call_logs);
-                    inspector.log_without_interpreter(ctx, logs, logs_range);
+                    let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
+                    for log in logs.iter().chain(precompile_call_logs.iter()) {
+                        inspector.log(ctx, log);
+                    }
                 }
             }
             frame_end(ctx, inspector, &frame_input, &mut output);

@@ -117,8 +117,8 @@ mod tests {
             }
         }
 
-        fn log(&mut self, _interp: &mut Interpreter<INTR>, _ctx: &mut CTX, log: Log) {
-            self.events.push(InspectorEvent::Log(log));
+        fn log(&mut self, _ctx: &mut CTX, log: &Log) {
+            self.events.push(InspectorEvent::Log(log.clone()));
         }
 
         fn call(&mut self, _ctx: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {

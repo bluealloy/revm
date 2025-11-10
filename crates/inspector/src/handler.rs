@@ -260,7 +260,7 @@ fn inspect_log<CTX, IT>(
     }
 
     let log = context.journal_mut().logs().last().unwrap().clone();
-    inspector.log(interpreter, context, log);
+    inspector.log(context, &log);
 }
 
 #[inline(never)]
