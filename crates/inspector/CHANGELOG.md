@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.1.0](https://github.com/bluealloy/revm/compare/revm-inspector-v12.0.2...revm-inspector-v12.1.0) - 2025-11-10
+
+### Added
+
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+
 ## [12.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v12.0.1...revm-inspector-v12.0.2) - 2025-11-10
 
 ### Other
