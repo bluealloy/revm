@@ -277,8 +277,8 @@ pub enum PrecompileError {
 
 impl PrecompileError {
     /// Returns another error with the given message.
-    pub fn other(err: String) -> Self {
-        Self::Other(Cow::Owned(err))
+    pub fn other(err: impl Into<String>) -> Self {
+        Self::Other(Cow::Owned(err.into()))
     }
 
     /// Returns another error with the given static string.
