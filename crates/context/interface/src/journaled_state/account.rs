@@ -77,6 +77,12 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
         }
     }
 
+    /// Marks the account as cold.
+    #[inline]
+    pub fn mark_cold(&mut self) {
+        self.account.mark_cold();
+    }
+
     /// Sets the balance of the account.
     ///
     /// If balance is the same, we don't add a journal entry.
