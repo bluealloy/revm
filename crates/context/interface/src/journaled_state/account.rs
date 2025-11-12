@@ -79,7 +79,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
 
     /// Marks the account as cold without making a journal entry.
     ///
-    /// Changing account without journal entry can be a footgun as reverting of the journal
+    /// Changing account without journal entry can be a footgun as reverting of the state change
     /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
     ///
     /// If account is in access list, it would still be marked as warm if account get accessed again.
@@ -143,9 +143,29 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
             return false;
         };
         self.account.info.set_nonce(nonce);
-        self.journal_entries
-            .push(ENTRY::nonce_changed(self.address));
+        self.journal_entries.push(ENTRY::nonce_bumped(self.address));
         true
+    }
+
+    /// Set the nonce of the account and create a journal entry.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    pub fn set_nonce(&mut self, nonce: u64) {
+        self.touch();
+        let previous_nonce = self.account.info.nonce;
+        self.account.info.set_nonce(nonce);
+        self.journal_entries
+            .push(ENTRY::nonce_changed(self.address, previous_nonce));
+    }
+
+    /// Set the nonce of the account without creating a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    #[inline]
+    pub fn unsafe_set_nonce(&mut self, nonce: u64) {
+        self.account.info.set_nonce(nonce);
     }
 
     /// Sets the code of the account.
