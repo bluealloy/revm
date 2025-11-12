@@ -77,9 +77,14 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
         }
     }
 
-    /// Marks the account as cold.
+    /// Marks the account as cold without making a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the journal
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    ///
+    /// If account is in access list, it would still be marked as warm if account get accessed again.
     #[inline]
-    pub fn mark_cold(&mut self) {
+    pub fn unsafe_mark_cold(&mut self) {
         self.account.mark_cold();
     }
 
