@@ -1,5 +1,5 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
-use context::{result::ExecutionResult, ContextTr, JournalEntry, Transaction};
+use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr, Transaction};
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
@@ -263,7 +263,7 @@ fn inspect_log<CTX, IT>(
     }
 
     let log = context.journal_mut().logs().last().unwrap().clone();
-    inspector.log(interpreter, context, log);
+    inspector.log(context, log);
 }
 
 #[inline(never)]

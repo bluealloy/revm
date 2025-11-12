@@ -60,6 +60,7 @@ impl Backend {
 impl JournalTr for Backend {
     type Database = InMemoryDB;
     type State = EvmState;
+    type JournalEntry = JournalEntry;
 
     fn new(database: InMemoryDB) -> Self {
         Self::new(SpecId::default(), database)
@@ -100,6 +101,10 @@ impl JournalTr for Backend {
 
     fn log(&mut self, log: Log) {
         self.journaled_state.log(log)
+    }
+
+    fn logs(&self) -> &[Log] {
+        self.journaled_state.logs()
     }
 
     fn selfdestruct(
@@ -157,15 +162,15 @@ impl JournalTr for Backend {
         self.journaled_state.transfer_loaded(from, to, balance)
     }
 
-    fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, Infallible> {
+    fn load_account(&mut self, address: Address) -> Result<StateLoad<&Account>, Infallible> {
         self.journaled_state.load_account(address)
     }
 
-    fn load_account_code(
+    fn load_account_with_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&mut Account>, Infallible> {
-        self.journaled_state.load_account_code(address)
+    ) -> Result<StateLoad<&Account>, Infallible> {
+        self.journaled_state.load_account_with_code(address)
     }
 
     fn load_account_delegated(
@@ -296,13 +301,23 @@ impl JournalTr for Backend {
         self.journaled_state
             .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
     }
+
+    fn load_account_mut_optional_code(
+        &mut self,
+        address: Address,
+        load_code: bool,
+    ) -> Result<
+        StateLoad<
+            revm::context::journaled_state::account::JournaledAccount<'_, Self::JournalEntry>,
+        >,
+        <Self::Database as Database>::Error,
+    > {
+        self.journaled_state
+            .load_account_mut_optional_code(address, load_code)
+    }
 }
 
 impl JournalExt for Backend {
-    fn logs(&self) -> &[Log] {
-        self.journaled_state.logs()
-    }
-
     fn journal(&self) -> &[JournalEntry] {
         self.journaled_state.journal()
     }

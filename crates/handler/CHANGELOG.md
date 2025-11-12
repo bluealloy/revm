@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v12.0.2...revm-handler-v14.0.0) - 2025-11-10
+
+### Added
+
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+- add gas refund to PrecompileOutput ([#3152](https://github.com/bluealloy/revm/pull/3152))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+
+## [12.0.2](https://github.com/bluealloy/revm/compare/revm-handler-v12.0.1...revm-handler-v12.0.2) - 2025-11-10
+
+### Other
+
+- updated the following local packages: revm-database, revm-context
+
+## [12.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v12.0.0...revm-handler-v12.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-context, revm-bytecode, revm-state, revm-database-interface, revm-context-interface, revm-database, revm-interpreter, revm-precompile
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v11.2.0...revm-handler-v12.0.0) - 2025-10-30
+
+### Added
+
+- JournaledAccount, a nice way to update and track changes ([#3086](https://github.com/bluealloy/revm/pull/3086))
+- dont load access list immediately ([#3116](https://github.com/bluealloy/revm/pull/3116))
+
+### Fixed
+
+- hook up Cfg::memory_limit ([#3129](https://github.com/bluealloy/revm/pull/3129))
+
+### Other
+
+- *(op)* use helper function in validate against state ([#3069](https://github.com/bluealloy/revm/pull/3069))
+- remove redundant alloy-eip7702 from handler dev-dependencies ([#3105](https://github.com/bluealloy/revm/pull/3105))
+
 ## [11.2.0](https://github.com/bluealloy/revm/compare/revm-handler-v11.1.2...revm-handler-v11.2.0) - 2025-10-17
 
 ### Added

@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/op-revm-v12.0.2...op-revm-v14.0.0) - 2025-11-10
+
+### Added
+
+- *(precompiles)* add performant PrecompileError::OtherCowStr variant ([#3144](https://github.com/bluealloy/revm/pull/3144))
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+
+## [12.0.2](https://github.com/bluealloy/revm/compare/op-revm-v12.0.1...op-revm-v12.0.2) - 2025-11-10
+
+### Fixed
+
+- *(op)* Ensure L1Block account is always loaded ([#3150](https://github.com/bluealloy/revm/pull/3150))
+
+## [12.0.1](https://github.com/bluealloy/revm/compare/op-revm-v12.0.0...op-revm-v12.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/op-revm-v11.2.0...op-revm-v12.0.0) - 2025-10-30
+
+### Added
+
+- JournaledAccount, a nice way to update and track changes ([#3086](https://github.com/bluealloy/revm/pull/3086))
+
+### Fixed
+
+- *(jovian)* fixes the DA footprint update storage slot. fix l1 fork associated with Jovian. ([#3120](https://github.com/bluealloy/revm/pull/3120))
+- *(op-revm)* add missing enveloped_tx validation in validate_env ([#3094](https://github.com/bluealloy/revm/pull/3094))
+
+### Other
+
+- *(op)* use helper function in validate against state ([#3069](https://github.com/bluealloy/revm/pull/3069))
+
+
+## [11.3.0](https://github.com/bluealloy/revm/compare/op-revm-v11.2.0...op-revm-v11.3.0) - 2025-10-28
+
+### Added
+
+- *(precompiles/jovian)* add jovian precompiles to revm ([#3128](https://github.com/bluealloy/revm/pull/3128))
+
+
 ## [11.2.0](https://github.com/bluealloy/revm/compare/op-revm-v11.1.2...op-revm-v11.2.0) - 2025-10-17
 
 ### Other

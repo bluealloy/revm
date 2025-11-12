@@ -47,12 +47,21 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = context;
     }
 
-    /// Called when a log is emitted.
+    /// Called when a log is emitted, called on every new log.
+    /// If there is a needs for Interpreter context, use [`Inspector::log_full`] instead.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
-        let _ = interp;
+    fn log(&mut self, context: &mut CTX, log: Log) {
         let _ = context;
         let _ = log;
+    }
+
+    /// Called when a log is emitted with the interpreter context.
+    ///
+    /// This will not happen only if custom precompiles where logs will be
+    /// gethered after precompile call.
+    fn log_full(&mut self, interpreter: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
+        let _ = interpreter;
+        self.log(context, log);
     }
 
     /// Called whenever a call to a contract is about to start.
@@ -133,9 +142,14 @@ where
         self.1.step_end(interp, context);
     }
 
-    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
-        self.0.log(interp, context, log.clone());
-        self.1.log(interp, context, log);
+    fn log(&mut self, context: &mut CTX, log: Log) {
+        self.0.log(context, log.clone());
+        self.1.log(context, log);
+    }
+
+    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
+        self.0.log_full(interp, context, log.clone());
+        self.1.log_full(interp, context, log);
     }
 
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
@@ -174,9 +188,6 @@ where
 /// Extends the journal with additional methods that are used by the inspector.
 #[auto_impl(&mut, Box)]
 pub trait JournalExt {
-    /// Get all logs from the journal.
-    fn logs(&self) -> &[Log];
-
     /// Get the journal entries that are created from last checkpoint.
     /// new checkpoint is created when sub call is made.
     fn journal(&self) -> &[JournalEntry];
@@ -189,11 +200,6 @@ pub trait JournalExt {
 }
 
 impl<DB: Database> JournalExt for Journal<DB> {
-    #[inline]
-    fn logs(&self) -> &[Log] {
-        &self.logs
-    }
-
     #[inline]
     fn journal(&self) -> &[JournalEntry] {
         &self.journal

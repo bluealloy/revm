@@ -1,8 +1,8 @@
 //! EVM gas calculation utilities.
 
 mod calc;
-pub mod params;
 mod constants;
+pub mod params;
 
 pub use calc::*;
 pub use constants::*;

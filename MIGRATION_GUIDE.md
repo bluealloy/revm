@@ -1,4 +1,55 @@
 
+# v100 tag (revm v33.0.0)
+
+* Additionally to v99 version:
+  * `Host::selfdestruct` function got changed to support oog on cold load for target account. 
+
+# v99 tag ( revm v32.0.0 )
+
+(yanked version)
+
+* Added support for transmitting Logs set from precompiles.
+   * `Inspector::log` function got renamed to `log` and `log_full`
+   * `log_full` default impl will call `log`
+   * difference is that `log_full` has `Interpreter` input while `log` does not
+     and `log` will be called in places where Interpreter is not found.
+* `PrecompileError` now contains `Other` as `Cow<'static, str>`
+   * It allows allows setting both `&'static str` that is without perf penalty and `String` if needed.
+
+# v98 tag
+
+No breaking changes.
+
+# v97 tag
+
+No breaking changes.
+
+# v96 tag
+
+No breaking changes.
+
+# v95 tag ( revm v31.0.0)
+
+* Cfg added `memory_limit()` function
+* `JournaledAccount` have been added that wraps account changes, touching and creating journal entry.
+  * Past function that fetches account now return a ref and new function `load_account_mut` now return `JournaledAccount`
+  * `JournalEntry` type is added to `JournalTr` so JournaledAccount can create it.
+* `JournalTr::load_account_code` is deprecated/renamed to `JournalTr::load_account_with_code`
+* `JournalTr::warm_account_and_storage` and `JournalTr::warm_account` are removed as access list is now separate from the main
+  Journal EvmState. Function that imports access list to the Journal is `JournalTr::warm_access_list`
+
+# v94 tag ( op-revm )
+
+No breaking changes
+
+# v93 tag ( op-revm )
+
+No breaking changes
+
+# v93 tag ( revm v30.1.0)
+
+No breaking changes
+
 # v92 tag ( revm v30.1.2)
 
 No breaking changes

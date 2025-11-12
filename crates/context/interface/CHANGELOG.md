@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v12.0.1...revm-context-interface-v13.0.0) - 2025-11-10
+
+### Added
+
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+- selfdestruct oog on cold load ([#3140](https://github.com/bluealloy/revm/pull/3140))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+
+## [12.0.1](https://github.com/bluealloy/revm/compare/revm-context-interface-v12.0.0...revm-context-interface-v12.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-state, revm-database-interface
+
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v11.1.2...revm-context-interface-v12.0.0) - 2025-10-30
+
+### Added
+
+- JournaledAccount, a nice way to update and track changes ([#3086](https://github.com/bluealloy/revm/pull/3086))
+- dont load access list immediately ([#3116](https://github.com/bluealloy/revm/pull/3116))
+
+### Fixed
+
+- hook up Cfg::memory_limit ([#3129](https://github.com/bluealloy/revm/pull/3129))
+
 ## [11.1.2](https://github.com/bluealloy/revm/compare/revm-context-interface-v11.1.1...revm-context-interface-v11.1.2) - 2025-10-15
 
 ### Other

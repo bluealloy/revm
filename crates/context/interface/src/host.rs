@@ -266,7 +266,7 @@ impl Host for DummyHost {
         _target: Address,
         _skip_cold_load: bool,
     ) -> Result<StateLoad<SelfDestructResult>, LoadError> {
-        Err(LoadError::DBError)
+        Err(LoadError::ColdLoadSkipped)
     }
 
     fn log(&mut self, _log: Log) {}

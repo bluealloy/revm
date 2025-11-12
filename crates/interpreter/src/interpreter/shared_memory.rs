@@ -196,6 +196,17 @@ impl SharedMemory {
         }
     }
 
+    /// Sets the memory limit in bytes.
+    #[inline]
+    pub fn set_memory_limit(&mut self, limit: u64) {
+        #[cfg(feature = "memory_limit")]
+        {
+            self.memory_limit = limit;
+        }
+        // for clippy.
+        let _ = limit;
+    }
+
     #[inline]
     fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
@@ -551,7 +562,6 @@ pub const fn num_words(len: usize) -> usize {
 
 /// Performs EVM memory resize.
 #[inline]
-#[must_use]
 pub fn resize_memory<Memory: MemoryTr>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
@@ -560,7 +570,7 @@ pub fn resize_memory<Memory: MemoryTr>(
     len: usize,
 ) -> Result<(), InstructionResult> {
     #[cfg(feature = "memory_limit")]
-    if self.memory.limit_reached(offset, len) {
+    if memory.limit_reached(offset, len) {
         return Err(InstructionResult::MemoryLimitOOG);
     }
 

@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-context-v11.0.2...revm-context-v12.0.0) - 2025-11-10
+
+### Added
+
+- generic Context::new ([#3156](https://github.com/bluealloy/revm/pull/3156))
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+- selfdestruct oog on cold load ([#3140](https://github.com/bluealloy/revm/pull/3140))
+
+### Fixed
+
+- use access list to decide if slot is cold ([#3149](https://github.com/bluealloy/revm/pull/3149))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+
+## [11.0.2](https://github.com/bluealloy/revm/compare/revm-context-v11.0.1...revm-context-v11.0.2) - 2025-11-10
+
+### Other
+
+- updated the following local packages: revm-database
+
+## [11.0.1](https://github.com/bluealloy/revm/compare/revm-context-v11.0.0...revm-context-v11.0.1) - 2025-11-07
+
+### Other
+
+- add test
+
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-context-v10.1.2...revm-context-v11.0.0) - 2025-10-30
+
+### Added
+
+- JournaledAccount, a nice way to update and track changes ([#3086](https://github.com/bluealloy/revm/pull/3086))
+- dont load access list immediately ([#3116](https://github.com/bluealloy/revm/pull/3116))
+
+### Fixed
+
+- *(context)* avoid double reference in `Context::all()` ([#3131](https://github.com/bluealloy/revm/pull/3131))
+- hook up Cfg::memory_limit ([#3129](https://github.com/bluealloy/revm/pull/3129))
+
+### Other
+
+- journal transfer fn cleanup ([#3085](https://github.com/bluealloy/revm/pull/3085))
+
 ## [10.1.2](https://github.com/bluealloy/revm/compare/revm-context-v10.1.1...revm-context-v10.1.2) - 2025-10-15
 
 ### Other

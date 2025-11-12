@@ -70,7 +70,7 @@ impl<
         let block = &self.block;
         let tx = &self.tx;
         let cfg = &self.cfg;
-        let db = &self.journaled_state.db();
+        let db = self.journaled_state.db();
         let journal = &self.journaled_state;
         let chain = &self.chain;
         let local = &self.local;
@@ -131,14 +131,15 @@ impl<
         JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
         LOCAL: LocalContextTr + Default,
-    > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN, LOCAL>
+        SPEC: Default + Copy + Into<SpecId>,
+    > Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
     ///
     /// This will create a new [`Journal`] object.
-    pub fn new(db: DB, spec: SpecId) -> Self {
+    pub fn new(db: DB, spec: SPEC) -> Self {
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(spec);
+        journaled_state.set_spec_id(spec.into());
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
@@ -521,6 +522,7 @@ impl<
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.
+    #[inline]
     fn selfdestruct(
         &mut self,
         address: Address,
@@ -538,6 +540,7 @@ impl<
             })
     }
 
+    #[inline]
     fn sstore_skip_cold_load(
         &mut self,
         address: Address,
@@ -556,6 +559,7 @@ impl<
             })
     }
 
+    #[inline]
     fn sload_skip_cold_load(
         &mut self,
         address: Address,
@@ -573,6 +577,7 @@ impl<
             })
     }
 
+    #[inline]
     fn load_account_info_skip_cold_load(
         &mut self,
         address: Address,

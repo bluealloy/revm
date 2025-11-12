@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v29.0.1...revm-precompile-v31.0.0) - 2025-11-10
+
+### Added
+
+- *(precompiles)* add performant PrecompileError::OtherCowStr variant ([#3144](https://github.com/bluealloy/revm/pull/3144))
+- add gas refund to PrecompileOutput ([#3152](https://github.com/bluealloy/revm/pull/3152))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+
+## [29.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v29.0.0...revm-precompile-v29.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm-primitives
+
+## [29.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v28.1.1...revm-precompile-v29.0.0) - 2025-10-30
+
+### Other
+
+- *(precompile)* remove unused mainnet_address() function ([#3091](https://github.com/bluealloy/revm/pull/3091))
+
 ## [28.1.1](https://github.com/bluealloy/revm/compare/revm-precompile-v28.1.0...revm-precompile-v28.1.1) - 2025-10-15
 
 ### Other

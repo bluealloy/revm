@@ -71,7 +71,7 @@ impl Default for GasParams {
 }
 
 impl GasParams {
-    /// Constants ids
+    // Constants ids
 
     /// EXP gas cost per byte
     pub const EXP_BYTE_GAS: GasId = 1;
@@ -415,7 +415,7 @@ impl GasParams {
                 refund += self.sstore_reset_without_cold_load_cost() as i64;
             }
         }
-        return refund;
+        refund
     }
 
     /// `LOG` opcode cost calculation.
