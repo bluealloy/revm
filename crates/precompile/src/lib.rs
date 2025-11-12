@@ -313,7 +313,7 @@ impl Precompiles {
 }
 
 /// Precompile.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Precompile {
     /// Unique identifier.
     id: PrecompileId,

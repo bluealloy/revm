@@ -158,3 +158,25 @@ impl fmt::Display for PrecompileId {
         f.write_str(self.name())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{modexp, Precompile,PrecompileId, PrecompileSpecId};
+
+    #[test]
+    fn test_mod_exp_precompile() {
+        const EXPECTED_PRECOMPILES_BY_SPEC_ID: [(PrecompileSpecId, Precompile); 7] = [
+            (PrecompileSpecId::HOMESTEAD, modexp::BYZANTIUM),
+            (PrecompileSpecId::BYZANTIUM, modexp::BYZANTIUM),
+            (PrecompileSpecId::ISTANBUL, modexp::BYZANTIUM),
+            (PrecompileSpecId::BERLIN, modexp::BERLIN),
+            (PrecompileSpecId::CANCUN, modexp::BERLIN),
+            (PrecompileSpecId::PRAGUE, modexp::BERLIN),
+            (PrecompileSpecId::OSAKA, modexp::OSAKA),
+        ];
+
+        for (spec_id, expected) in EXPECTED_PRECOMPILES_BY_SPEC_ID {
+            assert_eq!(PrecompileId::ModExp.precompile(spec_id), Some(expected));
+        }
+    }
+}
