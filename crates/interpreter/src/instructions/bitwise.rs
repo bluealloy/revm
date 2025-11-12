@@ -174,7 +174,7 @@ mod tests {
     use crate::{
         host::DummyHost,
         instructions::bitwise::{byte, clz, sar, shl, shr},
-        InstructionContext, Interpreter,
+        InstructionContext, InstructionResult, Interpreter, InterpreterAction,
     };
     use primitives::{hardfork::SpecId, uint, U256};
 
@@ -543,6 +543,28 @@ mod tests {
                 res, test.expected,
                 "CLZ for value {:#x} failed. Expected: {}, Got: {}",
                 test.value, test.expected, res
+            );
+        }
+    }
+
+    #[test]
+    fn test_clz_pre_osaka() {
+        let mut interpreter = Interpreter::default();
+        interpreter.set_spec_id(SpecId::PRAGUE);
+
+        push!(interpreter, uint!(0xffff_U256));
+        let context = InstructionContext {
+            host: &mut DummyHost,
+            interpreter: &mut interpreter,
+        };
+        clz(context);
+
+        if let Some(InterpreterAction::Return(result)) = interpreter.bytecode.action {
+            assert_eq!(result.result, InstructionResult::NotActivated);
+        } else {
+            unreachable!(
+                "Expected interpreter to return `NotActivated` error. Found: {:?}",
+                interpreter.bytecode.action
             );
         }
     }
