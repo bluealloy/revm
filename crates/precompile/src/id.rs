@@ -161,7 +161,7 @@ impl fmt::Display for PrecompileId {
 
 #[cfg(test)]
 mod tests {
-    use crate::{modexp, Precompile,PrecompileId, PrecompileSpecId};
+    use crate::{modexp, Precompile, PrecompileId, PrecompileSpecId};
 
     #[test]
     fn test_mod_exp_precompile() {
