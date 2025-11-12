@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [32.0.0](https://github.com/bluealloy/revm/compare/revm-v31.0.2...revm-v32.0.0) - 2025-11-10
+## [33.0.0](https://github.com/bluealloy/revm/compare/revm-v31.0.2...revm-v33.0.0) - 2025-11-10
 
 ### Other
 

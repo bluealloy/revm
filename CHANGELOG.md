@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v100
+date: 12.11.2025
+
+Bumping major version for `revm-context-interface` sa it is breaking change.
+Host selfdestruct function got changed in v99
+
+* `revm-context-interface`: 12.1.0 -> 13.0.0 (⚠ API breaking changes)
+* `revm-context`: 11.1.0 -> 12.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 30.0.0 -> 31.0.0 (✓ API compatible changes)
+* `revm-precompile`: 30.0.0 -> 31.0.0 (✓ API compatible changes)
+* `revm-handler`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `revm-inspector`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `op-revm`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 32.0.0 -> 33.0.0
+* `revm-statetest-types`: 12.0.0 -> 13.0.0
+* `revme`: 9.1.0 -> 10.0.0
+
+revm-context-interface@13.0.0 revm-context@12.0.0 revm-interpreter@31.0.0 revm-precompile@31.0.0 revm-handler@14.0.0 revm-inspector@14.0.0
+op-revm@14.0.0 revm@33.0.0 revm-statetest-types@13.0.0 revme@10.0.0
+
 # v99
 date 10.11.2025
 
@@ -16,6 +37,8 @@ Maintainance release.
 * `revm`: 31.0.2 -> 32.0.0
 * `revm-statetest-types`: 11.0.2 -> 12.0.0
 * `revme`: 9.0.2 -> 9.1.0
+
+
 
 # v98
 date: 10.11.2025
