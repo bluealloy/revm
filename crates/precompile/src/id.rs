@@ -161,6 +161,8 @@ impl fmt::Display for PrecompileId {
 
 #[cfg(test)]
 mod tests {
+    use std::ptr;
+
     use crate::{modexp, Precompile, PrecompileId, PrecompileSpecId};
 
     #[test]
@@ -176,7 +178,12 @@ mod tests {
         ];
 
         for (spec_id, expected) in EXPECTED_PRECOMPILES_BY_SPEC_ID {
-            assert_eq!(PrecompileId::ModExp.precompile(spec_id), Some(expected));
+            let precompile = PrecompileId::ModExp
+                .precompile(spec_id)
+                .expect("Precompile should be defined");
+            assert_eq!(precompile.id, expected.id);
+            assert_eq!(precompile.address, expected.address);
+            assert!(ptr::fn_addr_eq(precompile.fn_, expected.fn_));
         }
     }
 }
