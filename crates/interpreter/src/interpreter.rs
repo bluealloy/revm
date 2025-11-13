@@ -528,6 +528,7 @@ fn test_mstore_big_offset_memory_limit_oog() {
         false,
         SpecId::default(),
         100000,
+        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
