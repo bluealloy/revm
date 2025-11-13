@@ -160,7 +160,7 @@ impl EthFrame<EthInterpreter> {
         };
 
         // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
+        if depth >= CALL_STACK_LIMIT as usize {
             return return_result(InstructionResult::CallTooDeep);
         }
 
@@ -272,7 +272,7 @@ impl EthFrame<EthInterpreter> {
         };
 
         // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
+        if depth >= CALL_STACK_LIMIT as usize {
             return return_error(InstructionResult::CallTooDeep);
         }
 
