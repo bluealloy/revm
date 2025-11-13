@@ -598,7 +598,7 @@ fn resize_memory_cold<Memory: MemoryTr>(
     };
 
     if !gas.record_cost(cost) {
-        return Err(InstructionResult::OutOfGas);
+        return Err(InstructionResult::MemoryOOG);
     }
     memory.resize(new_num_words * 32);
     Ok(())
@@ -618,7 +618,9 @@ mod tests {
         assert_eq!(num_words(63), 2);
         assert_eq!(num_words(64), 2);
         assert_eq!(num_words(65), 3);
-        assert_eq!(num_words(usize::MAX), usize::MAX / 32);
+        assert_eq!(num_words(usize::MAX - 31), usize::MAX / 32);
+        assert_eq!(num_words(usize::MAX - 30), (usize::MAX / 32) + 1);
+        assert_eq!(num_words(usize::MAX), (usize::MAX / 32) + 1);
     }
 
     #[test]

@@ -59,8 +59,7 @@ mod serde {
 
 impl Default for GasParams {
     fn default() -> Self {
-        let table = Arc::new([0; 256]);
-        Self::new(table)
+        Self::new_spec(SpecId::default())
     }
 }
 
