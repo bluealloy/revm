@@ -266,9 +266,9 @@ impl L1BlockInfo {
     /// Internally calls [`L1BlockInfo::tx_cost`].
     pub fn tx_cost_with_tx(&mut self, tx: impl OpTxTr, spec: OpSpecId) -> Option<U256> {
         // account for additional cost of l1 fee and operator fee
-        let enveloped_tx = tx.enveloped_tx().cloned()?;
+        let enveloped_tx = tx.enveloped_tx()?;
         let gas_limit = U256::from(tx.gas_limit());
-        Some(self.tx_cost(&enveloped_tx, gas_limit, spec))
+        Some(self.tx_cost(enveloped_tx, gas_limit, spec))
     }
 
     /// Calculate additional transaction cost.
