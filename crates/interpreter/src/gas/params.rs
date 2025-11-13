@@ -23,6 +23,7 @@ pub struct GasParams {
 #[cfg(feature = "serde")]
 mod serde {
     use super::{Arc, GasParams};
+    use std::vec::Vec;
 
     #[derive(serde::Serialize, serde::Deserialize)]
     struct GasParamsSerde {
