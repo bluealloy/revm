@@ -111,7 +111,7 @@ pub trait Handler {
     fn configure(&mut self, evm: &mut Self::Evm) {
         let spec_id = evm.ctx().cfg().spec().into();
         // sets static gas depending on the spec id.
-        evm.ctx_instructions().1.set_spec_id(spec_id);
+        evm.ctx_instructions().1.set_spec(spec_id);
     }
 
     /// Runs the system call.
