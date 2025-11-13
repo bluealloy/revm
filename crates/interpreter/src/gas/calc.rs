@@ -114,8 +114,6 @@ pub fn calculate_initial_tx_gas(
         21000
     };
 
-    // TODO init gas
-
     // EIP-3860: Limit and meter initcode
     // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {

@@ -297,7 +297,6 @@ fn write_value(
     output: &mut dyn std::io::Write,
     value: &impl serde::Serialize,
 ) -> std::io::Result<()> {
-    //let mut stdout = std::io::stdout();
     serde_json::to_writer(&mut *output, value)?;
     output.write_all(b"\n")
 }
