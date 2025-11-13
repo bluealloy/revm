@@ -152,7 +152,9 @@ where
         let mut balance = caller_account.info.balance;
 
         if !cfg.is_fee_charge_disabled() {
-            let additional_cost = chain.tx_cost_with_tx(tx, spec);
+            let Some(additional_cost) = chain.tx_cost_with_tx(tx, spec) else {
+                return Err(ERROR::from_string("[OPTIMISM] Failed to load enveloped transaction.".into()));
+            };
             let Some(new_balance) = balance.checked_sub(additional_cost) else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(additional_cost),
