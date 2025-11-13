@@ -317,7 +317,7 @@ impl BlockHeader {
 
 impl Transaction {
     /// Convert Transaction to TxEnv
-    /// Note: The 'to' and 'sender' fields need to be provided separately in the reth model
+    /// Note: The 'to' and 'sender' fields need to be provided separately in TxEnv
     pub fn to_tx_env(&self) -> Result<TxEnv, String> {
         // Determine transaction type
         let tx_type = self.transaction_type.map(|t| t.to::<u8>()).unwrap_or(0);
@@ -437,7 +437,7 @@ mod test {
         let result: Result<BlockchainTest, _> = serde_json::from_str(SAMPLE);
 
         // Note: The test may fail because the sample JSON has a different structure
-        // than what reth expects (e.g., network is a string instead of ForkSpec enum)
+        // than the expected format (e.g., network is a string instead of ForkSpec enum)
         // This is expected as the formats differ slightly
         if let Err(e) = result {
             println!("Expected deserialization error due to format differences: {e}");
