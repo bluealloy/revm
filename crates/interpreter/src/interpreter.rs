@@ -58,6 +58,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) -> Self {
         Self::new_inner(
             Stack::new(),
@@ -67,6 +68,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             is_static,
             spec_id,
             gas_limit,
+            gas_params,
         )
     }
 
@@ -89,6 +91,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             false,
             SpecId::default(),
             u64::MAX,
+            GasParams::default(),
         )
     }
 
@@ -101,11 +104,12 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) -> Self {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
-            gas_params: GasParams::new_spec(spec_id),
+            gas_params,
             stack,
             return_data: Default::default(),
             memory,
@@ -117,6 +121,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Clears and reinitializes the interpreter with new parameters.
     #[allow(clippy::too_many_arguments)]
+    #[inline(always)]
     pub fn clear(
         &mut self,
         memory: SharedMemory,
@@ -125,11 +130,12 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) {
         let Self {
             bytecode: bytecode_ref,
             gas,
-            gas_params,
+            gas_params: gas_params_ref,
             stack,
             return_data,
             memory: memory_ref,
@@ -148,7 +154,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *memory_ref = memory;
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
-        *gas_params = GasParams::new_spec(spec_id);
+        *gas_params_ref = gas_params;
         *extend = EXT::default();
     }
 
@@ -445,6 +451,7 @@ mod tests {
             false,
             SpecId::default(),
             u64::MAX,
+            GasParams::default(),
         );
 
         let serialized = serde_json::to_string_pretty(&interpreter).unwrap();
@@ -482,6 +489,7 @@ fn test_mstore_big_offset_memory_oog() {
         false,
         SpecId::default(),
         1000,
+        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
