@@ -136,6 +136,9 @@ impl GasParams {
     /// Use to override default gas cost
     ///
     /// ```rust
+    /// use revm_interpreter::gas::params::GasParams;
+    /// use primitives::hardfork::SpecId;
+    /// 
     /// let mut gas_table = GasParams::new_spec(SpecId::default());
     /// gas_table.override_gas([(GasParams::MEMORY_LINEAR_COST, 2), (GasParams::MEMORY_QUADRATIC_REDUCTION, 512)].into_iter());
     /// assert_eq!(gas_table.get(GasParams::MEMORY_LINEAR_COST), 2);
