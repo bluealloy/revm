@@ -360,7 +360,7 @@ impl GasParams {
         let sstore_clearing_slot_refund = self.sstore_clearing_slot_refund() as i64;
 
         if !is_istanbul {
-            // // before instanbul fork, refund was always awarded without checking original state.
+            // // before istanbul fork, refund was always awarded without checking original state.
             if !vals.is_present_zero() && vals.is_new_zero() {
                 return sstore_clearing_slot_refund;
             }
