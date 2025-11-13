@@ -1,5 +1,17 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v101
+date: 13.11.2025
+
+Patch for Inspector so full_log will be called inside loop.
+
+* `revm-inspector`: 14.0.0 -> 14.0.1 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 33.0.0 -> 33.0.1
+* `revm-statetest-types`: 13.0.0 -> 13.0.1
+* `revme`: 10.0.0 -> 10.0.1
+* `op-revm`: 14.0.0 -> 14.0.1
+
 # v100
 date: 12.11.2025
 
