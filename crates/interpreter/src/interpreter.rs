@@ -19,8 +19,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    gas::params::GasParams, host::DummyHost, instruction_context::InstructionContext,
+    interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -29,6 +29,8 @@ use primitives::{hardfork::SpecId, Bytes};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
+    /// Gas table for dynamic gas constants.
+    pub gas_params: GasParams,
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
@@ -56,6 +58,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) -> Self {
         Self::new_inner(
             Stack::new(),
@@ -65,6 +68,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             is_static,
             spec_id,
             gas_limit,
+            gas_params,
         )
     }
 
@@ -87,6 +91,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             false,
             SpecId::default(),
             u64::MAX,
+            GasParams::default(),
         )
     }
 
@@ -99,10 +104,12 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) -> Self {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
+            gas_params,
             stack,
             return_data: Default::default(),
             memory,
@@ -114,6 +121,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Clears and reinitializes the interpreter with new parameters.
     #[allow(clippy::too_many_arguments)]
+    #[inline(always)]
     pub fn clear(
         &mut self,
         memory: SharedMemory,
@@ -122,10 +130,12 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        gas_params: GasParams,
     ) {
         let Self {
             bytecode: bytecode_ref,
             gas,
+            gas_params: gas_params_ref,
             stack,
             return_data,
             memory: memory_ref,
@@ -144,6 +154,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *memory_ref = memory;
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
+        *gas_params_ref = gas_params;
         *extend = EXT::default();
     }
 
@@ -155,6 +166,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Sets the specid for the interpreter.
     pub fn set_spec_id(&mut self, spec_id: SpecId) {
+        self.gas_params = GasParams::new_spec(spec_id);
         self.runtime_flag.spec_id = spec_id;
     }
 }
@@ -187,7 +199,17 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[inline]
     #[must_use]
     pub fn resize_memory(&mut self, offset: usize, len: usize) -> bool {
-        resize_memory(&mut self.gas, &mut self.memory, offset, len)
+        if let Err(result) = resize_memory(
+            &mut self.gas,
+            &mut self.memory,
+            &self.gas_params,
+            offset,
+            len,
+        ) {
+            self.halt(result);
+            return false;
+        }
+        true
     }
 
     /// Takes the next action from the control and returns it.
@@ -287,6 +309,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
+        //println!("step {opcode:x?} gas remaining: {:?}", self.gas.remaining());
+
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
@@ -294,6 +318,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
+        //println!("op: {opcode:x?} STATIC GAS: {:?}", instruction.static_gas());
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
             return self.halt_oog();
         }
@@ -426,6 +451,7 @@ mod tests {
             false,
             SpecId::default(),
             u64::MAX,
+            GasParams::default(),
         );
 
         let serialized = serde_json::to_string_pretty(&interpreter).unwrap();
@@ -463,6 +489,7 @@ fn test_mstore_big_offset_memory_oog() {
         false,
         SpecId::default(),
         1000,
+        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
@@ -501,6 +528,7 @@ fn test_mstore_big_offset_memory_limit_oog() {
         false,
         SpecId::default(),
         100000,
+        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();

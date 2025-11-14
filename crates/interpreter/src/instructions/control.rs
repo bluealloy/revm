@@ -11,7 +11,6 @@ use crate::InstructionContext;
 ///
 /// Unconditional jump to a valid destination.
 pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
-    //gas!(context.interpreter, gas::MID);
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
@@ -20,9 +19,7 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Conditional jump to a valid destination if condition is true.
 pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::HIGH);
     popn!([target, cond], context.interpreter);
-
     if !cond.is_zero() {
         jump_inner(context.interpreter, target);
     }
@@ -45,15 +42,12 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::JUMPDEST);
-}
+pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {}
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
 pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    //gas!(context.interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
@@ -69,15 +63,15 @@ fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
 ) {
-    // Zero gas cost
-    // //gas!(interpreter, gas::ZERO)
     popn!([offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
     // Important: Offset must be ignored if len is zeros
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        resize_memory!(interpreter, offset, len);
+        if !interpreter.resize_memory(offset, len) {
+            return;
+        }
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 
