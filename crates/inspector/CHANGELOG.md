@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v14.0.1...revm-inspector-v14.0.2) - 2025-11-14
+
+### Other
+
+- release ([#3162](https://github.com/bluealloy/revm/pull/3162))
+- call Inspector::log_full ([#3164](https://github.com/bluealloy/revm/pull/3164))
+
 ## [14.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v14.0.0...revm-inspector-v14.0.1) - 2025-11-14
 
 ### Other
