@@ -91,6 +91,12 @@ impl WarmAddresses {
         self.access_list = access_list;
     }
 
+    /// Returns the access list.
+    #[inline]
+    pub fn access_list(&self) -> &HashMap<Address, HashSet<StorageKey>> {
+        &self.access_list
+    }
+
     /// Clear the coinbase address.
     #[inline]
     pub fn clear_coinbase(&mut self) {
