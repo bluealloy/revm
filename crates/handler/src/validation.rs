@@ -107,8 +107,8 @@ pub fn validate_tx_env<CTX: ContextTr>(
     spec_id: SpecId,
 ) -> Result<(), InvalidTransaction> {
     // Check if the transaction's chain id is correct
-    let tx_type = context.tx().tx_type();
     let tx = context.tx();
+    let tx_type = tx.tx_type();
 
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
@@ -216,7 +216,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     // EIP-3860: Limit and meter initcode. Still valid with EIP-7907 and increase of initcode size.
     if spec_id.is_enabled_in(SpecId::SHANGHAI)
         && tx.kind().is_create()
-        && context.tx().input().len() > context.cfg().max_initcode_size()
+        && tx.input().len() > context.cfg().max_initcode_size()
     {
         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
     }
