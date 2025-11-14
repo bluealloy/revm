@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.0.0...revm-interpreter-v31.0.1) - 2025-11-14
+
+### Fixed
+
+- correctly handle selfdestruct cold load ([#3174](https://github.com/bluealloy/revm/pull/3174))
+
 ## [31.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v29.0.1...revm-interpreter-v31.0.0) - 2025-11-10
 
 ### Added

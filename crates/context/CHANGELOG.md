@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.1.0](https://github.com/bluealloy/revm/compare/revm-context-v12.0.0...revm-context-v12.1.0) - 2025-11-14
+
+### Added
+
+- Add set_nonce journal entry and fn ([#3163](https://github.com/bluealloy/revm/pull/3163))
+
 ## [12.0.0](https://github.com/bluealloy/revm/compare/revm-context-v11.0.2...revm-context-v12.0.0) - 2025-11-10
 
 ### Added
