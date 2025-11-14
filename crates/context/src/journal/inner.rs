@@ -281,7 +281,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         if bump_nonce {
             // nonce changed.
-            self.journal.push(ENTRY::nonce_changed(address));
+            self.journal.push(ENTRY::nonce_bumped(address));
         }
     }
 
@@ -303,7 +303,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Increments the nonce of the account.
     #[inline]
     pub fn nonce_bump_journal_entry(&mut self, address: Address) {
-        self.journal.push(ENTRY::nonce_changed(address));
+        self.journal.push(ENTRY::nonce_bumped(address));
     }
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.

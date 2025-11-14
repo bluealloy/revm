@@ -154,8 +154,11 @@ run_tests() {
     echo "Running devnet statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$DEVNET_DIR/state_tests"
 
-    echo "Running legacy tests..."
+    echo "Running legacy Cancun tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$LEGACY_DIR/Cancun/GeneralStateTests"
+
+    echo "Running legacy Constantinople tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG"$LEGACY_DIR/Constantinople/GeneralStateTests"
 
     echo "Running main develop blockchain tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/blockchain_tests"
