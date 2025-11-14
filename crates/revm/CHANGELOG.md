@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.0.2](https://github.com/bluealloy/revm/compare/revm-v33.0.1...revm-v33.0.2) - 2025-11-14
+
+### Fixed
+
+- expose optional_priority_fee_check feature from context crate ([#3159](https://github.com/bluealloy/revm/pull/3159))
+
+### Other
+
+- release ([#3162](https://github.com/bluealloy/revm/pull/3162))
+
 ## [33.0.1](https://github.com/bluealloy/revm/compare/revm-v33.0.0...revm-v33.0.1) - 2025-11-14
 
 ### Fixed
