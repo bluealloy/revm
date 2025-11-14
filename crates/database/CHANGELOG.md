@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.6](https://github.com/bluealloy/revm/compare/revm-database-v9.0.5...revm-database-v9.0.6) - 2025-11-14
+
+### Fixed
+
+- *(database)* return correct bytecode in BenchmarkDB::code_by_hash ([#3170](https://github.com/bluealloy/revm/pull/3170))
+
 ## [9.0.5](https://github.com/bluealloy/revm/compare/revm-database-v9.0.4...revm-database-v9.0.5) - 2025-11-10
 
 ### Fixed

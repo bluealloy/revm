@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.1](https://github.com/bluealloy/revm/compare/op-revm-v14.0.0...op-revm-v14.0.1) - 2025-11-14
+
+### Fixed
+
+- *(op-revm)* return error when enveloped_tx is missing ([#3143](https://github.com/bluealloy/revm/pull/3143))
+
 ## [14.0.0](https://github.com/bluealloy/revm/compare/op-revm-v12.0.2...op-revm-v14.0.0) - 2025-11-10
 
 ### Added
