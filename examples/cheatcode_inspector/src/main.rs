@@ -103,6 +103,10 @@ impl JournalTr for Backend {
         self.journaled_state.log(log)
     }
 
+    fn logs(&self) -> &[Log] {
+        self.journaled_state.logs()
+    }
+
     fn selfdestruct(
         &mut self,
         address: Address,
@@ -309,10 +313,6 @@ impl JournalTr for Backend {
 }
 
 impl JournalExt for Backend {
-    fn logs(&self) -> &[Log] {
-        self.journaled_state.logs()
-    }
-
     fn journal(&self) -> &[JournalEntry] {
         self.journaled_state.journal()
     }

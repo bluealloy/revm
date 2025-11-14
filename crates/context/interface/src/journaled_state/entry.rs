@@ -35,8 +35,11 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's balance is changed.
     fn balance_changed(address: Address, old_balance: U256) -> Self;
 
-    /// Creates a journal entry for when an account's nonce is incremented.
-    fn nonce_changed(address: Address) -> Self;
+    /// Creates a journal entry for when an account's nonce is changed.
+    fn nonce_changed(address: Address, previous_nonce: u64) -> Self;
+
+    /// Creates a journal entry for when an account's nonce is bumped.
+    fn nonce_bumped(address: Address) -> Self;
 
     /// Creates a journal entry for when a new account is created
     fn account_created(address: Address, is_created_globally: bool) -> Self;
@@ -158,9 +161,19 @@ pub enum JournalEntry {
         to: Address,
     },
     /// Increment nonce
+    /// Action: Set nonce
+    /// Revert: Revert to previous nonce
+    NonceChange {
+        /// Address of account that had its nonce changed.
+        /// Nonce is incremented by one.
+        address: Address,
+        /// Previous nonce of account.
+        previous_nonce: u64,
+    },
+    /// Increment nonce
     /// Action: Increment nonce by one
     /// Revert: Decrement nonce by one
-    NonceChange {
+    NonceBump {
         /// Address of account that had its nonce changed.
         /// Nonce is incremented by one.
         address: Address,
@@ -263,8 +276,15 @@ impl JournalEntryTr for JournalEntry {
         }
     }
 
-    fn nonce_changed(address: Address) -> Self {
-        JournalEntry::NonceChange { address }
+    fn nonce_changed(address: Address, previous_nonce: u64) -> Self {
+        JournalEntry::NonceChange {
+            address,
+            previous_nonce,
+        }
+    }
+
+    fn nonce_bumped(address: Address) -> Self {
+        JournalEntry::NonceBump { address }
     }
 
     fn storage_warmed(address: Address, key: StorageKey) -> Self {
@@ -346,8 +366,15 @@ impl JournalEntryTr for JournalEntry {
                 let to = state.get_mut(&to).unwrap();
                 to.info.balance -= balance;
             }
-            JournalEntry::NonceChange { address } => {
-                state.get_mut(&address).unwrap().info.nonce -= 1;
+            JournalEntry::NonceChange {
+                address,
+                previous_nonce,
+            } => {
+                state.get_mut(&address).unwrap().info.nonce = previous_nonce;
+            }
+            JournalEntry::NonceBump { address } => {
+                let nonce = &mut state.get_mut(&address).unwrap().info.nonce;
+                *nonce = nonce.saturating_sub(1);
             }
             JournalEntry::AccountCreated {
                 address,

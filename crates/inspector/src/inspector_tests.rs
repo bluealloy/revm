@@ -117,7 +117,7 @@ mod tests {
             }
         }
 
-        fn log(&mut self, _interp: &mut Interpreter<INTR>, _ctx: &mut CTX, log: Log) {
+        fn log(&mut self, _ctx: &mut CTX, log: Log) {
             self.events.push(InspectorEvent::Log(log));
         }
 

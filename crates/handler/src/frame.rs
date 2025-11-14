@@ -27,8 +27,7 @@ use primitives::{
 };
 use primitives::{keccak256, Address, Bytes, U256};
 use state::Bytecode;
-use std::borrow::ToOwned;
-use std::boxed::Box;
+use std::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -155,6 +154,8 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 memory_offset: inputs.return_memory_offset.clone(),
+                was_precompile_called: false,
+                precompile_call_logs: Vec::new(),
             })))
         };
 
@@ -190,14 +191,20 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit;
 
         if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+            let mut logs = Vec::new();
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
             } else {
+                // clone logs that precompile created, only possible with custom precompiles.
+                // checkpoint.log_i will be always correct.
+                logs = ctx.journal_mut().logs()[checkpoint.log_i..].to_vec();
                 ctx.journal_mut().checkpoint_revert(checkpoint);
             }
             return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result,
                 memory_offset: inputs.return_memory_offset.clone(),
+                was_precompile_called: true,
+                precompile_call_logs: logs,
             })));
         }
 

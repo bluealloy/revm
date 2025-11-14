@@ -482,8 +482,12 @@ impl Database for BenchmarkDB {
     }
 
     /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
-        Ok(Bytecode::default())
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        if code_hash == self.1 {
+            Ok(self.0.clone())
+        } else {
+            Ok(Bytecode::default())
+        }
     }
 
     /// Get storage value of address at index.

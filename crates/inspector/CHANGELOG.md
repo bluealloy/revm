@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.1.0](https://github.com/bluealloy/revm/compare/revm-inspector-v14.0.0...revm-inspector-v14.1.0) - 2025-11-14
+
+### Other
+
+- call Inspector::log_full ([#3164](https://github.com/bluealloy/revm/pull/3164))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v12.0.2...revm-inspector-v14.0.0) - 2025-11-10
+
+### Added
+
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+
 ## [12.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v12.0.1...revm-inspector-v12.0.2) - 2025-11-10
 
 ### Other

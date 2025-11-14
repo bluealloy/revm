@@ -1,7 +1,7 @@
 //! CountInspector - Inspector that counts all opcodes that were called.
 use crate::inspector::Inspector;
 use interpreter::{interpreter_types::Jumps, InterpreterTypes};
-use primitives::HashMap;
+use primitives::{HashMap, Log};
 
 /// Inspector that counts all opcodes that were called during execution.
 #[derive(Clone, Debug, Default)]
@@ -133,12 +133,7 @@ impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for CountInspector {
         self.step_end_count += 1;
     }
 
-    fn log(
-        &mut self,
-        _interp: &mut interpreter::Interpreter<INTR>,
-        _context: &mut CTX,
-        _log: primitives::Log,
-    ) {
+    fn log(&mut self, _context: &mut CTX, _log: Log) {
         self.log_count += 1;
     }
 

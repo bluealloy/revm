@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.1.0](https://github.com/bluealloy/revm/compare/revm-v33.0.0...revm-v33.1.0) - 2025-11-14
+
+### Fixed
+
+- expose optional_priority_fee_check feature from context crate ([#3159](https://github.com/bluealloy/revm/pull/3159))
+
+## [33.0.0](https://github.com/bluealloy/revm/compare/revm-v31.0.2...revm-v33.0.0) - 2025-11-10
+
+### Other
+
+- updated the following local packages: revm-context-interface, revm-context, revm-interpreter, revm-precompile, revm-handler, revm-inspector
+
 ## [31.0.2](https://github.com/bluealloy/revm/compare/revm-v31.0.1...revm-v31.0.2) - 2025-11-10
 
 ### Other

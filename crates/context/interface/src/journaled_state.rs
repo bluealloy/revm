@@ -100,6 +100,12 @@ pub trait JournalTr {
     /// Logs the log in Journal state.
     fn log(&mut self, log: Log);
 
+    /// Take logs from journal.
+    fn take_logs(&mut self) -> Vec<Log>;
+
+    /// Returns the logs from journal.
+    fn logs(&self) -> &[Log];
+
     /// Marks the account for selfdestruction and transfers all the balance to the target.
     fn selfdestruct(
         &mut self,
@@ -274,9 +280,6 @@ pub trait JournalTr {
 
     /// Returns the depth of the journal.
     fn depth(&self) -> usize;
-
-    /// Take logs from journal.
-    fn take_logs(&mut self) -> Vec<Log>;
 
     /// Commit current transaction journal and returns transaction logs.
     fn commit_tx(&mut self);

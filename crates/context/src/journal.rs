@@ -142,6 +142,16 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.log(log)
     }
 
+    #[inline]
+    fn logs(&self) -> &[Log] {
+        &self.inner.logs
+    }
+
+    #[inline]
+    fn take_logs(&mut self) -> Vec<Log> {
+        self.inner.take_logs()
+    }
+
     fn selfdestruct(
         &mut self,
         address: Address,
@@ -301,11 +311,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         // Ignore error.
         self.inner
             .create_account_checkpoint(caller, address, balance, spec_id)
-    }
-
-    #[inline]
-    fn take_logs(&mut self) -> Vec<Log> {
-        self.inner.take_logs()
     }
 
     #[inline]

@@ -152,7 +152,11 @@ where
         let mut balance = caller_account.info.balance;
 
         if !cfg.is_fee_charge_disabled() {
-            let additional_cost = chain.tx_cost_with_tx(tx, spec);
+            let Some(additional_cost) = chain.tx_cost_with_tx(tx, spec) else {
+                return Err(ERROR::from_string(
+                    "[OPTIMISM] Failed to load enveloped transaction.".into(),
+                ));
+            };
             let Some(new_balance) = balance.checked_sub(additional_cost) else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(additional_cost),
@@ -1279,14 +1283,14 @@ mod tests {
         assert_eq!(
             handler.execution_result(
                 &mut evm,
-                FrameResult::Call(CallOutcome {
-                    result: InterpreterResult {
+                FrameResult::Call(CallOutcome::new(
+                    InterpreterResult {
                         result: InstructionResult::OutOfGas,
                         output: Default::default(),
                         gas: Default::default(),
                     },
-                    memory_offset: Default::default(),
-                })
+                    Default::default()
+                ))
             ),
             Err(EVMError::Transaction(
                 OpTransactionError::HaltedDepositPostRegolith

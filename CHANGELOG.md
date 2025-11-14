@@ -1,5 +1,74 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v102
+date: 14.11.2025
+
+Fix for pre berlin selfdestruct oog introduced in v99/v100 tag (revm 32.0.0).
+
+* `revm-context-interface`: 13.0.0 -> 13.1.0 (✓ API compatible changes)
+* `revm-context`: 12.0.0 -> 12.1.0 (✓ API compatible changes)
+* `revm-database`: 9.0.5 -> 9.0.6 (✓ API compatible changes)
+* `revm-interpreter`: 31.0.0 -> 31.1.0 (✓ API compatible changes)
+* `revm-inspector`: 14.0.0 -> 14.1.0 (✓ API compatible changes)
+* `revm`: 33.0.0 -> 33.1.0 (✓ API compatible changes)
+* `revme`: 10.0.0 -> 10.0.2 (✓ API compatible changes)
+* `op-revm`: 14.0.0 -> 14.1.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm-handler`: 14.0.0 -> 14.1.0
+* `revm-statetest-types`: 13.0.0 -> 13.1.0
+
+# v101
+date: 13.11.2025
+
+Patch for Inspector so full_log will be called inside loop.
+
+* `revm-inspector`: 14.0.0 -> 14.0.1 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 33.0.0 -> 33.0.1
+* `revm-statetest-types`: 13.0.0 -> 13.0.1
+* `revme`: 10.0.0 -> 10.0.1
+* `op-revm`: 14.0.0 -> 14.0.1
+
+# v100
+date: 12.11.2025
+
+Bumping major version for `revm-context-interface` sa it is breaking change.
+Host selfdestruct function got changed in v99
+
+* `revm-context-interface`: 12.1.0 -> 13.0.0 (⚠ API breaking changes)
+* `revm-context`: 11.1.0 -> 12.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 30.0.0 -> 31.0.0 (✓ API compatible changes)
+* `revm-precompile`: 30.0.0 -> 31.0.0 (✓ API compatible changes)
+* `revm-handler`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `revm-inspector`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `op-revm`: 13.0.0 -> 14.0.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 32.0.0 -> 33.0.0
+* `revm-statetest-types`: 12.0.0 -> 13.0.0
+* `revme`: 9.1.0 -> 10.0.0
+
+revm-context-interface@13.0.0 revm-context@12.0.0 revm-interpreter@31.0.0 revm-precompile@31.0.0 revm-handler@14.0.0 revm-inspector@14.0.0
+op-revm@14.0.0 revm@33.0.0 revm-statetest-types@13.0.0 revme@10.0.0
+
+# v99
+date 10.11.2025
+
+Maintainance release.
+
+* `revm-context-interface`: 12.0.1 -> 12.1.0 (✓ API compatible changes)
+* `revm-context`: 11.0.2 -> 11.1.0 (✓ API compatible changes)
+* `revm-interpreter`: 29.0.1 -> 30.0.0 (✓ API compatible changes)
+* `revm-precompile`: 29.0.1 -> 30.0.0 (✓ API compatible changes)
+* `revm-handler`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `revm-inspector`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `op-revm`: 12.0.2 -> 13.0.0 (✓ API compatible changes)
+* `revm-ee-tests`: 0.1.0
+* `revm`: 31.0.2 -> 32.0.0
+* `revm-statetest-types`: 11.0.2 -> 12.0.0
+* `revme`: 9.0.2 -> 9.1.0
+
+
+
 # v98
 date: 10.11.2025
 
