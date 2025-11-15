@@ -5,8 +5,10 @@ use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResu
 use precompile::PrecompileError;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
-use std::boxed::Box;
-use std::string::{String, ToString};
+use std::{
+    boxed::Box,
+    string::{String, ToString},
+};
 
 /// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
