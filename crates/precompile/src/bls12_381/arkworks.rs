@@ -179,7 +179,7 @@ fn read_g2(
 ) -> Result<G2Affine, PrecompileError> {
     let point = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
     if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(PrecompileError::Bls12381G1NotInSubgroup);
+        return Err(PrecompileError::Bls12381G2NotInSubgroup);
     }
     Ok(point)
 }
