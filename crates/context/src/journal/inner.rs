@@ -688,14 +688,26 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 // skip load if account is cold.
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
                 if is_cold {
-                    is_cold = cold_account_load(
-                        account,
-                        &self.warm_addresses,
-                        address,
-                        skip_cold_load,
-                        self.transaction_id,
-                    )
-                    .ok_or(JournalLoadError::ColdLoadSkipped)?;
+                    // account can be loaded by we still need to check warm_addresses to see if it is cold.
+                    let should_be_cold = self.warm_addresses.is_cold(&address);
+
+                    // dont load it cold if skipping cold load is true.
+                    if should_be_cold && skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
+                    is_cold = should_be_cold;
+
+                    // mark it warm.
+                    account.mark_warm_with_transaction_id(self.transaction_id);
+
+                    // if it is cold loaded and we have selfdestructed locally it means that
+                    // account was selfdestructed in previous transaction and we need to clear its information and storage.
+                    if account.is_selfdestructed_locally() {
+                        account.selfdestruct();
+                        account.unmark_selfdestructed_locally();
+                    }
+                    // unmark locally created
+                    account.unmark_created_locally();
                 }
                 StateLoad {
                     data: account,
@@ -828,38 +840,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
-}
-
-#[cold]
-#[inline(never)]
-fn cold_account_load(
-    account: &mut Account,
-    warm_addresses: &WarmAddresses,
-    address: Address,
-    skip_cold_load: bool,
-    transaction_id: usize,
-) -> Option<bool> {
-    // account can be loaded by we still need to check warm_addresses to see if it is cold.
-    let should_be_cold = warm_addresses.is_cold(&address);
-
-    // dont load it cold if skipping cold load is true.
-    if should_be_cold && skip_cold_load {
-        return None;
-    }
-    let is_cold = should_be_cold;
-
-    // mark it warm.
-    account.mark_warm_with_transaction_id(transaction_id);
-
-    // if it is cold loaded and we have selfdestructed locally it means that
-    // account was selfdestructed in previous transaction and we need to clear its information and storage.
-    if account.is_selfdestructed_locally() {
-        account.selfdestruct();
-        account.unmark_selfdestructed_locally();
-    }
-    // unmark locally created
-    account.unmark_created_locally();
-    Some(is_cold)
 }
 
 #[cfg(test)]

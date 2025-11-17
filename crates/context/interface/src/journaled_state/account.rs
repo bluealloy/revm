@@ -50,12 +50,10 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                 let slot = occ.into_mut();
                 // skip load if account is cold.
                 let is_cold = slot.is_cold_transaction_id(self.transaction_id);
-                if is_cold {
-                    slot.mark_warm_with_transaction_id(self.transaction_id);
-                    if skip_cold_load {
-                        return Err(JournalLoadError::ColdLoadSkipped);
-                    }
+                if is_cold && skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
                 }
+                slot.mark_warm_with_transaction_id(self.transaction_id);
                 (slot, is_cold)
             }
             Entry::Vacant(vac) => {
@@ -76,10 +74,8 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
                     self.db.storage(self.address, key)?
                 };
 
-                (
-                    vac.insert(EvmStorageSlot::new(value, self.transaction_id)),
-                    is_cold,
-                )
+                let slot = vac.insert(EvmStorageSlot::new(value, self.transaction_id));
+                (slot, is_cold)
             }
         };
 
@@ -131,7 +127,6 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
     pub fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<<DB as Database>::Error>> {
         if self.account.info.code.is_none() {
             let hash = *self.code_hash();
-
             let code = if hash == KECCAK_EMPTY {
                 Bytecode::default()
             } else {
