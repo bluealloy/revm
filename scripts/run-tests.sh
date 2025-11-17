@@ -98,21 +98,30 @@ download_and_extract() {
 
     # Remove the tar file
     rm "${FIXTURES_DIR}/${tar_file}"
+
+    # remove all unused folders
+    find "$target_dir" -depth -name blockchain_tests_engine -exec rm -rf {} \;
+    find "$target_dir" -depth -name blockchain_tests_engine_x -exec rm -rf {} \;
+    find "$target_dir" -depth -name blockchain_tests_sync -exec rm -rf {} \;
 }
 
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
     mkdir -p "$MAIN_STABLE_DIR" "$MAIN_DEVELOP_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
-
+    
+    du -hs *
+    
     download_and_extract "$MAIN_STABLE_DIR" "$MAIN_STABLE_TAR" "main stable" "$MAIN_VERSION"
     download_and_extract "$MAIN_DEVELOP_DIR" "$MAIN_DEVELOP_TAR" "main develop" "$MAIN_VERSION"
     download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION"
-    
+
+    du -hs *
     # Clone legacytests repository
     echo "Cloning legacytests repository..."
     git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
     
+    du -hs *
     echo "Fixtures download and extraction complete."
 }
 
@@ -139,9 +148,11 @@ build_cargo_options() {
 
 # Run tests for each set of fixtures using the chosen runner.
 run_tests() {
+    du -hs *
     echo "Running main stable statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$MAIN_STABLE_DIR/state_tests"
 
+    du -hs *
     echo "Running main develop statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$MAIN_DEVELOP_DIR/state_tests"
 
