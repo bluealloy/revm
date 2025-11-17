@@ -95,6 +95,9 @@ download_and_extract() {
      # This is needed because when we extract the tar, it is placed under an
      # unnecessary "fixtures/" directory.
     tar -xzf "${FIXTURES_DIR}/${tar_file}" --strip-components=1 -C "$target_dir"
+
+    # Remove the tar file
+    rm "${FIXTURES_DIR}/${tar_file}"
 }
 
 # Download all fixtures
@@ -105,9 +108,6 @@ download_fixtures() {
     download_and_extract "$MAIN_STABLE_DIR" "$MAIN_STABLE_TAR" "main stable" "$MAIN_VERSION"
     download_and_extract "$MAIN_DEVELOP_DIR" "$MAIN_DEVELOP_TAR" "main develop" "$MAIN_VERSION"
     download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION"
-
-    echo "Cleaning up tar files..."
-    rm "${FIXTURES_DIR}/${MAIN_STABLE_TAR}" "${FIXTURES_DIR}/${MAIN_DEVELOP_TAR}" "${FIXTURES_DIR}/${DEVNET_TAR}"
     
     # Clone legacytests repository
     echo "Cloning legacytests repository..."
