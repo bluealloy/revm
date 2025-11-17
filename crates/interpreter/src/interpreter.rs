@@ -309,8 +309,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
-        //println!("step {opcode:x?} gas remaining: {:?}", self.gas.remaining());
-
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
@@ -318,7 +316,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        //println!("op: {opcode:x?} STATIC GAS: {:?}", instruction.static_gas());
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
             return self.halt_oog();
         }
