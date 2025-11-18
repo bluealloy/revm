@@ -161,7 +161,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[SAR as usize] = Instruction::new(bitwise::sar, 3);
     table[CLZ as usize] = Instruction::new(bitwise::clz, 5);
 
-    table[KECCAK256 as usize] = Instruction::new(system::keccak256, 30);
+    table[KECCAK256 as usize] = Instruction::new(system::keccak256, gas::KECCAK256);
 
     table[ADDRESS as usize] = Instruction::new(system::address, 2);
     table[BALANCE as usize] = Instruction::new(host::balance, 20);
