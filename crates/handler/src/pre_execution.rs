@@ -220,9 +220,9 @@ pub fn apply_eip7702_auth_list<
                 .expect("Failed to send sender");
         }
 
-        return auth_sender
+        auth_sender
             .send((authorization.authority(), authorization))
-            .expect("Failed to send sender");
+            .expect("Failed to send sender")
     });
 
     for _ in 0..authorition_len {
