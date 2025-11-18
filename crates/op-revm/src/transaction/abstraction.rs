@@ -189,7 +189,9 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         self.base.authorization_list()
     }
 
-    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
+    fn authorization_list_par(
+        &self,
+    ) -> impl ParallelIterator<Item = (usize, Self::Authorization<'_>)> {
         self.base.authorization_list_par()
     }
 }

@@ -128,7 +128,9 @@ pub trait Transaction {
     fn authorization_list_len(&self) -> usize;
 
     /// List of authorizations for rayon
-    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>>;
+    fn authorization_list_par(
+        &self,
+    ) -> impl ParallelIterator<Item = (usize, Self::Authorization<'_>)>;
 
     /// List of authorizations, that contains the signature that authorizes this
     /// caller to place the code to signer account.

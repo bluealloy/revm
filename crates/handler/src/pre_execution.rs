@@ -13,7 +13,6 @@ use context_interface::{
     Block, Cfg, Database,
 };
 use core::cmp::Ordering;
-use crossbeam_channel::unbounded;
 use primitives::{eip7702, hardfork::SpecId, U256};
 use primitives::{Address, HashMap, HashSet, StorageKey};
 use rayon::prelude::*;
@@ -201,32 +200,27 @@ pub fn apply_eip7702_auth_list<
 
     let mut refunded_accounts = 0;
 
-    let authorition_len = tx.authorization_list_len();
+    let mut authorities = tx
+        .authorization_list_par()
+        .map(|(index, authorization)| {
+            // 1. Verify the chain id is either 0 or the chain's current ID.
+            let auth_chain_id = authorization.chain_id();
+            if !auth_chain_id.is_zero() && auth_chain_id != U256::from(chain_id) {
+                return (index, None, authorization);
+            }
 
-    let (auth_sender, auth_receiver) = unbounded();
-    tx.authorization_list_par().for_each(|authorization| {
-        // 1. Verify the chain id is either 0 or the chain's current ID.
-        let auth_chain_id = authorization.chain_id();
-        if !auth_chain_id.is_zero() && auth_chain_id != U256::from(chain_id) {
-            return auth_sender
-                .send((None, authorization))
-                .expect("Failed to send sender");
-        }
+            // 2. Verify the `nonce` is less than `2**64 - 1`.
+            if authorization.nonce() == u64::MAX {
+                return (index, None, authorization);
+            }
 
-        // 2. Verify the `nonce` is less than `2**64 - 1`.
-        if authorization.nonce() == u64::MAX {
-            return auth_sender
-                .send((None, authorization))
-                .expect("Failed to send sender");
-        }
+            (index, authorization.authority(), authorization)
+        })
+        .collect::<Vec<_>>();
 
-        auth_sender
-            .send((authorization.authority(), authorization))
-            .expect("Failed to send sender")
-    });
+    authorities.sort_by_key(|(index, _, _)| *index);
 
-    for _ in 0..authorition_len {
-        let (recovered_authority, authorization) = auth_receiver.recv().unwrap();
+    for (_, recovered_authority, authorization) in authorities {
         // recover authority and authorized addresses.
         // 3. `authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]`
         let Some(authority) = recovered_authority else {
@@ -261,9 +255,6 @@ pub fn apply_eip7702_auth_list<
         // 9. Increase the nonce of `authority` by one.
         authority_acc.delegate(authorization.address());
     }
-
-    // Drop the last auth_sender to close the channel
-    drop(auth_sender);
 
     let refunded_gas =
         refunded_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);

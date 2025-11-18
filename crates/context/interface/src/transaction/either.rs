@@ -113,7 +113,9 @@ where
         }
     }
 
-    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
+    fn authorization_list_par(
+        &self,
+    ) -> impl ParallelIterator<Item = (usize, Self::Authorization<'_>)> {
         match self {
             Either::Left(l) => Either::Left(l.authorization_list_par()),
             Either::Right(r) => Either::Right(r.authorization_list_par()),

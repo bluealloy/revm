@@ -216,8 +216,10 @@ impl Transaction for TxEnv {
         self.authorization_list.iter()
     }
 
-    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
-        self.authorization_list.par_iter()
+    fn authorization_list_par(
+        &self,
+    ) -> impl ParallelIterator<Item = (usize, Self::Authorization<'_>)> {
+        self.authorization_list.par_iter().enumerate()
     }
 
     fn input(&self) -> &Bytes {
