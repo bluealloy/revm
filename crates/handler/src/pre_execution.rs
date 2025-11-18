@@ -17,6 +17,7 @@ use primitives::{eip7702, hardfork::SpecId, U256};
 use primitives::{Address, HashMap, HashSet, StorageKey};
 use rayon::prelude::*;
 use state::AccountInfo;
+use std::vec::Vec;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
 pub fn load_accounts<
