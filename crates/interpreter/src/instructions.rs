@@ -196,7 +196,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[MLOAD as usize] = Instruction::new(memory::mload, 3);
     table[MSTORE as usize] = Instruction::new(memory::mstore, 3);
     table[MSTORE8 as usize] = Instruction::new(memory::mstore8, 3);
-    table[SLOAD as usize] = Instruction::new(host::sload, 20);
+    table[SLOAD as usize] = Instruction::new(host::sload, 50);
     // SSTORE static gas can be found in GasParams as check for minimal stipend
     // needs to be done before deduction of static gas.
     table[SSTORE as usize] = Instruction::new(host::sstore, 0);
