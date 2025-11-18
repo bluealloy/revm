@@ -92,18 +92,6 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     use SpecId::*;
     let mut table = instruction_table();
 
-    table[EXTCODESIZE as usize].static_gas = 20;
-    table[EXTCODEHASH as usize].static_gas = 400;
-    table[EXTCODECOPY as usize].static_gas = 20;
-    table[SLOAD as usize].static_gas = 50;
-    table[BALANCE as usize].static_gas = 20;
-    table[CALL as usize].static_gas = 40;
-    table[CALLCODE as usize].static_gas = 40;
-    table[DELEGATECALL as usize].static_gas = 40;
-    table[STATICCALL as usize].static_gas = 40;
-    // SSTORE static gas can be found in GasParams as check for minimal stipend
-    // needs to be done before deduction of static gas.
-
     if spec.is_enabled_in(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         table[SLOAD as usize].static_gas = 200;
@@ -114,8 +102,6 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
         table[CALLCODE as usize].static_gas = 700;
         table[DELEGATECALL as usize].static_gas = 700;
         table[STATICCALL as usize].static_gas = 700;
-        // EIP-150: Gas cost changes for IO-heavy operations
-        //
         table[SELFDESTRUCT as usize].static_gas = 5000;
     }
 
@@ -178,7 +164,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[KECCAK256 as usize] = Instruction::new(system::keccak256, 30); // dynamic
 
     table[ADDRESS as usize] = Instruction::new(system::address, 2);
-    table[BALANCE as usize] = Instruction::new(host::balance, 0); // dynamic
+    table[BALANCE as usize] = Instruction::new(host::balance, 20);
     table[ORIGIN as usize] = Instruction::new(tx_info::origin, 2);
     table[CALLER as usize] = Instruction::new(system::caller, 2);
     table[CALLVALUE as usize] = Instruction::new(system::callvalue, 2);
@@ -189,11 +175,11 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[CODECOPY as usize] = Instruction::new(system::codecopy, 3);
 
     table[GASPRICE as usize] = Instruction::new(tx_info::gasprice, 2);
-    table[EXTCODESIZE as usize] = Instruction::new(host::extcodesize, 0); // dynamic
-    table[EXTCODECOPY as usize] = Instruction::new(host::extcodecopy, 0); // dynamic
+    table[EXTCODESIZE as usize] = Instruction::new(host::extcodesize, 20);
+    table[EXTCODECOPY as usize] = Instruction::new(host::extcodecopy, 20);
     table[RETURNDATASIZE as usize] = Instruction::new(system::returndatasize, 2);
     table[RETURNDATACOPY as usize] = Instruction::new(system::returndatacopy, 3);
-    table[EXTCODEHASH as usize] = Instruction::new(host::extcodehash, 0); // dynamic
+    table[EXTCODEHASH as usize] = Instruction::new(host::extcodehash, 400);
     table[BLOCKHASH as usize] = Instruction::new(host::blockhash, 20);
     table[COINBASE as usize] = Instruction::new(block_info::coinbase, 2);
     table[TIMESTAMP as usize] = Instruction::new(block_info::timestamp, 2);
@@ -210,8 +196,10 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[MLOAD as usize] = Instruction::new(memory::mload, 3);
     table[MSTORE as usize] = Instruction::new(memory::mstore, 3);
     table[MSTORE8 as usize] = Instruction::new(memory::mstore8, 3);
-    table[SLOAD as usize] = Instruction::new(host::sload, 0); // dynamic
-    table[SSTORE as usize] = Instruction::new(host::sstore, 0); // dynamic
+    table[SLOAD as usize] = Instruction::new(host::sload, 20);
+    // SSTORE static gas can be found in GasParams as check for minimal stipend
+    // needs to be done before deduction of static gas.
+    table[SSTORE as usize] = Instruction::new(host::sstore, 0);
     table[JUMP as usize] = Instruction::new(control::jump, 8);
     table[JUMPI as usize] = Instruction::new(control::jumpi, 10);
     table[PC as usize] = Instruction::new(control::pc, 2);
@@ -297,13 +285,13 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[LOG4 as usize] = Instruction::new(host::log::<4, _>, gas::LOG); // dynamic
 
     table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>, 0); // dynamic
-    table[CALL as usize] = Instruction::new(contract::call, 0); // dynamic
-    table[CALLCODE as usize] = Instruction::new(contract::call_code, 0); // dynamic
+    table[CALL as usize] = Instruction::new(contract::call, 40);
+    table[CALLCODE as usize] = Instruction::new(contract::call_code, 40);
     table[RETURN as usize] = Instruction::new(control::ret, 0);
-    table[DELEGATECALL as usize] = Instruction::new(contract::delegate_call, 0); // dynamic
+    table[DELEGATECALL as usize] = Instruction::new(contract::delegate_call, 40);
     table[CREATE2 as usize] = Instruction::new(contract::create::<_, true, _>, 0); // dynamic
 
-    table[STATICCALL as usize] = Instruction::new(contract::static_call, 0); // dynamic
+    table[STATICCALL as usize] = Instruction::new(contract::static_call, 40);
     table[REVERT as usize] = Instruction::new(control::revert, 0);
     table[INVALID as usize] = Instruction::new(control::invalid, 0);
     table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct, 0); // dynamic
