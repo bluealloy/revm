@@ -161,7 +161,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[SAR as usize] = Instruction::new(bitwise::sar, 3);
     table[CLZ as usize] = Instruction::new(bitwise::clz, 5);
 
-    table[KECCAK256 as usize] = Instruction::new(system::keccak256, 30); // dynamic
+    table[KECCAK256 as usize] = Instruction::new(system::keccak256, 30);
 
     table[ADDRESS as usize] = Instruction::new(system::address, 2);
     table[BALANCE as usize] = Instruction::new(host::balance, 20);
@@ -278,23 +278,23 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[SWAP15 as usize] = Instruction::new(stack::swap::<15, _, _>, 3);
     table[SWAP16 as usize] = Instruction::new(stack::swap::<16, _, _>, 3);
 
-    table[LOG0 as usize] = Instruction::new(host::log::<0, _>, gas::LOG); // dynamic
-    table[LOG1 as usize] = Instruction::new(host::log::<1, _>, gas::LOG); // dynamic
-    table[LOG2 as usize] = Instruction::new(host::log::<2, _>, gas::LOG); // dynamic
-    table[LOG3 as usize] = Instruction::new(host::log::<3, _>, gas::LOG); // dynamic
-    table[LOG4 as usize] = Instruction::new(host::log::<4, _>, gas::LOG); // dynamic
+    table[LOG0 as usize] = Instruction::new(host::log::<0, _>, gas::LOG);
+    table[LOG1 as usize] = Instruction::new(host::log::<1, _>, gas::LOG);
+    table[LOG2 as usize] = Instruction::new(host::log::<2, _>, gas::LOG);
+    table[LOG3 as usize] = Instruction::new(host::log::<3, _>, gas::LOG);
+    table[LOG4 as usize] = Instruction::new(host::log::<4, _>, gas::LOG);
 
-    table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>, 0); // dynamic
+    table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>, 0);
     table[CALL as usize] = Instruction::new(contract::call, 40);
     table[CALLCODE as usize] = Instruction::new(contract::call_code, 40);
     table[RETURN as usize] = Instruction::new(control::ret, 0);
     table[DELEGATECALL as usize] = Instruction::new(contract::delegate_call, 40);
-    table[CREATE2 as usize] = Instruction::new(contract::create::<_, true, _>, 0); // dynamic
+    table[CREATE2 as usize] = Instruction::new(contract::create::<_, true, _>, 0);
 
     table[STATICCALL as usize] = Instruction::new(contract::static_call, 40);
     table[REVERT as usize] = Instruction::new(control::revert, 0);
     table[INVALID as usize] = Instruction::new(control::invalid, 0);
-    table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct, 0); // dynamic
+    table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct, 0);
     table
 }
 
