@@ -37,7 +37,6 @@ macro_rules! gas {
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
         if !$interpreter.gas.record_cost($gas) {
-            //panic!("gas: {:?}", $gas);
             $interpreter.halt_oog();
             return $ret;
         }
