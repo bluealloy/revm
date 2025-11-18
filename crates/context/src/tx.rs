@@ -10,6 +10,7 @@ use context_interface::{
 use core::fmt::Debug;
 use database_interface::{BENCH_CALLER, BENCH_TARGET};
 use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
+use rayon::prelude::*;
 use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
@@ -213,6 +214,10 @@ impl Transaction for TxEnv {
 
     fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
         self.authorization_list.iter()
+    }
+
+    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
+        self.authorization_list.par_iter()
     }
 
     fn input(&self) -> &Bytes {

@@ -30,6 +30,8 @@ bytecode.workspace = true
 
 auto_impl.workspace = true
 derive-where.workspace = true
+rayon.workspace = true
+crossbeam-channel.workspace = true
 
 # Optional
 serde = { workspace = true, optional = true }

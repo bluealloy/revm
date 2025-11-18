@@ -110,10 +110,12 @@ serde_json = { version = "1.0", default-features = false }
 auto_impl = "1.3.0"
 bitflags = { version = "2.9.3", default-features = false }
 cfg-if = { version = "1.0", default-features = false }
+crossbeam-channel = "0.5.13"
 derive-where = { version = "1.6.0", default-features = false }
 rand = "0.9"
 tokio = "1.47"
 either = { version = "1.15.0", default-features = false }
+rayon = "1.7"
 
 # dev-dependencies
 anyhow = "1.0.99"

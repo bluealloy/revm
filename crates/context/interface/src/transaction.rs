@@ -18,6 +18,7 @@ use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
 use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
+use rayon::prelude::*;
 use std::boxed::Box;
 
 /// Transaction validity error types.
@@ -125,6 +126,9 @@ pub trait Transaction {
     ///
     /// Transaction is considered invalid if list is empty.
     fn authorization_list_len(&self) -> usize;
+
+    /// List of authorizations for rayon
+    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>>;
 
     /// List of authorizations, that contains the signature that authorizes this
     /// caller to place the code to signer account.

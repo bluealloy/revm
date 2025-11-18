@@ -1,6 +1,7 @@
 use super::Transaction;
 use either::Either;
 use primitives::{Address, Bytes, TxKind, B256, U256};
+use rayon::prelude::*;
 
 impl<L, R> Transaction for Either<L, R>
 where
@@ -109,6 +110,13 @@ where
         match self {
             Either::Left(l) => Either::Left(l.authorization_list()),
             Either::Right(r) => Either::Right(r.authorization_list()),
+        }
+    }
+
+    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
+        match self {
+            Either::Left(l) => Either::Left(l.authorization_list_par()),
+            Either::Right(r) => Either::Right(r.authorization_list_par()),
         }
     }
 

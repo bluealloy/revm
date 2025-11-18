@@ -1,6 +1,7 @@
 //! Optimism transaction abstraction containing the `[OpTxTr]` trait and corresponding `[OpTransaction]` type.
 use super::deposit::{DepositTransactionParts, DEPOSIT_TRANSACTION_TYPE};
 use auto_impl::auto_impl;
+use rayon::prelude::*;
 use revm::{
     context::{
         tx::{TxEnvBuildError, TxEnvBuilder},
@@ -186,6 +187,10 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
 
     fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
         self.base.authorization_list()
+    }
+
+    fn authorization_list_par(&self) -> impl ParallelIterator<Item = Self::Authorization<'_>> {
+        self.base.authorization_list_par()
     }
 }
 

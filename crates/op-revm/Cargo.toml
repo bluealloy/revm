@@ -25,6 +25,9 @@ auto_impl.workspace = true
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
+# misc
+rayon.workspace = true
+
 [dev-dependencies]
 rstest.workspace = true
 alloy-sol-types.workspace = true
