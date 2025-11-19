@@ -655,7 +655,7 @@ impl GasId {
         Self::new(12)
     }
 
-    /// Transafer value cost
+    /// Transfer value cost
     pub const fn transfer_value_cost() -> GasId {
         Self::new(13)
     }
@@ -713,7 +713,7 @@ impl GasId {
         Self::new(23)
     }
 
-    /// Colst storage cost
+    /// Cold storage cost
     pub const fn cold_storage_cost() -> GasId {
         Self::new(24)
     }
