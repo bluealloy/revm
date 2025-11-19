@@ -124,9 +124,9 @@ impl GasParams {
         table[GasId::new_account_cost().as_usize()] = gas::NEWACCOUNT;
         table[GasId::warm_storage_read_cost().as_usize()] = 0;
         // Frontiers had fixed 5k cost.
-        table[GasId::sstore_static().as_usize()] = 5000;
+        table[GasId::sstore_static().as_usize()] = SSTORE_RESET;
         // SSTORE SET
-        table[GasId::sstore_set_without_load_cost().as_usize()] = SSTORE_SET - 5000;
+        table[GasId::sstore_set_without_load_cost().as_usize()] = SSTORE_SET - SSTORE_RESET;
         // SSTORE RESET Is covered in SSTORE_STATIC.
         table[GasId::sstore_reset_without_cold_load_cost().as_usize()] = 0;
         // SSTORE CLEARING SLOT REFUND
@@ -558,9 +558,9 @@ impl GasId {
     /// ```
     /// use revm_interpreter::gas::params::GasId;
     ///
-    /// assert_eq!(GasId::from_str("exp_byte_gas"), Some(GasId::exp_byte_gas()));
-    /// assert_eq!(GasId::from_str("memory_linear_cost"), Some(GasId::memory_linear_cost()));
-    /// assert_eq!(GasId::from_str("invalid_name"), None);
+    /// assert_eq!(GasId::from_name("exp_byte_gas"), Some(GasId::exp_byte_gas()));
+    /// assert_eq!(GasId::from_name("memory_linear_cost"), Some(GasId::memory_linear_cost()));
+    /// assert_eq!(GasId::from_name("invalid_name"), None);
     /// ```
     pub fn from_name(s: &str) -> Option<GasId> {
         match s {
