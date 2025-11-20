@@ -83,6 +83,7 @@ pub const EOF_CREATE_GAS: u64 = 32000;
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;
 /// Gas cost for accessing a storage key in the access list (EIP-2930).
 pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
+
 /// Gas cost for SLOAD when accessing a cold storage slot (EIP-2929).
 pub const COLD_SLOAD_COST: u64 = 2100;
 /// Gas cost for accessing a cold account (EIP-2929).
@@ -90,8 +91,6 @@ pub const COLD_ACCOUNT_ACCESS_COST: u64 = 2600;
 /// Additional gas cost for accessing a cold account.
 pub const COLD_ACCOUNT_ACCESS_COST_ADDITIONAL: u64 =
     COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST;
-/// Additional gas cost for accessing a cold storage
-pub const COLD_SLOAD_COST_ADDITIONAL: u64 = COLD_SLOAD_COST - WARM_STORAGE_READ_COST;
 /// Gas cost for reading from a warm storage slot (EIP-2929).
 pub const WARM_STORAGE_READ_COST: u64 = 100;
 /// Gas cost for SSTORE reset operation on a warm storage slot.
@@ -102,5 +101,3 @@ pub const INITCODE_WORD_COST: u64 = 2;
 
 /// Gas stipend provided to the recipient of a CALL with value transfer.
 pub const CALL_STIPEND: u64 = 2300;
-/// Minimum gas that must be provided to a callee.
-pub const MIN_CALLEE_GAS: u64 = CALL_STIPEND;
