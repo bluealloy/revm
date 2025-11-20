@@ -4,17 +4,14 @@
 
 use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
-use context_interface::transaction::{AccessListItemTr, AuthorizationTr};
-use context_interface::ContextTr;
 use context_interface::{
     journaled_state::JournalTr,
     result::InvalidTransaction,
-    transaction::{Transaction, TransactionType},
-    Block, Cfg, Database,
+    transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
+    Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use primitives::{eip7702, hardfork::SpecId, U256};
-use primitives::{Address, HashMap, HashSet, StorageKey};
+use primitives::{eip7702, hardfork::SpecId, Address, HashMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.

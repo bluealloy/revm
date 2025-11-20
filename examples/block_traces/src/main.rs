@@ -15,13 +15,12 @@ use revm::{
     primitives::{TxKind, U256},
     Context, MainBuilder, MainContext,
 };
-use std::fs::create_dir_all;
-use std::fs::OpenOptions;
-use std::io::BufWriter;
-use std::io::Write;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::time::Instant;
+use std::{
+    fs::{create_dir_all, OpenOptions},
+    io::{BufWriter, Write},
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 struct FlushWriter {
     writer: Arc<Mutex<BufWriter<std::fs::File>>>,

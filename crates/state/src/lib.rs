@@ -12,8 +12,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use primitives::hardfork::SpecId;
-use primitives::{HashMap, StorageKey, StorageValue, U256};
+use primitives::{hardfork::SpecId, HashMap, StorageKey, StorageValue, U256};
 
 /// Account type used inside Journal to track changed to state.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

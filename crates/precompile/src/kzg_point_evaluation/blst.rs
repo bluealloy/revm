@@ -1,10 +1,12 @@
 //! KZG point evaluation precompile using BLST BLS12-381 implementation.
-use crate::bls12_381::blst::{
-    p1_add_or_double, p1_from_affine, p1_scalar_mul, p1_to_affine, p2_add_or_double,
-    p2_from_affine, p2_scalar_mul, p2_to_affine, pairing_check,
+use crate::{
+    bls12_381::blst::{
+        p1_add_or_double, p1_from_affine, p1_scalar_mul, p1_to_affine, p2_add_or_double,
+        p2_from_affine, p2_scalar_mul, p2_to_affine, pairing_check,
+    },
+    bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES,
+    PrecompileError,
 };
-use crate::bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES;
-use crate::PrecompileError;
 use ::blst::{
     blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
     blst_scalar_fr_check, blst_scalar_from_bendian,

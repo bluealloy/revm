@@ -6,8 +6,8 @@ use context_interface::{
     journaled_state::{
         account::JournaledAccount,
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
+        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
     },
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
 use database_interface::Database;

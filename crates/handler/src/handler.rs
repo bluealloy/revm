@@ -2,16 +2,16 @@ use crate::{
     evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
     ItemOrResult,
 };
-use context::result::{ExecutionResult, FromStringError};
-use context::LocalContextTr;
-use context_interface::context::ContextError;
-use context_interface::ContextTr;
-use context_interface::{
-    result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
-    Cfg, Database, JournalTr, Transaction,
+use context::{
+    result::{ExecutionResult, FromStringError},
+    LocalContextTr,
 };
-use interpreter::interpreter_action::FrameInit;
-use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
+use context_interface::{
+    context::ContextError,
+    result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
+    Cfg, ContextTr, Database, JournalTr, Transaction,
+};
+use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
 use state::Bytecode;
 
