@@ -1,6 +1,5 @@
 use revm::context_interface::transaction::SignedAuthorization;
-use serde::de::Error;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize};
 
 /// Struct for test authorization
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -18,10 +18,12 @@ use serde_json::json;
 use statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
 };
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 

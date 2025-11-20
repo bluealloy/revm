@@ -9,8 +9,7 @@ use revm::{
     database,
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::U256,
-    primitives::{hardfork::SpecId, Bytes, B256},
+    primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
