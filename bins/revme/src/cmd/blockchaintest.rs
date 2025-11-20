@@ -558,7 +558,10 @@ fn print_error_with_state(
 
     // Print state comparison
     eprintln!("\n💾 Pre-State (Initial):");
-    for (address, (info, storage)) in &debug_info.pre_state {
+    // Sort accounts by address for consistent output
+    let mut sorted_accounts: Vec<_> = debug_info.pre_state.iter().collect();
+    sorted_accounts.sort_by_key(|(addr, _)| *addr);
+    for (address, (info, storage)) in sorted_accounts {
         eprintln!("  Account {address:?}:");
         eprintln!("    Balance: 0x{:x}", info.balance);
         eprintln!("    Nonce: {}", info.nonce);
@@ -580,7 +583,10 @@ fn print_error_with_state(
 
     eprintln!("\n📝 Current State (Actual):");
     let committed_state = DebugInfo::capture_committed_state(current_state);
-    for (address, (info, storage)) in &committed_state {
+    // Sort accounts by address for consistent output
+    let mut sorted_current: Vec<_> = committed_state.iter().collect();
+    sorted_current.sort_by_key(|(addr, _)| *addr);
+    for (address, (info, storage)) in sorted_current {
         eprintln!("  Account {address:?}:");
         eprintln!("    Balance: 0x{:x}", info.balance);
         eprintln!("    Nonce: {}", info.nonce);
