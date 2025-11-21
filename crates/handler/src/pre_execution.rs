@@ -178,6 +178,11 @@ pub fn validate_against_state_and_deduct_caller<
 }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
+///
+/// Note that this function will do nothing if the transaction type is not EIP-7702.
+/// If you need to apply auth list for other transaction types, use [`apply_auth_list`] function.
+///
+/// Internally uses [`apply_auth_list`] function.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
@@ -185,17 +190,30 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
-    let tx = context.tx();
-    // Return if there is no auth list.
-    if tx.tx_type() != TransactionType::Eip7702 {
-        return Ok(0);
-    }
-
     let chain_id = context.cfg().chain_id();
     let (tx, journal) = context.tx_journal_mut();
 
+    // Return if not EIP-7702 transaction.
+    if tx.tx_type() != TransactionType::Eip7702 {
+        return Ok(0);
+    }
+    apply_auth_list(chain_id, tx.authorization_list(), journal)
+}
+
+/// Apply EIP-7702 style auth list and return number gas refund on already created accounts.
+///
+/// It is more granular function from [`apply_eip7702_auth_list`] function as it takes only the list, journal and chain id.
+#[inline]
+pub fn apply_auth_list<
+    JOURNAL: JournalTr,
+    ERROR: From<InvalidTransaction> + From<<JOURNAL::Database as Database>::Error>,
+>(
+    chain_id: u64,
+    auth_list: impl Iterator<Item = impl AuthorizationTr>,
+    journal: &mut JOURNAL,
+) -> Result<u64, ERROR> {
     let mut refunded_accounts = 0;
-    for authorization in tx.authorization_list() {
+    for authorization in auth_list {
         // 1. Verify the chain id is either 0 or the chain's current ID.
         let auth_chain_id = authorization.chain_id();
         if !auth_chain_id.is_zero() && auth_chain_id != U256::from(chain_id) {

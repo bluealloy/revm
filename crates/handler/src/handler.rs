@@ -1,6 +1,8 @@
 use crate::{
-    evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
-    ItemOrResult,
+    evm::FrameTr,
+    execution, post_execution,
+    pre_execution::{self, apply_eip7702_auth_list},
+    validation, EvmTr, FrameResult, ItemOrResult,
 };
 use context::{
     result::{ExecutionResult, FromStringError},
@@ -274,7 +276,7 @@ pub trait Handler {
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        pre_execution::apply_eip7702_auth_list(evm.ctx())
+        apply_eip7702_auth_list(evm.ctx_mut())
     }
 
     /// Deducts maximum possible fee and transfer value from caller's balance.
