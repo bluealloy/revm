@@ -49,9 +49,6 @@ pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
     pub checkpoint: JournalCheckpoint,
     /// Interpreter instance for executing bytecode.
     pub interpreter: Interpreter<IW>,
-    /// Whether the frame has been finished its execution.
-    /// Frame is considered finished if it has been called and returned a result.
-    pub is_finished: bool,
 }
 
 impl<IT: InterpreterTypes> FrameTr for EthFrame<IT> {
@@ -80,18 +77,7 @@ impl EthFrame<EthInterpreter> {
             depth: 0,
             checkpoint: JournalCheckpoint::default(),
             interpreter,
-            is_finished: false,
         }
-    }
-
-    /// Returns true if the frame has finished execution.
-    pub fn is_finished(&self) -> bool {
-        self.is_finished
-    }
-
-    /// Sets the finished state of the frame.
-    pub fn set_finished(&mut self, finished: bool) {
-        self.is_finished = finished;
     }
 }
 
@@ -120,12 +106,10 @@ impl EthFrame<EthInterpreter> {
             depth: depth_ref,
             interpreter,
             checkpoint: checkpoint_ref,
-            is_finished: is_finished_ref,
         } = self;
         *data_ref = data;
         *input_ref = input;
         *depth_ref = depth;
-        *is_finished_ref = false;
         interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
         *checkpoint_ref = checkpoint;
     }

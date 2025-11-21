@@ -1,6 +1,6 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr, Transaction};
-use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
+use handler::{EvmTr, FrameResult, Handler};
 use interpreter::{
     instructions::InstructionTable,
     interpreter_types::{Jumps, LoopControl},
@@ -24,7 +24,7 @@ use state::bytecode::opcode;
 /// * [`Handler::run`] replaced with [`InspectorHandler::inspect_run`]
 /// * [`Handler::run_without_catch_error`] replaced with [`InspectorHandler::inspect_run_without_catch_error`]
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
-/// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
+/// * [`EvmTr::run_exec_loop`] replaced with [`InspectorEvmTr::inspect_run_exec_loop`]
 ///   * `run_exec_loop` calls `inspect_frame_init` and `inspect_frame_run` that call inspector inside.
 /// * [`Handler::run_system_call`] replaced with [`InspectorHandler::inspect_run_system_call`]
 pub trait InspectorHandler: Handler
@@ -75,54 +75,11 @@ where
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
         // Run execution loop
-        let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
+        let mut frame_result = evm.inspect_run_exec_loop(first_frame_input)?;
 
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
-    }
-
-    /* FRAMES */
-
-    /// Run inspection on execution loop.
-    ///
-    /// This method acts as [`Handler::run_exec_loop`] method for inspection.
-    ///
-    /// It will call:
-    /// * [`Inspector::call`],[`Inspector::create`] to inspect call, create and eofcreate.
-    /// * [`Inspector::call_end`],[`Inspector::create_end`] to inspect call, create and eofcreate end.
-    /// * [`Inspector::initialize_interp`] to inspect initialized interpreter.
-    fn inspect_run_exec_loop(
-        &mut self,
-        evm: &mut Self::Evm,
-        first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
-    ) -> Result<FrameResult, Self::Error> {
-        let res = evm.inspect_frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
-        }
-
-        loop {
-            let call_or_result = evm.inspect_frame_run()?;
-
-            let result = match call_or_result {
-                ItemOrResult::Item(init) => {
-                    match evm.inspect_frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
-                        ItemOrResult::Result(result) => result,
-                    }
-                }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
-            }
-        }
     }
 
     /// Run system call with inspection support.
