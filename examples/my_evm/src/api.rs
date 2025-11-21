@@ -32,11 +32,11 @@ where
     type Block = <CTX as ContextTr>::Block;
 
     fn set_block(&mut self, block: Self::Block) {
-        self.0.ctx.set_block(block);
+        self.evm.ctx.set_block(block);
     }
 
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        self.0.ctx.set_tx(tx);
+        self.evm.ctx.set_tx(tx);
         let mut handler = MyHandler::default();
         handler.run(self)
     }
@@ -75,11 +75,11 @@ where
     type Inspector = INSP;
 
     fn set_inspector(&mut self, inspector: Self::Inspector) {
-        self.0.inspector = inspector;
+        self.evm.inspector = inspector;
     }
 
     fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        self.0.ctx.set_tx(tx);
+        self.evm.ctx.set_tx(tx);
         let mut handler = MyHandler::default();
         handler.inspect_run(self)
     }

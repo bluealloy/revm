@@ -1,11 +1,14 @@
 use revm::{
-    context::{ContextError, ContextSetters, ContextTr, Evm, FrameStack},
+    context::{ContextError, ContextSetters, ContextTr, CreateScheme, Evm, FrameStack},
     handler::{
         evm::FrameTr, instructions::EthInstructions, EthFrame, EthPrecompiles, EvmTr,
-        FrameInitOrResult, ItemOrResult,
+        FrameInitOrResult, FrameResult, ItemOrResult,
     },
     inspector::{InspectorEvmTr, JournalExt},
-    interpreter::interpreter::EthInterpreter,
+    interpreter::{
+        interpreter::EthInterpreter, interpreter_action::FrameInit, CreateInputs, FrameInput,
+    },
+    primitives::{Address, Bytes, U256},
     Database, Inspector,
 };
 
@@ -18,15 +21,26 @@ use revm::{
 /// The generic parameters allow for flexibility in the underlying database and
 /// inspection capabilities while maintaining the standard Ethereum execution semantics.
 #[derive(Debug)]
-pub struct MyEvm<CTX, INSP>(
-    pub  Evm<
+pub struct MyEvm<CTX: ContextTr, INSP> {
+    /// Inner EVM type.
+    pub evm: Evm<
         CTX,
         INSP,
         EthInstructions<EthInterpreter, CTX>,
         EthPrecompiles,
         EthFrame<EthInterpreter>,
     >,
-);
+    /// Handler for Frame init, it allows calling subcalls.
+    pub call_handler: FrameFn<CTX, INSP>,
+}
+
+/// Handler for Frame init, it allows calling subcalls.
+pub type FrameFn<CTX, INSP> =
+    fn(
+        &mut MyEvm<CTX, INSP>,
+        frame_input: &mut <EthFrame<EthInterpreter> as FrameTr>::FrameInit,
+    )
+        -> Result<Option<FrameResult>, ContextError<<<CTX as ContextTr>::Db as Database>::Error>>;
 
 impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
     /// Creates a new instance of MyEvm with the provided context and inspector.
@@ -44,13 +58,41 @@ impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
     /// - Default Ethereum precompiles
     /// - A fresh frame stack for execution
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
-        Self(Evm {
-            ctx,
-            inspector,
-            instruction: EthInstructions::new_mainnet(),
-            precompiles: EthPrecompiles::default(),
-            frame_stack: FrameStack::new(),
-        })
+        Self {
+            evm: Evm {
+                ctx,
+                inspector,
+                instruction: EthInstructions::new_mainnet(),
+                precompiles: EthPrecompiles::default(),
+                frame_stack: FrameStack::new(),
+            },
+            call_handler: |evm, frame_input| {
+                // check if it is call to specific address.
+                if let FrameInput::Call(call_inputs) = &frame_input.frame_input {
+                    // only continue if call is zero
+                    if call_inputs.target_address != Address::ZERO {
+                        return Ok(None);
+                    }
+                }
+                // create a subcall context
+                let sub_call = FrameInit {
+                    depth: frame_input.depth + 1,
+                    memory: frame_input.memory.new_child_context(),
+                    frame_input: FrameInput::Create(Box::new(CreateInputs {
+                        caller: Address::ZERO,
+                        scheme: CreateScheme::Create,
+                        value: U256::ZERO,
+                        init_code: Bytes::new(),
+                        gas_limit: 0,
+                    })),
+                };
+                // call subcall in recursion.
+                let result = evm.run_exec_loop(sub_call)?;
+
+                // propagate the subcall result to the upper call.
+                Ok(Some(result))
+            },
+        }
     }
 }
 
@@ -72,7 +114,7 @@ where
         &Self::Precompiles,
         &FrameStack<Self::Frame>,
     ) {
-        self.0.all()
+        self.evm.all()
     }
 
     #[inline]
@@ -84,18 +126,23 @@ where
         &mut Self::Precompiles,
         &mut FrameStack<Self::Frame>,
     ) {
-        self.0.all_mut()
+        self.evm.all_mut()
     }
 
     #[inline]
     fn frame_init(
         &mut self,
-        frame_input: <Self::Frame as FrameTr>::FrameInit,
+        mut frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<
         ItemOrResult<&mut Self::Frame, <Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
-        self.0.frame_init(frame_input)
+        let call_handle = self.call_handler;
+        if let Some(result) = (call_handle)(self, &mut frame_input)? {
+            return Ok(ItemOrResult::Result(result));
+        }
+
+        self.evm.frame_init(frame_input)
     }
 
     #[inline]
@@ -105,7 +152,7 @@ where
         FrameInitOrResult<Self::Frame>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
-        self.0.frame_run()
+        self.evm.frame_run()
     }
 
     #[inline]
@@ -116,7 +163,7 @@ where
         Option<<Self::Frame as FrameTr>::FrameResult>,
         ContextError<<<Self::Context as ContextTr>::Db as Database>::Error>,
     > {
-        self.0.frame_return_result(frame_result)
+        self.evm.frame_return_result(frame_result)
     }
 }
 
@@ -136,7 +183,7 @@ where
         &FrameStack<Self::Frame>,
         &Self::Inspector,
     ) {
-        self.0.all_inspector()
+        self.evm.all_inspector()
     }
 
     fn all_mut_inspector(
@@ -148,6 +195,6 @@ where
         &mut FrameStack<Self::Frame>,
         &mut Self::Inspector,
     ) {
-        self.0.all_mut_inspector()
+        self.evm.all_mut_inspector()
     }
 }

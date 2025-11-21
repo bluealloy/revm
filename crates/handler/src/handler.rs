@@ -1,6 +1,5 @@
 use crate::{
     evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
-    ItemOrResult,
 };
 use context::{
     result::{ExecutionResult, FromStringError},
@@ -196,7 +195,7 @@ pub trait Handler {
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
         // Run execution loop
-        let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
+        let mut frame_result = evm.run_exec_loop(first_frame_input)?;
 
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
@@ -352,49 +351,6 @@ pub trait Handler {
             gas.record_refund(refunded);
         }
         Ok(())
-    }
-
-    /* FRAMES */
-
-    /// Executes the main frame processing loop.
-    ///
-    /// This loop manages the frame stack, processing each frame until execution completes.
-    /// For each iteration:
-    /// 1. Calls the current frame
-    /// 2. Handles the returned frame input or result
-    /// 3. Creates new frames or propagates results as needed
-    #[inline]
-    fn run_exec_loop(
-        &mut self,
-        evm: &mut Self::Evm,
-        first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
-    ) -> Result<FrameResult, Self::Error> {
-        let res = evm.frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
-        }
-
-        loop {
-            let call_or_result = evm.frame_run()?;
-
-            let result = match call_or_result {
-                ItemOrResult::Item(init) => {
-                    match evm.frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
-                        ItemOrResult::Result(result) => result,
-                    }
-                }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
-            }
-        }
     }
 
     /* POST EXECUTION */
