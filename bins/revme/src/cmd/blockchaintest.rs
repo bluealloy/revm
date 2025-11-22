@@ -978,12 +978,17 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Istanbul => SpecId::ISTANBUL,
         ForkSpec::Berlin => SpecId::BERLIN,
         ForkSpec::London | ForkSpec::BerlinToLondonAt5 => SpecId::LONDON,
-        ForkSpec::Paris | ForkSpec::ParisToShanghaiAtTime15k => SpecId::MERGE,
+        ForkSpec::Paris
+        | ForkSpec::ParisToShanghaiAtTime15k
+        | ForkSpec::MergeEOF
+        | ForkSpec::MergeMeterInitCode
+        | ForkSpec::MergePush0 => SpecId::MERGE,
         ForkSpec::Shanghai => SpecId::SHANGHAI,
         ForkSpec::Cancun | ForkSpec::ShanghaiToCancunAtTime15k => SpecId::CANCUN,
         ForkSpec::Prague | ForkSpec::CancunToPragueAtTime15k => SpecId::PRAGUE,
-        ForkSpec::Osaka | ForkSpec::PragueToOsakaAtTime15k => SpecId::OSAKA,
-        _ => SpecId::OSAKA, // For any unknown forks, use latest available
+        ForkSpec::Osaka | ForkSpec::PragueToOsakaAtTime15k | ForkSpec::BPO1ToBPO2AtTime15k => {
+            SpecId::OSAKA
+        }
     }
 }
 
