@@ -162,10 +162,60 @@ pub trait InspectorEvmTr:
             // TODO When all_mut fn is added we can fetch inspector at the top of the function.s
             if let Some(frame) = frame.eth_frame() {
                 frame_end(ctx, inspector, &frame.input, frame_result);
-                frame.set_finished(true);
             }
         };
         result
+    }
+
+    /// Run inspection on execution loop.
+    ///
+    /// This method acts as [`EvmTr::run_exec_loop`] method for inspection.
+    ///
+    /// It will call:
+    /// * [`Inspector::call`],[`Inspector::create`] to inspect call, create and eofcreate.
+    /// * [`Inspector::call_end`],[`Inspector::create_end`] to inspect call, create and eofcreate end.
+    /// * [`Inspector::initialize_interp`] to inspect initialized interpreter.
+    fn inspect_run_exec_loop(
+        &mut self,
+        frame_init: <Self::Frame as FrameTr>::FrameInit,
+    ) -> Result<<Self::Frame as FrameTr>::FrameResult, ContextDbError<Self::Context>> {
+        let res = self.inspect_frame_init(frame_init)?;
+
+        if let ItemOrResult::Result(frame_result) = res {
+            return Ok(frame_result);
+        }
+
+        let mut depth = 1;
+        loop {
+            let call_or_result: ItemOrResult<FrameInit, FrameResult> = self.inspect_frame_run()?;
+
+            match call_or_result {
+                ItemOrResult::Item(init) => {
+                    match self.inspect_frame_init(init)? {
+                        ItemOrResult::Item(_) => {
+                            depth += 1;
+                        }
+                        // Do not pop the frame since no new frame was created
+                        ItemOrResult::Result(result) => {
+                            self.frame_return_result(result)?;
+                        }
+                    }
+                    continue;
+                }
+                ItemOrResult::Result(result) => {
+                    self.frame_stack().pop();
+                    // local depth of the call stack
+                    depth -= 1;
+                    // if depth is 0, return the result
+                    if depth == 0 {
+                        // pop first frame
+                        self.frame_stack().pop();
+                        return Ok(result);
+                    }
+                    self.frame_return_result(result)?;
+                }
+            };
+        }
     }
 }
 

@@ -123,6 +123,49 @@ pub trait EvmTr {
         &mut self,
         result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
+
+    /// Run the execution loop.
+    #[inline]
+    fn run_exec_loop(
+        &mut self,
+        frame_init: <Self::Frame as FrameTr>::FrameInit,
+    ) -> Result<<Self::Frame as FrameTr>::FrameResult, ContextDbError<Self::Context>> {
+        let res = self.frame_init(frame_init)?;
+
+        if let ItemOrResult::Result(frame_result) = res {
+            return Ok(frame_result);
+        }
+        // local depth of the call stack
+        let mut depth = 1;
+        loop {
+            let call_or_result = self.frame_run()?;
+
+            match call_or_result {
+                ItemOrResult::Item(init) => {
+                    match self.frame_init(init)? {
+                        ItemOrResult::Item(_) => {
+                            depth += 1;
+                        }
+                        // Do not pop the frame since no new frame was created
+                        ItemOrResult::Result(result) => {
+                            if let Some(result) = self.frame_return_result(result)? {
+                                return Ok(result);
+                            }
+                        }
+                    }
+                }
+                ItemOrResult::Result(result) => {
+                    self.frame_stack().pop();
+                    depth -= 1;
+                    // if depth is 0, return the result
+                    if depth == 0 {
+                        return Ok(result);
+                    }
+                    self.frame_return_result(result)?;
+                }
+            };
+        }
+    }
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
@@ -206,11 +249,7 @@ where
             .interpreter
             .run_plain(instructions.instruction_table(), context);
 
-        frame.process_next_action(context, action).inspect(|i| {
-            if i.is_result() {
-                frame.set_finished(true);
-            }
-        })
+        frame.process_next_action(context, action)
     }
 
     /// Returns the result of the frame to the caller. Frame is popped from the frame stack.
@@ -219,9 +258,6 @@ where
         &mut self,
         result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>> {
-        if self.frame_stack.get().is_finished() {
-            self.frame_stack.pop();
-        }
         if self.frame_stack.index().is_none() {
             return Ok(Some(result));
         }
