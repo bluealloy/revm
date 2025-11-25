@@ -166,7 +166,7 @@ impl WarmAddresses {
         skip_cold_load: bool,
     ) -> Result<bool, JournalLoadError<E>> {
         let is_cold = self.is_cold(address);
-        
+
         if is_cold && skip_cold_load {
             return Err(JournalLoadError::ColdLoadSkipped);
         }

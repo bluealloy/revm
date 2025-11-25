@@ -689,6 +689,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         Ok(load)
     }
 
+    /// Gets the account mut reference.
+    ///
+    /// # Load Unsafe
+    ///
+    /// Use this function only if you know what you are doing. It will not mark the account as warm or cold.
+    /// It will not bump transition_id or return if it is cold or warm loaded. This function is useful
+    /// when we know account is warm, touched and already loaded.
+    #[inline]
+    pub fn load_unsafe_account_mut<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'b mut DB,
+        address: Address,
+    ) -> Option<JournaledAccount<'a, ENTRY, DB>>
+    where
+        'b: 'a,
+    {
+        let account = self.state.get_mut(&address)?;
+        Some(JournaledAccount::new(
+            address,
+            account,
+            &mut self.journal,
+            db,
+            self.warm_addresses.access_list(),
+            self.transaction_id,
+        ))
+    }
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
     pub fn load_account_mut_optional<'a, 'b, DB: Database>(
@@ -768,14 +794,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// Panics if the account is not present in the state.
     #[inline]
-    pub fn sload<DB: Database>(
+    pub fn sload_unsafe<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
-        self.load_account_mut(db, address)?
+        self.load_unsafe_account_mut(db, address)
+            .unwrap()
             .sload(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
     }
@@ -786,7 +813,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// **Note**: Account should already be present in our state.
     #[inline]
-    pub fn sstore<DB: Database>(
+    pub fn sstore_unsafe<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -794,7 +821,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
-        self.load_account_mut(db, address)?
+        self.load_unsafe_account_mut(db, address)
+            .unwrap()
             .sstore(key, new, skip_cold_load)
     }
 
@@ -886,7 +914,7 @@ mod tests {
 
         // Try to sload with skip_cold_load=true - should succeed because slot is in access list
         let mut db = EmptyDB::new();
-        let result = journal.sload(&mut db, test_address, test_key, true);
+        let result = journal.sload_unsafe(&mut db, test_address, test_key, true);
 
         // Should succeed and return as warm
         assert!(result.is_ok());
