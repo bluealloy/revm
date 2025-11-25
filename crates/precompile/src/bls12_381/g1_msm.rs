@@ -1,12 +1,14 @@
 //! BLS12-381 G1 msm precompile. More details in [`g1_msm`]
-use crate::bls12_381::utils::{pad_g1_point, remove_g1_padding};
-use crate::bls12_381::G1Point;
-use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
-    PADDED_G1_LENGTH, SCALAR_LENGTH,
-};
-use crate::bls12_381_utils::msm_required_gas;
 use crate::{
+    bls12_381::{
+        utils::{pad_g1_point, remove_g1_padding},
+        G1Point,
+    },
+    bls12_381_const::{
+        DISCOUNT_TABLE_G1_MSM, G1_MSM_ADDRESS, G1_MSM_BASE_GAS_FEE, G1_MSM_INPUT_LENGTH,
+        PADDED_G1_LENGTH, SCALAR_LENGTH,
+    },
+    bls12_381_utils::msm_required_gas,
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 

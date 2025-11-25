@@ -1,7 +1,6 @@
 //! Benchmarks for the BN254 precompiles
 use criterion::{measurement::Measurement, BenchmarkGroup};
-use primitives::hex;
-use primitives::Bytes;
+use primitives::{hex, Bytes};
 use revm_precompile::bn254::{
     add::ISTANBUL_ADD_GAS_COST,
     mul::ISTANBUL_MUL_GAS_COST,

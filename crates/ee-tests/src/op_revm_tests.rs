@@ -23,8 +23,7 @@ use revm::{
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
-use std::path::PathBuf;
-use std::vec::Vec;
+use std::{path::PathBuf, vec::Vec};
 
 // Re-export the constant for testdata directory path
 const TESTS_TESTDATA: &str = "tests/op_revm_testdata";

@@ -1,5 +1,4 @@
-use crate::inspectors::GasInspector;
-use crate::Inspector;
+use crate::{inspectors::GasInspector, Inspector};
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},

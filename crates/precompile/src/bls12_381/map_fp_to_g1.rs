@@ -1,7 +1,7 @@
 //! BLS12-381 map fp to g1 precompile. More details in [`map_fp_to_g1`]
 use super::utils::{pad_g1_point, remove_fp_padding};
-use crate::bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH};
 use crate::{
+    bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH},
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 
