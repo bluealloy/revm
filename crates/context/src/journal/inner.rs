@@ -4,10 +4,10 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        account::JournaledAccount,
+        account::{JournaledAccount, JournaledAccountTr},
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
+        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
     },
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -565,11 +565,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
-    pub fn load_account<DB: Database>(
-        &mut self,
-        db: &mut DB,
+    pub fn load_account<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'b mut DB,
         address: Address,
-    ) -> Result<StateLoad<&Account>, DB::Error> {
+    ) -> Result<StateLoad<&'a Account>, DB::Error>
+    where
+        'b: 'a,
+    {
         self.load_account_optional(db, address, false, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
@@ -621,24 +624,30 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
     #[inline]
-    pub fn load_code<DB: Database>(
-        &mut self,
-        db: &mut DB,
+    pub fn load_code<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'a mut DB,
         address: Address,
-    ) -> Result<StateLoad<&Account>, DB::Error> {
+    ) -> Result<StateLoad<&'a Account>, DB::Error>
+    where
+        'b: 'a,
+    {
         self.load_account_optional(db, address, true, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
     /// Loads account into memory. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_optional<DB: Database>(
-        &mut self,
-        db: &mut DB,
+    pub fn load_account_optional<'a, 'b, DB: Database>(
+        &'a mut self,
+        db: &'a mut DB,
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<&Account>, JournalLoadError<DB::Error>> {
+    ) -> Result<StateLoad<&'a Account>, JournalLoadError<DB::Error>>
+    where
+        'b: 'a,
+    {
         let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
         if load_code {
             load.data.load_code()?;
@@ -652,7 +661,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &'a mut self,
         db: &'b mut DB,
         address: Address,
-    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, DB::Error> {
+    ) -> Result<StateLoad<JournaledAccount<'a, ENTRY, DB>>, DB::Error>
+    where
+        'b: 'a,
+    {
         self.load_account_mut_optional(db, address, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
@@ -665,7 +677,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
+    ) -> Result<StateLoad<JournaledAccount<'a, ENTRY, DB>>, JournalLoadError<DB::Error>>
+    where
+        'b: 'a,
+    {
         let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
         if load_code {
             load.data.load_code()?;
@@ -674,13 +689,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_mut_optional<'a, 'b, DB: Database>(
         &'a mut self,
         db: &'b mut DB,
         address: Address,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<JournaledAccount<'a, 'b, ENTRY, DB>>, JournalLoadError<DB::Error>> {
+    ) -> Result<StateLoad<JournaledAccount<'a, ENTRY, DB>>, JournalLoadError<DB::Error>>
+    where
+        'b: 'a,
+    {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
@@ -740,16 +758,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             self.journal.push(ENTRY::account_warmed(address));
         }
 
-        Ok(load.map(|i| {
+        Ok(StateLoad::new(
             JournaledAccount::new(
                 address,
-                i,
+                load.data,
                 &mut self.journal,
                 db,
                 self.warm_addresses.access_list(),
                 self.transaction_id,
-            )
-        }))
+            ),
+            load.is_cold,
+        ))
     }
 
     /// Loads storage slot.

@@ -6,7 +6,11 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::{journaled_state::JournalCheckpoint, result::InvalidTransaction, LocalContextTr},
+    context::{
+        journaled_state::{account::JournaledAccountTr, JournalCheckpoint},
+        result::InvalidTransaction,
+        LocalContextTr,
+    },
     context_interface::{
         context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
@@ -403,6 +407,8 @@ where
             let mut acc = journal.load_account_mut(caller)?;
             acc.bump_nonce();
             acc.incr_balance(U256::from(mint.unwrap_or_default()));
+
+            drop(acc); // drop the loaded account to avoid borrow checker issues.
 
             // We can now commit the changes.
             journal.commit_tx();

@@ -17,11 +17,111 @@ use primitives::{
 use state::{Account, Bytecode, EvmStorageSlot};
 use std::vec::Vec;
 
+/// Trait that contains database and journal of all changes that were made to the account.
+pub trait JournaledAccountTr: Deref<Target = Account> {
+    /// Database error type.
+    type DatabaseError;
+    /// Entry type.
+    type Entry: JournalEntryTr;
+
+    /// Creates a new journaled account.
+    fn sload(
+        &mut self,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadError<Self::DatabaseError>>;
+
+    /// Warm loads storage slot and stores the new value
+    fn sstore(
+        &mut self,
+        key: StorageKey,
+        new: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<Self::DatabaseError>>;
+
+    /// Loads the code of the account. and returns it as reference.
+    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<Self::DatabaseError>>;
+
+    /// Returns the balance of the account.
+    fn balance(&self) -> &U256;
+
+    /// Returns the nonce of the account.
+    fn nonce(&self) -> u64;
+
+    /// Returns the code hash of the account.
+    fn code_hash(&self) -> &B256;
+
+    /// Returns the code of the account.
+    fn code(&self) -> Option<&Bytecode>;
+
+    /// Touches the account.
+    fn touch(&mut self);
+
+    /// Marks the account as cold without making a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    ///
+    /// If account is in access list, it would still be marked as warm if account get accessed again.
+    fn unsafe_mark_cold(&mut self);
+
+    /// Sets the balance of the account.
+    ///
+    /// If balance is the same, we don't add a journal entry.
+    ///
+    /// Touches the account in all cases.
+    fn set_balance(&mut self, balance: U256);
+
+    /// Increments the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    fn incr_balance(&mut self, balance: U256) -> bool;
+
+    /// Decrements the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    fn decr_balance(&mut self, balance: U256) -> bool;
+
+    /// Bumps the nonce of the account.
+    ///
+    /// Touches the account in all cases.
+    ///
+    /// Returns true if nonce was bumped, false if nonce is at the max value.
+    fn bump_nonce(&mut self) -> bool;
+
+    /// Set the nonce of the account and create a journal entry.
+    ///
+    /// Touches the account in all cases.
+    fn set_nonce(&mut self, nonce: u64);
+
+    /// Set the nonce of the account without creating a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    fn unsafe_set_nonce(&mut self, nonce: u64);
+
+    /// Sets the code of the account.
+    ///
+    /// Touches the account in all cases.
+    fn set_code(&mut self, code_hash: B256, code: Bytecode);
+
+    /// Sets the code of the account. Calculates hash of the code.
+    ///
+    /// Touches the account in all cases.
+    fn set_code_and_hash_slow(&mut self, code: Bytecode);
+
+    /// Delegates the account to another address (EIP-7702).
+    ///
+    /// This touches the account, sets the code to the delegation designation,
+    /// and bumps the nonce.
+    fn delegate(&mut self, address: Address);
+}
+
 /// Journaled account contains both mutable account and journal entries.
 ///
 /// Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 #[derive(Debug, PartialEq, Eq)]
-pub struct JournaledAccount<'a, 'b, ENTRY: JournalEntryTr, DB> {
+pub struct JournaledAccount<'a, ENTRY: JournalEntryTr, DB> {
     /// Address of the account.
     address: Address,
     /// Mutable account.
@@ -33,10 +133,201 @@ pub struct JournaledAccount<'a, 'b, ENTRY: JournalEntryTr, DB> {
     /// Transaction ID.
     transaction_id: usize,
     /// Database used to load storage.
-    db: &'b mut DB,
+    db: &'a mut DB,
 }
 
-impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY, DB> {
+impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccountTr
+    for JournaledAccount<'a, ENTRY, DB>
+{
+    type DatabaseError = <DB as Database>::Error;
+    type Entry = ENTRY;
+
+    fn sload(
+        &mut self,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadError<Self::DatabaseError>> {
+        self.sload(key, skip_cold_load)
+    }
+
+    fn sstore(
+        &mut self,
+        key: StorageKey,
+        new: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<Self::DatabaseError>> {
+        self.sstore(key, new, skip_cold_load)
+    }
+
+    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<Self::DatabaseError>> {
+        self.load_code()
+    }
+
+    /// Returns the balance of the account.
+    #[inline]
+    fn balance(&self) -> &U256 {
+        &self.account.info.balance
+    }
+
+    /// Returns the nonce of the account.
+    #[inline]
+    fn nonce(&self) -> u64 {
+        self.account.info.nonce
+    }
+
+    /// Returns the code hash of the account.
+    #[inline]
+    fn code_hash(&self) -> &B256 {
+        &self.account.info.code_hash
+    }
+
+    /// Returns the code of the account.
+    #[inline]
+    fn code(&self) -> Option<&Bytecode> {
+        self.account.info.code.as_ref()
+    }
+
+    /// Touches the account.
+    #[inline]
+    fn touch(&mut self) {
+        if !self.account.status.is_touched() {
+            self.account.mark_touch();
+            self.journal_entries
+                .push(ENTRY::account_touched(self.address));
+        }
+    }
+
+    /// Marks the account as cold without making a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    ///
+    /// If account is in access list, it would still be marked as warm if account get accessed again.
+    #[inline]
+    fn unsafe_mark_cold(&mut self) {
+        self.account.mark_cold();
+    }
+
+    /// Sets the balance of the account.
+    ///
+    /// If balance is the same, we don't add a journal entry.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn set_balance(&mut self, balance: U256) {
+        self.touch();
+        if self.account.info.balance != balance {
+            self.journal_entries.push(ENTRY::balance_changed(
+                self.address,
+                self.account.info.balance,
+            ));
+            self.account.info.set_balance(balance);
+        }
+    }
+
+    /// Increments the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn incr_balance(&mut self, balance: U256) -> bool {
+        self.touch();
+        let Some(balance) = self.account.info.balance.checked_add(balance) else {
+            return false;
+        };
+        self.set_balance(balance);
+        true
+    }
+
+    /// Decrements the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn decr_balance(&mut self, balance: U256) -> bool {
+        self.touch();
+        let Some(balance) = self.account.info.balance.checked_sub(balance) else {
+            return false;
+        };
+        self.set_balance(balance);
+        true
+    }
+
+    /// Bumps the nonce of the account.
+    ///
+    /// Touches the account in all cases.
+    ///
+    /// Returns true if nonce was bumped, false if nonce is at the max value.
+    #[inline]
+    fn bump_nonce(&mut self) -> bool {
+        self.touch();
+        let Some(nonce) = self.account.info.nonce.checked_add(1) else {
+            return false;
+        };
+        self.account.info.set_nonce(nonce);
+        self.journal_entries.push(ENTRY::nonce_bumped(self.address));
+        true
+    }
+
+    /// Set the nonce of the account and create a journal entry.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn set_nonce(&mut self, nonce: u64) {
+        self.touch();
+        let previous_nonce = self.account.info.nonce;
+        self.account.info.set_nonce(nonce);
+        self.journal_entries
+            .push(ENTRY::nonce_changed(self.address, previous_nonce));
+    }
+
+    /// Set the nonce of the account without creating a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    #[inline]
+    fn unsafe_set_nonce(&mut self, nonce: u64) {
+        self.account.info.set_nonce(nonce);
+    }
+
+    /// Sets the code of the account.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn set_code(&mut self, code_hash: B256, code: Bytecode) {
+        self.touch();
+        self.account.info.set_code_hash(code_hash);
+        self.account.info.set_code(code);
+        self.journal_entries.push(ENTRY::code_changed(self.address));
+    }
+
+    /// Sets the code of the account. Calculates hash of the code.
+    ///
+    /// Touches the account in all cases.
+    #[inline]
+    fn set_code_and_hash_slow(&mut self, code: Bytecode) {
+        let code_hash = code.hash_slow();
+        self.set_code(code_hash, code);
+    }
+
+    /// Delegates the account to another address (EIP-7702).
+    ///
+    /// This touches the account, sets the code to the delegation designation,
+    /// and bumps the nonce.
+    #[inline]
+    fn delegate(&mut self, address: Address) {
+        let (bytecode, hash) = if address.is_zero() {
+            (Bytecode::default(), KECCAK_EMPTY)
+        } else {
+            let bytecode = Bytecode::new_eip7702(address);
+            let hash = bytecode.hash_slow();
+            (bytecode, hash)
+        };
+        self.touch();
+        self.set_code(hash, bytecode);
+        self.bump_nonce();
+    }
+}
+
+impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, ENTRY, DB> {
     /// Creates a new journaled account.
     #[inline(never)]
     pub fn sload(
@@ -139,7 +430,7 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, 'b, ENTRY
     }
 }
 
-impl<'a, 'b, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, 'b, ENTRY, DB> {
+impl<'a, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, ENTRY, DB> {
     /// Consumes the journaled account and returns the mutable account.
     #[inline]
     pub fn into_account_ref(self) -> &'a Account {
@@ -152,7 +443,7 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, 'b, ENTRY, DB> {
         address: Address,
         account: &'a mut Account,
         journal_entries: &'a mut Vec<ENTRY>,
-        db: &'b mut DB,
+        db: &'a mut DB,
         access_list: &'a HashMap<Address, HashSet<StorageKey>>,
         transaction_id: usize,
     ) -> Self {
@@ -165,172 +456,9 @@ impl<'a, 'b, ENTRY: JournalEntryTr, DB> JournaledAccount<'a, 'b, ENTRY, DB> {
             transaction_id,
         }
     }
-
-    /// Returns the balance of the account.
-    #[inline]
-    pub fn balance(&self) -> &U256 {
-        &self.account.info.balance
-    }
-
-    /// Returns the nonce of the account.
-    #[inline]
-    pub fn nonce(&self) -> u64 {
-        self.account.info.nonce
-    }
-
-    /// Returns the code hash of the account.
-    #[inline]
-    pub fn code_hash(&self) -> &B256 {
-        &self.account.info.code_hash
-    }
-
-    /// Returns the code of the account.
-    #[inline]
-    pub fn code(&self) -> Option<&Bytecode> {
-        self.account.info.code.as_ref()
-    }
-
-    /// Touches the account.
-    #[inline]
-    pub fn touch(&mut self) {
-        if !self.account.status.is_touched() {
-            self.account.mark_touch();
-            self.journal_entries
-                .push(ENTRY::account_touched(self.address));
-        }
-    }
-
-    /// Marks the account as cold without making a journal entry.
-    ///
-    /// Changing account without journal entry can be a footgun as reverting of the state change
-    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
-    ///
-    /// If account is in access list, it would still be marked as warm if account get accessed again.
-    #[inline]
-    pub fn unsafe_mark_cold(&mut self) {
-        self.account.mark_cold();
-    }
-
-    /// Sets the balance of the account.
-    ///
-    /// If balance is the same, we don't add a journal entry.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn set_balance(&mut self, balance: U256) {
-        self.touch();
-        if self.account.info.balance != balance {
-            self.journal_entries.push(ENTRY::balance_changed(
-                self.address,
-                self.account.info.balance,
-            ));
-            self.account.info.set_balance(balance);
-        }
-    }
-
-    /// Increments the balance of the account.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn incr_balance(&mut self, balance: U256) -> bool {
-        self.touch();
-        let Some(balance) = self.account.info.balance.checked_add(balance) else {
-            return false;
-        };
-        self.set_balance(balance);
-        true
-    }
-
-    /// Decrements the balance of the account.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn decr_balance(&mut self, balance: U256) -> bool {
-        self.touch();
-        let Some(balance) = self.account.info.balance.checked_sub(balance) else {
-            return false;
-        };
-        self.set_balance(balance);
-        true
-    }
-
-    /// Bumps the nonce of the account.
-    ///
-    /// Touches the account in all cases.
-    ///
-    /// Returns true if nonce was bumped, false if nonce is at the max value.
-    #[inline]
-    pub fn bump_nonce(&mut self) -> bool {
-        self.touch();
-        let Some(nonce) = self.account.info.nonce.checked_add(1) else {
-            return false;
-        };
-        self.account.info.set_nonce(nonce);
-        self.journal_entries.push(ENTRY::nonce_bumped(self.address));
-        true
-    }
-
-    /// Set the nonce of the account and create a journal entry.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn set_nonce(&mut self, nonce: u64) {
-        self.touch();
-        let previous_nonce = self.account.info.nonce;
-        self.account.info.set_nonce(nonce);
-        self.journal_entries
-            .push(ENTRY::nonce_changed(self.address, previous_nonce));
-    }
-
-    /// Set the nonce of the account without creating a journal entry.
-    ///
-    /// Changing account without journal entry can be a footgun as reverting of the state change
-    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
-    #[inline]
-    pub fn unsafe_set_nonce(&mut self, nonce: u64) {
-        self.account.info.set_nonce(nonce);
-    }
-
-    /// Sets the code of the account.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn set_code(&mut self, code_hash: B256, code: Bytecode) {
-        self.touch();
-        self.account.info.set_code_hash(code_hash);
-        self.account.info.set_code(code);
-        self.journal_entries.push(ENTRY::code_changed(self.address));
-    }
-
-    /// Sets the code of the account. Calculates hash of the code.
-    ///
-    /// Touches the account in all cases.
-    #[inline]
-    pub fn set_code_and_hash_slow(&mut self, code: Bytecode) {
-        let code_hash = code.hash_slow();
-        self.set_code(code_hash, code);
-    }
-
-    /// Delegates the account to another address (EIP-7702).
-    ///
-    /// This touches the account, sets the code to the delegation designation,
-    /// and bumps the nonce.
-    #[inline]
-    pub fn delegate(&mut self, address: Address) {
-        let (bytecode, hash) = if address.is_zero() {
-            (Bytecode::default(), KECCAK_EMPTY)
-        } else {
-            let bytecode = Bytecode::new_eip7702(address);
-            let hash = bytecode.hash_slow();
-            (bytecode, hash)
-        };
-        self.touch();
-        self.set_code(hash, bytecode);
-        self.bump_nonce();
-    }
 }
 
-impl<'a, 'b, ENTRY: JournalEntryTr, DB> Deref for JournaledAccount<'a, 'b, ENTRY, DB> {
+impl<'a, ENTRY: JournalEntryTr, DB> Deref for JournaledAccount<'a, ENTRY, DB> {
     type Target = Account;
 
     fn deref(&self) -> &Self::Target {
