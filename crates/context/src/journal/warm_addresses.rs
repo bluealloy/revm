@@ -3,6 +3,7 @@
 //! It is used to optimize access to precompile addresses.
 
 use bitvec::{bitvec, vec::BitVec};
+use context_interface::journaled_state::JournalLoadError;
 use primitives::{short_address, Address, HashMap, HashSet, StorageKey, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
@@ -155,6 +156,22 @@ impl WarmAddresses {
     #[inline]
     pub fn is_cold(&self, address: &Address) -> bool {
         !self.is_warm(address)
+    }
+
+    /// Checks if the address is cold loaded and returns an error if it is and skip_cold_load is true.
+    #[inline(never)]
+    pub fn check_is_cold<E>(
+        &self,
+        address: &Address,
+        skip_cold_load: bool,
+    ) -> Result<bool, JournalLoadError<E>> {
+        let is_cold = self.is_cold(address);
+        
+        if is_cold && skip_cold_load {
+            return Err(JournalLoadError::ColdLoadSkipped);
+        }
+
+        Ok(is_cold)
     }
 }
 

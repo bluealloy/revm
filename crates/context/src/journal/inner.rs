@@ -690,7 +690,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline]
+    #[inline(never)]
     pub fn load_account_mut_optional<'a, 'b, DB: Database>(
         &'a mut self,
         db: &'b mut DB,
@@ -708,14 +708,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
 
                 if unlikely(is_cold) {
-                    // account can be loaded by we still need to check warm_addresses to see if it is cold.
-                    let should_be_cold = self.warm_addresses.is_cold(&address);
-
-                    // dont load it cold if skipping cold load is true.
-                    if should_be_cold && skip_cold_load {
-                        return Err(JournalLoadError::ColdLoadSkipped);
-                    }
-                    is_cold = should_be_cold;
+                    is_cold = self
+                        .warm_addresses
+                        .check_is_cold(&address, skip_cold_load)?;
 
                     // mark it warm.
                     account.mark_warm_with_transaction_id(self.transaction_id);
@@ -735,13 +730,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 (account, is_cold)
             }
             Entry::Vacant(vac) => {
-                // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
-                let is_cold = self.warm_addresses.is_cold(&address);
-
-                // dont load cold account if skip_cold_load is true
-                if is_cold && skip_cold_load {
-                    return Err(JournalLoadError::ColdLoadSkipped);
-                }
+                let is_cold = self
+                    .warm_addresses
+                    .check_is_cold(&address, skip_cold_load)?;
 
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
