@@ -387,6 +387,9 @@ impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccount<'a, ENTRY, DB> {
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<<DB as Database>::Error>> {
+        // touch the account so changes are tracked.
+        self.touch();
+
         // assume that acc exists and load the slot.
         let slot = self.sload(key, skip_cold_load)?;
 

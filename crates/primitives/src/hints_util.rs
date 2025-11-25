@@ -1,5 +1,5 @@
 //! Utility functions for hints.
-//! Used from Hashbrown https://github.com/rust-lang/hashbrown/blob/0622304393c802aef285257e4864147cc2ac7374/src/util.rs#L12
+//! Used from Hashbrown <https://github.com/rust-lang/hashbrown/blob/0622304393c802aef285257e4864147cc2ac7374/src/util.rs#L12>.
 
 // FIXME: Replace with `core::hint::{likely, unlikely}` once they are stable.
 // pub use core::intrinsics::{likely, unlikely};

@@ -690,7 +690,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads account. If account is already loaded it will be marked as warm.
-    #[inline(never)]
+    #[inline]
     pub fn load_account_mut_optional<'a, 'b, DB: Database>(
         &'a mut self,
         db: &'b mut DB,
@@ -700,7 +700,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     where
         'b: 'a,
     {
-        let load = match self.state.entry(address) {
+        let (account, is_cold) = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
 
@@ -732,10 +732,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     // journal loading of cold account.
                     self.journal.push(ENTRY::account_warmed(address));
                 }
-                StateLoad {
-                    data: account,
-                    is_cold,
-                }
+                (account, is_cold)
             }
             Entry::Vacant(vac) => {
                 // Precompiles among some other account(coinbase included) are warm loaded so we need to take that into account
@@ -745,6 +742,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
+
                 let account = if let Some(account) = db.basic(address)? {
                     account.into()
                 } else {
@@ -756,23 +754,20 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     self.journal.push(ENTRY::account_warmed(address));
                 }
 
-                StateLoad {
-                    data: vac.insert(account),
-                    is_cold,
-                }
+                (vac.insert(account), is_cold)
             }
         };
 
         Ok(StateLoad::new(
             JournaledAccount::new(
                 address,
-                load.data,
+                account,
                 &mut self.journal,
                 db,
                 self.warm_addresses.access_list(),
                 self.transaction_id,
             ),
-            load.is_cold,
+            is_cold,
         ))
     }
 
