@@ -14,6 +14,7 @@ use database_interface::Database;
 use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
+    hints_util::unlikely,
     Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, TransientStorage};
@@ -705,7 +706,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
                 // skip load if account is cold.
                 let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
-                if is_cold {
+
+                if unlikely(is_cold) {
                     // account can be loaded by we still need to check warm_addresses to see if it is cold.
                     let should_be_cold = self.warm_addresses.is_cold(&address);
 
@@ -726,6 +728,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     }
                     // unmark locally created
                     account.unmark_created_locally();
+
+                    // journal loading of cold account.
+                    self.journal.push(ENTRY::account_warmed(address));
                 }
                 StateLoad {
                     data: account,
@@ -746,17 +751,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     Account::new_not_existing(self.transaction_id)
                 };
 
+                // journal loading of cold account.
+                if is_cold {
+                    self.journal.push(ENTRY::account_warmed(address));
+                }
+
                 StateLoad {
                     data: vac.insert(account),
                     is_cold,
                 }
             }
         };
-
-        // journal loading of cold account.
-        if load.is_cold {
-            self.journal.push(ENTRY::account_warmed(address));
-        }
 
         Ok(StateLoad::new(
             JournaledAccount::new(
