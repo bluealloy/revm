@@ -4,9 +4,10 @@
 // FIXME: Replace with `core::hint::{likely, unlikely}` once they are stable.
 // pub use core::intrinsics::{likely, unlikely};
 
+/// Cold path function.
 #[inline(always)]
 #[cold]
-fn cold_path() {}
+pub fn cold_path() {}
 
 /// Returns `b` but mark `false` path as cold
 #[inline(always)]

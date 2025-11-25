@@ -451,6 +451,7 @@ pub struct AccountInfoLoad<'a> {
 
 impl<'a> AccountInfoLoad<'a> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
+    #[inline]
     pub fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
         Self {
             account: Cow::Borrowed(account),
@@ -462,6 +463,7 @@ impl<'a> AccountInfoLoad<'a> {
     /// Maps the account info of the [`AccountInfoLoad`] to a new [`StateLoad`].
     ///
     /// Useful for transforming the account info of the [`AccountInfoLoad`] and preserving the cold load status.
+    #[inline]
     pub fn into_state_load<F, O>(self, f: F) -> StateLoad<O>
     where
         F: FnOnce(Cow<'a, AccountInfo>) -> O,
