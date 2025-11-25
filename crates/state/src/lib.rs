@@ -160,10 +160,7 @@ impl Account {
     /// Returns true if it is created globally for first time.
     #[inline]
     pub fn mark_created_locally(&mut self) -> bool {
-        self.status |= AccountStatus::CreatedLocal;
-        let is_created_globaly = !self.status.contains(AccountStatus::Created);
-        self.status |= AccountStatus::Created;
-        is_created_globaly
+        self.mark_local_and_global(AccountStatus::CreatedLocal, AccountStatus::Created)
     }
 
     /// Unmark account as locally created
@@ -175,10 +172,22 @@ impl Account {
     /// Mark account as locally and globally selfdestructed
     #[inline]
     pub fn mark_selfdestructed_locally(&mut self) -> bool {
-        self.status |= AccountStatus::SelfDestructedLocal;
-        let is_global_selfdestructed = !self.status.contains(AccountStatus::SelfDestructed);
-        self.status |= AccountStatus::SelfDestructed;
-        is_global_selfdestructed
+        self.mark_local_and_global(
+            AccountStatus::SelfDestructedLocal,
+            AccountStatus::SelfDestructed,
+        )
+    }
+
+    #[inline]
+    fn mark_local_and_global(
+        &mut self,
+        local_flag: AccountStatus,
+        global_flag: AccountStatus,
+    ) -> bool {
+        self.status |= local_flag;
+        let is_global_first_time = !self.status.contains(global_flag);
+        self.status |= global_flag;
+        is_global_first_time
     }
 
     /// Unmark account as locally selfdestructed
