@@ -697,7 +697,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// It will not bump transition_id or return if it is cold or warm loaded. This function is useful
     /// when we know account is warm, touched and already loaded.
     #[inline]
-    pub fn load_unsafe_account_mut<'a, 'b, DB: Database>(
+    pub fn load_account_mut_unsafe<'a, 'b, DB: Database>(
         &'a mut self,
         db: &'b mut DB,
         address: Address,
@@ -789,10 +789,22 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     }
 
     /// Loads storage slot.
+    #[inline]
+    pub fn sload<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        key: StorageKey,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
+        self.load_account_mut(db, address)?
+            .sload(key, skip_cold_load)
+            .map(|s| s.map(|s| s.present_value))
+    }
+
+    /// Loads storage slot.
     ///
-    /// # Panics
-    ///
-    /// Panics if the account is not present in the state.
+    /// If account is not present it will return [`JournalLoadError::ColdLoadSkipped`] error.
     #[inline]
     pub fn sload_unsafe<DB: Database>(
         &mut self,
@@ -801,10 +813,26 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
-        self.load_unsafe_account_mut(db, address)
-            .unwrap()
+        self.load_account_mut_unsafe(db, address)
+            .ok_or(JournalLoadError::ColdLoadSkipped)?
             .sload(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
+    }
+
+    /// Stores storage slot.
+    ///
+    /// If account is not present it will load from database
+    #[inline]
+    pub fn sstore<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        key: StorageKey,
+        new: StorageValue,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
+        self.load_account_mut(db, address)?
+            .sstore(key, new, skip_cold_load)
     }
 
     /// Stores storage slot.
@@ -821,8 +849,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
-        self.load_unsafe_account_mut(db, address)
-            .unwrap()
+        self.load_account_mut_unsafe(db, address)
+            .ok_or(JournalLoadError::ColdLoadSkipped)?
             .sstore(key, new, skip_cold_load)
     }
 
