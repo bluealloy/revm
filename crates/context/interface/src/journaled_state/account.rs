@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::entry::JournalEntryTr;
+use auto_impl::auto_impl;
 use core::ops::Deref;
 use database_interface::Database;
 use primitives::{
@@ -18,11 +19,10 @@ use state::{Account, Bytecode, EvmStorageSlot};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the account.
+#[auto_impl(&mut, Box)]
 pub trait JournaledAccountTr: Deref<Target = Account> {
     /// Database error type.
     type DatabaseError;
-    /// Entry type.
-    type Entry: JournalEntryTr;
 
     /// Creates a new journaled account.
     fn sload(
@@ -140,7 +140,6 @@ impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccountTr
     for JournaledAccount<'a, ENTRY, DB>
 {
     type DatabaseError = <DB as Database>::Error;
-    type Entry = ENTRY;
 
     fn sload(
         &mut self,
