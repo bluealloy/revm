@@ -122,9 +122,11 @@ impl<DB: Database> State<DB> {
         addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, DB::Error> {
         // Make transition and update cache state
-        let mut transitions = Vec::new();
-        let mut balances = Vec::new();
-        for address in addresses {
+        let addresses_iter = addresses.into_iter();
+        let (lower, _) = addresses_iter.size_hint();
+        let mut transitions = Vec::with_capacity(lower);
+        let mut balances = Vec::with_capacity(lower);
+        for address in addresses_iter {
             let original_account = self.load_cache_account(address)?;
             let (balance, transition) = original_account.drain_balance();
             balances.push(balance);
