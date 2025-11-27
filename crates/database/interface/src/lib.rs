@@ -188,7 +188,8 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
     ) -> Result<(), Self::Error> {
         // Make transition and update cache state
         let balances = balances.into_iter();
-        let mut transitions = HashMap::with_capacity(balances.size_hint().0);
+        let mut transitions: HashMap<Address, Account> = HashMap::default();
+        transitions.reserve(balances.size_hint().0);
         for (address, balance) in balances {
             if balance == 0 {
                 continue;
