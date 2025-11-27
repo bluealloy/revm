@@ -81,39 +81,6 @@ impl<DB: Database> State<DB> {
         self.bundle_state.size_hint()
     }
 
-    /// Iterates over received balances and increment all account balances.
-    ///
-    /// **Note**: If account is not found inside cache state it will be loaded from database.
-    ///
-    /// Update will create transitions for all accounts that are updated.
-    ///
-    /// If using this to implement withdrawals, zero balances must be filtered out before calling this function.
-    pub fn increment_balances(
-        &mut self,
-        balances: impl IntoIterator<Item = (Address, u128)>,
-    ) -> Result<(), DB::Error> {
-        // Make transition and update cache state
-        let balances = balances.into_iter();
-        let mut transitions = Vec::with_capacity(balances.size_hint().0);
-        for (address, balance) in balances {
-            if balance == 0 {
-                continue;
-            }
-            let original_account = self.load_cache_account(address)?;
-            transitions.push((
-                address,
-                original_account
-                    .increment_balance(balance)
-                    .expect("Balance is not zero"),
-            ))
-        }
-        // Append transition
-        if let Some(s) = self.transition_state.as_mut() {
-            s.add_transitions(transitions)
-        }
-        Ok(())
-    }
-
     /// Drains balances from given account and return those values.
     ///
     /// It is used for DAO hardfork state change to move values from given accounts.

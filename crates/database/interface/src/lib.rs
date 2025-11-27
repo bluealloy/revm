@@ -172,3 +172,39 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
         self.0.block_hash_ref(number)
     }
 }
+
+impl<T: Database + DatabaseCommit> DatabaseCommitExt for T {
+    // default implementation
+}
+
+/// EVM database commit interface.
+pub trait DatabaseCommitExt: Database + DatabaseCommit {
+    /// Iterates over received balances and increment all account balances.
+    ///
+    /// Update will create transitions for all accounts that are updated.
+    fn increment_balances(
+        &mut self,
+        balances: impl IntoIterator<Item = (Address, u128)>,
+    ) -> Result<(), Self::Error> {
+        // Make transition and update cache state
+        let balances = balances.into_iter();
+        let mut transitions = HashMap::with_capacity(balances.size_hint().0);
+        for (address, balance) in balances {
+            if balance == 0 {
+                continue;
+            }
+            let mut original_account = match self.basic(address)? {
+                Some(acc_info) => Account::from(acc_info),
+                None => Account::new_not_existing(0),
+            };
+            original_account.info.balance = original_account
+                .info
+                .balance
+                .saturating_add(U256::from(balance));
+            original_account.mark_touch();
+            transitions.insert(address, original_account);
+        }
+        self.commit(transitions);
+        Ok(())
+    }
+}
