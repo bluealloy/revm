@@ -5,7 +5,8 @@
 
 use crate::{
     context::{SStoreResult, StateLoad},
-    journaled_state::JournalLoadError,
+    journaled_state::{JournalLoadErasedError, JournalLoadError},
+    ErasedError,
 };
 
 use super::entry::JournalEntryTr;
@@ -20,16 +21,16 @@ use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the account.
 #[auto_impl(&mut, Box)]
-pub trait JournaledAccountTr: Deref<Target = Account> {
-    /// Database error type.
-    type DatabaseError;
+pub trait JournaledAccountTr {
+    /// Returns the account.
+    fn account(&self) -> &Account;
 
     /// Creates a new journaled account.
     fn sload(
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadError<Self::DatabaseError>>;
+    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadErasedError>;
 
     /// Warm loads storage slot and stores the new value
     fn sstore(
@@ -37,10 +38,10 @@ pub trait JournaledAccountTr: Deref<Target = Account> {
         key: StorageKey,
         new: StorageValue,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<Self::DatabaseError>>;
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadErasedError>;
 
     /// Loads the code of the account. and returns it as reference.
-    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<Self::DatabaseError>>;
+    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadErasedError>;
 
     /// Returns the balance of the account.
     fn balance(&self) -> &U256;
@@ -139,14 +140,17 @@ pub struct JournaledAccount<'a, ENTRY: JournalEntryTr, DB> {
 impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccountTr
     for JournaledAccount<'a, ENTRY, DB>
 {
-    type DatabaseError = <DB as Database>::Error;
+    fn account(&self) -> &Account {
+        self.account
+    }
 
     fn sload(
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadError<Self::DatabaseError>> {
+    ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadErasedError> {
         self.sload(key, skip_cold_load)
+            .map_err(|e| e.map(ErasedError::new))
     }
 
     fn sstore(
@@ -154,12 +158,13 @@ impl<'a, ENTRY: JournalEntryTr, DB: Database> JournaledAccountTr
         key: StorageKey,
         new: StorageValue,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<SStoreResult>, JournalLoadError<Self::DatabaseError>> {
+    ) -> Result<StateLoad<SStoreResult>, JournalLoadErasedError> {
         self.sstore(key, new, skip_cold_load)
+            .map_err(|e| e.map(ErasedError::new))
     }
 
-    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadError<Self::DatabaseError>> {
-        self.load_code()
+    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadErasedError> {
+        self.load_code().map_err(|e| e.map(ErasedError::new))
     }
 
     /// Returns the balance of the account.

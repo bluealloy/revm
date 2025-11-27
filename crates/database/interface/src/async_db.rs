@@ -1,6 +1,6 @@
 //! Async database interface.
 use crate::{DBErrorMarker, Database, DatabaseRef};
-use core::{error::Error, future::Future};
+use core::future::Future;
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
@@ -12,7 +12,7 @@ use tokio::runtime::{Handle, Runtime};
 /// Use [WrapDatabaseAsync] to provide [Database] implementation for a type that only implements this trait.
 pub trait DatabaseAsync {
     /// The database error type
-    type Error: Send + DBErrorMarker + Error;
+    type Error: DBErrorMarker + core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic_async(
@@ -47,7 +47,7 @@ pub trait DatabaseAsync {
 /// Use [WrapDatabaseAsync] to provide [DatabaseRef] implementation for a type that only implements this trait.
 pub trait DatabaseAsyncRef {
     /// The database error type
-    type Error: Send + DBErrorMarker + Error;
+    type Error: DBErrorMarker + core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic_async_ref(

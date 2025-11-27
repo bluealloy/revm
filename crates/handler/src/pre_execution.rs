@@ -166,7 +166,7 @@ pub fn validate_against_state_and_deduct_caller<
     // Load caller's account.
     let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
-    validate_account_nonce_and_code_with_components(&caller.info, tx, cfg)?;
+    validate_account_nonce_and_code_with_components(&caller.account().info, tx, cfg)?;
 
     let new_balance = calculate_caller_fee(*caller.balance(), tx, block, cfg)?;
 
@@ -234,9 +234,10 @@ pub fn apply_auth_list<
         // warm authority account and check nonce.
         // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
         let mut authority_acc = journal.load_account_with_code_mut(authority)?;
+        let authority_acc_info = &authority_acc.account().info;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
-        if let Some(bytecode) = &authority_acc.info.code {
+        if let Some(bytecode) = &authority_acc_info.code {
             // if it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
                 continue;
@@ -244,12 +245,16 @@ pub fn apply_auth_list<
         }
 
         // 6. Verify the nonce of `authority` is equal to `nonce`. In case `authority` does not exist in the trie, verify that `nonce` is equal to `0`.
-        if authorization.nonce() != authority_acc.info.nonce {
+        if authorization.nonce() != authority_acc_info.nonce {
             continue;
         }
 
         // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !(authority_acc.is_empty() && authority_acc.is_loaded_as_not_existing_not_touched()) {
+        if !(authority_acc_info.is_empty()
+            && authority_acc
+                .account()
+                .is_loaded_as_not_existing_not_touched())
+        {
             refunded_accounts += 1;
         }
 

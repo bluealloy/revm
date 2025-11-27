@@ -7,6 +7,7 @@ use crate::{
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
     journaled_state::account::JournaledAccountTr,
+    ErasedError,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -22,9 +23,7 @@ pub trait JournalTr {
     /// State type that is returned by the journal after finalization.
     type State;
     /// Journaled account type that is used in the journal.
-    type JournaledAccount<'a>: JournaledAccountTr<
-        DatabaseError = <Self::Database as Database>::Error,
-    >
+    type JournaledAccount<'a>: JournaledAccountTr
     where
         Self: 'a;
 
@@ -305,6 +304,9 @@ pub enum JournalLoadError<E> {
     ColdLoadSkipped,
 }
 
+/// Journal error on loading of storage or account with Boxed Database error.
+pub type JournalLoadErasedError = JournalLoadError<ErasedError>;
+
 impl<E> JournalLoadError<E> {
     /// Returns true if the error is a database error.
     #[inline]
@@ -344,6 +346,18 @@ impl<E> JournalLoadError<E> {
         match self {
             JournalLoadError::DBError(e) => (LoadError::DBError, Some(e)),
             JournalLoadError::ColdLoadSkipped => (LoadError::ColdLoadSkipped, None),
+        }
+    }
+
+    /// Maps the database error to a new error.
+    #[inline]
+    pub fn map<B, F>(self, f: F) -> JournalLoadError<B>
+    where
+        F: FnOnce(E) -> B,
+    {
+        match self {
+            JournalLoadError::DBError(e) => JournalLoadError::DBError(f(e)),
+            JournalLoadError::ColdLoadSkipped => JournalLoadError::ColdLoadSkipped,
         }
     }
 }

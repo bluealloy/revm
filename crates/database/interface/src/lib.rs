@@ -8,7 +8,6 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::string::String;
@@ -51,7 +50,7 @@ impl DBErrorMarker for String {}
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker + core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -83,7 +82,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker + core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

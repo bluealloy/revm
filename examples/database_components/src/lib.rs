@@ -28,7 +28,10 @@ pub struct DatabaseComponents<S, BH> {
 /// Error type for database component operations.
 /// Wraps errors from both state and block hash components.
 #[derive(Debug, thiserror::Error)]
-pub enum DatabaseComponentError<SE, BHE> {
+pub enum DatabaseComponentError<
+    SE: core::error::Error + Send + Sync + 'static,
+    BHE: core::error::Error + Send + Sync + 'static,
+> {
     /// Error from state component operations
     #[error(transparent)]
     State(SE),
@@ -37,7 +40,19 @@ pub enum DatabaseComponentError<SE, BHE> {
     BlockHash(BHE),
 }
 
-impl<SE, BHE> DBErrorMarker for DatabaseComponentError<SE, BHE> {}
+impl<
+        SE: core::error::Error + Send + Sync + 'static,
+        BHE: core::error::Error + Send + Sync + 'static,
+    > DBErrorMarker for DatabaseComponentError<SE, BHE>
+{
+}
+
+unsafe impl<
+        SE: core::error::Error + Send + Sync + 'static,
+        BHE: core::error::Error + Send + Sync + 'static,
+    > Send for DatabaseComponentError<SE, BHE>
+{
+}
 
 impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;

@@ -54,7 +54,7 @@ where
         // Load caller's account.
         let mut caller_account = journal.load_account_with_code_mut(tx.caller())?;
 
-        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
+        validate_account_nonce_and_code_with_components(&caller_account.account().info, tx, cfg)?;
 
         // make changes to the account. Account balance stays the same
         caller_account.touch();
