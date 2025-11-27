@@ -4,7 +4,7 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        account::JournaledAccount,
+        account::{JournaledAccount, JournaledAccountTr},
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
         AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
     },

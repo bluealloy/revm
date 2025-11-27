@@ -25,6 +25,7 @@ primitives.workspace = true
 # misc
 auto_impl.workspace = true
 either.workspace = true
+thiserror.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

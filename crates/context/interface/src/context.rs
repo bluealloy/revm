@@ -156,7 +156,7 @@ pub trait ContextTr: Host {
 
 /// Inner Context error used for Interpreter to set error without returning it from instruction
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ContextError<DbError> {
     /// Database error.
     Db(DbError),
