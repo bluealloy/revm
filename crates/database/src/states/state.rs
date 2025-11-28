@@ -166,7 +166,10 @@ impl<DB: Database> State<DB> {
     }
 
     /// Applies evm transitions to transition state.
-    pub fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
+    pub fn apply_transition(
+        &mut self,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+    ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
@@ -315,9 +318,18 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    fn commit(&mut self, evm_state: HashMap<Address, Account>) {
-        let transitions = self.cache.apply_evm_state(evm_state);
-        self.apply_transition(transitions);
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        let transitions = self.cache.apply_evm_state(changes);
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
+        }
+    }
+
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        let transitions = self.cache.apply_evm_state(changes);
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
+        }
     }
 }
 

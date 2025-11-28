@@ -3,7 +3,7 @@ use super::{
 };
 use bytecode::Bytecode;
 use primitives::{Address, HashMap, B256};
-use state::{Account, AccountInfo, EvmState};
+use state::{Account, AccountInfo};
 use std::vec::Vec;
 
 /// Cache state contains both modified and original values
@@ -89,14 +89,14 @@ impl CacheState {
     }
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
-    pub fn apply_evm_state(&mut self, evm_state: EvmState) -> Vec<(Address, TransitionAccount)> {
-        let mut transitions = Vec::with_capacity(evm_state.len());
-        for (address, account) in evm_state {
-            if let Some(transition) = self.apply_account_state(address, account) {
-                transitions.push((address, transition));
-            }
-        }
-        transitions
+    pub fn apply_evm_state<'a>(
+        &'a mut self,
+        evm_state: impl IntoIterator<Item = (Address, Account)> + 'a,
+    ) -> impl Iterator<Item = (Address, TransitionAccount)> + 'a {
+        evm_state.into_iter().filter_map(|(address, account)| {
+            self.apply_account_state(address, account)
+                .map(|transition| (address, transition))
+        })
     }
 
     /// Pretty print the cache state for debugging purposes.
