@@ -72,6 +72,16 @@ pub trait Database {
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
+
+    /// Commit changes to the database with an iterator.
+    ///
+    /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
+    ///
+    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        self.commit(changes);
+    }
 }
 
 /// EVM database interface.
