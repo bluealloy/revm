@@ -1,3 +1,4 @@
+pub mod exception_map;
 pub mod merkle_trie;
 mod runner;
 pub mod utils;

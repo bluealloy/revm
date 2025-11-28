@@ -169,6 +169,12 @@ pub fn validate_tx_env<CTX: ContextTr>(
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
+            // EIP-4844: Blob transactions cannot be create transactions.
+            // The `to` field must be present (i.e., must be a CALL, not CREATE).
+            if tx.kind().is_create() {
+                return Err(InvalidTransaction::BlobCreateTransaction);
+            }
+
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
                 tx.max_priority_fee_per_gas().unwrap_or_default(),
@@ -187,6 +193,12 @@ pub fn validate_tx_env<CTX: ContextTr>(
             // Check if EIP-7702 transaction is enabled.
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported);
+            }
+
+            // EIP-7702: SetCode transactions cannot be create transactions.
+            // The `to` field must be present (i.e., must be a CALL, not CREATE).
+            if tx.kind().is_create() {
+                return Err(InvalidTransaction::Eip7702CreateTransaction);
             }
 
             validate_priority_fee_tx(
