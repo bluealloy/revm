@@ -3,7 +3,7 @@
 //!
 //! Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 
-use crate::journaled_state::{entry::JournalEntry, JournalLoadErasedError};
+use crate::journaled_state::entry::JournalEntry;
 
 use super::entry::JournalEntryTr;
 use auto_impl::auto_impl;
@@ -16,9 +16,6 @@ use std::vec::Vec;
 pub trait JournaledAccountTr {
     /// Returns the account.
     fn account(&self) -> &Account;
-
-    /// Loads the code of the account. and returns it as reference.
-    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadErasedError>;
 
     /// Returns the balance of the account.
     fn balance(&self) -> &U256;
@@ -131,6 +128,11 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
 }
 
 impl<'a, ENTRY: JournalEntryTr> JournaledAccountTr for JournaledAccount<'a, ENTRY> {
+    /// Returns the account.
+    fn account(&self) -> &Account {
+        self.account
+    }
+
     /// Returns the balance of the account.
     #[inline]
     fn balance(&self) -> &U256 {
@@ -292,15 +294,5 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccountTr for JournaledAccount<'a, ENTR
         self.touch();
         self.set_code(hash, bytecode);
         self.bump_nonce();
-    }
-
-    /// Returns the account.
-    fn account(&self) -> &Account {
-        self.account
-    }
-
-    #[doc = " Loads the code of the account. and returns it as reference."]
-    fn load_code(&mut self) -> Result<&Bytecode, JournalLoadErasedError> {
-        todo!()
     }
 }

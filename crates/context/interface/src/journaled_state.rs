@@ -7,7 +7,6 @@ use crate::{
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
     journaled_state::account::JournaledAccountTr,
-    ErasedError,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -304,9 +303,6 @@ pub enum JournalLoadError<E> {
     /// Cold load skipped.
     ColdLoadSkipped,
 }
-
-/// Journal error on loading of storage or account with Boxed Database error.
-pub type JournalLoadErasedError = JournalLoadError<ErasedError>;
 
 impl<E> JournalLoadError<E> {
     /// Returns true if the error is a database error.
