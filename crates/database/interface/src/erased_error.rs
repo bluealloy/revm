@@ -1,5 +1,7 @@
 //! Erased error type.
 
+use std::boxed::Box;
+
 /// Erased error type.
 #[derive(thiserror::Error, Debug)]
 #[error(transparent)]

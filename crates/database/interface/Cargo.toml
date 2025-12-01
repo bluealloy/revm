@@ -37,6 +37,12 @@ tokio = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "state/std", "either/std"]
+std = [
+    "serde?/std",
+    "primitives/std",
+    "state/std",
+    "either/std",
+    "thiserror/std",
+]
 serde = ["dep:serde", "primitives/serde", "state/serde", "either/serde"]
 asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]
