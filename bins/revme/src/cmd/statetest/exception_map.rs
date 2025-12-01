@@ -74,7 +74,10 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
 
         // === Gas Limit Errors ===
         "TransactionException.INTRINSIC_GAS_TOO_LOW" => {
-            matches!(error, InvalidTransaction::CallGasCostMoreThanGasLimit { .. })
+            matches!(
+                error,
+                InvalidTransaction::CallGasCostMoreThanGasLimit { .. }
+            )
         }
         "TransactionException.INTRINSIC_GAS_BELOW_FLOOR_GAS_COST" => {
             matches!(error, InvalidTransaction::GasFloorMoreThanGasLimit { .. })
@@ -101,7 +104,7 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         "TransactionException.INSUFFICIENT_ACCOUNT_FUNDS" => {
             matches!(error, InvalidTransaction::LackOfFundForMaxFee { .. })
         }
-        "TransactionException.SENDER_NOT_EOA" => {
+        "TransactionException.SENDER_NOT_EOA" | "SenderNotEOA" => {
             matches!(error, InvalidTransaction::RejectCallerWithCode)
         }
 
@@ -234,9 +237,7 @@ pub fn error_to_exception_string(error: &InvalidTransaction) -> &'static str {
         // Transaction Type Support
         InvalidTransaction::Eip2930NotSupported
         | InvalidTransaction::Eip1559NotSupported
-        | InvalidTransaction::AccessListNotSupported => {
-            "TransactionException.TYPE_NOT_SUPPORTED"
-        }
+        | InvalidTransaction::AccessListNotSupported => "TransactionException.TYPE_NOT_SUPPORTED",
 
         // Overflows
         InvalidTransaction::OverflowPaymentInTransaction => {
@@ -257,6 +258,7 @@ pub fn error_to_exception_string(error: &InvalidTransaction) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use revm::primitives::U256;
 
     #[test]
     fn test_blob_create_transaction() {
@@ -279,8 +281,8 @@ mod tests {
     #[test]
     fn test_multiple_exceptions_pipe_separated() {
         let error = InvalidTransaction::LackOfFundForMaxFee {
-            fee: Box::new(1000u64.into()),
-            balance: Box::new(100u64.into()),
+            fee: Box::new(U256::from(1000)),
+            balance: Box::new(U256::from(100)),
         };
         assert!(error_matches_exception(
             &error,
