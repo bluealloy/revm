@@ -1,5 +1,5 @@
 use revm::{
-    context::Cfg,
+    context::{journaled_state::account::JournaledAccountTr, Cfg},
     context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
     handler::{
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
@@ -61,6 +61,8 @@ where
         if tx.kind().is_call() {
             caller_account.bump_nonce();
         }
+
+        drop(caller_account); // drop the loaded account to avoid borrow checker issues.
 
         let account_balance_slot = erc_address_storage(tx.caller());
 

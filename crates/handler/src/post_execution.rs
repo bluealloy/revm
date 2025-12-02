@@ -1,4 +1,5 @@
 use crate::FrameResult;
+use context::journaled_state::account::JournaledAccountTr;
 use context_interface::{
     journaled_state::JournalTr,
     result::{ExecutionResult, HaltReason, HaltReasonTr},

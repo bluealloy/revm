@@ -5,7 +5,7 @@ use crate::{
 use context::result::FromStringError;
 use context_interface::{
     context::ContextError,
-    journaled_state::{JournalCheckpoint, JournalTr},
+    journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
     Cfg, ContextTr, Database,
 };
@@ -276,7 +276,8 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Fetch balance of caller.
-        let mut caller_info = context.journal_mut().load_account_mut(inputs.caller)?;
+        let journal = context.journal_mut();
+        let mut caller_info = journal.load_account_mut(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
         // decrement of balance is done in the create_account_checkpoint.
@@ -301,8 +302,10 @@ impl EthFrame<EthInterpreter> {
             CreateScheme::Custom { address } => address,
         };
 
+        drop(caller_info); // drop the loaded account to avoid borrow checker issues.
+
         // warm load account.
-        context.journal_mut().load_account(created_address)?;
+        journal.load_account(created_address)?;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(

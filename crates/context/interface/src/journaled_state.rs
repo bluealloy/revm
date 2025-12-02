@@ -6,7 +6,7 @@ pub mod entry;
 use crate::{
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
-    journaled_state::{account::JournaledAccount, entry::JournalEntryTr},
+    journaled_state::account::JournaledAccountTr,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -15,15 +15,18 @@ use primitives::{
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
-
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     /// Database type that is used in the journal.
     type Database: Database;
     /// State type that is returned by the journal after finalization.
     type State;
-    /// Journal Entry type that is used in the journal.
-    type JournalEntry: JournalEntryTr;
+    /// Journaled account type that is used in the journal.
+    type JournaledAccount<'a>: JournaledAccountTr<
+        DatabaseError = <Self::Database as Database>::Error,
+    >
+    where
+        Self: 'a;
 
     /// Creates new Journaled state.
     ///
@@ -186,10 +189,7 @@ pub trait JournalTr {
     fn load_account_mut(
         &mut self,
         address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
         self.load_account_mut_optional_code(address, false)
     }
 
@@ -198,10 +198,7 @@ pub trait JournalTr {
     fn load_account_with_code_mut(
         &mut self,
         address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
         self.load_account_mut_optional_code(address, true)
     }
 
@@ -210,10 +207,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    >;
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error>;
 
     /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
@@ -457,6 +451,7 @@ pub struct AccountInfoLoad<'a> {
 
 impl<'a> AccountInfoLoad<'a> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
+    #[inline]
     pub fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
         Self {
             account: Cow::Borrowed(account),
@@ -468,6 +463,7 @@ impl<'a> AccountInfoLoad<'a> {
     /// Maps the account info of the [`AccountInfoLoad`] to a new [`StateLoad`].
     ///
     /// Useful for transforming the account info of the [`AccountInfoLoad`] and preserving the cold load status.
+    #[inline]
     pub fn into_state_load<F, O>(self, f: F) -> StateLoad<O>
     where
         F: FnOnce(Cow<'a, AccountInfo>) -> O,
