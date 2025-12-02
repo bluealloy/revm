@@ -3,13 +3,17 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{B256, KECCAK_EMPTY, U256};
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize};
+
+use primitives::{hardfork, B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
+#[cfg_attr(feature = "serde", derive(Serialize))]
 #[derive(Clone, Debug, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
@@ -24,6 +28,109 @@ pub struct AccountInfo {
     ///
     /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
+}
+
+// Manual Deserialize implementation to support both formats
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for AccountInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use core::fmt;
+        use serde::de::{self, MapAccess, Visitor};
+
+        struct AccountInfoVisitor;
+
+        impl<'de> Visitor<'de> for AccountInfoVisitor {
+            type Value = AccountInfo;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("struct AccountInfo")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<AccountInfo, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut balance = None;
+                let mut nonce = None;
+                let mut code_hash = None;
+                let mut code = None;
+
+                while let Some(key) = map.next_key::<hardfork::String>()? {
+                    match key.as_str() {
+                        "balance" => {
+                            if balance.is_some() {
+                                return Err(de::Error::duplicate_field("balance"));
+                            }
+                            balance = Some(map.next_value()?);
+                        }
+                        "nonce" => {
+                            if nonce.is_some() {
+                                return Err(de::Error::duplicate_field("nonce"));
+                            }
+                            nonce = Some(map.next_value()?);
+                        }
+                        "code_hash" | "codeHash" => {
+                            if code_hash.is_some() {
+                                return Err(de::Error::duplicate_field("code_hash/codeHash"));
+                            }
+                            code_hash = Some(map.next_value()?);
+                        }
+                        "code" => {
+                            if code.is_some() {
+                                return Err(de::Error::duplicate_field("code"));
+                            }
+                            code = Some(map.next_value()?);
+                        }
+                        _ => {
+                            let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+
+                let balance = balance.ok_or_else(|| de::Error::missing_field("balance"))?;
+                let nonce = nonce.ok_or_else(|| de::Error::missing_field("nonce"))?;
+
+                match (code_hash, code) {
+                    (Some(hash), Some(bytecode)) => Ok(AccountInfo {
+                        balance,
+                        nonce,
+                        code_hash: hash,
+                        code: Some(bytecode),
+                    }),
+                    (Some(hash), None) => Ok(AccountInfo {
+                        balance,
+                        nonce,
+                        code_hash: hash,
+                        code: None,
+                    }),
+                    (None, Some(bytecode)) => {
+                        let computed_hash = bytecode.hash_slow();
+                        Ok(AccountInfo {
+                            balance,
+                            nonce,
+                            code_hash: computed_hash,
+                            code: Some(bytecode),
+                        })
+                    }
+                    (None, None) => Ok(AccountInfo {
+                        balance,
+                        nonce,
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                }
+            }
+        }
+
+        deserializer.deserialize_struct(
+            "AccountInfo",
+            &["balance", "nonce", "code_hash", "codeHash", "code"],
+            AccountInfoVisitor,
+        )
+    }
 }
 
 impl Default for AccountInfo {
