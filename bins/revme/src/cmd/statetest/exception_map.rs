@@ -3,7 +3,7 @@
 //! This module provides mapping between REVM's `InvalidTransaction` errors
 //! and EEST's `TransactionException` strings used in state tests.
 //!
-//! Reference: https://github.com/ethereum/execution-spec-tests
+//! Reference: <https://github.com/ethereum/execution-spec-tests>
 //! Exception definitions: src/ethereum_test_exceptions/exceptions/transaction.py
 
 use revm::context_interface::result::InvalidTransaction;
@@ -122,7 +122,7 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         }
 
         // === Transaction Type Support Errors ===
-        "TransactionException.TYPE_NOT_SUPPORTED" => {
+        "TransactionException.TYPE_NOT_SUPPORTED" | "TR_TypeNotSupported" => {
             matches!(
                 error,
                 InvalidTransaction::Eip2930NotSupported
