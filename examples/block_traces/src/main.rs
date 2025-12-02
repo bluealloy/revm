@@ -108,9 +108,6 @@ async fn main() -> anyhow::Result<()> {
     let console_bar = Arc::new(ProgressBar::new(txs as u64));
     let start = Instant::now();
 
-    // Create the traces directory if it doesn't exist
-    std::fs::create_dir_all("traces").expect("Failed to create traces directory");
-
     // Fill in CfgEnv
     let BlockTransactions::Full(transactions) = block.transactions else {
         panic!("Wrong transaction type")
