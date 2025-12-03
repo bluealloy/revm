@@ -38,8 +38,7 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
             // In REVM, both are returned as TooManyBlobs since we check against max_blobs_per_tx
             matches!(error, InvalidTransaction::TooManyBlobs { .. })
         }
-        "TransactionException.TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH"
-        | "TR_BLOBVERSION_INVALID" => {
+        "TransactionException.TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH" | "TR_BLOBVERSION_INVALID" => {
             matches!(error, InvalidTransaction::BlobVersionNotSupported)
         }
         "TransactionException.TYPE_3_TX_PRE_FORK" => {
