@@ -89,14 +89,17 @@ impl CacheState {
     }
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
-    pub fn apply_evm_state<'a>(
-        &'a mut self,
-        evm_state: impl IntoIterator<Item = (Address, Account)> + 'a,
-    ) -> impl Iterator<Item = (Address, TransitionAccount)> + 'a {
-        evm_state.into_iter().filter_map(|(address, account)| {
-            self.apply_account_state(address, account)
-                .map(|transition| (address, transition))
-        })
+    pub fn apply_evm_state(
+        &mut self,
+        evm_state: impl IntoIterator<Item = (Address, Account)>,
+    ) -> Vec<(Address, TransitionAccount)> {
+        evm_state
+            .into_iter()
+            .filter_map(|(address, account)| {
+                self.apply_account_state(address, account)
+                    .map(|transition| (address, transition))
+            })
+            .collect()
     }
 
     /// Pretty print the cache state for debugging purposes.
