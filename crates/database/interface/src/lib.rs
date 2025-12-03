@@ -191,9 +191,6 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
         let mut transitions: HashMap<Address, Account> = HashMap::default();
         transitions.reserve(balances.size_hint().0);
         for (address, balance) in balances {
-            if balance == 0 {
-                continue;
-            }
             let mut original_account = match self.basic(address)? {
                 Some(acc_info) => Account::from(acc_info),
                 None => Account::new_not_existing(0),
