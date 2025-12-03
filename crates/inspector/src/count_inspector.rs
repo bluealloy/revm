@@ -1,13 +1,13 @@
 //! CountInspector - Inspector that counts all opcodes that were called.
 use crate::inspector::Inspector;
 use interpreter::{interpreter_types::Jumps, InterpreterTypes};
-use primitives::{HashMap, Log};
+use primitives::Log;
 
 /// Inspector that counts all opcodes that were called during execution.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct CountInspector {
-    /// Map from opcode value to count of times it was executed.
-    opcode_counts: HashMap<u8, u64>,
+    /// Fixed array keyed by opcode value to count executions.
+    opcode_counts: [u64; 256],
     /// Count of initialize_interp calls.
     initialize_interp_count: u64,
     /// Count of step calls.
@@ -28,6 +28,23 @@ pub struct CountInspector {
     selfdestruct_count: u64,
 }
 
+impl Default for CountInspector {
+    fn default() -> Self {
+        Self {
+            opcode_counts: [0; 256],
+            initialize_interp_count: 0,
+            step_count: 0,
+            step_end_count: 0,
+            log_count: 0,
+            call_count: 0,
+            call_end_count: 0,
+            create_count: 0,
+            create_end_count: 0,
+            selfdestruct_count: 0,
+        }
+    }
+}
+
 impl CountInspector {
     /// Create a new CountInspector.
     pub fn new() -> Self {
@@ -36,27 +53,30 @@ impl CountInspector {
 
     /// Get the count for a specific opcode.
     pub fn get_count(&self, opcode: u8) -> u64 {
-        self.opcode_counts.get(&opcode).copied().unwrap_or_default()
+        self.opcode_counts[opcode as usize]
     }
 
     /// Get a reference to all opcode counts.
-    pub fn opcode_counts(&self) -> &HashMap<u8, u64> {
+    pub fn opcode_counts(&self) -> &[u64; 256] {
         &self.opcode_counts
     }
 
     /// Get the total number of opcodes executed.
     pub fn total_opcodes(&self) -> u64 {
-        self.opcode_counts.values().sum()
+        self.opcode_counts.iter().copied().sum()
     }
 
     /// Get the number of unique opcodes executed.
     pub fn unique_opcodes(&self) -> usize {
-        self.opcode_counts.len()
+        self.opcode_counts
+            .iter()
+            .filter(|&&count| count > 0)
+            .count()
     }
 
     /// Clear all counts.
     pub fn clear(&mut self) {
-        self.opcode_counts.clear();
+        self.opcode_counts = [0; 256];
         self.initialize_interp_count = 0;
         self.step_count = 0;
         self.step_end_count = 0;
@@ -126,7 +146,7 @@ impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for CountInspector {
     fn step(&mut self, interp: &mut interpreter::Interpreter<INTR>, _context: &mut CTX) {
         self.step_count += 1;
         let opcode = interp.bytecode.opcode();
-        *self.opcode_counts.entry(opcode).or_insert(0) += 1;
+        self.opcode_counts[opcode as usize] += 1;
     }
 
     fn step_end(&mut self, _interp: &mut interpreter::Interpreter<INTR>, _context: &mut CTX) {
@@ -253,8 +273,8 @@ mod tests {
         let mut inspector = CountInspector::new();
 
         // Add some counts manually for testing
-        *inspector.opcode_counts.entry(opcode::PUSH1).or_insert(0) += 5;
-        *inspector.opcode_counts.entry(opcode::ADD).or_insert(0) += 3;
+        inspector.opcode_counts[opcode::PUSH1 as usize] += 5;
+        inspector.opcode_counts[opcode::ADD as usize] += 3;
         inspector.initialize_interp_count = 2;
         inspector.step_count = 10;
         inspector.step_end_count = 10;
@@ -274,7 +294,6 @@ mod tests {
         inspector.clear();
         assert_eq!(inspector.total_opcodes(), 0);
         assert_eq!(inspector.unique_opcodes(), 0);
-        assert!(inspector.opcode_counts().is_empty());
         assert_eq!(inspector.initialize_interp_count(), 0);
         assert_eq!(inspector.step_count(), 0);
         assert_eq!(inspector.step_end_count(), 0);
@@ -284,6 +303,7 @@ mod tests {
         assert_eq!(inspector.create_count(), 0);
         assert_eq!(inspector.create_end_count(), 0);
         assert_eq!(inspector.selfdestruct_count(), 0);
+        assert!(inspector.opcode_counts().iter().all(|&count| count == 0));
     }
 
     #[test]
