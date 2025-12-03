@@ -651,7 +651,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     {
         let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
         if load_code {
-            load.data.load_code_inner()?;
+            load.data.load_code_preserve_error()?;
         }
         Ok(load.map(|i| i.into_account()))
     }
@@ -684,7 +684,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     {
         let mut load = self.load_account_mut_optional(db, address, skip_cold_load)?;
         if load_code {
-            load.data.load_code_inner()?;
+            load.data.load_code_preserve_error()?;
         }
         Ok(load)
     }
@@ -697,7 +697,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// It will not bump transition_id or return if it is cold or warm loaded. This function is useful
     /// when we know account is warm, touched and already loaded.
     #[inline]
-    pub fn load_account_mut_unsafe<'a, 'db, DB: Database>(
+    pub fn get_account_mut<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
@@ -798,7 +798,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
         self.load_account_mut(db, address)?
-            .sload_inner(key, skip_cold_load)
+            .sload_preserve_error(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
     }
 
@@ -806,19 +806,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// If account is not present it will return [`JournalLoadError::ColdLoadSkipped`] error.
     #[inline]
-    pub fn sload_unsafe<DB: Database>(
+    pub fn sload_assume_account_present<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
-        let Some(mut account) = self.load_account_mut_unsafe(db, address) else {
+        let Some(mut account) = self.get_account_mut(db, address) else {
             return Err(JournalLoadError::ColdLoadSkipped);
         };
 
         account
-            .sload_inner(key, skip_cold_load)
+            .sload_preserve_error(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
     }
 
@@ -835,7 +835,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
         self.load_account_mut(db, address)?
-            .sstore_inner(key, new, skip_cold_load)
+            .sstore_preserve_error(key, new, skip_cold_load)
     }
 
     /// Stores storage slot.
@@ -844,7 +844,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// **Note**: Account should already be present in our state.
     #[inline]
-    pub fn sstore_unsafe<DB: Database>(
+    pub fn sstore_assume_account_present<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -852,11 +852,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
-        let Some(mut account) = self.load_account_mut_unsafe(db, address) else {
+        let Some(mut account) = self.get_account_mut(db, address) else {
             return Err(JournalLoadError::ColdLoadSkipped);
         };
 
-        account.sstore_inner(key, new, skip_cold_load)
+        account.sstore_preserve_error(key, new, skip_cold_load)
     }
 
     /// Read transient storage tied to the account.
@@ -947,7 +947,7 @@ mod tests {
 
         // Try to sload with skip_cold_load=true - should succeed because slot is in access list
         let mut db = EmptyDB::new();
-        let result = journal.sload_unsafe(&mut db, test_address, test_key, true);
+        let result = journal.sload_assume_account_present(&mut db, test_address, test_key, true);
 
         // Should succeed and return as warm
         assert!(result.is_ok());

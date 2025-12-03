@@ -24,14 +24,14 @@ pub trait JournaledAccountTr {
     /// Returns the account.
     fn account(&self) -> &Account;
 
-    /// Creates a new journaled account.
+    /// Sloads the storage slot and returns its mutable reference
     fn sload(
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadErasedError>;
 
-    /// Warm loads storage slot and stores the new value
+    /// Loads the storage slot and stores the new value
     fn sstore(
         &mut self,
         key: StorageKey,
@@ -137,7 +137,7 @@ pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
 }
 
 impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
-    /// Creates a new journaled account.
+    /// Creates new JournaledAccount
     #[inline]
     pub fn new(
         address: Address,
@@ -161,7 +161,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     ///
     /// Does not erase the db error.
     #[inline(never)]
-    pub fn sload_inner(
+    pub fn sload_preserve_error(
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
@@ -216,7 +216,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     ///
     /// Does not erase the db error.
     #[inline]
-    pub fn sstore_inner(
+    pub fn sstore_preserve_error(
         &mut self,
         key: StorageKey,
         new: StorageValue,
@@ -226,7 +226,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         self.touch();
 
         // assume that acc exists and load the slot.
-        let slot = self.sload_inner(key, skip_cold_load)?;
+        let slot = self.sload_preserve_error(key, skip_cold_load)?;
 
         let ret = Ok(StateLoad::new(
             SStoreResult {
@@ -255,7 +255,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     ///
     /// Does not erase the db error.
     #[inline]
-    pub fn load_code_inner(&mut self) -> Result<&Bytecode, JournalLoadError<DB::Error>> {
+    pub fn load_code_preserve_error(&mut self) -> Result<&Bytecode, JournalLoadError<DB::Error>> {
         if self.account.info.code.is_none() {
             let hash = *self.code_hash();
             let code = if hash == KECCAK_EMPTY {
@@ -454,7 +454,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadErasedError> {
-        self.sload_inner(key, skip_cold_load)
+        self.sload_preserve_error(key, skip_cold_load)
             .map_err(|i| i.map(ErasedError::new))
     }
 
@@ -466,13 +466,14 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadErasedError> {
-        self.sstore_inner(key, new, skip_cold_load)
+        self.sstore_preserve_error(key, new, skip_cold_load)
             .map_err(|i| i.map(ErasedError::new))
     }
 
     /// Loads the code of the account. and returns it as reference.
     #[inline]
     fn load_code(&mut self) -> Result<&Bytecode, JournalLoadErasedError> {
-        self.load_code_inner().map_err(|i| i.map(ErasedError::new))
+        self.load_code_preserve_error()
+            .map_err(|i| i.map(ErasedError::new))
     }
 }
