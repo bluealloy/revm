@@ -610,7 +610,7 @@ pub fn run(
     }
 
     // Collect results from all threads
-    let mut thread_errors = Vec::new();
+    let mut thread_errors = Vec::with_capacity(num_threads);
     for (i, handle) in handles.into_iter().enumerate() {
         match handle.join() {
             Ok(Ok(())) => {}
