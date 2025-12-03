@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.2.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v14.2.0) - 2025-12-03
+
+### Added
+
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Other
+
+- optimize vector initialization using size hints ([#3200](https://github.com/bluealloy/revm/pull/3200))
+- apply_auth_list helper fn ([#3187](https://github.com/bluealloy/revm/pull/3187))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.0.0...revm-handler-v14.1.0) - 2025-11-14
 
 ### Other

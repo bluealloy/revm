@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.0](https://github.com/bluealloy/revm/compare/revme-v10.0.2...revme-v10.1.0) - 2025-12-03
+
+### Added
+
+- DatabaseCommitExt + increment_balances ([#3195](https://github.com/bluealloy/revm/pull/3195))
+- sort accounts by address in blockchaintest output ([#3182](https://github.com/bluealloy/revm/pull/3182))
+
+### Other
+
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [10.0.2](https://github.com/bluealloy/revm/compare/revme-v10.0.0...revme-v10.0.2) - 2025-11-14
 
 ### Other
