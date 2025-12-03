@@ -89,6 +89,7 @@ impl CacheState {
     }
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
+    #[inline]
     pub fn apply_evm_state(
         &mut self,
         evm_state: impl IntoIterator<Item = (Address, Account)>,
