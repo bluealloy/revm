@@ -23,21 +23,23 @@ pub fn error_matches_exception(error: &InvalidTransaction, expected_exception: &
 fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -> bool {
     match exception {
         // === EIP-4844 Blob Transaction Errors ===
-        "TransactionException.TYPE_3_TX_CONTRACT_CREATION" => {
+        "TransactionException.TYPE_3_TX_CONTRACT_CREATION" | "TR_BLOBCREATE" => {
             matches!(error, InvalidTransaction::BlobCreateTransaction)
         }
-        "TransactionException.TYPE_3_TX_ZERO_BLOBS" => {
+        "TransactionException.TYPE_3_TX_ZERO_BLOBS" | "TR_EMPTYBLOB" => {
             matches!(error, InvalidTransaction::EmptyBlobs)
         }
         "TransactionException.TYPE_3_TX_BLOB_COUNT_EXCEEDED"
-        | "TransactionException.TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED" => {
+        | "TransactionException.TYPE_3_TX_MAX_BLOB_GAS_ALLOWANCE_EXCEEDED"
+        | "TR_BLOBLIST_OVERSIZE" => {
             // Both exceptions can map to TooManyBlobs - the difference is semantic:
             // - BLOB_COUNT_EXCEEDED: transaction has too many blobs for the tx limit
             // - MAX_BLOB_GAS_ALLOWANCE_EXCEEDED: transaction would exceed block blob gas
             // In REVM, both are returned as TooManyBlobs since we check against max_blobs_per_tx
             matches!(error, InvalidTransaction::TooManyBlobs { .. })
         }
-        "TransactionException.TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH" => {
+        "TransactionException.TYPE_3_TX_INVALID_BLOB_VERSIONED_HASH"
+        | "TR_BLOBVERSION_INVALID" => {
             matches!(error, InvalidTransaction::BlobVersionNotSupported)
         }
         "TransactionException.TYPE_3_TX_PRE_FORK" => {
@@ -65,15 +67,19 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
 
         // === EIP-1559 Fee Errors ===
         "TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS"
-        | "TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS_2" => {
+        | "TransactionException.PRIORITY_GREATER_THAN_MAX_FEE_PER_GAS_2"
+        | "TR_TipGtFeeCap" => {
             matches!(error, InvalidTransaction::PriorityFeeGreaterThanMaxFee)
         }
-        "TransactionException.INSUFFICIENT_MAX_FEE_PER_GAS" => {
+        "TransactionException.INSUFFICIENT_MAX_FEE_PER_GAS" | "TR_FeeCapLessThanBlocks" => {
             matches!(error, InvalidTransaction::GasPriceLessThanBasefee)
         }
 
         // === Gas Limit Errors ===
-        "TransactionException.INTRINSIC_GAS_TOO_LOW" => {
+        "TransactionException.INTRINSIC_GAS_TOO_LOW"
+        | "TR_IntrinsicGas"
+        | "TR_NoFundsOrGas"
+        | "IntrinsicGas" => {
             matches!(
                 error,
                 InvalidTransaction::CallGasCostMoreThanGasLimit { .. }
@@ -82,7 +88,7 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         "TransactionException.INTRINSIC_GAS_BELOW_FLOOR_GAS_COST" => {
             matches!(error, InvalidTransaction::GasFloorMoreThanGasLimit { .. })
         }
-        "TransactionException.GAS_ALLOWANCE_EXCEEDED" => {
+        "TransactionException.GAS_ALLOWANCE_EXCEEDED" | "TR_GasLimitReached" => {
             matches!(error, InvalidTransaction::CallerGasLimitMoreThanBlock)
         }
         "TransactionException.GAS_LIMIT_EXCEEDS_MAXIMUM" => {
@@ -101,7 +107,8 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         }
 
         // === Account/Balance Errors ===
-        "TransactionException.INSUFFICIENT_ACCOUNT_FUNDS" => {
+        // Note: TR_NoFundsOrGas is also handled above in gas limit errors (maps to either condition)
+        "TransactionException.INSUFFICIENT_ACCOUNT_FUNDS" | "TR_NoFunds" => {
             matches!(error, InvalidTransaction::LackOfFundForMaxFee { .. })
         }
         "TransactionException.SENDER_NOT_EOA" | "SenderNotEOA" => {
@@ -109,7 +116,7 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         }
 
         // === Contract Creation Errors ===
-        "TransactionException.INITCODE_SIZE_EXCEEDED" => {
+        "TransactionException.INITCODE_SIZE_EXCEEDED" | "TR_InitCodeLimitExceeded" => {
             matches!(error, InvalidTransaction::CreateInitCodeSizeLimit)
         }
 
@@ -137,7 +144,8 @@ fn error_matches_single_exception(error: &InvalidTransaction, exception: &str) -
         "TransactionException.GASLIMIT_PRICE_PRODUCT_OVERFLOW"
         | "TransactionException.VALUE_OVERFLOW"
         | "TransactionException.GASPRICE_OVERFLOW"
-        | "TransactionException.PRIORITY_OVERFLOW" => {
+        | "TransactionException.PRIORITY_OVERFLOW"
+        | "TR_NoFundsX" => {
             matches!(error, InvalidTransaction::OverflowPaymentInTransaction)
         }
 
