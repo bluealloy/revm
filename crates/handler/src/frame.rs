@@ -2,7 +2,7 @@ use crate::{
     evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
     CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
 };
-use context::result::FromStringError;
+use context::{journaled_state::account::JournaledAccountTr, result::FromStringError};
 use context_interface::{
     context::ContextError,
     journaled_state::{JournalCheckpoint, JournalTr},
@@ -300,6 +300,8 @@ impl EthFrame<EthInterpreter> {
             }
             CreateScheme::Custom { address } => address,
         };
+
+        drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
         context.journal_mut().load_account(created_address)?;

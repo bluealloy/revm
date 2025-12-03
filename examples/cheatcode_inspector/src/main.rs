@@ -8,7 +8,7 @@
 
 use revm::{
     context::{
-        journaled_state::{AccountInfoLoad, JournalLoadError},
+        journaled_state::{account::JournaledAccount, AccountInfoLoad, JournalLoadError},
         result::InvalidTransaction,
         BlockEnv, Cfg, CfgEnv, ContextTr, Evm, LocalContext, TxEnv,
     },
@@ -60,7 +60,10 @@ impl Backend {
 impl JournalTr for Backend {
     type Database = InMemoryDB;
     type State = EvmState;
-    type JournalEntry = JournalEntry;
+    type JournaledAccount<'a>
+        = JournaledAccount<'a>
+    where
+        Self: 'a;
 
     fn new(database: InMemoryDB) -> Self {
         Self::new(SpecId::default(), database)
@@ -306,12 +309,7 @@ impl JournalTr for Backend {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<
-            revm::context::journaled_state::account::JournaledAccount<'_, Self::JournalEntry>,
-        >,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
         self.journaled_state
             .load_account_mut_optional_code(address, load_code)
     }

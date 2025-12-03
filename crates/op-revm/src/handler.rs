@@ -6,7 +6,11 @@ use crate::{
     L1BlockInfo, OpHaltReason, OpSpecId,
 };
 use revm::{
-    context::{journaled_state::JournalCheckpoint, result::InvalidTransaction, LocalContextTr},
+    context::{
+        journaled_state::{account::JournaledAccountTr, JournalCheckpoint},
+        result::InvalidTransaction,
+        LocalContextTr,
+    },
     context_interface::{
         context::ContextError,
         result::{EVMError, ExecutionResult, FromStringError},
@@ -146,10 +150,10 @@ where
         let mut caller_account = journal.load_account_with_code_mut(tx.caller())?.data;
 
         // validates account nonce and code
-        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
+        validate_account_nonce_and_code_with_components(&caller_account.account().info, tx, cfg)?;
 
         // check additional cost and deduct it from the caller's balances
-        let mut balance = caller_account.info.balance;
+        let mut balance = caller_account.account().info.balance;
 
         if !cfg.is_fee_charge_disabled() {
             let Some(additional_cost) = chain.tx_cost_with_tx(tx, spec) else {
@@ -403,6 +407,8 @@ where
             let mut acc = journal.load_account_mut(caller)?;
             acc.bump_nonce();
             acc.incr_balance(U256::from(mint.unwrap_or_default()));
+
+            drop(acc); // Drop acc to avoid borrow checker issues.
 
             // We can now commit the changes.
             journal.commit_tx();

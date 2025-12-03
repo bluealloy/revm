@@ -92,7 +92,10 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
     type State = EvmState;
-    type JournalEntry = ENTRY;
+    type JournaledAccount<'a>
+        = JournaledAccount<'a, ENTRY>
+    where
+        Self: 'a;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
@@ -257,10 +260,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, DB::Error> {
         self.inner
             .load_account_mut_optional_code(&mut self.database, address, load_code, false)
             .map_err(JournalLoadError::unwrap_db_error)

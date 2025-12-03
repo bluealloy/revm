@@ -3,17 +3,100 @@
 //!
 //! Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 
+use crate::journaled_state::entry::JournalEntry;
+
 use super::entry::JournalEntryTr;
-use core::ops::Deref;
+use auto_impl::auto_impl;
 use primitives::{Address, B256, KECCAK_EMPTY, U256};
 use state::{Account, Bytecode};
 use std::vec::Vec;
+
+/// Trait that contains database and journal of all changes that were made to the account.
+#[auto_impl(&mut, Box)]
+pub trait JournaledAccountTr {
+    /// Returns the account.
+    fn account(&self) -> &Account;
+
+    /// Returns the balance of the account.
+    fn balance(&self) -> &U256;
+
+    /// Returns the nonce of the account.
+    fn nonce(&self) -> u64;
+
+    /// Returns the code hash of the account.
+    fn code_hash(&self) -> &B256;
+
+    /// Returns the code of the account.
+    fn code(&self) -> Option<&Bytecode>;
+
+    /// Touches the account.
+    fn touch(&mut self);
+
+    /// Marks the account as cold without making a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    ///
+    /// If account is in access list, it would still be marked as warm if account get accessed again.
+    fn unsafe_mark_cold(&mut self);
+
+    /// Sets the balance of the account.
+    ///
+    /// If balance is the same, we don't add a journal entry.
+    ///
+    /// Touches the account in all cases.
+    fn set_balance(&mut self, balance: U256);
+
+    /// Increments the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    fn incr_balance(&mut self, balance: U256) -> bool;
+
+    /// Decrements the balance of the account.
+    ///
+    /// Touches the account in all cases.
+    fn decr_balance(&mut self, balance: U256) -> bool;
+
+    /// Bumps the nonce of the account.
+    ///
+    /// Touches the account in all cases.
+    ///
+    /// Returns true if nonce was bumped, false if nonce is at the max value.
+    fn bump_nonce(&mut self) -> bool;
+
+    /// Set the nonce of the account and create a journal entry.
+    ///
+    /// Touches the account in all cases.
+    fn set_nonce(&mut self, nonce: u64);
+
+    /// Set the nonce of the account without creating a journal entry.
+    ///
+    /// Changing account without journal entry can be a footgun as reverting of the state change
+    /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
+    fn unsafe_set_nonce(&mut self, nonce: u64);
+
+    /// Sets the code of the account.
+    ///
+    /// Touches the account in all cases.
+    fn set_code(&mut self, code_hash: B256, code: Bytecode);
+
+    /// Sets the code of the account. Calculates hash of the code.
+    ///
+    /// Touches the account in all cases.
+    fn set_code_and_hash_slow(&mut self, code: Bytecode);
+
+    /// Delegates the account to another address (EIP-7702).
+    ///
+    /// This touches the account, sets the code to the delegation designation,
+    /// and bumps the nonce.
+    fn delegate(&mut self, address: Address);
+}
 
 /// Journaled account contains both mutable account and journal entries.
 ///
 /// Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 #[derive(Debug, PartialEq, Eq)]
-pub struct JournaledAccount<'a, ENTRY: JournalEntryTr> {
+pub struct JournaledAccount<'a, ENTRY: JournalEntryTr = JournalEntry> {
     /// Address of the account.
     address: Address,
     /// Mutable account.
@@ -42,34 +125,41 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
             journal_entries,
         }
     }
+}
+
+impl<'a, ENTRY: JournalEntryTr> JournaledAccountTr for JournaledAccount<'a, ENTRY> {
+    /// Returns the account.
+    fn account(&self) -> &Account {
+        self.account
+    }
 
     /// Returns the balance of the account.
     #[inline]
-    pub fn balance(&self) -> &U256 {
+    fn balance(&self) -> &U256 {
         &self.account.info.balance
     }
 
     /// Returns the nonce of the account.
     #[inline]
-    pub fn nonce(&self) -> u64 {
+    fn nonce(&self) -> u64 {
         self.account.info.nonce
     }
 
     /// Returns the code hash of the account.
     #[inline]
-    pub fn code_hash(&self) -> &B256 {
+    fn code_hash(&self) -> &B256 {
         &self.account.info.code_hash
     }
 
     /// Returns the code of the account.
     #[inline]
-    pub fn code(&self) -> Option<&Bytecode> {
+    fn code(&self) -> Option<&Bytecode> {
         self.account.info.code.as_ref()
     }
 
     /// Touches the account.
     #[inline]
-    pub fn touch(&mut self) {
+    fn touch(&mut self) {
         if !self.account.status.is_touched() {
             self.account.mark_touch();
             self.journal_entries
@@ -84,7 +174,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// If account is in access list, it would still be marked as warm if account get accessed again.
     #[inline]
-    pub fn unsafe_mark_cold(&mut self) {
+    fn unsafe_mark_cold(&mut self) {
         self.account.mark_cold();
     }
 
@@ -94,7 +184,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn set_balance(&mut self, balance: U256) {
+    fn set_balance(&mut self, balance: U256) {
         self.touch();
         if self.account.info.balance != balance {
             self.journal_entries.push(ENTRY::balance_changed(
@@ -109,7 +199,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn incr_balance(&mut self, balance: U256) -> bool {
+    fn incr_balance(&mut self, balance: U256) -> bool {
         self.touch();
         let Some(balance) = self.account.info.balance.checked_add(balance) else {
             return false;
@@ -122,7 +212,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn decr_balance(&mut self, balance: U256) -> bool {
+    fn decr_balance(&mut self, balance: U256) -> bool {
         self.touch();
         let Some(balance) = self.account.info.balance.checked_sub(balance) else {
             return false;
@@ -137,7 +227,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Returns true if nonce was bumped, false if nonce is at the max value.
     #[inline]
-    pub fn bump_nonce(&mut self) -> bool {
+    fn bump_nonce(&mut self) -> bool {
         self.touch();
         let Some(nonce) = self.account.info.nonce.checked_add(1) else {
             return false;
@@ -151,7 +241,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn set_nonce(&mut self, nonce: u64) {
+    fn set_nonce(&mut self, nonce: u64) {
         self.touch();
         let previous_nonce = self.account.info.nonce;
         self.account.info.set_nonce(nonce);
@@ -164,7 +254,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     /// Changing account without journal entry can be a footgun as reverting of the state change
     /// would not happen without entry. It is the reason why this function has an `unsafe` prefix.
     #[inline]
-    pub fn unsafe_set_nonce(&mut self, nonce: u64) {
+    fn unsafe_set_nonce(&mut self, nonce: u64) {
         self.account.info.set_nonce(nonce);
     }
 
@@ -172,7 +262,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn set_code(&mut self, code_hash: B256, code: Bytecode) {
+    fn set_code(&mut self, code_hash: B256, code: Bytecode) {
         self.touch();
         self.account.info.set_code_hash(code_hash);
         self.account.info.set_code(code);
@@ -183,7 +273,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     ///
     /// Touches the account in all cases.
     #[inline]
-    pub fn set_code_and_hash_slow(&mut self, code: Bytecode) {
+    fn set_code_and_hash_slow(&mut self, code: Bytecode) {
         let code_hash = code.hash_slow();
         self.set_code(code_hash, code);
     }
@@ -193,7 +283,7 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
     /// This touches the account, sets the code to the delegation designation,
     /// and bumps the nonce.
     #[inline]
-    pub fn delegate(&mut self, address: Address) {
+    fn delegate(&mut self, address: Address) {
         let (bytecode, hash) = if address.is_zero() {
             (Bytecode::default(), KECCAK_EMPTY)
         } else {
@@ -204,13 +294,5 @@ impl<'a, ENTRY: JournalEntryTr> JournaledAccount<'a, ENTRY> {
         self.touch();
         self.set_code(hash, bytecode);
         self.bump_nonce();
-    }
-}
-
-impl<'a, ENTRY: JournalEntryTr> Deref for JournaledAccount<'a, ENTRY> {
-    type Target = Account;
-
-    fn deref(&self) -> &Self::Target {
-        self.account
     }
 }

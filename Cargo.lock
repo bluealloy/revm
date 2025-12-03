@@ -3617,6 +3617,7 @@ dependencies = [
  "revm-primitives",
  "revm-state",
  "serde",
+ "thiserror",
  "tokio",
 ]
 

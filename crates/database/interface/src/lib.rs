@@ -8,10 +8,8 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -32,26 +30,27 @@ pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 pub mod async_db;
 pub mod either;
 pub mod empty_db;
+pub mod erased_error;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
+pub use erased_error::ErasedError;
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
-pub trait DBErrorMarker {}
+pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {}
 
 /// Implement marker for `()`.
-impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
-impl DBErrorMarker for String {}
+impl DBErrorMarker for ErasedError {}
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -83,7 +82,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

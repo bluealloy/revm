@@ -6,7 +6,7 @@ use revm::{
     primitives::{Address, StorageKey, StorageValue, B256},
     state::{AccountInfo, Bytecode},
 };
-use std::{error::Error as StdError, sync::Arc};
+use std::sync::Arc;
 
 /// Trait for mutable access to state data including accounts, code, and storage.
 /// This is typically used for database implementations that may modify state
@@ -14,7 +14,7 @@ use std::{error::Error as StdError, sync::Arc};
 #[auto_impl(&mut, Box)]
 pub trait State {
     /// Error type for state operations
-    type Error: StdError;
+    type Error: core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -33,7 +33,7 @@ pub trait State {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait StateRef {
     /// Error type for state operations
-    type Error: StdError;
+    type Error: core::error::Error + Send + Sync + 'static;
 
     /// Gets basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
