@@ -7,7 +7,7 @@ use core::{
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal, BalError},
-    AccountInfo, Bytecode, EvmState,
+    Account, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
 
@@ -158,6 +158,14 @@ impl BalState {
             }
         }
     }
+
+    /// Commit one account to the BAL builder.
+    #[inline]
+    pub fn commit_one(&mut self, address: Address, account: &Account) {
+        if let Some(bal_builder) = &mut self.bal_builder {
+            bal_builder.update_account(self.bal_index, address, account);
+        }
+    }
 }
 
 /// Database implementation for BAL.
@@ -245,7 +253,7 @@ impl<ERROR> From<BalError> for BalDatabaseError<ERROR> {
     }
 }
 
-impl<ERROR> DBErrorMarker for BalDatabaseError<ERROR> {}
+impl<ERROR: core::error::Error + Send + Sync + 'static> DBErrorMarker for BalDatabaseError<ERROR> {}
 
 impl<ERROR: Display> Display for BalDatabaseError<ERROR> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

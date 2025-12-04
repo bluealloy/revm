@@ -92,39 +92,6 @@ impl<DB: Database> State<DB> {
         self.bundle_state.size_hint()
     }
 
-    /// Iterates over received balances and increment all account balances.
-    ///
-    /// **Note**: If account is not found inside cache state it will be loaded from database.
-    ///
-    /// Update will create transitions for all accounts that are updated.
-    ///
-    /// If using this to implement withdrawals, zero balances must be filtered out before calling this function.
-    pub fn increment_balances(
-        &mut self,
-        balances: impl IntoIterator<Item = (Address, u128)>,
-    ) -> Result<(), DB::Error> {
-        // Make transition and update cache state
-        let balances = balances.into_iter();
-        let mut transitions = Vec::with_capacity(balances.size_hint().0);
-        for (address, balance) in balances {
-            if balance == 0 {
-                continue;
-            }
-            let original_account = self.load_cache_account(address)?;
-            transitions.push((
-                address,
-                original_account
-                    .increment_balance(balance)
-                    .expect("Balance is not zero"),
-            ))
-        }
-        // Append transition
-        if let Some(s) = self.transition_state.as_mut() {
-            s.add_transitions(transitions)
-        }
-        Ok(())
-    }
-
     /// Drains balances from given account and return those values.
     ///
     /// It is used for DAO hardfork state change to move values from given accounts.
@@ -133,9 +100,11 @@ impl<DB: Database> State<DB> {
         addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, DB::Error> {
         // Make transition and update cache state
-        let mut transitions = Vec::new();
-        let mut balances = Vec::new();
-        for address in addresses {
+        let addresses_iter = addresses.into_iter();
+        let (lower, _) = addresses_iter.size_hint();
+        let mut transitions = Vec::with_capacity(lower);
+        let mut balances = Vec::with_capacity(lower);
+        for address in addresses_iter {
             let original_account = self.load_cache_account(address)?;
             let (balance, transition) = original_account.drain_balance();
             balances.push(balance);
@@ -175,7 +144,10 @@ impl<DB: Database> State<DB> {
     }
 
     /// Applies evm transitions to transition state.
-    pub fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
+    pub fn apply_transition(
+        &mut self,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+    ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
@@ -270,34 +242,36 @@ impl<DB: Database> State<DB> {
     /// Gets storage value of address at index.
     #[inline]
     fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
-        // Account is guaranteed to be loaded.
-        // Note that storage from bundle is already loaded with account.
-        let storage = if let Some(account) = self.cache.accounts.get_mut(&address) {
-            // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
-            let is_storage_known = account.status.is_storage_known();
+        // If account is not found in cache, it will be loaded from database.
+        let account = if let Some(account) = self.cache.accounts.get_mut(&address) {
             account
-                .account
-                .as_mut()
-                .map(|account| match account.storage.entry(index) {
-                    hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
-                    hash_map::Entry::Vacant(entry) => {
-                        // If account was destroyed or account is newly built
-                        // we return zero and don't ask database.
-                        let value = if is_storage_known {
-                            StorageValue::ZERO
-                        } else {
-                            self.database.storage(address, index)?
-                        };
-                        entry.insert(value);
-                        Ok(value)
-                    }
-                })
-                .transpose()?
-                .unwrap_or_default()
         } else {
-            unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
+            self.load_cache_account(address)?;
+            // safe to unwrap as account is loaded a line above.
+            self.cache.accounts.get_mut(&address).unwrap()
         };
-        Ok(storage)
+
+        // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
+        let is_storage_known = account.status.is_storage_known();
+        Ok(account
+            .account
+            .as_mut()
+            .map(|account| match account.storage.entry(index) {
+                hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
+                hash_map::Entry::Vacant(entry) => {
+                    // If account was destroyed or account is newly built
+                    // we return zero and don't ask database.
+                    let value = if is_storage_known {
+                        StorageValue::ZERO
+                    } else {
+                        self.database.storage(address, index)?
+                    };
+                    entry.insert(value);
+                    Ok(value)
+                }
+            })
+            .transpose()?
+            .unwrap_or_default())
     }
 }
 
@@ -392,16 +366,21 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    fn commit(&mut self, evm_state: HashMap<Address, Account>) {
-        self.bal_state.commit(&evm_state);
-        let mut transitions = Vec::with_capacity(evm_state.len());
-        for (address, account) in evm_state {
-            // apply account state.
-            if let Some(transition) = self.cache.apply_account_state(address, account) {
-                transitions.push((address, transition));
-            }
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        self.bal_state.commit(&changes);
+        let transitions = self.cache.apply_evm_state(changes, |_, _| {});
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
         }
-        self.apply_transition(transitions);
+    }
+
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        let transitions = self.cache.apply_evm_state(changes, |address, account| {
+            self.bal_state.commit_one(*address, account);
+        });
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
+        }
     }
 }
 

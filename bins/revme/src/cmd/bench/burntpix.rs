@@ -12,8 +12,7 @@ use revm::{
     context::TxEnv,
     database::{CacheDB, BENCH_CALLER},
     database_interface::EmptyDB,
-    primitives::{hex, keccak256, Address, Bytes, TxKind, B256, U256},
-    primitives::{StorageKey, StorageValue},
+    primitives::{hex, keccak256, Address, Bytes, StorageKey, StorageValue, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };

@@ -1,7 +1,7 @@
 [package]
 name = "revm"
 description = "Revm - Rust Ethereum Virtual Machine"
-version = "31.0.0"
+version = "33.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -98,6 +98,7 @@ optional_eip3607 = ["context/optional_eip3607"]
 optional_eip7623 = ["context/optional_eip7623"]
 optional_no_base_fee = ["context/optional_no_base_fee"]
 optional_fee_charge = ["context/optional_fee_charge"]
+optional_priority_fee_check = ["context/optional_priority_fee_check"]
 
 # Precompiles features: Please look at the comments in `precompile` crate for more information.
 

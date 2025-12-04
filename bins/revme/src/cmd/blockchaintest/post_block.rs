@@ -1,9 +1,8 @@
 use revm::{
     context::{Block, ContextTr, JournalTr},
-    database::{Database, DatabaseCommit},
     handler::EvmTr,
     primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
-    SystemCallCommitEvm,
+    Database, DatabaseCommit, SystemCallCommitEvm,
 };
 use statetest_types::blockchain::Withdrawal;
 

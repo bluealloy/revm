@@ -8,10 +8,8 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::string::String;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -33,26 +31,27 @@ pub mod async_db;
 pub mod bal;
 pub mod either;
 pub mod empty_db;
+pub mod erased_error;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
+pub use erased_error::ErasedError;
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
-pub trait DBErrorMarker {}
+pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {}
 
 /// Implement marker for `()`.
-impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
-impl DBErrorMarker for String {}
+impl DBErrorMarker for ErasedError {}
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -87,6 +86,16 @@ pub trait Database {
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
+
+    /// Commit changes to the database with an iterator.
+    ///
+    /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
+    ///
+    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        self.commit(changes);
+    }
 }
 
 /// EVM database interface.
@@ -98,7 +107,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -199,5 +208,39 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
+    }
+}
+
+impl<T: Database + DatabaseCommit> DatabaseCommitExt for T {
+    // default implementation
+}
+
+/// EVM database commit interface.
+pub trait DatabaseCommitExt: Database + DatabaseCommit {
+    /// Iterates over received balances and increment all account balances.
+    ///
+    /// Update will create transitions for all accounts that are updated.
+    fn increment_balances(
+        &mut self,
+        balances: impl IntoIterator<Item = (Address, u128)>,
+    ) -> Result<(), Self::Error> {
+        // Make transition and update cache state
+        let balances = balances.into_iter();
+        let mut transitions: HashMap<Address, Account> = HashMap::default();
+        transitions.reserve(balances.size_hint().0);
+        for (address, balance) in balances {
+            let mut original_account = match self.basic(address)? {
+                Some(acc_info) => Account::from(acc_info),
+                None => Account::new_not_existing(0),
+            };
+            original_account.info.balance = original_account
+                .info
+                .balance
+                .saturating_add(U256::from(balance));
+            original_account.mark_touch();
+            transitions.insert(address, original_account);
+        }
+        self.commit(transitions);
+        Ok(())
     }
 }

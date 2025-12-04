@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.6](https://github.com/bluealloy/revm/compare/revm-database-v9.0.5...revm-database-v9.0.6) - 2025-11-14
+
+### Fixed
+
+- *(database)* return correct bytecode in BenchmarkDB::code_by_hash ([#3170](https://github.com/bluealloy/revm/pull/3170))
+
+## [9.0.5](https://github.com/bluealloy/revm/compare/revm-database-v9.0.4...revm-database-v9.0.5) - 2025-11-10
+
+### Fixed
+
+- *(op)* Ensure L1Block account is always loaded ([#3150](https://github.com/bluealloy/revm/pull/3150))
+
+## [9.0.4](https://github.com/bluealloy/revm/compare/revm-database-v9.0.3...revm-database-v9.0.4) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-state, revm-database-interface
+
 ## [9.0.3](https://github.com/bluealloy/revm/compare/revm-database-v9.0.2...revm-database-v9.0.3) - 2025-10-30
 
 ### Other

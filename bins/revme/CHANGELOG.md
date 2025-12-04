@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.2](https://github.com/bluealloy/revm/compare/revme-v10.0.0...revme-v10.0.2) - 2025-11-14
+
+### Other
+
+- update Cargo.lock dependencies
+
+## [10.0.0](https://github.com/bluealloy/revm/compare/revme-v9.0.2...revme-v10.0.0) - 2025-11-10
+
+### Other
+
+- updated the following local packages: revm, revm-statetest-types
+
+## [9.0.2](https://github.com/bluealloy/revm/compare/revme-v9.0.1...revme-v9.0.2) - 2025-11-10
+
+### Other
+
+- updated the following local packages: revm, revm-statetest-types
+
+## [9.0.1](https://github.com/bluealloy/revm/compare/revme-v9.0.0...revme-v9.0.1) - 2025-11-07
+
+### Fixed
+
+- *(revme)* use primitive hashmap in statetest ([#3137](https://github.com/bluealloy/revm/pull/3137))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revme-v8.3.0...revme-v9.0.0) - 2025-10-30
 
 ### Other

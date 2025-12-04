@@ -3,10 +3,10 @@ use std::convert::Infallible;
 use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
-use revm::primitives::{keccak256, Address, Log, B256, U256};
 use revm::{
     context::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database::{EmptyDB, PlainAccount, State},
+    primitives::{keccak256, Address, Log, B256, U256},
 };
 use triehash::sec_trie_root;
 

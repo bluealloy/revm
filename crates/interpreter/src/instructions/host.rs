@@ -1,7 +1,8 @@
 use crate::{
     gas::{
-        self, CALL_STIPEND, COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL,
-        ISTANBUL_SLOAD_GAS, WARM_STORAGE_READ_COST,
+        self, selfdestruct_cold_beneficiary_cost, CALL_STIPEND,
+        COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL, ISTANBUL_SLOAD_GAS,
+        WARM_STORAGE_READ_COST,
     },
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
@@ -395,7 +396,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // static gas
     gas!(context.interpreter, gas::static_selfdestruct_cost(spec));
 
-    let skip_cold = context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+    let skip_cold = context.interpreter.gas.remaining() < selfdestruct_cold_beneficiary_cost(spec);
     let res = match context.host.selfdestruct(
         context.interpreter.input.target_address(),
         target,

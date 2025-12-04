@@ -1,7 +1,7 @@
 [package]
 name = "revm-database-interface"
 description = "Revm Database interface"
-version = "8.0.4"
+version = "8.0.5"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -25,6 +25,7 @@ primitives.workspace = true
 # misc
 auto_impl.workspace = true
 either.workspace = true
+thiserror.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -36,6 +37,12 @@ tokio = { workspace = true, optional = true }
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "state/std", "either/std"]
+std = [
+    "serde?/std",
+    "primitives/std",
+    "state/std",
+    "either/std",
+    "thiserror/std",
+]
 serde = ["dep:serde", "primitives/serde", "state/serde", "either/serde"]
 asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]

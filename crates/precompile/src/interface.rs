@@ -2,7 +2,7 @@
 //! the precompile output type, and the precompile error type.
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
-use std::{boxed::Box, string::String, vec::Vec};
+use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
@@ -29,6 +29,8 @@ pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 pub struct PrecompileOutput {
     /// Gas used by the precompile
     pub gas_used: u64,
+    /// Gas refunded by the precompile.
+    pub gas_refunded: i64,
     /// Output bytes
     pub bytes: Bytes,
     /// Whether the precompile reverted
@@ -40,6 +42,7 @@ impl PrecompileOutput {
     pub fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self {
             gas_used,
+            gas_refunded: 0,
             bytes,
             reverted: false,
         }
@@ -49,6 +52,7 @@ impl PrecompileOutput {
     pub fn new_reverted(gas_used: u64, bytes: Bytes) -> Self {
         Self {
             gas_used,
+            gas_refunded: 0,
             bytes,
             reverted: true,
         }
@@ -271,14 +275,19 @@ pub enum PrecompileError {
     Secp256k1RecoverFailed,
     /// Fatal error with a custom error message
     Fatal(String),
-    /// Catch-all variant for other errors
-    Other(String),
+    /// Catch-all variant with a custom error message
+    Other(Cow<'static, str>),
 }
 
 impl PrecompileError {
     /// Returns another error with the given message.
     pub fn other(err: impl Into<String>) -> Self {
-        Self::Other(err.into())
+        Self::Other(Cow::Owned(err.into()))
+    }
+
+    /// Returns another error with the given static string.
+    pub const fn other_static(err: &'static str) -> Self {
+        Self::Other(Cow::Borrowed(err))
     }
 
     /// Returns `true` if the error is out of gas.

@@ -6,10 +6,9 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult},
     precompile::{PrecompileError, PrecompileOutput, PrecompileResult},
-    primitives::{address, hardfork::SpecId, Address, Bytes, U256},
+    primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
-use std::boxed::Box;
-use std::string::String;
+use std::{boxed::Box, string::String};
 
 // Define our custom precompile address
 pub const CUSTOM_PRECOMPILE_ADDRESS: Address = address!("0000000000000000000000000000000000000100");
@@ -105,7 +104,7 @@ fn run_custom_precompile<CTX: ContextTr>(
         // Write storage operation
         handle_write_storage(context, &input_bytes, inputs.gas_limit)
     } else {
-        Err(PrecompileError::Other("Invalid input length".to_string()))
+        Err(PrecompileError::Other("Invalid input length".into()))
     };
 
     match result {
@@ -158,7 +157,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
     let value = context
         .journal_mut()
         .sload(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY)
-        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}")))?
+        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}").into()))?
         .data;
 
     // Return the value as output
@@ -189,7 +188,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .sstore(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY, value)
-        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}").into()))?;
 
     // Get the caller address
     let caller = context.tx().caller();
@@ -199,17 +198,42 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .balance_incr(CUSTOM_PRECOMPILE_ADDRESS, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}").into()))?;
 
     // Then transfer to caller
     let transfer_result = context
         .journal_mut()
         .transfer(CUSTOM_PRECOMPILE_ADDRESS, caller, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}")))?;
+        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}").into()))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(format!("Transfer error: {error:?}")));
+        return Err(PrecompileError::Other(
+            format!("Transfer error: {error:?}").into(),
+        ));
     }
+
+    // Create a log to record the storage write operation
+    // Topic 0: keccak256("StorageWritten(address,uint256)")
+    let topic0 = B256::from_slice(&[
+        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
+        0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc,
+        0xde, 0xf0,
+    ]);
+    // Topic 1: caller address (indexed) - left-padded to 32 bytes
+    let mut topic1_bytes = [0u8; 32];
+    topic1_bytes[12..32].copy_from_slice(caller.as_slice());
+    let topic1 = B256::from(topic1_bytes);
+    // Data: the value that was written
+    let log_data = value.to_be_bytes_vec();
+
+    let log = Log::new(
+        CUSTOM_PRECOMPILE_ADDRESS,
+        vec![topic0, topic1],
+        log_data.into(),
+    )
+    .expect("Failed to create log");
+
+    context.journal_mut().log(log);
 
     // Return success with empty output
     Ok(PrecompileOutput::new(BASE_GAS + SSTORE_GAS, Bytes::new()))

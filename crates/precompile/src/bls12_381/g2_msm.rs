@@ -1,11 +1,11 @@
 //! BLS12-381 G2 msm precompile. More details in [`g2_msm`]
 use super::utils::{pad_g2_point, remove_g2_padding};
-use crate::bls12_381_const::{
-    DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
-    PADDED_G2_LENGTH, SCALAR_LENGTH,
-};
-use crate::bls12_381_utils::msm_required_gas;
 use crate::{
+    bls12_381_const::{
+        DISCOUNT_TABLE_G2_MSM, G2_MSM_ADDRESS, G2_MSM_BASE_GAS_FEE, G2_MSM_INPUT_LENGTH,
+        PADDED_G2_LENGTH, SCALAR_LENGTH,
+    },
+    bls12_381_utils::msm_required_gas,
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 

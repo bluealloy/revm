@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.1.0](https://github.com/bluealloy/revm/compare/op-revm-v14.0.0...op-revm-v14.1.0) - 2025-11-14
+
+### Fixed
+
+- *(op-revm)* return error when enveloped_tx is missing ([#3143](https://github.com/bluealloy/revm/pull/3143))
+
+## [14.0.0](https://github.com/bluealloy/revm/compare/op-revm-v12.0.2...op-revm-v14.0.0) - 2025-11-10
+
+### Added
+
+- *(precompiles)* add performant PrecompileError::OtherCowStr variant ([#3144](https://github.com/bluealloy/revm/pull/3144))
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+
+## [12.0.2](https://github.com/bluealloy/revm/compare/op-revm-v12.0.1...op-revm-v12.0.2) - 2025-11-10
+
+### Fixed
+
+- *(op)* Ensure L1Block account is always loaded ([#3150](https://github.com/bluealloy/revm/pull/3150))
+
+## [12.0.1](https://github.com/bluealloy/revm/compare/op-revm-v12.0.0...op-revm-v12.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm
+
 ## [12.0.0](https://github.com/bluealloy/revm/compare/op-revm-v11.2.0...op-revm-v12.0.0) - 2025-10-30
 
 ### Added

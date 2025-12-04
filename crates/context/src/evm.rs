@@ -1,6 +1,8 @@
 //! This module contains [`Evm`] struct.
-use core::fmt::Debug;
-use core::ops::{Deref, DerefMut};
+use core::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+};
 
 use context_interface::FrameStack;
 

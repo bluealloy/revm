@@ -1,6 +1,5 @@
 use super::TransitionAccount;
 use primitives::{hash_map::Entry, Address, HashMap};
-use std::vec::Vec;
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
@@ -29,7 +28,10 @@ impl TransitionState {
     ///
     /// This will insert new [`TransitionAccount`]s, or update existing ones via
     /// [`update`][TransitionAccount::update].
-    pub fn add_transitions(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
+    pub fn add_transitions(
+        &mut self,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+    ) {
         for (address, account) in transitions {
             match self.transitions.entry(address) {
                 Entry::Occupied(entry) => {

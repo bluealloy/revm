@@ -292,10 +292,21 @@ pub const fn dyn_selfdestruct_cost(spec_id: SpecId, res: &StateLoad<SelfDestruct
         gas += NEWACCOUNT
     }
 
-    if spec_id.is_enabled_in(SpecId::BERLIN) && res.is_cold {
-        gas += COLD_ACCOUNT_ACCESS_COST
+    if res.is_cold {
+        gas += selfdestruct_cold_beneficiary_cost(spec_id);
     }
+
     gas
+}
+
+/// EIP-2929: Gas cost increases for state access opcodes
+#[inline]
+pub const fn selfdestruct_cold_beneficiary_cost(spec_id: SpecId) -> u64 {
+    if spec_id.is_enabled_in(SpecId::BERLIN) {
+        COLD_ACCOUNT_ACCESS_COST
+    } else {
+        0
+    }
 }
 
 /// `SELFDESTRUCT` opcode cost calculation.
@@ -361,7 +372,8 @@ pub const fn memory_gas(num_words: usize) -> u64 {
 }
 
 /// Init and floor gas from transaction
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitialAndFloorGas {
     /// Initial gas for transaction.
     pub initial_gas: u64,

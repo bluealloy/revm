@@ -1,6 +1,5 @@
 //! Empty database implementation.
 use crate::{DBErrorMarker, Database, DatabaseRef};
-use core::error::Error;
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use primitives::{keccak256, Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
@@ -55,7 +54,7 @@ impl<E> EmptyDBTyped<E> {
     }
 }
 
-impl<E: DBErrorMarker + Error> Database for EmptyDBTyped<E> {
+impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
@@ -83,7 +82,9 @@ impl<E: DBErrorMarker + Error> Database for EmptyDBTyped<E> {
     }
 }
 
-impl<E: DBErrorMarker + Error> DatabaseRef for EmptyDBTyped<E> {
+impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> DatabaseRef
+    for EmptyDBTyped<E>
+{
     type Error = E;
 
     #[inline]

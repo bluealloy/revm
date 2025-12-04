@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.0.0...revm-interpreter-v31.1.0) - 2025-11-14
+
+### Fixed
+
+- correctly handle selfdestruct cold load ([#3174](https://github.com/bluealloy/revm/pull/3174))
+
+## [31.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v29.0.1...revm-interpreter-v31.0.0) - 2025-11-10
+
+### Added
+
+- process precompile logs to inspector ([#3148](https://github.com/bluealloy/revm/pull/3148))
+- selfdestruct oog on cold load ([#3140](https://github.com/bluealloy/revm/pull/3140))
+
+### Other
+
+- merge v98 versions bumps ([#3155](https://github.com/bluealloy/revm/pull/3155))
+- add eq/serde for InitialAndFloorGas ([#3147](https://github.com/bluealloy/revm/pull/3147))
+- *(interpreter)* deprecate public otry! macro ([#3146](https://github.com/bluealloy/revm/pull/3146))
+
+## [29.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v29.0.0...revm-interpreter-v29.0.1) - 2025-11-07
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode, revm-state, revm-context-interface
+
 ## [28.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v28.0.0...revm-interpreter-v28.0.1) - 2025-10-30
 
 ### Fixed

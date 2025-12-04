@@ -1,6 +1,8 @@
 use crate::{CallInput, InstructionResult, InterpreterAction};
-use core::cell::Ref;
-use core::ops::{Deref, Range};
+use core::{
+    cell::Ref,
+    ops::{Deref, Range},
+};
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode

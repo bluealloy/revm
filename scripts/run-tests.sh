@@ -95,20 +95,25 @@ download_and_extract() {
      # This is needed because when we extract the tar, it is placed under an
      # unnecessary "fixtures/" directory.
     tar -xzf "${FIXTURES_DIR}/${tar_file}" --strip-components=1 -C "$target_dir"
+
+    # Remove the tar file
+    rm "${FIXTURES_DIR}/${tar_file}"
+
+    # remove all unused folders
+    find "$target_dir" -depth -name blockchain_tests_engine -exec rm -rf {} \;
+    find "$target_dir" -depth -name blockchain_tests_engine_x -exec rm -rf {} \;
+    find "$target_dir" -depth -name blockchain_tests_sync -exec rm -rf {} \;
 }
 
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
     mkdir -p "$MAIN_STABLE_DIR" "$MAIN_DEVELOP_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
-
+    
     download_and_extract "$MAIN_STABLE_DIR" "$MAIN_STABLE_TAR" "main stable" "$MAIN_VERSION"
     download_and_extract "$MAIN_DEVELOP_DIR" "$MAIN_DEVELOP_TAR" "main develop" "$MAIN_VERSION"
     download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION"
 
-    echo "Cleaning up tar files..."
-    rm "${FIXTURES_DIR}/${MAIN_STABLE_TAR}" "${FIXTURES_DIR}/${MAIN_DEVELOP_TAR}" "${FIXTURES_DIR}/${DEVNET_TAR}"
-    
     # Clone legacytests repository
     echo "Cloning legacytests repository..."
     git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
@@ -148,8 +153,11 @@ run_tests() {
     echo "Running devnet statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$DEVNET_DIR/state_tests"
 
-    echo "Running legacy tests..."
+    echo "Running legacy Cancun tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Cancun/GeneralStateTests"
+
+    echo "Running legacy Constantinople tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Constantinople/GeneralStateTests"
 
     echo "Running main develop blockchain tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_DEVELOP_DIR/blockchain_tests"

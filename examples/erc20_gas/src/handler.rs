@@ -1,5 +1,5 @@
 use revm::{
-    context::Cfg,
+    context::{journaled_state::account::JournaledAccountTr, Cfg},
     context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
     handler::{
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
@@ -54,7 +54,7 @@ where
         // Load caller's account.
         let mut caller_account = journal.load_account_with_code_mut(tx.caller())?;
 
-        validate_account_nonce_and_code_with_components(&caller_account.info, tx, cfg)?;
+        validate_account_nonce_and_code_with_components(&caller_account.account().info, tx, cfg)?;
 
         // make changes to the account. Account balance stays the same
         caller_account.touch();
@@ -63,6 +63,8 @@ where
         }
 
         let account_balance_slot = erc_address_storage(tx.caller());
+
+        drop(caller_account); // Drop caller_account to avoid borrow checker issues.
 
         // load account balance
         let account_balance = journal.sload(TOKEN, account_balance_slot)?.data;

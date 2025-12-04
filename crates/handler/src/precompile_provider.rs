@@ -2,11 +2,12 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
-use precompile::PrecompileError;
-use precompile::{PrecompileSpecId, Precompiles};
+use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
-use std::boxed::Box;
-use std::string::{String, ToString};
+use std::{
+    boxed::Box,
+    string::{String, ToString},
+};
 
 /// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
@@ -120,6 +121,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
         match exec_result {
             Ok(output) => {
+                result.gas.record_refund(output.gas_refunded);
                 let underflow = result.gas.record_cost(output.gas_used);
                 assert!(underflow, "Gas underflow is not possible");
                 result.result = if output.reverted {
