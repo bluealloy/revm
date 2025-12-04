@@ -22,7 +22,7 @@ No breaking changes
    * difference is that `log_full` has `Interpreter` input while `log` does not
      and `log` will be called in places where Interpreter is not found.
 * `PrecompileError` now contains `Other` as `Cow<'static, str>`
-   * It allows allows setting both `&'static str` that is without perf penalty and `String` if needed.
+   * It allows setting both `&'static str` that is without perf penalty and `String` if needed.
 
 # v98 tag
 
