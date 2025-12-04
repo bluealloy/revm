@@ -23,9 +23,9 @@ pub enum OpSpecId {
     /// Holocene spec id.
     HOLOCENE,
     /// Isthmus spec id.
-    #[default]
     ISTHMUS,
     /// Jovian spec id.
+    #[default]
     JOVIAN,
     /// Interop spec id.
     INTEROP,
