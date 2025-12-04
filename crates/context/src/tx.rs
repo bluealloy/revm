@@ -112,7 +112,7 @@ impl TxEnv {
         Self {
             caller: BENCH_CALLER,
             kind: TxKind::Call(BENCH_TARGET),
-            gas_limit: 16_000_000,
+            gas_limit: eip7825::TX_GAS_LIMIT_CAP,
             ..Default::default()
         }
     }
