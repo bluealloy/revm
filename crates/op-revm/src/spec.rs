@@ -243,6 +243,6 @@ mod tests {
 
     #[test]
     fn default_op_spec_id() {
-        assert_eq!(OpSpecId::default(), OpSpecId::ISTHMUS);
+        assert_eq!(OpSpecId::default(), OpSpecId::JOVIAN);
     }
 }
