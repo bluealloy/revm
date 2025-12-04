@@ -1,7 +1,12 @@
 use criterion::Criterion;
 
 use revm::{
-    Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext, bytecode::Bytecode, context::TxEnv, database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB}, inspector::NoOpInspector, primitives::{Bytes, TxKind, bytes, eip7825, hex}
+    bytecode::Bytecode,
+    context::TxEnv,
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    inspector::NoOpInspector,
+    primitives::{bytes, eip7825, hex, Bytes, TxKind},
+    Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 
 pub fn run(criterion: &mut Criterion) {

@@ -9,7 +9,14 @@ use static_data::{
 
 use alloy_sol_types::{sol, SolCall};
 use revm::{
-    Context, ExecuteEvm, MainBuilder, MainContext, context::TxEnv, database::{BENCH_CALLER, CacheDB}, database_interface::EmptyDB, primitives::{Address, B256, Bytes, StorageKey, StorageValue, TxKind, U256, eip7825, hex, keccak256}, state::{AccountInfo, Bytecode}
+    context::TxEnv,
+    database::{CacheDB, BENCH_CALLER},
+    database_interface::EmptyDB,
+    primitives::{
+        eip7825, hex, keccak256, Address, Bytes, StorageKey, StorageValue, TxKind, B256, U256,
+    },
+    state::{AccountInfo, Bytecode},
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 use std::{error::Error, fs::File, io::Write};

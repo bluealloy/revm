@@ -1,6 +1,10 @@
 use criterion::Criterion;
 use revm::{
-    Context, ExecuteEvm, MainBuilder, MainContext, bytecode::Bytecode, context::TxEnv, database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB}, primitives::{Bytes, TxKind, eip7825, hex}
+    bytecode::Bytecode,
+    context::TxEnv,
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    primitives::{eip7825, hex, Bytes, TxKind},
+    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::io::Cursor;
 
