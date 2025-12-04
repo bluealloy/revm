@@ -3,7 +3,7 @@ use revm::{
     bytecode::Bytecode,
     context::TxEnv,
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{hex, Bytes, TxKind},
+    primitives::{eip7825, hex, Bytes, TxKind},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::io::Cursor;
@@ -29,7 +29,7 @@ pub fn run(criterion: &mut Criterion) {
         let tx = TxEnv::builder()
             .caller(BENCH_CALLER)
             .kind(TxKind::Call(BENCH_TARGET))
-            .gas_limit(1_000_000_000)
+            .gas_limit(eip7825::TX_GAS_LIMIT_CAP)
             .build()
             .unwrap();
 
