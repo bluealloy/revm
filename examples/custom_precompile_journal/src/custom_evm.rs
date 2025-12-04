@@ -210,6 +210,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
+                storage_id: None,
             },
         );
 
@@ -221,6 +222,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
+                storage_id: None,
             },
         );
 
@@ -344,6 +346,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
+                storage_id: None,
             },
         );
 

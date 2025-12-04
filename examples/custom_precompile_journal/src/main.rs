@@ -39,6 +39,7 @@ fn main() -> anyhow::Result<()> {
             nonce: 0,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
+            ..Default::default()
         },
     );
 
@@ -50,6 +51,7 @@ fn main() -> anyhow::Result<()> {
             nonce: 0,
             code_hash: revm::primitives::KECCAK_EMPTY,
             code: None,
+            ..Default::default()
         },
     );
 
