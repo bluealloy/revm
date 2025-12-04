@@ -922,6 +922,7 @@ mod tests {
             nonce: 1,
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
+            storage_id: None,
         };
         journal
             .state
