@@ -9,12 +9,7 @@ use static_data::{
 
 use alloy_sol_types::{sol, SolCall};
 use revm::{
-    context::TxEnv,
-    database::{CacheDB, BENCH_CALLER},
-    database_interface::EmptyDB,
-    primitives::{hex, keccak256, Address, Bytes, StorageKey, StorageValue, TxKind, B256, U256},
-    state::{AccountInfo, Bytecode},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteEvm, MainBuilder, MainContext, context::TxEnv, database::{BENCH_CALLER, CacheDB}, database_interface::EmptyDB, primitives::{Address, B256, Bytes, StorageKey, StorageValue, TxKind, U256, eip7825, hex, keccak256}, state::{AccountInfo, Bytecode}
 };
 
 use std::{error::Error, fs::File, io::Write};
@@ -44,7 +39,7 @@ pub fn run(criterion: &mut Criterion) {
         .caller(BENCH_CALLER)
         .kind(TxKind::Call(BURNTPIX_MAIN_ADDRESS))
         .data(run_call_data.clone().into())
-        .gas_limit(u64::MAX)
+        .gas_limit(eip7825::TX_GAS_LIMIT_CAP)
         .build()
         .unwrap();
 
