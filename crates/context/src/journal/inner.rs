@@ -756,6 +756,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 (account, is_cold)
             }
             Entry::Vacant(vac) => {
+                // Precompiles,  among some other account(access list and coinbase included)
+                // are warm loaded so we need to take that into account
                 let is_cold = self
                     .warm_addresses
                     .check_is_cold(&address, skip_cold_load)?;
