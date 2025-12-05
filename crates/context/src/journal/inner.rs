@@ -762,8 +762,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                     .warm_addresses
                     .check_is_cold(&address, skip_cold_load)?;
 
+                // dont load cold account if skip_cold_load is true
+                if is_cold && skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
+
                 let account = if let Some(account) = db.basic(address)? {
-                    account.into()
+                    let mut account: Account = account.into();
+                    account.transaction_id = self.transaction_id;
+                    account
                 } else {
                     Account::new_not_existing(self.transaction_id)
                 };
