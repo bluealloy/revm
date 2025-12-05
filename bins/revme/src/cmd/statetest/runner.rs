@@ -340,7 +340,7 @@ pub fn execute_test_suite(
             }
 
             // Setup block environment for this spec
-            let block = unit.block_env(&cfg);
+            let block = unit.block_env(&mut cfg);
 
             for (index, test) in tests.iter().enumerate() {
                 // Setup transaction environment
