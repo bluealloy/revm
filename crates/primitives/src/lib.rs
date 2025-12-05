@@ -24,6 +24,7 @@ pub mod eip7823;
 pub mod eip7825;
 pub mod eip7907;
 pub mod hardfork;
+pub mod hints_util;
 mod once_lock;
 
 pub use constants::*;
