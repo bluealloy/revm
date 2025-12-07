@@ -72,10 +72,10 @@ fn literals(r: u32, size: u32) -> u32 {
 
 fn cmp(input: &[u8], p: u32, q: u32, r: u32) -> u32 {
     let mut l = 0;
-    let mut r = r - q;
-    while l < r {
+    let mut limit = r.saturating_sub(q);
+    while l < limit {
         if input[(p + l) as usize] != input[(q + l) as usize] {
-            r = 0;
+            limit = 0;
         }
         l += 1;
     }
@@ -83,6 +83,9 @@ fn cmp(input: &[u8], p: u32, q: u32, r: u32) -> u32 {
 }
 
 fn flz_match(l: u32, size: u32) -> u32 {
+    if l == 0 {
+        return size + 2;
+    }
     let l = l - 1;
     let size = size + (3 * (l / 262));
     if l % 262 >= 6 {
