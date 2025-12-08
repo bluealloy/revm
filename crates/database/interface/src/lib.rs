@@ -235,8 +235,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
                     Some(acc_info) => Account::from(acc_info),
                     None => Account::new_not_existing(0),
                 };
-                let balance = original_account.info.balance;
-                original_account.info.balance = U256::ZERO;
+                let balance = core::mem::take(&mut original_account.info.balance);
                 original_account.mark_touch();
                 transitions.push((address, original_account));
                 Ok(balance.try_into().unwrap())
