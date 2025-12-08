@@ -161,7 +161,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     ///
     /// Does not erase the db error.
     #[inline(never)]
-    pub fn sload_preserve_error(
+    pub fn sload_concrete_error(
         &mut self,
         key: StorageKey,
         skip_cold_load: bool,
@@ -216,7 +216,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     ///
     /// Does not erase the db error.
     #[inline]
-    pub fn sstore_preserve_error(
+    pub fn sstore_concrete_error(
         &mut self,
         key: StorageKey,
         new: StorageValue,
@@ -226,7 +226,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         self.touch();
 
         // assume that acc exists and load the slot.
-        let slot = self.sload_preserve_error(key, skip_cold_load)?;
+        let slot = self.sload_concrete_error(key, skip_cold_load)?;
 
         let ret = Ok(StateLoad::new(
             SStoreResult {
@@ -454,7 +454,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         key: StorageKey,
         skip_cold_load: bool,
     ) -> Result<StateLoad<&mut EvmStorageSlot>, JournalLoadErasedError> {
-        self.sload_preserve_error(key, skip_cold_load)
+        self.sload_concrete_error(key, skip_cold_load)
             .map_err(|i| i.map(ErasedError::new))
     }
 
@@ -466,7 +466,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         new: StorageValue,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadErasedError> {
-        self.sstore_preserve_error(key, new, skip_cold_load)
+        self.sstore_concrete_error(key, new, skip_cold_load)
             .map_err(|i| i.map(ErasedError::new))
     }
 

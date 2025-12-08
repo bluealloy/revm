@@ -807,7 +807,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<DB::Error>> {
         self.load_account_mut(db, address)?
-            .sload_preserve_error(key, skip_cold_load)
+            .sload_concrete_error(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
     }
 
@@ -827,7 +827,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         };
 
         account
-            .sload_preserve_error(key, skip_cold_load)
+            .sload_concrete_error(key, skip_cold_load)
             .map(|s| s.map(|s| s.present_value))
     }
 
@@ -844,7 +844,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<DB::Error>> {
         self.load_account_mut(db, address)?
-            .sstore_preserve_error(key, new, skip_cold_load)
+            .sstore_concrete_error(key, new, skip_cold_load)
     }
 
     /// Stores storage slot.
@@ -865,7 +865,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Err(JournalLoadError::ColdLoadSkipped);
         };
 
-        account.sstore_preserve_error(key, new, skip_cold_load)
+        account.sstore_concrete_error(key, new, skip_cold_load)
     }
 
     /// Read transient storage tied to the account.
