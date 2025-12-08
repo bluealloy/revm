@@ -345,6 +345,10 @@ impl L1BlockInfo {
     /// `estimatedSize*(baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee)/1e12`
     fn calculate_tx_l1_cost_fjord(&self, input: &[u8]) -> U256 {
         let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
+        if l1_fee_scaled.is_zero() {
+            return U256::ZERO;
+        }
+        
         let estimated_size = self.tx_estimated_size_fjord(input);
 
         estimated_size
