@@ -348,7 +348,7 @@ impl L1BlockInfo {
         if l1_fee_scaled.is_zero() {
             return U256::ZERO;
         }
-        
+
         let estimated_size = self.tx_estimated_size_fjord(input);
 
         estimated_size
