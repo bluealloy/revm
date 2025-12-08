@@ -140,41 +140,38 @@ pub fn validate_tx_env<CTX: ContextTr>(
         });
     }
 
-    let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
+    // Gas price must be at least the basefee.
+    if let Some(base_fee) = base_fee {
+        if tx.gas_price() < base_fee {
+            return Err(InvalidTransaction::GasPriceLessThanBasefee);
+        }
+
+        if !context.cfg().is_priority_fee_check_disabled() {
+            if let Some(max_priority_fee) = tx.max_priority_fee_per_gas() {
+                if tx.gas_price() < max_priority_fee {
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
+                }
+            }
+        }
+    }
 
     match tx_type {
-        TransactionType::Legacy => {
-            validate_legacy_gas_price(tx.gas_price(), base_fee)?;
-        }
+        TransactionType::Legacy => {}
         TransactionType::Eip2930 => {
             // Enabled in BERLIN hardfork
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported);
             }
-            validate_legacy_gas_price(tx.gas_price(), base_fee)?;
         }
         TransactionType::Eip1559 => {
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-                disable_priority_fee_check,
-            )?;
         }
         TransactionType::Eip4844 => {
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
-
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-                disable_priority_fee_check,
-            )?;
 
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
@@ -188,13 +185,6 @@ pub fn validate_tx_env<CTX: ContextTr>(
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported);
             }
-
-            validate_priority_fee_tx(
-                tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas().unwrap_or_default(),
-                base_fee,
-                disable_priority_fee_check,
-            )?;
 
             let auth_list_len = tx.authorization_list_len();
             // The transaction is considered invalid if the length of authorization_list is zero.
