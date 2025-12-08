@@ -10,6 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
+use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -196,22 +197,52 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
         balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), Self::Error> {
         // Make transition and update cache state
-        let balances = balances.into_iter();
-        let mut transitions: HashMap<Address, Account> = HashMap::default();
-        transitions.reserve(balances.size_hint().0);
-        for (address, balance) in balances {
-            let mut original_account = match self.basic(address)? {
-                Some(acc_info) => Account::from(acc_info),
-                None => Account::new_not_existing(0),
-            };
-            original_account.info.balance = original_account
-                .info
-                .balance
-                .saturating_add(U256::from(balance));
-            original_account.mark_touch();
-            transitions.insert(address, original_account);
-        }
-        self.commit(transitions);
+        let transitions = balances
+            .into_iter()
+            .map(|(address, balance)| {
+                let mut original_account = match self.basic(address)? {
+                    Some(acc_info) => Account::from(acc_info),
+                    None => Account::new_not_existing(0),
+                };
+                original_account.info.balance = original_account
+                    .info
+                    .balance
+                    .saturating_add(U256::from(balance));
+                original_account.mark_touch();
+                Ok((address, original_account))
+            })
+            // Unfortunately must collect here to short circuit on error
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.commit_iter(transitions);
         Ok(())
+    }
+
+    /// Drains balances from given account and return those values.
+    ///
+    /// It is used for DAO hardfork state change to move values from given accounts.
+    fn drain_balances(
+        &mut self,
+        addresses: impl IntoIterator<Item = Address>,
+    ) -> Result<Vec<u128>, Self::Error> {
+        // Make transition and update cache state
+        let addresses_iter = addresses.into_iter();
+        let (lower, _) = addresses_iter.size_hint();
+        let mut transitions = Vec::with_capacity(lower);
+        let balances = addresses_iter
+            .map(|address| {
+                let mut original_account = match self.basic(address)? {
+                    Some(acc_info) => Account::from(acc_info),
+                    None => Account::new_not_existing(0),
+                };
+                let balance = core::mem::take(&mut original_account.info.balance);
+                original_account.mark_touch();
+                transitions.push((address, original_account));
+                Ok(balance.try_into().unwrap())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.commit_iter(transitions);
+        Ok(balances)
     }
 }
