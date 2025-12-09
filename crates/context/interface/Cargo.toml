@@ -52,6 +52,7 @@ serde = [
 	"alloy-eip2930/serde",
 	"database-interface/serde",
 	"either/serde",
+	"bitflags/serde",
 ]
 
 # Deprecated, please use `serde` feature instead.

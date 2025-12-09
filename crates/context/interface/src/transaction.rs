@@ -246,7 +246,7 @@ pub trait Transaction {
     }
 
     /// Returns what validations this transaction expects.
-    /// Default implementation returns `ByTxType` for ethereum transctions.
+    /// Default implementation returns `ByTxType` for ethereum transactions.
     fn validation_kind(&self) -> ValidationKind {
         ValidationKind::ByTxType
     }
