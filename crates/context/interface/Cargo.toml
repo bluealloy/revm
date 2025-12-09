@@ -43,6 +43,7 @@ std = [
 	"primitives/std",
 	"state/std",
 	"either/std",
+	"bitflags/std",
 ]
 serde = [
 	"dep:serde",
