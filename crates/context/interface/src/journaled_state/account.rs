@@ -157,7 +157,9 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         }
     }
 
-    /// Creates a new journaled account.
+    /// Loads the storage slot.
+    ///
+    /// If storage is cold and skip_cold_load is true, it will return [`JournalLoadError::ColdLoadSkipped`] error.
     ///
     /// Does not erase the db error.
     #[inline(never)]
@@ -212,7 +214,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
 
     /// Stores the storage slot.
     ///
-    /// If account is not present it will load from database.
+    /// If storage is cold and skip_cold_load is true, it will return [`JournalLoadError::ColdLoadSkipped`] error.
     ///
     /// Does not erase the db error.
     #[inline]

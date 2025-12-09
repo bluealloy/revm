@@ -696,6 +696,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Use this function only if you know what you are doing. It will not mark the account as warm or cold.
     /// It will not bump transition_id or return if it is cold or warm loaded. This function is useful
     /// when we know account is warm, touched and already loaded.
+    ///
+    /// It is useful when we want to access storage from account that is currently being executed.
     #[inline]
     pub fn get_account_mut<'a, 'db, DB: Database>(
         &'a mut self,
@@ -715,6 +717,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             self.transaction_id,
         ))
     }
+
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
     pub fn load_account_mut_optional<'a, 'db, DB: Database>(
@@ -761,11 +764,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 let is_cold = self
                     .warm_addresses
                     .check_is_cold(&address, skip_cold_load)?;
-
-                // dont load cold account if skip_cold_load is true
-                if is_cold && skip_cold_load {
-                    return Err(JournalLoadError::ColdLoadSkipped);
-                }
 
                 let account = if let Some(account) = db.basic(address)? {
                     let mut account: Account = account.into();
