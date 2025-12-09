@@ -60,10 +60,7 @@ impl Backend {
 impl JournalTr for Backend {
     type Database = InMemoryDB;
     type State = EvmState;
-    type JournaledAccount<'a>
-        = JournaledAccount<'a>
-    where
-        Self: 'a;
+    type JournaledAccount<'a> = JournaledAccount<'a, InMemoryDB, JournalEntry>;
 
     fn new(database: InMemoryDB) -> Self {
         Self::new(SpecId::default(), database)
@@ -300,7 +297,7 @@ impl JournalTr for Backend {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>> {
+    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<Infallible>> {
         self.journaled_state
             .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
     }
@@ -309,7 +306,7 @@ impl JournalTr for Backend {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, Infallible> {
         self.journaled_state
             .load_account_mut_optional_code(address, load_code)
     }

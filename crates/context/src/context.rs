@@ -8,7 +8,9 @@ use context_interface::{
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
-use primitives::{hardfork::SpecId, Address, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{
+    hardfork::SpecId, hints_util::cold_path, Address, Log, StorageKey, StorageValue, B256, U256,
+};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -499,6 +501,7 @@ impl<
         self.db_mut()
             .block_hash(requested_number)
             .map_err(|e| {
+                cold_path();
                 *self.error() = Err(e.into());
             })
             .ok()
@@ -532,6 +535,7 @@ impl<
         self.journal_mut()
             .selfdestruct(address, target, skip_cold_load)
             .map_err(|e| {
+                cold_path();
                 let (ret, err) = e.into_parts();
                 if let Some(err) = err {
                     *self.error() = Err(err.into());
@@ -551,6 +555,7 @@ impl<
         self.journal_mut()
             .sstore_skip_cold_load(address, key, value, skip_cold_load)
             .map_err(|e| {
+                cold_path();
                 let (ret, err) = e.into_parts();
                 if let Some(err) = err {
                     *self.error() = Err(err.into());
@@ -569,6 +574,7 @@ impl<
         self.journal_mut()
             .sload_skip_cold_load(address, key, skip_cold_load)
             .map_err(|e| {
+                cold_path();
                 let (ret, err) = e.into_parts();
                 if let Some(err) = err {
                     *self.error() = Err(err.into());
@@ -584,14 +590,17 @@ impl<
         load_code: bool,
         skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, LoadError> {
-        let error = &mut self.error;
-        let journal = &mut self.journaled_state;
-        match journal.load_account_info_skip_cold_load(address, load_code, skip_cold_load) {
+        match self.journaled_state.load_account_info_skip_cold_load(
+            address,
+            load_code,
+            skip_cold_load,
+        ) {
             Ok(a) => Ok(a),
             Err(e) => {
+                cold_path();
                 let (ret, err) = e.into_parts();
                 if let Some(err) = err {
-                    *error = Err(err.into());
+                    self.error = Err(err.into());
                 }
                 Err(ret)
             }
