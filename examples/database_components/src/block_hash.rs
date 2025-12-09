@@ -1,7 +1,7 @@
 //! BlockHash database component from [`revm::Database`]
 
 use auto_impl::auto_impl;
-use core::{error::Error as StdError, ops::Deref};
+use core::ops::Deref;
 use revm::primitives::B256;
 use std::sync::Arc;
 
@@ -11,7 +11,7 @@ use std::sync::Arc;
 #[auto_impl(&mut, Box)]
 pub trait BlockHash {
     /// Error type for block hash operations
-    type Error: StdError;
+    type Error: core::error::Error + Send + Sync + 'static;
 
     /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
@@ -23,7 +23,7 @@ pub trait BlockHash {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait BlockHashRef {
     /// Error type for block hash operations
-    type Error: StdError;
+    type Error: core::error::Error + Send + Sync + 'static;
 
     /// Gets block hash by block number.
     fn block_hash(&self, number: u64) -> Result<B256, Self::Error>;

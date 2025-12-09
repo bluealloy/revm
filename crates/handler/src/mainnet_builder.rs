@@ -73,8 +73,7 @@ impl MainContext for Context<BlockEnv, TxEnv, CfgEnv, EmptyDB, Journal<EmptyDB>,
 
 #[cfg(test)]
 mod test {
-    use crate::ExecuteEvm;
-    use crate::{MainBuilder, MainContext};
+    use crate::{ExecuteEvm, MainBuilder, MainContext};
     use alloy_signer::{Either, SignerSync};
     use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
@@ -84,8 +83,7 @@ mod test {
     use context::{Context, TxEnv};
     use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{hardfork::SpecId, TxKind, U256};
-    use primitives::{StorageKey, StorageValue};
+    use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
 
     #[test]
     fn sanity_eip7702_tx() {

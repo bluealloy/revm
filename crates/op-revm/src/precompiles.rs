@@ -11,8 +11,7 @@ use revm::{
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };
-use std::boxed::Box;
-use std::string::String;
+use std::{boxed::Box, string::String};
 
 /// Optimism precompile provider
 #[derive(Debug, Clone)]

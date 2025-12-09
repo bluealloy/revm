@@ -6,7 +6,7 @@ pub mod entry;
 use crate::{
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
-    journaled_state::{account::JournaledAccount, entry::JournalEntryTr},
+    journaled_state::account::JournaledAccountTr,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -22,8 +22,10 @@ pub trait JournalTr {
     type Database: Database;
     /// State type that is returned by the journal after finalization.
     type State;
-    /// Journal Entry type that is used in the journal.
-    type JournalEntry: JournalEntryTr;
+    /// Journal account allows modification of account with all needed changes.
+    type JournaledAccount<'a>: JournaledAccountTr
+    where
+        Self: 'a;
 
     /// Creates new Journaled state.
     ///
@@ -186,10 +188,7 @@ pub trait JournalTr {
     fn load_account_mut(
         &mut self,
         address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
         self.load_account_mut_optional_code(address, false)
     }
 
@@ -198,10 +197,7 @@ pub trait JournalTr {
     fn load_account_with_code_mut(
         &mut self,
         address: Address,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    > {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
         self.load_account_mut_optional_code(address, true)
     }
 
@@ -210,10 +206,7 @@ pub trait JournalTr {
         &mut self,
         address: Address,
         load_code: bool,
-    ) -> Result<
-        StateLoad<JournaledAccount<'_, Self::JournalEntry>>,
-        <Self::Database as Database>::Error,
-    >;
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error>;
 
     /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
@@ -350,6 +343,18 @@ impl<E> JournalLoadError<E> {
         match self {
             JournalLoadError::DBError(e) => (LoadError::DBError, Some(e)),
             JournalLoadError::ColdLoadSkipped => (LoadError::ColdLoadSkipped, None),
+        }
+    }
+
+    /// Maps the database error to a new error.
+    #[inline]
+    pub fn map<B, F>(self, f: F) -> JournalLoadError<B>
+    where
+        F: FnOnce(E) -> B,
+    {
+        match self {
+            JournalLoadError::DBError(e) => JournalLoadError::DBError(f(e)),
+            JournalLoadError::ColdLoadSkipped => JournalLoadError::ColdLoadSkipped,
         }
     }
 }

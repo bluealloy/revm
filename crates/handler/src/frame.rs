@@ -1,22 +1,20 @@
-use crate::evm::FrameTr;
-use crate::item_or_result::FrameInitOrResult;
-use crate::{precompile_provider::PrecompileProvider, ItemOrResult};
-use crate::{CallFrame, CreateFrame, FrameData, FrameResult};
-use context::result::FromStringError;
-use context_interface::context::ContextError;
-use context_interface::local::{FrameToken, OutFrame};
-use context_interface::ContextTr;
+use crate::{
+    evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
+    CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
+};
+use context::{journaled_state::account::JournaledAccountTr, result::FromStringError};
 use context_interface::{
+    context::ContextError,
     journaled_state::{JournalCheckpoint, JournalTr},
-    Cfg, Database,
+    local::{FrameToken, OutFrame},
+    Cfg, ContextTr, Database,
 };
 use core::cmp::min;
 use derive_where::derive_where;
-use interpreter::gas::params::GasParams;
-use interpreter::interpreter_action::FrameInit;
 use interpreter::{
-    gas,
+    gas::{self, params::GasParams},
     interpreter::{EthInterpreter, ExtBytecode},
+    interpreter_action::FrameInit,
     interpreter_types::ReturnData,
     CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
     FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
@@ -25,8 +23,8 @@ use interpreter::{
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+    keccak256, Address, Bytes, U256,
 };
-use primitives::{keccak256, Address, Bytes, U256};
 use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
 
@@ -309,6 +307,8 @@ impl EthFrame<EthInterpreter> {
             }
             CreateScheme::Custom { address } => address,
         };
+
+        drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
         context.journal_mut().load_account(created_address)?;

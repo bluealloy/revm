@@ -90,7 +90,8 @@ pub trait ExecuteEvm {
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
     ) -> Result<Vec<Self::ExecutionResult>, TransactionIndexedError<Self::Error>> {
-        let mut outputs = Vec::new();
+        let (lower, _) = txs.size_hint();
+        let mut outputs = Vec::with_capacity(lower);
         for (index, tx) in txs.enumerate() {
             outputs.push(
                 self.transact_one(tx)

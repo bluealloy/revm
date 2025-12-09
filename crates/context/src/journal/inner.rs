@@ -4,10 +4,10 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        account::JournaledAccount,
+        account::{JournaledAccount, JournaledAccountTr},
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
+        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
     },
-    journaled_state::{AccountLoad, JournalCheckpoint, JournalLoadError, TransferError},
 };
 use core::mem;
 use database_interface::Database;
@@ -704,8 +704,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 if is_cold && skip_cold_load {
                     return Err(JournalLoadError::ColdLoadSkipped);
                 }
+
                 let account = if let Some(account) = db.basic(address)? {
-                    account.into()
+                    let mut account: Account = account.into();
+                    account.transaction_id = self.transaction_id;
+                    account
                 } else {
                     Account::new_not_existing(self.transaction_id)
                 };

@@ -8,8 +8,7 @@ use revm::{
     precompile::{PrecompileError, PrecompileOutput, PrecompileResult},
     primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
-use std::boxed::Box;
-use std::string::String;
+use std::{boxed::Box, string::String};
 
 // Define our custom precompile address
 pub const CUSTOM_PRECOMPILE_ADDRESS: Address = address!("0000000000000000000000000000000000000100");

@@ -460,8 +460,9 @@ pub(crate) fn map_fp2_to_g2_bytes(
 pub(crate) fn p1_msm_bytes(
     point_scalar_pairs: impl Iterator<Item = Result<(G1Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
 ) -> Result<[u8; G1_LENGTH], PrecompileError> {
-    let mut g1_points = Vec::new();
-    let mut scalars = Vec::new();
+    let (lower, _) = point_scalar_pairs.size_hint();
+    let mut g1_points = Vec::with_capacity(lower);
+    let mut scalars = Vec::with_capacity(lower);
 
     // Parse all points and scalars
     for pair_result in point_scalar_pairs {
@@ -497,8 +498,9 @@ pub(crate) fn p1_msm_bytes(
 pub(crate) fn p2_msm_bytes(
     point_scalar_pairs: impl Iterator<Item = Result<(G2Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
 ) -> Result<[u8; G2_LENGTH], PrecompileError> {
-    let mut g2_points = Vec::new();
-    let mut scalars = Vec::new();
+    let (lower, _) = point_scalar_pairs.size_hint();
+    let mut g2_points = Vec::with_capacity(lower);
+    let mut scalars = Vec::with_capacity(lower);
 
     // Parse all points and scalars
     for pair_result in point_scalar_pairs {

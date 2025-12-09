@@ -9,8 +9,7 @@ use revm::{
     database,
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::U256,
-    primitives::{hardfork::SpecId, Bytes, B256},
+    primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
@@ -341,7 +340,7 @@ pub fn execute_test_suite(
             }
 
             // Setup block environment for this spec
-            let block = unit.block_env(&cfg);
+            let block = unit.block_env(&mut cfg);
 
             for (index, test) in tests.iter().enumerate() {
                 // Setup transaction environment

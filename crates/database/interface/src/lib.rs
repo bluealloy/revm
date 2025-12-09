@@ -8,10 +8,9 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use core::error::Error;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::string::String;
+use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -32,26 +31,27 @@ pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 pub mod async_db;
 pub mod either;
 pub mod empty_db;
+pub mod erased_error;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
+pub use erased_error::ErasedError;
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
-pub trait DBErrorMarker {}
+pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {}
 
 /// Implement marker for `()`.
-impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
-impl DBErrorMarker for String {}
+impl DBErrorMarker for ErasedError {}
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -72,6 +72,16 @@ pub trait Database {
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
+
+    /// Commit changes to the database with an iterator.
+    ///
+    /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
+    ///
+    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        self.commit(changes);
+    }
 }
 
 /// EVM database interface.
@@ -83,7 +93,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error: DBErrorMarker + Error;
+    type Error: DBErrorMarker;
 
     /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -170,5 +180,69 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
+    }
+}
+
+impl<T: Database + DatabaseCommit> DatabaseCommitExt for T {
+    // default implementation
+}
+
+/// EVM database commit interface.
+pub trait DatabaseCommitExt: Database + DatabaseCommit {
+    /// Iterates over received balances and increment all account balances.
+    ///
+    /// Update will create transitions for all accounts that are updated.
+    fn increment_balances(
+        &mut self,
+        balances: impl IntoIterator<Item = (Address, u128)>,
+    ) -> Result<(), Self::Error> {
+        // Make transition and update cache state
+        let transitions = balances
+            .into_iter()
+            .map(|(address, balance)| {
+                let mut original_account = match self.basic(address)? {
+                    Some(acc_info) => Account::from(acc_info),
+                    None => Account::new_not_existing(0),
+                };
+                original_account.info.balance = original_account
+                    .info
+                    .balance
+                    .saturating_add(U256::from(balance));
+                original_account.mark_touch();
+                Ok((address, original_account))
+            })
+            // Unfortunately must collect here to short circuit on error
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.commit_iter(transitions);
+        Ok(())
+    }
+
+    /// Drains balances from given account and return those values.
+    ///
+    /// It is used for DAO hardfork state change to move values from given accounts.
+    fn drain_balances(
+        &mut self,
+        addresses: impl IntoIterator<Item = Address>,
+    ) -> Result<Vec<u128>, Self::Error> {
+        // Make transition and update cache state
+        let addresses_iter = addresses.into_iter();
+        let (lower, _) = addresses_iter.size_hint();
+        let mut transitions = Vec::with_capacity(lower);
+        let balances = addresses_iter
+            .map(|address| {
+                let mut original_account = match self.basic(address)? {
+                    Some(acc_info) => Account::from(acc_info),
+                    None => Account::new_not_existing(0),
+                };
+                let balance = core::mem::take(&mut original_account.info.balance);
+                original_account.mark_touch();
+                transitions.push((address, original_account));
+                Ok(balance.try_into().unwrap())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        self.commit_iter(transitions);
+        Ok(balances)
     }
 }

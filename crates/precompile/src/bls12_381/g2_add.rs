@@ -1,9 +1,7 @@
 //! BLS12-381 G2 add precompile. More details in [`g2_add`]
 use super::utils::{pad_g2_point, remove_g2_padding};
-use crate::bls12_381_const::{
-    G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH,
-};
 use crate::{
+    bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH},
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
 

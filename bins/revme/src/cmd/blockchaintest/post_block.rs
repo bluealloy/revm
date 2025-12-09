@@ -1,6 +1,6 @@
 use revm::{
     context::{Block, ContextTr},
-    database::State,
+    database::{DatabaseCommitExt as _, State},
     handler::EvmTr,
     primitives::{hardfork::SpecId, ONE_ETHER, ONE_GWEI},
     Database, SystemCallCommitEvm,

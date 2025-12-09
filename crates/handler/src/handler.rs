@@ -1,18 +1,20 @@
 use crate::instructions::InstructionProvider;
 use crate::{
-    evm::FrameTr, execution, post_execution, pre_execution, validation, EvmTr, FrameResult,
-    ItemOrResult,
+    evm::FrameTr,
+    execution, post_execution,
+    pre_execution::{self, apply_eip7702_auth_list},
+    validation, EvmTr, FrameResult, ItemOrResult,
 };
-use context::result::{ExecutionResult, FromStringError};
-use context::LocalContextTr;
-use context_interface::context::ContextError;
-use context_interface::ContextTr;
+use context::{
+    result::{ExecutionResult, FromStringError},
+    LocalContextTr,
+};
 use context_interface::{
+    context::ContextError,
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
-    Cfg, Database, JournalTr, Transaction,
+    Cfg, ContextTr, Database, JournalTr, Transaction,
 };
-use interpreter::interpreter_action::FrameInit;
-use interpreter::{Gas, InitialAndFloorGas, SharedMemory};
+use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
 use state::Bytecode;
 
@@ -287,7 +289,7 @@ pub trait Handler {
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
     fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        pre_execution::apply_eip7702_auth_list(evm.ctx())
+        apply_eip7702_auth_list(evm.ctx_mut())
     }
 
     /// Deducts maximum possible fee and transfer value from caller's balance.

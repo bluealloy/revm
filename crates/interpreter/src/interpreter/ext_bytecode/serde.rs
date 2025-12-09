@@ -2,8 +2,7 @@ use super::ExtBytecode;
 use crate::interpreter::Jumps;
 use primitives::B256;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::borrow::Cow;
-use std::format;
+use std::{borrow::Cow, format};
 
 #[derive(Serialize, Deserialize)]
 struct ExtBytecodeSerde<'a> {

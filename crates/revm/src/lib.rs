@@ -28,8 +28,10 @@ pub use state;
 
 // Export items.
 
-pub use context::journal::{Journal, JournalEntry};
-pub use context::Context;
+pub use context::{
+    journal::{Journal, JournalEntry},
+    Context,
+};
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
 pub use handler::{
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext, MainnetEvm, SystemCallCommitEvm,

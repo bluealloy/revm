@@ -123,7 +123,7 @@ indicatif = "0.18"
 plain_hasher = "0.2"
 rstest = "0.26.0"
 serde_derive = "1.0"
-thiserror = "2.0"
+thiserror = { version = "2.0", default-features = false }
 triehash = "0.8"
 walkdir = "2.5"
 

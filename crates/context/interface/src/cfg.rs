@@ -1,7 +1,6 @@
 //! Configuration for the EVM. Containing [`SpecId`].
 use auto_impl::auto_impl;
-use core::fmt::Debug;
-use core::hash::Hash;
+use core::{fmt::Debug, hash::Hash};
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
 /// Configuration for the EVM.

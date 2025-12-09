@@ -7,9 +7,7 @@ use revm::{
     primitives::{hex, TxKind},
     Context, Database, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::path::PathBuf;
-use std::{borrow::Cow, fs};
-use std::{io::Error as IoError, time::Instant};
+use std::{borrow::Cow, fs, io::Error as IoError, path::PathBuf, time::Instant};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
