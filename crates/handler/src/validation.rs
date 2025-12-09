@@ -110,20 +110,20 @@ pub fn validate_tx_env<CTX: ContextTr>(
     // Check if the transaction's chain id is correct
     let tx = context.tx();
     let validation_kind = tx.validation_kind();
-    
+
     let tx_type = context.tx().tx_type();
     let tx_type = TransactionType::from(tx_type);
-    
+
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
     } else {
         Some(context.block().basefee() as u128)
     };
-    
+
     match validation_kind {
         ValidationKind::None => {
             // No validation required
-            return Ok(())
+            return Ok(());
         }
         ValidationKind::ByTxType => {
             return validate_by_tx_type(&context, spec_id, base_fee, &tx_type, tx)
@@ -131,8 +131,13 @@ pub fn validate_tx_env<CTX: ContextTr>(
         ValidationKind::Custom(checks) => {
             if checks.contains(ValidationChecks::CHAIN_ID) {
                 // Check chain_id if config is enabled.
-                // EIP-155: Simple replay attack protection   
-                validate_chain_id(context.cfg().tx_chain_id_check(), tx.chain_id(), context.cfg().chain_id(), &tx_type)?;
+                // EIP-155: Simple replay attack protection
+                validate_chain_id(
+                    context.cfg().tx_chain_id_check(),
+                    tx.chain_id(),
+                    context.cfg().chain_id(),
+                    &tx_type,
+                )?;
             }
             if checks.contains(ValidationChecks::TX_GAS_LIMIT) {
                 // EIP-7825: Transaction Gas Limit Cap
@@ -165,16 +170,24 @@ pub fn validate_tx_env<CTX: ContextTr>(
                 validate_auth_list(auth_list_len)?;
             }
             if checks.contains(ValidationChecks::BLOCK_GAS_LIMIT) {
-                validate_block_gas_limit(context.cfg().is_block_gas_limit_disabled(), tx.gas_limit(), context.block().gas_limit())?;
+                validate_block_gas_limit(
+                    context.cfg().is_block_gas_limit_disabled(),
+                    tx.gas_limit(),
+                    context.block().gas_limit(),
+                )?;
             }
             if checks.contains(ValidationChecks::MAX_INITCODE_SIZE) {
                 // EIP-3860: Limit and meter initcode. Still valid with EIP-7907 and increase of initcode size.
-                validate_max_init_code_size(spec_id, tx.kind().is_create(), context.tx().input().len(), context.cfg().max_initcode_size())?;
+                validate_max_init_code_size(
+                    spec_id,
+                    tx.kind().is_create(),
+                    context.tx().input().len(),
+                    context.cfg().max_initcode_size(),
+                )?;
             }
         }
     }
 
-    
     Ok(())
 }
 
@@ -184,11 +197,16 @@ pub fn validate_by_tx_type<CTX: ContextTr>(
     spec_id: SpecId,
     base_fee: Option<u128>,
     tx_type: &TransactionType,
-    tx: &<CTX as ContextTr>::Tx
+    tx: &<CTX as ContextTr>::Tx,
 ) -> Result<(), InvalidTransaction> {
     // Check chain_id if config is enabled.
-    // EIP-155: Simple replay attack protection   
-    validate_chain_id(context.cfg().tx_chain_id_check(), tx.chain_id(), context.cfg().chain_id(), &tx_type)?;
+    // EIP-155: Simple replay attack protection
+    validate_chain_id(
+        context.cfg().tx_chain_id_check(),
+        tx.chain_id(),
+        context.cfg().chain_id(),
+        &tx_type,
+    )?;
 
     // EIP-7825: Transaction Gas Limit Cap
     let cap = context.cfg().tx_gas_limit_cap();
@@ -260,16 +278,30 @@ pub fn validate_by_tx_type<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
-    validate_block_gas_limit(context.cfg().is_block_gas_limit_disabled(), tx.gas_limit(), context.block().gas_limit())?;
+    validate_block_gas_limit(
+        context.cfg().is_block_gas_limit_disabled(),
+        tx.gas_limit(),
+        context.block().gas_limit(),
+    )?;
 
     // EIP-3860: Limit and meter initcode. Still valid with EIP-7907 and increase of initcode size.
-    validate_max_init_code_size(spec_id, tx.kind().is_create(), context.tx().input().len(), context.cfg().max_initcode_size())?;
-    
+    validate_max_init_code_size(
+        spec_id,
+        tx.kind().is_create(),
+        context.tx().input().len(),
+        context.cfg().max_initcode_size(),
+    )?;
+
     Ok(())
 }
 
 /// Validate chain id.
-pub fn validate_chain_id(chain_id_check: bool, tx_chain_id: Option<u64>, cfg_chain_id: u64, tx_type: &TransactionType) -> Result<(), InvalidTransaction> {
+pub fn validate_chain_id(
+    chain_id_check: bool,
+    tx_chain_id: Option<u64>,
+    cfg_chain_id: u64,
+    tx_type: &TransactionType,
+) -> Result<(), InvalidTransaction> {
     if chain_id_check {
         if let Some(chain_id) = tx_chain_id {
             if chain_id != cfg_chain_id {
@@ -285,7 +317,10 @@ pub fn validate_chain_id(chain_id_check: bool, tx_chain_id: Option<u64>, cfg_cha
 }
 
 /// Validate tx gas limit.
-pub fn validate_tx_gas_limit(tx_gas_limit: u64, cfg_gas_limit_cap: u64) -> Result<(), InvalidTransaction> {
+pub fn validate_tx_gas_limit(
+    tx_gas_limit: u64,
+    cfg_gas_limit_cap: u64,
+) -> Result<(), InvalidTransaction> {
     if tx_gas_limit > cfg_gas_limit_cap {
         return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
             gas_limit: tx_gas_limit,
@@ -306,9 +341,12 @@ pub fn validate_auth_list(auth_list_len: usize) -> Result<(), InvalidTransaction
 }
 
 /// Validate block gas limit
-pub fn validate_block_gas_limit(is_block_gas_limit_disabled: bool, tx_gas_limit: u64, block_gas_limit: u64) -> Result<(), InvalidTransaction> {
-    if !is_block_gas_limit_disabled && tx_gas_limit > block_gas_limit
-    {
+pub fn validate_block_gas_limit(
+    is_block_gas_limit_disabled: bool,
+    tx_gas_limit: u64,
+    block_gas_limit: u64,
+) -> Result<(), InvalidTransaction> {
+    if !is_block_gas_limit_disabled && tx_gas_limit > block_gas_limit {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 
@@ -316,10 +354,13 @@ pub fn validate_block_gas_limit(is_block_gas_limit_disabled: bool, tx_gas_limit:
 }
 
 /// Validate max init code size
-pub fn validate_max_init_code_size(spec_id: SpecId, tx_is_create: bool, tx_input_len: usize, max_init_code_size: usize) -> Result<(), InvalidTransaction> {
-    if spec_id.is_enabled_in(SpecId::SHANGHAI)
-        && tx_is_create
-        && tx_input_len > max_init_code_size
+pub fn validate_max_init_code_size(
+    spec_id: SpecId,
+    tx_is_create: bool,
+    tx_input_len: usize,
+    max_init_code_size: usize,
+) -> Result<(), InvalidTransaction> {
+    if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx_is_create && tx_input_len > max_init_code_size
     {
         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
     }

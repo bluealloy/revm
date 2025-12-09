@@ -9,7 +9,7 @@ bitflags! {
     #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct ValidationChecks: u32 {
         /// Check if transaction has a valid chain id
-        const CHAIN_ID = 0b00000001;    
+        const CHAIN_ID = 0b00000001;
         /// Check of transaction has a valid gas limit
         const TX_GAS_LIMIT = 0b00000010;
         /// Check if the transaction has a valid base fee

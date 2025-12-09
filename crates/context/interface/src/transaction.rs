@@ -244,7 +244,7 @@ pub trait Transaction {
     ) -> Result<U256, InvalidTransaction> {
         Ok(self.effective_balance_spending(base_fee, blob_price)? - self.value())
     }
-    
+
     /// Returns what validations this transaction expects.
     /// Default implementation returns `ByTxType` for ethereum transctions.
     fn validation_kind(&self) -> ValidationKind {
