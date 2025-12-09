@@ -1,4 +1,4 @@
-// Transaction validation with custom validation
+//! Transaction validation with custom validation
 
 use bitflags::bitflags;
 
@@ -27,6 +27,8 @@ bitflags! {
     }
 }
 
+
+/// Transaction validation kind with custom validation checks
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ValidationKind {
