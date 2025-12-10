@@ -128,9 +128,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if len != 0 {
         // fail on casting of memory_offset only if len is not zero.
         memory_offset_usize = as_usize_or_fail!(context.interpreter, memory_offset);
-        if !context.interpreter.resize_memory(memory_offset_usize, len) {
-            return;
-        }
+        // Resize memory to fit the code
+        resize_memory!(context.interpreter, memory_offset_usize, len);
     }
 
     let code = if spec_id.is_enabled_in(BERLIN) {
@@ -330,9 +329,8 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(context.interpreter, offset);
-        if !context.interpreter.resize_memory(offset, len) {
-            return;
-        }
+        // Resize memory to fit the data
+        resize_memory!(context.interpreter, offset, len);
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     let Some(topics) = context.interpreter.stack.popn::<N>() else {

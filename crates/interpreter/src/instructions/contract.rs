@@ -58,9 +58,8 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         }
 
         let code_offset = as_usize_or_fail!(context.interpreter, code_offset);
-        if !context.interpreter.resize_memory(code_offset, len) {
-            return;
-        }
+        resize_memory!(context.interpreter, code_offset, len);
+
         code = Bytes::copy_from_slice(
             context
                 .interpreter
