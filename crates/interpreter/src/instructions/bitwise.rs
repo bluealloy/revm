@@ -42,12 +42,20 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
+/// eq inline function
+#[inline]
+pub fn eq_inline(op1: &U256, op2: &U256) -> bool {
+    let a = op1.as_limbs();
+    let b = op2.as_limbs();
+    ((a[0] ^ b[0]) | (a[1] ^ b[1]) | (a[2] ^ b[2]) | (a[3] ^ b[3])) == 0
+}
+
 /// Implements the EQ instruction.
 ///
 /// Equality comparison of two values from stack.
 pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
-    *op2 = U256::from(op1 == *op2);
+    *op2 = U256::from(eq_inline(&op1, &*op2));
 }
 
 /// Implements the ISZERO instruction.
