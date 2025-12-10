@@ -31,12 +31,6 @@ pub fn create_init_frame(
                 return_memory_offset: 0..0,
             }))
         }
-        TxKind::Create => FrameInput::Create(Box::new(CreateInputs {
-            caller: tx.caller(),
-            scheme: CreateScheme::Create,
-            value: tx.value(),
-            init_code: input,
-            gas_limit,
-        })),
+        TxKind::Create => FrameInput::Create(Box::new(CreateInputs::new(tx.caller(), CreateScheme::Create, tx.value(), input, gas_limit))),
     }
 }
