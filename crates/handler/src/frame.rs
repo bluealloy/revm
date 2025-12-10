@@ -303,7 +303,7 @@ impl EthFrame<EthInterpreter> {
         let created_address = match inputs.scheme() {
             CreateScheme::Create => inputs.caller().create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code()));
+                let init_code_hash = *init_code_hash.insert(keccak256(inputs.init_code()));
                 inputs.caller().create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
