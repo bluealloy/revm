@@ -1,6 +1,6 @@
 use context_interface::CreateScheme;
-use primitives::{Address, Bytes, U256};
 use core::cell::OnceCell;
+use primitives::{Address, Bytes, U256};
 
 /// Inputs for a create call
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -40,19 +40,17 @@ impl CreateInputs {
             cached_address: OnceCell::new(),
         }
     }
-    
+
     /// Returns the address that this create call will create.
     ///
     /// The result is cached to avoid redundant keccak computations.
     pub fn created_address(&self, nonce: u64) -> Address {
-        *self.cached_address.get_or_init(|| {
-            match self.scheme {
-                CreateScheme::Create => self.caller.create(nonce),
-                CreateScheme::Create2 { salt } => self
-                    .caller
-                    .create2_from_code(salt.to_be_bytes(), &self.init_code),
-                CreateScheme::Custom { address } => address,
-            }
+        *self.cached_address.get_or_init(|| match self.scheme {
+            CreateScheme::Create => self.caller.create(nonce),
+            CreateScheme::Create2 { salt } => self
+                .caller
+                .create2_from_code(salt.to_be_bytes(), &self.init_code),
+            CreateScheme::Custom { address } => address,
         })
     }
 }

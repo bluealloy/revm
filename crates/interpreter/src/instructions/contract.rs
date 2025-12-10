@@ -95,7 +95,13 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         .interpreter
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Create(Box::new(
-            CreateInputs::new(context.interpreter.input.target_address(), scheme, value, code, gas_limit),
+            CreateInputs::new(
+                context.interpreter.input.target_address(),
+                scheme,
+                value,
+                code,
+                gas_limit,
+            ),
         ))));
 }
 
