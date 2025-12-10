@@ -221,7 +221,6 @@ where
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
             } else if is_deposit {
-                let tx = ctx.tx();
                 if tx.is_system_transaction() {
                     // System transactions were a special type of deposit transaction in
                     // the Bedrock hardfork that did not incur any gas costs.
