@@ -4,6 +4,7 @@ pub mod eip2930;
 pub mod eip7702;
 mod either;
 pub mod transaction_type;
+pub mod tx_validation;
 
 pub use alloy_types::{
     AccessList, AccessListItem, Authorization, RecoveredAuthority, RecoveredAuthorization,
@@ -13,7 +14,7 @@ pub use eip2930::AccessListItemTr;
 pub use eip7702::AuthorizationTr;
 pub use transaction_type::TransactionType;
 
-use crate::result::InvalidTransaction;
+use crate::{result::InvalidTransaction, transaction::tx_validation::ValidationKind};
 use auto_impl::auto_impl;
 use core::{cmp::min, fmt::Debug};
 use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
@@ -242,5 +243,11 @@ pub trait Transaction {
         blob_price: u128,
     ) -> Result<U256, InvalidTransaction> {
         Ok(self.effective_balance_spending(base_fee, blob_price)? - self.value())
+    }
+
+    /// Returns what validations this transaction expects.
+    /// Default implementation returns `ByTxType` for ethereum transactions.
+    fn validation_kind(&self) -> ValidationKind {
+        ValidationKind::ByTxType
     }
 }
