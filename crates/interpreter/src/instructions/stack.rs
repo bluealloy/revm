@@ -63,9 +63,7 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the DUPN instruction.
 ///
 /// Duplicates the Nth stack item to the top of the stack, with N given by an immediate.
-pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
@@ -74,16 +72,16 @@ pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
 /// Implements the SWAPN instruction.
 ///
 /// Swaps the top stack item with the N+1th stack item, with N given by an immediate.
-pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
@@ -92,16 +90,16 @@ pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
 /// Implements the EXCHANGE instruction.
 ///
 /// Swaps the N+1th stack item with the M+1th stack item, with N, M given by an immediate.
-pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) {
+pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some((n, m)) = decode_pair(x) {
@@ -110,7 +108,9 @@ pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
@@ -144,7 +144,12 @@ fn decode_pair(x: usize) -> Option<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        gas::params::GasParams, host::DummyHost, instructions::instruction_table, interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory}, interpreter_types::LoopControl, Interpreter
+        gas::params::GasParams,
+        host::DummyHost,
+        instructions::instruction_table,
+        interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
+        interpreter_types::LoopControl,
+        Interpreter,
     };
     use bytecode::Bytecode;
     use primitives::{hardfork::SpecId, Bytes, U256};
@@ -206,18 +211,13 @@ mod tests {
     #[test]
     fn test_swapn_invalid_immediate() {
         let mut interpreter = run_bytecode(&[0xe7, 0x5b]);
-        assert!(interpreter
-            .bytecode
-            .instruction_result()
-            .is_none());
+        assert!(interpreter.bytecode.instruction_result().is_none());
     }
 
     #[test]
     fn test_jump_over_invalid_dupn() {
         let interpreter = run_bytecode(&[0x60, 0x04, 0x56, 0xe6, 0x5b]);
-        assert!(interpreter
-            .bytecode
-            .is_not_end());
+        assert!(interpreter.bytecode.is_not_end());
     }
 
     #[test]
