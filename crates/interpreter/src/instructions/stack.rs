@@ -161,7 +161,7 @@ mod tests {
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
             false,
-            SpecId::OSAKA,
+            SpecId::AMSTERDAM,
             u64::MAX,
             GasParams::default(),
         );
