@@ -5,4 +5,5 @@
 //! - Custom precompiles
 //! - Custom gas costs
 
+pub mod handler;
 pub mod precompiles;
