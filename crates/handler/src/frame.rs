@@ -270,7 +270,7 @@ impl EthFrame<EthInterpreter> {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
                     result: e,
-                    gas: Gas::new(inputs.gas_limit),
+                    gas: Gas::new(inputs.gas_limit()),
                     output: Bytes::new(),
                 },
                 address: None,
@@ -284,11 +284,11 @@ impl EthFrame<EthInterpreter> {
 
         // Fetch balance of caller.
         let journal = context.journal_mut();
-        let mut caller_info = journal.load_account_mut(inputs.caller)?;
+        let mut caller_info = journal.load_account_mut(inputs.caller())?;
 
         // Check if caller has enough balance to send to the created contract.
         // decrement of balance is done in the create_account_checkpoint.
-        if *caller_info.balance() < inputs.value {
+        if *caller_info.balance() < inputs.value() {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -300,11 +300,11 @@ impl EthFrame<EthInterpreter> {
 
         // Create address
         let mut init_code_hash = None;
-        let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
+        let created_address = match inputs.scheme() {
+            CreateScheme::Create => inputs.caller().create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code));
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                let init_code_hash = *init_code_hash.insert(keccak256(inputs.init_code()));
+                inputs.caller().create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
         };
@@ -316,9 +316,9 @@ impl EthFrame<EthInterpreter> {
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller,
+            inputs.caller(),
             created_address,
-            inputs.value,
+            inputs.value(),
             spec,
         ) {
             Ok(checkpoint) => checkpoint,
@@ -326,18 +326,18 @@ impl EthFrame<EthInterpreter> {
         };
 
         let bytecode = ExtBytecode::new_with_optional_hash(
-            Bytecode::new_legacy(inputs.init_code.clone()),
+            Bytecode::new_legacy(inputs.init_code().clone()),
             init_code_hash,
         );
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
-            caller_address: inputs.caller,
+            caller_address: inputs.caller(),
             bytecode_address: None,
             input: CallInput::Bytes(Bytes::new()),
-            call_value: inputs.value,
+            call_value: inputs.value(),
         };
-        let gas_limit = inputs.gas_limit;
+        let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),

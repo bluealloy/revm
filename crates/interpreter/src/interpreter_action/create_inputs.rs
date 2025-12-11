@@ -7,15 +7,15 @@ use primitives::{Address, Bytes, U256};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     /// Caller address of the EVM
-    pub caller: Address,
+    caller: Address,
     /// The create scheme
-    pub scheme: CreateScheme,
+    scheme: CreateScheme,
     /// The value to transfer
-    pub value: U256,
+    value: U256,
     /// The init code of the contract
-    pub init_code: Bytes,
+    init_code: Bytes,
     /// The gas limit of the call
-    pub gas_limit: u64,
+    gas_limit: u64,
     /// Cached created address. This is computed lazily and cached to avoid
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -52,5 +52,58 @@ impl CreateInputs {
                 .create2_from_code(salt.to_be_bytes(), &self.init_code),
             CreateScheme::Custom { address } => address,
         })
+    }
+
+    /// Returns the caller address of the EVM.
+    pub fn caller(&self) -> Address {
+        self.caller
+    }
+
+    /// Returns the create scheme of the EVM.
+    pub fn scheme(&self) -> CreateScheme {
+        self.scheme
+    }
+
+    /// Returns the value to transfer.
+    pub fn value(&self) -> U256 {
+        self.value
+    }
+
+    /// Returns the init code of the contract.
+    pub fn init_code(&self) -> &Bytes {
+        &self.init_code
+    }
+
+    /// Returns the gas limit of the call.
+    pub fn gas_limit(&self) -> u64 {
+        self.gas_limit
+    }
+
+    /// Set call
+    pub fn set_call(&mut self, caller: Address) {
+        self.caller = caller;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set scheme
+    pub fn set_scheme(&mut self, scheme: CreateScheme) {
+        self.scheme = scheme;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set value
+    pub fn set_value(&mut self, value: U256) {
+        self.value = value;
+    }
+
+    /// Set init code
+    pub fn set_init_code(&mut self, init_code: Bytes) {
+        self.init_code = init_code;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set gas limit
+    pub fn set_gas_limit(&mut self, gas_limit: u64) {
+        self.gas_limit = gas_limit;
     }
 }
