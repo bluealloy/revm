@@ -78,4 +78,32 @@ impl CreateInputs {
     pub fn gas_limit(&self) -> u64 {
         self.gas_limit
     }
+
+    /// Set call
+    pub fn set_call(&mut self, caller: Address) {
+        self.caller = caller;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set scheme
+    pub fn set_scheme(&mut self, scheme: CreateScheme) {
+        self.scheme = scheme;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set value
+    pub fn set_value(&mut self, value: U256) {
+        self.value = value;
+    }
+
+    /// Set init code
+    pub fn set_init_code(&mut self, init_code: Bytes) {
+        self.init_code = init_code;
+        self.cached_address = OnceCell::new();
+    }
+
+    /// Set gas limit
+    pub fn set_gas_limit(&mut self, gas_limit: u64) {
+        self.gas_limit = gas_limit;
+    }
 }
