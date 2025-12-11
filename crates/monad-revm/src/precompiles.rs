@@ -1,4 +1,5 @@
 //! Contains Monad specific precompiles.
+use crate::MonadSpecId;
 use revm::{
     context::Cfg,
     context_interface::ContextTr,
@@ -17,17 +18,24 @@ use std::{boxed::Box, string::String};
 pub struct MonadPrecompiles {
     /// Inner precompile provider is same as Ethereums.
     inner: EthPrecompiles,
+    /// Spec id of the precompile provider.
+    spec: MonadSpecId,
 }
 
 impl MonadPrecompiles {
     /// Create a new precompile provider with the given spec.
     #[inline]
-    pub fn new_with_spec(spec: SpecId) -> Self {
+    pub fn new_with_spec(spec: MonadSpecId) -> Self {
+        let precompiles = match spec {
+            MonadSpecId::Monad => Precompiles::new(spec.into_eth_spec().into()),
+        };
+
         Self {
             inner: EthPrecompiles {
-                precompiles: Precompiles::new(spec.into()),
-                spec,
+                precompiles,
+                spec: SpecId::default(),
             },
+            spec
         }
     }
 
@@ -40,15 +48,13 @@ impl MonadPrecompiles {
 
 impl<CTX> PrecompileProvider<CTX> for MonadPrecompiles
 where
-    // TODO:Update SpecId to MonadSpecId
-    CTX: ContextTr<Cfg: Cfg<Spec = SpecId>>,
+    CTX: ContextTr<Cfg: Cfg<Spec = MonadSpecId>>,
 {
     type Output = InterpreterResult;
 
     #[inline]
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool {
-        // TODO: use .spec once added to the struct
-        if spec == self.inner.spec {
+        if spec == self.spec {
             return false;
         }
         *self = Self::new_with_spec(spec);
@@ -77,6 +83,6 @@ where
 
 impl Default for MonadPrecompiles {
     fn default() -> Self {
-        Self::new_with_spec(SpecId::OSAKA)
+        Self::new_with_spec(MonadSpecId::Monad)
     }
 }

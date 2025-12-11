@@ -7,3 +7,6 @@
 
 pub mod handler;
 pub mod precompiles;
+pub mod spec;
+
+pub use spec::*;
