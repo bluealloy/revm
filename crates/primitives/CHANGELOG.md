@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.2...revm-primitives-v21.1.0) - 2025-12-11
+
+### Added
+
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+
+### Other
+
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [21.0.2](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.1...revm-primitives-v21.0.2) - 2025-11-07
 
 ### Other

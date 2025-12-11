@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.1.1](https://github.com/bluealloy/revm/compare/revm-statetest-types-v13.1.0...revm-statetest-types-v13.1.1) - 2025-12-11
+
+### Fixed
+
+- *(statetest)* use spec-aware blob base fee update fraction ([#3210](https://github.com/bluealloy/revm/pull/3210))
+
+### Other
+
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [13.1.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v13.0.0...revm-statetest-types-v13.1.0) - 2025-11-14
 
 ### Other

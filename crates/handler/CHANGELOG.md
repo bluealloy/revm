@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v15.0.0) - 2025-12-11
+
+### Added
+
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- *(create)* Implement Cache for CreateInputs::created_address ([#3218](https://github.com/bluealloy/revm/pull/3218))
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- *(create)* Fix CreateInputs::created_address Cache invalidation ([#3222](https://github.com/bluealloy/revm/pull/3222))
+
+### Other
+
+- optimize vector initialization using size hints ([#3200](https://github.com/bluealloy/revm/pull/3200))
+- apply_auth_list helper fn ([#3187](https://github.com/bluealloy/revm/pull/3187))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.0.0...revm-handler-v14.1.0) - 2025-11-14
 
 ### Other

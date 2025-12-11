@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v8.0.5...revm-database-interface-v9.0.0) - 2025-12-11
+
+### Added
+
+- DatabaseCommitExt::drain_balances ([#3205](https://github.com/bluealloy/revm/pull/3205))
+- DatabaseCommitExt + increment_balances ([#3195](https://github.com/bluealloy/revm/pull/3195))
+- DatabaseCommit::commit_iter ([#3197](https://github.com/bluealloy/revm/pull/3197))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Other
+
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [8.0.5](https://github.com/bluealloy/revm/compare/revm-database-interface-v8.0.4...revm-database-interface-v8.0.5) - 2025-11-07
 
 ### Other

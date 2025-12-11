@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v31.0.0...revm-precompile-v31.0.1) - 2025-12-11
+
+### Other
+
+- optimize vector initialization using size hints ([#3200](https://github.com/bluealloy/revm/pull/3200))
+- optimize precompile `extend()` ([#3192](https://github.com/bluealloy/revm/pull/3192))
+- optimize vector initialization with size hints in state and precompile modules ([#3191](https://github.com/bluealloy/revm/pull/3191))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [31.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v29.0.1...revm-precompile-v31.0.0) - 2025-11-10
 
 ### Added
