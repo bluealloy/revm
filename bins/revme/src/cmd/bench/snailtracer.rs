@@ -5,7 +5,7 @@ use revm::{
     context::TxEnv,
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
     inspector::NoOpInspector,
-    primitives::{bytes, hex, Bytes, TxKind},
+    primitives::{bytes, eip7825, hex, Bytes, TxKind},
     Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 
@@ -22,7 +22,7 @@ pub fn run(criterion: &mut Criterion) {
         .caller(BENCH_CALLER)
         .kind(TxKind::Call(BENCH_TARGET))
         .data(bytes!("30627b7c"))
-        .gas_limit(1_000_000_000)
+        .gas_limit(eip7825::TX_GAS_LIMIT_CAP)
         .build()
         .unwrap();
 
