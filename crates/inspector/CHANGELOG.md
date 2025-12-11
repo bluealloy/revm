@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.2.0](https://github.com/bluealloy/revm/compare/revm-inspector-v14.1.0...revm-inspector-v14.2.0) - 2025-12-11
+
+### Added
+
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+
+### Other
+
+- replace HashMap with fixed-size array for opcode counts in CountInspector ([#3203](https://github.com/bluealloy/revm/pull/3203))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/revm-inspector-v14.0.0...revm-inspector-v14.1.0) - 2025-11-14
 
 ### Other
