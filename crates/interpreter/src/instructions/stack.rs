@@ -151,6 +151,7 @@ mod tests {
         interpreter_types::LoopControl,
         Interpreter,
     };
+    use bytecode::opcode::*;
     use bytecode::Bytecode;
     use primitives::{hardfork::SpecId, Bytes, U256};
 
@@ -174,8 +175,8 @@ mod tests {
     #[test]
     fn test_dupn() {
         let interpreter = run_bytecode(&[
-            0x60, 0x01, 0x60, 0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-            0x80, 0x80, 0x80, 0x80, 0x80, 0xe6, 0x00,
+            PUSH1, 0x01, PUSH1, 0x00, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1,
+            DUP1, DUP1, DUP1, DUP1, DUP1, DUPN, 0x00,
         ]);
         assert_eq!(interpreter.stack.len(), 18);
         assert_eq!(interpreter.stack.data()[17], U256::from(1));
@@ -188,8 +189,8 @@ mod tests {
     #[test]
     fn test_swapn() {
         let interpreter = run_bytecode(&[
-            0x60, 0x01, 0x60, 0x00, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-            0x80, 0x80, 0x80, 0x80, 0x80, 0x60, 0x02, 0xe7, 0x00,
+            PUSH1, 0x01, PUSH1, 0x00, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1,
+            DUP1, DUP1, DUP1, DUP1, DUP1, PUSH1, 0x02, SWAPN, 0x00,
         ]);
         assert_eq!(interpreter.stack.len(), 18);
         assert_eq!(interpreter.stack.data()[17], U256::from(1));
@@ -201,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_exchange() {
-        let interpreter = run_bytecode(&[0x60, 0x00, 0x60, 0x01, 0x60, 0x02, 0xe8, 0x01]);
+        let interpreter = run_bytecode(&[PUSH1, 0x00, PUSH1, 0x01, PUSH1, 0x02, EXCHANGE, 0x01]);
         assert_eq!(interpreter.stack.len(), 3);
         assert_eq!(interpreter.stack.data()[2], U256::from(2));
         assert_eq!(interpreter.stack.data()[1], U256::from(0));
@@ -210,19 +211,21 @@ mod tests {
 
     #[test]
     fn test_swapn_invalid_immediate() {
-        let mut interpreter = run_bytecode(&[0xe7, 0x5b]);
+        let mut interpreter = run_bytecode(&[SWAPN, JUMPDEST]);
         assert!(interpreter.bytecode.instruction_result().is_none());
     }
 
     #[test]
     fn test_jump_over_invalid_dupn() {
-        let interpreter = run_bytecode(&[0x60, 0x04, 0x56, 0xe6, 0x5b]);
+        let interpreter = run_bytecode(&[PUSH1, 0x04, JUMP, DUPN, JUMPDEST]);
         assert!(interpreter.bytecode.is_not_end());
     }
 
     #[test]
     fn test_exchange_with_iszero() {
-        let interpreter = run_bytecode(&[0x60, 0x00, 0x60, 0x00, 0x60, 0x00, 0xe8, 0x01, 0x15]);
+        let interpreter = run_bytecode(&[
+            PUSH1, 0x00, PUSH1, 0x00, PUSH1, 0x00, EXCHANGE, 0x01, ISZERO,
+        ]);
         assert_eq!(interpreter.stack.len(), 3);
         assert_eq!(interpreter.stack.data()[2], U256::from(1));
         assert_eq!(interpreter.stack.data()[1], U256::ZERO);
