@@ -1,0 +1,52 @@
+name: Release Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Commit Cargo.lock if changed
+        run: |
+          git add Cargo.lock
+          git commit -m "chore: update Cargo.lock" || echo "No Cargo.lock changes to commit"
+
+      - name: Run release-plz (create release PR)
+        uses: MarcoIeni/release-plz-action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure kellnr registry
+        run: |
+          mkdir -p ~/.cargo
+          cat >> ~/.cargo/credentials.toml << EOF
+          [registries.kellnr]
+          token = "${{ secrets.KELLNR_TOKEN }}"
+          EOF
+
+      - name: Publish crates to kellnr
+        run: ./scripts/publish.sh

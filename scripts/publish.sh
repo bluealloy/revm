@@ -1,20 +1,38 @@
 #!/bin/bash
 
-# stop on error
-set -e
+# Publish crates to kellnr registry
+# Usage: ./publish.sh [--dry-run]
 
-cargo publish --package revm-primitives
-cargo publish --package revm-bytecode
-cargo publish --package revm-state
-cargo publish --package revm-database-interface
-cargo publish --package revm-context-interface 
-cargo publish --package revm-interpreter
-cargo publish --package revm-precompile
-cargo publish --package revm-database
-cargo publish --package revm-context
-cargo publish --package revm-handler
-cargo publish --package revm-inspector
-cargo publish --package revm
-cargo publish --package revm-statetest-types
-cargo publish --package revme
-cargo publish --package op-revm
+DRY_RUN=""
+if [[ "$1" == "--dry-run" ]]; then
+    DRY_RUN="--dry-run"
+    echo "Running in dry-run mode..."
+fi
+
+PACKAGES=(
+    revm-primitives
+    revm-bytecode
+    revm-state
+    revm-database-interface
+    revm-context-interface
+    revm-interpreter
+    revm-precompile
+    revm-database
+    revm-context
+    revm-handler
+    revm-inspector
+    revm
+    revm-statetest-types
+    revme
+    op-revm
+)
+
+for pkg in "${PACKAGES[@]}"; do
+    echo "::group::Publishing $pkg"
+    cargo publish --package "$pkg" --registry kellnr --allow-dirty $DRY_RUN || {
+        echo "::notice::$pkg skipped (already exists or no changes)"
+    }
+    echo "::endgroup::"
+done
+
+echo "✅ Done!"
