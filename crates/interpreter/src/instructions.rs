@@ -278,6 +278,10 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[SWAP15 as usize] = Instruction::new(stack::swap::<15, _, _>, 3);
     table[SWAP16 as usize] = Instruction::new(stack::swap::<16, _, _>, 3);
 
+    table[DUPN as usize] = Instruction::new(stack::dupn, 3);
+    table[SWAPN as usize] = Instruction::new(stack::swapn, 3);
+    table[EXCHANGE as usize] = Instruction::new(stack::exchange, 3);
+
     table[LOG0 as usize] = Instruction::new(host::log::<0, _>, gas::LOG);
     table[LOG1 as usize] = Instruction::new(host::log::<1, _>, gas::LOG);
     table[LOG2 as usize] = Instruction::new(host::log::<2, _>, gas::LOG);
