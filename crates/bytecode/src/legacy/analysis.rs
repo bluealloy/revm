@@ -29,13 +29,17 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
             iterator = unsafe { iterator.add(1) };
         } else {
             let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-            if push_offset < 32 {
-                // SAFETY: Iterator access range is checked in the while loop
-                iterator = unsafe { iterator.add(push_offset as usize + 2) };
-            } else {
-                // SAFETY: Iterator access range is checked in the while loop
-                iterator = unsafe { iterator.add(1) };
-            }
+            let dupn_offset = opcode.wrapping_sub(opcode::DUPN);
+            let skip =
+                if push_offset < 32 {
+                    2 + push_offset as usize
+                } else if dupn_offset < 3 {
+                    2
+                } else {
+                    1
+                };
+            // SAFETY: Iterator access range is checked in the while loop
+            iterator = unsafe { iterator.add(skip) };
         }
     }
 
