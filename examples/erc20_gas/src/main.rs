@@ -12,9 +12,7 @@ use revm::{
     context::TxEnv,
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{
-        address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, KECCAK_EMPTY, U256,
-    },
+    primitives::{address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, U256},
     state::AccountInfo,
     Context, Database, MainBuilder, MainContext,
 };
@@ -57,10 +55,8 @@ async fn main() -> Result<()> {
     cache_db.insert_account_info(
         account,
         AccountInfo {
-            nonce: 0,
             balance: hundred_tokens * U256::from(2),
-            code_hash: KECCAK_EMPTY,
-            code: None,
+            ..Default::default()
         },
     );
 
