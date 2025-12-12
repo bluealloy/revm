@@ -1,5 +1,4 @@
 use crate::{
-    gas,
     interpreter::Interpreter,
     interpreter_types::{
         InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
