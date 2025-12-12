@@ -623,9 +623,9 @@ opcodes! {
     // 0xE3
     // 0xE4
     // 0xE5
-    // 0xE6
-    // 0xE7
-    // 0xE8
+    0xE6 => DUPN     => stack_io(0, 1), immediate_size(1);
+    0xE7 => SWAPN    => stack_io(0, 0), immediate_size(1);
+    0xE8 => EXCHANGE => stack_io(0, 0), immediate_size(1);
     // 0xE9
     // 0xEA
     // 0xEB
@@ -668,9 +668,13 @@ mod tests {
     #[test]
     fn test_immediate_size() {
         let mut expected = [0u8; 256];
-        // PUSH opcodes
+
         for push in PUSH1..=PUSH32 {
             expected[push as usize] = push - PUSH1 + 1;
+        }
+
+        for stack_op in [DUPN, SWAPN, EXCHANGE] {
+            expected[stack_op as usize] = 1;
         }
 
         for (i, opcode) in OPCODE_INFO.iter().enumerate() {
@@ -718,7 +722,7 @@ mod tests {
         for _ in OPCODE_INFO.into_iter().flatten() {
             opcode_num += 1;
         }
-        assert_eq!(opcode_num, 150);
+        assert_eq!(opcode_num, 153);
     }
 
     #[test]

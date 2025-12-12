@@ -81,6 +81,8 @@ pub enum InstructionResult {
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
+    /// Invalid encoding of an instruction's immediate operand.
+    InvalidImmediateEncoding,
 }
 
 impl From<TransferError> for InstructionResult {
@@ -190,6 +192,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::CreateContractStartingWithEF
             | $crate::InstructionResult::CreateInitCodeSizeLimit
             | $crate::InstructionResult::FatalExternalError
+            | $crate::InstructionResult::InvalidImmediateEncoding
     };
 }
 
@@ -347,6 +350,9 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            }
+            InstructionResult::InvalidImmediateEncoding => {
+                Self::Halt(HaltReason::OpcodeNotFound.into())
             }
         }
     }
