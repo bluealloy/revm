@@ -237,75 +237,75 @@ impl<DB> BalDatabase<DB> {
     }
 }
 
-/// Error type for BAL database.
+/// Error type from database.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum BalDatabaseError<ERROR> {
+pub enum EvmDatabaseError<ERROR> {
     /// BAL error.
     Bal(BalError),
-    /// Database error.
-    Database(ERROR),
+    /// External database error.
+    External(ERROR),
 }
 
-impl<ERROR> From<BalError> for BalDatabaseError<ERROR> {
+impl<ERROR> From<BalError> for EvmDatabaseError<ERROR> {
     fn from(error: BalError) -> Self {
         Self::Bal(error)
     }
 }
 
-impl<ERROR: core::error::Error + Send + Sync + 'static> DBErrorMarker for BalDatabaseError<ERROR> {}
+impl<ERROR: core::error::Error + Send + Sync + 'static> DBErrorMarker for EvmDatabaseError<ERROR> {}
 
-impl<ERROR: Display> Display for BalDatabaseError<ERROR> {
+impl<ERROR: Display> Display for EvmDatabaseError<ERROR> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Bal(error) => write!(f, "Bal error: {error}"),
-            Self::Database(error) => write!(f, "Database error: {error}"),
+            Self::External(error) => write!(f, "Database error: {error}"),
         }
     }
 }
 
-impl<ERROR: Error> Error for BalDatabaseError<ERROR> {}
+impl<ERROR: Error> Error for EvmDatabaseError<ERROR> {}
 
-impl<ERROR> BalDatabaseError<ERROR> {
+impl<ERROR> EvmDatabaseError<ERROR> {
     /// Convert BAL database error to database error.
     ///
     /// Panics if BAL error is present.
-    pub fn into_db_error(self) -> ERROR {
+    pub fn into_external_error(self) -> ERROR {
         match self {
             Self::Bal(_) => panic!("Expected database error, got BAL error"),
-            Self::Database(error) => error,
+            Self::External(error) => error,
         }
     }
 }
 
 impl<DB: Database> Database for BalDatabase<DB> {
-    type Error = BalDatabaseError<DB::Error>;
+    type Error = EvmDatabaseError<DB::Error>;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.db
             .basic(address)
-            .map_err(BalDatabaseError::Database)
+            .map_err(EvmDatabaseError::External)
             .and_then(|basic| {
                 self.bal_state
                     .basic(address, basic)
-                    .map_err(BalDatabaseError::Bal)
+                    .map_err(EvmDatabaseError::Bal)
             })
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         self.db
             .code_by_hash(code_hash)
-            .map_err(BalDatabaseError::Database)
+            .map_err(EvmDatabaseError::External)
     }
 
     fn storage(&mut self, address: Address, key: StorageKey) -> Result<StorageValue, Self::Error> {
         self.db
             .storage(address, key)
-            .map_err(BalDatabaseError::Database)
+            .map_err(EvmDatabaseError::External)
             .and_then(|value| {
                 self.bal_state
                     .storage(address, key, value)
-                    .map_err(BalDatabaseError::Bal)
+                    .map_err(EvmDatabaseError::Bal)
             })
     }
 
@@ -318,18 +318,18 @@ impl<DB: Database> Database for BalDatabase<DB> {
     ) -> Result<StorageValue, Self::Error> {
         self.db
             .storage(address, storage_key)
-            .map_err(BalDatabaseError::Database)
+            .map_err(EvmDatabaseError::External)
             .and_then(|value| {
                 self.bal_state
                     .storage_by_account_id(account_id, storage_key, value)
-                    .map_err(BalDatabaseError::Bal)
+                    .map_err(EvmDatabaseError::Bal)
             })
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.db
             .block_hash(number)
-            .map_err(BalDatabaseError::Database)
+            .map_err(EvmDatabaseError::External)
     }
 }
 
