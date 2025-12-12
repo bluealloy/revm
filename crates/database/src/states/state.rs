@@ -16,7 +16,6 @@ use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
     sync::Arc,
-    vec::Vec,
 };
 
 /// Database boxed with a lifetime and Send
@@ -90,31 +89,6 @@ impl<DB: Database> State<DB> {
     /// See [BundleState::size_hint] for more info.
     pub fn bundle_size_hint(&self) -> usize {
         self.bundle_state.size_hint()
-    }
-
-    /// Drains balances from given account and return those values.
-    ///
-    /// It is used for DAO hardfork state change to move values from given accounts.
-    pub fn drain_balances(
-        &mut self,
-        addresses: impl IntoIterator<Item = Address>,
-    ) -> Result<Vec<u128>, DB::Error> {
-        // Make transition and update cache state
-        let addresses_iter = addresses.into_iter();
-        let (lower, _) = addresses_iter.size_hint();
-        let mut transitions = Vec::with_capacity(lower);
-        let mut balances = Vec::with_capacity(lower);
-        for address in addresses_iter {
-            let original_account = self.load_cache_account(address)?;
-            let (balance, transition) = original_account.drain_balance();
-            balances.push(balance);
-            transitions.push((address, transition))
-        }
-        // Append transition
-        if let Some(s) = self.transition_state.as_mut() {
-            s.add_transitions(transitions)
-        }
-        Ok(balances)
     }
 
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.

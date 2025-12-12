@@ -4,9 +4,8 @@
 
 use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
-use context::journaled_state::account::JournaledAccountTr;
 use context_interface::{
-    journaled_state::JournalTr,
+    journaled_state::{account::JournaledAccountTr, JournalTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,

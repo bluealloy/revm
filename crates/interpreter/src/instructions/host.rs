@@ -1,16 +1,14 @@
 use crate::{
-    gas::{
-        self, selfdestruct_cold_beneficiary_cost, CALL_STIPEND,
-        COLD_ACCOUNT_ACCESS_COST_ADDITIONAL, COLD_SLOAD_COST_ADDITIONAL, ISTANBUL_SLOAD_GAS,
-        WARM_STORAGE_READ_COST,
-    },
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionResult,
 };
 use context_interface::host::LoadError;
 use core::cmp::min;
-use primitives::{hardfork::SpecId::*, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256};
+use primitives::{
+    hardfork::SpecId::{self, *},
+    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
+};
 
 use crate::InstructionContext;
 
@@ -25,15 +23,6 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
         let account = berlin_load_account!(context, address, false);
         *top = account.balance;
     } else {
-        let gas = if spec_id.is_enabled_in(ISTANBUL) {
-            // EIP-1884: Repricing for trie-size-dependent opcodes
-            700
-        } else if spec_id.is_enabled_in(TANGERINE) {
-            400
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, false, false)
@@ -49,7 +38,6 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
-    //gas!(context.interpreter, gas::LOW);
 
     let Some(balance) = context
         .host
@@ -68,18 +56,13 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
+
     let spec_id = context.interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
         let account = berlin_load_account!(context, address, true);
         // safe to unwrap because we are loading code
         *top = U256::from(account.code.as_ref().unwrap().len());
     } else {
-        let gas = if spec_id.is_enabled_in(TANGERINE) {
-            700
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, true, false)
@@ -103,12 +86,6 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let account = if spec_id.is_enabled_in(BERLIN) {
         berlin_load_account!(context, address, true)
     } else {
-        let gas = if spec_id.is_enabled_in(ISTANBUL) {
-            700
-        } else {
-            400
-        };
-        gas!(context.interpreter, gas);
         let Ok(account) = context
             .host
             .load_account_info_skip_cold_load(address, true, false)
@@ -143,7 +120,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas!(
         context.interpreter,
-        gas::copy_cost(0, len).unwrap_or(u64::MAX)
+        context.interpreter.gas_params.extcodecopy(len)
     );
 
     let mut memory_offset_usize = 0;
@@ -151,6 +128,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     if len != 0 {
         // fail on casting of memory_offset only if len is not zero.
         memory_offset_usize = as_usize_or_fail!(context.interpreter, memory_offset);
+        // Resize memory to fit the code
         resize_memory!(context.interpreter, memory_offset_usize, len);
     }
 
@@ -158,13 +136,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         let account = berlin_load_account!(context, address, true);
         account.code.as_ref().unwrap().original_bytes()
     } else {
-        let gas = if spec_id.is_enabled_in(TANGERINE) {
-            700
-        } else {
-            20
-        };
-        gas!(context.interpreter, gas);
-
         let Some(code) = context.host.load_account_code(address) else {
             return context.interpreter.halt_fatal();
         };
@@ -187,7 +158,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
-    //gas!(context.interpreter, gas::BLOCKHASH);
     popn_top!([], number, context.interpreter);
 
     let requested_number = *number;
@@ -224,26 +194,17 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let target = context.interpreter.input.target_address();
 
-    // `SLOAD` opcode cost calculation.
-    let gas = if spec_id.is_enabled_in(BERLIN) {
-        WARM_STORAGE_READ_COST
-    } else if spec_id.is_enabled_in(ISTANBUL) {
-        // EIP-1884: Repricing for trie-size-dependent opcodes
-        ISTANBUL_SLOAD_GAS
-    } else if spec_id.is_enabled_in(TANGERINE) {
-        // EIP-150: Gas cost changes for IO-heavy operations
-        200
-    } else {
-        50
-    };
-    gas!(context.interpreter, gas);
     if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
+        let additional_cold_cost = context
+            .interpreter
+            .gas_params
+            .cold_storage_additional_cost();
+        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
         match res {
             Ok(storage) => {
                 if storage.is_cold {
-                    gas!(context.interpreter, COLD_SLOAD_COST_ADDITIONAL);
+                    gas!(context.interpreter, additional_cold_cost);
                 }
 
                 *index = storage.data;
@@ -269,13 +230,10 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     let target = context.interpreter.input.target_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
 
-    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
-    if context
-        .interpreter
-        .runtime_flag
-        .spec_id()
-        .is_enabled_in(ISTANBUL)
-        && context.interpreter.gas.remaining() <= CALL_STIPEND
+    // EIP-2200: Structured Definitions for Net Gas Metering
+    // If gasleft is less than or equal to gas stipend, fail the current call frame with ‘out of gas’ exception.
+    if spec_id.is_enabled_in(ISTANBUL)
+        && context.interpreter.gas.remaining() <= context.interpreter.gas_params.call_stipend()
     {
         context
             .interpreter
@@ -283,14 +241,17 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         return;
     }
 
-    // static gas
     gas!(
         context.interpreter,
-        gas::static_sstore_cost(context.interpreter.runtime_flag.spec_id())
+        context.interpreter.gas_params.sstore_static_gas()
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold = context.interpreter.gas.remaining() < COLD_SLOAD_COST_ADDITIONAL;
+        let additional_cold_cost = context
+            .interpreter
+            .gas_params
+            .cold_storage_additional_cost();
+        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold);
@@ -306,21 +267,25 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         load
     };
 
+    let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
+
     // dynamic gas
     gas!(
         context.interpreter,
-        gas::dyn_sstore_cost(
-            context.interpreter.runtime_flag.spec_id(),
+        context.interpreter.gas_params.sstore_dynamic_gas(
+            is_istanbul,
             &state_load.data,
             state_load.is_cold
         )
     );
 
     // refund
-    context.interpreter.gas.record_refund(gas::sstore_refund(
-        context.interpreter.runtime_flag.spec_id(),
-        &state_load.data,
-    ));
+    context.interpreter.gas.record_refund(
+        context
+            .interpreter
+            .gas_params
+            .sstore_refund(is_istanbul, &state_load.data),
+    );
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -328,8 +293,6 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
-    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
-
     popn!([index, value], context.interpreter);
 
     context
@@ -341,8 +304,6 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 /// Load value from transient storage
 pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
-    //gas!(context.interpreter, gas::WARM_STORAGE_READ_COST);
-
     popn_top!([], index, context.interpreter);
 
     *index = context
@@ -360,11 +321,15 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 
     popn!([offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    gas_or_fail!(context.interpreter, gas::log_cost(N as u8, len as u64));
+    gas!(
+        context.interpreter,
+        context.interpreter.gas_params.log_cost(N as u8, len as u64)
+    );
     let data = if len == 0 {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(context.interpreter, offset);
+        // Resize memory to fit the data
         resize_memory!(context.interpreter, offset, len);
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
@@ -393,34 +358,42 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let target = target.into_address();
     let spec = context.interpreter.runtime_flag.spec_id();
 
-    // static gas
-    gas!(context.interpreter, gas::static_selfdestruct_cost(spec));
+    let cold_load_gas = context
+        .interpreter
+        .gas_params
+        .cold_account_additional_cost();
 
-    let skip_cold = context.interpreter.gas.remaining() < selfdestruct_cold_beneficiary_cost(spec);
+    let skip_cold_load = context.interpreter.gas.remaining() < cold_load_gas;
     let res = match context.host.selfdestruct(
         context.interpreter.input.target_address(),
         target,
-        skip_cold,
+        skip_cold_load,
     ) {
         Ok(res) => res,
         Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
         Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
     };
 
-    gas!(context.interpreter, gas::dyn_selfdestruct_cost(spec, &res));
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    let should_charge_topup = if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
+        res.had_value && !res.target_exists
+    } else {
+        !res.target_exists
+    };
 
-    // EIP-3529: Reduction in refunds
-    if !context
-        .interpreter
-        .runtime_flag
-        .spec_id()
-        .is_enabled_in(LONDON)
-        && !res.previously_destroyed
-    {
+    gas!(
+        context.interpreter,
+        context
+            .interpreter
+            .gas_params
+            .selfdestruct_cost(should_charge_topup, res.is_cold)
+    );
+
+    if !res.previously_destroyed {
         context
             .interpreter
             .gas
-            .record_refund(gas::SELFDESTRUCT_REFUND);
+            .record_refund(context.interpreter.gas_params.selfdestruct_refund());
     }
 
     context.interpreter.halt(InstructionResult::SelfDestruct);

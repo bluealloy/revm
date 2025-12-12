@@ -1,17 +1,5 @@
 //! Utility macros to help implementing opcode instruction functions.
 
-/// `const` Option `?`.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! tri {
-    ($e:expr) => {
-        match $e {
-            Some(v) => v,
-            None => return None,
-        }
-    };
-}
-
 /// Fails the instruction if the current call is static.
 #[macro_export]
 #[collapse_debuginfo(yes)]
@@ -22,23 +10,6 @@ macro_rules! require_non_staticcall {
             return;
         }
     };
-}
-
-/// Macro for optional try - returns early if the expression evaluates to None.
-/// Similar to the `?` operator but for use in instruction implementations.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-#[deprecated(
-    since = "29.0.0",
-    note = "Prefer `let Some(x) = expr else { return; };` for early return in instruction functions"
-)]
-macro_rules! otry {
-    ($expression: expr) => {{
-        let Some(value) = $expression else {
-            return;
-        };
-        value
-    }};
 }
 
 /// Check if the `SPEC` is enabled, and fail the instruction if it is not.
@@ -80,20 +51,18 @@ macro_rules! berlin_load_account {
         $crate::berlin_load_account!($context, $address, $load_code, ())
     };
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
-        $crate::gas!($context.interpreter, WARM_STORAGE_READ_COST, $ret);
-        let skip_cold_load =
-            $context.interpreter.gas.remaining() < COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
+        let cold_load_gas = $context
+            .interpreter
+            .gas_params
+            .cold_account_additional_cost();
+        let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
         match $context
             .host
             .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)
         {
             Ok(account) => {
                 if account.is_cold {
-                    $crate::gas!(
-                        $context.interpreter,
-                        COLD_ACCOUNT_ACCESS_COST_ADDITIONAL,
-                        $ret
-                    );
+                    $crate::gas!($context.interpreter, cold_load_gas, $ret);
                 }
                 account
             }
@@ -109,24 +78,6 @@ macro_rules! berlin_load_account {
     }};
 }
 
-/// Same as [`gas!`], but with `gas` as an option.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! gas_or_fail {
-    ($interpreter:expr, $gas:expr) => {
-        $crate::gas_or_fail!($interpreter, $gas, ())
-    };
-    ($interpreter:expr, $gas:expr, $ret:expr) => {
-        match $gas {
-            Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
-            None => {
-                $interpreter.halt_oog();
-                return $ret;
-            }
-        }
-    };
-}
-
 /// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]
@@ -136,18 +87,14 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
-        #[cfg(feature = "memory_limit")]
-        if $interpreter.memory.limit_reached($offset, $len) {
-            $interpreter.halt_memory_limit_oog();
-            return $ret;
-        }
-        if !$crate::interpreter::resize_memory(
+        if let Err(result) = $crate::interpreter::resize_memory(
             &mut $interpreter.gas,
             &mut $interpreter.memory,
+            &$interpreter.gas_params,
             $offset,
             $len,
         ) {
-            $interpreter.halt_memory_oog();
+            $interpreter.halt(result);
             return $ret;
         }
     };

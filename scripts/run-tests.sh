@@ -31,9 +31,12 @@ LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 
 # Print usage information and exit
 usage() {
-    echo "Usage: $0 [clean] [runner] [profile] [target]"
+    echo "Usage: $0 [clean] [--keep-going] [runner] [profile] [target]"
     echo ""
-    echo "Arguments (after optional 'clean'):"
+    echo "Flags (can be specified before or after 'clean'):"
+    echo "  --keep-going  Continue running tests even after failures."
+    echo ""
+    echo "Arguments (after optional 'clean' and '--keep-going'):"
     echo "  runner   (Optional) Rust runner command. Must be either 'cargo' or 'cross'. Defaults to 'cargo'."
     echo "  profile  (Optional) Rust profile to use. Defaults to 'debug' if not provided."
     echo "  target   (Optional) Rust target. Only used if provided."
@@ -45,14 +48,17 @@ usage() {
     echo "  $0 release"
     echo "      Uses runner 'cargo', profile 'release', and no target."
     echo ""
+    echo "  $0 --keep-going release"
+    echo "      Uses runner 'cargo', profile 'release', and keeps going on test failures."
+    echo ""
     echo "  $0 release x86-win"
     echo "      Uses runner 'cargo', profile 'release', with target 'x86-win'."
     echo ""
     echo "  $0 clean"
     echo "      Cleans fixtures then uses runner 'cargo', profile 'debug', and no target."
     echo ""
-    echo "  $0 clean cross release x86-win"
-    echo "      Cleans fixtures then uses runner 'cross', profile 'release', and target 'x86-win'."
+    echo "  $0 clean --keep-going cross release x86-win"
+    echo "      Cleans fixtures then uses runner 'cross', profile 'release', target 'x86-win', and keeps going on failures."
     exit 1
 }
 
@@ -145,36 +151,51 @@ build_cargo_options() {
 # Run tests for each set of fixtures using the chosen runner.
 run_tests() {
     echo "Running main stable statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$MAIN_STABLE_DIR/state_tests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_STABLE_DIR/state_tests"
 
     echo "Running main develop statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$MAIN_DEVELOP_DIR/state_tests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/state_tests"
 
     echo "Running devnet statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$DEVNET_DIR/state_tests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$DEVNET_DIR/state_tests"
 
     echo "Running legacy Cancun tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Cancun/GeneralStateTests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$LEGACY_DIR/Cancun/GeneralStateTests"
 
     echo "Running legacy Constantinople tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest "$LEGACY_DIR/Constantinople/GeneralStateTests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$LEGACY_DIR/Constantinople/GeneralStateTests"
 
     echo "Running main develop blockchain tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_DEVELOP_DIR/blockchain_tests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/blockchain_tests"
 
     echo "Running main stable blockchain tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest "$MAIN_STABLE_DIR/blockchain_tests"
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_STABLE_DIR/blockchain_tests"
 }
 
 ##############################
 # Main logic
 
-# If the first argument is "clean", perform cleaning and download fixtures.
-if [ "$1" = "clean" ]; then
-    clean
-    download_fixtures
-    shift
-else
+# Initialize flags
+KEEP_GOING_FLAG=""
+DID_CLEAN=false
+
+# Process "clean" and "--keep-going" flags
+while true; do
+    if [ "$1" = "clean" ]; then
+        clean
+        download_fixtures
+        DID_CLEAN=true
+        shift
+    elif [ "$1" = "--keep-going" ]; then
+        KEEP_GOING_FLAG="--keep-going"
+        shift
+    else
+        break
+    fi
+done
+
+# If no clean was specified, check for existing fixtures
+if [ "$DID_CLEAN" = false ]; then
     if check_fixtures; then
         echo "Using existing test fixtures."
     else
@@ -184,7 +205,7 @@ else
 fi
 
 # Argument parsing for runner, profile, target.
-# Expected order (after optional clean): [runner] [profile] [target]
+# Expected order (after optional clean and --keep-going): [runner] [profile] [target]
 # If the first argument is "cargo" or "cross", then it is the runner.
 # Otherwise, runner defaults to "cargo", and the arguments are profile and target.
 if [ "$#" -eq 0 ]; then

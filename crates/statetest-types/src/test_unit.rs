@@ -95,7 +95,7 @@ impl TestUnit {
     /// # Returns
     ///
     /// A configured [`BlockEnv`] ready for execution
-    pub fn block_env(&self, cfg: &CfgEnv) -> BlockEnv {
+    pub fn block_env(&self, cfg: &mut CfgEnv) -> BlockEnv {
         let mut block = BlockEnv {
             number: self.env.current_number,
             beneficiary: self.env.current_coinbase,
@@ -113,10 +113,11 @@ impl TestUnit {
         };
 
         // Handle EIP-4844 blob gas
+        // Use spec-aware blob fee fraction: Cancun uses 3338477, Prague/Osaka use 5007716
         if let Some(current_excess_blob_gas) = self.env.current_excess_blob_gas {
             block.set_blob_excess_gas_and_price(
                 current_excess_blob_gas.to(),
-                revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
+                cfg.blob_base_fee_update_fraction(),
             );
         }
 
@@ -126,5 +127,157 @@ impl TestUnit {
         }
 
         block
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::{
+        context_interface::block::calc_blob_gasprice,
+        primitives::{
+            eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
+            U256,
+        },
+    };
+
+    /// Creates a minimal TestUnit with excess blob gas set for testing blob fee calculation
+    fn create_test_unit_with_excess_blob_gas(excess_blob_gas: u64) -> TestUnit {
+        TestUnit {
+            info: None,
+            env: Env {
+                current_chain_id: None,
+                current_coinbase: Address::ZERO,
+                current_difficulty: U256::ZERO,
+                current_gas_limit: U256::from(1_000_000u64),
+                current_number: U256::from(1u64),
+                current_timestamp: U256::from(1u64),
+                current_base_fee: Some(U256::from(1u64)),
+                previous_hash: None,
+                current_random: None,
+                current_beacon_root: None,
+                current_withdrawals_root: None,
+                current_excess_blob_gas: Some(U256::from(excess_blob_gas)),
+            },
+            pre: HashMap::default(),
+            post: BTreeMap::default(),
+            transaction: TransactionParts {
+                tx_type: None,
+                data: vec![],
+                gas_limit: vec![],
+                gas_price: None,
+                nonce: U256::ZERO,
+                secret_key: B256::ZERO,
+                sender: None,
+                to: None,
+                value: vec![],
+                max_fee_per_gas: None,
+                max_priority_fee_per_gas: None,
+                initcodes: None,
+                access_lists: vec![],
+                authorization_list: None,
+                blob_versioned_hashes: vec![],
+                max_fee_per_blob_gas: None,
+            },
+            out: None,
+        }
+    }
+
+    /// Test that block_env uses the correct blob base fee update fraction for Cancun
+    #[test]
+    fn test_block_env_blob_fee_fraction_cancun() {
+        let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
+
+        let mut cfg = CfgEnv::default();
+        cfg.spec = SpecId::CANCUN;
+
+        let block = unit.block_env(&mut cfg);
+
+        // Verify blob gas price is calculated with Cancun fraction
+        let blob_info = block
+            .blob_excess_gas_and_price
+            .expect("blob info should be set");
+        assert_eq!(blob_info.excess_blob_gas, 0x240000);
+
+        // Calculate expected price with Cancun fraction (3338477)
+        // blob_gasprice = fake_exponential(1, excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION)
+        // With excess_blob_gas=0x240000 and CANCUN fraction=3338477, price should be 2
+        let expected_price = calc_blob_gasprice(0x240000, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN);
+        assert_eq!(blob_info.blob_gasprice, expected_price);
+        assert_eq!(blob_info.blob_gasprice, 2); // With Cancun fraction, price is 2
+    }
+
+    /// Test that block_env uses the correct blob base fee update fraction for Prague
+    #[test]
+    fn test_block_env_blob_fee_fraction_prague() {
+        let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
+
+        let mut cfg = CfgEnv::default();
+        cfg.spec = SpecId::PRAGUE;
+
+        let block = unit.block_env(&mut cfg);
+
+        // Verify blob gas price is calculated with Prague fraction
+        let blob_info = block
+            .blob_excess_gas_and_price
+            .expect("blob info should be set");
+        assert_eq!(blob_info.excess_blob_gas, 0x240000);
+
+        // Calculate expected price with Prague fraction (5007716)
+        // With excess_blob_gas=0x240000 and PRAGUE fraction=5007716, price should be 1
+        let expected_price = calc_blob_gasprice(0x240000, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE);
+        assert_eq!(blob_info.blob_gasprice, expected_price);
+        assert_eq!(blob_info.blob_gasprice, 1); // With Prague fraction, price is 1
+    }
+
+    /// Test that block_env uses the correct blob base fee update fraction for Osaka
+    #[test]
+    fn test_block_env_blob_fee_fraction_osaka() {
+        let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
+
+        let mut cfg = CfgEnv::default();
+        cfg.spec = SpecId::OSAKA;
+
+        let block = unit.block_env(&mut cfg);
+
+        // Osaka should use Prague fraction (same as Prague)
+        let blob_info = block
+            .blob_excess_gas_and_price
+            .expect("blob info should be set");
+        let expected_price = calc_blob_gasprice(0x240000, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE);
+        assert_eq!(blob_info.blob_gasprice, expected_price);
+        assert_eq!(blob_info.blob_gasprice, 1); // With Prague fraction, price is 1
+    }
+
+    /// Test that demonstrates the bug scenario from IMPLEMENTATION_PROMPT.md
+    /// With excess_blob_gas=0x240000 and maxFeePerBlobGas=0x01:
+    /// - Cancun fraction (3338477): blob_price = 2, tx FAILS (insufficient fee)
+    /// - Prague fraction (5007716): blob_price = 1, tx SUCCEEDS
+    #[test]
+    fn test_blob_fee_difference_affects_tx_validity() {
+        let excess_blob_gas = 0x240000u64;
+
+        // Calculate prices with both fractions
+        let cancun_price =
+            calc_blob_gasprice(excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN);
+        let prague_price =
+            calc_blob_gasprice(excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE);
+
+        // Verify the prices are different
+        assert_eq!(cancun_price, 2, "Cancun blob price should be 2");
+        assert_eq!(prague_price, 1, "Prague blob price should be 1");
+
+        // With maxFeePerBlobGas=1:
+        // - Cancun: 1 < 2, tx would fail with insufficient fee
+        // - Prague: 1 >= 1, tx would succeed
+        let max_fee_per_blob_gas = 1u128;
+        assert!(
+            max_fee_per_blob_gas < cancun_price,
+            "Tx should fail with Cancun fraction"
+        );
+        assert!(
+            max_fee_per_blob_gas >= prague_price,
+            "Tx should succeed with Prague fraction"
+        );
     }
 }

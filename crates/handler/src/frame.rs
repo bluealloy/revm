@@ -2,17 +2,17 @@ use crate::{
     evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
     CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
 };
-use context::{journaled_state::account::JournaledAccountTr, result::FromStringError};
+use context::result::FromStringError;
 use context_interface::{
     context::ContextError,
-    journaled_state::{JournalCheckpoint, JournalTr},
+    journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
     Cfg, ContextTr, Database,
 };
 use core::cmp::min;
 use derive_where::derive_where;
 use interpreter::{
-    gas,
+    gas::{self, params::GasParams},
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
@@ -101,6 +101,7 @@ pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 impl EthFrame<EthInterpreter> {
     /// Clear and initialize a frame.
     #[allow(clippy::too_many_arguments)]
+    #[inline(always)]
     pub fn clear(
         &mut self,
         data: FrameData,
@@ -113,6 +114,7 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
+        gas_params: GasParams,
     ) {
         let Self {
             data: data_ref,
@@ -126,7 +128,9 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
+        interpreter.clear(
+            memory, bytecode, inputs, is_static, spec_id, gas_limit, gas_params,
+        );
         *checkpoint_ref = checkpoint;
     }
 
@@ -143,6 +147,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
+        gas_params: GasParams,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -242,6 +247,7 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
+            gas_params,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -257,13 +263,14 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
+        gas_params: GasParams,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
                     result: e,
-                    gas: Gas::new(inputs.gas_limit),
+                    gas: Gas::new(inputs.gas_limit()),
                     output: Bytes::new(),
                 },
                 address: None,
@@ -276,11 +283,12 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Fetch balance of caller.
-        let mut caller_info = context.journal_mut().load_account_mut(inputs.caller)?;
+        let journal = context.journal_mut();
+        let mut caller_info = journal.load_account_mut(inputs.caller())?;
 
         // Check if caller has enough balance to send to the created contract.
         // decrement of balance is done in the create_account_checkpoint.
-        if *caller_info.balance() < inputs.value {
+        if *caller_info.balance() < inputs.value() {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -292,11 +300,11 @@ impl EthFrame<EthInterpreter> {
 
         // Create address
         let mut init_code_hash = None;
-        let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
+        let created_address = match inputs.scheme() {
+            CreateScheme::Create => inputs.caller().create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                let init_code_hash = *init_code_hash.insert(keccak256(&inputs.init_code));
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                let init_code_hash = *init_code_hash.insert(keccak256(inputs.init_code()));
+                inputs.caller().create2(salt.to_be_bytes(), init_code_hash)
             }
             CreateScheme::Custom { address } => address,
         };
@@ -304,13 +312,13 @@ impl EthFrame<EthInterpreter> {
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
-        context.journal_mut().load_account(created_address)?;
+        journal.load_account(created_address)?;
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller,
+            inputs.caller(),
             created_address,
-            inputs.value,
+            inputs.value(),
             spec,
         ) {
             Ok(checkpoint) => checkpoint,
@@ -318,18 +326,18 @@ impl EthFrame<EthInterpreter> {
         };
 
         let bytecode = ExtBytecode::new_with_optional_hash(
-            Bytecode::new_legacy(inputs.init_code.clone()),
+            Bytecode::new_legacy(inputs.init_code().clone()),
             init_code_hash,
         );
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
-            caller_address: inputs.caller,
+            caller_address: inputs.caller(),
             bytecode_address: None,
             input: CallInput::Bytes(Bytes::new()),
-            call_value: inputs.value,
+            call_value: inputs.value(),
         };
-        let gas_limit = inputs.gas_limit;
+        let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
@@ -342,6 +350,7 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             checkpoint,
+            gas_params,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -355,6 +364,7 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
+        gas_params: GasParams,
     ) -> Result<
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
@@ -368,9 +378,11 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs, gas_params)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => {
+                Self::make_create_frame(this, ctx, depth, memory, inputs, gas_params)
+            }
             FrameInput::Empty => unreachable!(),
         }
     }

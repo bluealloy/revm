@@ -93,9 +93,10 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
     type State = EvmState;
     type JournaledAccount<'a>
-        = JournaledAccount<'a, ENTRY>
+        = JournaledAccount<'a, DB, ENTRY>
     where
-        Self: 'a;
+        ENTRY: 'a,
+        DB: 'a;
 
     fn new(database: DB) -> Journal<DB, ENTRY> {
         Self {
@@ -118,7 +119,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         key: StorageKey,
     ) -> Result<StateLoad<StorageValue>, <Self::Database as Database>::Error> {
         self.inner
-            .sload(&mut self.database, address, key, false)
+            .sload_assume_account_present(&mut self.database, address, key, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
@@ -129,7 +130,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         value: StorageValue,
     ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
         self.inner
-            .sstore(&mut self.database, address, key, value, false)
+            .sstore_assume_account_present(&mut self.database, address, key, value, false)
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
@@ -341,7 +342,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     ) -> Result<StateLoad<StorageValue>, JournalLoadError<<Self::Database as Database>::Error>>
     {
         self.inner
-            .sload(&mut self.database, address, key, skip_cold_load)
+            .sload_assume_account_present(&mut self.database, address, key, skip_cold_load)
     }
 
     #[inline]
@@ -353,8 +354,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, JournalLoadError<<Self::Database as Database>::Error>>
     {
-        self.inner
-            .sstore(&mut self.database, address, key, value, skip_cold_load)
+        self.inner.sstore_assume_account_present(
+            &mut self.database,
+            address,
+            key,
+            value,
+            skip_cold_load,
+        )
     }
 
     #[inline]
