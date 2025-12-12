@@ -220,12 +220,10 @@ where
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
-            } else if is_deposit {
-                if tx.is_system_transaction() {
-                    // System transactions were a special type of deposit transaction in
-                    // the Bedrock hardfork that did not incur any gas costs.
-                    gas.erase_cost(tx_gas_limit);
-                }
+            } else if is_deposit && tx.is_system_transaction() {
+                // System transactions were a special type of deposit transaction in
+                // the Bedrock hardfork that did not incur any gas costs.
+                gas.erase_cost(tx_gas_limit);
             }
         } else if instruction_result.is_revert() {
             // On Optimism, deposit transactions report gas usage uniquely to other
