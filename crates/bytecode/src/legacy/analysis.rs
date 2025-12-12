@@ -30,14 +30,13 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         } else {
             let push_offset = opcode.wrapping_sub(opcode::PUSH1);
             let dupn_offset = opcode.wrapping_sub(opcode::DUPN);
-            let skip =
-                if push_offset < 32 {
-                    2 + push_offset as usize
-                } else if dupn_offset < 3 {
-                    2
-                } else {
-                    1
-                };
+            let skip = if push_offset < 32 {
+                2 + push_offset as usize
+            } else if dupn_offset < 3 {
+                2
+            } else {
+                1
+            };
             // SAFETY: Iterator access range is checked in the while loop
             iterator = unsafe { iterator.add(skip) };
         }
