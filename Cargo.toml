@@ -60,7 +60,7 @@ ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.1
 # alloy
 alloy-eip2930 = { version = "0.2.3", default-features = false }
 alloy-eip7702 = { version = "0.6.3", default-features = false }
-alloy-eip7928 = { version = "0.2.0", default-features = false, git = "https://github.com/rakita/alloy-eips.git", rev = "037aae8" }
+alloy-eip7928 = { version = "0.2.0", default-features = false, git = "https://github.com/rakita/alloy-eips.git", rev = "734beaf" }
 alloy-primitives = { version = "1.4.1", default-features = false }
 
 # alloy in examples, revme or feature flagged.
