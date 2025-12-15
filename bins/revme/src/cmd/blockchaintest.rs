@@ -326,6 +326,27 @@ fn validate_post_state(
     debug_info: &DebugInfo,
     print_env_on_error: bool,
 ) -> Result<(), TestExecutionError> {
+    fn make_failure(
+        state: &mut State<EmptyDB>,
+        debug_info: &DebugInfo,
+        expected_post_state: &BTreeMap<Address, Account>,
+        print_env_on_error: bool,
+        address: Address,
+        field: String,
+        expected: String,
+        actual: String,
+    ) -> Result<(), TestExecutionError> {
+        if print_env_on_error {
+            print_error_with_state(debug_info, state, Some(expected_post_state));
+        }
+        Err(TestExecutionError::PostStateValidation {
+            address,
+            field,
+            expected,
+            actual,
+        })
+    }
+    
     for (address, expected_account) in expected_post_state {
         // Load account from final state
         let actual_account = state
@@ -339,55 +360,59 @@ fn validate_post_state(
 
         // Validate balance
         if info.balance != expected_account.balance {
-            if print_env_on_error {
-                print_error_with_state(debug_info, state, Some(expected_post_state));
-            }
-            return Err(TestExecutionError::PostStateValidation {
-                address: *address,
-                field: "balance".to_string(),
-                expected: format!("{}", expected_account.balance),
-                actual: format!("{}", info.balance),
-            });
+            return make_failure(
+                state,
+                debug_info,
+                expected_post_state,
+                print_env_on_error,
+                *address,
+                "balance".to_string(),
+                format!("{}", expected_account.balance),
+                format!("{}", info.balance),
+            );
         }
 
         // Validate nonce
         let expected_nonce = expected_account.nonce.to::<u64>();
         if info.nonce != expected_nonce {
-            if print_env_on_error {
-                print_error_with_state(debug_info, state, Some(expected_post_state));
-            }
-            return Err(TestExecutionError::PostStateValidation {
-                address: *address,
-                field: "nonce".to_string(),
-                expected: format!("{expected_nonce}"),
-                actual: format!("{}", info.nonce),
-            });
+            return make_failure(
+                state,
+                debug_info,
+                expected_post_state,
+                print_env_on_error,
+                *address,
+                "nonce".to_string(),
+                format!("{expected_nonce}"),
+                format!("{}", info.nonce),
+            );
         }
 
         // Validate code if present
         if !expected_account.code.is_empty() {
             if let Some(actual_code) = &info.code {
                 if actual_code.original_bytes() != expected_account.code {
-                    if print_env_on_error {
-                        print_error_with_state(debug_info, state, Some(expected_post_state));
-                    }
-                    return Err(TestExecutionError::PostStateValidation {
-                        address: *address,
-                        field: "code".to_string(),
-                        expected: format!("0x{}", hex::encode(&expected_account.code)),
-                        actual: format!("0x{}", hex::encode(actual_code.bytecode())),
-                    });
+                    return make_failure(
+                        state,
+                        debug_info,
+                        expected_post_state,
+                        print_env_on_error,
+                        *address,
+                        "code".to_string(),
+                        format!("0x{}", hex::encode(&expected_account.code)),
+                        format!("0x{}", hex::encode(actual_code.bytecode())),
+                    );
                 }
             } else {
-                if print_env_on_error {
-                    print_error_with_state(debug_info, state, Some(expected_post_state));
-                }
-                return Err(TestExecutionError::PostStateValidation {
-                    address: *address,
-                    field: "code".to_string(),
-                    expected: format!("0x{}", hex::encode(&expected_account.code)),
-                    actual: "empty".to_string(),
-                });
+                return make_failure(
+                    state,
+                    debug_info,
+                    expected_post_state,
+                    print_env_on_error,
+                    *address,
+                    "code".to_string(),
+                    format!("0x{}", hex::encode(&expected_account.code)),
+                    "empty".to_string(),
+                );
             }
         }
 
@@ -397,15 +422,16 @@ fn validate_post_state(
                 let slot = *slot;
                 let actual_value = *actual_value;
                 if !expected_account.storage.contains_key(&slot) && !actual_value.is_zero() {
-                    if print_env_on_error {
-                        print_error_with_state(debug_info, state, Some(expected_post_state));
-                    }
-                    return Err(TestExecutionError::PostStateValidation {
-                        address: *address,
-                        field: format!("storage_unexpected[{slot}]"),
-                        expected: "0x0".to_string(),
-                        actual: format!("{actual_value}"),
-                    });
+                    return make_failure(
+                        state,
+                        debug_info,
+                        expected_post_state,
+                        print_env_on_error,
+                        *address,
+                        format!("storage_unexpected[{slot}]"),
+                        "0x0".to_string(),
+                        format!("{actual_value}"),
+                    );
                 }
             }
         }
@@ -416,16 +442,16 @@ fn validate_post_state(
             let actual_value = actual_value.unwrap_or_default();
 
             if actual_value != *expected_value {
-                if print_env_on_error {
-                    print_error_with_state(debug_info, state, Some(expected_post_state));
-                }
-
-                return Err(TestExecutionError::PostStateValidation {
-                    address: *address,
-                    field: format!("storage_validation[{slot}]"),
-                    expected: format!("{expected_value}"),
-                    actual: format!("{actual_value}"),
-                });
+                return make_failure(
+                    state,
+                    debug_info,
+                    expected_post_state,
+                    print_env_on_error,
+                    *address,
+                    format!("storage_validation[{slot}]"),
+                    format!("{expected_value}"),
+                    format!("{actual_value}"),
+                );
             }
         }
     }
