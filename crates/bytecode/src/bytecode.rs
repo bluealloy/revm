@@ -4,7 +4,7 @@
 //! - Legacy bytecode with jump table analysis. Found in [`LegacyAnalyzedBytecode`]
 //! - EIP-7702 bytecode, introduces in Prague and contains address to delegated account.
 
-use std::sync::Arc;
+use std::{cell::OnceCell, sync::Arc};
 
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
@@ -40,7 +40,10 @@ impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
-        Self::LegacyAnalyzed(Arc::new(LegacyAnalyzedBytecode::default()))
+        const DEFAULT_BYTECODE: OnceCell<Bytecode> = OnceCell::new();
+        DEFAULT_BYTECODE
+            .get_or_init(|| Self::LegacyAnalyzed(Arc::new(LegacyAnalyzedBytecode::default())))
+            .clone()
     }
 
     /// Returns jump table if bytecode is analyzed.
