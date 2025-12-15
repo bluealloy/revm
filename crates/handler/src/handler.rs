@@ -354,7 +354,6 @@ pub trait Handler {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
-        let refunded = gas.refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
@@ -363,9 +362,8 @@ pub trait Handler {
             gas.erase_cost(remaining);
         }
 
-        if instruction_result.is_ok() {
-            gas.record_refund(refunded);
-        }
+        // Note: refund is now tracked at the journal level and will be applied
+        // in the refund() handler function. No need to propagate frame refund here.
         Ok(())
     }
 
@@ -428,6 +426,9 @@ pub trait Handler {
     }
 
     /// Calculates the final gas refund amount, including any EIP-7702 refunds.
+    ///
+    /// This function retrieves the accumulated refund from the journal (SSTORE/SELFDESTRUCT)
+    /// and combines it with the EIP-7702 refund to calculate the final refund amount.
     #[inline]
     fn refund(
         &self,
@@ -435,8 +436,7 @@ pub trait Handler {
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
     ) {
-        let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+        post_execution::refund(evm.ctx(), exec_result.gas_mut(), eip7702_refund)
     }
 
     /// Returns unused gas costs to the transaction sender's account.

@@ -273,21 +273,26 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    if let Some(
-        JournalEntry::AccountDestroyed {
-            address: contract,
-            target: to,
-            had_balance: balance,
-            ..
+    // Look through the last few journal entries to find the selfdestruct entry.
+    // This is needed because RefundChange entries may be added after AccountDestroyed/BalanceTransfer.
+    for entry in context.journal_mut().journal().iter().rev().take(3) {
+        match entry {
+            JournalEntry::AccountDestroyed {
+                address: contract,
+                target: to,
+                had_balance: balance,
+                ..
+            }
+            | JournalEntry::BalanceTransfer {
+                from: contract,
+                to,
+                balance,
+                ..
+            } => {
+                inspector.selfdestruct(*contract, *to, *balance);
+                return;
+            }
+            _ => continue,
         }
-        | JournalEntry::BalanceTransfer {
-            from: contract,
-            to,
-            balance,
-            ..
-        },
-    ) = context.journal_mut().journal().last()
-    {
-        inspector.selfdestruct(*contract, *to, *balance);
     }
 }

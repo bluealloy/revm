@@ -292,6 +292,19 @@ pub trait JournalTr {
         _load_code: bool,
         _skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>>;
+
+    /// Records a gas refund for the current transaction.
+    ///
+    /// This accumulates refunds at the global journal level, enabling proper
+    /// reverting in case of revert/oog/stackoverflow. A journal entry is created
+    /// to track the change.
+    ///
+    /// The `refund` value can be negative (e.g., for SSTORE that increases storage)
+    /// but the total accumulated refund should be non-negative at transaction end.
+    fn record_refund(&mut self, refund: i64);
+
+    /// Returns the current accumulated gas refund for the transaction.
+    fn refund(&self) -> i64;
 }
 
 /// Error that can happen when loading account info.

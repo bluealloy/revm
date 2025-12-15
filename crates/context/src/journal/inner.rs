@@ -58,6 +58,14 @@ pub struct JournalInner<ENTRY> {
     pub spec: SpecId,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
+    /// Accumulated gas refund for the current transaction.
+    ///
+    /// This is tracked at the journal level to enable proper reverting in case of
+    /// revert/oog/stackoverflow. The refund value can be negative during execution
+    /// but should be non-negative at the end of a successful transaction.
+    ///
+    /// See [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529) for refund limits.
+    pub refund: i64,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -81,6 +89,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth: 0,
             spec: SpecId::default(),
             warm_addresses: WarmAddresses::new(),
+            refund: 0,
         }
     }
 
@@ -109,6 +118,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
         // Spec precompiles and state are not changed. It is always set again execution.
         let _ = spec;
@@ -124,6 +134,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // increment transaction id.
         *transaction_id += 1;
         logs.clear();
+        // Reset refund for next transaction
+        *refund = 0;
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -138,6 +150,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
@@ -148,6 +161,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         *transaction_id += 1;
+        // Reset refund for next transaction
+        *refund = 0;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
@@ -170,6 +185,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            refund,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
@@ -185,6 +201,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         // reset transaction id.
         *transaction_id = 0;
+        // reset refund
+        *refund = 0;
 
         state
     }
@@ -476,6 +494,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 .drain(checkpoint.journal_i..)
                 .rev()
                 .for_each(|entry| {
+                    // Handle RefundChange specially - restore the old refund value
+                    if let Some(old_refund) = entry.get_refund_revert() {
+                        self.refund = old_refund;
+                    }
                     entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
                 });
         }
@@ -917,6 +939,24 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
+    }
+
+    /// Records a gas refund for the current transaction.
+    ///
+    /// This accumulates refunds at the global journal level, avoiding negative
+    /// refund values being visible during individual call frame execution.
+    /// A journal entry is created to enable reverting in case of revert/oog/stackoverflow.
+    #[inline]
+    pub fn record_refund(&mut self, refund: i64) {
+        // Create journal entry with the old refund value before changing it
+        self.journal.push(ENTRY::refund_changed(self.refund));
+        self.refund += refund;
+    }
+
+    /// Returns the current accumulated gas refund for the transaction.
+    #[inline]
+    pub fn refund(&self) -> i64 {
+        self.refund
     }
 }
 

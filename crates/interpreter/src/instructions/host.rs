@@ -279,8 +279,8 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         )
     );
 
-    // refund
-    context.interpreter.gas.record_refund(
+    // refund - record at journal level for proper revert support
+    context.host.record_refund(
         context
             .interpreter
             .gas_params
@@ -390,9 +390,9 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 
     if !res.previously_destroyed {
+        // record refund at journal level for proper revert support
         context
-            .interpreter
-            .gas
+            .host
             .record_refund(context.interpreter.gas_params.selfdestruct_refund());
     }
 

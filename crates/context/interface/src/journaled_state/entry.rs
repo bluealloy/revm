@@ -63,6 +63,14 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
 
+    /// Creates a journal entry for when the gas refund changes.
+    /// Records the previous refund value for reverting.
+    fn refund_changed(old_refund: i64) -> Self;
+
+    /// Returns the old refund value if this is a RefundChange entry.
+    /// Used during checkpoint revert to restore the previous refund value.
+    fn get_refund_revert(&self) -> Option<i64>;
+
     /// Reverts the state change recorded by this journal entry
     ///
     /// More information on what is reverted can be found in [`JournalEntry`] enum.
@@ -226,6 +234,16 @@ pub enum JournalEntry {
         /// Address of account that had its code changed.
         address: Address,
     },
+    /// Gas refund changed
+    /// Action: Gas refund value changed
+    /// Revert: Revert to previous refund value
+    ///
+    /// This tracks gas refund changes at the journal level to enable proper
+    /// reverting in case of revert/oog/stackoverflow. See issue #2145.
+    RefundChange {
+        /// Previous refund value before the change.
+        old_refund: i64,
+    },
 }
 impl JournalEntryTr for JournalEntry {
     fn account_warmed(address: Address) -> Self {
@@ -305,6 +323,17 @@ impl JournalEntryTr for JournalEntry {
 
     fn code_changed(address: Address) -> Self {
         JournalEntry::CodeChange { address }
+    }
+
+    fn refund_changed(old_refund: i64) -> Self {
+        JournalEntry::RefundChange { old_refund }
+    }
+
+    fn get_refund_revert(&self) -> Option<i64> {
+        match self {
+            JournalEntry::RefundChange { old_refund } => Some(*old_refund),
+            _ => None,
+        }
     }
 
     fn revert(
@@ -431,6 +460,11 @@ impl JournalEntryTr for JournalEntry {
                 let acc = state.get_mut(&address).unwrap();
                 acc.info.code_hash = KECCAK_EMPTY;
                 acc.info.code = None;
+            }
+            JournalEntry::RefundChange { .. } => {
+                // Refund revert is handled separately in checkpoint_revert
+                // because it needs access to the refund field in JournalInner,
+                // which is not part of EvmState.
             }
         }
     }

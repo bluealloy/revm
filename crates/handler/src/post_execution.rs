@@ -20,8 +20,19 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
 }
 
 /// Calculates and applies gas refunds based on the specification.
-pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
-    gas.record_refund(eip7702_refund);
+///
+/// This function takes the accumulated refund from the journal and applies it to the Gas struct.
+/// The journal refund includes SSTORE and SELFDESTRUCT refunds that were recorded during execution.
+/// The eip7702_refund is added on top of the journal refund.
+pub fn refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas, eip7702_refund: i64) {
+    let spec: SpecId = context.cfg().spec().into();
+
+    // Get the accumulated refund from the journal (SSTORE/SELFDESTRUCT refunds)
+    let journal_refund = context.journal().refund();
+
+    // Record total refund (journal + eip7702) to the Gas struct
+    gas.record_refund(journal_refund + eip7702_refund);
+
     // Calculate gas refund for transaction.
     // If spec is set to london, it will decrease the maximum refund amount to 5th part of
     // gas spend. (Before london it was 2th part of gas spend)
