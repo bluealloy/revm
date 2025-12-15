@@ -6,7 +6,6 @@ pub use call_helpers::{
 };
 
 use crate::{
-    gas,
     instructions::utility::IntoAddress,
     interpreter_action::FrameInput,
     interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
