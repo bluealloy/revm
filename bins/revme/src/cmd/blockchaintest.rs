@@ -346,7 +346,7 @@ fn validate_post_state(
             actual,
         })
     }
-    
+
     for (address, expected_account) in expected_post_state {
         // Load account from final state
         let actual_account = state
