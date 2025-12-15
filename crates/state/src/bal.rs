@@ -62,7 +62,11 @@ impl Bal {
             return;
         }
 
-        for (idx, (address, account)) in self.accounts.iter().enumerate() {
+        // Sort accounts by address before printing
+        let mut sorted_accounts: Vec<_> = self.accounts.iter().collect();
+        sorted_accounts.sort_by_key(|(address, _)| *address);
+
+        for (idx, (address, account)) in sorted_accounts.into_iter().enumerate() {
             println!("Account #{idx} - Address: {address:?}");
             println!("  Account Info:");
 
@@ -135,14 +139,14 @@ impl Bal {
     /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
-        address: Address,
+        account_id: usize,
         bal_index: BalIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((index, _, bal_account)) = self.accounts.get_full(&address) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
             return Err(BalError::AccountNotFound);
         };
-        account.storage_id = Some(index);
+        account.storage_id = Some(account_id);
 
         Ok(bal_account.populate_account_info(bal_index, account))
     }

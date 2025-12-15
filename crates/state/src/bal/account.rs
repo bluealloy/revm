@@ -87,7 +87,7 @@ impl AccountBal {
                                 .into_iter()
                                 .map(|key| AlloySlotChanges::new(key, Default::default())),
                         )
-                        .map(|slot| (slot.slot.into(), BalWrites::from(slot.changes))),
+                        .map(|slot| (slot.slot, BalWrites::from(slot.changes))),
                 ),
             },
         ))
@@ -100,14 +100,14 @@ impl AccountBal {
         let mut storage_changes = Vec::new();
         for (key, value) in self.storage.storage {
             if value.writes.is_empty() {
-                storage_reads.push(key.into());
+                storage_reads.push(key);
             } else {
                 storage_changes.push(AlloySlotChanges::new(
-                    key.into(),
+                    key,
                     value
                         .writes
                         .into_iter()
-                        .map(|(index, value)| AlloyStorageChange::new(index, value.into()))
+                        .map(|(index, value)| AlloyStorageChange::new(index, value))
                         .collect(),
                 ));
             }
@@ -232,16 +232,19 @@ pub struct StorageBal {
 
 impl StorageBal {
     /// Get storage from the builder.
+    #[inline]
     pub fn get(
         &self,
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<Option<StorageValue>, BalError> {
-        let Some(value) = self.storage.get(&key) else {
-            return Err(BalError::SlotNotFound);
-        };
+        Ok(self.get_bal_writes(key)?.get(bal_index))
+    }
 
-        Ok(value.get(bal_index))
+    /// Get storage writes from the builder.
+    #[inline]
+    pub fn get_bal_writes(&self, key: StorageKey) -> Result<&BalWrites<StorageValue>, BalError> {
+        self.storage.get(&key).ok_or(BalError::SlotNotFound)
     }
 
     /// Extend storage from another storage.

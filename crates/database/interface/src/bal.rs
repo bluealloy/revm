@@ -91,62 +91,107 @@ impl BalState {
         self.take_built_bal().map(|bal| bal.into_alloy_bal())
     }
 
+    /// Get account id from BAL.
+    ///
+    /// Return Error if BAL is not found and Account is not
+    #[inline]
+    pub fn get_account_id(&self, address: &Address) -> Result<Option<usize>, BalError> {
+        self.bal
+            .as_ref()
+            .map(|bal| {
+                bal.accounts
+                    .get_full(address)
+                    .map(|i| i.0)
+                    .ok_or(BalError::AccountNotFound)
+            })
+            .transpose()
+    }
+
     /// Fetch account from database and apply bal changes to it.
+    ///
+    /// Return Some if BAL is existing, None if not.
+    /// Return Err if Accounts is not found inside BAL.
+    /// And return true
     #[inline]
     pub fn basic(
         &self,
         address: Address,
-        mut basic: Option<AccountInfo>,
-    ) -> Result<Option<AccountInfo>, BalError> {
+        basic: &mut Option<AccountInfo>,
+    ) -> Result<bool, BalError> {
+        let Some(account_id) = self.get_account_id(&address)? else {
+            return Ok(false);
+        };
+        Ok(self.basic_by_account_id(account_id, basic))
+    }
+
+    /// Fetch account from database and apply bal changes to it by account id.
+    ///
+    /// Panics if account_id is invalid
+    #[inline]
+    pub fn basic_by_account_id(&self, account_id: usize, basic: &mut Option<AccountInfo>) -> bool {
         if let Some(bal) = &self.bal {
             let is_none = basic.is_none();
-            let mut bal_basic = basic.unwrap_or_default();
-            if bal.populate_account_info(address, self.bal_index, &mut bal_basic)? {
-                // return new basic if it got changed.
-                return Ok(Some(bal_basic));
-            }
+            let mut bal_basic = core::mem::take(basic).unwrap_or_default();
+            bal.populate_account_info(account_id, self.bal_index, &mut bal_basic)
+                .expect("Invalid account id");
 
             // if it is not changed, check if it is none and return it.
             if is_none {
-                return Ok(None);
+                return true;
             }
 
-            basic = Some(bal_basic);
+            *basic = Some(bal_basic);
+            return true;
         }
-
-        Ok(basic)
+        false
     }
 
-    /// Fetch storage from database and apply bal changes to it.
+    /// Get storage value from BAL.
+    ///
+    /// Return Err if bal is present but account or storage is not found inside BAL.
+    #[inline]
     pub fn storage(
         &self,
-        address: Address,
-        key: StorageKey,
-        mut value: StorageValue,
-    ) -> Result<StorageValue, BalError> {
-        if let Some(bal) = &self.bal {
-            bal.populate_storage_slot(address, self.bal_index, key, &mut value)?;
-        }
-        Ok(value)
+        account: &Address,
+        storage_key: StorageKey,
+    ) -> Result<Option<StorageValue>, BalError> {
+        let Some(bal) = &self.bal else {
+            return Ok(None);
+        };
+
+        let Some(bal_account) = bal.accounts.get(account) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        Ok(bal_account
+            .storage
+            .get_bal_writes(storage_key)?
+            .get(self.bal_index))
     }
 
-    /// Fetch the storage changes from database and apply bal change to it.
+    /// Get the storage value by account id.
+    ///
+    /// Return Err if bal is present but account or storage is not found inside BAL.
+    ///
+    ///
     #[inline]
     pub fn storage_by_account_id(
         &self,
         account_id: usize,
         storage_key: StorageKey,
-        mut value: StorageValue,
-    ) -> Result<StorageValue, BalError> {
-        if let Some(bal) = &self.bal {
-            bal.populate_storage_slot_by_account_id(
-                account_id,
-                self.bal_index,
-                storage_key,
-                &mut value,
-            )?;
-        }
-        Ok(value)
+    ) -> Result<Option<StorageValue>, BalError> {
+        let Some(bal) = &self.bal else {
+            return Ok(None);
+        };
+
+        let Some((_, bal_account)) = bal.accounts.get_index(account_id) else {
+            return Err(BalError::AccountNotFound);
+        };
+
+        Ok(bal_account
+            .storage
+            .get_bal_writes(storage_key)?
+            .get(self.bal_index))
     }
 
     /// Apply changed from EvmState to the bal_builder
@@ -244,7 +289,7 @@ pub enum EvmDatabaseError<ERROR> {
     /// BAL error.
     Bal(BalError),
     /// External database error.
-    External(ERROR),
+    Database(ERROR),
 }
 
 impl<ERROR> From<BalError> for EvmDatabaseError<ERROR> {
@@ -259,7 +304,7 @@ impl<ERROR: Display> Display for EvmDatabaseError<ERROR> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Bal(error) => write!(f, "Bal error: {error}"),
-            Self::External(error) => write!(f, "Database error: {error}"),
+            Self::Database(error) => write!(f, "Database error: {error}"),
         }
     }
 }
@@ -273,7 +318,7 @@ impl<ERROR> EvmDatabaseError<ERROR> {
     pub fn into_external_error(self) -> ERROR {
         match self {
             Self::Bal(_) => panic!("Expected database error, got BAL error"),
-            Self::External(error) => error,
+            Self::Database(error) => error,
         }
     }
 }
@@ -281,55 +326,60 @@ impl<ERROR> EvmDatabaseError<ERROR> {
 impl<DB: Database> Database for BalDatabase<DB> {
     type Error = EvmDatabaseError<DB::Error>;
 
+    #[inline]
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.db
-            .basic(address)
-            .map_err(EvmDatabaseError::External)
-            .and_then(|basic| {
-                self.bal_state
-                    .basic(address, basic)
-                    .map_err(EvmDatabaseError::Bal)
-            })
+        let account_id = self.bal_state.get_account_id(&address)?;
+
+        let mut account = self.db.basic(address).map_err(EvmDatabaseError::Database)?;
+
+        if let Some(account_id) = account_id {
+            self.bal_state.basic_by_account_id(account_id, &mut account);
+        }
+
+        Ok(account)
     }
 
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         self.db
             .code_by_hash(code_hash)
-            .map_err(EvmDatabaseError::External)
+            .map_err(EvmDatabaseError::Database)
     }
 
+    #[inline]
     fn storage(&mut self, address: Address, key: StorageKey) -> Result<StorageValue, Self::Error> {
+        if let Some(storage) = self.bal_state.storage(&address, key)? {
+            return Ok(storage);
+        }
+
         self.db
             .storage(address, key)
-            .map_err(EvmDatabaseError::External)
-            .and_then(|value| {
-                self.bal_state
-                    .storage(address, key, value)
-                    .map_err(EvmDatabaseError::Bal)
-            })
+            .map_err(EvmDatabaseError::Database)
     }
 
-    /// Storage id is used to access BAL index not for database index.
+    #[inline]
     fn storage_by_account_id(
         &mut self,
         address: Address,
         account_id: usize,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
+        if let Some(value) = self
+            .bal_state
+            .storage_by_account_id(account_id, storage_key)?
+        {
+            return Ok(value);
+        }
+
         self.db
             .storage(address, storage_key)
-            .map_err(EvmDatabaseError::External)
-            .and_then(|value| {
-                self.bal_state
-                    .storage_by_account_id(account_id, storage_key, value)
-                    .map_err(EvmDatabaseError::Bal)
-            })
+            .map_err(EvmDatabaseError::Database)
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.db
             .block_hash(number)
-            .map_err(EvmDatabaseError::External)
+            .map_err(EvmDatabaseError::Database)
     }
 }
 

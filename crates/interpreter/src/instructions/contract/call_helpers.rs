@@ -156,6 +156,10 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let mut code_hash = account.code_hash();
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
+        println!(
+            "new_account_cost: {}",
+            gas_table.new_account_cost(is_spurious_dragon, transfers_value)
+        );
         cost += gas_table.new_account_cost(is_spurious_dragon, transfers_value);
         return Ok((cost, bytecode, code_hash));
     }

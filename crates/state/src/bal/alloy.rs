@@ -54,7 +54,7 @@ impl From<Vec<AlloyStorageChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.new_value.into()))
+                .map(|change| (change.block_access_index, change.new_value))
                 .collect(),
         }
     }
