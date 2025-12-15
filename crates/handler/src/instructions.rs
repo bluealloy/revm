@@ -105,7 +105,7 @@ where
         if spec == self.spec {
             return false;
         }
-        self.instruction_table = Box::new(instruction_table_gas_changes_spec(spec));
+        *self.instruction_table = instruction_table_gas_changes_spec(spec);
         self.gas_params = GasParams::new_spec(spec);
 
         true
