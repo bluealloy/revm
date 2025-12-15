@@ -4,13 +4,14 @@
 //! - Legacy bytecode with jump table analysis. Found in [`LegacyAnalyzedBytecode`]
 //! - EIP-7702 bytecode, introduces in Prague and contains address to delegated account.
 
-use std::{cell::OnceCell, sync::Arc};
-
 use crate::{
     eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES},
     BytecodeDecodeError, JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode,
 };
-use primitives::{alloy_primitives::Sealable, keccak256, Address, Bytes, B256, KECCAK_EMPTY};
+use primitives::{
+    alloy_primitives::Sealable, keccak256, Address, Bytes, OnceLock, B256, KECCAK_EMPTY,
+};
+use std::sync::Arc;
 
 /// Main bytecode structure with all variants.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
@@ -40,7 +41,7 @@ impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
-        const DEFAULT_BYTECODE: OnceCell<Bytecode> = OnceCell::new();
+        static DEFAULT_BYTECODE: OnceLock<Bytecode> = OnceLock::new();
         DEFAULT_BYTECODE
             .get_or_init(|| Self::LegacyAnalyzed(Arc::new(LegacyAnalyzedBytecode::default())))
             .clone()
