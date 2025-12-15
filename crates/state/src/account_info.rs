@@ -17,8 +17,11 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// Hash of the raw bytes in `code`, or [`KECCAK_EMPTY`].
     pub code_hash: B256,
-    /// Storage id.
-    pub storage_id: Option<usize>,
+    /// Used as a hint to optimize the access to the storage of account.
+    ///
+    /// It is set when account is loaded from the database, and if it is `Some` it will called
+    /// by journal to ask database the storage with this account_id (It will stil send the address to the database).
+    pub account_id: Option<usize>,
     /// [`Bytecode`] data associated with this account.
     ///
     /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be
@@ -33,7 +36,7 @@ impl Default for AccountInfo {
         Self {
             balance: U256::ZERO,
             code_hash: KECCAK_EMPTY,
-            storage_id: None,
+            account_id: None,
             code: Some(Bytecode::default()),
             nonce: 0,
         }
@@ -80,7 +83,7 @@ impl AccountInfo {
             nonce,
             code: Some(code),
             code_hash,
-            storage_id: None,
+            account_id: None,
         }
     }
 
@@ -202,7 +205,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash: self.code_hash,
-            storage_id: self.storage_id,
+            account_id: self.account_id,
             code: None,
         }
     }
@@ -291,7 +294,7 @@ impl AccountInfo {
             nonce: 1,
             code: Some(bytecode),
             code_hash: hash,
-            storage_id: None,
+            account_id: None,
         }
     }
 }

@@ -146,7 +146,7 @@ impl Bal {
         let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
             return Err(BalError::AccountNotFound);
         };
-        account.storage_id = Some(account_id);
+        account.account_id = Some(account_id);
 
         Ok(bal_account.populate_account_info(bal_index, account))
     }

@@ -64,9 +64,10 @@ pub trait Database {
     fn storage(&mut self, address: Address, index: StorageKey)
         -> Result<StorageValue, Self::Error>;
 
-    /// Gets storage value of account by its id.
+    /// Gets storage value of account by its id. By default call [`Database::storage`] method.
     ///
-    /// Default implementation is to call [`Database::storage`] method.
+    /// If basic account sets account_id inside [`AccountInfo::account_id`], evm will call this
+    /// function with that given account_id. This can be useful if IndexMap is used to get faster access to the account.
     #[inline]
     fn storage_by_account_id(
         &mut self,
