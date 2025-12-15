@@ -1,6 +1,7 @@
 use super::LegacyAnalyzedBytecode;
 use core::ops::Deref;
 use primitives::Bytes;
+use std::sync::Arc;
 
 /// Used only as intermediate representation for legacy bytecode.
 ///
@@ -13,6 +14,11 @@ impl LegacyRawBytecode {
     /// Analyzes the bytecode, instantiating a [`LegacyAnalyzedBytecode`].
     pub fn into_analyzed(self) -> LegacyAnalyzedBytecode {
         LegacyAnalyzedBytecode::analyze(self.0)
+    }
+
+    /// Analyzes the bytecode, instantiating a [`LegacyAnalyzedBytecode`] and wrapping it in an [`Arc`].
+    pub fn into_analyzed_arc(self) -> Arc<LegacyAnalyzedBytecode> {
+        Arc::new(self.into_analyzed())
     }
 }
 

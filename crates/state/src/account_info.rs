@@ -20,7 +20,7 @@ pub struct AccountInfo {
     /// Used as a hint to optimize the access to the storage of account.
     ///
     /// It is set when account is loaded from the database, and if it is `Some` it will called
-    /// by journal to ask database the storage with this account_id (It will still send the address to the database).
+    /// by journal to ask database the storage with this account_id (It will stil send the address to the database).
     pub account_id: Option<usize>,
     /// [`Bytecode`] data associated with this account.
     ///
