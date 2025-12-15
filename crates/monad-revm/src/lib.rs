@@ -6,6 +6,7 @@
 //! - Custom gas costs
 
 pub mod handler;
+pub mod instructions;
 pub mod precompiles;
 pub mod spec;
 

@@ -2,7 +2,7 @@
 use core::str::FromStr;
 use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
-/// Optimism spec id.
+/// Monad spec id.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

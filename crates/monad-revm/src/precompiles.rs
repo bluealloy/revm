@@ -35,7 +35,7 @@ impl MonadPrecompiles {
                 precompiles,
                 spec: SpecId::default(),
             },
-            spec
+            spec,
         }
     }
 
