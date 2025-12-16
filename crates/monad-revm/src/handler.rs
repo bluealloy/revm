@@ -4,11 +4,14 @@
 //! - Gas is charged based on gas_limit, not gas_used (no refunds)
 use revm::{
     context_interface::{result::HaltReason, Block, Cfg, ContextTr, JournalTr, Transaction},
-    handler::{evm::FrameTr, handler::EvmTrError, EvmTr, FrameResult, Handler, MainnetHandler},
-    interpreter::interpreter_action::FrameInit,
+    handler::{evm::FrameTr, handler::EvmTrError, EthFrame, EvmTr, FrameResult, Handler, MainnetHandler},
+    inspector::{Inspector, InspectorEvmTr, InspectorHandler},
+    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit},
     primitives::{hardfork::SpecId, U256},
     state::EvmState,
 };
+
+use crate::api::exec::MonadContextTr;
 
 /// Monad handler extends [`Handler`] with Monad-specific gas handling.
 ///
@@ -93,4 +96,16 @@ where
 
         Ok(())
     }
+}
+
+impl<EVM, ERROR> InspectorHandler for MonadHandler<EVM, ERROR, EthFrame<EthInterpreter>>
+where
+    EVM: InspectorEvmTr<
+        Context: MonadContextTr,
+        Frame = EthFrame<EthInterpreter>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+    >,
+    ERROR: EvmTrError<EVM>,
+{
+    type IT = EthInterpreter;
 }
