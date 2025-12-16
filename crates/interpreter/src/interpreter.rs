@@ -9,6 +9,7 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
+use context_interface::cfg::GasParams;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -19,8 +20,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    gas::params::GasParams, host::DummyHost, instruction_context::InstructionContext,
-    interpreter_types::*, Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -29,8 +30,6 @@ use primitives::{hardfork::SpecId, Bytes};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
-    /// Gas table for dynamic gas constants.
-    pub gas_params: GasParams,
     /// Bytecode being executed.
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
@@ -58,7 +57,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        gas_params: GasParams,
     ) -> Self {
         Self::new_inner(
             Stack::new(),
@@ -68,7 +66,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             is_static,
             spec_id,
             gas_limit,
-            gas_params,
         )
     }
 
@@ -91,7 +88,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             false,
             SpecId::default(),
             u64::MAX,
-            GasParams::default(),
         )
     }
 
@@ -104,12 +100,10 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        gas_params: GasParams,
     ) -> Self {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
-            gas_params,
             stack,
             return_data: Default::default(),
             memory,
@@ -130,12 +124,10 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        gas_params: GasParams,
     ) {
         let Self {
             bytecode: bytecode_ref,
             gas,
-            gas_params: gas_params_ref,
             stack,
             return_data,
             memory: memory_ref,
@@ -154,7 +146,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *memory_ref = memory;
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
-        *gas_params_ref = gas_params;
         *extend = EXT::default();
     }
 
@@ -162,12 +153,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     pub fn with_bytecode(mut self, bytecode: Bytecode) -> Self {
         self.bytecode = ExtBytecode::new(bytecode);
         self
-    }
-
-    /// Sets the specid for the interpreter.
-    pub fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.gas_params = GasParams::new_spec(spec_id);
-        self.runtime_flag.spec_id = spec_id;
     }
 }
 
@@ -198,14 +183,9 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Performs EVM memory resize.
     #[inline]
     #[must_use]
-    pub fn resize_memory(&mut self, offset: usize, len: usize) -> bool {
-        if let Err(result) = resize_memory(
-            &mut self.gas,
-            &mut self.memory,
-            &self.gas_params,
-            offset,
-            len,
-        ) {
+    pub fn resize_memory(&mut self, gas_params: &GasParams, offset: usize, len: usize) -> bool {
+        if let Err(result) = resize_memory(&mut self.gas, &mut self.memory, gas_params, offset, len)
+        {
             self.halt(result);
             return false;
         }
@@ -333,7 +313,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// This uses dummy Host.
     #[inline]
     pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        self.step(instruction_table, &mut DummyHost);
+        self.step(instruction_table, &mut DummyHost::default());
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -448,7 +428,6 @@ mod tests {
             false,
             SpecId::default(),
             u64::MAX,
-            GasParams::default(),
         );
 
         let serialized = serde_json::to_string_pretty(&interpreter).unwrap();
@@ -486,11 +465,10 @@ fn test_mstore_big_offset_memory_oog() {
         false,
         SpecId::default(),
         1000,
-        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
-    let mut host = DummyHost;
+    let mut host = DummyHost::default();
     let action = interpreter.run_plain(&table, &mut host);
 
     assert!(action.is_return());

@@ -225,7 +225,7 @@ mod tests {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
             let context = InstructionContext {
-                host: &mut DummyHost,
+                host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             shl(context);
@@ -308,7 +308,7 @@ mod tests {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
             let context = InstructionContext {
-                host: &mut DummyHost,
+                host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             shr(context);
@@ -416,7 +416,7 @@ mod tests {
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
             let context = InstructionContext {
-                host: &mut DummyHost,
+                host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             sar(context);
@@ -454,7 +454,7 @@ mod tests {
             push!(interpreter, test.input);
             push!(interpreter, U256::from(test.index));
             let context = InstructionContext {
-                host: &mut DummyHost,
+                host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             byte(context);
@@ -466,7 +466,7 @@ mod tests {
     #[test]
     fn test_clz() {
         let mut interpreter = Interpreter::default();
-        interpreter.set_spec_id(SpecId::OSAKA);
+        let mut host = DummyHost::new(SpecId::OSAKA);
 
         struct TestCase {
             value: U256,
@@ -507,7 +507,7 @@ mod tests {
         for test in test_cases {
             push!(interpreter, test.value);
             let context = InstructionContext {
-                host: &mut DummyHost,
+                host: &mut host,
                 interpreter: &mut interpreter,
             };
             clz(context);

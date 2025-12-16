@@ -1,4 +1,5 @@
 use crate::interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr};
+use context_interface::Host;
 use core::cmp::max;
 use primitives::U256;
 
@@ -7,10 +8,10 @@ use crate::InstructionContext;
 /// Implements the MLOAD instruction.
 ///
 /// Loads a 32-byte word from memory.
-pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
-    resize_memory!(context.interpreter, offset, 32);
+    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
     *top =
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
 }
@@ -18,10 +19,10 @@ pub fn mload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 /// Implements the MSTORE instruction.
 ///
 /// Stores a 32-byte word to memory.
-pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, offset, 32);
+    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
     context
         .interpreter
         .memory
@@ -31,10 +32,10 @@ pub fn mstore<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the MSTORE8 instruction.
 ///
 /// Stores a single byte to memory.
-pub fn mstore8<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, offset, 1);
+    resize_memory!(context.interpreter, context.host.gas_params(), offset, 1);
     context.interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
@@ -51,7 +52,7 @@ pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 /// Implements the MCOPY instruction.
 ///
 /// EIP-5656: Memory copying instruction that copies memory from one location to another.
-pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);
 
@@ -60,7 +61,7 @@ pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     // Deduce gas
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.mcopy_cost(len)
+        context.host.gas_params().mcopy_cost(len)
     );
 
     if len == 0 {
@@ -70,7 +71,12 @@ pub fn mcopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     let dst = as_usize_or_fail!(context.interpreter, dst);
     let src = as_usize_or_fail!(context.interpreter, src);
     // Resize memory
-    resize_memory!(context.interpreter, max(dst, src), len);
+    resize_memory!(
+        context.interpreter,
+        context.host.gas_params(),
+        max(dst, src),
+        len
+    );
     // Copy memory in place
     context.interpreter.memory.copy(dst, src, len);
 }

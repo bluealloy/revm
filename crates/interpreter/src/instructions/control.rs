@@ -3,6 +3,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr},
     InstructionResult, InterpreterAction,
 };
+use context_interface::{cfg::GasParams, Host};
 use primitives::{Bytes, U256};
 
 use crate::InstructionContext;
@@ -61,6 +62,7 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 /// Handles memory data retrieval and sets the return action.
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
+    gas_params: &GasParams,
     instruction_result: InstructionResult,
 ) {
     popn!([offset, len], interpreter);
@@ -69,7 +71,7 @@ fn return_inner(
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        if !interpreter.resize_memory(offset, len) {
+        if !interpreter.resize_memory(gas_params, offset, len) {
             return;
         }
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
@@ -87,14 +89,22 @@ fn return_inner(
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
-pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    return_inner(context.interpreter, InstructionResult::Return);
+pub fn ret<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    return_inner(
+        context.interpreter,
+        context.host.gas_params(),
+        InstructionResult::Return,
+    );
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn revert<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     check!(context.interpreter, BYZANTIUM);
-    return_inner(context.interpreter, InstructionResult::Revert);
+    return_inner(
+        context.interpreter,
+        context.host.gas_params(),
+        InstructionResult::Revert,
+    );
 }
 
 /// Stop opcode. This opcode halts the execution.

@@ -1,6 +1,7 @@
 //! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
+    cfg::GasParams,
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
@@ -450,6 +451,11 @@ impl<
 
     fn prevrandao(&self) -> Option<U256> {
         self.block().prevrandao().map(|r| r.into())
+    }
+
+    #[inline]
+    fn gas_params(&self) -> &GasParams {
+        self.cfg().gas_params()
     }
 
     fn block_number(&self) -> U256 {

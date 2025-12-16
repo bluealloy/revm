@@ -3,6 +3,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, StackTr},
     InstructionContext,
 };
+use context_interface::Host;
 use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
@@ -74,11 +75,11 @@ pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 }
 
 /// Implements the EXP instruction - exponentiates two values from stack.
-pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn exp<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.exp_cost(*op2)
+        context.host.gas_params().exp_cost(*op2)
     );
     *op2 = op1.pow(*op2);
 }

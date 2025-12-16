@@ -4,6 +4,7 @@ use crate::{
 };
 use context::result::FromStringError;
 use context_interface::{
+    cfg::gas::CODEDEPOSIT,
     context::ContextError,
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
@@ -12,7 +13,6 @@ use context_interface::{
 use core::cmp::min;
 use derive_where::derive_where;
 use interpreter::{
-    gas::{self, params::GasParams},
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
@@ -114,7 +114,6 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
-        gas_params: GasParams,
     ) {
         let Self {
             data: data_ref,
@@ -128,9 +127,7 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(
-            memory, bytecode, inputs, is_static, spec_id, gas_limit, gas_params,
-        );
+        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
         *checkpoint_ref = checkpoint;
     }
 
@@ -147,7 +144,6 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-        gas_params: GasParams,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -247,7 +243,6 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
-            gas_params,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -263,7 +258,6 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-        gas_params: GasParams,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -350,7 +344,6 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             checkpoint,
-            gas_params,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -364,7 +357,6 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
-        gas_params: GasParams,
     ) -> Result<
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
@@ -378,11 +370,9 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs, gas_params)
+                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
             }
-            FrameInput::Create(inputs) => {
-                Self::make_create_frame(this, ctx, depth, memory, inputs, gas_params)
-            }
+            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -579,7 +569,7 @@ pub fn return_create<JOURNAL: JournalTr>(
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
         return;
     }
-    let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
+    let gas_for_code = interpreter_result.output.len() as u64 * CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the

@@ -1,11 +1,12 @@
 //! Host interface for external blockchain state access.
 
 use crate::{
+    cfg::GasParams,
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{AccountInfoLoad, AccountLoad},
 };
 use auto_impl::auto_impl;
-use primitives::{Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 use state::Bytecode;
 
 /// Error that can happen when loading account info.
@@ -59,6 +60,9 @@ pub trait Host {
 
     /// Max initcode size, calls `ContextTr::cfg().max_code_size().saturating_mul(2)`
     fn max_initcode_size(&self) -> usize;
+
+    /// Gas params contains the dynamic gas constants for the EVM.
+    fn gas_params(&self) -> &GasParams;
 
     /* Database */
 
@@ -200,8 +204,19 @@ pub trait Host {
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
-#[derive(Debug)]
-pub struct DummyHost;
+#[derive(Default, Debug)]
+pub struct DummyHost {
+    gas_params: GasParams,
+}
+
+impl DummyHost {
+    /// Create a new dummy host with the given spec.
+    pub fn new(spec: SpecId) -> Self {
+        Self {
+            gas_params: GasParams::new_spec(spec),
+        }
+    }
+}
 
 impl Host for DummyHost {
     fn basefee(&self) -> U256 {
@@ -214,6 +229,10 @@ impl Host for DummyHost {
 
     fn gas_limit(&self) -> U256 {
         U256::ZERO
+    }
+
+    fn gas_params(&self) -> &GasParams {
+        &self.gas_params
     }
 
     fn difficulty(&self) -> U256 {

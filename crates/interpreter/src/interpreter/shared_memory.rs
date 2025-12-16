@@ -1,5 +1,6 @@
 use super::MemoryTr;
-use crate::{gas::params::GasParams, InstructionResult};
+use crate::InstructionResult;
+use context_interface::cfg::GasParams;
 use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,

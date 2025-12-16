@@ -1,6 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
+use context_interface::cfg::GasParams;
 use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -55,6 +56,8 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
     /// with initials cap of 30M.
     pub tx_gas_limit_cap: Option<u64>,
+    /// Gas params for the EVM.
+    pub gas_params: GasParams,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -146,7 +149,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC> CfgEnv<SPEC> {
+impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
@@ -159,6 +162,7 @@ impl<SPEC> CfgEnv<SPEC> {
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
+            gas_params: GasParams::new_spec(spec.into()),
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -199,7 +203,8 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
-    pub fn with_spec<OSPEC: Into<SpecId>>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
+    pub fn with_spec<OSPEC: Into<SpecId> + Copy>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
+        let eth_spec = spec.into();
         CfgEnv {
             chain_id: self.chain_id,
             tx_chain_id_check: self.tx_chain_id_check,
@@ -210,6 +215,7 @@ impl<SPEC> CfgEnv<SPEC> {
             tx_gas_limit_cap: self.tx_gas_limit_cap,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
+            gas_params: GasParams::new_spec(eth_spec),
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -410,9 +416,14 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
             }
         }
     }
+
+    #[inline]
+    fn gas_params(&self) -> &GasParams {
+        &self.gas_params
+    }
 }
 
-impl<SPEC: Default> Default for CfgEnv<SPEC> {
+impl<SPEC: Default + Into<SpecId> + Copy> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self::new_with_spec(SPEC::default())
     }

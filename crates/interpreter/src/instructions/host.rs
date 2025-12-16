@@ -114,13 +114,14 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter
     );
     let address = address.into_address();
+    let u256 = address.into_word();
 
     let spec_id = context.interpreter.runtime_flag.spec_id();
 
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.extcodecopy(len)
+        context.host.gas_params().extcodecopy(len)
     );
 
     let mut memory_offset_usize = 0;
@@ -129,7 +130,12 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         // fail on casting of memory_offset only if len is not zero.
         memory_offset_usize = as_usize_or_fail!(context.interpreter, memory_offset);
         // Resize memory to fit the code
-        resize_memory!(context.interpreter, memory_offset_usize, len);
+        resize_memory!(
+            context.interpreter,
+            context.host.gas_params(),
+            memory_offset_usize,
+            len
+        );
     }
 
     let code = if spec_id.is_enabled_in(BERLIN) {
@@ -195,10 +201,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let target = context.interpreter.input.target_address();
 
     if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context
-            .interpreter
-            .gas_params
-            .cold_storage_additional_cost();
+        let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
         match res {
@@ -233,7 +236,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // EIP-2200: Structured Definitions for Net Gas Metering
     // If gasleft is less than or equal to gas stipend, fail the current call frame with ‘out of gas’ exception.
     if spec_id.is_enabled_in(ISTANBUL)
-        && context.interpreter.gas.remaining() <= context.interpreter.gas_params.call_stipend()
+        && context.interpreter.gas.remaining() <= context.host.gas_params().call_stipend()
     {
         context
             .interpreter
@@ -243,14 +246,11 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.sstore_static_gas()
+        context.host.gas_params().sstore_static_gas()
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context
-            .interpreter
-            .gas_params
-            .cold_storage_additional_cost();
+        let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
         let res = context
             .host
@@ -272,7 +272,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // dynamic gas
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.sstore_dynamic_gas(
+        context.host.gas_params().sstore_dynamic_gas(
             is_istanbul,
             &state_load.data,
             state_load.is_cold
@@ -282,8 +282,8 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     // refund
     context.interpreter.gas.record_refund(
         context
-            .interpreter
-            .gas_params
+            .host
+            .gas_params()
             .sstore_refund(is_istanbul, &state_load.data),
     );
 }
@@ -323,14 +323,14 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     let len = as_usize_or_fail!(context.interpreter, len);
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.log_cost(N as u8, len as u64)
+        context.host.gas_params().log_cost(N as u8, len as u64)
     );
     let data = if len == 0 {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(context.interpreter, offset);
         // Resize memory to fit the data
-        resize_memory!(context.interpreter, offset, len);
+        resize_memory!(context.interpreter, context.host.gas_params(), offset, len);
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
@@ -358,10 +358,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let target = target.into_address();
     let spec = context.interpreter.runtime_flag.spec_id();
 
-    let cold_load_gas = context
-        .interpreter
-        .gas_params
-        .cold_account_additional_cost();
+    let cold_load_gas = context.host.gas_params().cold_account_additional_cost();
 
     let skip_cold_load = context.interpreter.gas.remaining() < cold_load_gas;
     let res = match context.host.selfdestruct(
@@ -384,8 +381,8 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(
         context.interpreter,
         context
-            .interpreter
-            .gas_params
+            .host
+            .gas_params()
             .selfdestruct_cost(should_charge_topup, res.is_cold)
     );
 
@@ -393,7 +390,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context
             .interpreter
             .gas
-            .record_refund(context.interpreter.gas_params.selfdestruct_refund());
+            .record_refund(context.host.gas_params().selfdestruct_refund());
     }
 
     context.interpreter.halt(InstructionResult::SelfDestruct);
