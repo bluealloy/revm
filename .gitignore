@@ -26,3 +26,6 @@ rustc-ice-*
 
 # Fixtures
 /test-fixtures
+
+# Local documentation
+monad-revm.md

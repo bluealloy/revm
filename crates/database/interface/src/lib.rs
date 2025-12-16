@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -68,7 +68,15 @@ pub trait Database {
 }
 
 /// EVM database commit interface.
-#[auto_impl(&mut, Box)]
+///
+/// # Dyn Compatibility
+///
+/// This trait is dyn-compatible. The `commit_iter` method has a `Self: Sized` bound
+/// which excludes it from the trait's vtable, allowing `dyn DatabaseCommit` to work.
+///
+/// Note: We manually implement this trait for `&mut T` and `Box<T>` instead of using
+/// `#[auto_impl]` because auto_impl generates impls for `T: ?Sized` that try to delegate
+/// `commit_iter` to the inner type, which fails when `T` is `?Sized` (like `dyn DatabaseCommit`).
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
@@ -95,6 +103,47 @@ pub trait DatabaseCommit {
     {
         let changes: HashMap<Address, Account> = changes.into_iter().collect();
         self.commit(changes);
+    }
+}
+
+/// Manual implementation for `&mut T` where `T: DatabaseCommit + ?Sized`.
+///
+/// We can't use `#[auto_impl]` because it would generate code that tries to call
+/// `T::commit_iter` which requires `T: Sized`, but `T` might be `?Sized` here.
+impl<T: DatabaseCommit + ?Sized> DatabaseCommit for &mut T {
+    #[inline]
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        (**self).commit(changes)
+    }
+
+    #[inline]
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
+    where
+        Self: Sized,
+    {
+        // Don't delegate to T::commit_iter since T might be ?Sized.
+        // Instead, collect and call commit directly.
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        (**self).commit(changes);
+    }
+}
+
+/// Manual implementation for `Box<T>` where `T: DatabaseCommit + ?Sized`.
+impl<T: DatabaseCommit + ?Sized> DatabaseCommit for Box<T> {
+    #[inline]
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        (**self).commit(changes)
+    }
+
+    #[inline]
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
+    where
+        Self: Sized,
+    {
+        // Don't delegate to T::commit_iter since T might be ?Sized.
+        // Instead, collect and call commit directly.
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        (**self).commit(changes);
     }
 }
 
