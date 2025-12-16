@@ -21,6 +21,7 @@ pub struct AccountInfo {
     ///
     /// It is set when account is loaded from the database, and if it is `Some` it will called
     /// by journal to ask database the storage with this account_id (It will still send the address to the database).
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub account_id: Option<usize>,
     /// [`Bytecode`] data associated with this account.
     ///

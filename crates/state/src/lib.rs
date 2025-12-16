@@ -18,6 +18,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use primitives::{hardfork::SpecId, HashMap, OnceLock, StorageKey, StorageValue, U256};
+use std::boxed::Box;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
 ///
@@ -37,7 +38,7 @@ pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
     /// Original account info used by BAL, changed only on cold load by BAL.
-    pub original_info: AccountInfo,
+    pub original_info: Box<AccountInfo>,
     /// Transaction id, used to track when account was toched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
@@ -56,7 +57,7 @@ impl Account {
                 storage: HashMap::default(),
                 transaction_id,
                 status: AccountStatus::LoadedAsNotExisting,
-                original_info: AccountInfo::default(),
+                original_info: Box::new(AccountInfo::default()),
             })
             .clone()
     }
@@ -305,7 +306,7 @@ impl Account {
 
 impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
-        let original_info = info.clone();
+        let original_info = Box::new(info.clone());
         Self {
             info,
             storage: HashMap::default(),
@@ -348,7 +349,7 @@ mod serde_impl {
 
             Ok(Account {
                 info,
-                original_info,
+                original_info: Box::new(original_info),
                 storage,
                 transaction_id,
                 status,
