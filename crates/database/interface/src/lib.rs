@@ -78,21 +78,7 @@ pub trait DatabaseCommit {
     /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
     /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
-    ///
-    /// # Dyn Compatibility
-    ///
-    /// This method requires `Self: Sized` because it uses `impl Trait` in argument position,
-    /// which is not dyn-compatible. Without this bound, the entire `DatabaseCommit` trait
-    /// would become not dyn-compatible, breaking code that uses `dyn DatabaseCommit` or
-    /// traits that extend it (e.g., Foundry's `DatabaseExt`).
-    ///
-    /// The `Sized` bound excludes this method from the trait's vtable while keeping the
-    /// trait itself dyn-compatible. Code using trait objects should use [`commit`](Self::commit)
-    /// instead, collecting the iterator into a `HashMap` first if needed.
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
-    where
-        Self: Sized,
-    {
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
         let changes: HashMap<Address, Account> = changes.into_iter().collect();
         self.commit(changes);
     }
@@ -228,9 +214,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             // Unfortunately must collect here to short circuit on error
             .collect::<Result<Vec<_>, _>>()?;
 
-        // Use commit() instead of commit_iter() since we already have a collected Vec.
-        // This keeps these methods dyn-compatible without requiring Self: Sized.
-        self.commit(transitions.into_iter().collect());
+        self.commit_iter(transitions);
         Ok(())
     }
 
@@ -258,9 +242,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        // Use commit() instead of commit_iter() since we already have a collected Vec.
-        // This keeps these methods dyn-compatible without requiring Self: Sized.
-        self.commit(transitions.into_iter().collect());
+        self.commit_iter(transitions);
         Ok(balances)
     }
 }
