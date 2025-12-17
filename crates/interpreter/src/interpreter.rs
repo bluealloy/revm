@@ -503,11 +503,10 @@ fn test_mstore_big_offset_memory_limit_oog() {
         false,
         SpecId::default(),
         100000,
-        GasParams::default(),
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
-    let mut host = DummyHost;
+    let mut host = DummyHost::default();
     let action = interpreter.run_plain(&table, &mut host);
 
     assert!(action.is_return());

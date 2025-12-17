@@ -41,6 +41,7 @@ impl OpPrecompiles {
             inner: EthPrecompiles {
                 precompiles,
                 spec: SpecId::default(),
+                spec_override_fn: None,
             },
             spec,
         }

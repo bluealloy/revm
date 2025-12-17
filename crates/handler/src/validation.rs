@@ -275,7 +275,7 @@ mod tests {
         let ctx = Context::mainnet()
             .modify_cfg_chained(|c| {
                 if let Some(spec_id) = spec_id {
-                    c.spec = spec_id;
+                    c.set_spec(spec_id);
                 }
             })
             .with_db(CacheDB::<EmptyDB>::default());

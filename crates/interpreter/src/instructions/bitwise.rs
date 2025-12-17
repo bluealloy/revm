@@ -466,6 +466,7 @@ mod tests {
     #[test]
     fn test_clz() {
         let mut interpreter = Interpreter::default();
+        interpreter.runtime_flag.spec_id = SpecId::OSAKA;
         let mut host = DummyHost::new(SpecId::OSAKA);
 
         struct TestCase {

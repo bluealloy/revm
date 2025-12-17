@@ -1,5 +1,5 @@
 use auto_impl::auto_impl;
-use context::{Cfg, LocalContextTr};
+use context::{Cfg, LocalContextTr, SetSpecTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
@@ -18,6 +18,9 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     /// Sets the spec id and returns true if the spec id was changed. Initial call to set_spec will always return true.
     ///
     /// Returns `true` if precompile addresses should be injected into the journal.
+    #[deprecated(
+        note = "We are moving away from runtime setting off spec to setting spec in initialization. Check EvmTrSetSpec trait for more information."
+    )]
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool;
 
     /// Run the precompile.
@@ -41,6 +44,8 @@ pub struct EthPrecompiles {
     pub precompiles: &'static Precompiles,
     /// Current spec. None means that spec was not set yet.
     pub spec: SpecId,
+    /// Spec override function.
+    pub spec_override_fn: Option<fn(spec: SpecId) -> &'static Precompiles>,
 }
 
 impl EthPrecompiles {
@@ -55,11 +60,27 @@ impl EthPrecompiles {
     }
 }
 
+impl SetSpecTr for EthPrecompiles {
+    type Spec = SpecId;
+
+    fn set_spec(&mut self, spec: Self::Spec) {
+        if spec == self.spec {
+            return;
+        }
+        self.precompiles = self
+            .spec_override_fn
+            .map(|override_fn| override_fn(spec))
+            .unwrap_or_else(|| Precompiles::new(PrecompileSpecId::from_spec_id(spec)));
+        self.spec = spec;
+    }
+}
+
 impl Clone for EthPrecompiles {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
             spec: self.spec,
+            spec_override_fn: self.spec_override_fn,
         }
     }
 }
@@ -70,6 +91,7 @@ impl Default for EthPrecompiles {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
             spec,
+            spec_override_fn: None,
         }
     }
 }
@@ -83,7 +105,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         if spec == self.spec {
             return false;
         }
-        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec));
+        self.precompiles = self
+            .spec_override_fn
+            .map(|override_fn| override_fn(spec))
+            .unwrap_or_else(|| Precompiles::new(PrecompileSpecId::from_spec_id(spec)));
         self.spec = spec;
         true
     }

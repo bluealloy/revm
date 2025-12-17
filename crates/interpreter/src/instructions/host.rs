@@ -114,7 +114,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter
     );
     let address = address.into_address();
-    let u256 = address.into_word();
 
     let spec_id = context.interpreter.runtime_flag.spec_id();
 

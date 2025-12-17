@@ -448,7 +448,7 @@ fn print_error_with_state(
 
     // Print configuration environment
     eprintln!("\n📋 Configuration Environment:");
-    eprintln!("  Spec ID: {:?}", debug_info.cfg_env.spec);
+    eprintln!("  Spec ID: {:?}", debug_info.cfg_env.spec());
     eprintln!("  Chain ID: {}", debug_info.cfg_env.chain_id);
     eprintln!(
         "  Limit contract code size: {:?}",
@@ -685,7 +685,7 @@ fn execute_blockchain_test(
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
-    cfg.spec = spec_id;
+    cfg.set_spec(spec_id);
 
     // Genesis block is not used yet.
     let mut parent_block_hash = Some(test_case.genesis_block_header.hash);

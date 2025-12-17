@@ -5,7 +5,8 @@ use context_interface::{
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
-    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
+    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, SetSpecTr, Transaction,
+    TransactionType,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
@@ -146,15 +147,49 @@ impl<
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv {
-                spec,
-                ..Default::default()
-            },
+            cfg: CfgEnv::new_with_spec(spec),
             local: LOCAL::default(),
             journaled_state,
             chain: Default::default(),
             error: Ok(()),
         }
+    }
+}
+
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> SetSpecTr
+    for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
+where
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg + SetSpecTr<Spec = <CFG as Cfg>::Spec>,
+    DB: Database,
+    JOURNAL: JournalTr<Database = DB>,
+    LOCAL: LocalContextTr,
+{
+    type Spec = <CFG as Cfg>::Spec;
+
+    /// Sets the spec for the context.
+    #[inline]
+    fn set_spec(&mut self, spec: Self::Spec) {
+        self.cfg.set_spec(spec.clone());
+        self.journaled_state.set_spec_id(spec.into());
+    }
+}
+
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
+where
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg + SetSpecTr<Spec = <CFG as Cfg>::Spec>,
+    DB: Database,
+    JOURNAL: JournalTr<Database = DB>,
+    LOCAL: LocalContextTr,
+{
+    /// Creates a new context with a new spec.
+    #[inline]
+    pub fn with_spec(mut self, spec: <CFG as Cfg>::Spec) -> Self {
+        self.set_spec(spec);
+        self
     }
 }
 

@@ -3,7 +3,7 @@ use crate::{
     ItemOrResult, PrecompileProvider,
 };
 use auto_impl::auto_impl;
-use context::{ContextTr, Database, Evm, FrameStack};
+use context::{Cfg, ContextTr, Database, Evm, FrameStack, SetSpecTr};
 use context_interface::context::ContextError;
 use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
 
@@ -123,6 +123,27 @@ pub trait EvmTr {
         &mut self,
         result: <Self::Frame as FrameTr>::FrameResult,
     ) -> Result<Option<<Self::Frame as FrameTr>::FrameResult>, ContextDbError<Self::Context>>;
+}
+
+/// A trait that integrates context, instruction set, and precompiles to create an EVM struct.
+///
+/// In addition to execution capabilities, this trait provides getter methods for its component fields.
+pub trait EvmTrSetSpec: EvmTr {
+    /// Sets the spec for the EVM.
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec);
+}
+
+impl<CTX, INSP, I, P> EvmTrSetSpec for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
+where
+    CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>,
+{
+    /// Sets the spec for the EVM.
+    #[inline]
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec) {
+        SetSpecTr::set_spec(self.ctx(), spec);
+    }
 }
 
 impl<CTX, INSP, I, P> EvmTr for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>

@@ -99,7 +99,7 @@ mod test {
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let ctx = Context::mainnet()
-            .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
+            .modify_cfg_chained(|cfg| cfg.set_spec(SpecId::PRAGUE))
             .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();

@@ -86,7 +86,7 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
     let mut ctx = Context::mainnet()
         .with_db(cache_db)
         .modify_cfg_chained(|cfg| {
-            cfg.spec = SpecId::CANCUN;
+            cfg.set_spec(SpecId::CANCUN);
         })
         .with_tx(
             TxEnv::builder()

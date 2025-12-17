@@ -51,7 +51,7 @@ fn test_deposit_tx() {
                 .source_hash(revm::primitives::B256::from([1u8; 32]))
                 .build_fill(),
         )
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE);
+        .with_spec(OpSpecId::HOLOCENE);
 
     let mut evm = ctx.build_op();
 
@@ -83,7 +83,7 @@ fn test_halted_deposit_tx() {
                 .source_hash(revm::primitives::B256::from([1u8; 32]))
                 .build_fill(),
         )
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::HOLOCENE)
+        .with_spec(OpSpecId::HOLOCENE)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
             [opcode::POP].into(),
         )));
@@ -127,7 +127,7 @@ fn p256verify_test_tx(
                 )
                 .build_fill(),
         )
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
+        .with_spec(SPEC_ID)
 }
 
 #[test]
@@ -160,7 +160,7 @@ fn test_halted_tx_call_p256verify() {
                 )
                 .build_fill(),
         )
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -196,7 +196,7 @@ fn bn254_pair_test_tx(
                 )
                 .build_fill(),
         )
-        .modify_cfg_chained(|cfg| cfg.spec = spec)
+        .with_spec(spec)
 }
 
 #[test]
@@ -253,7 +253,7 @@ fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
 
@@ -290,7 +290,7 @@ fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -339,7 +339,7 @@ fn g1_msm_test_tx(
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
+        .with_spec(SPEC_ID)
 }
 
 #[test]
@@ -369,7 +369,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -416,7 +416,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -474,7 +474,7 @@ fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
 
@@ -511,7 +511,7 @@ fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
 
@@ -561,7 +561,7 @@ fn g2_msm_test_tx(
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID)
+        .with_spec(SPEC_ID)
 }
 
 #[test]
@@ -591,7 +591,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -638,7 +638,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -707,7 +707,7 @@ fn bl12_381_pairing_test_tx(
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS)
+        .with_spec(OpSpecId::ISTHMUS)
 }
 
 #[test]
@@ -734,7 +734,7 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -778,7 +778,7 @@ fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = OpSpecId::ISTHMUS);
+        .with_spec(OpSpecId::ISTHMUS);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -842,7 +842,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -884,7 +884,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -926,7 +926,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();
@@ -967,7 +967,7 @@ fn test_l1block_load_for_pre_regolith() {
         .modify_chain_chained(|l1_block| {
             l1_block.l2_block = None;
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx
         .with_db(
@@ -1006,7 +1006,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
             l1_block.operator_fee_constant = Some(U256::ZERO);
             l1_block.operator_fee_scalar = Some(U256::ZERO)
         })
-        .modify_cfg_chained(|cfg| cfg.spec = SPEC_ID);
+        .with_spec(SPEC_ID);
 
     let mut evm = ctx.build_op();
     let output = evm.replay().unwrap();

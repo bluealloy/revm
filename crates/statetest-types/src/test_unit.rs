@@ -121,7 +121,7 @@ impl TestUnit {
         }
 
         // Set default prevrandao for merge
-        if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
+        if cfg.spec().is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
             block.prevrandao = Some(B256::default());
         }
 
@@ -188,7 +188,7 @@ mod tests {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
         let mut cfg = CfgEnv::default();
-        cfg.spec = SpecId::CANCUN;
+        cfg.set_spec(SpecId::CANCUN);
 
         let block = unit.block_env(&mut cfg);
 
@@ -212,7 +212,7 @@ mod tests {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
         let mut cfg = CfgEnv::default();
-        cfg.spec = SpecId::PRAGUE;
+        cfg.set_spec(SpecId::PRAGUE);
 
         let block = unit.block_env(&mut cfg);
 
@@ -235,7 +235,7 @@ mod tests {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
         let mut cfg = CfgEnv::default();
-        cfg.spec = SpecId::OSAKA;
+        cfg.set_spec(SpecId::OSAKA);
 
         let block = unit.block_env(&mut cfg);
 

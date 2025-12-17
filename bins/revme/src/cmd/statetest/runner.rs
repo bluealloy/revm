@@ -2,10 +2,7 @@ use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResul
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
-    context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-        Cfg,
-    },
+    context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database,
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
@@ -328,12 +325,12 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            cfg.spec = spec_name.to_spec_id();
+            cfg.set_spec(spec_name.to_spec_id());
 
             // Configure max blobs per spec
-            if cfg.spec.is_enabled_in(SpecId::OSAKA) {
+            if cfg.spec().is_enabled_in(SpecId::OSAKA) {
                 cfg.set_max_blobs_per_tx(6);
-            } else if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
+            } else if cfg.spec().is_enabled_in(SpecId::PRAGUE) {
                 cfg.set_max_blobs_per_tx(9);
             } else {
                 cfg.set_max_blobs_per_tx(6);
@@ -409,7 +406,7 @@ pub fn execute_test_suite(
 fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     // Prepare state
     let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    cache.set_state_clear_flag(ctx.cfg.spec().is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -454,7 +451,7 @@ fn debug_failed_test(ctx: DebugContext) {
 
     // Re-run with tracing
     let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    cache.set_state_clear_flag(ctx.cfg.spec().is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -476,7 +473,7 @@ fn debug_failed_test(ctx: DebugContext) {
         "\nState after:\n{}",
         evm.ctx.journaled_state.database.cache.pretty_print()
     );
-    println!("\nSpecification: {:?}", ctx.cfg.spec);
+    println!("\nSpecification: {:?}", ctx.cfg.spec());
     println!("\nTx: {:#?}", ctx.tx);
     println!("Block: {:#?}", ctx.block);
     println!("Cfg: {:#?}", ctx.cfg);

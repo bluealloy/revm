@@ -1,13 +1,19 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use context_interface::cfg::GasParams;
+use context_interface::cfg::{GasParams, SetSpecTr};
 use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
+
+/// Gas params override function.
+pub type GasParamsOverrideFn<SPEC> = fn(SPEC) -> GasParams;
+
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
+    /// Specification for EVM represent the hardfork
+    spec: SPEC,
     /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
@@ -18,8 +24,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// If set to `false`, the transaction's chain ID check will be skipped.
     pub tx_chain_id_check: bool,
 
-    /// Specification for EVM represent the hardfork
-    pub spec: SPEC,
     /// Contract code size limit override.
     ///
     /// If None, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
@@ -58,6 +62,11 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub tx_gas_limit_cap: Option<u64>,
     /// Gas params for the EVM.
     pub gas_params: GasParams,
+    /// Gas params override function.
+    ///
+    /// If this is set, it will override the gas params with this function.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub gas_params_override: Option<GasParamsOverrideFn<SPEC>>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -163,6 +172,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
             gas_params: GasParams::new_spec(spec.into()),
+            gas_params_override: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -184,6 +194,36 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
         }
     }
 
+    /// Returns the spec for the `CfgEnv`.
+    #[inline]
+    pub fn spec(&self) -> SPEC {
+        self.spec
+    }
+
+    /// Sets the spec for the `CfgEnv`.
+    ///
+    /// It will update the gas params to the new spec.
+    ///
+    /// Please use Evm::set_spec so other parts of the system are updated.
+    #[inline]
+    pub fn set_spec(&mut self, spec: SPEC) {
+        self.gas_params = self
+            .gas_params_override
+            .map(|override_fn| override_fn(spec))
+            .unwrap_or_else(|| GasParams::new_spec(spec.into()));
+
+        self.spec = spec;
+    }
+
+    /// Sets the gas params override function.
+    ///
+    /// It will override the gas params with this function.
+    #[inline]
+    pub fn set_gas_params_override(&mut self, override_fn: GasParamsOverrideFn<SPEC>) {
+        self.gas_params_override = Some(override_fn);
+        self.gas_params = override_fn(self.spec);
+    }
+
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
@@ -203,6 +243,8 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
+    ///
+    /// Resets the gas params override function as it is generic over SPEC.
     pub fn with_spec<OSPEC: Into<SpecId> + Copy>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
         let eth_spec = spec.into();
         CfgEnv {
@@ -216,6 +258,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             gas_params: GasParams::new_spec(eth_spec),
+            gas_params_override: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -420,6 +463,15 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
+    }
+}
+
+impl<SPEC: Into<SpecId> + Copy> SetSpecTr for CfgEnv<SPEC> {
+    type Spec = SPEC;
+
+    #[inline]
+    fn set_spec(&mut self, spec: SPEC) {
+        self.set_spec(spec);
     }
 }
 

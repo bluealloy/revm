@@ -1,11 +1,8 @@
 //! EVM gas calculation utilities.
 
 mod calc;
-mod constants;
-pub mod params;
 
 pub use calc::*;
-pub use constants::*;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

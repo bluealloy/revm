@@ -1,10 +1,10 @@
 //! Contains the `[OpEvm]` type and its implementation of the execution EVM traits.
 use crate::precompiles::OpPrecompiles;
 use revm::{
-    context::{ContextError, ContextSetters, Evm, FrameStack},
+    context::{Cfg, ContextError, ContextSetters, Evm, FrameStack, SetSpecTr},
     context_interface::ContextTr,
     handler::{
-        evm::FrameTr,
+        evm::{EvmTrSetSpec, FrameTr},
         instructions::{EthInstructions, InstructionProvider},
         EthFrame, EvmTr, FrameInitOrResult, ItemOrResult, PrecompileProvider,
     },
@@ -89,6 +89,18 @@ where
         &mut Self::Inspector,
     ) {
         self.0.all_mut_inspector()
+    }
+}
+
+impl<CTX, INSP, I, P> EvmTrSetSpec for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
+where
+    CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>,
+{
+    #[inline]
+    fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec) {
+        self.0.set_spec(spec);
     }
 }
 
