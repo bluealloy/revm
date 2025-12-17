@@ -856,7 +856,7 @@ fn execute_blockchain_test(
                             println!("{}", serde_json::to_string(&output).unwrap());
                         } else {
                             eprintln!(
-                                "⚠️  Skipping block {block_idx} due to expected failure: {exception}"
+                                "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {exception})"
                             );
                         }
                         break; // Skip to next block
