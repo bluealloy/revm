@@ -36,11 +36,12 @@ where
     type Context = Self;
 
     fn build_mainnet(self) -> MainnetEvm<Self::Context> {
+        let spec = self.cfg.spec().into();
         Evm {
             ctx: self,
             inspector: (),
-            instruction: EthInstructions::default(),
-            precompiles: EthPrecompiles::default(),
+            instruction: EthInstructions::new_mainnet_with_spec(spec),
+            precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
         }
     }
@@ -49,11 +50,12 @@ where
         self,
         inspector: INSP,
     ) -> MainnetEvm<Self::Context, INSP> {
+        let spec = self.cfg.spec().into();
         Evm {
             ctx: self,
             inspector,
-            instruction: EthInstructions::default(),
-            precompiles: EthPrecompiles::default(),
+            instruction: EthInstructions::new_mainnet_with_spec(spec),
+            precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
         }
     }

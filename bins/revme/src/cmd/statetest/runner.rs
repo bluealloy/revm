@@ -5,6 +5,7 @@ use revm::{
     context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database,
     database_interface::EmptyDB,
+    handler::EvmTrSetSpec,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
     primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
@@ -406,7 +407,8 @@ pub fn execute_test_suite(
 fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     // Prepare state
     let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec().is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    let spec = ctx.cfg.spec();
+    cache.set_state_clear_flag(spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -423,6 +425,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     let (db, exec_result) = if ctx.trace {
         let mut evm = evm_context
             .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
+        //evm.set_spec(spec.clone().into());
         let res = evm.inspect_tx_commit(ctx.tx);
         let db = evm.ctx.journaled_state.database;
         (db, res)

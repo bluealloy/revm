@@ -33,7 +33,7 @@ pub mod validation;
 
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
-pub use evm::{EvmTr, FrameTr};
+pub use evm::{EvmTr, EvmTrSetSpec, FrameTr};
 pub use frame::{return_create, ContextTrDbError, EthFrame};
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};

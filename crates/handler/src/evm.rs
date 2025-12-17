@@ -133,16 +133,24 @@ pub trait EvmTrSetSpec: EvmTr {
     fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec);
 }
 
+// CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+// I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+// P: PrecompileProvider<CTX, Output = InterpreterResult>,
+
 impl<CTX, INSP, I, P> EvmTrSetSpec for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
-    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
-    P: PrecompileProvider<CTX, Output = InterpreterResult>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>
+        + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    P: PrecompileProvider<CTX, Output = InterpreterResult>
+        + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
 {
     /// Sets the spec for the EVM.
     #[inline]
     fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec) {
-        SetSpecTr::set_spec(self.ctx(), spec);
+        self.ctx().set_spec(spec.clone());
+        SetSpecTr::set_spec(&mut self.precompiles, spec.clone());
+        self.instruction.set_spec(spec);
     }
 }
 

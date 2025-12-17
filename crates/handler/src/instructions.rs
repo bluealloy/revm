@@ -1,4 +1,5 @@
 use auto_impl::auto_impl;
+use context::SetSpecTr;
 use interpreter::{
     instructions::{instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
@@ -36,6 +37,23 @@ where
             instruction_table: self.instruction_table.clone(),
             spec: self.spec,
         }
+    }
+}
+
+impl<WIRE, HOST> SetSpecTr for EthInstructions<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host,
+{
+    type Spec = SpecId;
+
+    #[inline]
+    fn set_spec(&mut self, spec: Self::Spec) {
+        if spec == self.spec {
+            return;
+        }
+        self.spec = spec;
+        self.instruction_table = Box::new(instruction_table_gas_changes_spec(spec));
     }
 }
 
