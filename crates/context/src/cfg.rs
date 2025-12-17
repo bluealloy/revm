@@ -2,6 +2,7 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::{GasParams, SetSpecTr};
+use derive_where::derive_where;
 use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 
 /// Gas params override function.
@@ -9,7 +10,8 @@ pub type GasParamsOverrideFn<SPEC> = fn(SPEC) -> GasParams;
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
+#[derive_where(Eq, PartialEq; SPEC)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
     /// Specification for EVM represent the hardfork
@@ -66,6 +68,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// If this is set, it will override the gas params with this function.
     #[cfg_attr(feature = "serde", serde(skip))]
+    #[derive_where(skip)]
     pub gas_params_override: Option<GasParamsOverrideFn<SPEC>>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.

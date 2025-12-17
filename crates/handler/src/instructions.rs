@@ -52,7 +52,7 @@ where
             return;
         }
         self.spec = spec;
-        self.instruction_table = Box::new(instruction_table_gas_changes_spec(spec));
+        *self.instruction_table = instruction_table_gas_changes_spec(spec);
     }
 }
 
