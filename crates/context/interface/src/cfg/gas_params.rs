@@ -503,7 +503,7 @@ impl GasId {
     /// # Examples
     ///
     /// ```
-    /// use revm_interpreter::gas::params::GasId;
+    /// use revm_context_interface::cfg::gas_params::GasId;
     ///
     /// assert_eq!(GasId::exp_byte_gas().name(), "exp_byte_gas");
     /// assert_eq!(GasId::memory_linear_cost().name(), "memory_linear_cost");
@@ -557,7 +557,7 @@ impl GasId {
     /// # Examples
     ///
     /// ```
-    /// use revm_interpreter::gas::params::GasId;
+    /// use revm_context_interface::cfg::gas_params::GasId;
     ///
     /// assert_eq!(GasId::from_name("exp_byte_gas"), Some(GasId::exp_byte_gas()));
     /// assert_eq!(GasId::from_name("memory_linear_cost"), Some(GasId::memory_linear_cost()));
