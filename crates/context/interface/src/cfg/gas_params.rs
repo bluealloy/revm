@@ -81,7 +81,7 @@ impl GasParams {
     /// Use to override default gas cost
     ///
     /// ```rust
-    /// use revm_interpreter::gas::params::{GasParams, GasId};
+    /// use revm_context_interface::cfg::gas_params::{GasParams, GasId};
     /// use primitives::hardfork::SpecId;
     ///
     /// let mut gas_table = GasParams::new_spec(SpecId::default());
