@@ -49,7 +49,6 @@ pub struct EthPrecompiles {
 }
 
 impl EthPrecompiles {
-
     /// Create a new precompile provider with the given spec.
     pub fn new(spec: SpecId) -> Self {
         Self {
@@ -70,10 +69,9 @@ impl EthPrecompiles {
     }
 }
 
-impl SetSpecTr for EthPrecompiles {
-    type Spec = SpecId;
-
-    fn set_spec(&mut self, spec: Self::Spec) {
+impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for EthPrecompiles {
+    fn set_spec(&mut self, spec: SPEC) {
+        let spec = spec.into();
         if spec == self.spec {
             return;
         }

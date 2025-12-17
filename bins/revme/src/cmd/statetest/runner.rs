@@ -5,7 +5,6 @@ use revm::{
     context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database,
     database_interface::EmptyDB,
-    handler::EvmTrSetSpec,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
     primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
@@ -425,7 +424,6 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     let (db, exec_result) = if ctx.trace {
         let mut evm = evm_context
             .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
-        //evm.set_spec(spec.clone().into());
         let res = evm.inspect_tx_commit(ctx.tx);
         let db = evm.ctx.journaled_state.database;
         (db, res)

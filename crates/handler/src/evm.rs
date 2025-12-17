@@ -139,11 +139,11 @@ pub trait EvmTrSetSpec: EvmTr {
 
 impl<CTX, INSP, I, P> EvmTrSetSpec for Evm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    CTX: ContextTr + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>
-        + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+        + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
     P: PrecompileProvider<CTX, Output = InterpreterResult>
-        + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+        + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
 {
     /// Sets the spec for the EVM.
     #[inline]

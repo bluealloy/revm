@@ -35,7 +35,7 @@ impl<CTX: ContextTr<Cfg: Cfg<Spec: Into<OpSpecId> + Clone>>, INSP>
         Self(Evm {
             ctx,
             inspector,
-            instruction: EthInstructions::new_mainnet_with_spec(spec.clone().into()),
+            instruction: EthInstructions::new_mainnet_with_spec(spec.into()),
             precompiles: OpPrecompiles::new_with_spec(spec),
             frame_stack: FrameStack::new_prealloc(8),
         })
@@ -97,7 +97,7 @@ where
 
 impl<CTX, INSP, I, P> EvmTrSetSpec for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr + SetSpecTr<Spec = <<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    CTX: ContextTr + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
     I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     P: PrecompileProvider<CTX, Output = InterpreterResult>,
 {

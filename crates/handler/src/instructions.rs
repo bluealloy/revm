@@ -40,15 +40,14 @@ where
     }
 }
 
-impl<WIRE, HOST> SetSpecTr for EthInstructions<WIRE, HOST>
+impl<WIRE, HOST, SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for EthInstructions<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
     HOST: Host,
 {
-    type Spec = SpecId;
-
     #[inline]
-    fn set_spec(&mut self, spec: Self::Spec) {
+    fn set_spec(&mut self, spec: SPEC) {
+        let spec = spec.into();
         if spec == self.spec {
             return;
         }

@@ -158,7 +158,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
+impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
@@ -166,7 +166,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
             tx_chain_id_check: true,
             limit_contract_code_size: None,
             limit_contract_initcode_size: None,
-            spec,
+            spec: spec.clone(),
             disable_nonce_check: false,
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
@@ -197,7 +197,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     /// Returns the spec for the `CfgEnv`.
     #[inline]
     pub fn spec(&self) -> SPEC {
-        self.spec
+        self.spec.clone()
     }
 
     /// Sets the spec for the `CfgEnv`.
@@ -207,12 +207,12 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     /// Please use Evm::set_spec so other parts of the system are updated.
     #[inline]
     pub fn set_spec(&mut self, spec: SPEC) {
+        self.spec = spec.clone();
+
         self.gas_params = self
             .gas_params_override
-            .map(|override_fn| override_fn(spec))
+            .map(|override_fn| override_fn(spec.clone()))
             .unwrap_or_else(|| GasParams::new_spec(spec.into()));
-
-        self.spec = spec;
     }
 
     /// Sets the gas params override function.
@@ -221,7 +221,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     #[inline]
     pub fn set_gas_params_override(&mut self, override_fn: GasParamsOverrideFn<SPEC>) {
         self.gas_params_override = Some(override_fn);
-        self.gas_params = override_fn(self.spec);
+        self.gas_params = override_fn(self.spec.clone());
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
@@ -466,9 +466,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Copy> SetSpecTr for CfgEnv<SPEC> {
-    type Spec = SPEC;
-
+impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for CfgEnv<SPEC> {
     #[inline]
     fn set_spec(&mut self, spec: SPEC) {
         self.set_spec(spec);

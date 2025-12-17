@@ -135,7 +135,7 @@ impl<
         JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
         LOCAL: LocalContextTr + Default,
-        SPEC: Default + Copy + Into<SpecId>,
+        SPEC: Default + Into<SpecId> + Clone,
     > Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
@@ -143,7 +143,7 @@ impl<
     /// This will create a new [`Journal`] object.
     pub fn new(db: DB, spec: SPEC) -> Self {
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(spec.into());
+        journaled_state.set_spec_id(spec.clone().into());
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
@@ -156,21 +156,20 @@ impl<
     }
 }
 
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> SetSpecTr
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL, SPEC> SetSpecTr<SPEC>
     for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 where
     BLOCK: Block,
     TX: Transaction,
-    CFG: Cfg + SetSpecTr<Spec = <CFG as Cfg>::Spec>,
+    CFG: Cfg<Spec = SPEC> + SetSpecTr<SPEC>,
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
     LOCAL: LocalContextTr,
+    SPEC: Into<SpecId> + Clone,
 {
-    type Spec = <CFG as Cfg>::Spec;
-
     /// Sets the spec for the context.
     #[inline]
-    fn set_spec(&mut self, spec: Self::Spec) {
+    fn set_spec(&mut self, spec: <CFG as Cfg>::Spec) {
         self.cfg.set_spec(spec.clone());
         self.journaled_state.set_spec_id(spec.into());
     }
@@ -180,7 +179,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> Context<BLOCK, TX, CFG, DB, JOUR
 where
     BLOCK: Block,
     TX: Transaction,
-    CFG: Cfg + SetSpecTr<Spec = <CFG as Cfg>::Spec>,
+    CFG: Cfg + SetSpecTr<<CFG as Cfg>::Spec>,
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
     LOCAL: LocalContextTr,
