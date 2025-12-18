@@ -200,7 +200,7 @@ impl HandleOrRuntime {
                         !matches!(
                             current.runtime_flavor(),
                             tokio::runtime::RuntimeFlavor::CurrentThread
-                        ) && std::ptr::eq(handle as *const _, &current as *const _)
+                        ) && core::ptr::eq(handle as *const _, &current as *const _)
                     }
                     Err(_) => false,
                 };
