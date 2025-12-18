@@ -20,9 +20,10 @@ workspace = true
 [dependencies]
 # alloy
 alloy-primitives = { workspace = true, features = [
+    "map",
+    "map-foldhash",
     "map-indexmap",
     "rlp",
-    "map",
 ] }
 
 # mics
