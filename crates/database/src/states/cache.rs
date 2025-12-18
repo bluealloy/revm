@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use bytecode::Bytecode;
-use primitives::{Address, HashMap, B256};
+use primitives::{Address, AddressMap, B256Map, HashMap};
 use state::{Account, AccountInfo};
 use std::vec::Vec;
 
@@ -17,9 +17,9 @@ use std::vec::Vec;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
     /// Block state account with account state
-    pub accounts: HashMap<Address, CacheAccount>,
+    pub accounts: AddressMap<CacheAccount>,
     /// Created contracts
-    pub contracts: HashMap<B256, Bytecode>,
+    pub contracts: B256Map<Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork)
     pub has_state_clear: bool,
 }

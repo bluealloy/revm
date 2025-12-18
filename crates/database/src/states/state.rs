@@ -145,16 +145,39 @@ impl<DB: Database> State<DB> {
     /// If the account is not found in the cache, it will be loaded from the
     /// database and inserted into the cache.
     pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DB::Error> {
-        match self.cache.accounts.entry(address) {
+        Self::load_cache_account_with(
+            &mut self.cache,
+            self.use_preloaded_bundle,
+            &self.bundle_state,
+            &mut self.database,
+            address,
+        )
+    }
+
+    /// Get a mutable reference to the [`CacheAccount`] for the given address.
+    ///
+    /// If the account is not found in the cache, it will be loaded from the
+    /// database and inserted into the cache.
+    ///
+    /// This function accepts destructed fields of [`Self`] as arguments and
+    /// returns a cached account with the lifetime of the provided cache reference.
+    fn load_cache_account_with<'a>(
+        cache: &'a mut CacheState,
+        use_preloaded_bundle: bool,
+        bundle_state: &BundleState,
+        database: &mut DB,
+        address: Address,
+    ) -> Result<&'a mut CacheAccount, DB::Error> {
+        Ok(match cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
-                if self.use_preloaded_bundle {
+                if use_preloaded_bundle {
                     // Load account from bundle state
-                    if let Some(account) = self.bundle_state.account(&address).map(Into::into) {
+                    if let Some(account) = bundle_state.account(&address).map(Into::into) {
                         return Ok(entry.insert(account));
                     }
                 }
                 // If not found in bundle, load it from database
-                let info = self.database.basic(address)?;
+                let info = database.basic(address)?;
                 let account = match info {
                     None => CacheAccount::new_loaded_not_existing(),
                     Some(acc) if acc.is_empty() => {
@@ -162,10 +185,10 @@ impl<DB: Database> State<DB> {
                     }
                     Some(acc) => CacheAccount::new_loaded(acc, HashMap::default()),
                 };
-                Ok(entry.insert(account))
+                entry.insert(account)
             }
-            hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
-        }
+            hash_map::Entry::Occupied(entry) => entry.into_mut(),
+        })
     }
 
     // TODO : Make cache aware of transitions dropping by having global transition counter.
@@ -223,13 +246,13 @@ impl<DB: Database> State<DB> {
     #[inline]
     fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
         // If account is not found in cache, it will be loaded from database.
-        let account = if let Some(account) = self.cache.accounts.get_mut(&address) {
-            account
-        } else {
-            self.load_cache_account(address)?;
-            // safe to unwrap as account is loaded a line above.
-            self.cache.accounts.get_mut(&address).unwrap()
-        };
+        let account = Self::load_cache_account_with(
+            &mut self.cache,
+            self.use_preloaded_bundle,
+            &self.bundle_state,
+            &mut self.database,
+            address,
+        )?;
 
         // Account will always be some, but if it is not, StorageValue::ZERO will be returned.
         let is_storage_known = account.status.is_storage_known();

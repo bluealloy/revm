@@ -248,13 +248,17 @@ impl HandleOrRuntime {
     {
         match self {
             Self::Handle(handle) => {
-                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime.
-                // Otherwise, call handle.block_on directly to avoid panicking outside of a runtime.
+                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime
+                // and the handle belongs to the same runtime. Otherwise, call handle.block_on directly.
                 let can_block_in_place = match Handle::try_current() {
-                    Ok(current) => !matches!(
-                        current.runtime_flavor(),
-                        tokio::runtime::RuntimeFlavor::CurrentThread
-                    ),
+                    Ok(current) => {
+                        // Only use block_in_place if we're in a multi-threaded runtime
+                        // and the handle belongs to the current runtime (same handle instance).
+                        !matches!(
+                            current.runtime_flavor(),
+                            tokio::runtime::RuntimeFlavor::CurrentThread
+                        ) && core::ptr::eq(handle as *const _, &current as *const _)
+                    }
                     Err(_) => false,
                 };
 
