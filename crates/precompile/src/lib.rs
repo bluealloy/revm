@@ -290,7 +290,7 @@ impl Precompiles {
             .iter()
             .filter(|(a, _)| !other.inner.contains_key(*a))
             .map(|(a, p)| (*a, p.clone()))
-            .collect::<HashMap<_, _>>();
+            .collect::<AddressMap<_>>();
 
         let mut precompiles = Self::default();
         precompiles.extend(inner.into_iter().map(|p| p.1));
@@ -307,7 +307,7 @@ impl Precompiles {
             .iter()
             .filter(|(a, _)| other.inner.contains_key(*a))
             .map(|(a, p)| (*a, p.clone()))
-            .collect::<HashMap<_, _>>();
+            .collect::<AddressMap<_>>();
 
         let mut precompiles = Self::default();
         precompiles.extend(inner.into_iter().map(|p| p.1));
