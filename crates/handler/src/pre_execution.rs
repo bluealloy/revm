@@ -11,9 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use primitives::{
-    eip7702, hardfork::SpecId, AddressMap, HashMap, HashSet, StorageKey, U256,
-};
+use primitives::{eip7702, hardfork::SpecId, AddressMap, HashMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
