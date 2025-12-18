@@ -9,14 +9,14 @@ pub use alloy_eip7928::{
 
 use crate::bal::{AccountBal, Bal, BalWrites};
 use bytecode::{Bytecode, BytecodeDecodeError};
-use primitives::{IndexMap, B256, U256};
+use primitives::{AddressIndexMap, B256, U256};
 use std::vec::Vec;
 
 impl TryFrom<AlloyBal> for Bal {
     type Error = BytecodeDecodeError;
 
     fn try_from(alloy_bal: AlloyBal) -> Result<Self, Self::Error> {
-        let accounts = IndexMap::from_iter(
+        let accounts = AddressIndexMap::from_iter(
             alloy_bal
                 .into_iter()
                 .map(AccountBal::try_from_alloy)

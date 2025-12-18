@@ -21,7 +21,7 @@ pub use writes::BalWrites;
 
 use crate::{Account, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
-use primitives::{Address, IndexMap, StorageKey, StorageValue};
+use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
 
 /// Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
 pub type BalIndex = u64;
@@ -31,7 +31,7 @@ pub type BalIndex = u64;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bal {
     /// Accounts bal.
-    pub accounts: IndexMap<Address, AccountBal>,
+    pub accounts: AddressIndexMap<AccountBal>,
 }
 
 impl FromIterator<(Address, AccountBal)> for Bal {
@@ -46,7 +46,7 @@ impl Bal {
     /// Create a new BAL builder.
     pub fn new() -> Self {
         Self {
-            accounts: IndexMap::default(),
+            accounts: AddressIndexMap::default(),
         }
     }
 
