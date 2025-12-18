@@ -93,7 +93,7 @@ pub trait DatabaseCommit {
     ///
     /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
-    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
+    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`AddressMap`].
     fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
         let changes: AddressMap<Account> = changes.into_iter().collect();
         self.commit(changes);
