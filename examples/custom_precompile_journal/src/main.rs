@@ -66,6 +66,11 @@ fn main() -> anyhow::Result<()> {
     let mut evm = CustomEvm::new(context, NoOpInspector);
     println!("\n=== Testing Custom Precompile ===");
 
+    let mut read_ok = false;
+    let mut write_ok = false;
+    let mut verify_ok = false;
+    let mut final_value: Option<U256> = None;
+
     // Test 1: Read initial storage value (should be 0)
     println!("1. Reading initial storage value from custom precompile...");
     evm.0.ctx.set_tx(
@@ -87,6 +92,7 @@ fn main() -> anyhow::Result<()> {
             let data = output.data();
             let value = U256::from_be_slice(data);
             println!("   📖 Initial storage value: {value}");
+            read_ok = true;
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
             println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
@@ -119,6 +125,7 @@ fn main() -> anyhow::Result<()> {
             println!("   ✓ Success! Gas used: {gas_used}");
             println!("   📝 Value 42 written to storage");
             println!("   💰 1 wei transferred from precompile to caller as reward");
+            write_ok = true;
         }
         Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
             println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
@@ -155,6 +162,8 @@ fn main() -> anyhow::Result<()> {
             println!("   📖 Final storage value: {value}");
             if value == U256::from(42) {
                 println!("   🎉 Storage write was successful!");
+                verify_ok = true;
+                final_value = Some(value);
             } else {
                 println!("   ⚠️  Unexpected value in storage");
             }
@@ -177,7 +186,11 @@ fn main() -> anyhow::Result<()> {
     let user_info = final_context_mut.db_mut().basic(user_address).unwrap();
     if let Some(user_account) = user_info {
         println!("👤 User balance: {} wei", user_account.balance);
-        println!("   Received 1 wei reward from precompile!");
+        if write_ok && verify_ok {
+            println!("   Received 1 wei reward from precompile!");
+        } else {
+            println!("   Reward not verified because storage write did not succeed.");
+        }
     }
 
     let precompile_info = final_context_mut
@@ -192,11 +205,28 @@ fn main() -> anyhow::Result<()> {
     println!("📦 Note: Storage state has been modified via journal operations");
 
     println!("\n=== Summary ===");
-    println!("✅ Custom EVM with journal-accessing precompiles working correctly!");
-    println!("📝 Precompile successfully read and wrote storage");
-    println!("💸 Balance transfer from precompile to caller executed");
-    println!("🔍 All operations properly recorded in the journal");
-    println!("🎯 Used default mainnet handler for transaction execution");
+    if read_ok {
+        println!("✅ Initial read succeeded.");
+    } else {
+        println!("⚠️ Initial read did not succeed.");
+    }
+
+    if write_ok {
+        println!("✅ Storage write and reward transfer executed.");
+    } else {
+        println!("⚠️ Storage write and reward transfer did not execute.");
+    }
+
+    if verify_ok {
+        println!(
+            "✅ Final storage value confirmed: {}.",
+            final_value.unwrap_or_default()
+        );
+    } else {
+        println!("⚠️ Final storage value not confirmed.");
+    }
+
+    println!("🔍 Used default mainnet handler for transaction execution");
 
     Ok(())
 }
