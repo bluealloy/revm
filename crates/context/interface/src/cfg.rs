@@ -77,12 +77,6 @@ pub trait Cfg {
     fn gas_params(&self) -> &GasParams;
 }
 
-/// Sets the spec for the `Cfg`.
-pub trait SetSpecTr<SPEC: Into<SpecId> + Clone> {
-    /// Sets the spec for the `Cfg`.
-    fn set_spec(&mut self, spec: SPEC);
-}
-
 /// What bytecode analysis to perform
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

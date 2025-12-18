@@ -5,13 +5,14 @@ use context_interface::{
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
-    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, SetSpecTr, Transaction,
-    TransactionType,
+    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::{
-    hardfork::SpecId, hints_util::cold_path, Address, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::{SetSpecTr, SpecId},
+    hints_util::cold_path,
+    Address, Log, StorageKey, StorageValue, B256, U256,
 };
 
 /// EVM context contains data that EVM needs for execution.

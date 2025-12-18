@@ -1,10 +1,9 @@
 use auto_impl::auto_impl;
-use context::SetSpecTr;
 use interpreter::{
     instructions::{instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
-use primitives::hardfork::SpecId;
+use primitives::hardfork::{SetSpecTr, SpecId};
 use std::boxed::Box;
 
 /// Stores instructions for EVM.

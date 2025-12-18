@@ -3718,6 +3718,7 @@ name = "revm-primitives"
 version = "21.0.2"
 dependencies = [
  "alloy-primitives",
+ "auto_impl",
  "num_enum",
  "once_cell",
  "serde",

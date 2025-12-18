@@ -27,6 +27,7 @@ once_cell = { version = "1.21", default-features = false, features = [
     "alloc",
     "race",
 ] }
+auto_impl.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

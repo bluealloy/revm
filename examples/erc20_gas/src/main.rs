@@ -85,9 +85,7 @@ fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<StorageVa
 fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheDB) -> Result<()> {
     let mut ctx = Context::mainnet()
         .with_db(cache_db)
-        .modify_cfg_chained(|cfg| {
-            cfg.set_spec(SpecId::CANCUN);
-        })
+        .with_spec(SpecId::CANCUN)
         .with_tx(
             TxEnv::builder()
                 .caller(from)

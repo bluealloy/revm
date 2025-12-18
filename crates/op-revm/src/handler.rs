@@ -465,9 +465,9 @@ mod tests {
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
-        handler::{evm::EvmTrSetSpec, EthFrame},
+        handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
-        primitives::{bytes, Address, Bytes, B256},
+        primitives::{bytes, hardfork::SetSpecTr, Address, Bytes, B256},
         state::AccountInfo,
     };
     use rstest::rstest;

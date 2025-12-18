@@ -1,12 +1,12 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use context_interface::cfg::{GasParams, SetSpecTr};
+use context_interface::cfg::GasParams;
 use derive_where::derive_where;
-use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
-
-/// Gas params override function.
-pub type GasParamsOverrideFn<SPEC> = fn(SPEC) -> GasParams;
+use primitives::{
+    eip170, eip3860, eip7825,
+    hardfork::{SetSpecTr, SpecId},
+};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -69,7 +69,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// If this is set, it will override the gas params with this function.
     #[cfg_attr(feature = "serde", serde(skip))]
     #[derive_where(skip)]
-    pub gas_params_override: Option<GasParamsOverrideFn<SPEC>>,
+    pub gas_params_override: Option<fn(SPEC) -> GasParams>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -142,7 +142,7 @@ impl CfgEnv {
     }
 }
 
-impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
+impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
     ///
     /// If this field is not set, return the default value for the spec.
@@ -151,7 +151,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
     /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
     pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
         self.blob_base_fee_update_fraction.unwrap_or_else(|| {
-            let spec: SpecId = self.spec.into();
+            let spec: SpecId = self.spec.clone().into();
             if spec.is_enabled_in(SpecId::PRAGUE) {
                 primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
             } else {
@@ -159,9 +159,7 @@ impl<SPEC: Into<SpecId> + Copy> CfgEnv<SPEC> {
             }
         })
     }
-}
 
-impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec(spec: SPEC) -> Self {
         Self {
@@ -203,26 +201,11 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
         self.spec.clone()
     }
 
-    /// Sets the spec for the `CfgEnv`.
-    ///
-    /// It will update the gas params to the new spec.
-    ///
-    /// Please use Evm::set_spec so other parts of the system are updated.
-    #[inline]
-    pub fn set_spec(&mut self, spec: SPEC) {
-        self.spec = spec.clone();
-
-        self.gas_params = self
-            .gas_params_override
-            .map(|override_fn| override_fn(spec.clone()))
-            .unwrap_or_else(|| GasParams::new_spec(spec.into()));
-    }
-
     /// Sets the gas params override function.
     ///
-    /// It will override the gas params with this function.
+    /// Every change in spec will call `override_fn` to update [`GasParams`].
     #[inline]
-    pub fn set_gas_params_override(&mut self, override_fn: GasParamsOverrideFn<SPEC>) {
+    pub fn set_gas_params_override(&mut self, override_fn: fn(SPEC) -> GasParams) {
         self.gas_params_override = Some(override_fn);
         self.gas_params = override_fn(self.spec.clone());
     }
@@ -321,7 +304,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
+impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     type Spec = SPEC;
 
     #[inline]
@@ -331,7 +314,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     #[inline]
     fn spec(&self) -> Self::Spec {
-        self.spec
+        self.spec.clone()
     }
 
     #[inline]
@@ -342,7 +325,7 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn tx_gas_limit_cap(&self) -> u64 {
         self.tx_gas_limit_cap
-            .unwrap_or(if self.spec.into().is_enabled_in(SpecId::OSAKA) {
+            .unwrap_or(if self.spec.clone().into().is_enabled_in(SpecId::OSAKA) {
                 eip7825::TX_GAS_LIMIT_CAP
             } else {
                 u64::MAX
@@ -472,11 +455,16 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for CfgEnv<SPEC> {
     #[inline]
     fn set_spec(&mut self, spec: SPEC) {
-        self.set_spec(spec);
+        self.spec = spec.clone();
+
+        self.gas_params = self
+            .gas_params_override
+            .map(|override_fn| override_fn(spec.clone()))
+            .unwrap_or_else(|| GasParams::new_spec(spec.into()));
     }
 }
 
-impl<SPEC: Default + Into<SpecId> + Copy> Default for CfgEnv<SPEC> {
+impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self::new_with_spec(SPEC::default())
     }

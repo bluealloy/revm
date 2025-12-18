@@ -10,7 +10,10 @@ use revm::{
     database::{states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
-    primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
+    primitives::{
+        hardfork::{SetSpecTr, SpecId},
+        hex, Address, HashMap, U256,
+    },
     state::AccountInfo,
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };

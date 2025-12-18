@@ -1,15 +1,16 @@
 //! Contains the `[OpEvm]` type and its implementation of the execution EVM traits.
 use crate::{precompiles::OpPrecompiles, OpSpecId};
 use revm::{
-    context::{Cfg, ContextError, ContextSetters, Evm, FrameStack, SetSpecTr},
+    context::{Cfg, ContextError, ContextSetters, Evm, FrameStack},
     context_interface::ContextTr,
     handler::{
-        evm::{EvmTrSetSpec, FrameTr},
+        evm::FrameTr,
         instructions::{EthInstructions, InstructionProvider},
         EthFrame, EvmTr, FrameInitOrResult, ItemOrResult, PrecompileProvider,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    primitives::hardfork::SetSpecTr,
     Database, Inspector,
 };
 
@@ -95,18 +96,19 @@ where
     }
 }
 
-impl<CTX, INSP, I, P> EvmTrSetSpec for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
+impl<CTX, INSP, I, P> SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>
+    for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
-    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
-    P: PrecompileProvider<CTX, Output = InterpreterResult>,
+    I: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    P: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
 {
+    /// Sets the spec for the EVM.
     #[inline]
-    fn set_spec(&mut self, spec: <<Self::Context as ContextTr>::Cfg as Cfg>::Spec) {
+    fn set_spec(&mut self, spec: <<CTX as ContextTr>::Cfg as Cfg>::Spec) {
         self.0.set_spec(spec);
     }
 }
-
 impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr,

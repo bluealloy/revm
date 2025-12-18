@@ -2,6 +2,7 @@
 // enumn has missing docs. Should be replaced in the future https://github.com/bluealloy/revm/issues/2402
 #![allow(missing_docs)]
 
+use auto_impl::auto_impl;
 use core::str::FromStr;
 pub use num_enum::TryFromPrimitive;
 pub use std::string::{String, ToString};
@@ -209,4 +210,11 @@ impl core::fmt::Display for SpecId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", <&'static str>::from(*self))
     }
+}
+
+/// Utility interface that sets the spec for structs that implements it.
+#[auto_impl(&mut, Box)]
+pub trait SetSpecTr<SPEC: Into<SpecId> + Clone> {
+    /// Sets the spec for the struct.
+    fn set_spec(&mut self, spec: SPEC);
 }

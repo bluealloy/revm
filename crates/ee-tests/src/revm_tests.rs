@@ -5,7 +5,11 @@ use revm::{
     bytecode::opcode,
     context::{ContextTr, TxEnv},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
+    primitives::{
+        address, b256,
+        hardfork::{SetSpecTr, SpecId},
+        Bytes, TxKind, KECCAK_EMPTY, U256,
+    },
     state::{AccountStatus, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };

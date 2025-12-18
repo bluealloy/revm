@@ -85,7 +85,10 @@ mod test {
     use context::{Context, TxEnv};
     use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
+    use primitives::{
+        hardfork::{SetSpecTr, SpecId},
+        StorageKey, StorageValue, TxKind, U256,
+    };
 
     #[test]
     fn sanity_eip7702_tx() {

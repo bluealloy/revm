@@ -136,6 +136,7 @@ mod tests {
         context_interface::block::calc_blob_gasprice,
         primitives::{
             eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
+            hardfork::SetSpecTr,
             U256,
         },
     };

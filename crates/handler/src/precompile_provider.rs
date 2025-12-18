@@ -1,9 +1,12 @@
 use auto_impl::auto_impl;
-use context::{Cfg, LocalContextTr, SetSpecTr};
+use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
-use primitives::{hardfork::SpecId, Address, Bytes};
+use primitives::{
+    hardfork::{SetSpecTr, SpecId},
+    Address, Bytes,
+};
 use std::{
     boxed::Box,
     string::{String, ToString},

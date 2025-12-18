@@ -265,7 +265,9 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind, B256};
+    use primitives::{
+        address, eip3860, eip7907, hardfork::SetSpecTr, hardfork::SpecId, Bytes, TxKind, B256,
+    };
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(

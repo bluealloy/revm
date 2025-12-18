@@ -4,7 +4,8 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
-use context_interface::FrameStack;
+use context_interface::{Cfg, ContextTr, FrameStack};
+use primitives::hardfork::SetSpecTr;
 
 /// Main EVM structure that contains all data needed for execution.
 #[derive(Debug, Clone)]
@@ -93,5 +94,21 @@ impl<CTX, INSP, I, P, F> Deref for Evm<CTX, INSP, I, P, F> {
 impl<CTX, INSP, I, P, F> DerefMut for Evm<CTX, INSP, I, P, F> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ctx
+    }
+}
+
+impl<CTX, INSP, I, P, FRAME> SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>
+    for Evm<CTX, INSP, I, P, FRAME>
+where
+    CTX: ContextTr + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    I: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+    P: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
+{
+    /// Sets the spec for the EVM.
+    #[inline]
+    fn set_spec(&mut self, spec: <<CTX as ContextTr>::Cfg as Cfg>::Spec) {
+        self.ctx.set_spec(spec.clone());
+        self.precompiles.set_spec(spec.clone());
+        self.instruction.set_spec(spec);
     }
 }
