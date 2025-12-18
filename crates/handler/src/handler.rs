@@ -265,8 +265,17 @@ pub trait Handler {
     ///
     /// Verifies the initial cost does not exceed the transaction gas limit.
     #[inline]
-    fn validate_initial_tx_gas(&self, evm: &mut Self::Evm) -> Result<InitialAndFloorGas, Self::Error> {
-        validation::validate_initial_tx_gas(evm).map_err(From::from)
+    fn validate_initial_tx_gas(
+        &self,
+        evm: &mut Self::Evm,
+    ) -> Result<InitialAndFloorGas, Self::Error> {
+        let ctx = evm.ctx_ref();
+        validation::validate_initial_tx_gas(
+            ctx.tx(),
+            ctx.cfg().spec().into(),
+            ctx.cfg().is_eip7623_disabled(),
+        )
+        .map_err(From::from)
     }
 
     /* PRE EXECUTION */
