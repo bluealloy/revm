@@ -137,6 +137,7 @@ impl GasParams {
         table[GasId::cold_storage_additional_cost().as_usize()] = 0;
         table[GasId::cold_storage_cost().as_usize()] = 0;
         table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
+        table[GasId::code_deposit_cost().as_usize()] = gas::CODEDEPOSIT;
 
         if spec.is_enabled_in(SpecId::TANGERINE) {
             table[GasId::new_account_cost_for_selfdestruct().as_usize()] = gas::NEWACCOUNT;
@@ -476,6 +477,13 @@ impl GasParams {
         self.get(GasId::copy_per_word())
             .saturating_mul(word_num as u64)
     }
+
+    /// Code deposit cost, calculated per byte as len * code_deposit_cost.
+    #[inline]
+    pub fn code_deposit_cost(&self, len: usize) -> u64 {
+        self.get(GasId::code_deposit_cost())
+            .saturating_mul(len as u64)
+    }
 }
 
 /// Gas identifier that maps onto index in gas table.
@@ -546,6 +554,7 @@ impl GasId {
             x if x == Self::new_account_cost_for_selfdestruct().as_u8() => {
                 "new_account_cost_for_selfdestruct"
             }
+            x if x == Self::code_deposit_cost().as_u8() => "code_deposit_cost",
             _ => "unknown",
         }
     }
@@ -592,6 +601,7 @@ impl GasId {
             "cold_storage_additional_cost" => Some(Self::cold_storage_additional_cost()),
             "cold_storage_cost" => Some(Self::cold_storage_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
+            "code_deposit_cost" => Some(Self::code_deposit_cost()),
             _ => None,
         }
     }
@@ -722,6 +732,11 @@ impl GasId {
     /// New account cost for selfdestruct.
     pub const fn new_account_cost_for_selfdestruct() -> GasId {
         Self::new(25)
+    }
+
+    /// Code deposit cost. Calculated as len * code_deposit_cost.
+    pub const fn code_deposit_cost() -> GasId {
+        Self::new(26)
     }
 }
 

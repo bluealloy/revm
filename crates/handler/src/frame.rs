@@ -4,7 +4,6 @@ use crate::{
 };
 use context::result::FromStringError;
 use context_interface::{
-    cfg::gas::CODEDEPOSIT,
     context::ContextError,
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
@@ -388,8 +387,6 @@ impl EthFrame<EthInterpreter> {
         context: &mut CTX,
         next_action: InterpreterAction,
     ) -> Result<FrameInitOrResult<Self>, ERROR> {
-        let spec = context.cfg().spec().into();
-
         // Run interpreter
 
         let mut interpreter_result = match next_action {
@@ -420,16 +417,13 @@ impl EthFrame<EthInterpreter> {
                 )))
             }
             FrameData::Create(frame) => {
-                let max_code_size = context.cfg().max_code_size();
-                let is_eip3541_disabled = context.cfg().is_eip3541_disabled();
+                let (cfg, journal) = context.cfg_journal_mut();
                 return_create(
-                    context.journal_mut(),
+                    journal,
+                    cfg,
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
-                    max_code_size,
-                    is_eip3541_disabled,
-                    spec,
                 );
 
                 ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
@@ -535,15 +529,17 @@ impl EthFrame<EthInterpreter> {
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
-pub fn return_create<JOURNAL: JournalTr>(
+pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     journal: &mut JOURNAL,
+    cfg: CFG,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
-    max_code_size: usize,
-    is_eip3541_disabled: bool,
-    spec_id: SpecId,
 ) {
+    let max_code_size = cfg.max_code_size();
+    let is_eip3541_disabled = cfg.is_eip3541_disabled();
+    let spec_id = cfg.spec().into();
+
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
         journal.checkpoint_revert(checkpoint);
@@ -569,7 +565,9 @@ pub fn return_create<JOURNAL: JournalTr>(
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
         return;
     }
-    let gas_for_code = interpreter_result.output.len() as u64 * CODEDEPOSIT;
+    let gas_for_code = cfg
+        .gas_params()
+        .code_deposit_cost(interpreter_result.output.len());
     if !interpreter_result.gas.record_cost(gas_for_code) {
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
