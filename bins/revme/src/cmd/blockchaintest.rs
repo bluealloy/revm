@@ -326,6 +326,7 @@ fn validate_post_state(
     debug_info: &DebugInfo,
     print_env_on_error: bool,
 ) -> Result<(), TestExecutionError> {
+    #[allow(clippy::too_many_arguments)]
     fn make_failure(
         state: &mut State<EmptyDB>,
         debug_info: &DebugInfo,
