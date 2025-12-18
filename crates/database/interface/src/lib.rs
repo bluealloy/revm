@@ -8,7 +8,7 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
+use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
@@ -87,7 +87,7 @@ pub trait Database {
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: HashMap<Address, Account>);
+    fn commit(&mut self, changes: AddressMap<Account>);
 
     /// Commit changes to the database with an iterator.
     ///
@@ -95,7 +95,7 @@ pub trait DatabaseCommit {
     ///
     /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
     fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        let changes: AddressMap<Account> = changes.into_iter().collect();
         self.commit(changes);
     }
 }
@@ -180,7 +180,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.0.commit(changes)
     }
 }

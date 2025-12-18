@@ -1,6 +1,6 @@
 use revm::{
     context::tx::TxEnv,
-    primitives::{Address, Bytes, HashMap, TxKind, B256},
+    primitives::{AddressMap, Bytes, TxKind, B256},
 };
 use serde::Deserialize;
 
@@ -25,7 +25,7 @@ pub struct Test {
     pub hash: B256,
     /// Post state
     #[serde(default)]
-    pub post_state: HashMap<Address, AccountInfo>,
+    pub post_state: AddressMap<AccountInfo>,
 
     /// Logs root
     pub logs: B256,
@@ -34,7 +34,7 @@ pub struct Test {
     ///
     /// Note: Not used.
     #[serde(default)]
-    state: HashMap<Address, AccountInfo>,
+    state: AddressMap<AccountInfo>,
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,

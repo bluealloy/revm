@@ -2,7 +2,7 @@
 
 use crate::{Database, DatabaseCommit, DatabaseRef};
 use either::Either;
-use primitives::{Address, HashMap, StorageKey, StorageValue, B256};
+use primitives::{Address, AddressMap, StorageKey, StorageValue, B256};
 use state::{Account, AccountInfo, Bytecode};
 
 impl<L, R> Database for Either<L, R>
@@ -62,7 +62,7 @@ where
     L: DatabaseCommit,
     R: DatabaseCommit,
 {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         match self {
             Self::Left(db) => db.commit(changes),
             Self::Right(db) => db.commit(changes),

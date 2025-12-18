@@ -34,7 +34,10 @@ pub use once_lock::OnceLock;
 
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256,
-    map::{self, hash_map, hash_set, indexmap, AddressMap, B256Map, HashMap, HashSet, IndexMap},
+    map::{
+        self, hash_map, hash_set, indexmap, AddressMap, B256Map, HashMap, HashSet, IndexMap,
+        U256Map,
+    },
     ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
 };
 
@@ -45,6 +48,9 @@ pub type StorageKey = U256;
 /// Type alias for EVM storage values (256-bit unsigned integers).
 /// Used to store data values in smart contract storage slots.
 pub type StorageValue = U256;
+
+/// Type alias for EVM storage key (256-bit unsigned integers) map.
+pub type StorageKeyMap<V> = U256Map<V>;
 
 /// Optimize short address access.
 pub const SHORT_ADDRESS_CAP: usize = 300;

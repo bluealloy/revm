@@ -6,7 +6,7 @@ use core::{
     cmp::Ordering,
     ops::{Deref, DerefMut},
 };
-use primitives::{Address, HashMap, StorageKey, StorageValue};
+use primitives::{Address, StorageKeyMap, StorageValue};
 use state::AccountInfo;
 use std::vec::Vec;
 
@@ -145,7 +145,7 @@ pub struct AccountRevert {
     /// Account information revert.
     pub account: AccountInfoRevert,
     /// Storage slots to revert.
-    pub storage: HashMap<StorageKey, RevertToSlot>,
+    pub storage: StorageKeyMap<RevertToSlot>,
     /// Previous account status before the change.
     pub previous_status: AccountStatus,
     /// Whether to wipe the storage.
@@ -170,7 +170,7 @@ impl AccountRevert {
     ) -> Self {
         // Take present storage values as the storages that we are going to revert to.
         // As those values got destroyed.
-        let mut previous_storage: HashMap<StorageKey, RevertToSlot> = previous_storage
+        let mut previous_storage: StorageKeyMap<RevertToSlot> = previous_storage
             .drain()
             .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
             .collect();

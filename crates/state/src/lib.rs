@@ -17,7 +17,9 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use primitives::{hardfork::SpecId, HashMap, OnceLock, StorageKey, StorageValue, U256};
+use primitives::{
+    hardfork::SpecId, HashMap, OnceLock, StorageKey,  StorageValue, U256,
+};
 use std::boxed::Box;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
@@ -326,7 +328,7 @@ mod serde_impl {
     struct AccountSerde {
         info: AccountInfo,
         original_info: Option<AccountInfo>,
-        storage: HashMap<StorageKey, EvmStorageSlot>,
+        storage: EvmStorage,
         transaction_id: usize,
         status: AccountStatus,
     }

@@ -11,7 +11,9 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use primitives::{eip7702, hardfork::SpecId, Address, HashMap, HashSet, StorageKey, U256};
+use primitives::{
+    eip7702, hardfork::SpecId, AddressMap, HashMap, HashSet, StorageKey, U256,
+};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -50,7 +52,7 @@ pub fn load_accounts<
     // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy {
         if let Some(access_list) = tx.access_list() {
-            let mut map: HashMap<Address, HashSet<StorageKey>> = HashMap::default();
+            let mut map: AddressMap<HashSet<StorageKey>> = HashMap::default();
             for item in access_list {
                 map.entry(*item.address())
                     .or_default()
