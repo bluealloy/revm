@@ -1,3 +1,4 @@
+use crate::EvmTr;
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
@@ -225,12 +226,15 @@ pub fn validate_tx_env<CTX: ContextTr>(
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas(
-    tx: impl Transaction,
-    spec: SpecId,
-    is_eip7623_disabled: bool,
+pub fn validate_initial_tx_gas<EVM: EvmTr>(
+    evm: &mut EVM,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = gas::calculate_initial_tx_gas_for_tx(&tx, spec);
+    let ctx = evm.ctx_ref();
+    let tx = ctx.tx();
+    let spec: SpecId = ctx.cfg().spec().into();
+    let is_eip7623_disabled = ctx.cfg().is_eip7623_disabled();
+
+    let mut gas = gas::calculate_initial_tx_gas_for_tx(tx, spec);
 
     if is_eip7623_disabled {
         gas.floor_gas = 0
