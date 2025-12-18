@@ -3,12 +3,19 @@ use super::{
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
 use bytecode::Bytecode;
-use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
+use database_interface::{
+    bal::{BalState, EvmDatabaseError},
+    Database, DatabaseCommit, DatabaseRef, EmptyDB,
+};
 use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
-use state::{Account, AccountInfo};
+use state::{
+    bal::{alloy::AlloyBal, Bal},
+    Account, AccountInfo,
+};
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
+    sync::Arc,
 };
 
 /// Database boxed with a lifetime and Send
@@ -62,6 +69,10 @@ pub struct State<DB> {
     ///
     /// The fork block is different or some blocks are not saved inside database.
     pub block_hashes: BTreeMap<u64, B256>,
+    /// BAL state.
+    ///
+    /// Can contain both the BAL for reads and BAL builder that is used to build BAL.
+    pub bal_state: BalState,
 }
 
 // Have ability to call State::builder without having to specify the type.
@@ -194,39 +205,46 @@ impl<DB: Database> State<DB> {
     pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }
-}
 
-impl<DB: Database> Database for State<DB> {
-    type Error = DB::Error;
-
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.load_cache_account(address).map(|a| a.account_info())
+    /// Takes build bal from bal state.
+    #[inline]
+    pub fn take_built_bal(&mut self) -> Option<Bal> {
+        self.bal_state.take_built_bal()
     }
 
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        let res = match self.cache.contracts.entry(code_hash) {
-            hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
-            hash_map::Entry::Vacant(entry) => {
-                if self.use_preloaded_bundle {
-                    if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
-                        entry.insert(code.clone());
-                        return Ok(code.clone());
-                    }
-                }
-                // If not found in bundle ask database
-                let code = self.database.code_by_hash(code_hash)?;
-                entry.insert(code.clone());
-                Ok(code)
-            }
-        };
-        res
+    /// Takes built alloy bal from bal state.
+    #[inline]
+    pub fn take_built_alloy_bal(&mut self) -> Option<AlloyBal> {
+        self.bal_state.take_built_alloy_bal()
     }
 
-    fn storage(
-        &mut self,
-        address: Address,
-        index: StorageKey,
-    ) -> Result<StorageValue, Self::Error> {
+    /// Bump BAL index.
+    #[inline]
+    pub fn bump_bal_index(&mut self) {
+        self.bal_state.bump_bal_index();
+    }
+
+    /// Set BAL index.
+    #[inline]
+    pub fn set_bal_index(&mut self, index: u64) {
+        self.bal_state.bal_index = index;
+    }
+
+    /// Reset BAL index.
+    #[inline]
+    pub fn reset_bal_index(&mut self) {
+        self.bal_state.reset_bal_index();
+    }
+
+    /// Set BAL.
+    #[inline]
+    pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
+        self.bal_state.bal = bal;
+    }
+
+    /// Gets storage value of address at index.
+    #[inline]
+    fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
         // If account is not found in cache, it will be loaded from database.
         let account = Self::load_cache_account_with(
             &mut self.cache,
@@ -258,12 +276,93 @@ impl<DB: Database> Database for State<DB> {
             .transpose()?
             .unwrap_or_default())
     }
+}
+
+impl<DB: Database> Database for State<DB> {
+    type Error = EvmDatabaseError<DB::Error>;
+
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        // if bal is existing but account is not found, error will be returned.
+        let account_id = self
+            .bal_state
+            .get_account_id(&address)
+            .map_err(EvmDatabaseError::Bal)?;
+
+        let mut basic = self
+            .load_cache_account(address)
+            .map(|a| a.account_info())
+            .map_err(EvmDatabaseError::Database)?;
+        // will populate account code if there was a bal change to it. If there is no change
+        // it will be fetched in code_by_hash.
+        if let Some(account_id) = account_id {
+            self.bal_state.basic_by_account_id(account_id, &mut basic);
+        }
+        Ok(basic)
+    }
+
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        let res = match self.cache.contracts.entry(code_hash) {
+            hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
+            hash_map::Entry::Vacant(entry) => {
+                if self.use_preloaded_bundle {
+                    if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
+                        entry.insert(code.clone());
+                        return Ok(code.clone());
+                    }
+                }
+                // If not found in bundle ask database
+                let code = self
+                    .database
+                    .code_by_hash(code_hash)
+                    .map_err(EvmDatabaseError::Database)?;
+                entry.insert(code.clone());
+                Ok(code)
+            }
+        };
+        res
+    }
+
+    fn storage(
+        &mut self,
+        address: Address,
+        index: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        if let Some(storage) = self
+            .bal_state
+            .storage(&address, index)
+            .map_err(EvmDatabaseError::Bal)?
+        {
+            // return bal value if it is found
+            return Ok(storage);
+        }
+        self.storage(address, index)
+            .map_err(EvmDatabaseError::Database)
+    }
+
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        if let Some(storage) = self.bal_state.storage_by_account_id(account_id, key)? {
+            return Ok(storage);
+        }
+
+        self.database
+            .storage(address, key)
+            .map_err(EvmDatabaseError::Database)
+    }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         match self.block_hashes.entry(number) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
-                let ret = *entry.insert(self.database.block_hash(number)?);
+                let ret = *entry.insert(
+                    self.database
+                        .block_hash(number)
+                        .map_err(EvmDatabaseError::Database)?,
+                );
 
                 // Prune all hashes that are older than BLOCK_HASH_HISTORY
                 let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
@@ -283,14 +382,17 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
-        let transitions = self.cache.apply_evm_state(changes);
+        self.bal_state.commit(&changes);
+        let transitions = self.cache.apply_evm_state(changes, |_, _| {});
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         }
     }
 
     fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
-        let transitions = self.cache.apply_evm_state(changes);
+        let transitions = self.cache.apply_evm_state(changes, |address, account| {
+            self.bal_state.commit_one(*address, account);
+        });
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         }
@@ -298,21 +400,42 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 }
 
 impl<DB: DatabaseRef> DatabaseRef for State<DB> {
-    type Error = DB::Error;
+    type Error = EvmDatabaseError<DB::Error>;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        // if bal is present and account is not found, error will be returned.
+        let account_id = self.bal_state.get_account_id(&address)?;
+
         // Account is already in cache
+        let mut loaded_account = None;
         if let Some(account) = self.cache.accounts.get(&address) {
-            return Ok(account.account_info());
-        }
+            loaded_account = Some(account.account_info());
+        };
+
         // If bundle state is used, check if account is in bundle state
-        if self.use_preloaded_bundle {
+        if self.use_preloaded_bundle && loaded_account.is_none() {
             if let Some(account) = self.bundle_state.account(&address) {
-                return Ok(account.account_info());
+                loaded_account = Some(account.account_info());
             }
         }
+
         // If not found, load it from database
-        self.database.basic_ref(address)
+        if loaded_account.is_none() {
+            loaded_account = Some(
+                self.database
+                    .basic_ref(address)
+                    .map_err(EvmDatabaseError::Database)?,
+            );
+        }
+
+        // safe to unwrap as it in some in condition above
+        let mut account = loaded_account.unwrap();
+
+        // if it is inside bal, overwrite the account with the bal changes.
+        if let Some(account_id) = account_id {
+            self.bal_state.basic_by_account_id(account_id, &mut account);
+        }
+        Ok(account)
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -327,7 +450,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             }
         }
         // If not found, load it from database
-        self.database.code_by_hash_ref(code_hash)
+        self.database
+            .code_by_hash_ref(code_hash)
+            .map_err(EvmDatabaseError::Database)
     }
 
     fn storage_ref(
@@ -335,6 +460,11 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
+        // if bal has storage value, return it
+        if let Some(storage) = self.bal_state.storage(&address, index)? {
+            return Ok(storage);
+        }
+
         // Check if account is in cache, the account is not guaranteed to be loaded
         if let Some(account) = self.cache.accounts.get(&address) {
             if let Some(plain_account) = &account.account {
@@ -349,8 +479,11 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
                 }
             }
         }
+
         // If not found, load it from database
-        self.database.storage_ref(address, index)
+        self.database
+            .storage_ref(address, index)
+            .map_err(EvmDatabaseError::Database)
     }
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
@@ -358,7 +491,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
             return Ok(*entry);
         }
         // If not found, load it from database
-        self.database.block_hash_ref(number)
+        self.database
+            .block_hash_ref(number)
+            .map_err(EvmDatabaseError::Database)
     }
 }
 

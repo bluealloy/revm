@@ -11,7 +11,7 @@ use revm::{
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
     primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
-    state::AccountInfo,
+    state::{bal::Bal, AccountInfo},
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
@@ -22,6 +22,7 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
     time::Instant,
 };
 use thiserror::Error;
@@ -654,7 +655,7 @@ fn execute_blockchain_test(
     }
 
     // Create database with initial state
-    let mut state = State::builder().build();
+    let mut state = State::builder().with_bal_builder().build();
 
     // Capture pre-state for debug info
     let mut pre_state_debug = HashMap::default();
@@ -667,6 +668,7 @@ fn execute_blockchain_test(
             nonce: account.nonce,
             code_hash: revm::primitives::keccak256(&account.code),
             code: Some(Bytecode::new_raw(account.code.clone())),
+            account_id: None,
         };
 
         // Store for debug info
@@ -722,6 +724,15 @@ fn execute_blockchain_test(
         } else {
             this_excess_blob_gas = None;
         }
+
+        let bal_test = block
+            .block_access_list
+            .as_ref()
+            .and_then(|bal| Bal::try_from(bal.clone()).ok())
+            .map(Arc::new);
+
+        //state.set_bal(bal_test);
+        state.reset_bal_index();
 
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
@@ -807,6 +818,9 @@ fn execute_blockchain_test(
                     break; // Skip to next block
                 }
             };
+
+            // bump bal index
+            evm.db_mut().bump_bal_index();
 
             // If JSON output requested, output transaction details
             let execution_result = if json_output {
@@ -917,6 +931,9 @@ fn execute_blockchain_test(
             }
         }
 
+        // bump bal index
+        evm.db_mut().bump_bal_index();
+
         // uncle rewards are not implemented yet
         post_block::post_block_transition(
             &mut evm,
@@ -929,6 +946,19 @@ fn execute_blockchain_test(
         state
             .block_hashes
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
+
+        if let Some(bal) = state.bal_state.bal_builder.take() {
+            if let Some(state_bal) = bal_test {
+                if &bal != state_bal.as_ref() {
+                    println!("Bal mismatch");
+                    println!("Test bal");
+                    state_bal.pretty_print();
+                    println!("Bal:");
+                    bal.pretty_print();
+                    return Err(TestExecutionError::BalMismatchError);
+                }
+            }
+        }
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {
@@ -983,7 +1013,8 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Cancun | ForkSpec::ShanghaiToCancunAtTime15k => SpecId::CANCUN,
         ForkSpec::Prague | ForkSpec::CancunToPragueAtTime15k => SpecId::PRAGUE,
         ForkSpec::Osaka | ForkSpec::PragueToOsakaAtTime15k => SpecId::OSAKA,
-        _ => SpecId::OSAKA, // For any unknown forks, use latest available
+        ForkSpec::Amsterdam => SpecId::AMSTERDAM,
+        _ => SpecId::AMSTERDAM, // For any unknown forks, use latest available
     }
 }
 
@@ -1087,6 +1118,9 @@ pub enum TestExecutionError {
         reason: HaltReason,
         gas_used: u64,
     },
+
+    #[error("BAL error")]
+    BalMismatchError,
 
     #[error(
         "Post-state validation failed for {address:?}.{field}: expected {expected}, got {actual}"

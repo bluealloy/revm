@@ -34,7 +34,7 @@ pub use once_lock::OnceLock;
 
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256,
-    map::{self, hash_map, hash_set, AddressMap, B256Map, HashMap, HashSet},
+    map::{self, hash_map, hash_set, indexmap, AddressMap, B256Map, HashMap, HashSet, IndexMap},
     ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
 };
 

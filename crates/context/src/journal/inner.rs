@@ -110,7 +110,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             spec,
             warm_addresses,
         } = self;
-        // Spec precompiles and state are not changed. It is always set again execution.
+        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
         let _ = state;
         transient_storage.clear();
@@ -123,6 +123,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         warm_addresses.clear_coinbase_and_access_list();
         // increment transaction id.
         *transaction_id += 1;
+
         logs.clear();
     }
 
@@ -436,7 +437,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target_acc.info.balance = new_balance;
 
         // safe to decrement for the caller as balance check is already done.
-        self.state.get_mut(&caller).unwrap().info.balance -= balance;
+        let caller_account = self.state.get_mut(&caller).unwrap();
+        caller_account.info.balance -= balance;
 
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
@@ -750,6 +752,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
+                    // set original info to current info.
+                    *account.original_info = account.info.clone();
+
                     // unmark locally created
                     account.unmark_created_locally();
 
@@ -940,6 +945,7 @@ mod tests {
             nonce: 1,
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
+            account_id: None,
         };
         journal
             .state

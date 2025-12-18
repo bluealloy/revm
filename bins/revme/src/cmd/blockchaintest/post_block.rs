@@ -1,15 +1,15 @@
 use revm::{
-    context::{Block, ContextTr},
-    database::{DatabaseCommitExt as _, State},
+    context::{Block, ContextTr, JournalTr},
     handler::EvmTr,
-    primitives::{hardfork::SpecId, ONE_ETHER, ONE_GWEI},
-    Database, SystemCallCommitEvm,
+    primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
+    Database, DatabaseCommit, SystemCallCommitEvm,
 };
 use statetest_types::blockchain::Withdrawal;
 
 /// Post block transition that includes:
 ///   * Block and uncle rewards before the Merge/Paris hardfork.
-///   * system calls
+///   * Withdrawals (EIP-4895)
+///   * Post-block system calls: EIP-7002 (withdrawal requests) and EIP-7251 (consolidation requests)
 ///
 /// # Note
 ///
@@ -17,9 +17,8 @@ use statetest_types::blockchain::Withdrawal;
 #[inline]
 pub fn post_block_transition<
     'a,
-    DB: Database + 'a,
-    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>
-        + EvmTr<Context: ContextTr<Db = &'a mut State<DB>>>,
+    DB: Database + DatabaseCommit + 'a,
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug> + EvmTr<Context: ContextTr<Db = DB>>,
 >(
     evm: &mut EVM,
     block: impl Block,
@@ -29,23 +28,35 @@ pub fn post_block_transition<
     // block reward
     let block_reward = block_reward(spec, 0);
     if block_reward != 0 {
-        let _ = evm
-            .ctx_mut()
-            .db_mut()
-            .increment_balances(vec![(block.beneficiary(), block_reward)]);
+        evm.ctx_mut()
+            .journal_mut()
+            .balance_incr(block.beneficiary(), U256::from(block_reward))
+            .expect("Db actions to pass");
     }
 
     // withdrawals
     if spec.is_enabled_in(SpecId::SHANGHAI) {
         for withdrawal in withdrawals {
             evm.ctx_mut()
-                .db_mut()
-                .increment_balances(vec![(
+                .journal_mut()
+                .balance_incr(
                     withdrawal.address,
-                    withdrawal.amount.to::<u128>().saturating_mul(ONE_GWEI),
-                )])
+                    withdrawal.amount.saturating_mul(U256::from(ONE_GWEI)),
+                )
                 .expect("Db actions to pass");
         }
+    }
+
+    evm.commit_inner();
+
+    // EIP-7002: Withdrawal requests system call
+    if spec.is_enabled_in(SpecId::PRAGUE) {
+        system_call_eip7002_withdrawal_request(evm);
+    }
+
+    // EIP-7251: Consolidation requests system call
+    if spec.is_enabled_in(SpecId::PRAGUE) {
+        system_call_eip7251_consolidation_request(evm);
     }
 }
 
@@ -65,4 +76,35 @@ pub const fn block_reward(spec: SpecId, ommers: usize) -> u128 {
     };
 
     reward + (reward >> 5) * ommers as u128
+}
+
+pub const WITHDRAWAL_REQUEST_ADDRESS: Address =
+    address!("0x00000961Ef480Eb55e80D19ad83579A64c007002");
+
+/// EIP-7002: Withdrawal requests system call
+pub(crate) fn system_call_eip7002_withdrawal_request(
+    evm: &mut impl SystemCallCommitEvm<Error: core::fmt::Debug>,
+) {
+    // empty data is valid for EIP-7002
+    let _ = match evm.system_call_commit(WITHDRAWAL_REQUEST_ADDRESS, Bytes::new()) {
+        Ok(res) => res,
+        Err(e) => {
+            panic!("System call failed: {e:?}");
+        }
+    };
+}
+
+pub const CONSOLIDATION_REQUEST_ADDRESS: Address =
+    address!("0x0000BBdDc7CE488642fb579F8B00f3a590007251");
+
+/// EIP-7251: Consolidation requests system call
+pub(crate) fn system_call_eip7251_consolidation_request(
+    evm: &mut impl SystemCallCommitEvm<Error: core::fmt::Debug>,
+) {
+    let _ = match evm.system_call_commit(CONSOLIDATION_REQUEST_ADDRESS, Bytes::new()) {
+        Ok(res) => res,
+        Err(e) => {
+            panic!("System call failed: {e:?}");
+        }
+    };
 }

@@ -205,6 +205,13 @@ impl GasParams {
         self.get(GasId::selfdestruct_refund()) as i64
     }
 
+    /// Selfdestruct cold cost is calculated differently from other cold costs.
+    /// and it contains both cold and warm costs.
+    #[inline]
+    pub fn selfdestruct_cold_cost(&self) -> u64 {
+        self.cold_account_additional_cost() + self.warm_storage_read_cost()
+    }
+
     /// Selfdestruct cost.
     #[inline]
     pub fn selfdestruct_cost(&self, should_charge_topup: bool, is_cold: bool) -> u64 {
@@ -221,7 +228,7 @@ impl GasParams {
             // the changes small, a SELFDESTRUCT already costs 5K and is a no-op if invoked more than once.
             //
             // For GasParams both values are zero before BERLIN fork.
-            gas += self.cold_account_additional_cost() + self.warm_storage_read_cost();
+            gas += self.selfdestruct_cold_cost();
         }
         gas
     }

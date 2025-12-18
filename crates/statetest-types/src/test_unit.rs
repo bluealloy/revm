@@ -76,6 +76,7 @@ impl TestUnit {
                 code_hash,
                 code: Some(bytecode),
                 nonce: info.nonce,
+                ..Default::default()
             };
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }

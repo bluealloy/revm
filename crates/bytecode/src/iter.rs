@@ -119,7 +119,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         // We should only see the opcodes, not the immediates
         assert_eq!(
@@ -144,7 +144,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
 
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
 
@@ -207,7 +207,7 @@ mod tests {
         ];
 
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
 
         // Use the iterator directly
         let iter = BytecodeIterator::new(&bytecode);
@@ -255,7 +255,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
 
         let mut iter = bytecode.iter_opcodes();
 
@@ -287,7 +287,7 @@ mod tests {
         // Empty bytecode (just STOP)
         let bytecode_data = vec![opcode::STOP];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed());
+        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
 
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::STOP]);

@@ -358,10 +358,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let target = target.into_address();
     let spec = context.interpreter.runtime_flag.spec_id();
 
-    let cold_load_gas = context
-        .interpreter
-        .gas_params
-        .cold_account_additional_cost();
+    let cold_load_gas = context.interpreter.gas_params.selfdestruct_cold_cost();
 
     let skip_cold_load = context.interpreter.gas.remaining() < cold_load_gas;
     let res = match context.host.selfdestruct(
