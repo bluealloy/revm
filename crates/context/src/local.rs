@@ -42,8 +42,4 @@ impl LocalContextTr for LocalContext {
 }
 
 impl LocalContext {
-    /// Creates a new local context, initcodes are hashes and added to the mapping.
-    pub fn new() -> Self {
-        Self::default()
-    }
 }
