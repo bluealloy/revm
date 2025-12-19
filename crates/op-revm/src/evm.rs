@@ -17,16 +17,17 @@ use revm::{
 #[derive(Debug, Clone)]
 pub struct OpEvm<
     CTX,
+    EXT,
     INSP,
-    I = EthInstructions<EthInterpreter, CTX>,
+    I = EthInstructions<EthInterpreter<EXT>, CTX>,
     P = OpPrecompiles,
-    F = EthFrame<EthInterpreter>,
+    F = EthFrame<EthInterpreter<EXT>>,
 >(
     /// Inner EVM type.
     pub Evm<CTX, INSP, I, P, F>,
 );
 
-impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+impl<CTX: ContextTr, EXT, INSP> OpEvm<CTX, EXT, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, OpPrecompiles> {
     /// Create a new Optimism EVM.
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
         Self(Evm {
@@ -56,10 +57,10 @@ impl<CTX, INSP, I, P> OpEvm<CTX, INSP, I, P> {
     }
 }
 
-impl<CTX, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
+impl<CTX, EXT, INSP, I, P> InspectorEvmTr for OpEvm<CTX, INSP, I, P>
 where
     CTX: ContextTr<Journal: JournalExt> + ContextSetters,
-    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     P: PrecompileProvider<CTX, Output = InterpreterResult>,
     INSP: Inspector<CTX, I::InterpreterTypes>,
 {
@@ -92,16 +93,16 @@ where
     }
 }
 
-impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
+impl<CTX, EXT, INSP, I, P> EvmTr for OpEvm<CTX, EXT, INSP, I, P, EthFrame<EthInterpreter<EXT>>>
 where
     CTX: ContextTr,
-    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    I: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     P: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Context = CTX;
     type Instructions = I;
     type Precompiles = P;
-    type Frame = EthFrame<EthInterpreter>;
+    type Frame = EthFrame<EthInterpreter<EXT>>;
 
     #[inline]
     fn all(

@@ -170,11 +170,11 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+impl<CTX, INSP, INST, PRECOMPILES, EXT> ExecuteEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter<EXT>>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
-    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type ExecutionResult = ExecutionResult<HaltReason>;
@@ -208,11 +208,11 @@ where
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+impl<CTX, INSP, INST, PRECOMPILES, EXT> ExecuteCommitEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter<EXT>>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit> + ContextSetters,
-    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     #[inline]

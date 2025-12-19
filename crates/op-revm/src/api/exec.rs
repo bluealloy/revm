@@ -46,8 +46,8 @@ impl<T> OpContextTr for T where
 /// Type alias for the error type of the OpEvm.
 pub type OpError<CTX> = EVMError<<<CTX as ContextTr>::Db as Database>::Error, OpTransactionError>;
 
-impl<CTX, INSP, PRECOMPILE> ExecuteEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+impl<CTX, EXT, INSP, PRECOMPILE> ExecuteEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -64,7 +64,7 @@ where
 
     fn transact_one(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
-        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter<EXT>>>::new();
         h.run(self)
     }
 
@@ -75,7 +75,7 @@ where
     fn replay(
         &mut self,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter<EXT>>>::new();
         h.run(self).map(|result| {
             let state = self.finalize();
             ExecResultAndState::new(result, state)
@@ -84,7 +84,7 @@ where
 }
 
 impl<CTX, INSP, PRECOMPILE> ExecuteCommitEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Db: DatabaseCommit> + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -94,11 +94,11 @@ where
     }
 }
 
-impl<CTX, INSP, PRECOMPILE> InspectEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+impl<CTX, EXT, INSP, PRECOMPILE> InspectEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Journal: JournalExt> + ContextSetters,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: Inspector<CTX, EXT, EthInterpreter<EXT>>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type Inspector = INSP;
@@ -109,22 +109,22 @@ where
 
     fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
         self.0.ctx.set_tx(tx);
-        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter<EXT>>>::new();
         h.inspect_run(self)
     }
 }
 
-impl<CTX, INSP, PRECOMPILE> InspectCommitEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+impl<CTX, EXT, INSP, PRECOMPILE> InspectCommitEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Journal: JournalExt, Db: DatabaseCommit> + ContextSetters,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: Inspector<CTX, EXT, EthInterpreter<EXT>>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
 }
 
-impl<CTX, INSP, PRECOMPILE> SystemCallEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+impl<CTX, EXT, INSP, PRECOMPILE> SystemCallEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Tx: SystemCallTx> + ContextSetters,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -140,16 +140,16 @@ where
             system_contract_address,
             data,
         ));
-        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter<EXT>>>::new();
         h.run_system_call(self)
     }
 }
 
-impl<CTX, INSP, PRECOMPILE> InspectSystemCallEvm
-    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, PRECOMPILE>
+impl<CTX, EXT, INSP, PRECOMPILE> InspectSystemCallEvm
+    for OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, PRECOMPILE>
 where
     CTX: OpContextTr<Journal: JournalExt, Tx: SystemCallTx> + ContextSetters,
-    INSP: Inspector<CTX, EthInterpreter>,
+    INSP: Inspector<CTX, EXT, EthInterpreter<EXT>>,
     PRECOMPILE: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn inspect_one_system_call_with_caller(
@@ -163,7 +163,7 @@ where
             system_contract_address,
             data,
         ));
-        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter>>::new();
+        let mut h = OpHandler::<_, _, EthFrame<EthInterpreter<EXT>>>::new();
         h.inspect_run_system_call(self)
     }
 }

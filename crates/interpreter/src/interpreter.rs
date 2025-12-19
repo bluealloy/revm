@@ -28,7 +28,7 @@ use primitives::{hardfork::SpecId, Bytes};
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
+pub struct Interpreter<EXT, WIRE: InterpreterTypes<Extend = EXT> = EthInterpreter<EXT>> {
     /// Gas table for dynamic gas constants.
     pub gas_params: GasParams,
     /// Bytecode being executed.
@@ -49,7 +49,7 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub extend: WIRE::Extend,
 }
 
-impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
+impl<EXT: Default> Interpreter<EXT, EthInterpreter<EXT>> {
     /// Create new interpreter
     pub fn new(
         memory: SharedMemory,
@@ -171,7 +171,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     }
 }
 
-impl Default for Interpreter<EthInterpreter> {
+impl<EXT: Default> Default for Interpreter<EXT, EthInterpreter<EXT>> {
     fn default() -> Self {
         Self::default_ext()
     }
@@ -194,7 +194,7 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Output = InterpreterAction;
 }
 
-impl<IW: InterpreterTypes> Interpreter<IW> {
+impl<EXT, IW: InterpreterTypes<Extend = EXT>> Interpreter<EXT, IW> {
     /// Performs EVM memory resize.
     #[inline]
     #[must_use]
@@ -303,7 +303,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[inline]
     pub fn step<H: Host + ?Sized>(
         &mut self,
-        instruction_table: &InstructionTable<IW, H>,
+        instruction_table: &InstructionTable<EXT, IW, H>,
         host: &mut H,
     ) {
         // Get current opcode.
@@ -332,7 +332,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// This uses dummy Host.
     #[inline]
-    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
+    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<EXT, IW, DummyHost>) {
         self.step(instruction_table, &mut DummyHost);
     }
 
@@ -340,7 +340,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[inline]
     pub fn run_plain<H: Host + ?Sized>(
         &mut self,
-        instruction_table: &InstructionTable<IW, H>,
+        instruction_table: &InstructionTable<EXT, IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
         while self.bytecode.is_not_end() {
@@ -410,7 +410,7 @@ impl InterpreterResult {
 }
 
 // Special implementation for types where Output can be created from InterpreterAction
-impl<IW: InterpreterTypes> Interpreter<IW>
+impl<EXT, IW: InterpreterTypes<Extend = EXT>> Interpreter<EXT, IW>
 where
     IW::Output: From<InterpreterAction>,
 {
@@ -424,7 +424,7 @@ where
     #[inline]
     pub fn run_plain_as_output<H: Host + ?Sized>(
         &mut self,
-        instruction_table: &InstructionTable<IW, H>,
+        instruction_table: &InstructionTable<EXT, IW, H>,
         host: &mut H,
     ) -> IW::Output {
         From::from(self.run_plain(instruction_table, host))
@@ -441,7 +441,7 @@ mod tests {
         use primitives::Bytes;
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
-        let interpreter = Interpreter::<EthInterpreter>::new(
+        let interpreter = Interpreter::<(), EthInterpreter::<()>>::new(
             SharedMemory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
@@ -452,7 +452,7 @@ mod tests {
         );
 
         let serialized = serde_json::to_string_pretty(&interpreter).unwrap();
-        let deserialized: Interpreter<EthInterpreter> = serde_json::from_str(&serialized).unwrap();
+        let deserialized: Interpreter<(), EthInterpreter::<()>> = serde_json::from_str(&serialized).unwrap();
 
         assert_eq!(
             interpreter.bytecode.pc(),
@@ -479,7 +479,7 @@ fn test_mstore_big_offset_memory_oog() {
     );
     let bytecode = Bytecode::new_raw(code);
 
-    let mut interpreter = Interpreter::<EthInterpreter>::new(
+    let mut interpreter = Interpreter::<(), EthInterpreter::<()>>::new(
         SharedMemory::new(),
         ExtBytecode::new(bytecode),
         InputsImpl::default(),
@@ -489,7 +489,7 @@ fn test_mstore_big_offset_memory_oog() {
         GasParams::default(),
     );
 
-    let table = instruction_table::<EthInterpreter, DummyHost>();
+    let table = instruction_table::<(), EthInterpreter::<()>, DummyHost>();
     let mut host = DummyHost;
     let action = interpreter.run_plain(&table, &mut host);
 

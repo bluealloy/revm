@@ -105,7 +105,7 @@ mod tests {
     #[derive(Default)]
     struct DummyInsp;
 
-    impl<CTX> Inspector<CTX, EthInterpreter> for DummyInsp {}
+    impl<CTX, EXT> Inspector<CTX, EthInterpreter::<()>> for DummyInsp {}
 
     #[test]
     fn test_either_inspector_type_check() {

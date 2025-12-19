@@ -38,7 +38,7 @@ use std::{borrow::ToOwned, boxed::Box, vec::Vec};
     <IW as InterpreterTypes>::RuntimeFlag,
     <IW as InterpreterTypes>::Extend,
 )]
-pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
+pub struct EthFrame<EXT, IW: InterpreterTypes = EthInterpreter<EXT>> {
     /// Frame-specific data (Call, Create, or EOFCreate).
     pub data: FrameData,
     /// Input data for the frame.

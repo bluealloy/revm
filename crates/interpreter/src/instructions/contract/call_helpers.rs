@@ -14,8 +14,8 @@ use state::Bytecode;
 
 /// Gets memory input and output ranges for call instructions.
 #[inline]
-pub fn get_memory_input_and_out_ranges(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+pub fn get_memory_input_and_out_ranges<EXT>(
+    interpreter: &mut Interpreter<EXT, impl InterpreterTypes<Extend = EXT>>,
 ) -> Option<(Range<usize>, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
@@ -33,8 +33,8 @@ pub fn get_memory_input_and_out_ranges(
 /// Resize memory and return range of memory.
 /// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
 #[inline]
-pub fn resize_memory(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+pub fn resize_memory<EXT>(
+    interpreter: &mut Interpreter<EXT, impl InterpreterTypes<Extend = EXT>>,
     offset: U256,
     len: U256,
 ) -> Option<Range<usize>> {
@@ -51,8 +51,8 @@ pub fn resize_memory(
 
 /// Calculates gas cost and limit for call instructions.
 #[inline(never)]
-pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+pub fn load_acc_and_calc_gas<EXT, H: Host + ?Sized>(
+    context: &mut InstructionContext<'_, EXT, H, impl InterpreterTypes<Extend = EXT>>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
@@ -99,8 +99,8 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
 /// Loads accounts and its delegate account.
 #[inline]
-pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+pub fn load_account_delegated_handle_error<EXT, H: Host + ?Sized>(
+    context: &mut InstructionContext<'_, EXT, H, impl InterpreterTypes<Extend = EXT>>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,

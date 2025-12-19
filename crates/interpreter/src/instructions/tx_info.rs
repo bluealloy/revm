@@ -8,8 +8,8 @@ use crate::InstructionContext;
 /// Implements the GASPRICE instruction.
 ///
 /// Gets the gas price of the originating transaction.
-pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn gasprice<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     push!(context.interpreter, context.host.effective_gas_price());
 }
@@ -17,7 +17,7 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the ORIGIN instruction.
 ///
 /// Gets the execution origination address.
-pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn origin<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     push!(
         context.interpreter,
         context.host.caller().into_word().into()
@@ -27,8 +27,8 @@ pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 /// Implements the BLOBHASH instruction.
 ///
 /// EIP-4844: Shard Blob Transactions - gets the hash of a transaction blob.
-pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn blob_hash<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     check!(context.interpreter, CANCUN);
     popn_top!([], index, context.interpreter);

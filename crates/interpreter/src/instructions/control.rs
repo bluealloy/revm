@@ -10,7 +10,7 @@ use crate::InstructionContext;
 /// Implements the JUMP instruction.
 ///
 /// Unconditional jump to a valid destination.
-pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, ITy>) {
+pub fn jump<EXT, ITy: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, ITy>) {
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target);
 }
@@ -18,7 +18,7 @@ pub fn jump<ITy: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the JUMPI instruction.
 ///
 /// Conditional jump to a valid destination if condition is true.
-pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn jumpi<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn!([target, cond], context.interpreter);
     if !cond.is_zero() {
         jump_inner(context.interpreter, target);
@@ -29,7 +29,7 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 ///
 /// Validates jump target and performs the actual jump.
 #[inline(always)]
-fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
+fn jump_inner<EXT, WIRE: InterpreterTypes<Extend = EXT>>(interpreter: &mut Interpreter<EXT, WIRE>, target: U256) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter.halt(InstructionResult::InvalidJump);
@@ -42,12 +42,12 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {}
+pub fn jumpdest<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(_context: InstructionContext<'_, EXT, H, WIRE>) {}
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
-pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn pc<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
@@ -59,8 +59,8 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 /// Internal helper function for return operations.
 ///
 /// Handles memory data retrieval and sets the return action.
-fn return_inner(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+fn return_inner<EXT>(
+    interpreter: &mut Interpreter<EXT, impl InterpreterTypes<Extend = EXT>>,
     instruction_result: InstructionResult,
 ) {
     popn!([offset, len], interpreter);
@@ -87,27 +87,27 @@ fn return_inner(
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
-pub fn ret<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn ret<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     return_inner(context.interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn revert<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, BYZANTIUM);
     return_inner(context.interpreter, InstructionResult::Revert);
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn stop<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     context.interpreter.halt(InstructionResult::Stop);
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn invalid<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     context.interpreter.halt(InstructionResult::InvalidFEOpcode);
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn unknown<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     context.interpreter.halt(InstructionResult::OpcodeNotFound);
 }

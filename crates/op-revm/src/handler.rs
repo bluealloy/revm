@@ -436,16 +436,16 @@ where
     }
 }
 
-impl<EVM, ERROR> InspectorHandler for OpHandler<EVM, ERROR, EthFrame<EthInterpreter>>
+impl<EVM, ERROR, EXT> InspectorHandler for OpHandler<EVM, ERROR, EthFrame<EthInterpreter<EXT>>>
 where
     EVM: InspectorEvmTr<
         Context: OpContextTr,
-        Frame = EthFrame<EthInterpreter>,
-        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+        Frame = EthFrame<EthInterpreter<EXT>>,
+        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter<EXT>>,
     >,
     ERROR: EvmTrError<EVM> + From<OpTransactionError> + FromStringError + IsTxError,
 {
-    type IT = EthInterpreter;
+    type IT = EthInterpreter<EXT>;
 }
 
 #[cfg(test)]
@@ -491,7 +491,7 @@ mod tests {
         ));
 
         let mut handler =
-            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
+            OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter::<()>>>::new();
 
         handler
             .last_frame_result(&mut evm, &mut exec_result)

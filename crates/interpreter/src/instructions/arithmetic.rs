@@ -6,25 +6,25 @@ use crate::{
 use primitives::U256;
 
 /// Implements the ADD instruction - adds two values from stack.
-pub fn add<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn add<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_add(*op2);
 }
 
 /// Implements the MUL instruction - multiplies two values from stack.
-pub fn mul<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mul<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_mul(*op2);
 }
 
 /// Implements the SUB instruction - subtracts two values from stack.
-pub fn sub<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sub<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1.wrapping_sub(*op2);
 }
 
 /// Implements the DIV instruction - divides two values from stack.
-pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn div<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
@@ -34,7 +34,7 @@ pub fn div<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the SDIV instruction.
 ///
 /// Performs signed division of two values from stack.
-pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sdiv<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_div(op1, *op2);
 }
@@ -42,7 +42,7 @@ pub fn sdiv<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
 /// Implements the MOD instruction.
 ///
 /// Pops two values from stack and pushes the remainder of their division.
-pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn rem<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
@@ -52,7 +52,7 @@ pub fn rem<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the SMOD instruction.
 ///
 /// Performs signed modulo of two values from stack.
-pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn smod<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = i256_mod(op1, *op2)
 }
@@ -60,7 +60,7 @@ pub fn smod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
 /// Implements the ADDMOD instruction.
 ///
 /// Pops three values from stack and pushes (a + b) % n.
-pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn addmod<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1, op2], op3, context.interpreter);
     *op3 = op1.add_mod(op2, *op3)
 }
@@ -68,13 +68,13 @@ pub fn addmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the MULMOD instruction.
 ///
 /// Pops three values from stack and pushes (a * b) % n.
-pub fn mulmod<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mulmod<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1, op2], op3, context.interpreter);
     *op3 = op1.mul_mod(op2, *op3)
 }
 
 /// Implements the EXP instruction - exponentiates two values from stack.
-pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn exp<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     gas!(
         context.interpreter,
@@ -112,7 +112,7 @@ pub fn exp<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 ///
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
 /// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn signextend<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([ext], x, context.interpreter);
     // For 31 we also don't need to do anything.
     if ext < U256::from(31) {

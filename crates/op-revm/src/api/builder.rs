@@ -10,8 +10,8 @@ use revm::{
 };
 
 /// Type alias for default OpEvm
-pub type DefaultOpEvm<CTX, INSP = ()> =
-    OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles>;
+pub type DefaultOpEvm<CTX, EXT, INSP = ()> =
+    OpEvm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, OpPrecompiles>;
 
 /// Trait that allows for optimism OpEvm to be built.
 pub trait OpBuilder: Sized {

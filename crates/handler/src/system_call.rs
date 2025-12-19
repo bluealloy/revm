@@ -217,11 +217,11 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+impl<CTX, INSP, INST, PRECOMPILES, EXT> SystemCallEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter<EXT>>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
-    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn system_call_one_with_caller(
@@ -241,12 +241,12 @@ where
     }
 }
 
-impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm
-    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+impl<CTX, INSP, INST, PRECOMPILES, EXT> SystemCallCommitEvm
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter<EXT>>>
 where
     CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
         + ContextSetters,
-    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter<EXT>>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     fn system_call_with_caller_commit(

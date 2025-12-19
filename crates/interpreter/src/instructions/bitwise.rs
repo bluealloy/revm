@@ -7,19 +7,19 @@ use core::cmp::Ordering;
 use primitives::U256;
 
 /// Implements the LT instruction - less than comparison.
-pub fn lt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn lt<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
 /// Implements the GT instruction - greater than comparison.
-pub fn gt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn gt<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 > *op2);
 }
 
 /// Implements the CLZ instruction - count leading zeros.
-pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn clz<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, OSAKA);
     popn_top!([], op1, context.interpreter);
     let leading_zeros = op1.leading_zeros();
@@ -29,7 +29,7 @@ pub fn clz<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the SLT instruction.
 ///
 /// Signed less than comparison of two values from stack.
-pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn slt<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
@@ -37,7 +37,7 @@ pub fn slt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the SGT instruction.
 ///
 /// Signed greater than comparison of two values from stack.
-pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sgt<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
@@ -45,7 +45,7 @@ pub fn sgt<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the EQ instruction.
 ///
 /// Equality comparison of two values from stack.
-pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn eq<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = U256::from(op1 == *op2);
 }
@@ -53,7 +53,7 @@ pub fn eq<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, 
 /// Implements the ISZERO instruction.
 ///
 /// Checks if the top stack value is zero.
-pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn iszero<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([], op1, context.interpreter);
     *op1 = U256::from(op1.is_zero());
 }
@@ -61,7 +61,7 @@ pub fn iszero<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the AND instruction.
 ///
 /// Bitwise AND of two values from stack.
-pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn bitand<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1 & *op2;
 }
@@ -69,7 +69,7 @@ pub fn bitand<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the OR instruction.
 ///
 /// Bitwise OR of two values from stack.
-pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn bitor<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1 | *op2;
 }
@@ -77,7 +77,7 @@ pub fn bitor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 /// Implements the XOR instruction.
 ///
 /// Bitwise XOR of two values from stack.
-pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn bitxor<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     *op2 = op1 ^ *op2;
 }
@@ -85,7 +85,7 @@ pub fn bitxor<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_,
 /// Implements the NOT instruction.
 ///
 /// Bitwise NOT (negation) of the top stack value.
-pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn not<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([], op1, context.interpreter);
     *op1 = !*op1;
 }
@@ -93,7 +93,7 @@ pub fn not<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Implements the BYTE instruction.
 ///
 /// Extracts a single byte from a word at a given index.
-pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn byte<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([op1], op2, context.interpreter);
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
@@ -105,7 +105,7 @@ pub fn byte<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn shl<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
@@ -117,7 +117,7 @@ pub fn shl<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn shr<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
@@ -129,7 +129,7 @@ pub fn shr<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sar<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
@@ -145,15 +145,13 @@ pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 #[cfg(test)]
 mod tests {
     use crate::{
-        host::DummyHost,
-        instructions::bitwise::{byte, clz, sar, shl, shr},
-        InstructionContext, Interpreter,
+        InstructionContext, Interpreter, host::DummyHost, instructions::bitwise::{byte, clz, sar, shl, shr}, interpreter::EthInterpreter
     };
     use primitives::{hardfork::SpecId, uint, U256};
 
     #[test]
     fn test_shift_left() {
-        let mut interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::<(), EthInterpreter<()>>::default();
 
         struct TestCase {
             value: U256,
@@ -236,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_logical_shift_right() {
-        let mut interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::<(), EthInterpreter<()>>::default();
 
         struct TestCase {
             value: U256,
@@ -319,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_arithmetic_shift_right() {
-        let mut interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::<(), EthInterpreter<()>>::default();
 
         struct TestCase {
             value: U256,
@@ -433,7 +431,7 @@ mod tests {
             expected: U256,
         }
 
-        let mut interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::<()>::default();
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);
         let test_cases = (0..32)
@@ -465,7 +463,7 @@ mod tests {
 
     #[test]
     fn test_clz() {
-        let mut interpreter = Interpreter::default();
+        let mut interpreter = Interpreter::<(), EthInterpreter<()>>::default();
         interpreter.set_spec_id(SpecId::OSAKA);
 
         struct TestCase {

@@ -15,7 +15,7 @@ use crate::InstructionContext;
 /// Implements the BALANCE instruction.
 ///
 /// Gets the balance of the given account.
-pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn balance<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
@@ -34,8 +34,8 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn selfbalance<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     check!(context.interpreter, ISTANBUL);
 
@@ -51,8 +51,8 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the EXTCODESIZE instruction.
 ///
 /// Gets the size of an account's code.
-pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn extcodesize<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
@@ -75,8 +75,8 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn extcodehash<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
@@ -106,8 +106,8 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the EXTCODECOPY instruction.
 ///
 /// Copies a portion of an account's code to memory.
-pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn extcodecopy<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     popn!(
         [address, memory_offset, code_offset, len_u256],
@@ -155,8 +155,8 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the BLOCKHASH instruction.
 ///
 /// Gets the hash of one of the 256 most recent complete blocks.
-pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn blockhash<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     popn_top!([], number, context.interpreter);
 
@@ -189,7 +189,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the SLOAD instruction.
 ///
 /// Loads a word from storage.
-pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sload<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     popn_top!([], index, context.interpreter);
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let target = context.interpreter.input.target_address();
@@ -223,7 +223,7 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
-pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sstore<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
@@ -290,7 +290,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn tstore<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
@@ -302,7 +302,7 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn tload<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(context: InstructionContext<'_, EXT, H, WIRE>) {
     check!(context.interpreter, CANCUN);
     popn_top!([], index, context.interpreter);
 
@@ -314,8 +314,8 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 /// Implements the LOG0-LOG4 instructions.
 ///
 /// Appends log record with N topics.
-pub fn log<const N: usize, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, impl InterpreterTypes>,
+pub fn log<const N: usize, EXT, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, impl InterpreterTypes<Extend = EXT>>,
 ) {
     require_non_staticcall!(context.interpreter);
 
@@ -350,8 +350,8 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 /// Implements the SELFDESTRUCT instruction.
 ///
 /// Halt execution and register account for later deletion.
-pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn selfdestruct<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);

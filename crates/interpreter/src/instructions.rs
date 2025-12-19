@@ -33,15 +33,15 @@ use crate::{gas, interpreter_types::InterpreterTypes, Host, InstructionContext};
 
 /// EVM opcode function signature.
 #[derive(Debug)]
-pub struct Instruction<W: InterpreterTypes, H: ?Sized> {
-    fn_: fn(InstructionContext<'_, H, W>),
+pub struct Instruction<EXT, W: InterpreterTypes<Extend = EXT>, H: ?Sized> {
+    fn_: fn(InstructionContext<'_, EXT, H, W>),
     static_gas: u64,
 }
 
-impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
+impl<EXT, W: InterpreterTypes<Extend = EXT>, H: Host + ?Sized> Instruction<EXT, W, H> {
     /// Creates a new instruction with the given function and static gas cost.
     #[inline]
-    pub const fn new(fn_: fn(InstructionContext<'_, H, W>), static_gas: u64) -> Self {
+    pub const fn new(fn_: fn(InstructionContext<'_, EXT, H, W>), static_gas: u64) -> Self {
         Self { fn_, static_gas }
     }
 
@@ -56,7 +56,7 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
 
     /// Executes the instruction with the given context.
     #[inline(always)]
-    pub fn execute(self, ctx: InstructionContext<'_, H, W>) {
+    pub fn execute(self, ctx: InstructionContext<'_, EXT, H, W>) {
         (self.fn_)(ctx)
     }
 
@@ -67,27 +67,27 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
     }
 }
 
-impl<W: InterpreterTypes, H: Host + ?Sized> Copy for Instruction<W, H> {}
-impl<W: InterpreterTypes, H: Host + ?Sized> Clone for Instruction<W, H> {
+impl<EXT, W: InterpreterTypes<Extend = EXT>, H: Host + ?Sized> Copy for Instruction<EXT, W, H> {}
+impl<EXT, W: InterpreterTypes<Extend = EXT>, H: Host + ?Sized> Clone for Instruction<EXT, W, H> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
-pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
+pub type InstructionTable<EXT, W, H> = [Instruction<EXT, W, H>; 256];
 
 /// Returns the default instruction table for the given interpreter types and host.
 #[inline]
-pub const fn instruction_table<WIRE: InterpreterTypes, H: Host>() -> [Instruction<WIRE, H>; 256] {
-    const { instruction_table_impl::<WIRE, H>() }
+pub const fn instruction_table<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>() -> [Instruction<EXT, WIRE, H>; 256] {
+    const { instruction_table_impl::<EXT, WIRE, H>() }
 }
 
 /// Create a instruction table with applied spec changes to static gas cost.
 #[inline]
-pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
+pub fn instruction_table_gas_changes_spec<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host>(
     spec: SpecId,
-) -> [Instruction<WIRE, H>; 256] {
+) -> [Instruction<EXT, WIRE, H>; 256] {
     use bytecode::opcode::*;
     use SpecId::*;
     let mut table = instruction_table();
@@ -128,7 +128,7 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     table
 }
 
-const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instruction<WIRE, H>; 256] {
+const fn instruction_table_impl<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>() -> [Instruction<EXT, WIRE, H>; 256] {
     use bytecode::opcode::*;
     let mut table = [Instruction::unknown(); 256];
 
@@ -211,85 +211,85 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[MCOPY as usize] = Instruction::new(memory::mcopy, 3); // static 2, mostly dynamic
 
     table[PUSH0 as usize] = Instruction::new(stack::push0, 2);
-    table[PUSH1 as usize] = Instruction::new(stack::push::<1, _, _>, 3);
-    table[PUSH2 as usize] = Instruction::new(stack::push::<2, _, _>, 3);
-    table[PUSH3 as usize] = Instruction::new(stack::push::<3, _, _>, 3);
-    table[PUSH4 as usize] = Instruction::new(stack::push::<4, _, _>, 3);
-    table[PUSH5 as usize] = Instruction::new(stack::push::<5, _, _>, 3);
-    table[PUSH6 as usize] = Instruction::new(stack::push::<6, _, _>, 3);
-    table[PUSH7 as usize] = Instruction::new(stack::push::<7, _, _>, 3);
-    table[PUSH8 as usize] = Instruction::new(stack::push::<8, _, _>, 3);
-    table[PUSH9 as usize] = Instruction::new(stack::push::<9, _, _>, 3);
-    table[PUSH10 as usize] = Instruction::new(stack::push::<10, _, _>, 3);
-    table[PUSH11 as usize] = Instruction::new(stack::push::<11, _, _>, 3);
-    table[PUSH12 as usize] = Instruction::new(stack::push::<12, _, _>, 3);
-    table[PUSH13 as usize] = Instruction::new(stack::push::<13, _, _>, 3);
-    table[PUSH14 as usize] = Instruction::new(stack::push::<14, _, _>, 3);
-    table[PUSH15 as usize] = Instruction::new(stack::push::<15, _, _>, 3);
-    table[PUSH16 as usize] = Instruction::new(stack::push::<16, _, _>, 3);
-    table[PUSH17 as usize] = Instruction::new(stack::push::<17, _, _>, 3);
-    table[PUSH18 as usize] = Instruction::new(stack::push::<18, _, _>, 3);
-    table[PUSH19 as usize] = Instruction::new(stack::push::<19, _, _>, 3);
-    table[PUSH20 as usize] = Instruction::new(stack::push::<20, _, _>, 3);
-    table[PUSH21 as usize] = Instruction::new(stack::push::<21, _, _>, 3);
-    table[PUSH22 as usize] = Instruction::new(stack::push::<22, _, _>, 3);
-    table[PUSH23 as usize] = Instruction::new(stack::push::<23, _, _>, 3);
-    table[PUSH24 as usize] = Instruction::new(stack::push::<24, _, _>, 3);
-    table[PUSH25 as usize] = Instruction::new(stack::push::<25, _, _>, 3);
-    table[PUSH26 as usize] = Instruction::new(stack::push::<26, _, _>, 3);
-    table[PUSH27 as usize] = Instruction::new(stack::push::<27, _, _>, 3);
-    table[PUSH28 as usize] = Instruction::new(stack::push::<28, _, _>, 3);
-    table[PUSH29 as usize] = Instruction::new(stack::push::<29, _, _>, 3);
-    table[PUSH30 as usize] = Instruction::new(stack::push::<30, _, _>, 3);
-    table[PUSH31 as usize] = Instruction::new(stack::push::<31, _, _>, 3);
-    table[PUSH32 as usize] = Instruction::new(stack::push::<32, _, _>, 3);
+    table[PUSH1 as usize] = Instruction::new(stack::push::<1, _, _, _>, 3);
+    table[PUSH2 as usize] = Instruction::new(stack::push::<2, _, _, _>, 3);
+    table[PUSH3 as usize] = Instruction::new(stack::push::<3, _, _, _>, 3);
+    table[PUSH4 as usize] = Instruction::new(stack::push::<4, _, _, _>, 3);
+    table[PUSH5 as usize] = Instruction::new(stack::push::<5, _, _, _>, 3);
+    table[PUSH6 as usize] = Instruction::new(stack::push::<6, _, _, _>, 3);
+    table[PUSH7 as usize] = Instruction::new(stack::push::<7, _, _, _>, 3);
+    table[PUSH8 as usize] = Instruction::new(stack::push::<8, _, _, _>, 3);
+    table[PUSH9 as usize] = Instruction::new(stack::push::<9, _, _, _>, 3);
+    table[PUSH10 as usize] = Instruction::new(stack::push::<10, _, _, _>, 3);
+    table[PUSH11 as usize] = Instruction::new(stack::push::<11, _, _, _>, 3);
+    table[PUSH12 as usize] = Instruction::new(stack::push::<12, _, _, _>, 3);
+    table[PUSH13 as usize] = Instruction::new(stack::push::<13, _, _, _>, 3);
+    table[PUSH14 as usize] = Instruction::new(stack::push::<14, _, _, _>, 3);
+    table[PUSH15 as usize] = Instruction::new(stack::push::<15, _, _, _>, 3);
+    table[PUSH16 as usize] = Instruction::new(stack::push::<16, _, _, _>, 3);
+    table[PUSH17 as usize] = Instruction::new(stack::push::<17, _, _, _>, 3);
+    table[PUSH18 as usize] = Instruction::new(stack::push::<18, _, _, _>, 3);
+    table[PUSH19 as usize] = Instruction::new(stack::push::<19, _, _, _>, 3);
+    table[PUSH20 as usize] = Instruction::new(stack::push::<20, _, _, _>, 3);
+    table[PUSH21 as usize] = Instruction::new(stack::push::<21, _, _, _>, 3);
+    table[PUSH22 as usize] = Instruction::new(stack::push::<22, _, _, _>, 3);
+    table[PUSH23 as usize] = Instruction::new(stack::push::<23, _, _, _>, 3);
+    table[PUSH24 as usize] = Instruction::new(stack::push::<24, _, _, _>, 3);
+    table[PUSH25 as usize] = Instruction::new(stack::push::<25, _, _, _>, 3);
+    table[PUSH26 as usize] = Instruction::new(stack::push::<26, _, _, _>, 3);
+    table[PUSH27 as usize] = Instruction::new(stack::push::<27, _, _, _>, 3);
+    table[PUSH28 as usize] = Instruction::new(stack::push::<28, _, _, _>, 3);
+    table[PUSH29 as usize] = Instruction::new(stack::push::<29, _, _, _>, 3);
+    table[PUSH30 as usize] = Instruction::new(stack::push::<30, _, _, _>, 3);
+    table[PUSH31 as usize] = Instruction::new(stack::push::<31, _, _, _>, 3);
+    table[PUSH32 as usize] = Instruction::new(stack::push::<32, _, _, _>, 3);
 
-    table[DUP1 as usize] = Instruction::new(stack::dup::<1, _, _>, 3);
-    table[DUP2 as usize] = Instruction::new(stack::dup::<2, _, _>, 3);
-    table[DUP3 as usize] = Instruction::new(stack::dup::<3, _, _>, 3);
-    table[DUP4 as usize] = Instruction::new(stack::dup::<4, _, _>, 3);
-    table[DUP5 as usize] = Instruction::new(stack::dup::<5, _, _>, 3);
-    table[DUP6 as usize] = Instruction::new(stack::dup::<6, _, _>, 3);
-    table[DUP7 as usize] = Instruction::new(stack::dup::<7, _, _>, 3);
-    table[DUP8 as usize] = Instruction::new(stack::dup::<8, _, _>, 3);
-    table[DUP9 as usize] = Instruction::new(stack::dup::<9, _, _>, 3);
-    table[DUP10 as usize] = Instruction::new(stack::dup::<10, _, _>, 3);
-    table[DUP11 as usize] = Instruction::new(stack::dup::<11, _, _>, 3);
-    table[DUP12 as usize] = Instruction::new(stack::dup::<12, _, _>, 3);
-    table[DUP13 as usize] = Instruction::new(stack::dup::<13, _, _>, 3);
-    table[DUP14 as usize] = Instruction::new(stack::dup::<14, _, _>, 3);
-    table[DUP15 as usize] = Instruction::new(stack::dup::<15, _, _>, 3);
-    table[DUP16 as usize] = Instruction::new(stack::dup::<16, _, _>, 3);
+    table[DUP1 as usize] = Instruction::new(stack::dup::<1, _, _, _>, 3);
+    table[DUP2 as usize] = Instruction::new(stack::dup::<2, _, _, _>, 3);
+    table[DUP3 as usize] = Instruction::new(stack::dup::<3, _, _, _>, 3);
+    table[DUP4 as usize] = Instruction::new(stack::dup::<4, _, _, _>, 3);
+    table[DUP5 as usize] = Instruction::new(stack::dup::<5, _, _, _>, 3);
+    table[DUP6 as usize] = Instruction::new(stack::dup::<6, _, _, _>, 3);
+    table[DUP7 as usize] = Instruction::new(stack::dup::<7, _, _, _>, 3);
+    table[DUP8 as usize] = Instruction::new(stack::dup::<8, _, _, _>, 3);
+    table[DUP9 as usize] = Instruction::new(stack::dup::<9, _, _, _>, 3);
+    table[DUP10 as usize] = Instruction::new(stack::dup::<10, _, _, _>, 3);
+    table[DUP11 as usize] = Instruction::new(stack::dup::<11, _, _, _>, 3);
+    table[DUP12 as usize] = Instruction::new(stack::dup::<12, _, _, _>, 3);
+    table[DUP13 as usize] = Instruction::new(stack::dup::<13, _, _, _>, 3);
+    table[DUP14 as usize] = Instruction::new(stack::dup::<14, _, _, _>, 3);
+    table[DUP15 as usize] = Instruction::new(stack::dup::<15, _, _, _>, 3);
+    table[DUP16 as usize] = Instruction::new(stack::dup::<16, _, _, _>, 3);
 
-    table[SWAP1 as usize] = Instruction::new(stack::swap::<1, _, _>, 3);
-    table[SWAP2 as usize] = Instruction::new(stack::swap::<2, _, _>, 3);
-    table[SWAP3 as usize] = Instruction::new(stack::swap::<3, _, _>, 3);
-    table[SWAP4 as usize] = Instruction::new(stack::swap::<4, _, _>, 3);
-    table[SWAP5 as usize] = Instruction::new(stack::swap::<5, _, _>, 3);
-    table[SWAP6 as usize] = Instruction::new(stack::swap::<6, _, _>, 3);
-    table[SWAP7 as usize] = Instruction::new(stack::swap::<7, _, _>, 3);
-    table[SWAP8 as usize] = Instruction::new(stack::swap::<8, _, _>, 3);
-    table[SWAP9 as usize] = Instruction::new(stack::swap::<9, _, _>, 3);
-    table[SWAP10 as usize] = Instruction::new(stack::swap::<10, _, _>, 3);
-    table[SWAP11 as usize] = Instruction::new(stack::swap::<11, _, _>, 3);
-    table[SWAP12 as usize] = Instruction::new(stack::swap::<12, _, _>, 3);
-    table[SWAP13 as usize] = Instruction::new(stack::swap::<13, _, _>, 3);
-    table[SWAP14 as usize] = Instruction::new(stack::swap::<14, _, _>, 3);
-    table[SWAP15 as usize] = Instruction::new(stack::swap::<15, _, _>, 3);
-    table[SWAP16 as usize] = Instruction::new(stack::swap::<16, _, _>, 3);
+    table[SWAP1 as usize] = Instruction::new(stack::swap::<1, _, _, _>, 3);
+    table[SWAP2 as usize] = Instruction::new(stack::swap::<2, _, _, _>, 3);
+    table[SWAP3 as usize] = Instruction::new(stack::swap::<3, _, _, _>, 3);
+    table[SWAP4 as usize] = Instruction::new(stack::swap::<4, _, _, _>, 3);
+    table[SWAP5 as usize] = Instruction::new(stack::swap::<5, _, _, _>, 3);
+    table[SWAP6 as usize] = Instruction::new(stack::swap::<6, _, _, _>, 3);
+    table[SWAP7 as usize] = Instruction::new(stack::swap::<7, _, _, _>, 3);
+    table[SWAP8 as usize] = Instruction::new(stack::swap::<8, _, _, _>, 3);
+    table[SWAP9 as usize] = Instruction::new(stack::swap::<9, _, _, _>, 3);
+    table[SWAP10 as usize] = Instruction::new(stack::swap::<10, _, _, _>, 3);
+    table[SWAP11 as usize] = Instruction::new(stack::swap::<11, _, _, _>, 3);
+    table[SWAP12 as usize] = Instruction::new(stack::swap::<12, _, _, _>, 3);
+    table[SWAP13 as usize] = Instruction::new(stack::swap::<13, _, _, _>, 3);
+    table[SWAP14 as usize] = Instruction::new(stack::swap::<14, _, _, _>, 3);
+    table[SWAP15 as usize] = Instruction::new(stack::swap::<15, _, _, _>, 3);
+    table[SWAP16 as usize] = Instruction::new(stack::swap::<16, _, _, _>, 3);
 
-    table[LOG0 as usize] = Instruction::new(host::log::<0, _>, gas::LOG);
-    table[LOG1 as usize] = Instruction::new(host::log::<1, _>, gas::LOG);
-    table[LOG2 as usize] = Instruction::new(host::log::<2, _>, gas::LOG);
-    table[LOG3 as usize] = Instruction::new(host::log::<3, _>, gas::LOG);
-    table[LOG4 as usize] = Instruction::new(host::log::<4, _>, gas::LOG);
+    table[LOG0 as usize] = Instruction::new(host::log::<0, _, _>, gas::LOG);
+    table[LOG1 as usize] = Instruction::new(host::log::<1, _, _>, gas::LOG);
+    table[LOG2 as usize] = Instruction::new(host::log::<2, _, _>, gas::LOG);
+    table[LOG3 as usize] = Instruction::new(host::log::<3, _, _>, gas::LOG);
+    table[LOG4 as usize] = Instruction::new(host::log::<4, _, _>, gas::LOG);
 
-    table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>, 0);
+    table[CREATE as usize] = Instruction::new(contract::create::<_, _, false, _>, 0);
     table[CALL as usize] = Instruction::new(contract::call, 40);
     table[CALLCODE as usize] = Instruction::new(contract::call_code, 40);
     table[RETURN as usize] = Instruction::new(control::ret, 0);
     table[DELEGATECALL as usize] = Instruction::new(contract::delegate_call, 40);
-    table[CREATE2 as usize] = Instruction::new(contract::create::<_, true, _>, 0);
+    table[CREATE2 as usize] = Instruction::new(contract::create::<_, _, true, _>, 0);
 
     table[STATICCALL as usize] = Instruction::new(contract::static_call, 40);
     table[REVERT as usize] = Instruction::new(control::revert, 0);
@@ -308,7 +308,7 @@ mod tests {
     fn all_instructions_and_opcodes_used() {
         // known unknown instruction we compare it with other instructions from table.
         let unknown_instruction = 0x0C_usize;
-        let instr_table = instruction_table::<EthInterpreter, DummyHost>();
+        let instr_table = instruction_table::<(), EthInterpreter::<()>, DummyHost>();
 
         let unknown_istr = instr_table[unknown_instruction];
         for (i, instr) in instr_table.iter().enumerate() {

@@ -21,8 +21,8 @@ use crate::InstructionContext;
 /// Implements the CREATE/CREATE2 instruction.
 ///
 /// Creates a new contract with provided bytecode.
-pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
+pub fn create<EXT, WIRE: InterpreterTypes<Extend = EXT>, const IS_CREATE2: bool, H: Host + ?Sized>(
+    context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     require_non_staticcall!(context.interpreter);
 
@@ -120,8 +120,8 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 /// Implements the CALL instruction.
 ///
 /// Message call with value transfer to another account.
-pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    mut context: InstructionContext<'_, H, WIRE>,
+pub fn call<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = to.into_address();
@@ -170,8 +170,8 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the CALLCODE instruction.
 ///
 /// Message call with alternative account's code.
-pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    mut context: InstructionContext<'_, H, WIRE>,
+pub fn call_code<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     popn!([local_gas_limit, to, value], context.interpreter);
     let to = Address::from_word(B256::from(to));
@@ -213,8 +213,8 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the DELEGATECALL instruction.
 ///
 /// Message call with alternative account's code but same sender and value.
-pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    mut context: InstructionContext<'_, H, WIRE>,
+pub fn delegate_call<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     check!(context.interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], context.interpreter);
@@ -256,8 +256,8 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the STATICCALL instruction.
 ///
 /// Static message call (cannot modify state).
-pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    mut context: InstructionContext<'_, H, WIRE>,
+pub fn static_call<EXT, WIRE: InterpreterTypes<Extend = EXT>, H: Host + ?Sized>(
+    mut context: InstructionContext<'_, EXT, H, WIRE>,
 ) {
     check!(context.interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], context.interpreter);

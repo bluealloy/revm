@@ -14,7 +14,7 @@ use state::EvmState;
 /// Object that is implemented this trait is used in `InspectorHandler` to trace the EVM execution.
 /// And API that allow calling the inspector can be found in [`crate::InspectEvm`] and [`crate::InspectCommitEvm`].
 #[auto_impl(&mut, Box)]
-pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
+pub trait Inspector<CTX, EXT, INTR: InterpreterTypes = EthInterpreter<EXT>> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.bytecode.set_action` is set the execution of the interpreter is skipped.

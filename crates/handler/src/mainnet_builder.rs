@@ -6,8 +6,8 @@ use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
 
 /// Type alias for a mainnet EVM instance with standard Ethereum components.
-pub type MainnetEvm<CTX, INSP = ()> =
-    Evm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, EthPrecompiles, EthFrame<EthInterpreter>>;
+pub type MainnetEvm<CTX, EXT = (), INSP = ()> =
+    Evm<CTX, INSP, EthInstructions<EthInterpreter<EXT>, CTX>, EthPrecompiles, EthFrame<EthInterpreter<EXT>>>;
 
 /// Type alias for a mainnet context with standard Ethereum environment types.
 pub type MainnetContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, Journal<DB>, ()>;
