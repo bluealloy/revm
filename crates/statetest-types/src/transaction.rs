@@ -50,16 +50,17 @@ pub struct TransactionParts {
 }
 
 impl TransactionParts {
-    /// Returns the transaction type.   
+    /// Returns the transaction type.
     ///
     /// As this information is derived from the fields it is not stored in the struct.
     ///
-    /// Returns `None` if the transaction is invalid:
-    ///   * It has both blob gas and no destination.
-    ///   * It has authorization list and no destination.
-    pub fn tx_type(&self, access_list_index: usize) -> Option<TransactionType> {
+    /// Note: This function always returns a transaction type, even for potentially
+    /// invalid transactions (e.g., blob tx with no destination). The validation
+    /// of these constraints happens during EVM execution, not during parsing.
+    /// This matches the behavior of geth and other spec-compliant clients.
+    pub fn tx_type(&self, access_list_index: usize) -> TransactionType {
         if let Some(tx_type) = self.tx_type {
-            return Some(TransactionType::from(tx_type));
+            return TransactionType::from(tx_type);
         }
 
         let mut tx_type = TransactionType::Legacy;
@@ -77,20 +78,38 @@ impl TransactionParts {
         }
 
         // If it has max_fee_per_blob_gas it is EIP-4844 tx
+        // Note: We return EIP-4844 type even without a `to` address.
+        // The validation that blob txs cannot be CREATE transactions
+        // happens during EVM execution (returns BlobCreateTransaction error).
         if self.max_fee_per_blob_gas.is_some() {
-            // target need to be present for EIP-4844 tx
-            self.to?;
-            return Some(TransactionType::Eip4844);
+            return TransactionType::Eip4844;
         }
 
         // And if it has authorization list it is EIP-7702 tx
+        // Note: We return EIP-7702 type even without a `to` address.
+        // The validation that setcode txs cannot be CREATE transactions
+        // happens during EVM execution (returns Eip7702CreateTransaction error).
         if self.authorization_list.is_some() {
-            // Target need to be present for EIP-7702 tx
-            self.to?;
-            return Some(TransactionType::Eip7702);
+            return TransactionType::Eip7702;
         }
 
-        Some(tx_type)
+        tx_type
+    }
+
+    /// Checks if this transaction is a blob transaction attempting contract creation.
+    ///
+    /// This is an invalid combination that will fail during EVM execution with
+    /// `InvalidTransaction::BlobCreateTransaction`.
+    pub fn is_blob_create(&self) -> bool {
+        self.max_fee_per_blob_gas.is_some() && self.to.is_none()
+    }
+
+    /// Checks if this transaction is an EIP-7702 transaction attempting contract creation.
+    ///
+    /// This is an invalid combination that will fail during EVM execution with
+    /// `InvalidTransaction::Eip7702CreateTransaction`.
+    pub fn is_eip7702_create(&self) -> bool {
+        self.authorization_list.is_some() && self.to.is_none()
     }
 }
 

@@ -427,6 +427,10 @@ pub enum InvalidTransaction {
     AuthorizationListInvalidFields,
     /// Empty Authorization List is not allowed.
     EmptyAuthorizationList,
+    /// EIP-7702 transaction can't be a create transaction.
+    ///
+    /// `to` must be present for SetCode transactions.
+    Eip7702CreateTransaction,
     /// EIP-2930 is not supported.
     Eip2930NotSupported,
     /// EIP-1559 is not supported.
@@ -533,6 +537,9 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "authorization list tx has invalid fields")
             }
             Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
+            Self::Eip7702CreateTransaction => {
+                write!(f, "EIP-7702 transaction cannot be used to create contract")
+            }
             Self::Eip2930NotSupported => write!(f, "Eip2930 is not supported"),
             Self::Eip1559NotSupported => write!(f, "Eip1559 is not supported"),
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),

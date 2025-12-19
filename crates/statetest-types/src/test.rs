@@ -57,9 +57,14 @@ impl Test {
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - The private key cannot be used to recover the sender address
-    /// - The transaction type is invalid and no exception is expected
+    /// Returns an error if the private key cannot be used to recover the sender address.
+    ///
+    /// # Note
+    ///
+    /// This function constructs the transaction even for potentially invalid combinations
+    /// (e.g., blob tx with no destination, EIP-7702 tx with no destination). These
+    /// invalid combinations are validated during EVM execution, not during parsing.
+    /// This matches the spec-compliant behavior of geth and other clients.
     pub fn tx_env(&self, unit: &TestUnit) -> Result<TxEnv, TestError> {
         // Setup sender
         let caller = if let Some(address) = unit.transaction.sender {
@@ -69,17 +74,9 @@ impl Test {
                 .ok_or(TestError::UnknownPrivateKey(unit.transaction.secret_key))?
         };
 
-        // Transaction specific fields
-        let tx_type = unit.transaction.tx_type(self.indexes.data).ok_or_else(|| {
-            if self.expect_exception.is_some() {
-                TestError::UnexpectedException {
-                    expected_exception: self.expect_exception.clone(),
-                    got_exception: Some("Invalid transaction type".to_string()),
-                }
-            } else {
-                TestError::InvalidTransactionType
-            }
-        })?;
+        // Transaction type is always determined, even for potentially invalid transactions.
+        // Validation happens during EVM execution.
+        let tx_type = unit.transaction.tx_type(self.indexes.data);
 
         let tx = TxEnv {
             caller,

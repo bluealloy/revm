@@ -1,3 +1,4 @@
+use crate::cmd::statetest::exception_map::error_matches_exception;
 use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
@@ -46,6 +47,8 @@ pub enum TestErrorKind {
     StateRootMismatch { got: B256, expected: B256 },
     #[error("unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
+    #[error("invalid transaction type")]
+    InvalidTransactionType,
     #[error("unexpected exception: got {got_exception:?}, expected {expected_exception:?}")]
     UnexpectedException {
         expected_exception: Option<String>,
@@ -193,6 +196,16 @@ fn format_evm_result(
     }
 }
 
+/// Validates that the execution result matches the expected exception (if any).
+///
+/// This function implements spec-compliant exception matching:
+/// - If no exception is expected and execution succeeded -> pass
+/// - If an exception is expected and execution failed with a matching error -> pass
+/// - Otherwise -> fail with detailed error information
+///
+/// Returns `Ok(true)` if an expected exception occurred (state root should NOT be checked).
+/// Returns `Ok(false)` if no exception was expected and execution succeeded.
+/// Returns `Err(...)` if there's a mismatch.
 fn validate_exception(
     test: &Test,
     exec_result: &Result<
@@ -201,12 +214,43 @@ fn validate_exception(
     >,
 ) -> Result<bool, TestErrorKind> {
     match (&test.expect_exception, exec_result) {
-        (None, Ok(_)) => Ok(false), // No exception expected, execution succeeded
-        (Some(_), Err(_)) => Ok(true), // Exception expected and occurred
-        _ => Err(TestErrorKind::UnexpectedException {
-            expected_exception: test.expect_exception.clone(),
-            got_exception: exec_result.as_ref().err().map(|e| e.to_string()),
+        // No exception expected, execution succeeded -> pass
+        (None, Ok(_)) => Ok(false),
+
+        // No exception expected, but execution failed -> fail
+        (None, Err(e)) => Err(TestErrorKind::UnexpectedException {
+            expected_exception: None,
+            got_exception: Some(e.to_string()),
         }),
+
+        // Exception expected, execution succeeded -> fail
+        (Some(expected), Ok(_)) => Err(TestErrorKind::UnexpectedException {
+            expected_exception: Some(expected.clone()),
+            got_exception: None,
+        }),
+
+        // Exception expected and execution failed -> check if error matches
+        (Some(expected), Err(EVMError::Transaction(invalid_tx))) => {
+            if error_matches_exception(invalid_tx, expected) {
+                // Error matches expected exception -> pass (don't check state root)
+                Ok(true)
+            } else {
+                // Error doesn't match expected exception -> fail
+                Err(TestErrorKind::UnexpectedException {
+                    expected_exception: Some(expected.clone()),
+                    got_exception: Some(invalid_tx.to_string()),
+                })
+            }
+        }
+
+        // Other EVM errors (Database errors, Custom errors)
+        (Some(expected), Err(e)) => {
+            // For non-transaction errors, just report the mismatch
+            Err(TestErrorKind::UnexpectedException {
+                expected_exception: Some(expected.clone()),
+                got_exception: Some(e.to_string()),
+            })
+        }
     }
 }
 
@@ -356,10 +400,12 @@ pub fn execute_test_suite(
 
             for (index, test) in tests.iter().enumerate() {
                 // Setup transaction environment
+                // Note: tx_env() now always succeeds for valid transaction types.
+                // Invalid combinations (e.g., blob+create) are validated during EVM execution.
                 let tx = match test.tx_env(&unit) {
                     Ok(tx) => tx,
-                    Err(_) if test.expect_exception.is_some() => continue,
                     Err(_) => {
+                        // The only error tx_env can return now is UnknownPrivateKey
                         return Err(TestError {
                             name: name.clone(),
                             path: path.clone(),
