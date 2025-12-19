@@ -3685,6 +3685,7 @@ dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
  "auto_impl",
+ "bitflags",
  "either",
  "revm-database-interface",
  "revm-primitives",
