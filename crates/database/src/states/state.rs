@@ -386,6 +386,9 @@ impl<DB: Database> DatabaseCommit for State<DB> {
         let transitions = self.cache.apply_evm_state_iter(changes, |_, _| {});
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
+        } else {
+            // Advance the iter to apply all state updates.
+            transitions.for_each(|_| {});
         }
     }
 
@@ -397,6 +400,9 @@ impl<DB: Database> DatabaseCommit for State<DB> {
             });
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
+        } else {
+            // Advance the iter to apply all state updates.
+            transitions.for_each(|_| {});
         }
     }
 }
