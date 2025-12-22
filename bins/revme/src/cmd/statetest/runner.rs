@@ -455,7 +455,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
         ctx.name,
         &exec_result,
         db,
-        ctx.cfg.spec(),
+        *ctx.cfg.spec(),
         ctx.print_json_outcome,
     )
 }

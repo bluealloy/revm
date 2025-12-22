@@ -10,7 +10,6 @@ use anyhow::Result;
 use exec::transact_erc20evm_commit;
 use revm::{
     context::{CfgEnv, TxEnv},
-    context_interface::cfg::GasParams,
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
     primitives::{address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, U256},
@@ -82,10 +81,7 @@ fn balance_of(address: Address, alloy_db: &mut AlloyCacheDB) -> Result<StorageVa
 fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheDB) -> Result<()> {
     let mut ctx = Context::mainnet()
         .with_db(cache_db)
-        .with_cfg(CfgEnv::new_with_spec_and_gas_params(
-            SpecId::CANCUN,
-            GasParams::new_spec(SpecId::CANCUN),
-        ))
+        .with_cfg(CfgEnv::new_with_spec(SpecId::CANCUN))
         .with_tx(
             TxEnv::builder()
                 .caller(from)

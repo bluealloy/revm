@@ -172,7 +172,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             tx_chain_id_check: true,
             limit_contract_code_size: None,
             limit_contract_initcode_size: None,
-            spec: spec.clone(),
+            spec,
             disable_nonce_check: false,
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
@@ -201,8 +201,8 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Returns the spec for the `CfgEnv`.
     #[inline]
-    pub fn spec(&self) -> SPEC {
-        self.spec.clone()
+    pub fn spec(&self) -> &SPEC {
+        &self.spec
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
@@ -254,6 +254,24 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Disables the transaction's chain ID check.
     pub fn disable_tx_chain_id_check(mut self) -> Self {
         self.tx_chain_id_check = false;
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv`.
+    #[inline]
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead"
+    )]
+    pub fn with_spec(mut self, spec: SPEC) -> Self {
+        self.spec = spec;
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    pub fn with_spec_and_mainnet_gas_params(mut self, spec: SPEC) -> Self {
+        self.set_spec(spec.clone());
+        self.set_gas_params(GasParams::new_spec(spec.into()));
         self
     }
 
