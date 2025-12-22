@@ -885,19 +885,19 @@ fn execute_blockchain_test(
                                 test_case.post_state.as_ref(),
                             );
                         }
-                        let exception = block.expect_exception.clone().unwrap_or_default();
+                        let expected_exception = block.expect_exception.clone().unwrap_or_default();
                         if json_output {
                             let output = json!({
                                 "block": block_idx,
                                 "tx": tx_idx,
-                                "error": format!("expected failure: {exception}"),
+                                "expected_exception": expected_exception,
                                 "gas_used": result.result.gas_used(),
                                 "status": "unexpected_success"
                             });
                             println!("{}", serde_json::to_string(&output).unwrap());
                         } else {
                             eprintln!(
-                                "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {exception})"
+                                "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {expected_exception})"
                             );
                         }
                         break; // Skip to next block
