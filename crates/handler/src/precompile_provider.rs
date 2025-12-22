@@ -3,10 +3,7 @@ use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
-use primitives::{
-    hardfork::{SetSpecTr, SpecId},
-    Address, Bytes,
-};
+use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
     boxed::Box,
     string::{String, ToString},
@@ -66,20 +63,6 @@ impl EthPrecompiles {
     /// Returns whether the address is a precompile.
     pub fn contains(&self, address: &Address) -> bool {
         self.precompiles.contains(address)
-    }
-}
-
-impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for EthPrecompiles {
-    fn set_spec(&mut self, spec: SPEC) {
-        let spec = spec.into();
-        if spec == self.spec {
-            return;
-        }
-        self.precompiles = self
-            .spec_override_fn
-            .map(|override_fn| override_fn(spec))
-            .unwrap_or_else(|| Precompiles::new(PrecompileSpecId::from_spec_id(spec)));
-        self.spec = spec;
     }
 }
 

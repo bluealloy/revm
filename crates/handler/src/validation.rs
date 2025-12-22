@@ -265,9 +265,7 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{
-        address, eip3860, eip7907, hardfork::SetSpecTr, hardfork::SpecId, Bytes, TxKind, B256,
-    };
+    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind, B256};
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -277,7 +275,7 @@ mod tests {
         let ctx = Context::mainnet()
             .modify_cfg_chained(|c| {
                 if let Some(spec_id) = spec_id {
-                    c.set_spec(spec_id);
+                    c.spec = spec_id;
                 }
             })
             .with_db(CacheDB::<EmptyDB>::default());

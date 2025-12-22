@@ -10,10 +10,7 @@ use revm::{
     database::{states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
-    primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        hex, Address, HashMap, U256,
-    },
+    primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
     state::AccountInfo,
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
@@ -688,7 +685,7 @@ fn execute_blockchain_test(
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
-    cfg.set_spec(spec_id);
+    cfg.spec = spec_id;
 
     // Genesis block is not used yet.
     let mut parent_block_hash = Some(test_case.genesis_block_header.hash);
@@ -729,7 +726,7 @@ fn execute_blockchain_test(
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
             .with_block(&block_env)
-            .with_cfg(&cfg)
+            .with_cfg(cfg.clone())
             .with_db(&mut state);
 
         // Build and execute with EVM - always use inspector when JSON output is enabled

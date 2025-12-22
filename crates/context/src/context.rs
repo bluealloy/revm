@@ -10,9 +10,7 @@ use context_interface::{
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::{
-    hardfork::{SetSpecTr, SpecId},
-    hints_util::cold_path,
-    Address, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, hints_util::cold_path, Address, Log, StorageKey, StorageValue, B256, U256,
 };
 
 /// EVM context contains data that EVM needs for execution.
@@ -154,42 +152,6 @@ impl<
             chain: Default::default(),
             error: Ok(()),
         }
-    }
-}
-
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL, SPEC> SetSpecTr<SPEC>
-    for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
-where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg<Spec = SPEC> + SetSpecTr<SPEC>,
-    DB: Database,
-    JOURNAL: JournalTr<Database = DB>,
-    LOCAL: LocalContextTr,
-    SPEC: Into<SpecId> + Clone,
-{
-    /// Sets the spec for the context.
-    #[inline]
-    fn set_spec(&mut self, spec: <CFG as Cfg>::Spec) {
-        self.cfg.set_spec(spec.clone());
-        self.journaled_state.set_spec_id(spec.into());
-    }
-}
-
-impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
-where
-    BLOCK: Block,
-    TX: Transaction,
-    CFG: Cfg + SetSpecTr<<CFG as Cfg>::Spec>,
-    DB: Database,
-    JOURNAL: JournalTr<Database = DB>,
-    LOCAL: LocalContextTr,
-{
-    /// Creates a new context with a new spec.
-    #[inline]
-    pub fn with_spec(mut self, spec: <CFG as Cfg>::Spec) -> Self {
-        self.set_spec(spec);
-        self
     }
 }
 

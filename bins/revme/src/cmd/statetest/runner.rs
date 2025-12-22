@@ -6,10 +6,7 @@ use revm::{
     database,
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        Bytes, B256, U256,
-    },
+    primitives::{hardfork::SpecId, Bytes, B256, U256},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
@@ -328,7 +325,7 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            cfg.set_spec(spec_name.to_spec_id());
+            cfg.spec = spec_name.to_spec_id();
 
             // Configure max blobs per spec
             if cfg.spec().is_enabled_in(SpecId::OSAKA) {
@@ -419,7 +416,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     let evm_context = Context::mainnet()
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .with_db(&mut state);
 
     // Execute
@@ -465,7 +462,7 @@ fn debug_failed_test(ctx: DebugContext) {
         .with_db(&mut state)
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
 
     let exec_result = evm.inspect_tx_commit(ctx.tx);

@@ -136,7 +136,6 @@ mod tests {
         context_interface::block::calc_blob_gasprice,
         primitives::{
             eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
-            hardfork::SetSpecTr,
             U256,
         },
     };
@@ -188,8 +187,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_cancun() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::CANCUN);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
 
         let block = unit.block_env(&mut cfg);
 
@@ -212,8 +210,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_prague() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::PRAGUE);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
 
         let block = unit.block_env(&mut cfg);
 
@@ -235,8 +232,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_osaka() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::OSAKA);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
 
         let block = unit.block_env(&mut cfg);
 

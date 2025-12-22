@@ -77,6 +77,13 @@ pub trait Cfg {
     fn gas_params(&self) -> &GasParams;
 }
 
+/// Trait for initializing the configuration.
+#[auto_impl(&mut, Box)]
+pub trait InitializeCfg {
+    /// Utility function called when EVM is build. Used to set the gas params.
+    fn initialize(&mut self);
+}
+
 /// What bytecode analysis to perform
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

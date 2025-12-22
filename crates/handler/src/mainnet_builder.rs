@@ -1,6 +1,6 @@
 use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
-use context_interface::{Block, Database, JournalTr, Transaction};
+use context_interface::{cfg::InitializeCfg, Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
@@ -29,7 +29,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG,
 where
     BLOCK: Block,
     TX: Transaction,
-    CFG: Cfg,
+    CFG: Cfg + InitializeCfg,
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
 {
@@ -85,10 +85,7 @@ mod test {
     use context::{Context, TxEnv};
     use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        StorageKey, StorageValue, TxKind, U256,
-    };
+    use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
 
     #[test]
     fn sanity_eip7702_tx() {
@@ -104,7 +101,7 @@ mod test {
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let ctx = Context::mainnet()
-            .modify_cfg_chained(|cfg| cfg.set_spec(SpecId::PRAGUE))
+            .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
             .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();

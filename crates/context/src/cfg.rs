@@ -1,21 +1,23 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use context_interface::cfg::GasParams;
-use derive_where::derive_where;
-use primitives::{
-    eip170, eip3860, eip7825,
-    hardfork::{SetSpecTr, SpecId},
-};
+use context_interface::cfg::{GasParams, InitializeCfg};
+use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug)]
-#[derive_where(Eq, PartialEq; SPEC)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
     /// Specification for EVM represent the hardfork
-    spec: SPEC,
+    pub spec: SPEC,
+
+    /// Gas params for the EVM. Use [`CfgEnv::set_gas_params`] to set the gas params.
+    /// If gas_params was not set it will be set to the default gas params for the spec.
+    gas_params: GasParams,
+
+    /// If gas params were set this will be set to true.
+    is_custom_gas_params: bool,
     /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
@@ -62,14 +64,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
     /// with initials cap of 30M.
     pub tx_gas_limit_cap: Option<u64>,
-    /// Gas params for the EVM.
-    pub gas_params: GasParams,
-    /// Gas params override function.
-    ///
-    /// If this is set, it will override the gas params with this function.
-    #[cfg_attr(feature = "serde", serde(skip))]
-    #[derive_where(skip)]
-    pub gas_params_override: Option<fn(SPEC) -> GasParams>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -135,6 +129,17 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub disable_fee_charge: bool,
 }
 
+impl<SPEC: Into<SpecId> + Clone> InitializeCfg for CfgEnv<SPEC> {
+    fn initialize(&mut self) {
+        if !self.is_custom_gas_params {
+            return;
+        }
+        self.is_custom_gas_params = false;
+
+        self.gas_params = GasParams::new_spec(self.spec.clone().into());
+    }
+}
+
 impl CfgEnv {
     /// Creates new `CfgEnv` with default values.
     pub fn new() -> Self {
@@ -173,7 +178,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
             gas_params: GasParams::new_spec(spec.into()),
-            gas_params_override: None,
+            is_custom_gas_params: false,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -201,19 +206,24 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
         self.spec.clone()
     }
 
-    /// Sets the gas params override function.
-    ///
-    /// Every change in spec will call `override_fn` to update [`GasParams`].
-    #[inline]
-    pub fn set_gas_params_override(&mut self, override_fn: fn(SPEC) -> GasParams) {
-        self.gas_params_override = Some(override_fn);
-        self.gas_params = override_fn(self.spec.clone());
-    }
-
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
+    }
+
+    /// Sets the gas params for the `CfgEnv`.
+    #[inline]
+    pub fn with_gas_params(mut self, gas_params: GasParams) -> Self {
+        self.set_gas_params(gas_params);
+        self
+    }
+
+    /// Sets the gas params for the `CfgEnv`.
+    #[inline]
+    pub fn set_gas_params(&mut self, gas_params: GasParams) {
+        self.gas_params = gas_params;
+        self.is_custom_gas_params = true;
     }
 
     /// Enables the transaction's chain ID check.
@@ -244,7 +254,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             gas_params: GasParams::new_spec(eth_spec),
-            gas_params_override: None,
+            is_custom_gas_params: false,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -449,18 +459,6 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
-    }
-}
-
-impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for CfgEnv<SPEC> {
-    #[inline]
-    fn set_spec(&mut self, spec: SPEC) {
-        self.spec = spec.clone();
-
-        self.gas_params = self
-            .gas_params_override
-            .map(|override_fn| override_fn(spec.clone()))
-            .unwrap_or_else(|| GasParams::new_spec(spec.into()));
     }
 }
 

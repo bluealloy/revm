@@ -9,10 +9,7 @@ use revm::{
         self, bn254, secp256r1, Precompile, PrecompileError, PrecompileId, PrecompileResult,
         Precompiles,
     },
-    primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        Address, OnceLock,
-    },
+    primitives::{hardfork::SpecId, Address, OnceLock},
 };
 use std::{boxed::Box, string::String};
 
@@ -122,15 +119,6 @@ pub fn jovian() -> &'static Precompiles {
 
         precompiles
     })
-}
-
-impl SetSpecTr<OpSpecId> for OpPrecompiles {
-    fn set_spec(&mut self, spec: OpSpecId) {
-        if spec == self.spec {
-            return;
-        }
-        *self = Self::new_with_spec(spec);
-    }
 }
 
 impl<CTX> PrecompileProvider<CTX> for OpPrecompiles
