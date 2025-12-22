@@ -93,19 +93,30 @@ impl CacheState {
     pub fn apply_evm_state<F>(
         &mut self,
         evm_state: impl IntoIterator<Item = (Address, Account)>,
-        mut inspect: F,
+        inspect: F,
     ) -> Vec<(Address, TransitionAccount)>
     where
         F: FnMut(&Address, &Account),
     {
-        evm_state
-            .into_iter()
-            .filter_map(|(address, account)| {
-                inspect(&address, &account);
-                self.apply_account_state(address, account)
-                    .map(|transition| (address, transition))
-            })
-            .collect()
+        self.apply_evm_state_iter(evm_state, inspect).collect()
+    }
+
+    /// Applies output of revm execution and creates an iterator of account transitions.
+    #[inline]
+    pub(crate) fn apply_evm_state_iter<'a, F, T>(
+        &'a mut self,
+        evm_state: T,
+        mut inspect: F,
+    ) -> impl Iterator<Item = (Address, TransitionAccount)> + use<'a, F, T>
+    where
+        F: FnMut(&Address, &Account),
+        T: IntoIterator<Item = (Address, Account)>,
+    {
+        evm_state.into_iter().filter_map(move |(address, account)| {
+            inspect(&address, &account);
+            self.apply_account_state(address, account)
+                .map(|transition| (address, transition))
+        })
     }
 
     /// Pretty print the cache state for debugging purposes.
