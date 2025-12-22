@@ -10,10 +10,13 @@ use primitives::{
     hardfork::SpecId::{self},
     U256,
 };
-use std::sync::Arc;
+use std::{
+    hash::{Hash, Hasher},
+    sync::Arc,
+};
 
 /// Gas table for dynamic gas constants.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub struct GasParams {
     /// Table of gas costs for operations
     table: Arc<[u64; 256]>,
@@ -21,6 +24,25 @@ pub struct GasParams {
     ptr: *const u64,
 }
 
+impl PartialEq<GasParams> for GasParams {
+    fn eq(&self, other: &GasParams) -> bool {
+        self.table == other.table
+    }
+}
+
+impl Hash for GasParams {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.table.hash(hasher);
+    }
+}
+
+impl core::fmt::Debug for GasParams {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "GasParams {{ table: {:?} }}", self.table)
+    }
+}
+
+impl Eq for GasParams {}
 #[cfg(feature = "serde")]
 mod serde {
     use super::{Arc, GasParams};
