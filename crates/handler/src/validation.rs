@@ -63,7 +63,7 @@ pub fn validate_priority_fee_tx(
 
 /// Validate priority fee for transactions that support EIP-1559 (Eip1559, Eip4844, Eip7702).
 #[inline]
-fn validate_priority_fee_for_tx<TX: ContextTr>(
+fn validate_priority_fee_for_tx<TX: Transaction>(
     tx: TX,
     base_fee: Option<u128>,
     disable_priority_fee_check: bool,
