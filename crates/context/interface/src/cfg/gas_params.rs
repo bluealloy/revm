@@ -6,14 +6,12 @@ use crate::{
     },
     context::SStoreResult,
 };
+use core::hash::{Hash, Hasher};
 use primitives::{
     hardfork::SpecId::{self},
     U256,
 };
-use std::{
-    hash::{Hash, Hasher},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 /// Gas table for dynamic gas constants.
 #[derive(Clone)]
