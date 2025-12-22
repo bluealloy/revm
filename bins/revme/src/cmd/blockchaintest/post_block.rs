@@ -2,9 +2,9 @@ use revm::{
     context::{Block, ContextTr, JournalTr},
     handler::EvmTr,
     primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
+    statetest_types::blockchain::Withdrawal,
     Database, DatabaseCommit, SystemCallCommitEvm,
 };
-use statetest_types::blockchain::Withdrawal;
 
 /// Post block transition that includes:
 ///   * Block and uncle rewards before the Merge/Paris hardfork.

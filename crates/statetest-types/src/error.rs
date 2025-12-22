@@ -1,4 +1,4 @@
-use revm::primitives::B256;
+use primitives::B256;
 use thiserror::Error;
 
 /// Errors that can occur during test setup and execution

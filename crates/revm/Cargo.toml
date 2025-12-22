@@ -30,6 +30,7 @@ interpreter.workspace = true
 precompile.workspace = true
 primitives.workspace = true
 state.workspace = true
+statetest-types = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
@@ -117,3 +118,6 @@ portable = ["precompile/portable"]
 # use gmp for modexp precompile.
 # It is faster library but licenced as GPL code, if enabled please make sure to follow the license.
 gmp = ["precompile/gmp"]
+
+# Statetest types for running ethereum tests
+test-types = ["dep:statetest-types"]

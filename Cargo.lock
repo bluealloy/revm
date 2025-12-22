@@ -3646,6 +3646,7 @@ dependencies = [
  "revm-precompile",
  "revm-primitives",
  "revm-state",
+ "revm-statetest-types",
  "serde",
  "serde_json",
 ]
@@ -3840,9 +3841,13 @@ name = "revm-statetest-types"
 version = "13.1.0"
 dependencies = [
  "alloy-eip7928",
- "alloy-eips",
  "k256",
- "revm",
+ "revm-bytecode",
+ "revm-context",
+ "revm-context-interface",
+ "revm-database",
+ "revm-primitives",
+ "revm-state",
  "serde",
  "serde_json",
  "thiserror",
@@ -3862,7 +3867,6 @@ dependencies = [
  "k256",
  "plain_hasher",
  "revm",
- "revm-statetest-types",
  "serde",
  "serde_json",
  "thiserror",
