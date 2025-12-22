@@ -12,7 +12,8 @@ use crate::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, Bytes, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, Address, AddressMap, Bytes, HashSet, Log, StorageKey, StorageValue, B256,
+    U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
@@ -104,7 +105,7 @@ pub trait JournalTr {
     ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<<Self::Database as Database>::Error>>;
 
     /// Sets access list inside journal.
-    fn warm_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>);
+    fn warm_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>);
 
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);

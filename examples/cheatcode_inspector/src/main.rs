@@ -117,10 +117,7 @@ impl JournalTr for Backend {
             .selfdestruct(address, target, skip_cold_load)
     }
 
-    fn warm_access_list(
-        &mut self,
-        access_list: revm::primitives::HashMap<Address, HashSet<StorageKey>>,
-    ) {
+    fn warm_access_list(&mut self, access_list: revm::primitives::AddressMap<HashSet<StorageKey>>) {
         self.journaled_state.warm_access_list(access_list);
     }
 

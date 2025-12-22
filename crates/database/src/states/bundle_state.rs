@@ -7,7 +7,8 @@ use super::{
 use bytecode::Bytecode;
 use core::{mem, ops::RangeInclusive};
 use primitives::{
-    hash_map::Entry, Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
+    hash_map::Entry, Address, AddressMap, B256Map, HashMap, HashSet, StorageKey, StorageKeyMap,
+    StorageValue, B256, KECCAK_EMPTY,
 };
 use state::AccountInfo;
 use std::{
@@ -19,16 +20,16 @@ use std::{
 #[derive(Debug)]
 pub struct BundleBuilder {
     states: HashSet<Address>,
-    state_original: HashMap<Address, AccountInfo>,
-    state_present: HashMap<Address, AccountInfo>,
-    state_storage: HashMap<Address, HashMap<StorageKey, (StorageValue, StorageValue)>>,
+    state_original: AddressMap<AccountInfo>,
+    state_present: AddressMap<AccountInfo>,
+    state_storage: AddressMap<StorageKeyMap<(StorageValue, StorageValue)>>,
 
     reverts: BTreeSet<(u64, Address)>,
     revert_range: RangeInclusive<u64>,
     revert_account: HashMap<(u64, Address), Option<Option<AccountInfo>>>,
     revert_storage: HashMap<(u64, Address), Vec<(StorageKey, StorageValue)>>,
 
-    contracts: HashMap<B256, Bytecode>,
+    contracts: B256Map<Bytecode>,
 }
 
 /// Option for [`BundleState`] when converting it to the plain state.
@@ -119,7 +120,7 @@ impl BundleBuilder {
     pub fn state_storage(
         mut self,
         address: Address,
-        storage: HashMap<StorageKey, (StorageValue, StorageValue)>,
+        storage: StorageKeyMap<(StorageValue, StorageValue)>,
     ) -> Self {
         self.set_state_storage(address, storage);
         self
@@ -200,7 +201,7 @@ impl BundleBuilder {
     pub fn set_state_storage(
         &mut self,
         address: Address,
-        storage: HashMap<StorageKey, (StorageValue, StorageValue)>,
+        storage: StorageKeyMap<(StorageValue, StorageValue)>,
     ) -> &mut Self {
         self.states.insert(address);
         self.state_storage.insert(address, storage);
@@ -329,19 +330,19 @@ impl BundleBuilder {
     }
 
     /// Mutable getter for `state_original` field
-    pub fn get_state_original_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+    pub fn get_state_original_mut(&mut self) -> &mut AddressMap<AccountInfo> {
         &mut self.state_original
     }
 
     /// Mutable getter for `state_present` field
-    pub fn get_state_present_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+    pub fn get_state_present_mut(&mut self) -> &mut AddressMap<AccountInfo> {
         &mut self.state_present
     }
 
     /// Mutable getter for `state_storage` field
     pub fn get_state_storage_mut(
         &mut self,
-    ) -> &mut HashMap<Address, HashMap<StorageKey, (StorageValue, StorageValue)>> {
+    ) -> &mut AddressMap<StorageKeyMap<(StorageValue, StorageValue)>> {
         &mut self.state_storage
     }
 
@@ -370,7 +371,7 @@ impl BundleBuilder {
     }
 
     /// Mutable getter for `contracts` field
-    pub fn get_contracts_mut(&mut self) -> &mut HashMap<B256, Bytecode> {
+    pub fn get_contracts_mut(&mut self) -> &mut B256Map<Bytecode> {
         &mut self.contracts
     }
 }
@@ -404,9 +405,9 @@ impl BundleRetention {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleState {
     /// Account state
-    pub state: HashMap<Address, BundleAccount>,
+    pub state: AddressMap<BundleAccount>,
     /// All created contracts in this block.
-    pub contracts: HashMap<B256, Bytecode>,
+    pub contracts: B256Map<Bytecode>,
     /// Changes to revert
     ///
     /// **Note**: Inside vector is *not* sorted by address.
@@ -432,7 +433,7 @@ impl BundleState {
                 Address,
                 Option<AccountInfo>,
                 Option<AccountInfo>,
-                HashMap<StorageKey, (StorageValue, StorageValue)>,
+                StorageKeyMap<(StorageValue, StorageValue)>,
             ),
         >,
         reverts: impl IntoIterator<
@@ -512,7 +513,7 @@ impl BundleState {
     }
 
     /// Returns reference to the state.
-    pub fn state(&self) -> &HashMap<Address, BundleAccount> {
+    pub fn state(&self) -> &AddressMap<BundleAccount> {
         &self.state
     }
 
@@ -681,7 +682,7 @@ impl BundleState {
     /// Extends the bundle with other state.
     ///
     /// Updates the `other` state only if `other` is not flagged as destroyed.
-    pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>) {
+    pub fn extend_state(&mut self, other_state: AddressMap<BundleAccount>) {
         for (address, other_account) in other_state {
             match self.state.entry(address) {
                 Entry::Occupied(mut entry) => {

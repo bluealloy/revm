@@ -4,8 +4,8 @@ use database_interface::{
     BENCH_TARGET, BENCH_TARGET_BALANCE,
 };
 use primitives::{
-    hash_map::Entry, Address, AddressMap, B256Map, HashMap, Log, StorageKey, StorageValue, B256,
-    KECCAK_EMPTY, U256,
+    hash_map::Entry, Address, AddressMap, B256Map, HashMap, Log, StorageKey, StorageKeyMap,
+    StorageValue, U256Map, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
@@ -29,7 +29,7 @@ pub struct Cache {
     /// All logs that were committed via [DatabaseCommit::commit].
     pub logs: Vec<Log>,
     /// All cached block hashes from the [DatabaseRef].
-    pub block_hashes: HashMap<U256, B256>,
+    pub block_hashes: U256Map<B256>,
 }
 
 impl Default for Cache {
@@ -183,7 +183,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn replace_account_storage(
         &mut self,
         address: Address,
-        storage: HashMap<StorageKey, StorageValue>,
+        storage: StorageKeyMap<StorageValue>,
     ) -> Result<(), ExtDB::Error> {
         let account = self.load_account(address)?;
         account.account_state = AccountState::StorageCleared;
@@ -193,7 +193,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         for (address, mut account) in changes {
             if !account.is_touched() {
                 continue;
@@ -372,7 +372,7 @@ pub struct DbAccount {
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// Storage slots
-    pub storage: HashMap<StorageKey, StorageValue>,
+    pub storage: StorageKeyMap<StorageValue>,
 }
 
 impl DbAccount {

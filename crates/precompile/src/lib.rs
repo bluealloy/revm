@@ -54,7 +54,8 @@ use aurora_engine_modexp as _;
 
 use core::hash::Hash;
 use primitives::{
-    hardfork::SpecId, short_address, Address, HashMap, HashSet, OnceLock, SHORT_ADDRESS_CAP,
+    hardfork::SpecId, short_address, Address, AddressMap, HashMap, HashSet, OnceLock,
+    SHORT_ADDRESS_CAP,
 };
 use std::vec::Vec;
 
@@ -67,7 +68,7 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 #[derive(Clone, Debug)]
 pub struct Precompiles {
     /// Precompiles
-    inner: HashMap<Address, Precompile>,
+    inner: AddressMap<Precompile>,
     /// Addresses of precompiles.
     addresses: HashSet<Address>,
     /// Optimized addresses filter.
@@ -117,7 +118,7 @@ impl Precompiles {
     }
 
     /// Returns inner HashMap of precompiles.
-    pub fn inner(&self) -> &HashMap<Address, Precompile> {
+    pub fn inner(&self) -> &AddressMap<Precompile> {
         &self.inner
     }
 
@@ -289,7 +290,7 @@ impl Precompiles {
             .iter()
             .filter(|(a, _)| !other.inner.contains_key(*a))
             .map(|(a, p)| (*a, p.clone()))
-            .collect::<HashMap<_, _>>();
+            .collect::<AddressMap<_>>();
 
         let mut precompiles = Self::default();
         precompiles.extend(inner.into_iter().map(|p| p.1));
@@ -306,7 +307,7 @@ impl Precompiles {
             .iter()
             .filter(|(a, _)| other.inner.contains_key(*a))
             .map(|(a, p)| (*a, p.clone()))
-            .collect::<HashMap<_, _>>();
+            .collect::<AddressMap<_>>();
 
         let mut precompiles = Self::default();
         precompiles.extend(inner.into_iter().map(|p| p.1));

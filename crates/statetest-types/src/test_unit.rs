@@ -2,7 +2,7 @@ use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv},
     database::CacheState,
-    primitives::{hardfork::SpecId, keccak256, Address, Bytes, HashMap, B256},
+    primitives::{hardfork::SpecId, keccak256, AddressMap, Bytes, B256},
     state::Bytecode,
 };
 use serde::Deserialize;
@@ -29,7 +29,7 @@ pub struct TestUnit {
     /// A mapping of addresses to their account information before the transaction
     /// is executed. This represents the initial state of all accounts involved
     /// in the test, including their balances, nonces, code, and storage.
-    pub pre: HashMap<Address, AccountInfo>,
+    pub pre: AddressMap<AccountInfo>,
 
     /// Post-execution expectations per specification.
     ///
@@ -137,7 +137,7 @@ mod tests {
         context_interface::block::calc_blob_gasprice,
         primitives::{
             eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
-            U256,
+            Address, U256,
         },
     };
 
@@ -159,7 +159,7 @@ mod tests {
                 current_withdrawals_root: None,
                 current_excess_blob_gas: Some(U256::from(excess_blob_gas)),
             },
-            pre: HashMap::default(),
+            pre: AddressMap::default(),
             post: BTreeMap::default(),
             transaction: TransactionParts {
                 tx_type: None,
