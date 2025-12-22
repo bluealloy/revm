@@ -146,7 +146,10 @@ impl<
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv::new_with_spec(spec),
+            cfg: CfgEnv::new_with_spec_and_gas_params(
+                spec.clone(),
+                GasParams::new_spec(spec.into()),
+            ),
             local: LOCAL::default(),
             journaled_state,
             chain: Default::default(),

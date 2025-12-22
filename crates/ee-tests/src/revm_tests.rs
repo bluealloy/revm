@@ -85,7 +85,7 @@ fn test_selfdestruct_multi_tx() {
 fn test_multi_tx_create() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
-            cfg.spec = SpecId::BERLIN;
+            cfg.set_spec_and_mainnet_gas_params(SpecId::BERLIN);
             cfg.disable_nonce_check = true;
         })
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))

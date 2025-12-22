@@ -1,6 +1,6 @@
 use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
-use context_interface::{cfg::InitializeCfg, Block, Database, JournalTr, Transaction};
+use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
 use interpreter::interpreter::EthInterpreter;
 use primitives::hardfork::SpecId;
@@ -29,7 +29,7 @@ impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG,
 where
     BLOCK: Block,
     TX: Transaction,
-    CFG: Cfg + InitializeCfg,
+    CFG: Cfg,
     DB: Database,
     JOURNAL: JournalTr<Database = DB>,
 {
@@ -101,7 +101,7 @@ mod test {
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let ctx = Context::mainnet()
-            .modify_cfg_chained(|cfg| cfg.spec = SpecId::PRAGUE)
+            .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
             .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();

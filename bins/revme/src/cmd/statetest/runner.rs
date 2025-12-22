@@ -337,7 +337,7 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            cfg.spec = spec_name.to_spec_id();
+            cfg.set_spec_and_mainnet_gas_params(spec_name.to_spec_id());
 
             // Configure max blobs per spec
             if cfg.spec().is_enabled_in(SpecId::OSAKA) {

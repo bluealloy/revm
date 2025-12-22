@@ -1,7 +1,7 @@
 //! This module contains [`CfgEnv`] and implements [`Cfg`] trait for it.
 pub use context_interface::Cfg;
 
-use context_interface::cfg::{GasParams, InitializeCfg};
+use context_interface::cfg::GasParams;
 use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 
 /// EVM configuration
@@ -10,14 +10,17 @@ use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
     /// Specification for EVM represent the hardfork
+    ///
+    /// [`CfgEnv::new_with_spec`] is going to set both gas params and spec.
+    ///
+    /// As GasParams is spec dependent, it is recommended to use one of followin function to set both of them.
+    /// [`CfgEnv::set_spec_and_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`]
     pub spec: SPEC,
 
     /// Gas params for the EVM. Use [`CfgEnv::set_gas_params`] to set the gas params.
     /// If gas_params was not set it will be set to the default gas params for the spec.
-    gas_params: GasParams,
+    pub gas_params: GasParams,
 
-    /// If gas params were set this will be set to true.
-    is_custom_gas_params: bool,
     /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
@@ -129,17 +132,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub disable_fee_charge: bool,
 }
 
-impl<SPEC: Into<SpecId> + Clone> InitializeCfg for CfgEnv<SPEC> {
-    fn initialize(&mut self) {
-        if !self.is_custom_gas_params {
-            return;
-        }
-        self.is_custom_gas_params = false;
-
-        self.gas_params = GasParams::new_spec(self.spec.clone().into());
-    }
-}
-
 impl CfgEnv {
     /// Creates new `CfgEnv` with default values.
     pub fn new() -> Self {
@@ -166,7 +158,15 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 
     /// Create new `CfgEnv` with default values and specified spec.
+    /// It will create a new gas params based on mainnet spec.
+    ///
+    /// Internally it will call [`CfgEnv::new_with_spec_and_gas_params`] with the mainnet gas params.
     pub fn new_with_spec(spec: SPEC) -> Self {
+        Self::new_with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
+    }
+
+    /// Create new `CfgEnv` with default values and specified spec.
+    pub fn new_with_spec_and_gas_params(spec: SPEC, gas_params: GasParams) -> Self {
         Self {
             chain_id: 1,
             tx_chain_id_check: true,
@@ -177,8 +177,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
-            gas_params: GasParams::new_spec(spec.into()),
-            is_custom_gas_params: false,
+            gas_params,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -219,11 +218,31 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
         self
     }
 
+    /// Sets the gas params for the `CfgEnv` to the mainnet gas params.
+    ///
+    /// If spec gets changed, calling this function would use this spec to set the mainnetF gas params.
+    pub fn with_mainnet_gas_params(mut self) -> Self {
+        self.set_gas_params(GasParams::new_spec(self.spec.clone().into()));
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv`.
+    #[inline]
+    pub fn set_spec(&mut self, spec: SPEC) {
+        self.spec = spec;
+    }
+
+    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    #[inline]
+    pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
+        self.set_spec(spec.clone());
+        self.set_gas_params(GasParams::new_spec(spec.into()));
+    }
+
     /// Sets the gas params for the `CfgEnv`.
     #[inline]
     pub fn set_gas_params(&mut self, gas_params: GasParams) {
         self.gas_params = gas_params;
-        self.is_custom_gas_params = true;
     }
 
     /// Enables the transaction's chain ID check.
@@ -241,8 +260,11 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     ///
     /// Resets the gas params override function as it is generic over SPEC.
-    pub fn with_spec<OSPEC: Into<SpecId> + Copy>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
-        let eth_spec = spec.into();
+    pub fn with_spec_and_gas_params<OSPEC: Into<SpecId> + Copy>(
+        self,
+        spec: OSPEC,
+        gas_params: GasParams,
+    ) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,
             tx_chain_id_check: self.tx_chain_id_check,
@@ -253,8 +275,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             tx_gas_limit_cap: self.tx_gas_limit_cap,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
-            gas_params: GasParams::new_spec(eth_spec),
-            is_custom_gas_params: false,
+            gas_params,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -464,7 +485,10 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
 
 impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
     fn default() -> Self {
-        Self::new_with_spec(SPEC::default())
+        Self::new_with_spec_and_gas_params(
+            SPEC::default(),
+            GasParams::new_spec(SPEC::default().into()),
+        )
     }
 }
 
