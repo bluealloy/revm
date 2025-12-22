@@ -1,4 +1,4 @@
-use revm::primitives::Address;
+use primitives::Address;
 use serde::{de, Deserialize};
 
 /// Deserializes a [string][String] as a [u64].

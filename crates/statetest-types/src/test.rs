@@ -1,7 +1,5 @@
-use revm::{
-    context::tx::TxEnv,
-    primitives::{Address, Bytes, HashMap, TxKind, B256},
-};
+use context::tx::TxEnv;
+use primitives::{Address, Bytes, HashMap, TxKind, B256};
 use serde::Deserialize;
 
 use crate::{
@@ -119,7 +117,7 @@ impl Test {
                 .map(|auth_list| {
                     auth_list
                         .into_iter()
-                        .map(|i| revm::context::either::Either::Left(i.into()))
+                        .map(|i| context::either::Either::Left(i.into()))
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default(),

@@ -3,6 +3,9 @@ pub mod pre_block;
 
 use clap::Parser;
 
+use revm::statetest_types::blockchain::{
+    Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
+};
 use revm::{
     bytecode::Bytecode,
     context::{cfg::CfgEnv, ContextTr},
@@ -15,9 +18,6 @@ use revm::{
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
-use statetest_types::blockchain::{
-    Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
-};
 use std::{
     collections::BTreeMap,
     fs,

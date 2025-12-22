@@ -5,11 +5,9 @@
 
 use crate::{deserialize_maybe_empty, AccountInfo, TestAuthorization};
 use alloy_eip7928::BlockAccessList;
-use revm::{
-    context::{transaction::AccessList, BlockEnv, TxEnv},
-    context_interface::block::BlobExcessGasAndPrice,
-    primitives::{Address, Bytes, FixedBytes, TxKind, B256, U256},
-};
+use context::{transaction::AccessList, BlockEnv, TxEnv};
+use context_interface::block::BlobExcessGasAndPrice;
+use primitives::{Address, Bytes, FixedBytes, TxKind, B256, U256};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
@@ -444,7 +442,7 @@ impl BlockchainTestCase {
 
 #[cfg(test)]
 mod test {
-    use revm::primitives::address;
+    use primitives::address;
 
     use super::*;
 
@@ -519,7 +517,7 @@ mod test {
     #[test]
     fn test_transaction_conversion() {
         use crate::blockchain::Transaction;
-        use revm::primitives::{Bytes, U256};
+        use primitives::{Bytes, U256};
 
         let tx = Transaction {
             transaction_type: Some(U256::from(0)),
