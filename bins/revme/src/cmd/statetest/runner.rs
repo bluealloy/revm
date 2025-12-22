@@ -3,7 +3,7 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-    database,
+    database::{self, bal::EvmDatabaseError},
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
     primitives::{hardfork::SpecId, Bytes, B256, U256},
@@ -149,7 +149,10 @@ struct DebugContext<'a> {
 fn build_json_output(
     test: &Test,
     test_name: &str,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
     validation: &TestValidationResult,
     spec: SpecId,
     error: Option<String>,
@@ -172,7 +175,10 @@ fn build_json_output(
 }
 
 fn format_evm_result(
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
 ) -> String {
     match exec_result {
         Ok(r) => match r {
@@ -186,7 +192,10 @@ fn format_evm_result(
 
 fn validate_exception(
     test: &Test,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
 ) -> Result<bool, TestErrorKind> {
     match (&test.expect_exception, exec_result) {
         (None, Ok(_)) => Ok(false), // No exception expected, execution succeeded
@@ -217,7 +226,10 @@ fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
     db: &mut database::State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
@@ -435,6 +447,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     };
     *ctx.elapsed.lock().unwrap() += timer.elapsed();
 
+    let exec_result = exec_result;
     // Check results
     check_evm_execution(
         ctx.test,

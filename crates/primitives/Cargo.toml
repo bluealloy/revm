@@ -19,7 +19,11 @@ workspace = true
 
 [dependencies]
 # alloy
-alloy-primitives = { workspace = true, features = ["rlp", "map"] }
+alloy-primitives = { workspace = true, features = [
+    "map-indexmap",
+    "rlp",
+    "map",
+] }
 
 # mics
 num_enum = { version = "0.7", default-features = false }

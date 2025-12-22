@@ -4,7 +4,8 @@ use database_interface::{
     BENCH_TARGET, BENCH_TARGET_BALANCE,
 };
 use primitives::{
-    hash_map::Entry, Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    hash_map::Entry, Address, AddressMap, B256Map, HashMap, Log, StorageKey, StorageValue, B256,
+    KECCAK_EMPTY, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
@@ -22,9 +23,9 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 pub struct Cache {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
-    pub accounts: HashMap<Address, DbAccount>,
+    pub accounts: AddressMap<DbAccount>,
     /// Tracks all contracts by their code hash.
-    pub contracts: HashMap<B256, Bytecode>,
+    pub contracts: B256Map<Bytecode>,
     /// All logs that were committed via [DatabaseCommit::commit].
     pub logs: Vec<Log>,
     /// All cached block hashes from the [DatabaseRef].
@@ -84,6 +85,7 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
                     block_hashes,
                 },
             db: mut inner,
+            ..
         } = self;
 
         inner.cache.accounts.extend(accounts);
@@ -468,6 +470,7 @@ impl Database for BenchmarkDB {
                 balance: BENCH_TARGET_BALANCE,
                 code: Some(self.0.clone()),
                 code_hash: self.1,
+                ..Default::default()
             }));
         }
         if address == BENCH_CALLER {
@@ -476,6 +479,7 @@ impl Database for BenchmarkDB {
                 balance: BENCH_CALLER_BALANCE,
                 code: None,
                 code_hash: KECCAK_EMPTY,
+                ..Default::default()
             }));
         }
         Ok(None)

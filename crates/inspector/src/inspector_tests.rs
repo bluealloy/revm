@@ -384,6 +384,7 @@ mod tests {
                 nonce: 0,
                 code_hash: primitives::keccak256(&caller_code),
                 code: Some(Bytecode::new_raw(caller_code)),
+                ..Default::default()
             },
         );
 
@@ -399,6 +400,7 @@ mod tests {
                 nonce: 0,
                 code_hash: primitives::keccak256(&callee_code),
                 code: Some(Bytecode::new_raw(callee_code)),
+                ..Default::default()
             },
         );
 

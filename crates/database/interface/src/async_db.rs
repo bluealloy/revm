@@ -33,6 +33,20 @@ pub trait DatabaseAsync {
         index: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
 
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseAsync::storage_async`] method.
+    #[inline]
+    fn storage_by_account_id_async(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
+        let _ = account_id;
+        self.storage_async(address, storage_key)
+    }
+
     /// Gets block hash by block number.
     fn block_hash_async(
         &mut self,
@@ -67,6 +81,20 @@ pub trait DatabaseAsyncRef {
         address: Address,
         index: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
+
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseAsyncRef::storage_async_ref`] method.
+    #[inline]
+    fn storage_by_account_id_async_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
+        let _ = account_id;
+        self.storage_async_ref(address, storage_key)
+    }
 
     /// Gets block hash by block number.
     fn block_hash_async_ref(
@@ -141,6 +169,22 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
         self.rt.block_on(self.db.storage_async(address, index))
     }
 
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseRef::storage_ref`] method.
+    #[inline]
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.rt.block_on(
+            self.db
+                .storage_by_account_id_async(address, account_id, storage_key),
+        )
+    }
+
     #[inline]
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async(number))
@@ -170,6 +214,19 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     }
 
     #[inline]
+    fn storage_by_account_id_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.rt.block_on(
+            self.db
+                .storage_by_account_id_async_ref(address, account_id, storage_key),
+        )
+    }
+
+    #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async_ref(number))
     }
@@ -191,13 +248,17 @@ impl HandleOrRuntime {
     {
         match self {
             Self::Handle(handle) => {
-                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime.
-                // Otherwise, call handle.block_on directly to avoid panicking outside of a runtime.
+                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime
+                // and the handle belongs to the same runtime. Otherwise, call handle.block_on directly.
                 let can_block_in_place = match Handle::try_current() {
-                    Ok(current) => !matches!(
-                        current.runtime_flavor(),
-                        tokio::runtime::RuntimeFlavor::CurrentThread
-                    ),
+                    Ok(current) => {
+                        // Only use block_in_place if we're in a multi-threaded runtime
+                        // and the handle belongs to the current runtime (same handle instance).
+                        !matches!(
+                            current.runtime_flavor(),
+                            tokio::runtime::RuntimeFlavor::CurrentThread
+                        ) && core::ptr::eq(handle as *const _, &current as *const _)
+                    }
                     Err(_) => false,
                 };
 
