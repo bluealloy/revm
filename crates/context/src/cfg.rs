@@ -13,7 +13,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// [`CfgEnv::new_with_spec`] is going to set both gas params and spec.
     ///
-    /// As GasParams is spec dependent, it is recommended to use one of followin function to set both of them.
+    /// As GasParams is spec dependent, it is recommended to use one of following function to set both of them.
     /// [`CfgEnv::set_spec_and_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`]
     pub spec: SPEC,
 
