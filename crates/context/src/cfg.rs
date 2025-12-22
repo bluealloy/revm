@@ -269,16 +269,17 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
-    pub fn with_spec_and_mainnet_gas_params(mut self, spec: SPEC) -> Self {
-        self.set_spec(spec.clone());
-        self.set_gas_params(GasParams::new_spec(spec.into()));
-        self
+    pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
+        self,
+        spec: OSPEC,
+    ) -> CfgEnv<OSPEC> {
+        self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     ///
     /// Resets the gas params override function as it is generic over SPEC.
-    pub fn with_spec_and_gas_params<OSPEC: Into<SpecId> + Copy>(
+    pub fn with_spec_and_gas_params<OSPEC: Into<SpecId> + Clone>(
         self,
         spec: OSPEC,
         gas_params: GasParams,
