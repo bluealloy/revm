@@ -64,11 +64,10 @@ pub fn validate_priority_fee_tx(
 /// Validate priority fee for transactions that support EIP-1559 (Eip1559, Eip4844, Eip7702).
 #[inline]
 fn validate_priority_fee_for_tx<CTX: ContextTr>(
-    context: &CTX,
+    tx: impl Transaction,
     base_fee: Option<u128>,
     disable_priority_fee_check: bool,
 ) -> Result<(), InvalidTransaction> {
-    let tx = context.tx();
     validate_priority_fee_tx(
         tx.max_fee_per_gas(),
         tx.max_priority_fee_per_gas().unwrap_or_default(),
@@ -173,14 +172,14 @@ pub fn validate_tx_env<CTX: ContextTr>(
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported);
             }
-            validate_priority_fee_for_tx(&context, base_fee, disable_priority_fee_check)?;
+            validate_priority_fee_for_tx(tx, base_fee, disable_priority_fee_check)?;
         }
         TransactionType::Eip4844 => {
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
-            validate_priority_fee_for_tx(&context, base_fee, disable_priority_fee_check)?;
+            validate_priority_fee_for_tx(tx, base_fee, disable_priority_fee_check)?;
 
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
@@ -195,7 +194,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
                 return Err(InvalidTransaction::Eip7702NotSupported);
             }
 
-            validate_priority_fee_for_tx(&context, base_fee, disable_priority_fee_check)?;
+            validate_priority_fee_for_tx(tx, base_fee, disable_priority_fee_check)?;
 
             let auth_list_len = tx.authorization_list_len();
             // The transaction is considered invalid if the length of authorization_list is zero.
