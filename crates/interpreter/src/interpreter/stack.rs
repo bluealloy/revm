@@ -248,10 +248,18 @@ impl Stack {
         if len < n || len + 1 > STACK_LIMIT {
             false
         } else {
-            // SAFETY: Check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                let ptr = self.data.as_mut_ptr().add(len);
-                ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
+                let src = self.data.as_ptr().add(len - n) as *const u8;
+                let dst = self.data.as_mut_ptr().add(len) as *mut u8;
+
+                let src_u64 = src as *const u64;
+                let dst_u64 = dst as *mut u64;
+
+                core::ptr::write(dst_u64.add(0), core::ptr::read(src_u64.add(0)));
+                core::ptr::write(dst_u64.add(1), core::ptr::read(src_u64.add(1)));
+                core::ptr::write(dst_u64.add(2), core::ptr::read(src_u64.add(2)));
+                core::ptr::write(dst_u64.add(3), core::ptr::read(src_u64.add(3)));
+
                 self.data.set_len(len + 1);
             }
             true
