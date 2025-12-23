@@ -34,6 +34,11 @@ impl Hash for GasParams {
     }
 }
 
+/// Pointer points to Arc so it is safe to send across threads
+unsafe impl Send for GasParams {}
+/// Pointer points to Arc so it is safe to access
+unsafe impl Sync for GasParams {}
+
 impl core::fmt::Debug for GasParams {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "GasParams {{ table: {:?} }}", self.table)
