@@ -30,6 +30,7 @@ interpreter.workspace = true
 precompile.workspace = true
 primitives.workspace = true
 state.workspace = true
+statetest-types = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
@@ -114,6 +115,8 @@ asm-sha2 = ["precompile/asm-sha2"]
 # Binary can be executed on all systems.
 portable = ["precompile/portable"]
 
-# use gmp for modexp precompile.
-# It is faster library but licenced as GPL code, if enabled please make sure to follow the license.
+# Use GMP for modexp precompile (LGPL; dynamically linked via system libs).
 gmp = ["precompile/gmp"]
+
+# Statetest types for running ethereum tests
+test-types = ["dep:statetest-types"]

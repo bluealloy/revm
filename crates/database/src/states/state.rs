@@ -383,18 +383,26 @@ impl<DB: Database> Database for State<DB> {
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         self.bal_state.commit(&changes);
-        let transitions = self.cache.apply_evm_state(changes, |_, _| {});
+        let transitions = self.cache.apply_evm_state_iter(changes, |_, _| {});
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
+        } else {
+            // Advance the iter to apply all state updates.
+            transitions.for_each(|_| {});
         }
     }
 
     fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
-        let transitions = self.cache.apply_evm_state(changes, |address, account| {
-            self.bal_state.commit_one(*address, account);
-        });
+        let transitions = self
+            .cache
+            .apply_evm_state_iter(changes, |address, account| {
+                self.bal_state.commit_one(*address, account);
+            });
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
+        } else {
+            // Advance the iter to apply all state updates.
+            transitions.for_each(|_| {});
         }
     }
 }

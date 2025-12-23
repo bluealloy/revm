@@ -1,4 +1,4 @@
-use revm::primitives::hardfork::SpecId;
+use primitives::hardfork::SpecId;
 use serde::Deserialize;
 
 /// Ethereum specification names

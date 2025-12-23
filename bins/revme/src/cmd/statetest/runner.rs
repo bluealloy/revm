@@ -7,10 +7,10 @@ use revm::{
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
     primitives::{hardfork::SpecId, Bytes, B256, U256},
+    statetest_types::{SpecName, Test, TestSuite, TestUnit},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
-use statetest_types::{SpecName, Test, TestSuite, TestUnit};
 use std::{
     convert::Infallible,
     fmt::Debug,

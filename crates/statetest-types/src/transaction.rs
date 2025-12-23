@@ -1,9 +1,7 @@
 use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
-use revm::{
-    context::TransactionType,
-    context_interface::transaction::AccessList,
-    primitives::{Address, Bytes, B256, U256},
-};
+use context::TransactionType;
+use context_interface::transaction::AccessList;
+use primitives::{Address, Bytes, B256, U256};
 use serde::{Deserialize, Serialize};
 
 /// Transaction parts.

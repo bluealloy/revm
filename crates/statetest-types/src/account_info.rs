@@ -1,4 +1,4 @@
-use revm::primitives::{Bytes, HashMap, StorageKey, StorageValue, U256};
+use primitives::{Bytes, HashMap, StorageKey, StorageValue, U256};
 use serde::Deserialize;
 
 use crate::deserializer::deserialize_str_as_u64;
