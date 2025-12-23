@@ -74,7 +74,8 @@ ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]
-default = ["std", "gmp", "secp256k1", "blst", "c-kzg", "portable"]
+default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
+
 std = [
 	"primitives/std",
 	"k256/std",
