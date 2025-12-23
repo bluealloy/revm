@@ -230,6 +230,8 @@ pub enum BalError {
     AccountNotFound,
     /// Slot not found in BAL.
     SlotNotFound,
+    /// String error.
+    StrError(&'static str),
 }
 
 impl core::fmt::Display for BalError {
@@ -237,6 +239,9 @@ impl core::fmt::Display for BalError {
         match self {
             Self::AccountNotFound => write!(f, "Account not found in BAL"),
             Self::SlotNotFound => write!(f, "Slot not found in BAL"),
+            Self::StrError(s) => write!(f, "{s}"),
         }
     }
 }
+
+impl core::error::Error for BalError {}
