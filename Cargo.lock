@@ -138,7 +138,7 @@ dependencies = [
 [[package]]
 name = "alloy-eip7928"
 version = "0.2.0"
-source = "git+https://github.com/rakita/alloy-eips.git?rev=734beaf#734beafea409bdd87b3a4e33ac72ac68654bb8dd"
+source = "git+https://github.com/alloy-rs/eips.git?rev=734beaf#734beafea409bdd87b3a4e33ac72ac68654bb8dd"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
