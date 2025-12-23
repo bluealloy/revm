@@ -1027,12 +1027,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "az"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b7e4c2464d97fe331d41de9d5db0def0a96f4d823b8b32a2efd503578988973"
-
-[[package]]
 name = "backtrace"
 version = "0.3.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3802,13 +3796,13 @@ dependencies = [
  "c-kzg",
  "cfg-if",
  "codspeed-criterion-compat",
+ "gmp-mpfr-sys",
  "k256",
  "p256",
  "rand 0.9.2",
  "revm-primitives",
  "ripemd",
  "rstest",
- "rug",
  "secp256k1 0.31.1",
  "sha2",
  "substrate-bn",
@@ -3930,18 +3924,6 @@ dependencies = [
  "rustc_version 0.4.1",
  "syn 2.0.106",
  "unicode-ident",
-]
-
-[[package]]
-name = "rug"
-version = "1.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58ad2e973fe3c3214251a840a621812a4f40468da814b1a3d6947d433c2af11f"
-dependencies = [
- "az",
- "gmp-mpfr-sys",
- "libc",
- "libm",
 ]
 
 [[package]]
