@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::entry::JournalEntryTr;
+use super::{StateUpdate, StateUpdateListenerHandle};
 use auto_impl::auto_impl;
 use database_interface::Database;
 use primitives::{
@@ -120,7 +121,6 @@ pub trait JournaledAccountTr {
 /// Journaled account contains both mutable account and journal entries.
 ///
 /// Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
-#[derive(Debug, PartialEq, Eq)]
 pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
     /// Address of the account.
     address: Address,
@@ -134,6 +134,38 @@ pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
     transaction_id: usize,
     /// Database used to load storage.
     db: &'a mut DB,
+    /// Optional state update listener for per-change emission.
+    state_update_listener: Option<StateUpdateListenerHandle>,
+}
+
+impl<'a, DB: PartialEq, ENTRY: JournalEntryTr + PartialEq> PartialEq
+    for JournaledAccount<'a, DB, ENTRY>
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.address == other.address
+            && self.account == other.account
+            && self.journal_entries == other.journal_entries
+            && self.access_list == other.access_list
+            && self.transaction_id == other.transaction_id
+            && self.db == other.db
+    }
+}
+
+impl<'a, DB: Eq, ENTRY: JournalEntryTr + Eq> Eq for JournaledAccount<'a, DB, ENTRY> {}
+
+impl<'a, DB: core::fmt::Debug, ENTRY: JournalEntryTr + core::fmt::Debug> core::fmt::Debug
+    for JournaledAccount<'a, DB, ENTRY>
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("JournaledAccount")
+            .field("address", &self.address)
+            .field("account", &self.account)
+            .field("journal_entries", &self.journal_entries)
+            .field("access_list", &self.access_list)
+            .field("transaction_id", &self.transaction_id)
+            .field("db", &self.db)
+            .finish()
+    }
 }
 
 impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
@@ -146,6 +178,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         db: &'a mut DB,
         access_list: &'a HashMap<Address, HashSet<StorageKey>>,
         transaction_id: usize,
+        state_update_listener: Option<StateUpdateListenerHandle>,
     ) -> Self {
         Self {
             address,
@@ -154,6 +187,26 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
             access_list,
             transaction_id,
             db,
+            state_update_listener,
+        }
+    }
+
+    #[inline]
+    fn notify_account_update(&self) {
+        if let Some(listener) = &self.state_update_listener {
+            listener.on_update(StateUpdate::Account {
+                address: self.address,
+            });
+        }
+    }
+
+    #[inline]
+    fn notify_storage_update(&self, key: StorageKey) {
+        if let Some(listener) = &self.state_update_listener {
+            listener.on_update(StateUpdate::Storage {
+                address: self.address,
+                key,
+            });
         }
     }
 
@@ -248,6 +301,8 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
             // add journal entry.
             self.journal_entries
                 .push(ENTRY::storage_changed(self.address, key, previous_value));
+            self.notify_storage_update(key);
+            self.notify_account_update();
         }
 
         ret
@@ -345,6 +400,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
                 self.account.info.balance,
             ));
             self.account.info.set_balance(balance);
+            self.notify_account_update();
         }
     }
 
@@ -387,6 +443,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         };
         self.account.info.set_nonce(nonce);
         self.journal_entries.push(ENTRY::nonce_bumped(self.address));
+        self.notify_account_update();
         true
     }
 
@@ -400,6 +457,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         self.account.info.set_nonce(nonce);
         self.journal_entries
             .push(ENTRY::nonce_changed(self.address, previous_nonce));
+        self.notify_account_update();
     }
 
     /// Set the nonce of the account without creating a journal entry.
@@ -420,6 +478,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
         self.account.info.set_code_hash(code_hash);
         self.account.info.set_code(code);
         self.journal_entries.push(ENTRY::code_changed(self.address));
+        self.notify_account_update();
     }
 
     /// Sets the code of the account. Calculates hash of the code.

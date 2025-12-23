@@ -6,7 +6,8 @@ use context_interface::{
     journaled_state::{
         account::{JournaledAccount, JournaledAccountTr},
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
-        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
+        AccountLoad, JournalCheckpoint, JournalLoadError, StateUpdate, StateUpdateListenerHandle,
+        TransferError,
     },
 };
 use core::mem;
@@ -22,7 +23,7 @@ use std::vec::Vec;
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalInner<ENTRY> {
     /// The current state
@@ -58,6 +59,39 @@ pub struct JournalInner<ENTRY> {
     pub spec: SpecId,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
+    /// Optional state update listener for per-change emission.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub state_update_listener: Option<StateUpdateListenerHandle>,
+}
+
+impl<ENTRY: PartialEq> PartialEq for JournalInner<ENTRY> {
+    fn eq(&self, other: &Self) -> bool {
+        self.state == other.state
+            && self.transient_storage == other.transient_storage
+            && self.logs == other.logs
+            && self.depth == other.depth
+            && self.journal == other.journal
+            && self.transaction_id == other.transaction_id
+            && self.spec == other.spec
+            && self.warm_addresses == other.warm_addresses
+    }
+}
+
+impl<ENTRY: Eq> Eq for JournalInner<ENTRY> {}
+
+impl<ENTRY: core::fmt::Debug> core::fmt::Debug for JournalInner<ENTRY> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("JournalInner")
+            .field("state", &self.state)
+            .field("transient_storage", &self.transient_storage)
+            .field("logs", &self.logs)
+            .field("depth", &self.depth)
+            .field("journal", &self.journal)
+            .field("transaction_id", &self.transaction_id)
+            .field("spec", &self.spec)
+            .field("warm_addresses", &self.warm_addresses)
+            .finish()
+    }
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -81,6 +115,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth: 0,
             spec: SpecId::default(),
             warm_addresses: WarmAddresses::new(),
+            state_update_listener: None,
         }
     }
 
@@ -109,10 +144,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            state_update_listener,
         } = self;
         // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
         let _ = state;
+        let _ = state_update_listener;
         transient_storage.clear();
         *depth = 0;
 
@@ -139,8 +176,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            state_update_listener,
         } = self;
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        let _ = state_update_listener;
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
             entry.revert(state, None, is_spurious_dragon_enabled);
@@ -171,9 +210,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            state_update_listener,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
+        let _ = state_update_listener;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
 
@@ -200,6 +241,22 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn set_spec_id(&mut self, spec: SpecId) {
         self.spec = spec;
+    }
+
+    /// Sets the state update listener.
+    #[inline]
+    pub fn set_state_update_listener(
+        &mut self,
+        listener: Option<StateUpdateListenerHandle>,
+    ) {
+        self.state_update_listener = listener;
+    }
+
+    #[inline]
+    fn notify_account_update(&self, address: Address) {
+        if let Some(listener) = &self.state_update_listener {
+            listener.on_update(StateUpdate::Account { address });
+        }
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -247,6 +304,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
+        self.notify_account_update(address);
     }
 
     /// Use it only if you know that acc is warm.
@@ -342,6 +400,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Some(TransferError::OutOfFunds);
         };
         *from_balance = from_balance_decr;
+        self.notify_account_update(from);
 
         // add balance to
         let to_account = self.state.get_mut(&to).unwrap();
@@ -352,6 +411,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             return Some(TransferError::OverflowPayment);
         };
         *to_balance = to_balance_incr;
+        self.notify_account_update(to);
 
         // add journal entry
         self.journal
@@ -443,6 +503,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
 
+        self.notify_account_update(target_address);
+        self.notify_account_update(caller);
+
         Ok(checkpoint)
     }
 
@@ -515,6 +578,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let target_account = self.state.get_mut(&target).unwrap();
             Self::touch_account(&mut self.journal, target, target_account);
             target_account.info.balance += acc_balance;
+            self.notify_account_update(target);
         }
 
         let acc = self.state.get_mut(&address).unwrap();
@@ -553,6 +617,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         if let Some(entry) = journal_entry {
             self.journal.push(entry);
+            self.notify_account_update(address);
         };
 
         Ok(StateLoad {
@@ -717,6 +782,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             db,
             self.warm_addresses.access_list(),
             self.transaction_id,
+            self.state_update_listener.clone(),
         ))
     }
 
@@ -795,6 +861,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 db,
                 self.warm_addresses.access_list(),
                 self.transaction_id,
+                self.state_update_listener.clone(),
             ),
             is_cold,
         ))
@@ -932,6 +999,7 @@ mod tests {
     use database_interface::EmptyDB;
     use primitives::{address, HashSet, U256};
     use state::AccountInfo;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn test_sload_skip_cold_load() {
@@ -967,5 +1035,60 @@ mod tests {
         let state_load = result.unwrap();
         assert!(!state_load.is_cold); // Should be warm
         assert_eq!(state_load.data, U256::ZERO); // Empty slot
+    }
+
+    #[test]
+    fn test_state_update_listener_fires_on_changes() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let test_address = address!("1000000000000000000000000000000000000000");
+        let storage_key = U256::from(1);
+
+        let account_info = AccountInfo {
+            balance: U256::from(1000),
+            nonce: 1,
+            code_hash: KECCAK_EMPTY,
+            code: Some(Bytecode::default()),
+            account_id: None,
+        };
+        journal
+            .state
+            .insert(test_address, Account::from(account_info));
+
+        let updates: Arc<Mutex<Vec<StateUpdate>>> = Arc::new(Mutex::new(Vec::new()));
+        let updates_handle = Arc::clone(&updates);
+        journal.set_state_update_listener(Some(Arc::new(move |update: StateUpdate| {
+            updates_handle.lock().unwrap().push(update);
+        })));
+
+        let mut db = EmptyDB::new();
+        let _ = journal
+            .sstore_assume_account_present(&mut db, test_address, storage_key, U256::from(2), false)
+            .unwrap();
+
+        {
+            let updates = updates.lock().unwrap();
+            assert_eq!(updates.len(), 2);
+            assert!(updates.contains(&StateUpdate::Account {
+                address: test_address
+            }));
+            assert!(updates.contains(&StateUpdate::Storage {
+                address: test_address,
+                key: storage_key
+            }));
+        }
+
+        updates.lock().unwrap().clear();
+        let _ = journal
+            .balance_incr(&mut db, test_address, U256::from(5))
+            .unwrap();
+
+        let updates = updates.lock().unwrap();
+        assert_eq!(updates.len(), 1);
+        assert_eq!(
+            updates[0],
+            StateUpdate::Account {
+                address: test_address
+            }
+        );
     }
 }

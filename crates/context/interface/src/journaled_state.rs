@@ -15,7 +15,45 @@ use primitives::{
     hardfork::SpecId, Address, Bytes, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
+use std::sync::Arc;
 use std::{borrow::Cow, vec::Vec};
+
+/// State updates emitted during execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum StateUpdate {
+    /// Account-level update (balance/nonce/code/selfdestruct/create/etc).
+    Account {
+        /// Updated account address.
+        address: Address,
+    },
+    /// Storage slot update (sstore).
+    Storage {
+        /// Updated account address.
+        address: Address,
+        /// Updated storage slot key.
+        key: StorageKey,
+    },
+}
+
+/// Listener for state update events.
+pub trait StateUpdateListener: Send + Sync {
+    /// Called for each state update.
+    fn on_update(&self, update: StateUpdate);
+}
+
+impl<T> StateUpdateListener for T
+where
+    T: Fn(StateUpdate) + Send + Sync,
+{
+    #[inline]
+    fn on_update(&self, update: StateUpdate) {
+        (self)(update);
+    }
+}
+
+/// Shared state update listener handle.
+pub type StateUpdateListenerHandle = Arc<dyn StateUpdateListener>;
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     /// Database type that is used in the journal.

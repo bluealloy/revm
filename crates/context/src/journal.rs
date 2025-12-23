@@ -87,6 +87,15 @@ impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
     pub fn to_inner(&self) -> JournalInner<ENTRY> {
         self.inner.clone()
     }
+
+    /// Sets the state update listener for per-change emission.
+    #[inline]
+    pub fn set_state_update_listener(
+        &mut self,
+        listener: Option<context_interface::journaled_state::StateUpdateListenerHandle>,
+    ) {
+        self.inner.set_state_update_listener(listener);
+    }
 }
 
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
