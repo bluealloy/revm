@@ -76,7 +76,7 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
                 }
 
                 let bits = gmp::mpz_sizeinbase(self.as_ptr(), 2);
-                let mut output = vec![0u8; ((bits + 7) / 8) as usize];
+                let mut output = vec![0u8; bits.div_ceil(8)];
                 let mut count: usize = 0;
                 gmp::mpz_export(
                     output.as_mut_ptr() as *mut c_void,
@@ -87,7 +87,7 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
                     0,
                     self.as_ptr(),
                 );
-                output.truncate(count as usize);
+                output.truncate(count);
                 output
             }
         }
