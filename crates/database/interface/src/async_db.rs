@@ -248,23 +248,37 @@ impl HandleOrRuntime {
     {
         match self {
             Self::Handle(handle) => {
-                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime
-                // and the handle belongs to the same runtime. Otherwise, call handle.block_on directly.
-                let can_block_in_place = match Handle::try_current() {
-                    Ok(current) => {
-                        // Only use block_in_place if we're in a multi-threaded runtime
-                        // and the handle belongs to the current runtime (same handle instance).
+                // We use a conservative approach: if we're currently in a multi-threaded
+                // tokio runtime context, we use block_in_place. This works because:
+                // 1. If we're in the SAME runtime, block_in_place prevents deadlock
+                // 2. If we're in a DIFFERENT runtime, block_in_place still works safely
+                //    (it just moves the work off the current worker thread before blocking)
+                //
+                // This approach is compatible with all tokio versions and doesn't require
+                // runtime identity comparison (Handle::id() is unstable feature).
+                let should_use_block_in_place = Handle::try_current()
+                    .ok()
+                    .map(|current| {
+                        // Only use block_in_place for multi-threaded runtimes
+                        // (block_in_place panics on current-thread runtime)
                         !matches!(
                             current.runtime_flavor(),
                             tokio::runtime::RuntimeFlavor::CurrentThread
-                        ) && core::ptr::eq(handle as *const _, &current as *const _)
-                    }
-                    Err(_) => false,
-                };
+                        )
+                    })
+                    .unwrap_or(false);
 
-                if can_block_in_place {
+                if should_use_block_in_place {
+                    // We're in a multi-threaded runtime context.
+                    // Use block_in_place to:
+                    // 1. Move the blocking operation off the async worker thread
+                    // 2. Prevent potential deadlock if this is the same runtime
+                    // 3. Allow other tasks to continue executing
                     tokio::task::block_in_place(move || handle.block_on(f))
                 } else {
+                    // Safe to call block_on directly in these cases:
+                    // - We're outside any runtime context
+                    // - We're in a current-thread runtime (where block_in_place doesn't work)
                     handle.block_on(f)
                 }
             }
