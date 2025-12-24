@@ -33,3 +33,11 @@ thiserror = { workspace = true }
 
 # alloy
 alloy-eip7928 = { workspace = true, features = ["std", "serde", "rlp"] }
+
+[features]
+map-foldhash = [
+    "primitives/map-foldhash",
+    "state/map-foldhash",
+    "context/map-foldhash",
+    "database/map-foldhash",
+]

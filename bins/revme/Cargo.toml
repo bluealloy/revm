@@ -41,8 +41,10 @@ k256 = { workspace = true, features = ["ecdsa"] }
 csv = "1.1.6"
 
 [features]
+default = ["map-foldhash"]
 # Optionally enable gmp because it doesn't work on i686 github actions runners
 gmp = ["revm/gmp"]
+map-foldhash = ["revm/map-foldhash"]
 
 [[bench]]
 name = "evm"
