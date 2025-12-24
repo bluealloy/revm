@@ -1,3 +1,4 @@
+mod bench;
 pub mod merkle_trie;
 mod runner;
 pub mod utils;
@@ -36,6 +37,15 @@ pub struct Cmd {
     /// Keep going after a test failure
     #[arg(long, alias = "no-fail-fast")]
     keep_going: bool,
+    /// Run benchmarks instead of tests
+    #[arg(long)]
+    bench: bool,
+    /// Warmup time for benchmarks (default: 300 milliseconds)
+    #[arg(short = 'w', long)]
+    warmup: Option<u64>,
+    /// Measurement time for benchmarks (default: 2 seconds)
+    #[arg(short = 'm', long)]
+    time: Option<u64>,
 }
 
 impl Cmd {
@@ -50,7 +60,6 @@ impl Cmd {
                 });
             }
 
-            println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
 
             if test_files.is_empty() {
@@ -61,13 +70,19 @@ impl Cmd {
                 });
             }
 
-            run(
-                test_files,
-                self.single_thread,
-                self.json,
-                self.json_outcome,
-                self.keep_going,
-            )?
+            if self.bench {
+                println!("\nRunning benchmarks in {}...", path.display());
+                bench::run_benchmarks(test_files, self.warmup, self.time);
+            } else {
+                println!("\nRunning tests in {}...", path.display());
+                run(
+                    test_files,
+                    self.single_thread,
+                    self.json,
+                    self.json_outcome,
+                    self.keep_going,
+                )?;
+            }
         }
         Ok(())
     }
