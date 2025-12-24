@@ -116,8 +116,9 @@ blst = ["dep:blst"]
 bn = ["dep:bn"]
 
 # Use GMP (LGPL) for modexp precompile via gmp-mpfr-sys.
-# This feature links to system GMP using the experimental `use-system-libs` flag.
-gmp = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/use-system-libs"]
+# If you want to use a system libs and dynamic linking of GMP, include `gmp-mpfr-sys` in your project
+# with a `features = ["use-system-libs"]` enabled.
+gmp = ["dep:gmp-mpfr-sys"]
 
 [[bench]]
 name = "bench"
