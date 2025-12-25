@@ -28,6 +28,11 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
+/// Panics if the value cannot be serialized to JSON.
+fn print_json<T: serde::Serialize>(value: &T) {
+    println!("{}", serde_json::to_string(value).unwrap());
+}
+
 /// `blockchaintest` subcommand
 #[derive(Parser, Debug)]
 pub struct Cmd {
@@ -123,7 +128,7 @@ fn run_tests(
                     "status": "skipped",
                     "reason": "known_issue"
                 });
-                println!("{}", serde_json::to_string(&output).unwrap());
+                print_json(&output);
             } else if !omit_progress {
                 println!(
                     "Skipping ({}/{}): {}",
@@ -163,7 +168,7 @@ fn run_tests(
                         "error": e.to_string(),
                         "status": "failed"
                     });
-                    println!("{}", serde_json::to_string(&output).unwrap());
+                    print_json(&output);
                 } else if !omit_progress {
                     eprintln!(
                         "✗ ({}/{}) {} - {}",
@@ -192,7 +197,7 @@ fn run_tests(
                 "duration_secs": duration.as_secs_f64(),
             }
         });
-        println!("{}", serde_json::to_string(&results).unwrap());
+        print_json(&results);
     } else {
         // Print failed test paths if keep-going was enabled
         if keep_going && !failed_paths.is_empty() {
@@ -238,7 +243,7 @@ fn run_test_file(
                 "file": file_path.display().to_string(),
                 "status": "running"
             });
-            println!("{}", serde_json::to_string(&output).unwrap());
+            print_json(&output);
         } else {
             println!("  Running: {test_name}");
         }
@@ -253,7 +258,7 @@ fn run_test_file(
                         "file": file_path.display().to_string(),
                         "status": "passed"
                     });
-                    println!("{}", serde_json::to_string(&output).unwrap());
+                    print_json(&output);
                 }
                 test_count += 1;
             }
@@ -265,7 +270,7 @@ fn run_test_file(
                         "status": "failed",
                         "error": e.to_string()
                     });
-                    println!("{}", serde_json::to_string(&output).unwrap());
+                    print_json(&output);
                 }
                 return Err(Error::TestExecution {
                     test_name: test_name.clone(),
@@ -799,7 +804,7 @@ fn execute_blockchain_test(
                         "error": "missing sender",
                         "status": "skipped"
                     });
-                    println!("{}", serde_json::to_string(&output).unwrap());
+                    print_json(&output);
                 } else {
                     eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
                 }
@@ -836,7 +841,7 @@ fn execute_blockchain_test(
                             "error": format!("tx env creation error: {e}"),
                             "status": "skipped"
                         });
-                        println!("{}", serde_json::to_string(&output).unwrap());
+                        print_json(&output);
                     } else {
                         eprintln!(
                             "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
@@ -894,7 +899,7 @@ fn execute_blockchain_test(
                                 "gas_used": result.result.gas_used(),
                                 "status": "unexpected_success"
                             });
-                            println!("{}", serde_json::to_string(&output).unwrap());
+                            print_json(&output);
                         } else {
                             eprintln!(
                                 "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {expected_exception})"
@@ -937,7 +942,7 @@ fn execute_blockchain_test(
                                 "error": format!("{e:?}"),
                                 "status": "unexpected_failure"
                             });
-                            println!("{}", serde_json::to_string(&output).unwrap());
+                            print_json(&output);
                         } else {
                             eprintln!(
                                 "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
@@ -952,7 +957,7 @@ fn execute_blockchain_test(
                             "error": format!("{e:?}"),
                             "status": "expected_failure"
                         });
-                        println!("{}", serde_json::to_string(&output).unwrap());
+                        print_json(&output);
                     }
                 }
             }
