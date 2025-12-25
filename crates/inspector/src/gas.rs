@@ -214,12 +214,12 @@ mod tests {
 
         let mut inspector = CallOverrideInspector::default();
         inspector.call_override.push(Some(CallOutcome::new(
-            InterpreterResult::new(InstructionResult::Return, [0x01].into(), Gas::new(100_000)),
+            InterpreterResult::new(InstructionResult::Return, [0x01].into(), Gas::new(16_000)),
             0..1,
         )));
         inspector.call_override.push(None);
         inspector.create_override.push(Some(CreateOutcome::new(
-            InterpreterResult::new(InstructionResult::Revert, [0x02].into(), Gas::new(100_000)),
+            InterpreterResult::new(InstructionResult::Revert, [0x02].into(), Gas::new(16_000)),
             Some(Address::ZERO),
         )));
 
