@@ -268,7 +268,7 @@ fn run_test_file(
                     println!("{}", serde_json::to_string(&output).unwrap());
                 }
                 return Err(Error::TestExecution {
-                    test_name: test_name.clone(),
+                    test_name,
                     test_path: file_path.to_path_buf(),
                     error: e.to_string(),
                 });

@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
     let ref_tx = evm.transact_commit(
         TxEnv::builder()
             .kind(TxKind::Create)
-            .data(bytecode.clone())
+            .data(bytecode)
             .build()
             .unwrap(),
     )?;
