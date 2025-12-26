@@ -607,11 +607,10 @@ fn print_error_with_state(
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
-            for (key, value) in storage.iter().take(5) {
+            let mut sorted_storage: Vec<_> = storage.iter().collect();
+            sorted_storage.sort_by_key(|(key, _)| *key);
+            for (key, value) in sorted_storage.iter() {
                 eprintln!("      {key:?} => {value:?}");
-            }
-            if storage.len() > 5 {
-                eprintln!("      ... and {} more slots", storage.len() - 5);
             }
         }
     }
@@ -632,11 +631,10 @@ fn print_error_with_state(
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
-            for (key, value) in storage.iter().take(5) {
+            let mut sorted_storage: Vec<_> = storage.iter().collect();
+            sorted_storage.sort_by_key(|(key, _)| *key);
+            for (key, value) in sorted_storage.iter() {
                 eprintln!("      {key:?} => {value:?}");
-            }
-            if storage.len() > 5 {
-                eprintln!("      ... and {} more slots", storage.len() - 5);
             }
         }
     }
@@ -653,11 +651,8 @@ fn print_error_with_state(
             }
             if !account.storage.is_empty() {
                 eprintln!("    Storage ({} slots):", account.storage.len());
-                for (key, value) in account.storage.iter().take(5) {
+                for (key, value) in account.storage.iter() {
                     eprintln!("      {key:?} => {value:?}");
-                }
-                if account.storage.len() > 5 {
-                    eprintln!("      ... and {} more slots", account.storage.len() - 5);
                 }
             }
         }
