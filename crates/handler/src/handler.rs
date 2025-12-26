@@ -295,7 +295,11 @@ pub trait Handler {
         apply_eip7702_auth_list(evm.ctx_mut())
     }
 
-    /// Deducts maximum possible fee and transfer value from caller's balance.
+    /// Deducts the maximum possible fee from caller's balance.
+    ///
+    /// If cfg.is_balance_check_disabled, this method will add back enough funds to ensure that
+    /// the caller's balance is at least tx.value() before returning. Note that the amount of funds
+    /// added back in this case may exceed the maximum fee.
     ///
     /// Unused fees are returned to caller after execution completes.
     #[inline]
