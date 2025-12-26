@@ -19,7 +19,11 @@ workspace = true
 
 [dependencies]
 # alloy
-alloy-primitives = { workspace = true, features = ["rlp", "map"] }
+alloy-primitives = { workspace = true, features = [
+    "map-indexmap",
+    "rlp",
+    "map",
+] }
 
 # mics
 num_enum = { version = "0.7", default-features = false }
@@ -27,7 +31,6 @@ once_cell = { version = "1.21", default-features = false, features = [
     "alloc",
     "race",
 ] }
-auto_impl.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

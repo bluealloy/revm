@@ -2,20 +2,25 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::GasParams;
-use derive_where::derive_where;
-use primitives::{
-    eip170, eip3860, eip7825,
-    hardfork::{SetSpecTr, SpecId},
-};
+use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug)]
-#[derive_where(Eq, PartialEq; SPEC)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC = SpecId> {
     /// Specification for EVM represent the hardfork
-    spec: SPEC,
+    ///
+    /// [`CfgEnv::new_with_spec`] is going to set both gas params and spec.
+    ///
+    /// As GasParams is spec dependent, it is recommended to use one of following function to set both of them.
+    /// [`CfgEnv::set_spec_and_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`], [`CfgEnv::with_mainnet_gas_params`]
+    pub spec: SPEC,
+
+    /// Gas params for the EVM. Use [`CfgEnv::set_gas_params`] to set the gas params.
+    /// If gas_params was not set it will be set to the default gas params for the spec.
+    pub gas_params: GasParams,
+
     /// Chain ID of the EVM. Used in CHAINID opcode and transaction's chain ID check.
     ///
     /// Chain ID is introduced EIP-155.
@@ -62,14 +67,6 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
     /// with initials cap of 30M.
     pub tx_gas_limit_cap: Option<u64>,
-    /// Gas params for the EVM.
-    pub gas_params: GasParams,
-    /// Gas params override function.
-    ///
-    /// If this is set, it will override the gas params with this function.
-    #[cfg_attr(feature = "serde", serde(skip))]
-    #[derive_where(skip)]
-    pub gas_params_override: Option<fn(SPEC) -> GasParams>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -142,38 +139,20 @@ impl CfgEnv {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
-    /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
-    ///
-    /// If this field is not set, return the default value for the spec.
-    ///
-    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
-    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
-    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
-        self.blob_base_fee_update_fraction.unwrap_or_else(|| {
-            let spec: SpecId = self.spec.clone().into();
-            if spec.is_enabled_in(SpecId::PRAGUE) {
-                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
-            } else {
-                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
-            }
-        })
-    }
-
+impl<SPEC> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
-    pub fn new_with_spec(spec: SPEC) -> Self {
+    pub fn new_with_spec_and_gas_params(spec: SPEC, gas_params: GasParams) -> Self {
         Self {
             chain_id: 1,
             tx_chain_id_check: true,
             limit_contract_code_size: None,
             limit_contract_initcode_size: None,
-            spec: spec.clone(),
+            spec,
             disable_nonce_check: false,
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
-            gas_params: GasParams::new_spec(spec.into()),
-            gas_params_override: None,
+            gas_params,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -197,23 +176,33 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Returns the spec for the `CfgEnv`.
     #[inline]
-    pub fn spec(&self) -> SPEC {
-        self.spec.clone()
-    }
-
-    /// Sets the gas params override function.
-    ///
-    /// Every change in spec will call `override_fn` to update [`GasParams`].
-    #[inline]
-    pub fn set_gas_params_override(&mut self, override_fn: fn(SPEC) -> GasParams) {
-        self.gas_params_override = Some(override_fn);
-        self.gas_params = override_fn(self.spec.clone());
+    pub fn spec(&self) -> &SPEC {
+        &self.spec
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
+    }
+
+    /// Sets the gas params for the `CfgEnv`.
+    #[inline]
+    pub fn with_gas_params(mut self, gas_params: GasParams) -> Self {
+        self.set_gas_params(gas_params);
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv`.
+    #[inline]
+    pub fn set_spec(&mut self, spec: SPEC) {
+        self.spec = spec;
+    }
+
+    /// Sets the gas params for the `CfgEnv`.
+    #[inline]
+    pub fn set_gas_params(&mut self, gas_params: GasParams) {
+        self.gas_params = gas_params;
     }
 
     /// Enables the transaction's chain ID check.
@@ -228,11 +217,33 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
         self
     }
 
+    /// Sets the spec for the `CfgEnv`.
+    #[inline]
+    #[deprecated(
+        since = "0.1.0",
+        note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead"
+    )]
+    pub fn with_spec(mut self, spec: SPEC) -> Self {
+        self.spec = spec;
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
+        self,
+        spec: OSPEC,
+    ) -> CfgEnv<OSPEC> {
+        self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
+    }
+
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
     ///
     /// Resets the gas params override function as it is generic over SPEC.
-    pub fn with_spec<OSPEC: Into<SpecId> + Copy>(self, spec: OSPEC) -> CfgEnv<OSPEC> {
-        let eth_spec = spec.into();
+    pub fn with_spec_and_gas_params<OSPEC: Into<SpecId> + Clone>(
+        self,
+        spec: OSPEC,
+        gas_params: GasParams,
+    ) -> CfgEnv<OSPEC> {
         CfgEnv {
             chain_id: self.chain_id,
             tx_chain_id_check: self.tx_chain_id_check,
@@ -243,8 +254,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             tx_gas_limit_cap: self.tx_gas_limit_cap,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
-            gas_params: GasParams::new_spec(eth_spec),
-            gas_params_override: None,
+            gas_params,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
             #[cfg(feature = "optional_balance_check")]
@@ -301,6 +311,48 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
         self
+    }
+}
+
+impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
+    /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
+    ///
+    /// If this field is not set, return the default value for the spec.
+    ///
+    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
+    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
+    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
+        self.blob_base_fee_update_fraction.unwrap_or_else(|| {
+            let spec: SpecId = self.spec.clone().into();
+            if spec.is_enabled_in(SpecId::PRAGUE) {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
+            } else {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+            }
+        })
+    }
+
+    /// Create new `CfgEnv` with default values and specified spec.
+    /// It will create a new gas params based on mainnet spec.
+    ///
+    /// Internally it will call [`CfgEnv::new_with_spec_and_gas_params`] with the mainnet gas params.
+    pub fn new_with_spec(spec: SPEC) -> Self {
+        Self::new_with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
+    }
+
+    /// Sets the gas params for the `CfgEnv` to the mainnet gas params.
+    ///
+    /// If spec gets changed, calling this function would use this spec to set the mainnetF gas params.
+    pub fn with_mainnet_gas_params(mut self) -> Self {
+        self.set_gas_params(GasParams::new_spec(self.spec.clone().into()));
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    #[inline]
+    pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
+        self.set_spec(spec.clone());
+        self.set_gas_params(GasParams::new_spec(spec.into()));
     }
 }
 
@@ -452,21 +504,12 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for CfgEnv<SPEC> {
-    #[inline]
-    fn set_spec(&mut self, spec: SPEC) {
-        self.spec = spec.clone();
-
-        self.gas_params = self
-            .gas_params_override
-            .map(|override_fn| override_fn(spec.clone()))
-            .unwrap_or_else(|| GasParams::new_spec(spec.into()));
-    }
-}
-
-impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
+impl<SPEC: Default + Into<SpecId>> Default for CfgEnv<SPEC> {
     fn default() -> Self {
-        Self::new_with_spec(SPEC::default())
+        Self::new_with_spec_and_gas_params(
+            SPEC::default(),
+            GasParams::new_spec(SPEC::default().into()),
+        )
     }
 }
 

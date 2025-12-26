@@ -1,11 +1,9 @@
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
-use revm::{
-    context::{block::BlockEnv, cfg::CfgEnv},
-    database::CacheState,
-    primitives::{hardfork::SpecId, keccak256, Address, Bytes, HashMap, B256},
-    state::Bytecode,
-};
+use context::{block::BlockEnv, cfg::CfgEnv};
+use database::CacheState;
+use primitives::{hardfork::SpecId, keccak256, Address, Bytes, HashMap, B256};
 use serde::Deserialize;
+use state::Bytecode;
 use std::collections::BTreeMap;
 
 /// Single test unit struct
@@ -71,11 +69,12 @@ impl TestUnit {
             let code_hash = keccak256(&info.code);
             let bytecode = Bytecode::new_raw_checked(info.code.clone())
                 .unwrap_or(Bytecode::new_legacy(info.code.clone()));
-            let acc_info = revm::state::AccountInfo {
+            let acc_info = state::AccountInfo {
                 balance: info.balance,
                 code_hash,
                 code: Some(bytecode),
                 nonce: info.nonce,
+                ..Default::default()
             };
             cache_state.insert_account_with_storage(*address, acc_info, info.storage.clone());
         }
@@ -132,13 +131,10 @@ impl TestUnit {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm::{
-        context_interface::block::calc_blob_gasprice,
-        primitives::{
-            eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
-            hardfork::SetSpecTr,
-            U256,
-        },
+    use context_interface::block::calc_blob_gasprice;
+    use primitives::{
+        eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
+        U256,
     };
 
     /// Creates a minimal TestUnit with excess blob gas set for testing blob fee calculation
@@ -188,8 +184,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_cancun() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::CANCUN);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
 
         let block = unit.block_env(&mut cfg);
 
@@ -212,8 +207,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_prague() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::PRAGUE);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::PRAGUE);
 
         let block = unit.block_env(&mut cfg);
 
@@ -235,8 +229,7 @@ mod tests {
     fn test_block_env_blob_fee_fraction_osaka() {
         let unit = create_test_unit_with_excess_blob_gas(0x240000); // 2,359,296
 
-        let mut cfg = CfgEnv::default();
-        cfg.set_spec(SpecId::OSAKA);
+        let mut cfg = CfgEnv::new_with_spec(SpecId::OSAKA);
 
         let block = unit.block_env(&mut cfg);
 

@@ -29,6 +29,11 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
+      - name: Install GMP (all-features)
+        if: contains(matrix.flags, '--all-features')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
       - run: cargo test --workspace ${{ matrix.flags }}
 
   check-no-std:
@@ -74,6 +79,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
+      - name: Install GMP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
       - name: cargo hack
         run: cargo hack check --feature-powerset --depth 1
 
@@ -86,6 +95,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - name: Install GMP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
       - run: cargo clippy --workspace --all-targets --all-features
         env:
           RUSTFLAGS: -Dwarnings
@@ -99,6 +112,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-docs
+      - name: Install GMP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
       - run: cargo doc --workspace --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: "--cfg docsrs -D warnings"

@@ -1,7 +1,10 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
-use database_interface::{DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
+use database_interface::{
+    bal::BalState, DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef,
+};
 use primitives::B256;
-use std::collections::BTreeMap;
+use state::bal::Bal;
+use std::{collections::BTreeMap, sync::Arc};
 
 /// Allows building of State and initializing it with different options.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,6 +32,8 @@ pub struct StateBuilder<DB> {
     with_background_transition_merge: bool,
     /// If we want to set different block hashes,
     with_block_hashes: BTreeMap<u64, B256>,
+    /// BAL state.
+    bal_state: BalState,
 }
 
 impl StateBuilder<EmptyDB> {
@@ -58,6 +63,7 @@ impl<DB: Database> StateBuilder<DB> {
             with_bundle_update: false,
             with_background_transition_merge: false,
             with_block_hashes: BTreeMap::new(),
+            bal_state: BalState::default(),
         }
     }
 
@@ -73,6 +79,7 @@ impl<DB: Database> StateBuilder<DB> {
             with_bundle_update: self.with_bundle_update,
             with_background_transition_merge: self.with_background_transition_merge,
             with_block_hashes: self.with_block_hashes,
+            bal_state: self.bal_state,
         }
     }
 
@@ -158,6 +165,18 @@ impl<DB: Database> StateBuilder<DB> {
         }
     }
 
+    /// With BAL.
+    pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
+        self.bal_state.bal = Some(bal);
+        self
+    }
+
+    /// With BAL builder.
+    pub fn with_bal_builder(mut self) -> Self {
+        self.bal_state.bal_builder = Some(Bal::new());
+        self
+    }
+
     /// Builds the State with the configured settings.
     pub fn build(mut self) -> State<DB> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
@@ -175,6 +194,7 @@ impl<DB: Database> StateBuilder<DB> {
             bundle_state: self.with_bundle_prestate.unwrap_or_default(),
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
+            bal_state: self.bal_state,
         }
     }
 }

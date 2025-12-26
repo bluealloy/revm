@@ -33,6 +33,20 @@ pub trait DatabaseAsync {
         index: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
 
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseAsync::storage_async`] method.
+    #[inline]
+    fn storage_by_account_id_async(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
+        let _ = account_id;
+        self.storage_async(address, storage_key)
+    }
+
     /// Gets block hash by block number.
     fn block_hash_async(
         &mut self,
@@ -67,6 +81,20 @@ pub trait DatabaseAsyncRef {
         address: Address,
         index: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send;
+
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseAsyncRef::storage_async_ref`] method.
+    #[inline]
+    fn storage_by_account_id_async_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
+        let _ = account_id;
+        self.storage_async_ref(address, storage_key)
+    }
 
     /// Gets block hash by block number.
     fn block_hash_async_ref(
@@ -141,6 +169,22 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
         self.rt.block_on(self.db.storage_async(address, index))
     }
 
+    /// Gets storage value of account by its id.
+    ///
+    /// Default implementation is to call [`DatabaseRef::storage_ref`] method.
+    #[inline]
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.rt.block_on(
+            self.db
+                .storage_by_account_id_async(address, account_id, storage_key),
+        )
+    }
+
     #[inline]
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async(number))
@@ -170,6 +214,19 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     }
 
     #[inline]
+    fn storage_by_account_id_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.rt.block_on(
+            self.db
+                .storage_by_account_id_async_ref(address, account_id, storage_key),
+        )
+    }
+
+    #[inline]
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         self.rt.block_on(self.db.block_hash_async_ref(number))
     }
@@ -191,19 +248,37 @@ impl HandleOrRuntime {
     {
         match self {
             Self::Handle(handle) => {
-                // Use block_in_place only when we're currently inside a multi-threaded Tokio runtime.
-                // Otherwise, call handle.block_on directly to avoid panicking outside of a runtime.
-                let can_block_in_place = match Handle::try_current() {
-                    Ok(current) => !matches!(
-                        current.runtime_flavor(),
-                        tokio::runtime::RuntimeFlavor::CurrentThread
-                    ),
-                    Err(_) => false,
-                };
+                // We use a conservative approach: if we're currently in a multi-threaded
+                // tokio runtime context, we use block_in_place. This works because:
+                // 1. If we're in the SAME runtime, block_in_place prevents deadlock
+                // 2. If we're in a DIFFERENT runtime, block_in_place still works safely
+                //    (it just moves the work off the current worker thread before blocking)
+                //
+                // This approach is compatible with all tokio versions and doesn't require
+                // runtime identity comparison (Handle::id() is unstable feature).
+                let should_use_block_in_place = Handle::try_current()
+                    .ok()
+                    .map(|current| {
+                        // Only use block_in_place for multi-threaded runtimes
+                        // (block_in_place panics on current-thread runtime)
+                        !matches!(
+                            current.runtime_flavor(),
+                            tokio::runtime::RuntimeFlavor::CurrentThread
+                        )
+                    })
+                    .unwrap_or(false);
 
-                if can_block_in_place {
+                if should_use_block_in_place {
+                    // We're in a multi-threaded runtime context.
+                    // Use block_in_place to:
+                    // 1. Move the blocking operation off the async worker thread
+                    // 2. Prevent potential deadlock if this is the same runtime
+                    // 3. Allow other tasks to continue executing
                     tokio::task::block_in_place(move || handle.block_on(f))
                 } else {
+                    // Safe to call block_on directly in these cases:
+                    // - We're outside any runtime context
+                    // - We're in a current-thread runtime (where block_in_place doesn't work)
                     handle.block_on(f)
                 }
             }

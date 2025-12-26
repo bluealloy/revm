@@ -1,4 +1,4 @@
-use revm::primitives::{Address, B256, U256};
+use primitives::{Address, B256, U256};
 use serde::Deserialize;
 
 /// Environment variables

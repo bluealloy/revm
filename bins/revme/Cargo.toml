@@ -17,8 +17,8 @@ revm = { workspace = true, features = [
     "blst",
     "tracer",
     "parse",
+    "test-types",
 ] }
-statetest-types.workspace = true
 
 # criterion
 criterion.workspace = true

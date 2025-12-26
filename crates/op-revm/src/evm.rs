@@ -10,7 +10,6 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
-    primitives::hardfork::SetSpecTr,
     Database, Inspector,
 };
 
@@ -40,6 +39,11 @@ impl<CTX: ContextTr<Cfg: Cfg<Spec: Into<OpSpecId> + Clone>>, INSP>
             precompiles: OpPrecompiles::new_with_spec(spec),
             frame_stack: FrameStack::new_prealloc(8),
         })
+    }
+
+    /// Consumes self and returns the inner context.
+    pub fn into_context(self) -> CTX {
+        self.0.ctx
     }
 }
 
@@ -96,19 +100,6 @@ where
     }
 }
 
-impl<CTX, INSP, I, P> SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>
-    for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
-where
-    CTX: ContextTr + SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
-    I: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
-    P: SetSpecTr<<<CTX as ContextTr>::Cfg as Cfg>::Spec>,
-{
-    /// Sets the spec for the EVM.
-    #[inline]
-    fn set_spec(&mut self, spec: <<CTX as ContextTr>::Cfg as Cfg>::Spec) {
-        self.0.set_spec(spec);
-    }
-}
 impl<CTX, INSP, I, P> EvmTr for OpEvm<CTX, INSP, I, P, EthFrame<EthInterpreter>>
 where
     CTX: ContextTr,

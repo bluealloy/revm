@@ -85,10 +85,7 @@ mod test {
     use context::{Context, TxEnv};
     use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        StorageKey, StorageValue, TxKind, U256,
-    };
+    use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
 
     #[test]
     fn sanity_eip7702_tx() {
@@ -104,7 +101,7 @@ mod test {
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let ctx = Context::mainnet()
-            .modify_cfg_chained(|cfg| cfg.set_spec(SpecId::PRAGUE))
+            .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
             .with_db(BenchmarkDB::new_bytecode(bytecode));
 
         let mut evm = ctx.build_mainnet();

@@ -3,7 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{B256, KECCAK_EMPTY, U256};
+use primitives::{OnceLock, B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
@@ -17,6 +17,12 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// Hash of the raw bytes in `code`, or [`KECCAK_EMPTY`].
     pub code_hash: B256,
+    /// Used as a hint to optimize the access to the storage of account.
+    ///
+    /// It is set when account is loaded from the database, and if it is `Some` it will called
+    /// by journal to ask database the storage with this account_id (It will still send the address to the database).
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub account_id: Option<usize>,
     /// [`Bytecode`] data associated with this account.
     ///
     /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be
@@ -28,12 +34,16 @@ pub struct AccountInfo {
 
 impl Default for AccountInfo {
     fn default() -> Self {
-        Self {
-            balance: U256::ZERO,
-            code_hash: KECCAK_EMPTY,
-            code: Some(Bytecode::default()),
-            nonce: 0,
-        }
+        static DEFAULT: OnceLock<AccountInfo> = OnceLock::new();
+        DEFAULT
+            .get_or_init(|| Self {
+                balance: U256::ZERO,
+                code_hash: KECCAK_EMPTY,
+                account_id: None,
+                nonce: 0,
+                code: Some(Bytecode::default()),
+            })
+            .clone()
     }
 }
 
@@ -77,6 +87,7 @@ impl AccountInfo {
             nonce,
             code: Some(code),
             code_hash,
+            account_id: None,
         }
     }
 
@@ -87,10 +98,9 @@ impl AccountInfo {
     /// As code hash is calculated with [`Bytecode::hash_slow`] there will be performance penalty if used frequently.
     pub fn with_code(self, code: Bytecode) -> Self {
         Self {
-            balance: self.balance,
-            nonce: self.nonce,
             code_hash: code.hash_slow(),
             code: Some(code),
+            ..self
         }
     }
 
@@ -102,10 +112,9 @@ impl AccountInfo {
     /// also [Self::with_code_and_hash].
     pub fn with_code_hash(self, code_hash: B256) -> Self {
         Self {
-            balance: self.balance,
-            nonce: self.nonce,
             code_hash,
             code: None,
+            ..self
         }
     }
 
@@ -118,10 +127,9 @@ impl AccountInfo {
     pub fn with_code_and_hash(self, code: Bytecode, code_hash: B256) -> Self {
         debug_assert_eq!(code.hash_slow(), code_hash);
         Self {
-            balance: self.balance,
-            nonce: self.nonce,
             code_hash,
             code: Some(code),
+            ..self
         }
     }
 
@@ -201,6 +209,7 @@ impl AccountInfo {
             balance: self.balance,
             nonce: self.nonce,
             code_hash: self.code_hash,
+            account_id: self.account_id,
             code: None,
         }
     }
@@ -289,6 +298,7 @@ impl AccountInfo {
             nonce: 1,
             code: Some(bytecode),
             code_hash: hash,
+            account_id: None,
         }
     }
 }
@@ -298,25 +308,17 @@ mod tests {
     use crate::AccountInfo;
     use bytecode::Bytecode;
     use core::cmp::Ordering;
-    use primitives::{KECCAK_EMPTY, U256};
     use std::collections::BTreeSet;
 
     #[test]
     fn test_account_info_trait_consistency() {
         let bytecode = Bytecode::default();
         let account1 = AccountInfo {
-            balance: U256::ZERO,
-            nonce: 0,
-            code_hash: KECCAK_EMPTY,
             code: Some(bytecode.clone()),
+            ..AccountInfo::default()
         };
 
-        let account2 = AccountInfo {
-            balance: U256::ZERO,
-            nonce: 0,
-            code_hash: KECCAK_EMPTY,
-            code: None,
-        };
+        let account2 = AccountInfo::default();
 
         assert_eq!(account1, account2, "Accounts should be equal ignoring code");
 

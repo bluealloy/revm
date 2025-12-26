@@ -26,6 +26,10 @@ pub use primitives;
 #[doc(inline)]
 pub use state;
 
+#[cfg(feature = "test-types")]
+#[doc(inline)]
+pub use statetest_types;
+
 // Export items.
 
 pub use context::{

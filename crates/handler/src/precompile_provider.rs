@@ -3,10 +3,7 @@ use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
-use primitives::{
-    hardfork::{SetSpecTr, SpecId},
-    Address, Bytes,
-};
+use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
     boxed::Box,
     string::{String, ToString},
@@ -44,8 +41,6 @@ pub struct EthPrecompiles {
     pub precompiles: &'static Precompiles,
     /// Current spec. None means that spec was not set yet.
     pub spec: SpecId,
-    /// Spec override function.
-    pub spec_override_fn: Option<fn(spec: SpecId) -> &'static Precompiles>,
 }
 
 impl EthPrecompiles {
@@ -54,7 +49,6 @@ impl EthPrecompiles {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
             spec,
-            spec_override_fn: None,
         }
     }
 
@@ -69,26 +63,11 @@ impl EthPrecompiles {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for EthPrecompiles {
-    fn set_spec(&mut self, spec: SPEC) {
-        let spec = spec.into();
-        if spec == self.spec {
-            return;
-        }
-        self.precompiles = self
-            .spec_override_fn
-            .map(|override_fn| override_fn(spec))
-            .unwrap_or_else(|| Precompiles::new(PrecompileSpecId::from_spec_id(spec)));
-        self.spec = spec;
-    }
-}
-
 impl Clone for EthPrecompiles {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
             spec: self.spec,
-            spec_override_fn: self.spec_override_fn,
         }
     }
 }
@@ -99,7 +78,6 @@ impl Default for EthPrecompiles {
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
             spec,
-            spec_override_fn: None,
         }
     }
 }
@@ -113,10 +91,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         if spec == self.spec {
             return false;
         }
-        self.precompiles = self
-            .spec_override_fn
-            .map(|override_fn| override_fn(spec))
-            .unwrap_or_else(|| Precompiles::new(PrecompileSpecId::from_spec_id(spec)));
+        self.precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(spec));
         self.spec = spec;
         true
     }

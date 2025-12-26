@@ -23,8 +23,8 @@ primitives.workspace = true
 
 # modexp precompiles
 aurora-engine-modexp.workspace = true
-# gmp wrapper
-rug = { workspace = true, features = ["integer"], optional = true }
+# gmp ffi
+gmp-mpfr-sys = { workspace = true, default-features = false, optional = true }
 
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
@@ -75,6 +75,7 @@ rstest.workspace = true
 
 [features]
 default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
+
 std = [
 	"primitives/std",
 	"k256/std",
@@ -90,7 +91,6 @@ std = [
 	"ark-serialize/std",
 	"ark-std/std",
 	"p256/std",
-	"rug?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -115,9 +115,10 @@ blst = ["dep:blst"]
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
 
-# Use rug (that wraps gmp) for modexp precompile.
-# It is faster library but licences as GPL code, if enabled please make sure to follow the license.
-gmp = ["dep:rug"]
+# Use GMP (LGPL) for modexp precompile via gmp-mpfr-sys.
+# If you want to use a system libs and dynamic linking of GMP, include `gmp-mpfr-sys` in your project
+# with a `features = ["use-system-libs"]` enabled.
+gmp = ["dep:gmp-mpfr-sys"]
 
 [[bench]]
 name = "bench"

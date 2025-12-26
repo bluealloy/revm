@@ -91,16 +91,7 @@ async fn main() -> anyhow::Result<()> {
             c.chain_id = chain_id;
         });
 
-    let write = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open("traces/0.json");
-    let inner = Arc::new(Mutex::new(BufWriter::new(
-        write.expect("Failed to open file"),
-    )));
-    let writer = FlushWriter::new(Arc::clone(&inner));
-    let mut evm = ctx.build_mainnet_with_inspector(TracerEip3155::new(Box::new(writer)));
+    let mut evm = ctx.build_mainnet_with_inspector(TracerEip3155::new(Box::new(std::io::sink())));
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");

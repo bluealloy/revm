@@ -378,7 +378,11 @@ where
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let is_deposit = evm.ctx().tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
-        let output = if error.is_tx_error() && is_deposit {
+        let is_tx_error = error.is_tx_error();
+        let mut output = Err(error);
+
+        // Deposit transaction can't fail so we manually handle it here.
+        if is_tx_error && is_deposit {
             let ctx = evm.ctx();
             let spec = ctx.cfg().spec();
             let tx = ctx.tx();
@@ -420,13 +424,12 @@ where
                 0
             };
             // clear the journal
-            Ok(ExecutionResult::Halt {
+            output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
                 gas_used,
             })
-        } else {
-            Err(error)
-        };
+        }
+
         // do the cleanup
         evm.ctx().chain_mut().clear_tx_l1_cost();
         evm.ctx().local_mut().clear();
@@ -461,13 +464,13 @@ mod tests {
     };
     use alloy_primitives::uint;
     use revm::{
-        context::{BlockEnv, Context, TxEnv},
+        context::{BlockEnv, CfgEnv, Context, TxEnv},
         context_interface::result::InvalidTransaction,
         database::InMemoryDB,
         database_interface::EmptyDB,
         handler::EthFrame,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
-        primitives::{bytes, hardfork::SetSpecTr, Address, Bytes, B256},
+        primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
     };
     use rstest::rstest;
@@ -508,7 +511,7 @@ mod tests {
                     .base(TxEnv::builder().gas_limit(100))
                     .build_fill(),
             )
-            .with_spec(OpSpecId::BEDROCK);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK));
 
         let gas = call_last_frame_return(ctx, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -524,7 +527,7 @@ mod tests {
                     .base(TxEnv::builder().gas_limit(100))
                     .build_fill(),
             )
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -541,7 +544,7 @@ mod tests {
                     .source_hash(B256::from([1u8; 32]))
                     .build_fill(),
             )
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
@@ -566,7 +569,7 @@ mod tests {
                     .source_hash(B256::from([1u8; 32]))
                     .build_fill(),
             )
-            .with_spec(OpSpecId::BEDROCK);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK));
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spent(), 100);
@@ -583,7 +586,7 @@ mod tests {
                     .is_system_transaction()
                     .build_fill(),
             )
-            .with_spec(OpSpecId::BEDROCK);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK));
         let gas = call_last_frame_return(ctx, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 100);
         assert_eq!(gas.spent(), 0);
@@ -610,7 +613,7 @@ mod tests {
                 l1_base_fee_scalar: U256::from(1_000),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
         ctx.modify_tx(|tx| {
             tx.deposit.source_hash = B256::from([1u8; 32]);
             tx.deposit.mint = Some(10);
@@ -649,7 +652,7 @@ mod tests {
                 l2_block: Some(U256::from(0)),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::REGOLITH)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH))
             .with_tx(
                 OpTransaction::builder()
                     .base(TxEnv::builder().gas_limit(100))
@@ -722,7 +725,7 @@ mod tests {
                 number: BLOCK_NUM,
                 ..Default::default()
             })
-            .with_spec(OpSpecId::ISTHMUS);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS));
 
         let mut evm = ctx.build_op();
 
@@ -809,7 +812,7 @@ mod tests {
                 number: BLOCK_NUM,
                 ..Default::default()
             })
-            .with_spec(OpSpecId::JOVIAN)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::JOVIAN))
             // set the operator fee to a low value
             .with_tx(
                 OpTransaction::builder()
@@ -877,7 +880,7 @@ mod tests {
                 number: BLOCK_NUM,
                 ..Default::default()
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
         assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
@@ -937,7 +940,7 @@ mod tests {
                 number: BLOCK_NUM,
                 ..Default::default()
             })
-            .with_spec(OpSpecId::ECOTONE);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::ECOTONE));
 
         let mut evm = ctx.build_op();
         assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
@@ -1010,7 +1013,7 @@ mod tests {
                 number: BLOCK_NUM,
                 ..Default::default()
             })
-            .with_spec(OpSpecId::ISTHMUS);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS));
 
         let mut evm = ctx.build_op();
 
@@ -1060,7 +1063,7 @@ mod tests {
                 l2_block: Some(U256::from(0)),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::REGOLITH)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH))
             .with_tx(
                 OpTransaction::builder()
                     .base(TxEnv::builder().gas_limit(100))
@@ -1103,7 +1106,7 @@ mod tests {
                 l2_block: Some(U256::from(0)),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::ISTHMUS)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS))
             .with_tx(
                 OpTransaction::builder()
                     .base(TxEnv::builder().gas_limit(10))
@@ -1145,7 +1148,7 @@ mod tests {
                 l2_block: Some(U256::from(0)),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::JOVIAN)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::JOVIAN))
             .with_tx(
                 OpTransaction::builder()
                     .base(TxEnv::builder().gas_limit(10))
@@ -1187,7 +1190,7 @@ mod tests {
                 l2_block: Some(U256::from(0)),
                 ..Default::default()
             })
-            .with_spec(OpSpecId::REGOLITH)
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH))
             .modify_tx_chained(|tx| {
                 tx.enveloped_tx = Some(bytes!("FACADE"));
             });
@@ -1218,7 +1221,7 @@ mod tests {
                 tx.deposit.source_hash = B256::from([1u8; 32]);
                 tx.deposit.is_system_transaction = true;
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
         let handler =
@@ -1231,7 +1234,11 @@ mod tests {
             ))
         );
 
-        evm.set_spec(OpSpecId::BEDROCK);
+        // With BEDROCK spec.
+        let ctx = evm.into_context();
+        let mut evm = ctx
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::BEDROCK))
+            .build_op();
 
         // Pre-regolith system transactions should be allowed.
         assert!(handler.validate_env(&mut evm).is_ok());
@@ -1244,7 +1251,7 @@ mod tests {
             .modify_tx_chained(|tx| {
                 tx.deposit.source_hash = B256::from([1u8; 32]);
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
         let handler =
@@ -1260,7 +1267,7 @@ mod tests {
             .modify_tx_chained(|tx| {
                 tx.deposit.source_hash = B256::from([1u8; 32]);
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
         let handler =
@@ -1277,7 +1284,7 @@ mod tests {
                 // Set up as deposit transaction by having a deposit with source_hash
                 tx.deposit.source_hash = B256::from([1u8; 32]);
             })
-            .with_spec(OpSpecId::REGOLITH);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
         let mut handler =
@@ -1360,7 +1367,7 @@ mod tests {
                     })
                     .build_fill(),
             )
-            .with_spec(OpSpecId::ISTHMUS);
+            .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS));
 
         let mut evm = ctx.build_op();
         let handler =

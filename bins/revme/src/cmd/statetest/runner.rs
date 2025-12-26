@@ -3,17 +3,14 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-    database,
+    database::{self, bal::EvmDatabaseError},
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::{
-        hardfork::{SetSpecTr, SpecId},
-        Bytes, B256, U256,
-    },
+    primitives::{hardfork::SpecId, Bytes, B256, U256},
+    statetest_types::{SpecName, Test, TestSuite, TestUnit},
     Context, ExecuteCommitEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
-use statetest_types::{SpecName, Test, TestSuite, TestUnit};
 use std::{
     convert::Infallible,
     fmt::Debug,
@@ -152,7 +149,10 @@ struct DebugContext<'a> {
 fn build_json_output(
     test: &Test,
     test_name: &str,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
     validation: &TestValidationResult,
     spec: SpecId,
     error: Option<String>,
@@ -175,7 +175,10 @@ fn build_json_output(
 }
 
 fn format_evm_result(
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
 ) -> String {
     match exec_result {
         Ok(r) => match r {
@@ -189,7 +192,10 @@ fn format_evm_result(
 
 fn validate_exception(
     test: &Test,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
 ) -> Result<bool, TestErrorKind> {
     match (&test.expect_exception, exec_result) {
         (None, Ok(_)) => Ok(false), // No exception expected, execution succeeded
@@ -220,7 +226,10 @@ fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
+    exec_result: &Result<
+        ExecutionResult<HaltReason>,
+        EVMError<EvmDatabaseError<Infallible>, InvalidTransaction>,
+    >,
     db: &mut database::State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
@@ -328,7 +337,7 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            cfg.set_spec(spec_name.to_spec_id());
+            cfg.set_spec_and_mainnet_gas_params(spec_name.to_spec_id());
 
             // Configure max blobs per spec
             if cfg.spec().is_enabled_in(SpecId::OSAKA) {
@@ -419,7 +428,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     let evm_context = Context::mainnet()
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .with_db(&mut state);
 
     // Execute
@@ -438,6 +447,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     };
     *ctx.elapsed.lock().unwrap() += timer.elapsed();
 
+    let exec_result = exec_result;
     // Check results
     check_evm_execution(
         ctx.test,
@@ -445,7 +455,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
         ctx.name,
         &exec_result,
         db,
-        ctx.cfg.spec(),
+        *ctx.cfg.spec(),
         ctx.print_json_outcome,
     )
 }
@@ -465,7 +475,7 @@ fn debug_failed_test(ctx: DebugContext) {
         .with_db(&mut state)
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
 
     let exec_result = evm.inspect_tx_commit(ctx.tx);

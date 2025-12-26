@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use bytecode::Bytecode;
-use primitives::{Address, HashMap, B256};
+use primitives::{Address, AddressMap, B256Map, HashMap};
 use state::{Account, AccountInfo};
 use std::vec::Vec;
 
@@ -17,9 +17,9 @@ use std::vec::Vec;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
     /// Block state account with account state
-    pub accounts: HashMap<Address, CacheAccount>,
+    pub accounts: AddressMap<CacheAccount>,
     /// Created contracts
-    pub contracts: HashMap<B256, Bytecode>,
+    pub contracts: B256Map<Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork)
     pub has_state_clear: bool,
 }
@@ -90,17 +90,33 @@ impl CacheState {
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
     #[inline]
-    pub fn apply_evm_state(
+    pub fn apply_evm_state<F>(
         &mut self,
         evm_state: impl IntoIterator<Item = (Address, Account)>,
-    ) -> Vec<(Address, TransitionAccount)> {
-        evm_state
-            .into_iter()
-            .filter_map(|(address, account)| {
-                self.apply_account_state(address, account)
-                    .map(|transition| (address, transition))
-            })
-            .collect()
+        inspect: F,
+    ) -> Vec<(Address, TransitionAccount)>
+    where
+        F: FnMut(&Address, &Account),
+    {
+        self.apply_evm_state_iter(evm_state, inspect).collect()
+    }
+
+    /// Applies output of revm execution and creates an iterator of account transitions.
+    #[inline]
+    pub(crate) fn apply_evm_state_iter<'a, F, T>(
+        &'a mut self,
+        evm_state: T,
+        mut inspect: F,
+    ) -> impl Iterator<Item = (Address, TransitionAccount)> + use<'a, F, T>
+    where
+        F: FnMut(&Address, &Account),
+        T: IntoIterator<Item = (Address, Account)>,
+    {
+        evm_state.into_iter().filter_map(move |(address, account)| {
+            inspect(&address, &account);
+            self.apply_account_state(address, account)
+                .map(|transition| (address, transition))
+        })
     }
 
     /// Pretty print the cache state for debugging purposes.
@@ -169,7 +185,7 @@ impl CacheState {
     /// Applies updated account state to the cached account.
     ///
     /// Returns account transition if applicable.
-    fn apply_account_state(
+    pub(crate) fn apply_account_state(
         &mut self,
         address: Address,
         account: Account,

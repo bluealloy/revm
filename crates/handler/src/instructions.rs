@@ -3,7 +3,7 @@ use interpreter::{
     instructions::{instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
-use primitives::hardfork::{SetSpecTr, SpecId};
+use primitives::hardfork::SpecId;
 use std::boxed::Box;
 
 /// Stores instructions for EVM.
@@ -36,22 +36,6 @@ where
             instruction_table: self.instruction_table.clone(),
             spec: self.spec,
         }
-    }
-}
-
-impl<WIRE, HOST, SPEC: Into<SpecId> + Clone> SetSpecTr<SPEC> for EthInstructions<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    #[inline]
-    fn set_spec(&mut self, spec: SPEC) {
-        let spec = spec.into();
-        if spec == self.spec {
-            return;
-        }
-        self.spec = spec;
-        *self.instruction_table = instruction_table_gas_changes_spec(spec);
     }
 }
 

@@ -6,6 +6,7 @@ use crate::{
     },
     context::SStoreResult,
 };
+use core::hash::{Hash, Hasher};
 use primitives::{
     hardfork::SpecId::{self},
     U256,
@@ -13,7 +14,7 @@ use primitives::{
 use std::sync::Arc;
 
 /// Gas table for dynamic gas constants.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub struct GasParams {
     /// Table of gas costs for operations
     table: Arc<[u64; 256]>,
@@ -21,6 +22,30 @@ pub struct GasParams {
     ptr: *const u64,
 }
 
+impl PartialEq<GasParams> for GasParams {
+    fn eq(&self, other: &GasParams) -> bool {
+        self.table == other.table
+    }
+}
+
+impl Hash for GasParams {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.table.hash(hasher);
+    }
+}
+
+/// Pointer points to Arc so it is safe to send across threads
+unsafe impl Send for GasParams {}
+/// Pointer points to Arc so it is safe to access
+unsafe impl Sync for GasParams {}
+
+impl core::fmt::Debug for GasParams {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "GasParams {{ table: {:?} }}", self.table)
+    }
+}
+
+impl Eq for GasParams {}
 #[cfg(feature = "serde")]
 mod serde {
     use super::{Arc, GasParams};
@@ -207,6 +232,13 @@ impl GasParams {
         self.get(GasId::selfdestruct_refund()) as i64
     }
 
+    /// Selfdestruct cold cost is calculated differently from other cold costs.
+    /// and it contains both cold and warm costs.
+    #[inline]
+    pub fn selfdestruct_cold_cost(&self) -> u64 {
+        self.cold_account_additional_cost() + self.warm_storage_read_cost()
+    }
+
     /// Selfdestruct cost.
     #[inline]
     pub fn selfdestruct_cost(&self, should_charge_topup: bool, is_cold: bool) -> u64 {
@@ -223,7 +255,7 @@ impl GasParams {
             // the changes small, a SELFDESTRUCT already costs 5K and is a no-op if invoked more than once.
             //
             // For GasParams both values are zero before BERLIN fork.
-            gas += self.cold_account_additional_cost() + self.warm_storage_read_cost();
+            gas += self.selfdestruct_cold_cost();
         }
         gas
     }
