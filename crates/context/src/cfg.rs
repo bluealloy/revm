@@ -139,32 +139,7 @@ impl CfgEnv {
     }
 }
 
-impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
-    /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
-    ///
-    /// If this field is not set, return the default value for the spec.
-    ///
-    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
-    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
-    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
-        self.blob_base_fee_update_fraction.unwrap_or_else(|| {
-            let spec: SpecId = self.spec.clone().into();
-            if spec.is_enabled_in(SpecId::PRAGUE) {
-                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
-            } else {
-                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
-            }
-        })
-    }
-
-    /// Create new `CfgEnv` with default values and specified spec.
-    /// It will create a new gas params based on mainnet spec.
-    ///
-    /// Internally it will call [`CfgEnv::new_with_spec_and_gas_params`] with the mainnet gas params.
-    pub fn new_with_spec(spec: SPEC) -> Self {
-        Self::new_with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
-    }
-
+impl<SPEC> CfgEnv<SPEC> {
     /// Create new `CfgEnv` with default values and specified spec.
     pub fn new_with_spec_and_gas_params(spec: SPEC, gas_params: GasParams) -> Self {
         Self {
@@ -218,25 +193,10 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
         self
     }
 
-    /// Sets the gas params for the `CfgEnv` to the mainnet gas params.
-    ///
-    /// If spec gets changed, calling this function would use this spec to set the mainnetF gas params.
-    pub fn with_mainnet_gas_params(mut self) -> Self {
-        self.set_gas_params(GasParams::new_spec(self.spec.clone().into()));
-        self
-    }
-
     /// Sets the spec for the `CfgEnv`.
     #[inline]
     pub fn set_spec(&mut self, spec: SPEC) {
         self.spec = spec;
-    }
-
-    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
-    #[inline]
-    pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
-        self.set_spec(spec.clone());
-        self.set_gas_params(GasParams::new_spec(spec.into()));
     }
 
     /// Sets the gas params for the `CfgEnv`.
@@ -351,6 +311,48 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
         self
+    }
+}
+
+impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
+    /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
+    ///
+    /// If this field is not set, return the default value for the spec.
+    ///
+    /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
+    /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
+    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
+        self.blob_base_fee_update_fraction.unwrap_or_else(|| {
+            let spec: SpecId = self.spec.clone().into();
+            if spec.is_enabled_in(SpecId::PRAGUE) {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
+            } else {
+                primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+            }
+        })
+    }
+
+    /// Create new `CfgEnv` with default values and specified spec.
+    /// It will create a new gas params based on mainnet spec.
+    ///
+    /// Internally it will call [`CfgEnv::new_with_spec_and_gas_params`] with the mainnet gas params.
+    pub fn new_with_spec(spec: SPEC) -> Self {
+        Self::new_with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
+    }
+
+    /// Sets the gas params for the `CfgEnv` to the mainnet gas params.
+    ///
+    /// If spec gets changed, calling this function would use this spec to set the mainnetF gas params.
+    pub fn with_mainnet_gas_params(mut self) -> Self {
+        self.set_gas_params(GasParams::new_spec(self.spec.clone().into()));
+        self
+    }
+
+    /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    #[inline]
+    pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
+        self.set_spec(spec.clone());
+        self.set_gas_params(GasParams::new_spec(spec.into()));
     }
 }
 
@@ -502,7 +504,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
+impl<SPEC: Default + Into<SpecId>> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self::new_with_spec_and_gas_params(
             SPEC::default(),
