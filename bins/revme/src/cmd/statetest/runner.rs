@@ -26,7 +26,6 @@ use std::{
     time::{Duration, Instant},
 };
 use thiserror::Error;
-use walkdir::{DirEntry, WalkDir};
 
 /// Error that occurs during test execution
 #[derive(Debug, Error)]
@@ -64,22 +63,6 @@ pub enum TestErrorKind {
     InvalidPath,
     #[error("no JSON test files found in path")]
     NoJsonFiles,
-}
-
-/// Find all JSON test files in the given path
-/// If path is a file, returns it in a vector
-/// If path is a directory, recursively finds all .json files
-pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
-    if path.is_file() {
-        vec![path.to_path_buf()]
-    } else {
-        WalkDir::new(path)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| e.path().extension() == Some("json".as_ref()))
-            .map(DirEntry::into_path)
-            .collect()
-    }
 }
 
 /// Check if a test should be skipped based on its filename
@@ -361,8 +344,8 @@ pub fn execute_test_suite(
                     Err(_) if test.expect_exception.is_some() => continue,
                     Err(_) => {
                         return Err(TestError {
-                            name,
-                            path,
+                            name: name.clone(),
+                            path: path.clone(),
                             kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
                         });
                     }
@@ -387,8 +370,8 @@ pub fn execute_test_suite(
                     static FAILED: AtomicBool = AtomicBool::new(false);
                     if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
                         return Err(TestError {
-                            name,
-                            path,
+                            name: name.clone(),
+                            path: path.clone(),
                             kind: e,
                         });
                     }
@@ -407,8 +390,8 @@ pub fn execute_test_suite(
                     });
 
                     return Err(TestError {
-                        path,
-                        name,
+                        path: path.clone(),
+                        name: name.clone(),
                         kind: e,
                     });
                 }
