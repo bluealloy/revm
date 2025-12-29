@@ -1059,7 +1059,7 @@ fn skip_test(path: &Path) -> bool {
         return true;
     }
 
-    let name = path.file_name().unwrap().to_str().unwrap();
+    let name = path.file_name().unwrap().to_str().unwrap_or_default();
     // Add any problematic tests here that should be skipped
     matches!(
         name,
