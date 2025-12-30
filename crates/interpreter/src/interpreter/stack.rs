@@ -155,7 +155,7 @@ impl Stack {
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
         //Todo: can you likely instrincts to show the else branch is more likely to be hit
         let len = self.data.len();
-        if len == 0 {
+        if primitives::hints_util::unlikely(len == 0) {
             Err(InstructionResult::StackUnderflow)
         } else {
             unsafe {
@@ -225,7 +225,7 @@ impl Stack {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
         // In debug builds, verify we have sufficient capacity provisioned.
-        debug_assert!(self.data.capacity() >= STACK_LIMIT);
+        assume!(self.data.capacity() >= STACK_LIMIT);
         let len = self.data.len();
         if len == STACK_LIMIT {
             return false;
