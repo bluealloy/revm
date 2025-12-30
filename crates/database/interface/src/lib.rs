@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -84,7 +84,15 @@ pub trait Database {
 }
 
 /// EVM database commit interface.
-#[auto_impl(&mut, Box)]
+///
+/// # Dyn Compatibility
+///
+/// This trait is dyn-compatible. The `commit_iter` method has a `Self: Sized` bound
+/// which excludes it from the trait's vtable, allowing `dyn DatabaseCommit` to work.
+///
+/// Note: We manually implement this trait for `&mut T` and `Box<T>` instead of using
+/// `#[auto_impl]` because auto_impl generates impls for `T: ?Sized` that try to delegate
+/// `commit_iter` to the inner type, which fails when `T` is `?Sized` (like `dyn DatabaseCommit`).
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
@@ -94,9 +102,64 @@ pub trait DatabaseCommit {
     /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
     /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+    ///
+    /// # Dyn Compatibility
+    ///
+    /// This method requires `Self: Sized` because it uses `impl Trait` in argument position,
+    /// which is not dyn-compatible. Without this bound, the entire `DatabaseCommit` trait
+    /// would become not dyn-compatible, breaking code that uses `dyn DatabaseCommit` or
+    /// traits that extend it (e.g., Foundry's `DatabaseExt`).
+    ///
+    /// The `Sized` bound excludes this method from the trait's vtable while keeping the
+    /// trait itself dyn-compatible. Code using trait objects should use [`commit`](Self::commit)
+    /// instead, collecting the iterator into a `HashMap` first if needed.
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
+    where
+        Self: Sized,
+    {
         let changes: HashMap<Address, Account> = changes.into_iter().collect();
         self.commit(changes);
+    }
+}
+
+/// Manual implementation for `&mut T` where `T: DatabaseCommit + ?Sized`.
+///
+/// We can't use `#[auto_impl]` because it would generate code that tries to call
+/// `T::commit_iter` which requires `T: Sized`, but `T` might be `?Sized` here.
+impl<T: DatabaseCommit + ?Sized> DatabaseCommit for &mut T {
+    #[inline]
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        (**self).commit(changes)
+    }
+
+    #[inline]
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
+    where
+        Self: Sized,
+    {
+        // Don't delegate to T::commit_iter since T might be ?Sized.
+        // Instead, collect and call commit directly.
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        (**self).commit(changes);
+    }
+}
+
+/// Manual implementation for `Box<T>` where `T: DatabaseCommit + ?Sized`.
+impl<T: DatabaseCommit + ?Sized> DatabaseCommit for Box<T> {
+    #[inline]
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        (**self).commit(changes)
+    }
+
+    #[inline]
+    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
+    where
+        Self: Sized,
+    {
+        // Don't delegate to T::commit_iter since T might be ?Sized.
+        // Instead, collect and call commit directly.
+        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+        (**self).commit(changes);
     }
 }
 
@@ -244,7 +307,9 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             // Unfortunately must collect here to short circuit on error
             .collect::<Result<Vec<_>, _>>()?;
 
-        self.commit_iter(transitions);
+        // Use commit() instead of commit_iter() since we already have a collected Vec.
+        // This keeps these methods dyn-compatible without requiring Self: Sized.
+        self.commit(transitions.into_iter().collect());
         Ok(())
     }
 
@@ -272,7 +337,9 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        self.commit_iter(transitions);
+        // Use commit() instead of commit_iter() since we already have a collected Vec.
+        // This keeps these methods dyn-compatible without requiring Self: Sized.
+        self.commit(transitions.into_iter().collect());
         Ok(balances)
     }
 }
