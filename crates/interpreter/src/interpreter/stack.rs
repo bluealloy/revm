@@ -153,7 +153,16 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
-        self.data.pop().ok_or(InstructionResult::StackUnderflow)
+        //Todo: can you likely instrincts to show the else branch is more likely to be hit
+        let len = self.data.len();
+        if len == 0 {
+            return Err(InstructionResult::StackUnderflow);
+        } else {
+            unsafe {
+                self.data.set_len(len - 1);
+                Ok(core::ptr::read(self.data.as_ptr().add(len - 1)))
+            }
+        }
     }
 
     /// Removes the topmost element from the stack and returns it.
@@ -165,7 +174,9 @@ impl Stack {
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         assume!(!self.data.is_empty());
-        self.data.pop().unwrap_unchecked()
+        let new_len = self.data.len() - 1;
+        self.data.set_len(new_len );
+        core::ptr::read(self.data.as_ptr().add(new_len))
     }
 
     /// Peeks the top of the stack.
@@ -215,10 +226,15 @@ impl Stack {
     pub fn push(&mut self, value: U256) -> bool {
         // In debug builds, verify we have sufficient capacity provisioned.
         debug_assert!(self.data.capacity() >= STACK_LIMIT);
-        if self.data.len() == STACK_LIMIT {
+        let len = self.data.len();
+        if len == STACK_LIMIT {
             return false;
         }
-        self.data.push(value);
+        unsafe {
+            let end = self.data.as_mut_ptr().add(len);
+            core::ptr::write(end, value);
+            self.data.set_len(len + 1);
+        }
         true
     }
 
