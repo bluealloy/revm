@@ -629,6 +629,37 @@ pub enum HaltReason {
     CallTooDeep,
 }
 
+impl core::error::Error for HaltReason {}
+
+impl fmt::Display for HaltReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OutOfGas(err) => write!(f, "{err}"),
+            Self::OpcodeNotFound => write!(f, "opcode not found"),
+            Self::InvalidFEOpcode => write!(f, "invalid 0xFE opcode"),
+            Self::InvalidJump => write!(f, "invalid jump destination"),
+            Self::NotActivated => write!(f, "feature or opcode not activated"),
+            Self::StackUnderflow => write!(f, "stack underflow"),
+            Self::StackOverflow => write!(f, "stack overflow"),
+            Self::OutOfOffset => write!(f, "out of offset"),
+            Self::CreateCollision => write!(f, "create collision"),
+            Self::PrecompileError => write!(f, "precompile error"),
+            Self::PrecompileErrorWithContext(msg) => write!(f, "precompile error: {msg}"),
+            Self::NonceOverflow => write!(f, "nonce overflow"),
+            Self::CreateContractSizeLimit => write!(f, "create contract size limit"),
+            Self::CreateContractStartingWithEF => {
+                write!(f, "create contract starting with 0xEF")
+            }
+            Self::CreateInitCodeSizeLimit => write!(f, "create initcode size limit"),
+            Self::OverflowPayment => write!(f, "overflow payment"),
+            Self::StateChangeDuringStaticCall => write!(f, "state change during static call"),
+            Self::CallNotAllowedInsideStatic => write!(f, "call not allowed inside static call"),
+            Self::OutOfFunds => write!(f, "out of funds"),
+            Self::CallTooDeep => write!(f, "call too deep"),
+        }
+    }
+}
+
 /// Out of gas errors.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -646,6 +677,21 @@ pub enum OutOfGasError {
     InvalidOperand,
     /// When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
+}
+
+impl core::error::Error for OutOfGasError {}
+
+impl fmt::Display for OutOfGasError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Basic => write!(f, "out of gas"),
+            Self::MemoryLimit => write!(f, "out of gas: memory limit exceeded"),
+            Self::Memory => write!(f, "out of gas: memory expansion"),
+            Self::Precompile => write!(f, "out of gas: precompile"),
+            Self::InvalidOperand => write!(f, "out of gas: invalid operand"),
+            Self::ReentrancySentry => write!(f, "out of gas: reentrancy sentry"),
+        }
+    }
 }
 
 /// Error that includes transaction index for batch transaction processing.
