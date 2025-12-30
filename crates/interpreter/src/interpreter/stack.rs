@@ -156,7 +156,7 @@ impl Stack {
         //Todo: can you likely instrincts to show the else branch is more likely to be hit
         let len = self.data.len();
         if len == 0 {
-            return Err(InstructionResult::StackUnderflow);
+            Err(InstructionResult::StackUnderflow)
         } else {
             unsafe {
                 self.data.set_len(len - 1);
