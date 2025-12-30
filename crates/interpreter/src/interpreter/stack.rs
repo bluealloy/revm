@@ -174,9 +174,7 @@ impl Stack {
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         assume!(!self.data.is_empty());
-        let new_len = self.data.len() - 1;
-        self.data.set_len(new_len);
-        core::ptr::read(self.data.as_ptr().add(new_len))
+        self.data.pop().unwrap_unchecked()
     }
 
     /// Peeks the top of the stack.
