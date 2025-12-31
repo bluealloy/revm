@@ -197,6 +197,15 @@ pub trait Host {
                 })
             })
     }
+
+    /// Records a gas refund for the current transaction.
+    ///
+    /// This is called by SSTORE instruction to record gas refunds at the journal level,
+    /// enabling proper reverting in case of revert/oog/stackoverflow.
+    fn record_refund(&mut self, refund: i64);
+
+    /// Returns the current accumulated gas refund for the transaction.
+    fn refund(&self) -> i64;
 }
 
 /// Dummy host that implements [`Host`] trait and  returns all default values.
@@ -303,5 +312,11 @@ impl Host for DummyHost {
         _skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, LoadError> {
         Err(LoadError::DBError)
+    }
+
+    fn record_refund(&mut self, _refund: i64) {}
+
+    fn refund(&self) -> i64 {
+        0
     }
 }

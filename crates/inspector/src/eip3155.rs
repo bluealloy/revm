@@ -224,7 +224,7 @@ where
         self.gas_inspector.initialize_interp(&interp.gas);
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step(&interp.gas);
         self.stack.clear();
         interp.stack.clone_into(&mut self.stack);
@@ -239,7 +239,9 @@ where
         self.opcode = interp.bytecode.opcode();
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
-        self.refunded = interp.gas.refunded();
+        // Use journal-level refund which properly tracks global refund state
+        // and avoids negative values during individual call execution.
+        self.refunded = context.journal().refund();
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
@@ -252,7 +254,7 @@ where
             stack: &self.stack,
             depth: context.journal_mut().depth() as u64,
             return_data: "0x",
-            refund: self.refunded as u64,
+            refund: self.refunded.max(0) as u64,
             mem_size: self.mem_size as u64,
 
             op_name: OpCode::new(self.opcode).map(|i| i.as_str()),
