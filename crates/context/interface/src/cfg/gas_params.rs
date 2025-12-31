@@ -2,8 +2,8 @@
 
 use crate::{
     cfg::gas::{
-        self, get_tokens_in_calldata, log2floor, num_words, InitialAndFloorGas, ISTANBUL_SLOAD_GAS,
-        SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET,
+        self, get_tokens_in_calldata, InitialAndFloorGas, ISTANBUL_SLOAD_GAS, SSTORE_RESET,
+        SSTORE_SET, WARM_SSTORE_RESET,
     },
     context::SStoreResult,
 };
@@ -45,6 +45,13 @@ impl core::fmt::Debug for GasParams {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "GasParams {{ table: {:?} }}", self.table)
     }
+}
+
+/// Returns number of words what would fit to provided number of bytes,
+/// i.e. it rounds up the number bytes to number of words.
+#[inline]
+pub const fn num_words(len: usize) -> usize {
+    len.div_ceil(32)
 }
 
 impl Eq for GasParams {}
@@ -590,55 +597,70 @@ impl GasParams {
             .saturating_mul(len as u64)
     }
 
-    /// EIP-7702 PER_EMPTY_ACCOUNT_COST gas
+    /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per empty account cost.
     #[inline]
     pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
         self.get(GasId::tx_eip7702_per_empty_account_cost())
     }
 
-    /// EIP-2028 NON_ZERO_BYTE_MULTIPLIER_ISTANBUL gas
+    /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
     #[inline]
     pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
         self.get(GasId::tx_token_non_zero_byte_multiplier())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the token cost for input data.
     #[inline]
     pub fn tx_token_cost(&self) -> u64 {
         self.get(GasId::tx_token_cost())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the floor gas per token.
     pub fn tx_floor_cost_per_token(&self) -> u64 {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
+    /// Used [GasParams::initial_tx_gas] to calculate the floor gas.
+    ///
+    /// Floor gas is introduced in EIP-7623.
+    #[inline]
+    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
+        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
+    }
+
+    /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
     pub fn tx_floor_cost_base_gas(&self) -> u64 {
         self.get(GasId::tx_floor_cost_base_gas())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the access list address cost.
     pub fn tx_access_list_address_cost(&self) -> u64 {
         self.get(GasId::tx_access_list_address_cost())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the access list storage key cost.
     pub fn tx_access_list_storage_key_cost(&self) -> u64 {
         self.get(GasId::tx_access_list_storage_key_cost())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
     pub fn tx_base_stipend(&self) -> u64 {
         self.get(GasId::tx_base_stipend())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the create cost.
+    ///
+    /// Similar to the [`Self::create_cost`] method but it got activated in different fork,
+    #[inline]
     pub fn tx_create_cost(&self) -> u64 {
         self.get(GasId::tx_create_cost())
     }
 
+    /// Used in [GasParams::initial_tx_gas] to calculate the initcode cost per word of len.
+    #[inline]
     pub fn tx_initcode_cost(&self, len: usize) -> u64 {
         self.get(GasId::tx_initcode_cost())
             .saturating_mul(num_words(len) as u64)
-    }
-
-    #[inline]
-    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
-        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
     }
 
     /// Initial gas that is deducted for transaction to be included.
@@ -648,7 +670,7 @@ impl GasParams {
     ///
     /// - Intrinsic gas
     /// - Number of tokens in calldata
-    pub fn calculate_initial_tx_gas_with_gas_params(
+    pub fn initial_tx_gas(
         &self,
         input: &[u8],
         is_create: bool,
@@ -682,6 +704,29 @@ impl GasParams {
 
         gas
     }
+}
+
+#[inline]
+pub(crate) const fn log2floor(value: U256) -> u64 {
+    let mut l: u64 = 256;
+    let mut i = 3;
+    loop {
+        if value.as_limbs()[i] == 0u64 {
+            l -= 64;
+        } else {
+            l -= value.as_limbs()[i].leading_zeros() as u64;
+            if l == 0 {
+                return l;
+            } else {
+                return l - 1;
+            }
+        }
+        if i == 0 {
+            break;
+        }
+        i -= 1;
+    }
+    l
 }
 
 /// Gas identifier that maps onto index in gas table.
@@ -968,38 +1013,47 @@ impl GasId {
         Self::new(27)
     }
 
+    /// Initial tx gas token non zero byte multiplier.
     pub const fn tx_token_non_zero_byte_multiplier() -> GasId {
         Self::new(28)
     }
 
+    /// Initial tx gas token cost.
     pub const fn tx_token_cost() -> GasId {
         Self::new(29)
     }
 
+    /// Initial tx gas floor cost per token.
     pub const fn tx_floor_cost_per_token() -> GasId {
         Self::new(30)
     }
 
+    /// Initial tx gas floor cost base gas.
     pub const fn tx_floor_cost_base_gas() -> GasId {
         Self::new(31)
     }
 
+    /// Initial tx gas access list address cost.
     pub const fn tx_access_list_address_cost() -> GasId {
         Self::new(32)
     }
 
+    /// Initial tx gas access list storage key cost.
     pub const fn tx_access_list_storage_key_cost() -> GasId {
         Self::new(33)
     }
 
+    /// Initial tx gas base stipend.
     pub const fn tx_base_stipend() -> GasId {
         Self::new(34)
     }
 
+    /// Initial tx gas create cost.
     pub const fn tx_create_cost() -> GasId {
         Self::new(35)
     }
 
+    /// Initial tx gas initcode cost per word.
     pub const fn tx_initcode_cost() -> GasId {
         Self::new(36)
     }
