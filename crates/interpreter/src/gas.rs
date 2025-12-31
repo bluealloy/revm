@@ -1,8 +1,6 @@
 //! EVM gas calculation utilities.
 
-mod calc;
-
-pub use calc::*;
+pub use context_interface::cfg::gas::*;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

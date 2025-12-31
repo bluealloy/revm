@@ -189,8 +189,15 @@ pub trait JournalTr {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error> {
-        self.load_account_mut_optional_code(address, false)
+        self.load_account_mut_skip_cold_load(address, false)
     }
+
+    /// Loads the journaled account.
+    fn load_account_mut_skip_cold_load(
+        &mut self,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, <Self::Database as Database>::Error>;
 
     /// Loads the journaled account.
     #[inline]

@@ -4,7 +4,7 @@ use context_interface::{
     Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::gas::{self, InitialAndFloorGas};
+use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
@@ -230,7 +230,7 @@ pub fn validate_initial_tx_gas(
     spec: SpecId,
     is_eip7623_disabled: bool,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = gas::calculate_initial_tx_gas_for_tx(&tx, spec);
+    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
 
     if is_eip7623_disabled {
         gas.floor_gas = 0
