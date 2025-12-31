@@ -192,7 +192,12 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                     reason, gas_used, gas_refunded
                 )?;
                 if !logs.is_empty() {
-                    write!(f, ", {} log{}", logs.len(), if logs.len() == 1 { "" } else { "s" })?;
+                    write!(
+                        f,
+                        ", {} log{}",
+                        logs.len(),
+                        if logs.len() == 1 { "" } else { "s" }
+                    )?;
                 }
                 write!(f, ", {}", output)
             }
@@ -848,7 +853,10 @@ mod tests {
             gas_used: 100000,
             output: Bytes::from(vec![1, 2, 3, 4]),
         };
-        assert_eq!(result.to_string(), "Revert: 100000 gas used, 4 bytes output");
+        assert_eq!(
+            result.to_string(),
+            "Revert: 100000 gas used, 4 bytes output"
+        );
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
             reason: HaltReason::OutOfGas(OutOfGasError::Basic),
