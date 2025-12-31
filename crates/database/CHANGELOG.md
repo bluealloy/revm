@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-database-v9.0.6...revm-database-v10.0.0) - 2025-12-31
+
+### Added
+
+- Propagate `map-foldhash` Feature Through Dependency Chain ([#3252](https://github.com/bluealloy/revm/pull/3252))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- DatabaseCommitExt::drain_balances ([#3205](https://github.com/bluealloy/revm/pull/3205))
+- DatabaseCommitExt + increment_balances ([#3195](https://github.com/bluealloy/revm/pull/3195))
+- DatabaseCommit::commit_iter ([#3197](https://github.com/bluealloy/revm/pull/3197))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- *(database)* prevent deadlock in ([#3251](https://github.com/bluealloy/revm/pull/3251))
+- *(database)* verify handle belongs to current runtime before block_in_place ([#3212](https://github.com/bluealloy/revm/pull/3212))
+
+### Other
+
+- avoid collect in CacheState commit ([#3242](https://github.com/bluealloy/revm/pull/3242))
+- *(database)* use fixed hashmaps in cache db ([#3231](https://github.com/bluealloy/revm/pull/3231))
+- *(database)* avoid triple cache lookup ([#3232](https://github.com/bluealloy/revm/pull/3232))
+- optimize vector initialization with size hints in state and precompile modules ([#3191](https://github.com/bluealloy/revm/pull/3191))
+
 ## [9.0.6](https://github.com/bluealloy/revm/compare/revm-database-v9.0.5...revm-database-v9.0.6) - 2025-11-14
 
 ### Fixed

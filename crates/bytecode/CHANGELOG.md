@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.2.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.1.1...revm-bytecode-v7.2.0) - 2025-12-31
+
+### Added
+
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+
+### Fixed
+
+- the MLOAD opcode can resize memory ([#3266](https://github.com/bluealloy/revm/pull/3266))
+
 ## [7.1.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.1.0...revm-bytecode-v7.1.1) - 2025-11-07
 
 ### Other
