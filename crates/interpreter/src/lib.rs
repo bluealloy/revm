@@ -27,10 +27,11 @@ pub mod interpreter_types;
 
 // Reexport primary types.
 pub use context_interface::{
+    cfg::gas::InitialAndFloorGas,
     context::{SStoreResult, SelfDestructResult, StateLoad},
     host, CreateScheme, Host,
 };
-pub use gas::{Gas, InitialAndFloorGas};
+pub use gas::Gas;
 pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};

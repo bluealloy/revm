@@ -197,8 +197,15 @@ pub fn calculate_initial_tx_gas(
 ) -> InitialAndFloorGas {
     let mut gas = InitialAndFloorGas::default();
 
+    let non_zero_data_multiplier = if spec_id.is_enabled_in(SpecId::ISTANBUL) {
+        // EIP-2028: Transaction data gas cost reduction
+        NON_ZERO_BYTE_MULTIPLIER_ISTANBUL
+    } else {
+        NON_ZERO_BYTE_MULTIPLIER
+    };
+
     // Initdate stipend
-    let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
+    let tokens_in_calldata = get_tokens_in_calldata(input, non_zero_data_multiplier);
 
     gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
@@ -207,13 +214,10 @@ pub fn calculate_initial_tx_gas(
     gas.initial_gas += access_list_storages * ACCESS_LIST_STORAGE_KEY;
 
     // Base stipend
-    gas.initial_gas += if is_create {
-        if spec_id.is_enabled_in(SpecId::HOMESTEAD) {
-            // EIP-2: Homestead Hard-fork Changes
-            53000
-        } else {
-            21000
-        }
+
+    // EIP-2: Homestead Hard-fork Changes
+    gas.initial_gas += if spec_id.is_enabled_in(SpecId::HOMESTEAD) && is_create {
+        53000
     } else {
         21000
     };
@@ -272,15 +276,9 @@ pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> In
 
 /// Retrieve the total number of tokens in calldata.
 #[inline]
-pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
+pub fn get_tokens_in_calldata(input: &[u8], non_zero_data_multiplier: u64) -> u64 {
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
     let non_zero_data_len = input.len() as u64 - zero_data_len;
-    let non_zero_data_multiplier = if is_istanbul {
-        // EIP-2028: Transaction data gas cost reduction
-        NON_ZERO_BYTE_MULTIPLIER_ISTANBUL
-    } else {
-        NON_ZERO_BYTE_MULTIPLIER
-    };
     zero_data_len + non_zero_data_len * non_zero_data_multiplier
 }
 

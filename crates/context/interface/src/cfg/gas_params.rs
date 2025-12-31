@@ -2,14 +2,16 @@
 
 use crate::{
     cfg::gas::{
-        self, log2floor, num_words, ISTANBUL_SLOAD_GAS, SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET,
+        self, get_tokens_in_calldata, log2floor, num_words, InitialAndFloorGas, ISTANBUL_SLOAD_GAS,
+        SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET,
     },
     context::SStoreResult,
 };
 use core::hash::{Hash, Hasher};
 use primitives::{
+    eip7702,
     hardfork::SpecId::{self},
-    U256,
+    OnceLock, U256,
 };
 use std::sync::Arc;
 
@@ -85,7 +87,7 @@ mod serde {
 
 impl Default for GasParams {
     fn default() -> Self {
-        Self::new_spec(SpecId::default())
+        Self::new_spec(SpecId::default()).clone()
     }
 }
 
@@ -129,8 +131,66 @@ impl GasParams {
     }
 
     /// Creates a new `GasParams` for the given spec.
-    #[inline]
+    #[inline(never)]
     pub fn new_spec(spec: SpecId) -> Self {
+        use SpecId::*;
+        let gas_params = match spec {
+            FRONTIER | FRONTIER_THAWING => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // Transaction creation cost was added in homestead fork.
+            HOMESTEAD | DAO_FORK => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // New account cost for selfdestruct was added in tangerine fork.
+            TANGERINE => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // EXP cost was increased in spurious dragon fork.
+            SPURIOUS_DRAGON | BYZANTIUM | CONSTANTINOPLE | PETERSBURG => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // SSTORE gas calculation changed in istanbul fork.
+            ISTANBUL | MUIR_GLACIER => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // Warm/cold state access
+            BERLIN => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // Refund reduction in london fork.
+            LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // Transaction initcode cost was introduced in shanghai fork.
+            SHANGHAI | CANCUN => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // EIP-7702 was introduced in prague fork.
+            PRAGUE | OSAKA => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+            // New fork.
+            SpecId::AMSTERDAM => {
+                static TABLE: OnceLock<GasParams> = OnceLock::new();
+                TABLE.get_or_init(|| Self::new_spec_inner(spec))
+            }
+        };
+        gas_params.clone()
+    }
+
+    /// Creates a new `GasParams` for the given spec.
+    #[inline]
+    fn new_spec_inner(spec: SpecId) -> Self {
         let mut table = [0; 256];
 
         table[GasId::exp_byte_gas().as_usize()] = 10;
@@ -163,6 +223,10 @@ impl GasParams {
         table[GasId::cold_storage_cost().as_usize()] = 0;
         table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
         table[GasId::code_deposit_cost().as_usize()] = gas::CODEDEPOSIT;
+
+        if spec.is_enabled_in(SpecId::HOMESTEAD) {
+            table[GasId::tx_create_cost().as_usize()] = gas::CREATE;
+        }
 
         if spec.is_enabled_in(SpecId::TANGERINE) {
             table[GasId::new_account_cost_for_selfdestruct().as_usize()] = gas::NEWACCOUNT;
@@ -204,6 +268,15 @@ impl GasParams {
                 WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
 
             table[GasId::selfdestruct_refund().as_usize()] = 0;
+        }
+
+        if spec.is_enabled_in(SpecId::SHANGHAI) {
+            table[GasId::tx_initcode_cost().as_usize()] = gas::INITCODE_WORD_COST;
+        }
+
+        if spec.is_enabled_in(SpecId::PRAGUE) {
+            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
+                eip7702::PER_EMPTY_ACCOUNT_COST;
         }
 
         Self::new(Arc::new(table))
@@ -516,6 +589,99 @@ impl GasParams {
         self.get(GasId::code_deposit_cost())
             .saturating_mul(len as u64)
     }
+
+    /// EIP-7702 PER_EMPTY_ACCOUNT_COST gas
+    #[inline]
+    pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
+        self.get(GasId::tx_eip7702_per_empty_account_cost())
+    }
+
+    /// EIP-2028 NON_ZERO_BYTE_MULTIPLIER_ISTANBUL gas
+    #[inline]
+    pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_token_non_zero_byte_multiplier())
+    }
+
+    #[inline]
+    pub fn tx_token_cost(&self) -> u64 {
+        self.get(GasId::tx_token_cost())
+    }
+
+    pub fn tx_floor_cost_per_token(&self) -> u64 {
+        self.get(GasId::tx_floor_cost_per_token())
+    }
+
+    pub fn tx_floor_cost_base_gas(&self) -> u64 {
+        self.get(GasId::tx_floor_cost_base_gas())
+    }
+
+    pub fn tx_access_list_address_cost(&self) -> u64 {
+        self.get(GasId::tx_access_list_address_cost())
+    }
+
+    pub fn tx_access_list_storage_key_cost(&self) -> u64 {
+        self.get(GasId::tx_access_list_storage_key_cost())
+    }
+
+    pub fn tx_base_stipend(&self) -> u64 {
+        self.get(GasId::tx_base_stipend())
+    }
+
+    pub fn tx_create_cost(&self) -> u64 {
+        self.get(GasId::tx_create_cost())
+    }
+
+    pub fn tx_initcode_cost(&self, len: usize) -> u64 {
+        self.get(GasId::tx_initcode_cost())
+            .saturating_mul(num_words(len) as u64)
+    }
+
+    #[inline]
+    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
+        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
+    }
+
+    /// Initial gas that is deducted for transaction to be included.
+    /// Initial gas contains initial stipend gas, gas for access list and input data.
+    ///
+    /// # Returns
+    ///
+    /// - Intrinsic gas
+    /// - Number of tokens in calldata
+    pub fn calculate_initial_tx_gas_with_gas_params(
+        &self,
+        input: &[u8],
+        is_create: bool,
+        access_list_accounts: u64,
+        access_list_storages: u64,
+        authorization_list_num: u64,
+    ) -> InitialAndFloorGas {
+        let mut gas = InitialAndFloorGas::default();
+
+        // Initdate stipend
+        let tokens_in_calldata =
+            get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
+
+        gas.initial_gas += tokens_in_calldata * self.tx_token_cost()
+            + access_list_accounts * self.tx_access_list_address_cost()
+            + access_list_storages * self.tx_access_list_storage_key_cost()
+            + self.tx_base_stipend()
+            // EIP-7702: Authorization list
+            + authorization_list_num * self.tx_eip7702_per_empty_account_cost();
+
+        if is_create {
+            // EIP-2: Homestead Hard-fork Changes
+            gas.initial_gas += self.tx_create_cost();
+
+            // EIP-3860: Limit and meter initcode
+            gas.initial_gas += self.tx_initcode_cost(input.len())
+        }
+
+        // Calculate gas floor for EIP-7623
+        gas.floor_gas = self.tx_floor_cost(tokens_in_calldata);
+
+        gas
+    }
 }
 
 /// Gas identifier that maps onto index in gas table.
@@ -587,6 +753,22 @@ impl GasId {
                 "new_account_cost_for_selfdestruct"
             }
             x if x == Self::code_deposit_cost().as_u8() => "code_deposit_cost",
+            x if x == Self::tx_eip7702_per_empty_account_cost().as_u8() => {
+                "tx_eip7702_per_empty_account_cost"
+            }
+            x if x == Self::tx_token_non_zero_byte_multiplier().as_u8() => {
+                "tx_token_non_zero_byte_multiplier"
+            }
+            x if x == Self::tx_token_cost().as_u8() => "tx_token_cost",
+            x if x == Self::tx_floor_cost_per_token().as_u8() => "tx_floor_cost_per_token",
+            x if x == Self::tx_floor_cost_base_gas().as_u8() => "tx_floor_cost_base_gas",
+            x if x == Self::tx_access_list_address_cost().as_u8() => "tx_access_list_address_cost",
+            x if x == Self::tx_access_list_storage_key_cost().as_u8() => {
+                "tx_access_list_storage_key_cost"
+            }
+            x if x == Self::tx_base_stipend().as_u8() => "tx_base_stipend",
+            x if x == Self::tx_create_cost().as_u8() => "tx_create_cost",
+            x if x == Self::tx_initcode_cost().as_u8() => "tx_initcode_cost",
             _ => "unknown",
         }
     }
@@ -634,6 +816,16 @@ impl GasId {
             "cold_storage_cost" => Some(Self::cold_storage_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
             "code_deposit_cost" => Some(Self::code_deposit_cost()),
+            "eip7702_per_empty_account_cost" => Some(Self::tx_eip7702_per_empty_account_cost()),
+            "tx_token_non_zero_byte_multiplier" => Some(Self::tx_token_non_zero_byte_multiplier()),
+            "tx_token_cost" => Some(Self::tx_token_cost()),
+            "tx_floor_cost_per_token" => Some(Self::tx_floor_cost_per_token()),
+            "tx_floor_cost_base_gas" => Some(Self::tx_floor_cost_base_gas()),
+            "tx_access_list_address_cost" => Some(Self::tx_access_list_address_cost()),
+            "tx_access_list_storage_key_cost" => Some(Self::tx_access_list_storage_key_cost()),
+            "tx_base_stipend" => Some(Self::tx_base_stipend()),
+            "tx_create_cost" => Some(Self::tx_create_cost()),
+            "tx_initcode_cost" => Some(Self::tx_initcode_cost()),
             _ => None,
         }
     }
@@ -769,6 +961,47 @@ impl GasId {
     /// Code deposit cost. Calculated as len * code_deposit_cost.
     pub const fn code_deposit_cost() -> GasId {
         Self::new(26)
+    }
+
+    /// EIP-7702 PER_EMPTY_ACCOUNT_COST gas
+    pub const fn tx_eip7702_per_empty_account_cost() -> GasId {
+        Self::new(27)
+    }
+
+    pub const fn tx_token_non_zero_byte_multiplier() -> GasId {
+        Self::new(28)
+    }
+
+    pub const fn tx_token_cost() -> GasId {
+        Self::new(29)
+    }
+
+    pub const fn tx_floor_cost_per_token() -> GasId {
+        Self::new(30)
+    }
+
+    pub const fn tx_floor_cost_base_gas() -> GasId {
+        Self::new(31)
+    }
+
+    pub const fn tx_access_list_address_cost() -> GasId {
+        Self::new(32)
+    }
+
+    pub const fn tx_access_list_storage_key_cost() -> GasId {
+        Self::new(33)
+    }
+
+    pub const fn tx_base_stipend() -> GasId {
+        Self::new(34)
+    }
+
+    pub const fn tx_create_cost() -> GasId {
+        Self::new(35)
+    }
+
+    pub const fn tx_initcode_cost() -> GasId {
+        Self::new(36)
     }
 }
 
