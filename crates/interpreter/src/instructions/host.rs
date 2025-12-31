@@ -84,11 +84,11 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let account = if spec_id.is_enabled_in(BERLIN) {
-        berlin_load_account!(context, address, true)
+        berlin_load_account!(context, address, false)
     } else {
         let Ok(account) = context
             .host
-            .load_account_info_skip_cold_load(address, true, false)
+            .load_account_info_skip_cold_load(address, false, false)
         else {
             return context.interpreter.halt_fatal();
         };

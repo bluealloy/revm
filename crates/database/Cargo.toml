@@ -65,3 +65,4 @@ alloydb = [
 	"dep:alloy-eips",
 	"dep:alloy-transport",
 ]
+map-foldhash = ["primitives/map-foldhash", "state/map-foldhash"]
