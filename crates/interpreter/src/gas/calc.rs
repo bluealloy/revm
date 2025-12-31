@@ -1,30 +1,8 @@
-use super::constants::*;
 use crate::num_words;
-use context_interface::{transaction::AccessListItemTr as _, Transaction, TransactionType};
-use primitives::{eip7702, hardfork::SpecId, U256};
-
-#[inline]
-pub(crate) const fn log2floor(value: U256) -> u64 {
-    let mut l: u64 = 256;
-    let mut i = 3;
-    loop {
-        if value.as_limbs()[i] == 0u64 {
-            l -= 64;
-        } else {
-            l -= value.as_limbs()[i].leading_zeros() as u64;
-            if l == 0 {
-                return l;
-            } else {
-                return l - 1;
-            }
-        }
-        if i == 0 {
-            break;
-        }
-        i -= 1;
-    }
-    l
-}
+use context_interface::{
+    cfg::gas::*, transaction::AccessListItemTr as _, Transaction, TransactionType,
+};
+use primitives::{eip7702, hardfork::SpecId};
 
 /// Calculate the cost of buffer per word.
 #[inline]
@@ -43,15 +21,6 @@ pub const fn initcode_cost(len: usize) -> u64 {
         panic!("initcode cost overflow")
     };
     cost
-}
-
-/// Memory expansion cost calculation for a given number of words.
-#[inline]
-pub const fn memory_gas(num_words: usize, linear_cost: u64, quadratic_cost: u64) -> u64 {
-    let num_words = num_words as u64;
-    linear_cost
-        .saturating_mul(num_words)
-        .saturating_add(num_words.saturating_mul(num_words) / quadratic_cost)
 }
 
 /// Init and floor gas from transaction

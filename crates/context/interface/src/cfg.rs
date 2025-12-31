@@ -1,4 +1,10 @@
 //! Configuration for the EVM. Containing [`SpecId`].
+
+pub mod gas;
+pub mod gas_params;
+
+pub use gas_params::{GasId, GasParams};
+
 use auto_impl::auto_impl;
 use core::{fmt::Debug, hash::Hash};
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
@@ -66,6 +72,9 @@ pub trait Cfg {
 
     /// Returns the limit in bytes for the memory buffer.
     fn memory_limit(&self) -> u64;
+
+    /// Returns the gas params for the EVM.
+    fn gas_params(&self) -> &GasParams;
 }
 
 /// What bytecode analysis to perform

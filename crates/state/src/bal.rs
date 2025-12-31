@@ -240,3 +240,5 @@ impl core::fmt::Display for BalError {
         }
     }
 }
+
+impl core::error::Error for BalError {}

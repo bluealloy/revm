@@ -1,4 +1,3 @@
-use crate::instructions::InstructionProvider;
 use crate::{
     evm::FrameTr,
     execution, post_execution,
@@ -99,21 +98,11 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        self.configure(evm);
         // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
         }
-    }
-
-    /// Configure the handler:
-    ///  * Set Instruction gas table to the spec id.
-    #[inline]
-    fn configure(&mut self, evm: &mut Self::Evm) {
-        let spec_id = evm.ctx().cfg().spec().into();
-        // sets static gas depending on the spec id.
-        evm.ctx_instructions().1.set_spec(spec_id);
     }
 
     /// Runs the system call.
@@ -137,8 +126,6 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        // configure the evm for system call.
-        self.configure(evm);
         // call execution and than output.
         match self
             .execution(evm, &init_and_floor_gas)

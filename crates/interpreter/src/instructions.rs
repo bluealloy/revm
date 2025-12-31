@@ -27,9 +27,10 @@ pub mod tx_info;
 /// Utility functions and helpers for instruction implementation.
 pub mod utility;
 
-use primitives::hardfork::SpecId;
+pub use context_interface::cfg::gas::{self, *};
 
-use crate::{gas, interpreter_types::InterpreterTypes, Host, InstructionContext};
+use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
+use primitives::hardfork::SpecId;
 
 /// EVM opcode function signature.
 #[derive(Debug)]

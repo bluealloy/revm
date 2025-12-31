@@ -1,10 +1,9 @@
 use crate::{
-    gas::params::GasParams,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     InstructionContext,
 };
-use context_interface::{host::LoadError, Host};
+use context_interface::{cfg::GasParams, host::LoadError, Host};
 use core::{cmp::min, ops::Range};
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -16,17 +15,18 @@ use state::Bytecode;
 #[inline]
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
+    gas_params: &GasParams,
 ) -> Option<(Range<usize>, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
-    let mut in_range = resize_memory(interpreter, in_offset, in_len)?;
+    let mut in_range = resize_memory(interpreter, gas_params, in_offset, in_len)?;
 
     if !in_range.is_empty() {
         let offset = interpreter.memory.local_memory_offset();
         in_range = in_range.start.saturating_add(offset)..in_range.end.saturating_add(offset);
     }
 
-    let ret_range = resize_memory(interpreter, out_offset, out_len)?;
+    let ret_range = resize_memory(interpreter, gas_params, out_offset, out_len)?;
     Some((in_range, ret_range))
 }
 
@@ -35,13 +35,14 @@ pub fn get_memory_input_and_out_ranges(
 #[inline]
 pub fn resize_memory(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
+    gas_params: &GasParams,
     offset: U256,
     len: U256,
 ) -> Option<Range<usize>> {
     let len = as_usize_or_fail_ret!(interpreter, len, None);
     let offset = if len != 0 {
         let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        resize_memory!(interpreter, offset, len, None);
+        resize_memory!(interpreter, gas_params, offset, len, None);
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -62,7 +63,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     if transfers_value {
         gas!(
             context.interpreter,
-            context.interpreter.gas_params.transfer_value_cost(),
+            context.host.gas_params().transfer_value_cost(),
             None
         );
     }
@@ -76,12 +77,13 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     gas!(interpreter, gas, None);
 
     let interpreter = &mut context.interpreter;
+    let host = &mut context.host;
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let mut gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // On mainnet this will take return 63/64 of gas_limit.
-        let reduced_gas_limit = interpreter
-            .gas_params
+        let reduced_gas_limit = host
+            .gas_params()
             .call_stipend_reduction(interpreter.gas.remaining());
         min(reduced_gas_limit, stack_gas_limit)
     } else {
@@ -91,7 +93,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
     // Add call stipend if there is value to be transferred.
     if transfers_value {
-        gas_limit = gas_limit.saturating_add(interpreter.gas_params.call_stipend());
+        gas_limit = gas_limit.saturating_add(host.gas_params().call_stipend());
     }
 
     Some((gas_limit, bytecode, code_hash))
@@ -107,10 +109,8 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 ) -> Option<(u64, Bytecode, B256)> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
-    let gas_table = &context.interpreter.gas_params;
     match load_account_delegated(
         context.host,
-        gas_table,
         context.interpreter.runtime_flag.spec_id(),
         remaining_gas,
         to,
@@ -134,7 +134,6 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(
     host: &mut H,
-    gas_table: &GasParams,
     spec: SpecId,
     remaining_gas: u64,
     address: Address,
@@ -145,7 +144,8 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
     let is_spurious_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
 
-    let additional_cold_cost = gas_table.cold_account_additional_cost();
+    let additional_cold_cost = host.gas_params().cold_account_additional_cost();
+    let warm_storage_read_cost = host.gas_params().warm_storage_read_cost();
 
     let skip_cold_load = is_berlin && remaining_gas < additional_cold_cost;
     let account = host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;
@@ -156,14 +156,16 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let mut code_hash = account.code_hash();
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
-        cost += gas_table.new_account_cost(is_spurious_dragon, transfers_value);
+        cost += host
+            .gas_params()
+            .new_account_cost(is_spurious_dragon, transfers_value);
         return Ok((cost, bytecode, code_hash));
     }
 
     // load delegate code if account is EIP-7702
     if let Some(Bytecode::Eip7702(code)) = &account.code {
         // EIP-7702 is enabled after berlin hardfork.
-        cost += gas_table.warm_storage_read_cost();
+        cost += warm_storage_read_cost;
         if cost > remaining_gas {
             return Err(LoadError::ColdLoadSkipped);
         }

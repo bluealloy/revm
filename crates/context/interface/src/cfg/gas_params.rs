@@ -1,10 +1,12 @@
 //! Gas table for dynamic gas constants.
 
 use crate::{
-    gas::{self, log2floor, ISTANBUL_SLOAD_GAS, SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET},
-    num_words,
+    cfg::gas::{
+        self, log2floor, num_words, ISTANBUL_SLOAD_GAS, SSTORE_RESET, SSTORE_SET, WARM_SSTORE_RESET,
+    },
+    context::SStoreResult,
 };
-use context_interface::context::SStoreResult;
+use core::hash::{Hash, Hasher};
 use primitives::{
     hardfork::SpecId::{self},
     U256,
@@ -12,7 +14,7 @@ use primitives::{
 use std::sync::Arc;
 
 /// Gas table for dynamic gas constants.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub struct GasParams {
     /// Table of gas costs for operations
     table: Arc<[u64; 256]>,
@@ -20,6 +22,30 @@ pub struct GasParams {
     ptr: *const u64,
 }
 
+impl PartialEq<GasParams> for GasParams {
+    fn eq(&self, other: &GasParams) -> bool {
+        self.table == other.table
+    }
+}
+
+impl Hash for GasParams {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.table.hash(hasher);
+    }
+}
+
+/// Pointer points to Arc so it is safe to send across threads
+unsafe impl Send for GasParams {}
+/// Pointer points to Arc so it is safe to access
+unsafe impl Sync for GasParams {}
+
+impl core::fmt::Debug for GasParams {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "GasParams {{ table: {:?} }}", self.table)
+    }
+}
+
+impl Eq for GasParams {}
 #[cfg(feature = "serde")]
 mod serde {
     use super::{Arc, GasParams};
@@ -80,7 +106,7 @@ impl GasParams {
     /// Use to override default gas cost
     ///
     /// ```rust
-    /// use revm_interpreter::gas::params::{GasParams, GasId};
+    /// use revm_context_interface::cfg::gas_params::{GasParams, GasId};
     /// use primitives::hardfork::SpecId;
     ///
     /// let mut gas_table = GasParams::new_spec(SpecId::default());
@@ -509,7 +535,7 @@ impl GasId {
     /// # Examples
     ///
     /// ```
-    /// use revm_interpreter::gas::params::GasId;
+    /// use revm_context_interface::cfg::gas_params::GasId;
     ///
     /// assert_eq!(GasId::exp_byte_gas().name(), "exp_byte_gas");
     /// assert_eq!(GasId::memory_linear_cost().name(), "memory_linear_cost");
@@ -563,7 +589,7 @@ impl GasId {
     /// # Examples
     ///
     /// ```
-    /// use revm_interpreter::gas::params::GasId;
+    /// use revm_context_interface::cfg::gas_params::GasId;
     ///
     /// assert_eq!(GasId::from_name("exp_byte_gas"), Some(GasId::exp_byte_gas()));
     /// assert_eq!(GasId::from_name("memory_linear_cost"), Some(GasId::memory_linear_cost()));

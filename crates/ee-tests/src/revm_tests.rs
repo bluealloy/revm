@@ -3,7 +3,7 @@
 use crate::TestdataConfig;
 use revm::{
     bytecode::opcode,
-    context::{ContextTr, TxEnv},
+    context::{CfgEnv, ContextTr, TxEnv},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
     primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
     state::{AccountStatus, Bytecode},
@@ -38,7 +38,7 @@ const SELFDESTRUCT_BYTECODE: &[u8] = &[
 #[test]
 fn test_selfdestruct_multi_tx() {
     let mut evm = Context::mainnet()
-        .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
+        .with_cfg(CfgEnv::new_with_spec(SpecId::BERLIN))
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
             SELFDESTRUCT_BYTECODE.into(),
         )))
@@ -85,7 +85,7 @@ fn test_selfdestruct_multi_tx() {
 fn test_multi_tx_create() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
-            cfg.spec = SpecId::BERLIN;
+            cfg.set_spec_and_mainnet_gas_params(SpecId::BERLIN);
             cfg.disable_nonce_check = true;
         })
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
@@ -217,7 +217,7 @@ fn deployment_contract(bytes: &[u8]) -> Bytes {
 #[test]
 fn test_frame_stack_index() {
     let mut evm = Context::mainnet()
-        .modify_cfg_chained(|cfg| cfg.spec = SpecId::BERLIN)
+        .with_cfg(CfgEnv::new_with_spec(SpecId::BERLIN))
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
             SELFDESTRUCT_BYTECODE.into(),
         )))

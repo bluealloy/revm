@@ -5,6 +5,7 @@ use crate::{
     },
     CallInput, InstructionResult,
 };
+use context_interface::{cfg::GasParams, Host};
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
@@ -13,18 +14,20 @@ use crate::InstructionContext;
 /// Implements the KECCAK256 instruction.
 ///
 /// Computes Keccak-256 hash of memory data.
-pub fn keccak256<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
     gas!(
         context.interpreter,
-        context.interpreter.gas_params.keccak256_cost(len)
+        context.host.gas_params().keccak256_cost(len)
     );
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, from, len);
+        resize_memory!(context.interpreter, context.host.gas_params(), from, len);
         primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
     };
     *top = hash.into();
@@ -73,11 +76,17 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
 /// Implements the CODECOPY instruction.
 ///
 /// Copies running contract's bytecode to memory.
-pub fn codecopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
-    else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(
+        context.interpreter,
+        context.host.gas_params(),
+        memory_offset,
+        len,
+    ) else {
         return;
     };
     let code_offset = as_usize_saturated!(code_offset);
@@ -148,11 +157,17 @@ pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<
 /// Implements the CALLDATACOPY instruction.
 ///
 /// Copies input data to memory.
-pub fn calldatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
-    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
-    else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(
+        context.interpreter,
+        context.host.gas_params(),
+        memory_offset,
+        len,
+    ) else {
         return;
     };
 
@@ -185,7 +200,9 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
     check!(context.interpreter, BYZANTIUM);
     popn!([memory_offset, offset, len], context.interpreter);
 
@@ -199,8 +216,12 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionCon
         return;
     }
 
-    let Some(memory_offset) = copy_cost_and_memory_resize(context.interpreter, memory_offset, len)
-    else {
+    let Some(memory_offset) = copy_cost_and_memory_resize(
+        context.interpreter,
+        context.host.gas_params(),
+        memory_offset,
+        len,
+    ) else {
         return;
     };
 
@@ -228,16 +249,17 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 /// Handles memory expansion and gas calculation for data copy operations.
 pub fn copy_cost_and_memory_resize(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
+    gas_params: &GasParams,
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {
     // Safe to cast usize to u64
-    gas!(interpreter, interpreter.gas_params.copy_cost(len), None);
+    gas!(interpreter, gas_params.copy_cost(len), None);
     if len == 0 {
         return None;
     }
     let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
-    resize_memory!(interpreter, memory_offset, len, None);
+    resize_memory!(interpreter, gas_params, memory_offset, len, None);
 
     Some(memory_offset)
 }

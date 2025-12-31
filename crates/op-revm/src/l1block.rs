@@ -11,11 +11,9 @@ use crate::{
     OpSpecId,
 };
 use revm::{
+    context_interface::cfg::gas::{NON_ZERO_BYTE_MULTIPLIER_ISTANBUL, STANDARD_TOKEN_COST},
     database_interface::Database,
-    interpreter::{
-        gas::{get_tokens_in_calldata, NON_ZERO_BYTE_MULTIPLIER_ISTANBUL, STANDARD_TOKEN_COST},
-        Gas,
-    },
+    interpreter::{gas::get_tokens_in_calldata, Gas},
     primitives::U256,
 };
 
