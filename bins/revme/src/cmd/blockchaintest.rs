@@ -1,6 +1,7 @@
 pub mod post_block;
 pub mod pre_block;
 
+use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
 
 use revm::statetest_types::blockchain::{
@@ -26,8 +27,11 @@ use std::{
     time::Instant,
 };
 use thiserror::Error;
-use walkdir::{DirEntry, WalkDir};
+use walkdir;
 
+/// Prints a value as JSON to stdout.
+///
+/// # Panics
 /// Panics if the value cannot be serialized to JSON.
 fn print_json<T: serde::Serialize>(value: &T) {
     println!("{}", serde_json::to_string(value).unwrap());
@@ -83,22 +87,6 @@ impl Cmd {
             )?;
         }
         Ok(())
-    }
-}
-
-/// Find all JSON test files in the given path
-/// If path is a file, returns it in a vector
-/// If path is a directory, recursively finds all .json files
-pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
-    if path.is_file() {
-        vec![path.to_path_buf()]
-    } else {
-        WalkDir::new(path)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| e.path().extension() == Some("json".as_ref()))
-            .map(DirEntry::into_path)
-            .collect()
     }
 }
 
@@ -273,7 +261,7 @@ fn run_test_file(
                     print_json(&output);
                 }
                 return Err(Error::TestExecution {
-                    test_name,
+                    test_name: test_name.clone(),
                     test_path: file_path.to_path_buf(),
                     error: e.to_string(),
                 });
@@ -607,10 +595,11 @@ fn print_error_with_state(
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
-            let mut sorted_storage: Vec<_> = storage.iter().collect();
-            sorted_storage.sort_by_key(|(key, _)| *key);
-            for (key, value) in sorted_storage.iter() {
+            for (key, value) in storage.iter().take(5) {
                 eprintln!("      {key:?} => {value:?}");
+            }
+            if storage.len() > 5 {
+                eprintln!("      ... and {} more slots", storage.len() - 5);
             }
         }
     }
@@ -631,10 +620,11 @@ fn print_error_with_state(
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
-            let mut sorted_storage: Vec<_> = storage.iter().collect();
-            sorted_storage.sort_by_key(|(key, _)| *key);
-            for (key, value) in sorted_storage.iter() {
+            for (key, value) in storage.iter().take(5) {
                 eprintln!("      {key:?} => {value:?}");
+            }
+            if storage.len() > 5 {
+                eprintln!("      ... and {} more slots", storage.len() - 5);
             }
         }
     }
@@ -651,8 +641,11 @@ fn print_error_with_state(
             }
             if !account.storage.is_empty() {
                 eprintln!("    Storage ({} slots):", account.storage.len());
-                for (key, value) in account.storage.iter() {
+                for (key, value) in account.storage.iter().take(5) {
                     eprintln!("      {key:?} => {value:?}");
+                }
+                if account.storage.len() > 5 {
+                    eprintln!("      ... and {} more slots", account.storage.len() - 5);
                 }
             }
         }
