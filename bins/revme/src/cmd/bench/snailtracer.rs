@@ -13,7 +13,7 @@ pub fn run(criterion: &mut Criterion) {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
 
     let mut evm = Context::mainnet()
-        .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_cfg_chained(|c| c.disable_nonce_check = true)
         .build_mainnet()
         .with_inspector(NoOpInspector {});

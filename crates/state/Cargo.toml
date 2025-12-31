@@ -51,3 +51,4 @@ serde = [
     "bytecode/serde",
     "alloy-eip7928/serde",
 ]
+map-foldhash = ["primitives/map-foldhash"]

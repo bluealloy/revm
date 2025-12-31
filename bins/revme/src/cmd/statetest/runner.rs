@@ -358,8 +358,8 @@ pub fn execute_test_suite(
                     Err(_) if test.expect_exception.is_some() => continue,
                     Err(_) => {
                         return Err(TestError {
-                            name: name.clone(),
-                            path: path.clone(),
+                            name,
+                            path,
                             kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
                         });
                     }
@@ -384,8 +384,8 @@ pub fn execute_test_suite(
                     static FAILED: AtomicBool = AtomicBool::new(false);
                     if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
                         return Err(TestError {
-                            name: name.clone(),
-                            path: path.clone(),
+                            name,
+                            path,
                             kind: e,
                         });
                     }
@@ -404,8 +404,8 @@ pub fn execute_test_suite(
                     });
 
                     return Err(TestError {
-                        path: path.clone(),
-                        name: name.clone(),
+                        path,
+                        name,
                         kind: e,
                     });
                 }
