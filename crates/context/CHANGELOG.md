@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.2.0](https://github.com/bluealloy/revm/compare/revm-context-v12.1.0...revm-context-v12.2.0) - 2025-12-31
+
+### Added
+
+- Propagate `map-foldhash` Feature Through Dependency Chain ([#3252](https://github.com/bluealloy/revm/pull/3252))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- set transaction_id on new account ([#3204](https://github.com/bluealloy/revm/pull/3204))
+
+### Other
+
+- *(cleanup)* remove unused duplicate ContextSetters trait in context crate ([#3225](https://github.com/bluealloy/revm/pull/3225))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [12.1.0](https://github.com/bluealloy/revm/compare/revm-context-v12.0.0...revm-context-v12.1.0) - 2025-11-14
 
 ### Added
