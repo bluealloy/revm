@@ -186,6 +186,7 @@ impl OpCode {
                 | OpCode::MSTORE
                 | OpCode::MSTORE8
                 | OpCode::MCOPY
+                | OpCode::KECCAK256
                 | OpCode::CODECOPY
                 | OpCode::CALLDATACOPY
                 | OpCode::RETURNDATACOPY
@@ -771,6 +772,7 @@ mod tests {
     fn test_modifies_memory() {
         assert!(OpCode::new(MLOAD).unwrap().modifies_memory());
         assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
+        assert!(OpCode::new(KECCAK256).unwrap().modifies_memory());
         assert!(!OpCode::new(ADD).unwrap().modifies_memory());
     }
 }
