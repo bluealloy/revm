@@ -104,6 +104,7 @@ impl Default for BlockEnv {
         Self {
             number: U256::ZERO,
             beneficiary: Address::ZERO,
+            // Set to 1 instead of 0 to avoid zero timestamp. Users should set the actual value.
             timestamp: U256::ONE,
             gas_limit: u64::MAX,
             basefee: 0,
