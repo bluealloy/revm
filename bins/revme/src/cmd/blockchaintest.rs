@@ -1,6 +1,7 @@
 pub mod post_block;
 pub mod pre_block;
 
+use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
 
 use revm::statetest_types::blockchain::{
@@ -26,7 +27,6 @@ use std::{
     time::Instant,
 };
 use thiserror::Error;
-use walkdir::{DirEntry, WalkDir};
 
 /// Panics if the value cannot be serialized to JSON.
 fn print_json<T: serde::Serialize>(value: &T) {
@@ -83,22 +83,6 @@ impl Cmd {
             )?;
         }
         Ok(())
-    }
-}
-
-/// Find all JSON test files in the given path
-/// If path is a file, returns it in a vector
-/// If path is a directory, recursively finds all .json files
-pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
-    if path.is_file() {
-        vec![path.to_path_buf()]
-    } else {
-        WalkDir::new(path)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| e.path().extension() == Some("json".as_ref()))
-            .map(DirEntry::into_path)
-            .collect()
     }
 }
 

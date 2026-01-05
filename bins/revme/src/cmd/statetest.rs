@@ -4,8 +4,9 @@ pub mod utils;
 
 pub use runner::{TestError as Error, TestErrorKind};
 
+use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
-use runner::{find_all_json_tests, run, TestError};
+use runner::{run, TestError};
 use std::path::PathBuf;
 
 /// `statetest` subcommand
