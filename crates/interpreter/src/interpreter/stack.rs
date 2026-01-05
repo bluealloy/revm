@@ -223,7 +223,7 @@ impl Stack {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
         // In debug builds, verify we have sufficient capacity provisioned.
-        assume!(self.data.capacity() >= STACK_LIMIT);
+        debug_assert!(self.data.capacity() >= STACK_LIMIT);
         let len = self.data.len();
         if len == STACK_LIMIT {
             return false;
