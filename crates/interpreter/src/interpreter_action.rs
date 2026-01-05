@@ -119,14 +119,4 @@ impl InterpreterAction {
     pub fn new_return(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
         Self::Return(InterpreterResult::new(result, output, gas))
     }
-
-    /// Create new stop action.
-    #[inline]
-    pub fn new_stop() -> Self {
-        Self::Return(InterpreterResult::new(
-            InstructionResult::Stop,
-            Bytes::new(),
-            Gas::new(0),
-        ))
-    }
 }
