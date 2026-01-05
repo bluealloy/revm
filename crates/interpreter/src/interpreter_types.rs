@@ -163,11 +163,6 @@ pub trait StackTr {
     /// Returns stack content.
     fn data(&self) -> &[U256];
 
-    /// Returns `true` if stack is empty.
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
     /// Clears the stack.
     fn clear(&mut self);
 
