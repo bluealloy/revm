@@ -1,10 +1,7 @@
 //! Gas table for dynamic gas constants.
 
 use crate::{
-    cfg::gas::{
-        self, get_tokens_in_calldata, InitialAndFloorGas, ISTANBUL_SLOAD_GAS, SSTORE_RESET,
-        SSTORE_SET, WARM_SSTORE_RESET,
-    },
+    cfg::gas::{self, get_tokens_in_calldata, InitialAndFloorGas},
     context::SStoreResult,
 };
 use core::hash::{Hash, Hasher};
@@ -217,9 +214,10 @@ impl GasParams {
         table[GasId::new_account_cost().as_usize()] = gas::NEWACCOUNT;
         table[GasId::warm_storage_read_cost().as_usize()] = 0;
         // Frontiers had fixed 5k cost.
-        table[GasId::sstore_static().as_usize()] = SSTORE_RESET;
+        table[GasId::sstore_static().as_usize()] = gas::SSTORE_RESET;
         // SSTORE SET
-        table[GasId::sstore_set_without_load_cost().as_usize()] = SSTORE_SET - SSTORE_RESET;
+        table[GasId::sstore_set_without_load_cost().as_usize()] =
+            gas::SSTORE_SET - gas::SSTORE_RESET;
         // SSTORE RESET Is covered in SSTORE_STATIC.
         table[GasId::sstore_reset_without_cold_load_cost().as_usize()] = 0;
         // SSTORE CLEARING SLOT REFUND
@@ -230,6 +228,10 @@ impl GasParams {
         table[GasId::cold_storage_cost().as_usize()] = 0;
         table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
         table[GasId::code_deposit_cost().as_usize()] = gas::CODEDEPOSIT;
+        table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
+            gas::NON_ZERO_BYTE_MULTIPLIER;
+        table[GasId::tx_token_cost().as_usize()] = gas::STANDARD_TOKEN_COST;
+        table[GasId::tx_base_stipend().as_usize()] = 21000;
 
         if spec.is_enabled_in(SpecId::HOMESTEAD) {
             table[GasId::tx_create_cost().as_usize()] = gas::CREATE;
@@ -246,9 +248,11 @@ impl GasParams {
         if spec.is_enabled_in(SpecId::ISTANBUL) {
             table[GasId::sstore_static().as_usize()] = gas::ISTANBUL_SLOAD_GAS;
             table[GasId::sstore_set_without_load_cost().as_usize()] =
-                SSTORE_SET - ISTANBUL_SLOAD_GAS;
+                gas::SSTORE_SET - gas::ISTANBUL_SLOAD_GAS;
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
-                SSTORE_RESET - ISTANBUL_SLOAD_GAS;
+                gas::SSTORE_RESET - gas::ISTANBUL_SLOAD_GAS;
+            table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
+                gas::NON_ZERO_BYTE_MULTIPLIER_ISTANBUL;
         }
 
         if spec.is_enabled_in(SpecId::BERLIN) {
@@ -261,9 +265,13 @@ impl GasParams {
             table[GasId::warm_storage_read_cost().as_usize()] = gas::WARM_STORAGE_READ_COST;
 
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
-                WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
+                gas::WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
             table[GasId::sstore_set_without_load_cost().as_usize()] =
-                SSTORE_SET - gas::WARM_STORAGE_READ_COST;
+                gas::SSTORE_SET - gas::WARM_STORAGE_READ_COST;
+
+            table[GasId::tx_access_list_address_cost().as_usize()] = gas::ACCESS_LIST_ADDRESS;
+            table[GasId::tx_access_list_storage_key_cost().as_usize()] =
+                gas::ACCESS_LIST_STORAGE_KEY;
         }
 
         if spec.is_enabled_in(SpecId::LONDON) {
@@ -272,7 +280,7 @@ impl GasParams {
             // Replace SSTORE_CLEARS_SCHEDULE (as defined in EIP-2200) with
             // SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_KEY_COST (4,800 gas as of EIP-2929 + EIP-2930)
             table[GasId::sstore_clearing_slot_refund().as_usize()] =
-                WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
+                gas::WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
 
             table[GasId::selfdestruct_refund().as_usize()] = 0;
         }
@@ -284,6 +292,9 @@ impl GasParams {
         if spec.is_enabled_in(SpecId::PRAGUE) {
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
                 eip7702::PER_EMPTY_ACCOUNT_COST;
+
+            table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
+            table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
         }
 
         Self::new(Arc::new(table))
@@ -685,7 +696,9 @@ impl GasParams {
             get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
 
         gas.initial_gas += tokens_in_calldata * self.tx_token_cost()
+            // before berlin tx_access_list_address_cost will be zero
             + access_list_accounts * self.tx_access_list_address_cost()
+            // before berlin tx_access_list_storage_key_cost will be zero
             + access_list_storages * self.tx_access_list_storage_key_cost()
             + self.tx_base_stipend()
             // EIP-7702: Authorization list
@@ -696,7 +709,7 @@ impl GasParams {
             gas.initial_gas += self.tx_create_cost();
 
             // EIP-3860: Limit and meter initcode
-            gas.initial_gas += self.tx_initcode_cost(input.len())
+            gas.initial_gas += self.tx_initcode_cost(input.len());
         }
 
         // Calculate gas floor for EIP-7623
