@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
-use std::{boxed::Box, vec::Vec};
+use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
 pub const FFADDRESS: Address = address!("0xffffffffffffffffffffffffffffffffffffffff");
@@ -87,12 +87,9 @@ pub trait Database {
 ///
 /// # Dyn Compatibility
 ///
-/// This trait is dyn-compatible. The `commit_iter` method has a `Self: Sized` bound
-/// which excludes it from the trait's vtable, allowing `dyn DatabaseCommit` to work.
-///
-/// Note: We manually implement this trait for `&mut T` and `Box<T>` instead of using
-/// `#[auto_impl]` because auto_impl generates impls for `T: ?Sized` that try to delegate
-/// `commit_iter` to the inner type, which fails when `T` is `?Sized` (like `dyn DatabaseCommit`).
+/// This trait is dyn-compatible. The `commit_iter` method uses `&mut dyn Iterator`
+/// which allows it to be called on trait objects while remaining in the vtable.
+#[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
@@ -105,78 +102,27 @@ pub trait DatabaseCommit {
     ///
     /// # Dyn Compatibility
     ///
-    /// This method requires `Self: Sized` because it uses `impl Trait` in argument position,
-    /// which is not dyn-compatible. Without this bound, the entire `DatabaseCommit` trait
-    /// would become not dyn-compatible, breaking code that uses `dyn DatabaseCommit` or
-    /// traits that extend it (e.g., Foundry's `DatabaseExt`).
-    ///
-    /// The `Sized` bound excludes this method from the trait's vtable while keeping the
-    /// trait itself dyn-compatible. Code using trait objects should use [`commit`](Self::commit)
-    /// instead, collecting the iterator into a `HashMap` first if needed.
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
-    where
-        Self: Sized,
-    {
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+    /// This method uses `&mut dyn Iterator` to remain object-safe and callable on trait objects.
+    /// For ergonomic usage with `impl IntoIterator`, use the inherent method
+    /// `commit_from_iter` on `dyn DatabaseCommit`.
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        let changes: HashMap<Address, Account> = changes.collect();
         self.commit(changes);
     }
 }
 
 /// Inherent implementation for `dyn DatabaseCommit` trait objects.
 ///
-/// This provides `commit_from_iter` for trait objects, which can't use the trait's
-/// `commit_iter` method because it requires `Self: Sized`. The inherent method
-/// collects the iterator into a `HashMap` and delegates to `commit()`.
+/// This provides `commit_from_iter` as an ergonomic wrapper around the trait's
+/// `commit_iter` method, accepting `impl IntoIterator` for convenience.
 impl dyn DatabaseCommit {
     /// Commit changes to the database with an iterator.
     ///
-    /// This is an inherent method on `dyn DatabaseCommit` that provides the same
-    /// functionality as the trait's `commit_iter` method, but works with trait objects.
+    /// This is an ergonomic wrapper that accepts `impl IntoIterator` and delegates
+    /// to the trait's [`commit_iter`](DatabaseCommit::commit_iter) method.
     #[inline]
     pub fn commit_from_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
-        self.commit(changes);
-    }
-}
-
-/// Manual implementation for `&mut T` where `T: DatabaseCommit + ?Sized`.
-///
-/// We can't use `#[auto_impl]` because it would generate code that tries to call
-/// `T::commit_iter` which requires `T: Sized`, but `T` might be `?Sized` here.
-impl<T: DatabaseCommit + ?Sized> DatabaseCommit for &mut T {
-    #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
-        (**self).commit(changes)
-    }
-
-    #[inline]
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
-    where
-        Self: Sized,
-    {
-        // Don't delegate to T::commit_iter since T might be ?Sized.
-        // Instead, collect and call commit directly.
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
-        (**self).commit(changes);
-    }
-}
-
-/// Manual implementation for `Box<T>` where `T: DatabaseCommit + ?Sized`.
-impl<T: DatabaseCommit + ?Sized> DatabaseCommit for Box<T> {
-    #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
-        (**self).commit(changes)
-    }
-
-    #[inline]
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>)
-    where
-        Self: Sized,
-    {
-        // Don't delegate to T::commit_iter since T might be ?Sized.
-        // Instead, collect and call commit directly.
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
-        (**self).commit(changes);
+        self.commit_iter(&mut changes.into_iter())
     }
 }
 
@@ -306,9 +252,8 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
         &mut self,
         balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), Self::Error> {
-        // Make transition and update cache state.
-        // Collect directly to HashMap to avoid double collection.
-        let transitions: HashMap<Address, Account> = balances
+        // Make transition and update cache state
+        let transitions = balances
             .into_iter()
             .map(|(address, balance)| {
                 let mut original_account = match self.basic(address)? {
@@ -322,9 +267,10 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
                 original_account.mark_touch();
                 Ok((address, original_account))
             })
-            .collect::<Result<_, _>>()?;
+            // Unfortunately must collect here to short circuit on error
+            .collect::<Result<Vec<_>, _>>()?;
 
-        self.commit(transitions);
+        self.commit_iter(&mut transitions.into_iter());
         Ok(())
     }
 
@@ -335,25 +281,24 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
         &mut self,
         addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, Self::Error> {
-        // Make transition and update cache state.
-        // We need to collect both transitions (HashMap) and balances (Vec).
+        // Make transition and update cache state
         let addresses_iter = addresses.into_iter();
         let (lower, _) = addresses_iter.size_hint();
-        let mut transitions = HashMap::with_capacity_and_hasher(lower, Default::default());
-        let mut balances = Vec::with_capacity(lower);
+        let mut transitions = Vec::with_capacity(lower);
+        let balances = addresses_iter
+            .map(|address| {
+                let mut original_account = match self.basic(address)? {
+                    Some(acc_info) => Account::from(acc_info),
+                    None => Account::new_not_existing(0),
+                };
+                let balance = core::mem::take(&mut original_account.info.balance);
+                original_account.mark_touch();
+                transitions.push((address, original_account));
+                Ok(balance.try_into().unwrap())
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
-        for address in addresses_iter {
-            let mut original_account = match self.basic(address)? {
-                Some(acc_info) => Account::from(acc_info),
-                None => Account::new_not_existing(0),
-            };
-            let balance = core::mem::take(&mut original_account.info.balance);
-            original_account.mark_touch();
-            transitions.insert(address, original_account);
-            balances.push(balance.try_into().unwrap());
-        }
-
-        self.commit(transitions);
+        self.commit_iter(&mut transitions.into_iter());
         Ok(balances)
     }
 }
@@ -384,22 +329,31 @@ mod tests {
 
         let mut db = MockDb { commits: vec![] };
 
-        // Test via trait method (requires Sized) - works on concrete types
-        db.commit_iter(vec![]);
+        // Test commit_iter on concrete types
+        let items: Vec<(Address, Account)> = vec![];
+        db.commit_iter(&mut items.into_iter());
         assert_eq!(db.commits.len(), 1);
 
-        // Test via dyn - commit() works on trait objects
+        // Test commit() on trait objects
         {
             let db_dyn: &mut dyn DatabaseCommit = &mut db;
             db_dyn.commit(HashMap::default());
         }
         assert_eq!(db.commits.len(), 2);
 
-        // For commit_iter on dyn, use the inherent impl's commit_from_iter
+        // Test commit_iter on trait objects (now works directly!)
+        {
+            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            let items: Vec<(Address, Account)> = vec![];
+            db_dyn.commit_iter(&mut items.into_iter());
+        }
+        assert_eq!(db.commits.len(), 3);
+
+        // Test ergonomic commit_from_iter on trait objects
         {
             let db_dyn: &mut dyn DatabaseCommit = &mut db;
             db_dyn.commit_from_iter(vec![]);
         }
-        assert_eq!(db.commits.len(), 3);
+        assert_eq!(db.commits.len(), 4);
     }
 }
