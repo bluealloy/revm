@@ -147,10 +147,7 @@ impl Bytecode {
     /// Returns raw bytes reference.
     #[inline]
     pub fn bytes_ref(&self) -> &Bytes {
-        match self {
-            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            Self::Eip7702(code) => code.raw(),
-        }
+        self.bytecode()
     }
 
     /// Returns raw bytes slice.
