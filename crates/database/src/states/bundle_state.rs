@@ -397,7 +397,7 @@ impl BundleRetention {
 ///
 /// This is needed to decide if there were any changes to the account.
 ///
-/// Reverts and created when TransitionState is applied to BundleState.
+/// Changes are applied and reverts are created when TransitionState is applied to BundleState.
 ///
 /// And can be used to revert BundleState to the state before transition.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
