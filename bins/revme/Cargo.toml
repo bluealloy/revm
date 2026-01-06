@@ -39,6 +39,7 @@ triehash.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
 csv = "1.1.6"
+color-eyre = "0.6"
 
 [features]
 default = ["map-foldhash"]
