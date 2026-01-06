@@ -39,14 +39,21 @@ serde_json.workspace = true
 [features]
 default = ["std", "parse"]
 std = [
-  "serde?/std",
-  "serde_json/std",
-  "primitives/std",
-  "bitvec/std",
-  "phf?/std",
+	"serde?/std",
+	"serde_json/std",
+	"primitives/std",
+	"bitvec/std",
+	"phf?/std",
+	"alloy-primitives/std"
 ]
 hashbrown = ["primitives/hashbrown"]
-serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"bitvec/serde",
+	"phf?/serde",
+	"alloy-primitives/serde"
+]
 parse = ["phf", "paste"]
 
 # Deprecated, please use `serde` feature instead.
