@@ -499,9 +499,9 @@ impl EthFrame<EthInterpreter> {
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
-                if ins_result.is_ok() {
-                    interpreter.gas.record_refund(out_gas.refunded());
-                }
+                // Note: refund is now tracked at the journal level, so we don't need to
+                // propagate it from child to parent frame here. The journal handles
+                // refund accumulation and revert automatically.
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -528,8 +528,10 @@ impl EthFrame<EthInterpreter> {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
 
+                // Note: refund is now tracked at the journal level, so we don't need to
+                // propagate it from child to parent frame here. The journal handles
+                // refund accumulation and revert automatically.
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO

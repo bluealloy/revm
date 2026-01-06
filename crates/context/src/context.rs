@@ -606,4 +606,14 @@ impl<
             }
         }
     }
+
+    #[inline]
+    fn record_refund(&mut self, refund: i64) {
+        self.journal_mut().record_refund(refund);
+    }
+
+    #[inline]
+    fn refund(&self) -> i64 {
+        self.journal().refund()
+    }
 }
