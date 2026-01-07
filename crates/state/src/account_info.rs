@@ -342,7 +342,7 @@ mod tests {
             "Set contains account2 (since equal)"
         );
 
-        let mut accounts = [account2.clone(), account1.clone()];
+        let mut accounts = [account2, account1];
         accounts.sort();
         assert_eq!(accounts[0], accounts[1], "Sorted vec treats them as equal");
     }
