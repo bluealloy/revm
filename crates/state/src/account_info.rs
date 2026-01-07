@@ -314,7 +314,7 @@ mod tests {
     fn test_account_info_trait_consistency() {
         let bytecode = Bytecode::default();
         let account1 = AccountInfo {
-            code: Some(bytecode.clone()),
+            code: Some(bytecode),
             ..AccountInfo::default()
         };
 
