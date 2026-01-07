@@ -29,34 +29,34 @@ impl TryFrom<AlloyBal> for Bal {
 
 impl From<Vec<AlloyBalanceChange>> for BalWrites<U256> {
     fn from(value: Vec<AlloyBalanceChange>) -> Self {
-        Self {
-            writes: value
+        Self::new(
+            value
                 .into_iter()
                 .map(|change| (change.block_access_index, change.post_balance))
                 .collect(),
-        }
+        )
     }
 }
 
 impl From<Vec<AlloyNonceChange>> for BalWrites<u64> {
     fn from(value: Vec<AlloyNonceChange>) -> Self {
-        Self {
-            writes: value
+        Self::new(
+            value
                 .into_iter()
                 .map(|change| (change.block_access_index, change.new_nonce))
                 .collect(),
-        }
+        )
     }
 }
 
 impl From<Vec<AlloyStorageChange>> for BalWrites<U256> {
     fn from(value: Vec<AlloyStorageChange>) -> Self {
-        Self {
-            writes: value
+        Self::new(
+            value
                 .into_iter()
                 .map(|change| (change.block_access_index, change.new_value))
                 .collect(),
-        }
+        )
     }
 }
 
@@ -64,8 +64,8 @@ impl TryFrom<Vec<AlloyCodeChange>> for BalWrites<(B256, Bytecode)> {
     type Error = BytecodeDecodeError;
 
     fn try_from(value: Vec<AlloyCodeChange>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            writes: value
+        Ok(Self::new(
+            value
                 .into_iter()
                 .map(|change| {
                     // convert bytes to bytecode.
@@ -75,6 +75,6 @@ impl TryFrom<Vec<AlloyCodeChange>> for BalWrites<(B256, Bytecode)> {
                     })
                 })
                 .collect::<Result<Vec<_>, Self::Error>>()?,
-        })
+        ))
     }
 }
