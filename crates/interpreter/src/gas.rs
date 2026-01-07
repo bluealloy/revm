@@ -142,11 +142,12 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
-            self.remaining = new_remaining;
-            return true;
+        if primitives::hints_util::unlikely(self.remaining < cost) {
+            false
+        } else {
+            self.remaining -= cost;
+            true
         }
-        false
     }
 
     /// Records an explicit cost. In case of underflow the gas will wrap around cost.
