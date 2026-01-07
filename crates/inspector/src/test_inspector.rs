@@ -1,6 +1,9 @@
 //! Test inspector for testing EVM execution.
 
+extern crate alloc;
+
 use crate::Inspector;
+use alloc::{format, string::String, vec::Vec};
 use interpreter::{
     interpreter_types::{Jumps, MemoryTr, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterTypes,
@@ -10,35 +13,53 @@ use primitives::{Address, Log, U256};
 /// Interpreter state at a specific point in execution.
 #[derive(Debug, Clone)]
 pub struct InterpreterState {
+    /// Program counter.
     pub pc: usize,
+    /// Stack length.
     pub stack_len: usize,
+    /// Memory size.
     pub memory_size: usize,
 }
 
 /// Step execution record.
 #[derive(Debug, Clone)]
 pub struct StepRecord {
+    /// State before instruction execution.
     pub before: InterpreterState,
+    /// State after instruction execution.
     pub after: Option<InterpreterState>,
+    /// Opcode name.
     pub opcode_name: String,
 }
 
 /// Events captured during EVM execution.
 #[derive(Debug, Clone)]
 pub enum InspectorEvent {
+    /// Execution step.
     Step(StepRecord),
+    /// Call operation.
     Call {
+        /// Call inputs.
         inputs: CallInputs,
+        /// Call outcome.
         outcome: Option<CallOutcome>,
     },
+    /// Create operation.
     Create {
+        /// Create inputs.
         inputs: CreateInputs,
+        /// Create outcome.
         outcome: Option<CreateOutcome>,
     },
+    /// Log emission.
     Log(Log),
+    /// Selfdestruct operation.
     Selfdestruct {
+        /// Contract address.
         address: Address,
+        /// Beneficiary address.
         beneficiary: Address,
+        /// Value transferred.
         value: U256,
     },
 }
@@ -46,12 +67,16 @@ pub enum InspectorEvent {
 /// Test inspector that records execution events.
 #[derive(Debug, Default)]
 pub struct TestInspector {
+    /// Captured events.
     pub events: Vec<InspectorEvent>,
+    /// Total step count.
     pub step_count: usize,
+    /// Current call depth.
     pub call_depth: usize,
 }
 
 impl TestInspector {
+    /// Create a new TestInspector.
     pub fn new() -> Self {
         Self::default()
     }
@@ -71,10 +96,12 @@ impl TestInspector {
         }
     }
 
+    /// Get all captured events.
     pub fn get_events(&self) -> Vec<InspectorEvent> {
         self.events.clone()
     }
 
+    /// Get the total step count.
     pub fn get_step_count(&self) -> usize {
         self.step_count
     }
@@ -176,6 +203,7 @@ where
 #[cfg(feature = "std")]
 pub mod default_tests {
     use super::*;
+    use alloc::{string::ToString, vec, vec::Vec};
     use primitives::Bytes;
     use state::bytecode::opcode;
 
