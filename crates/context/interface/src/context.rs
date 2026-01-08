@@ -152,6 +152,13 @@ pub trait ContextTr: Host {
         let (_, tx, _, _, _, local) = self.all_mut();
         (tx, local)
     }
+
+    /// Get the configuration and journal mutably
+    #[inline]
+    fn cfg_journal_mut(&mut self) -> (&Self::Cfg, &mut Self::Journal) {
+        let (_, _, cfg, journal, _, _) = self.all_mut();
+        (cfg, journal)
+    }
 }
 
 /// Inner Context error used for Interpreter to set error without returning it from instruction
