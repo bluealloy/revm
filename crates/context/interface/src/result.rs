@@ -176,6 +176,45 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     }
 }
 
+impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Success {
+                reason,
+                gas_used,
+                gas_refunded,
+                logs,
+                output,
+            } => {
+                write!(
+                    f,
+                    "Success ({}): {} gas used, {} refunded",
+                    reason, gas_used, gas_refunded
+                )?;
+                if !logs.is_empty() {
+                    write!(
+                        f,
+                        ", {} log{}",
+                        logs.len(),
+                        if logs.len() == 1 { "" } else { "s" }
+                    )?;
+                }
+                write!(f, ", {}", output)
+            }
+            Self::Revert { gas_used, output } => {
+                write!(f, "Revert: {} gas used", gas_used)?;
+                if !output.is_empty() {
+                    write!(f, ", {} bytes output", output.len())?;
+                }
+                Ok(())
+            }
+            Self::Halt { reason, gas_used } => {
+                write!(f, "Halted: {} ({} gas used)", reason, gas_used)
+            }
+        }
+    }
+}
+
 /// Output of a transaction execution
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -208,6 +247,34 @@ impl Output {
         match self {
             Output::Call(_) => None,
             Output::Create(_, address) => address.as_ref(),
+        }
+    }
+}
+
+impl fmt::Display for Output {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Output::Call(data) => {
+                if data.is_empty() {
+                    write!(f, "no output")
+                } else {
+                    write!(f, "{} bytes output", data.len())
+                }
+            }
+            Output::Create(data, Some(addr)) => {
+                if data.is_empty() {
+                    write!(f, "contract created at {}", addr)
+                } else {
+                    write!(f, "contract created at {} ({} bytes)", addr, data.len())
+                }
+            }
+            Output::Create(data, None) => {
+                if data.is_empty() {
+                    write!(f, "contract creation (no address)")
+                } else {
+                    write!(f, "contract creation (no address, {} bytes)", data.len())
+                }
+            }
         }
     }
 }
@@ -579,6 +646,16 @@ pub enum SuccessReason {
     SelfDestruct,
 }
 
+impl fmt::Display for SuccessReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Stop => write!(f, "Stop"),
+            Self::Return => write!(f, "Return"),
+            Self::SelfDestruct => write!(f, "SelfDestruct"),
+        }
+    }
+}
+
 /// Indicates that the EVM has experienced an exceptional halt.
 ///
 /// This causes execution to immediately end with all gas being consumed.
@@ -629,6 +706,37 @@ pub enum HaltReason {
     CallTooDeep,
 }
 
+impl core::error::Error for HaltReason {}
+
+impl fmt::Display for HaltReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OutOfGas(err) => write!(f, "{err}"),
+            Self::OpcodeNotFound => write!(f, "opcode not found"),
+            Self::InvalidFEOpcode => write!(f, "invalid 0xFE opcode"),
+            Self::InvalidJump => write!(f, "invalid jump destination"),
+            Self::NotActivated => write!(f, "feature or opcode not activated"),
+            Self::StackUnderflow => write!(f, "stack underflow"),
+            Self::StackOverflow => write!(f, "stack overflow"),
+            Self::OutOfOffset => write!(f, "out of offset"),
+            Self::CreateCollision => write!(f, "create collision"),
+            Self::PrecompileError => write!(f, "precompile error"),
+            Self::PrecompileErrorWithContext(msg) => write!(f, "precompile error: {msg}"),
+            Self::NonceOverflow => write!(f, "nonce overflow"),
+            Self::CreateContractSizeLimit => write!(f, "create contract size limit"),
+            Self::CreateContractStartingWithEF => {
+                write!(f, "create contract starting with 0xEF")
+            }
+            Self::CreateInitCodeSizeLimit => write!(f, "create initcode size limit"),
+            Self::OverflowPayment => write!(f, "overflow payment"),
+            Self::StateChangeDuringStaticCall => write!(f, "state change during static call"),
+            Self::CallNotAllowedInsideStatic => write!(f, "call not allowed inside static call"),
+            Self::OutOfFunds => write!(f, "out of funds"),
+            Self::CallTooDeep => write!(f, "call too deep"),
+        }
+    }
+}
+
 /// Out of gas errors.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -646,6 +754,21 @@ pub enum OutOfGasError {
     InvalidOperand,
     /// When performing SSTORE the gasleft is less than or equal to 2300
     ReentrancySentry,
+}
+
+impl core::error::Error for OutOfGasError {}
+
+impl fmt::Display for OutOfGasError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Basic => write!(f, "out of gas"),
+            Self::MemoryLimit => write!(f, "out of gas: memory limit exceeded"),
+            Self::Memory => write!(f, "out of gas: memory expansion"),
+            Self::Precompile => write!(f, "out of gas: precompile"),
+            Self::InvalidOperand => write!(f, "out of gas: invalid operand"),
+            Self::ReentrancySentry => write!(f, "out of gas: reentrancy sentry"),
+        }
+    }
 }
 
 /// Error that includes transaction index for batch transaction processing.
@@ -705,5 +828,40 @@ impl From<&'static str> for InvalidTransaction {
 impl From<String> for InvalidTransaction {
     fn from(s: String) -> Self {
         Self::Str(Cow::Owned(s))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_execution_result_display() {
+        let result: ExecutionResult<HaltReason> = ExecutionResult::Success {
+            reason: SuccessReason::Return,
+            gas_used: 21000,
+            gas_refunded: 5000,
+            logs: vec![Log::default(), Log::default()],
+            output: Output::Call(Bytes::from(vec![1, 2, 3])),
+        };
+        assert_eq!(
+            result.to_string(),
+            "Success (Return): 21000 gas used, 5000 refunded, 2 logs, 3 bytes output"
+        );
+
+        let result: ExecutionResult<HaltReason> = ExecutionResult::Revert {
+            gas_used: 100000,
+            output: Bytes::from(vec![1, 2, 3, 4]),
+        };
+        assert_eq!(
+            result.to_string(),
+            "Revert: 100000 gas used, 4 bytes output"
+        );
+
+        let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
+            reason: HaltReason::OutOfGas(OutOfGasError::Basic),
+            gas_used: 1000000,
+        };
+        assert_eq!(result.to_string(), "Halted: out of gas (1000000 gas used)");
     }
 }

@@ -406,7 +406,7 @@ fn validate_post_state(
                         *address,
                         "code".to_string(),
                         format!("0x{}", hex::encode(&expected_account.code)),
-                        format!("0x{}", hex::encode(actual_code.bytecode())),
+                        format!("0x{}", hex::encode(actual_code.original_byte_slice())),
                     );
                 }
             } else {
@@ -603,7 +603,7 @@ fn print_error_with_state(
         eprintln!("    Code hash: {:?}", info.code_hash);
         eprintln!(
             "    Code size: {} bytes",
-            info.code.as_ref().map_or(0, |c| c.bytecode().len())
+            info.code.as_ref().map_or(0, |c| c.len())
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
@@ -627,7 +627,7 @@ fn print_error_with_state(
         eprintln!("    Code hash: {:?}", info.code_hash);
         eprintln!(
             "    Code size: {} bytes",
-            info.code.as_ref().map_or(0, |c| c.bytecode().len())
+            info.code.as_ref().map_or(0, |c| c.len())
         );
         if !storage.is_empty() {
             eprintln!("    Storage ({} slots):", storage.len());
