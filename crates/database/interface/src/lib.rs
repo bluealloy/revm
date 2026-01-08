@@ -84,6 +84,11 @@ pub trait Database {
 }
 
 /// EVM database commit interface.
+///
+/// # Dyn Compatibility
+///
+/// This trait is dyn-compatible. The `commit_iter` method uses `&mut dyn Iterator`
+/// which allows it to be called on trait objects while remaining in the vtable.
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
@@ -94,9 +99,30 @@ pub trait DatabaseCommit {
     /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
     /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
-    fn commit_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
-        let changes: HashMap<Address, Account> = changes.into_iter().collect();
+    ///
+    /// # Dyn Compatibility
+    ///
+    /// This method uses `&mut dyn Iterator` to remain object-safe and callable on trait objects.
+    /// For ergonomic usage with `impl IntoIterator`, use the inherent method
+    /// `commit_from_iter` on `dyn DatabaseCommit`.
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        let changes: HashMap<Address, Account> = changes.collect();
         self.commit(changes);
+    }
+}
+
+/// Inherent implementation for `dyn DatabaseCommit` trait objects.
+///
+/// This provides `commit_from_iter` as an ergonomic wrapper around the trait's
+/// `commit_iter` method, accepting `impl IntoIterator` for convenience.
+impl dyn DatabaseCommit {
+    /// Commit changes to the database with an iterator.
+    ///
+    /// This is an ergonomic wrapper that accepts `impl IntoIterator` and delegates
+    /// to the trait's [`commit_iter`](DatabaseCommit::commit_iter) method.
+    #[inline]
+    pub fn commit_from_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+        self.commit_iter(&mut changes.into_iter())
     }
 }
 
@@ -244,7 +270,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             // Unfortunately must collect here to short circuit on error
             .collect::<Result<Vec<_>, _>>()?;
 
-        self.commit_iter(transitions);
+        self.commit_iter(&mut transitions.into_iter());
         Ok(())
     }
 
@@ -272,7 +298,62 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        self.commit_iter(transitions);
+        self.commit_iter(&mut transitions.into_iter());
         Ok(balances)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Compile-time test that DatabaseCommit is dyn-compatible.
+    /// This mirrors Foundry's approach: `struct _ObjectSafe(dyn DatabaseExt);`
+    struct _DatabaseCommitObjectSafe(dyn DatabaseCommit);
+
+    /// Test that dyn DatabaseCommit works correctly.
+    #[test]
+    fn test_dyn_database_commit() {
+        use std::collections::HashMap as StdHashMap;
+
+        struct MockDb {
+            commits: Vec<StdHashMap<Address, Account>>,
+        }
+
+        impl DatabaseCommit for MockDb {
+            fn commit(&mut self, changes: HashMap<Address, Account>) {
+                let std_map: StdHashMap<_, _> = changes.into_iter().collect();
+                self.commits.push(std_map);
+            }
+        }
+
+        let mut db = MockDb { commits: vec![] };
+
+        // Test commit_iter on concrete types
+        let items: Vec<(Address, Account)> = vec![];
+        db.commit_iter(&mut items.into_iter());
+        assert_eq!(db.commits.len(), 1);
+
+        // Test commit() on trait objects
+        {
+            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            db_dyn.commit(HashMap::default());
+        }
+        assert_eq!(db.commits.len(), 2);
+
+        // Test commit_iter on trait objects (now works directly!)
+        {
+            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            let items: Vec<(Address, Account)> = vec![];
+            db_dyn.commit_iter(&mut items.into_iter());
+        }
+        assert_eq!(db.commits.len(), 3);
+
+        // Test ergonomic commit_from_iter on trait objects
+        {
+            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            db_dyn.commit_from_iter(vec![]);
+        }
+        assert_eq!(db.commits.len(), 4);
     }
 }
