@@ -50,13 +50,13 @@ pub struct State<DB> {
     ///
     /// Build reverts and state that gets applied to the state.
     pub transition_state: Option<TransitionState>,
-    /// After block is finishes we merge those changes inside bundle
+    /// After block finishes we merge those changes inside bundle
     ///
     /// Bundle is used to update database and create changesets.
     ///
     /// Bundle state can be set on initialization if we want to use preloaded bundle.
     pub bundle_state: BundleState,
-    /// Addition layer that is going to be used to fetched values before fetching values
+    /// Additional layer that is going to be used to fetch values before fetching values
     /// from database
     ///
     /// Bundle is the main output of the state execution and this allows setting previous bundle
@@ -192,7 +192,7 @@ impl<DB: Database> State<DB> {
     }
 
     // TODO : Make cache aware of transitions dropping by having global transition counter.
-    /// Takess the [`BundleState`] changeset from the [`State`], replacing it
+    /// Takes the [`BundleState`] changeset from the [`State`], replacing it
     /// with an empty one.
     ///
     /// This will not apply any pending [`TransitionState`].

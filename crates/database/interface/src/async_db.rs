@@ -171,7 +171,7 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
 
     /// Gets storage value of account by its id.
     ///
-    /// Default implementation is to call [`DatabaseRef::storage_ref`] method.
+    /// Wraps [`DatabaseAsync::storage_by_account_id_async`] in a blocking call.
     #[inline]
     fn storage_by_account_id(
         &mut self,
