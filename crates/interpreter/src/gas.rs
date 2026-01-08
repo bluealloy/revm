@@ -1,11 +1,8 @@
 //! EVM gas calculation utilities.
 
 mod calc;
-mod constants;
-pub mod params;
 
 pub use calc::*;
-pub use constants::*;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -218,10 +215,19 @@ impl MemoryGas {
             return None;
         }
         self.words_num = new_num;
-        let mut cost = crate::gas::calc::memory_gas(new_num, linear_cost, quadratic_cost);
+        let mut cost = memory_gas(new_num, linear_cost, quadratic_cost);
         core::mem::swap(&mut self.expansion_cost, &mut cost);
         // Safe to subtract because we know that new_len > length
         // Notice the swap above.
         Some(self.expansion_cost - cost)
     }
+}
+
+/// Memory expansion cost calculation for a given number of words.
+#[inline]
+pub const fn memory_gas(num_words: usize, linear_cost: u64, quadratic_cost: u64) -> u64 {
+    let num_words = num_words as u64;
+    linear_cost
+        .saturating_mul(num_words)
+        .saturating_add(num_words.saturating_mul(num_words) / quadratic_cost)
 }

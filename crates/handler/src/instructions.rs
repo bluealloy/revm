@@ -1,6 +1,5 @@
 use auto_impl::auto_impl;
 use interpreter::{
-    gas::params::GasParams,
     instructions::{instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
@@ -17,12 +16,6 @@ pub trait InstructionProvider {
 
     /// Returns the instruction table that is used by EvmTr to execute instructions.
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
-
-    /// Returns the gas params that is used by EvmTr to execute instructions.
-    fn gas_params(&self) -> GasParams;
-
-    /// Sets the spec. Return true if the spec was changed.
-    fn set_spec(&mut self, spec: SpecId) -> bool;
 }
 
 /// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
@@ -30,8 +23,6 @@ pub trait InstructionProvider {
 pub struct EthInstructions<WIRE: InterpreterTypes, HOST: ?Sized> {
     /// Table containing instruction implementations indexed by opcode.
     pub instruction_table: Box<InstructionTable<WIRE, HOST>>,
-    /// Gas params that sets gas costs for instructions.
-    pub gas_params: GasParams,
     /// Spec that is used to set gas costs for instructions.
     pub spec: SpecId,
 }
@@ -43,7 +34,6 @@ where
     fn clone(&self) -> Self {
         Self {
             instruction_table: self.instruction_table.clone(),
-            gas_params: self.gas_params.clone(),
             spec: self.spec,
         }
     }
@@ -57,23 +47,19 @@ where
     /// Returns `EthInstructions` with mainnet spec.
     pub fn new_mainnet() -> Self {
         let spec = SpecId::default();
-        Self::new(
-            instruction_table_gas_changes_spec(spec),
-            GasParams::new_spec(spec),
-            spec,
-        )
+        Self::new(instruction_table_gas_changes_spec(spec), spec)
+    }
+
+    /// Returns `EthInstructions` with mainnet spec.
+    pub fn new_mainnet_with_spec(spec: SpecId) -> Self {
+        Self::new(instruction_table_gas_changes_spec(spec), spec)
     }
 
     /// Returns a new instance of `EthInstructions` with custom instruction table.
     #[inline]
-    pub fn new(
-        base_table: InstructionTable<WIRE, HOST>,
-        gas_params: GasParams,
-        spec: SpecId,
-    ) -> Self {
+    pub fn new(base_table: InstructionTable<WIRE, HOST>, spec: SpecId) -> Self {
         Self {
             instruction_table: Box::new(base_table),
-            gas_params,
             spec,
         }
     }
@@ -95,20 +81,6 @@ where
 
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table
-    }
-
-    fn gas_params(&self) -> GasParams {
-        self.gas_params.clone()
-    }
-
-    fn set_spec(&mut self, spec: SpecId) -> bool {
-        if spec == self.spec {
-            return false;
-        }
-        *self.instruction_table = instruction_table_gas_changes_spec(spec);
-        self.gas_params = GasParams::new_spec(spec);
-
-        true
     }
 }
 

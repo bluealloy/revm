@@ -173,9 +173,18 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
             Entry::Occupied(occ) => {
                 let slot = occ.into_mut();
                 // skip load if account is cold.
-                let is_cold = slot.is_cold_transaction_id(self.transaction_id);
-                if is_cold && skip_cold_load {
-                    return Err(JournalLoadError::ColdLoadSkipped);
+                let mut is_cold = false;
+                if slot.is_cold_transaction_id(self.transaction_id) {
+                    // is storage cold
+                    is_cold = self
+                        .access_list
+                        .get(&self.address)
+                        .and_then(|v| v.get(&key))
+                        .is_none();
+
+                    if is_cold && skip_cold_load {
+                        return Err(JournalLoadError::ColdLoadSkipped);
+                    }
                 }
                 slot.mark_warm_with_transaction_id(self.transaction_id);
                 (slot, is_cold)

@@ -52,12 +52,17 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             }
             gas!(
                 context.interpreter,
-                context.interpreter.gas_params.initcode_cost(len)
+                context.host.gas_params().initcode_cost(len)
             );
         }
 
         let code_offset = as_usize_or_fail!(context.interpreter, code_offset);
-        resize_memory!(context.interpreter, code_offset, len);
+        resize_memory!(
+            context.interpreter,
+            context.host.gas_params(),
+            code_offset,
+            len
+        );
 
         code = Bytes::copy_from_slice(
             context
@@ -74,14 +79,11 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // SAFETY: `len` is reasonable in size as gas for it is already deducted.
         gas!(
             context.interpreter,
-            context.interpreter.gas_params.create2_cost(len)
+            context.host.gas_params().create2_cost(len)
         );
         CreateScheme::Create2 { salt }
     } else {
-        gas!(
-            context.interpreter,
-            context.interpreter.gas_params.create_cost()
-        );
+        gas!(context.interpreter, context.host.gas_params().create_cost());
         CreateScheme::Create
     };
 
@@ -95,10 +97,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         .is_enabled_in(SpecId::TANGERINE)
     {
         // Take remaining gas and deduce l64 part of it.
-        gas_limit = context
-            .interpreter
-            .gas_params
-            .call_stipend_reduction(gas_limit);
+        gas_limit = context.host.gas_params().call_stipend_reduction(gas_limit);
     }
     gas!(context.interpreter, gas_limit);
 
@@ -136,7 +135,8 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     }
 
-    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
+    let Some((input, return_memory_offset)) =
+        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
     else {
         return;
     };
@@ -179,7 +179,8 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
     let has_transfer = !value.is_zero();
 
-    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
+    let Some((input, return_memory_offset)) =
+        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
     else {
         return;
     };
@@ -222,7 +223,8 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
-    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
+    let Some((input, return_memory_offset)) =
+        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
     else {
         return;
     };
@@ -265,7 +267,8 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
-    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(context.interpreter)
+    let Some((input, return_memory_offset)) =
+        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
     else {
         return;
     };

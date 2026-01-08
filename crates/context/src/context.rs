@@ -1,6 +1,7 @@
 //! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
+    cfg::GasParams,
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
@@ -133,7 +134,7 @@ impl<
         JOURNAL: JournalTr<Database = DB>,
         CHAIN: Default,
         LOCAL: LocalContextTr + Default,
-        SPEC: Default + Copy + Into<SpecId>,
+        SPEC: Default + Into<SpecId> + Clone,
     > Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
@@ -141,14 +142,11 @@ impl<
     /// This will create a new [`Journal`] object.
     pub fn new(db: DB, spec: SPEC) -> Self {
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(spec.into());
+        journaled_state.set_spec_id(spec.clone().into());
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv {
-                spec,
-                ..Default::default()
-            },
+            cfg: CfgEnv::new_with_spec(spec),
             local: LOCAL::default(),
             journaled_state,
             chain: Default::default(),
@@ -450,6 +448,11 @@ impl<
 
     fn prevrandao(&self) -> Option<U256> {
         self.block().prevrandao().map(|r| r.into())
+    }
+
+    #[inline]
+    fn gas_params(&self) -> &GasParams {
+        self.cfg().gas_params()
     }
 
     fn block_number(&self) -> U256 {

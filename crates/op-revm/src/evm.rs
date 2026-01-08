@@ -1,7 +1,7 @@
 //! Contains the `[OpEvm]` type and its implementation of the execution EVM traits.
-use crate::precompiles::OpPrecompiles;
+use crate::{precompiles::OpPrecompiles, OpSpecId};
 use revm::{
-    context::{ContextError, ContextSetters, Evm, FrameStack},
+    context::{Cfg, ContextError, ContextSetters, Evm, FrameStack},
     context_interface::ContextTr,
     handler::{
         evm::FrameTr,
@@ -26,16 +26,24 @@ pub struct OpEvm<
     pub Evm<CTX, INSP, I, P, F>,
 );
 
-impl<CTX: ContextTr, INSP> OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles> {
+impl<CTX: ContextTr<Cfg: Cfg<Spec: Into<OpSpecId> + Clone>>, INSP>
+    OpEvm<CTX, INSP, EthInstructions<EthInterpreter, CTX>, OpPrecompiles>
+{
     /// Create a new Optimism EVM.
     pub fn new(ctx: CTX, inspector: INSP) -> Self {
+        let spec: OpSpecId = ctx.cfg().spec().into();
         Self(Evm {
             ctx,
             inspector,
-            instruction: EthInstructions::new_mainnet(),
-            precompiles: OpPrecompiles::default(),
+            instruction: EthInstructions::new_mainnet_with_spec(spec.into()),
+            precompiles: OpPrecompiles::new_with_spec(spec),
             frame_stack: FrameStack::new_prealloc(8),
         })
+    }
+
+    /// Consumes self and returns the inner context.
+    pub fn into_context(self) -> CTX {
+        self.0.ctx
     }
 }
 

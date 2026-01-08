@@ -183,13 +183,7 @@ where
 
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = Self::Frame::init_with_context(
-            new_frame,
-            ctx,
-            precompiles,
-            frame_input,
-            self.instruction.gas_params(),
-        )?;
+        let res = Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input)?;
 
         Ok(res.map_frame(|token| {
             if is_first_init {

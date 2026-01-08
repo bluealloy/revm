@@ -2,10 +2,7 @@ use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResul
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
-    context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-        Cfg,
-    },
+    context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database::{self, bal::EvmDatabaseError},
     database_interface::EmptyDB,
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
@@ -340,12 +337,12 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            cfg.spec = spec_name.to_spec_id();
+            cfg.set_spec_and_mainnet_gas_params(spec_name.to_spec_id());
 
             // Configure max blobs per spec
-            if cfg.spec.is_enabled_in(SpecId::OSAKA) {
+            if cfg.spec().is_enabled_in(SpecId::OSAKA) {
                 cfg.set_max_blobs_per_tx(6);
-            } else if cfg.spec.is_enabled_in(SpecId::PRAGUE) {
+            } else if cfg.spec().is_enabled_in(SpecId::PRAGUE) {
                 cfg.set_max_blobs_per_tx(9);
             } else {
                 cfg.set_max_blobs_per_tx(6);
@@ -421,7 +418,8 @@ pub fn execute_test_suite(
 fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     // Prepare state
     let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    let spec = ctx.cfg.spec();
+    cache.set_state_clear_flag(spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -430,7 +428,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     let evm_context = Context::mainnet()
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .with_db(&mut state);
 
     // Execute
@@ -457,7 +455,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
         ctx.name,
         &exec_result,
         db,
-        ctx.cfg.spec(),
+        *ctx.cfg.spec(),
         ctx.print_json_outcome,
     )
 }
@@ -467,7 +465,7 @@ fn debug_failed_test(ctx: DebugContext) {
 
     // Re-run with tracing
     let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    cache.set_state_clear_flag(ctx.cfg.spec().is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -477,7 +475,7 @@ fn debug_failed_test(ctx: DebugContext) {
         .with_db(&mut state)
         .with_block(ctx.block)
         .with_tx(ctx.tx)
-        .with_cfg(ctx.cfg)
+        .with_cfg(ctx.cfg.clone())
         .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
 
     let exec_result = evm.inspect_tx_commit(ctx.tx);
@@ -489,7 +487,7 @@ fn debug_failed_test(ctx: DebugContext) {
         "\nState after:\n{}",
         evm.ctx.journaled_state.database.cache.pretty_print()
     );
-    println!("\nSpecification: {:?}", ctx.cfg.spec);
+    println!("\nSpecification: {:?}", ctx.cfg.spec());
     println!("\nTx: {:#?}", ctx.tx);
     println!("Block: {:#?}", ctx.block);
     println!("Cfg: {:#?}", ctx.cfg);

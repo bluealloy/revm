@@ -481,7 +481,7 @@ fn print_error_with_state(
 
     // Print configuration environment
     eprintln!("\n📋 Configuration Environment:");
-    eprintln!("  Spec ID: {:?}", debug_info.cfg_env.spec);
+    eprintln!("  Spec ID: {:?}", debug_info.cfg_env.spec());
     eprintln!("  Chain ID: {}", debug_info.cfg_env.chain_id);
     eprintln!(
         "  Limit contract code size: {:?}",
@@ -714,7 +714,7 @@ fn execute_blockchain_test(
     // Setup configuration based on fork
     let spec_id = fork_to_spec_id(test_case.network);
     let mut cfg = CfgEnv::default();
-    cfg.spec = spec_id;
+    cfg.set_spec_and_mainnet_gas_params(spec_id);
 
     // Genesis block is not used yet.
     let mut parent_block_hash = Some(test_case.genesis_block_header.hash);
@@ -764,7 +764,7 @@ fn execute_blockchain_test(
         // Create EVM context for each transaction to ensure fresh state access
         let evm_context = Context::mainnet()
             .with_block(&block_env)
-            .with_cfg(&cfg)
+            .with_cfg(cfg.clone())
             .with_db(&mut state);
 
         // Build and execute with EVM - always use inspector when JSON output is enabled
