@@ -628,4 +628,60 @@ mod tests {
 
         assert!(evm.inspector.get_step_count() > 0);
     }
+
+    #[test]
+    fn test_default_tests_bootstrap() {
+        use crate::test_inspector::default_tests;
+
+        // Example: run basic tests
+        let result = default_tests::run_tests(|bytecode| {
+            let bytecode = Bytecode::new_raw(bytecode);
+            let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+            let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+            let _ = evm.inspect_one_tx(
+                TxEnv::builder()
+                    .caller(BENCH_CALLER)
+                    .kind(TxKind::Call(BENCH_TARGET))
+                    .gas_limit(100_000)
+                    .build()
+                    .unwrap(),
+            );
+            Ok(evm.inspector)
+        });
+        assert!(result.is_ok(), "Basic tests should pass");
+
+        // Example: run extended tests
+        let result = default_tests::run_extended_tests(|setup| {
+            let mut db = database::InMemoryDB::default();
+            db.insert_account_info(
+                BENCH_TARGET,
+                AccountInfo {
+                    balance: U256::from(1_000_000_000_000_000_000u64),
+                    code: Some(Bytecode::new_raw(setup.main_bytecode)),
+                    ..Default::default()
+                },
+            );
+            for (addr, bytecode) in setup.auxiliary_contracts {
+                db.insert_account_info(
+                    addr,
+                    AccountInfo {
+                        code: Some(Bytecode::new_raw(bytecode)),
+                        ..Default::default()
+                    },
+                );
+            }
+            let ctx = Context::mainnet().with_db(db);
+            let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+            let _ = evm.inspect_one_tx(
+                TxEnv::builder()
+                    .caller(BENCH_CALLER)
+                    .kind(TxKind::Call(BENCH_TARGET))
+                    .gas_limit(1_000_000)
+                    .build()
+                    .unwrap(),
+            );
+            Ok(evm.inspector)
+        });
+        assert!(result.is_ok(), "Extended tests should pass");
+    }
 }
