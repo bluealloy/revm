@@ -16,6 +16,8 @@ mod inspect;
 mod inspector;
 mod mainnet_inspect;
 mod noop;
+/// Test inspector for testing EVM execution.
+pub mod test_inspector;
 mod traits;
 
 #[cfg(test)]
@@ -33,6 +35,7 @@ pub use handler::{inspect_instructions, InspectorHandler};
 pub use inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm};
 pub use inspector::*;
 pub use noop::NoOpInspector;
+pub use test_inspector::{InspectorEvent, InterpreterState, StepRecord, TestInspector};
 pub use traits::*;
 
 #[cfg(test)]
