@@ -20,7 +20,6 @@ pub enum AlloyDBError {
     /// Block not found for the given block number.
     ///
     /// This can occur when:
-    /// - The block number is in the future
     /// - The node has pruned the block data
     /// - Using a light client that doesn't have the block
     BlockNotFound(u64),
