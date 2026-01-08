@@ -75,7 +75,7 @@ pub fn granite() -> &'static Precompiles {
     })
 }
 
-/// Returns precompiles for isthumus spec.
+/// Returns precompiles for isthmus spec.
 pub fn isthmus() -> &'static Precompiles {
     static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
