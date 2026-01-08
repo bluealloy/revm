@@ -874,7 +874,7 @@ impl GasId {
             "cold_storage_cost" => Some(Self::cold_storage_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
             "code_deposit_cost" => Some(Self::code_deposit_cost()),
-            "eip7702_per_empty_account_cost" => Some(Self::tx_eip7702_per_empty_account_cost()),
+            "tx_eip7702_per_empty_account_cost" => Some(Self::tx_eip7702_per_empty_account_cost()),
             "tx_token_non_zero_byte_multiplier" => Some(Self::tx_token_non_zero_byte_multiplier()),
             "tx_token_cost" => Some(Self::tx_token_cost()),
             "tx_floor_cost_per_token" => Some(Self::tx_floor_cost_per_token()),
@@ -1112,11 +1112,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 25 known GasIds (based on the indices 1-25 used)
+        // We should have exactly 36 known GasIds (based on the indices 1-36 used)
         assert_eq!(
             unique_names.len(),
-            25,
-            "Expected 25 unique GasIds, found {}",
+            36,
+            "Expected 36 unique GasIds, found {}",
             unique_names.len()
         );
     }
