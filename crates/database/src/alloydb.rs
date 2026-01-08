@@ -12,23 +12,42 @@ use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
-/// Error type for transport-related database operations.
+/// Error type for AlloyDB database operations.
 #[derive(Debug)]
-pub struct DBTransportError(pub TransportError);
+pub enum AlloyDBError {
+    /// Transport error from the underlying provider.
+    Transport(TransportError),
+    /// Block not found for the given block number.
+    ///
+    /// This can occur when:
+    /// - The node has pruned the block data
+    /// - Using a light client that doesn't have the block
+    BlockNotFound(u64),
+}
 
-impl DBErrorMarker for DBTransportError {}
+impl DBErrorMarker for AlloyDBError {}
 
-impl Display for DBTransportError {
+impl Display for AlloyDBError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Transport error: {}", self.0)
+        match self {
+            Self::Transport(err) => write!(f, "Transport error: {err}"),
+            Self::BlockNotFound(number) => write!(f, "Block not found: {number}"),
+        }
     }
 }
 
-impl Error for DBTransportError {}
+impl Error for AlloyDBError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Transport(err) => Some(err),
+            Self::BlockNotFound(_) => None,
+        }
+    }
+}
 
-impl From<TransportError> for DBTransportError {
+impl From<TransportError> for AlloyDBError {
     fn from(e: TransportError) -> Self {
-        Self(e)
+        Self::Transport(e)
     }
 }
 
@@ -61,7 +80,7 @@ impl<N: Network, P: Provider<N>> AlloyDB<N, P> {
 }
 
 impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
-    type Error = DBTransportError;
+    type Error = AlloyDBError;
 
     async fn basic_async_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let nonce = self
@@ -93,8 +112,11 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
             // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
             .get_block_by_number(number.into())
             .await?;
-        // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
-        Ok(B256::new(*block.unwrap().header().hash()))
+
+        match block {
+            Some(block) => Ok(B256::new(*block.header().hash())),
+            None => Err(AlloyDBError::BlockNotFound(number)),
+        }
     }
 
     async fn code_by_hash_async_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
