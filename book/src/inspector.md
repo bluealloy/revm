@@ -28,7 +28,7 @@ pub trait Inspector<CTX, INTR: InterpreterTypes> {
     
     // Event tracing
     fn log(&mut self, context: &mut CTX, log: Log) {}
-    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context &mut CTX, log: Log) {
+    fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         self.log(context, log)
     }
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {}
@@ -138,4 +138,4 @@ REVM provides several ready-to-use inspectors:
 - **Development tools**: Contract interaction tracing
 - **Testing frameworks**: Execution verification and state checking
 
-The Inspector trait makes REVM very observable EVM implementations available, enabling sophisticated tooling and analysis capabilities.
+The Inspector trait makes REVM one of the most observable EVM implementations available, enabling sophisticated tooling and analysis capabilities.
