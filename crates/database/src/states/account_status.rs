@@ -59,9 +59,7 @@ impl AccountStatus {
         matches!(
             self,
             Self::LoadedNotExisting
-                | Self::InMemoryChange
                 | Self::Destroyed
-                | Self::DestroyedChanged
                 | Self::DestroyedAgain
         )
     }
@@ -228,9 +226,7 @@ mod test {
         // We know full storage
         assert!(!AccountStatus::LoadedEmptyEIP161.is_storage_known());
         assert!(AccountStatus::LoadedNotExisting.is_storage_known());
-        assert!(AccountStatus::InMemoryChange.is_storage_known());
         assert!(AccountStatus::Destroyed.is_storage_known());
-        assert!(AccountStatus::DestroyedChanged.is_storage_known());
         assert!(AccountStatus::DestroyedAgain.is_storage_known());
         assert!(!AccountStatus::Loaded.is_storage_known());
         assert!(!AccountStatus::Changed.is_storage_known());
