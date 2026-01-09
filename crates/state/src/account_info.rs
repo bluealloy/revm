@@ -314,7 +314,7 @@ mod tests {
     fn test_account_info_trait_consistency() {
         let bytecode = Bytecode::default();
         let account1 = AccountInfo {
-            code: Some(bytecode.clone()),
+            code: Some(bytecode),
             ..AccountInfo::default()
         };
 
@@ -342,7 +342,7 @@ mod tests {
             "Set contains account2 (since equal)"
         );
 
-        let mut accounts = [account2.clone(), account1.clone()];
+        let mut accounts = [account2, account1];
         accounts.sort();
         assert_eq!(accounts[0], accounts[1], "Sorted vec treats them as equal");
     }

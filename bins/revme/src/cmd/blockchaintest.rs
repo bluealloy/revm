@@ -485,10 +485,9 @@ fn print_error_with_state(
     eprintln!("  Difficulty: {}", debug_info.block_env.difficulty);
     eprintln!("  Prevrandao: {:?}", debug_info.block_env.prevrandao);
     eprintln!("  Beneficiary: {:?}", debug_info.block_env.beneficiary);
-    eprintln!(
-        "  Blob excess gas: {:?}",
-        debug_info.block_env.blob_excess_gas_and_price
-    );
+    let blob = debug_info.block_env.blob_excess_gas_and_price;
+    eprintln!("  Blob excess gas: {:?}", blob.map(|a| a.excess_blob_gas));
+    eprintln!("  Blob gas price: {:?}", blob.map(|a| a.blob_gasprice));
 
     // Print withdrawals
     if let Some(withdrawals) = &debug_info.withdrawals {
