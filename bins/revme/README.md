@@ -9,7 +9,7 @@ Currently it is mainly used to run ethereum tests with the `statetest` subcomman
 `statetest` takes a path to the directory where ethereum statetest json can be found.
 It recursively parses all json files in the specified directory and executes them.
 
-Running all [ethereum tests][et] checks that revm is compliant to the ethereum specs.
+Running all [ethereum tests][et] checks that revm is compliant with the ethereum specs.
 
 To run [ethereum tests][et] locally, clone the [tests][et] repository and provide the
 test directory. Below, we clone the repo and execute the `GeneralStateTests` suite of
