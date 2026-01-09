@@ -42,7 +42,9 @@ impl LocalContextTr for LocalContext {
 }
 
 impl LocalContext {
-    /// Creates a new local context, initcodes are hashes and added to the mapping.
+    /// Creates a new local context with default values.
+    ///
+    /// Initializes a shared memory buffer with 4KB capacity and no precompile error message.
     pub fn new() -> Self {
         Self::default()
     }
