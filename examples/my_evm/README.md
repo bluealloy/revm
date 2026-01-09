@@ -68,7 +68,7 @@ let _res = my_evm.inspect_commit_replay();
 ```
 
 ### [`revm::SystemCallEvm`]
-Allows executing system transaction, only input needed is system contract add address and input
+Allows executing a system transaction. Only input needed is system contract address and input.
 Validation and pre-execution and most of post execution phases of ordinary transact flow will be skipped.
 
 System calls are needed for inserting of fetching data on pre or post block state.

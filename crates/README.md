@@ -1,5 +1,5 @@
 Crates version and their description:
-* ![revm](https://img.shields.io/crates/v/revm?height=50?label=revm) main crate, it reexports all other crates. 
+* ![revm](https://img.shields.io/crates/v/revm?height=50?label=revm) main crate. It reexports all other crates. 
 * ![revm-primitives](https://img.shields.io/crates/v/revm-primitives?label=revm-primitives) contains constants and primitives types that revm uses (alloy-primitives)
 * ![revm-interpreter](https://img.shields.io/crates/v/revm-interpreter?label=revm-interpreter) biggest crate in the project, it contains all instructions
 * ![revm-precompile](https://img.shields.io/crates/v/revm-precompile?label=revm-precompile) Precompiles defined by ethereum

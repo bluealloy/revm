@@ -20,7 +20,7 @@ Revm offers two primary applications: firstly, it functions as an executor where
 
 ### How to use:
 
-Here is a straightforward example of using the Execution API: It allows us to create an Ethereum Virtual Machine (EVM) and execute transactions. Additionally, it can be utilized to generate traces with the inspector or more complex example of foundry cheatcodes.
+Here is a straightforward example of using the Execution API: It allows us to create an Ethereum Virtual Machine (EVM) and execute transactions. Additionally, it can be utilized to generate traces with the inspector or more complex examples of foundry cheatcodes.
 
 ```rust,ignore
 let mut evm = Context::mainnet().with_block(block).build_mainnet();
@@ -49,7 +49,7 @@ The full list of projects that use Revm is available in the [awesome-revm](https
 
 The [book](https://bluealloy.github.io/revm/) and [`Architecture and API`](https://bluealloy.github.io/revm/architecture.html) page is the best starting resource.
 
-Some quick links can be found here. Some point to code documentation or the book. code docs are there to explain usage of a particular part of the code where the book is to get more of an overview of the architecture or how components/projects fit together.
+Some quick links can be found here. Some point to code documentation or the book. Code docs are there to explain usage of a particular part of the code where the book is to get more of an overview of the architecture or how components/projects fit together.
 
 * [How to build and use revm](https://bluealloy.github.io/revm/dev.html)
 * [Architecture overview](https://bluealloy.github.io/revm/architecture.html)
@@ -69,8 +69,8 @@ The Minimum Supported Rust Version (MSRV) may be updated at any time, so we can 
 ### Community:
 For questions please open a github issue or join the public [telegram group](https://t.me/+Ig4WDWOzikA3MzA0)
 
-### Licence
-Revm is licensed under MIT Licence.
+### License
+Revm is licensed under MIT License.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.
 
