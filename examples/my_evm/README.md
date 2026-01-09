@@ -68,10 +68,10 @@ let _res = my_evm.inspect_commit_replay();
 ```
 
 ### [`revm::SystemCallEvm`]
-Allows executing a system transaction. Only input needed is system contract address and input.
-Validation and pre-execution and most of post execution phases of ordinary transact flow will be skipped.
+Allows executing a system transaction. The only input needed is the system contract address and input.
+Validation and pre-execution and most of the post-execution phases of ordinary transact flow will be skipped.
 
-System calls are needed for inserting of fetching data on pre or post block state.
+System calls are needed for inserting or fetching data on pre or post block state.
 
 ```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), revm::inspector::NoOpInspector);
