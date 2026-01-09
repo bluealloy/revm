@@ -58,9 +58,7 @@ impl AccountStatus {
     pub fn is_storage_known(&self) -> bool {
         matches!(
             self,
-            Self::LoadedNotExisting
-                | Self::Destroyed
-                | Self::DestroyedAgain
+            Self::LoadedNotExisting | Self::Destroyed | Self::DestroyedAgain
         )
     }
 

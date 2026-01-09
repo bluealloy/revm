@@ -1029,7 +1029,8 @@ mod tests {
 
         // Block 1: Deploy the contract with an initial slot.
         let first_block_slot_key = U256::from(1);
-        let first_block_slot_value = state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(1), 0);
+        let first_block_slot_value =
+            state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(1), 0);
         let contract_account = Account {
             info: contract_info.clone(),
             storage: state::EvmStorage::from_iter([(
@@ -1056,7 +1057,8 @@ mod tests {
 
         // Block 2: Write a new slot to the contract
         let second_block_slot_key = U256::from(2);
-        let second_block_slot_value = state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(2), 1);
+        let second_block_slot_value =
+            state::EvmStorageSlot::new_changed(U256::ZERO, U256::from(2), 1);
         let contract_account = Account {
             info: contract_info,
             storage: state::EvmStorage::from_iter([(
