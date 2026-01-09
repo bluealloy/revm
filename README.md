@@ -14,7 +14,7 @@ Revm is a highly efficient and stable implementation of the Ethereum Virtual Mac
 [tg-url]: https://t.me/+Ig4WDWOzikA3MzA0
 [tg-badge]: https://img.shields.io/badge/chat-telegram-blue
 
-Known for its robustness, it stands as one of the most popular libraries and a critical component of the Ethereum ecosystem. Revm plays a crucial role across various projects, being widely utilized by almost all tooling and block builders. It is integrated into Reth, multiple Layer 2 variants and other clients and serving as a standard for zkVMs.
+Known for its robustness, it stands as one of the most popular libraries and a critical component of the Ethereum ecosystem. Revm plays a crucial role across various projects, being widely utilized by almost all tooling and block builders. It is integrated into Reth, multiple Layer 2 variants and other clients, and serves as a standard for zkVMs.
 
 Revm offers two primary applications: firstly, it functions as an executor where users can set up block info and process mainnet transactions; secondly, it acts as a framework that facilitates the extension and support of different EVM variants such as op-revm.
 
@@ -58,7 +58,7 @@ Some quick links can be found here. Some point to code documentation or the book
 * [Release procedure and changelogs explanation](https://bluealloy.github.io/revm/release_procedure.html)
 * [How to use revme](https://github.com/bluealloy/revm/tree/main/bins/revme) (Revm binary with few commands)
 * [How to run Ethereum tests](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
-* If there is more need for explanations please open a PR request.
+* If there is more need for explanations please open a PR.
 
 ## Supported Rust Versions (MSRV)
 
