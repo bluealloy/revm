@@ -46,7 +46,13 @@ std = [
   "phf?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
-serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
+serde = [
+	"dep:serde",
+	"primitives/serde",
+	"bitvec/serde",
+	"phf?/serde",
+	"rand/serde"
+]
 parse = ["phf", "paste"]
 
 # Deprecated, please use `serde` feature instead.
