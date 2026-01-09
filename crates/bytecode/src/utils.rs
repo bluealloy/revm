@@ -24,55 +24,89 @@ pub unsafe fn read_u16(ptr: *const u8) -> u16 {
 #[cfg(test)]
 pub mod test {
     use crate::opcode;
-    use alloy_primitives::{hex, Bytes};
     use anyhow::Result;
-    use std::str::FromStr;
+    use primitives::U256;
+    use rand::Rng;
 
     /// Constructs bytecode for inserting input into memory
-    pub fn build_memory_input_opcodes(hex_input: &str) -> Result<Vec<u8>> {
+    pub fn build_memory_input_opcodes(start_offset: U256, input: &[u8]) -> Result<Vec<u8>> {
         let mut opcodes = vec![];
-
-        // Parse hex input string to bytes
-        let input_bytes = Bytes::from_str(hex_input)?;
+        let mut current_offset = start_offset;
 
         // Iterate for each 32 bytes to prepend PUSH* and append MSTORE opcodes
-        for chunk in input_bytes.chunks(32) {
-            let push_opcode = opcode::PUSH0 + chunk.len() as u8;
-            opcodes.push(push_opcode);
+        let offset_step = U256::from(32);
+        for bytes in input.chunks(32) {
+            // Push the input value
+            build_push_bytes(bytes, &mut opcodes);
 
-            opcodes.extend_from_slice(chunk);
+            // Push the memory offset
+            build_push_u256(current_offset, &mut opcodes);
 
+            // Call MSTORE
             opcodes.push(opcode::MSTORE);
+
+            // Increase the memory offset
+            current_offset += offset_step;
         }
 
         Ok(opcodes)
     }
 
+    // Constructs a PUSH* instruction for an Uint256
+    fn build_push_u256(value: U256, opcodes: &mut Vec<u8>) {
+        let bytes = value.to_be_bytes_trimmed_vec();
+        build_push_bytes(&bytes, opcodes);
+    }
+
+    // Constructs a PUSH* instruction for the value of byte size is not greater than 32
+    fn build_push_bytes(bytes: &[u8], opcodes: &mut Vec<u8>) {
+        let len = bytes.len();
+        assert!(len <= 32);
+
+        let push_opcode = opcode::PUSH0 + len as u8;
+        opcodes.push(push_opcode);
+
+        opcodes.extend_from_slice(bytes);
+    }
+
     #[test]
     fn test_build_memory_input_opcodes() {
-        let mut bytes = vec![];
-        bytes.extend([0xff; 32]);
-        bytes.extend([0x77; 32]);
-        bytes.extend([0x11; 32]);
-        bytes.extend([1, 2, 3, 4]);
+        let mut rng = rand::rng();
 
-        let hex_input = hex::encode(bytes);
+        // make the memory offset as 4 bytes for test
+        let start_offset = rng.random_range(0x0100_0000..=(u32::MAX - 100));
+        let mut current_offset = start_offset;
 
-        let opcodes = build_memory_input_opcodes(&hex_input).unwrap();
-        let mut expected = vec![];
-        expected.push(opcode::PUSH32);
-        expected.extend([0xff; 32]);
-        expected.push(opcode::MSTORE);
-        expected.push(opcode::PUSH32);
-        expected.extend([0x77; 32]);
-        expected.push(opcode::MSTORE);
-        expected.push(opcode::PUSH32);
-        expected.extend([0x11; 32]);
-        expected.push(opcode::MSTORE);
-        expected.push(opcode::PUSH4);
-        expected.extend([1, 2, 3, 4]);
-        expected.push(opcode::MSTORE);
+        let mut all_inputs = vec![];
+        let mut expected_opcodes = vec![];
 
-        assert_eq!(opcodes, expected);
+        // Generate 32 bytes input array
+        let input_arr: [[u8; 32]; 3] = rng.random();
+        for input in input_arr {
+            all_inputs.extend(input);
+
+            expected_opcodes.push(opcode::PUSH32);
+            expected_opcodes.extend(input);
+            expected_opcodes.push(opcode::PUSH4);
+            expected_opcodes.extend(current_offset.to_be_bytes());
+            expected_opcodes.push(opcode::MSTORE);
+
+            current_offset += 32;
+        }
+
+        let last_input: [u8; 15] = rng.random();
+        {
+            all_inputs.extend(last_input);
+
+            expected_opcodes.push(opcode::PUSH15);
+            expected_opcodes.extend(last_input);
+            expected_opcodes.push(opcode::PUSH4);
+            expected_opcodes.extend(current_offset.to_be_bytes());
+
+            expected_opcodes.push(opcode::MSTORE);
+        }
+
+        let opcodes = build_memory_input_opcodes(U256::from(start_offset), &all_inputs).unwrap();
+        assert_eq!(opcodes, expected_opcodes);
     }
 }

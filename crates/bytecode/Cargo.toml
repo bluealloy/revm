@@ -32,28 +32,21 @@ paste = { workspace = true, optional = true }
 phf = { workspace = true, features = ["macros"], optional = true }
 
 [dev-dependencies]
-alloy-primitives.workspace = true
 anyhow.workspace = true
+rand.workspace = true
 serde_json.workspace = true
 
 [features]
 default = ["std", "parse"]
 std = [
-	"serde?/std",
-	"serde_json/std",
-	"primitives/std",
-	"bitvec/std",
-	"phf?/std",
-	"alloy-primitives/std"
+  "serde?/std",
+  "serde_json/std",
+  "primitives/std",
+  "bitvec/std",
+  "phf?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
-serde = [
-	"dep:serde",
-	"primitives/serde",
-	"bitvec/serde",
-	"phf?/serde",
-	"alloy-primitives/serde"
-]
+serde = ["dep:serde", "primitives/serde", "bitvec/serde", "phf?/serde"]
 parse = ["phf", "paste"]
 
 # Deprecated, please use `serde` feature instead.
