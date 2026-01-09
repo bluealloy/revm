@@ -1,6 +1,6 @@
 # Building from source
 
-It requires running
+Building requires running
 ```bash
 git clone https://github.com/bluealloy/revm.git
 cd revm
