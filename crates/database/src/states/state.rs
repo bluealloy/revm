@@ -1,3 +1,5 @@
+use crate::states::block_hash_cache::BlockHashCache;
+
 use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
@@ -7,16 +9,12 @@ use database_interface::{
     bal::{BalState, EvmDatabaseError},
     Database, DatabaseCommit, DatabaseRef, EmptyDB,
 };
-use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256, BLOCK_HASH_HISTORY};
+use primitives::{hash_map, Address, FixedBytes, HashMap, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal},
     Account, AccountInfo,
 };
-use std::{
-    boxed::Box,
-    collections::{btree_map, BTreeMap},
-    sync::Arc,
-};
+use std::{boxed::Box, sync::Arc};
 
 /// Database boxed with a lifetime and Send
 pub type DBBox<'a, E> = Box<dyn Database<Error = E> + Send + 'a>;
@@ -68,7 +66,7 @@ pub struct State<DB> {
     /// This map can be used to give different values for block hashes if in case.
     ///
     /// The fork block is different or some blocks are not saved inside database.
-    pub block_hashes: BTreeMap<u64, B256>,
+    pub block_hashes: BlockHashCache,
     /// BAL state.
     ///
     /// Can contain both the BAL for reads and BAL builder that is used to build BAL.
@@ -355,28 +353,21 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        match self.block_hashes.entry(number) {
-            btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
-            btree_map::Entry::Vacant(entry) => {
-                let ret = *entry.insert(
-                    self.database
-                        .block_hash(number)
-                        .map_err(EvmDatabaseError::Database)?,
-                );
-
-                // Prune all hashes that are older than BLOCK_HASH_HISTORY
-                let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
-                while let Some(entry) = self.block_hashes.first_entry() {
-                    if *entry.key() < last_block {
-                        entry.remove();
-                    } else {
-                        break;
-                    }
-                }
-
-                Ok(ret)
-            }
+        // Check cache first
+        if let Some(hash) = self.block_hashes.get(number) {
+            return Ok(hash);
         }
+
+        // Not in cache, fetch from database
+        let hash = self
+            .database
+            .block_hash(number)
+            .map_err(EvmDatabaseError::Database)?;
+
+        // Insert into cache
+        self.block_hashes.insert(number, hash);
+
+        Ok(hash)
     }
 }
 
@@ -495,8 +486,8 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     }
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
-        if let Some(entry) = self.block_hashes.get(&number) {
-            return Ok(*entry);
+        if let Some(entry) = self.block_hashes.get(number) {
+            return Ok(FixedBytes(*entry));
         }
         // If not found, load it from database
         self.database
@@ -512,8 +503,7 @@ mod tests {
         states::{reverts::AccountInfoRevert, StorageSlot},
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
-    use primitives::{keccak256, U256};
-
+    use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();
@@ -526,18 +516,19 @@ mod tests {
         let block2_hash = keccak256(U256::from(2).to_string().as_bytes());
         let block_test_hash = keccak256(U256::from(test_number).to_string().as_bytes());
 
-        assert_eq!(
-            state.block_hashes,
-            BTreeMap::from([(1, block1_hash), (2, block2_hash)])
-        );
+        // Verify blocks 1 and 2 are in cache
+        assert_eq!(state.block_hashes.get(1), Some(block1_hash));
+        assert_eq!(state.block_hashes.get(2), Some(block2_hash));
 
+        // Fetch block beyond BLOCK_HASH_HISTORY
+        // Block 258 % 256 = 2, so it will overwrite block 2
         state.block_hash(test_number).unwrap();
-        assert_eq!(
-            state.block_hashes,
-            BTreeMap::from([(test_number, block_test_hash), (2, block2_hash)])
-        );
-    }
 
+        // Block 2 should be evicted (wrapped around), but block 1 should still be present
+        assert_eq!(state.block_hashes.get(1), Some(block1_hash));
+        assert_eq!(state.block_hashes.get(2), None);
+        assert_eq!(state.block_hashes.get(test_number), Some(block_test_hash));
+    }
     /// Checks that if accounts is touched multiple times in the same block,
     /// then the old values from the first change are preserved and not overwritten.
     ///
