@@ -213,7 +213,7 @@ impl DummyHost {
     /// Create a new dummy host with the given spec.
     pub fn new(spec: SpecId) -> Self {
         Self {
-            gas_params: GasParams::new_spec(spec).clone(),
+            gas_params: GasParams::new_spec(spec),
         }
     }
 }

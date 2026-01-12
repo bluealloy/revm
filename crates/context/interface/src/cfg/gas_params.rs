@@ -91,7 +91,7 @@ mod serde {
 
 impl Default for GasParams {
     fn default() -> Self {
-        Self::new_spec(SpecId::default()).clone()
+        Self::new_spec(SpecId::default())
     }
 }
 
