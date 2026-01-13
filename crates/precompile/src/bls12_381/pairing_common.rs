@@ -59,4 +59,3 @@ where
 
     Ok(pairing_check(&parsed_pairs))
 }
-
