@@ -9,7 +9,7 @@ use context::{
     LocalContextTr,
 };
 use context_interface::{
-    context::ContextError,
+    context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
@@ -464,11 +464,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        match core::mem::replace(evm.ctx().error(), Ok(())) {
-            Err(ContextError::Db(e)) => return Err(e.into()),
-            Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
-            Ok(()) => (),
-        }
+        take_error::<Self::Error, _>(evm.ctx().error())?;
 
         let exec_result = post_execution::output(evm.ctx(), result);
 
