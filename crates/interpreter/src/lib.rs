@@ -25,6 +25,13 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+/// Basic block gas batching optimization - reduces gas checks from per-instruction to per-block.
+/// Expected gain: 4-6%.
+pub mod basic_block_gas;
+
+/// Batched interpreter using basic block gas optimization.
+pub mod batched_interpreter;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
