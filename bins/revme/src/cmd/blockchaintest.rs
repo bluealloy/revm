@@ -199,9 +199,7 @@ fn run_tests(
     }
 
     if failed_files > 0 {
-        Err(Error::FilesFailed {
-            failed_files,
-        })
+        Err(Error::FilesFailed { failed_files })
     } else {
         Ok(())
     }
