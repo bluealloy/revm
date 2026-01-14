@@ -370,6 +370,15 @@ impl InterpreterResult {
         }
     }
 
+    /// Returns a new `InterpreterResult` for an out-of-gas error with the given gas limit.
+    pub fn new_oog(gas_limit: u64) -> Self {
+        Self {
+            result: InstructionResult::OutOfGas,
+            output: Bytes::default(),
+            gas: Gas::new_spent(gas_limit),
+        }
+    }
+
     /// Returns whether the instruction result is a success.
     #[inline]
     pub const fn is_ok(&self) -> bool {
