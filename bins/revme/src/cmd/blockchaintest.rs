@@ -94,9 +94,9 @@ fn run_tests(
     print_env_on_error: bool,
     json_output: bool,
 ) -> Result<(), Error> {
-    let mut passed = 0;
-    let mut failed = 0;
-    let mut skipped = 0;
+    let mut passed_tests = 0;
+    let mut failed_files = 0;
+    let mut skipped_files = 0;
     let mut failed_paths = Vec::new();
 
     let start_time = Instant::now();
@@ -105,7 +105,7 @@ fn run_tests(
     for (file_index, file_path) in test_files.into_iter().enumerate() {
         let current_file = file_index + 1;
         if skip_test(&file_path) {
-            skipped += 1;
+            skipped_files += 1;
             if json_output {
                 let output = json!({
                     "file": file_path.display().to_string(),
@@ -128,7 +128,7 @@ fn run_tests(
 
         match result {
             Ok(test_count) => {
-                passed += test_count;
+                passed_tests += test_count;
                 if json_output {
                     // JSON output handled in run_test_file
                 } else if !omit_progress {
@@ -142,7 +142,7 @@ fn run_tests(
                 }
             }
             Err(e) => {
-                failed += 1;
+                failed_files += 1;
                 if keep_going {
                     failed_paths.push(file_path.clone());
                 }
@@ -175,9 +175,9 @@ fn run_tests(
     if json_output {
         let results = json!({
             "summary": {
-                "passed": passed,
-                "failed": failed,
-                "skipped": skipped,
+                "passed_tests": passed_tests,
+                "failed_files": failed_files,
+                "skipped_files": skipped_files,
                 "duration_secs": duration.as_secs_f64(),
             }
         });
@@ -192,14 +192,16 @@ fn run_tests(
         }
 
         println!("\nTest results:");
-        println!("  Passed:  {passed}");
-        println!("  Failed:  {failed}");
-        println!("  Skipped: {skipped}");
+        println!("  Passed tests:  {passed_tests}");
+        println!("  Failed files:  {failed_files}");
+        println!("  Skipped files: {skipped_files}");
         println!("  Time:    {:.2}s", duration.as_secs_f64());
     }
 
-    if failed > 0 {
-        Err(Error::TestsFailed { failed })
+    if failed_files > 0 {
+        Err(Error::FilesFailed {
+            failed_files,
+        })
     } else {
         Ok(())
     }
@@ -1167,6 +1169,6 @@ pub enum Error {
     #[error("Directory traversal error: {0}")]
     WalkDir(#[from] walkdir::Error),
 
-    #[error("{failed} tests failed")]
-    TestsFailed { failed: usize },
+    #[error("{failed_files} files failed")]
+    FilesFailed { failed_files: usize },
 }
