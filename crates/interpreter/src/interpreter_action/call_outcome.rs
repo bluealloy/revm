@@ -45,6 +45,16 @@ impl CallOutcome {
         }
     }
 
+    /// Constructs a new [`CallOutcome`] for an out-of-gas error.
+    ///
+    /// # Arguments
+    ///
+    /// * `gas_limit` - The gas limit that was exceeded.
+    /// * `memory_offset` - The range in memory indicating where the output data is stored.
+    pub fn new_oog(gas_limit: u64, memory_offset: Range<usize>) -> Self {
+        Self::new(InterpreterResult::new_oog(gas_limit), memory_offset)
+    }
+
     /// Returns a reference to the instruction result.
     ///
     /// Provides access to the result of the executed instruction.
