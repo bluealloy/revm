@@ -25,6 +25,10 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+/// Bytecode preprocessing with instruction caching - eliminates repeated bytecode reads.
+/// Expected gain: 2-3%.
+pub mod bytecode_cache;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
