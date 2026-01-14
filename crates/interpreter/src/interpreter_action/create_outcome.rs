@@ -30,6 +30,19 @@ impl CreateOutcome {
         Self { result, address }
     }
 
+    /// Constructs a new [`CreateOutcome`] for an out-of-gas error.
+    ///
+    /// # Arguments
+    ///
+    /// * `gas_limit` - The gas limit that was exceeded.
+    ///
+    /// # Returns
+    ///
+    /// A new [`CreateOutcome`] instance with no address.
+    pub fn new_oog(gas_limit: u64) -> Self {
+        Self::new(InterpreterResult::new_oog(gas_limit), None)
+    }
+
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].
     ///
     /// This method provides access to the [`InstructionResult`] which represents the
