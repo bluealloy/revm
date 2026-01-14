@@ -187,7 +187,6 @@ where
     }
 }
 
-
 impl<DbError> FromStringError for ContextError<DbError> {
     fn from_string(value: String) -> Self {
         Self::Custom(value)
