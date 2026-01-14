@@ -25,6 +25,10 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+/// Tail-call dispatch optimization - reduces interpreter loop overhead.
+/// Expected gain: 3-5%.
+pub mod tail_call;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
