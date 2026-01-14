@@ -25,6 +25,11 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+/// Cache-aligned stack with 64-byte alignment and downward growth for better cache locality.
+/// Expected gain: 1-2%.
+pub mod aligned_stack;
+pub use aligned_stack::AlignedStack;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
