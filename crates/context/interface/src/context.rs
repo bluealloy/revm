@@ -171,6 +171,23 @@ pub enum ContextError<DbError> {
     Custom(String),
 }
 
+/// Take (drain) the stored context error and map it into an external error type.
+///
+/// This is used in multiple places (handlers/frames) to avoid duplicating the
+/// `mem::replace + match ContextError` boilerplate.
+#[inline]
+pub fn take_error<E, DbError>(err: &mut Result<(), ContextError<DbError>>) -> Result<(), E>
+where
+    E: From<DbError> + FromStringError,
+{
+    match core::mem::replace(err, Ok(())) {
+        Err(ContextError::Db(e)) => Err(e.into()),
+        Err(ContextError::Custom(e)) => Err(E::from_string(e)),
+        Ok(()) => Ok(()),
+    }
+}
+
+
 impl<DbError> FromStringError for ContextError<DbError> {
     fn from_string(value: String) -> Self {
         Self::Custom(value)
