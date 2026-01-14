@@ -25,6 +25,10 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+/// Opcode fusion optimization - fuses common PUSH+OP patterns into single handlers.
+/// Expected gain: 2-4%.
+pub mod opcode_fusion;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
