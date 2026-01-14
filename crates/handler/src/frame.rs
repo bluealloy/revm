@@ -4,7 +4,7 @@ use crate::{
 };
 use context::result::FromStringError;
 use context_interface::{
-    context::ContextError,
+    context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
     Cfg, ContextTr, Database,
@@ -443,11 +443,7 @@ impl EthFrame<EthInterpreter> {
         result: FrameResult,
     ) -> Result<(), ERROR> {
         self.interpreter.memory.free_child_context();
-        match core::mem::replace(ctx.error(), Ok(())) {
-            Err(ContextError::Db(e)) => return Err(e.into()),
-            Err(ContextError::Custom(e)) => return Err(ERROR::from_string(e)),
-            Ok(_) => (),
-        }
+        take_error::<ERROR, _>(ctx.error())?;
 
         // Insert result to the top frame.
         match result {
