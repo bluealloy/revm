@@ -1,4 +1,5 @@
 use primitives::{alloy_primitives::B256, BLOCK_HASH_HISTORY};
+use std::boxed::Box;
 
 const BLOCK_HASH_HISTORY_USIZE: usize = BLOCK_HASH_HISTORY as usize;
 /// A fixed-size cache for the 256 most recent block hashes.
