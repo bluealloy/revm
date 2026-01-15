@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v15.0.0) - 2026-01-15
+
+### Added
+
+- add `new_oog` helpers to InterpreterResult, CallOutcome, CreateOutcome, and FrameResult ([#3309](https://github.com/bluealloy/revm/pull/3309))
+- new gas params, tx initial gas and codedeposit ([#3260](https://github.com/bluealloy/revm/pull/3260))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- *(create)* Implement Cache for CreateInputs::created_address ([#3218](https://github.com/bluealloy/revm/pull/3218))
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- *(create)* Fix CreateInputs::created_address Cache invalidation ([#3222](https://github.com/bluealloy/revm/pull/3222))
+
+### Other
+
+- apply improvements from ai-bot labeled PRs ([#3297](https://github.com/bluealloy/revm/pull/3297))
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- description of `Handler::validate_against_state_and_deduct_caller` should match responsibilities ([#3256](https://github.com/bluealloy/revm/pull/3256))
+- *(handler)* eliminate code duplication in transaction validation ([#3243](https://github.com/bluealloy/revm/pull/3243))
+- *(handler)* validate_initial_tx_gas takes &mut Evm  ([#3235](https://github.com/bluealloy/revm/pull/3235))
+- *(clippy)* remove unused imports ([#3227](https://github.com/bluealloy/revm/pull/3227))
+- optimize vector initialization using size hints ([#3200](https://github.com/bluealloy/revm/pull/3200))
+- apply_auth_list helper fn ([#3187](https://github.com/bluealloy/revm/pull/3187))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.0.0...revm-handler-v14.1.0) - 2025-11-14
 
 ### Other

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.1.0...revm-interpreter-v32.0.0) - 2026-01-15
+
+### Added
+
+- add `new_oog` helpers to InterpreterResult, CallOutcome, CreateOutcome, and FrameResult ([#3309](https://github.com/bluealloy/revm/pull/3309))
+- new gas params, tx initial gas and codedeposit ([#3260](https://github.com/bluealloy/revm/pull/3260))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- *(create)* Implement Cache for CreateInputs::created_address ([#3218](https://github.com/bluealloy/revm/pull/3218))
+
+### Fixed
+
+- *(create)* Fix CreateInputs::created_address Cache invalidation ([#3222](https://github.com/bluealloy/revm/pull/3222))
+
+### Other
+
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- add optimization for push and pop ([#3263](https://github.com/bluealloy/revm/pull/3263))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- avoid loading bytecode in extcodehash ([#3261](https://github.com/bluealloy/revm/pull/3261))
+- *(clippy)* remove unused imports ([#3227](https://github.com/bluealloy/revm/pull/3227))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [31.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.0.0...revm-interpreter-v31.1.0) - 2025-11-14
 
 ### Fixed

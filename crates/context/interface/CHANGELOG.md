@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v13.1.0...revm-context-interface-v14.0.0) - 2026-01-15
+
+### Added
+
+- new gas params, tx initial gas and codedeposit ([#3260](https://github.com/bluealloy/revm/pull/3260))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- *(test)* one gasid name is missing ([#3290](https://github.com/bluealloy/revm/pull/3290))
+
+### Other
+
+- *(gas_params)* add dedicated GasIds for sstore_refund ([#3310](https://github.com/bluealloy/revm/pull/3310))
+- remove redundant clones in gas params defaults ([#3300](https://github.com/bluealloy/revm/pull/3300))
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- add Display trait for ExecutionResult and related types ([#3267](https://github.com/bluealloy/revm/pull/3267))
+- add Display for HaltReason and OutOfGasError ([#3265](https://github.com/bluealloy/revm/pull/3265))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [13.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v13.0.0...revm-context-interface-v13.1.0) - 2025-11-14
 
 ### Added
