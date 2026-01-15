@@ -7,7 +7,7 @@ pub struct BlockHashCache {
     /// A fixed-size array holding the block hashes.
     /// Since we only store the most recent 256 block hashes, this array has a length of 256.
     /// The reason we store block number alongside its hash is to handle the case where it wraps around, so we can verify the block number.
-    hashes: [(u64, B256); BLOCK_HASH_HISTORY_USIZE],
+    hashes: Box<[(u64, B256); BLOCK_HASH_HISTORY_USIZE]>,
 }
 
 impl Default for BlockHashCache {
@@ -19,9 +19,9 @@ impl Default for BlockHashCache {
 impl BlockHashCache {
     /// Creates a new empty BlockHashCache of length [BLOCK_HASH_HISTORY].
     #[inline]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            hashes: [(0, B256::ZERO); BLOCK_HASH_HISTORY_USIZE],
+            hashes: Box::new([(0, B256::ZERO); BLOCK_HASH_HISTORY_USIZE]),
         }
     }
 
