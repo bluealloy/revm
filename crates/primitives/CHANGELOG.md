@@ -270,12 +270,6 @@ Stable version
 - Bump new logo ([#1735](https://github.com/bluealloy/revm/pull/1735))
 - bump kzg-rs version ([#1734](https://github.com/bluealloy/revm/pull/1734))
 
-## [9.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v9.0.0...revm-primitives-v9.0.1) - 2024-08-30
-
-### Other
-- Bump new logo ([#1735](https://github.com/bluealloy/revm/pull/1735))
-- bump kzg-rs version ([#1734](https://github.com/bluealloy/revm/pull/1734))
-
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v8.0.0...revm-primitives-v9.0.0) - 2024-08-29
 
 ### Added
