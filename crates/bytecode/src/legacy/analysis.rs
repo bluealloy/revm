@@ -94,21 +94,21 @@ mod tests {
     #[test]
     fn test_empty_bytecode_requires_stop() {
         let bytecode = vec![];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+        let (_, padded_bytecode) = analyze_legacy(bytecode.into());
         assert_eq!(padded_bytecode.len(), 1); // Just STOP
     }
 
     #[test]
     fn test_bytecode_with_jumpdest_at_start() {
         let bytecode = vec![opcode::JUMPDEST, opcode::PUSH1, 0x01, opcode::STOP];
-        let (jump_table, _) = analyze_legacy(bytecode.clone().into());
+        let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(jump_table.is_valid(0)); // First byte should be a valid jumpdest
     }
 
     #[test]
     fn test_bytecode_with_jumpdest_after_push() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::JUMPDEST, opcode::STOP];
-        let (jump_table, _) = analyze_legacy(bytecode.clone().into());
+        let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(jump_table.is_valid(2)); // JUMPDEST should be at position 2
     }
 
@@ -121,7 +121,7 @@ mod tests {
             opcode::JUMPDEST,
             opcode::STOP,
         ];
-        let (jump_table, _) = analyze_legacy(bytecode.clone().into());
+        let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(jump_table.is_valid(0)); // First JUMPDEST
         assert!(jump_table.is_valid(3)); // Second JUMPDEST
     }
@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn test_bytecode_with_invalid_opcode() {
         let bytecode = vec![0xFF, opcode::STOP]; // 0xFF is an invalid opcode
-        let (jump_table, _) = analyze_legacy(bytecode.clone().into());
+        let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(!jump_table.is_valid(0)); // Invalid opcode should not be a jumpdest
     }
 
@@ -170,7 +170,7 @@ mod tests {
             0x02,
             opcode::STOP,
         ];
-        let (jump_table, _) = analyze_legacy(bytecode.clone().into());
+        let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
     }
 }
