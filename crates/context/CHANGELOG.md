@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-context-v12.1.0...revm-context-v13.0.0) - 2026-01-15
+
+### Added
+
+- new gas params, tx initial gas and codedeposit ([#3260](https://github.com/bluealloy/revm/pull/3260))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- Propagate `map-foldhash` Feature Through Dependency Chain ([#3252](https://github.com/bluealloy/revm/pull/3252))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+- JournaledAccount sload/sstore ([#3201](https://github.com/bluealloy/revm/pull/3201))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Fixed
+
+- fix API comment ([#3293](https://github.com/bluealloy/revm/pull/3293))
+- *(test)* one gasid name is missing ([#3290](https://github.com/bluealloy/revm/pull/3290))
+- set transaction_id on new account ([#3204](https://github.com/bluealloy/revm/pull/3204))
+
+### Other
+
+- *(gas_params)* add dedicated GasIds for sstore_refund ([#3310](https://github.com/bluealloy/revm/pull/3310))
+- remove redundant clones in gas params defaults ([#3300](https://github.com/bluealloy/revm/pull/3300))
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- add Display trait for ExecutionResult and related types ([#3267](https://github.com/bluealloy/revm/pull/3267))
+- add Display for HaltReason and OutOfGasError ([#3265](https://github.com/bluealloy/revm/pull/3265))
+- *(cleanup)* remove unused duplicate ContextSetters trait in context crate ([#3225](https://github.com/bluealloy/revm/pull/3225))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [12.1.0](https://github.com/bluealloy/revm/compare/revm-context-v12.0.0...revm-context-v12.1.0) - 2025-11-14
 
 ### Added
