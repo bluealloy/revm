@@ -532,8 +532,8 @@ mod tests {
 
     /// Test that block 0 can be correctly fetched and cached.
     /// This is a regression test for a bug where the cache was initialized with
-    /// (0, B256::ZERO) entries, causing block 0 lookups to incorrectly return
-    /// B256::ZERO from cache instead of fetching from the database.
+    /// `(0, B256::ZERO)` entries, causing block 0 lookups to incorrectly match
+    /// the default entry instead of fetching from the database.
     #[test]
     fn block_hash_cache_block_zero() {
         let mut state = State::builder().build();
