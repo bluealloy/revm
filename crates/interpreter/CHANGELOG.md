@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v32.0.0...revm-interpreter-v32.0.1) - 2026-01-16
+
+### Other
+
+- remove outdated stack pop TODO ([#3315](https://github.com/bluealloy/revm/pull/3315))
+
 ## [32.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.1.0...revm-interpreter-v32.0.0) - 2026-01-15
 
 ### Added
