@@ -59,8 +59,15 @@ use primitives::{
 use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
-pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
+#[inline]
+pub fn calc_linear_cost(len: usize, base: u64, word: u64) -> u64 {
     (len as u64).div_ceil(32) * word + base
+}
+
+/// Calculate the linear cost of a precompile.
+#[deprecated(note = "please use `calc_linear_cost` instead")]
+pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
+    calc_linear_cost(len, base, word)
 }
 
 /// Precompiles contain map of precompile addresses to functions and HashSet of precompile addresses.
