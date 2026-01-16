@@ -38,14 +38,13 @@ impl BlockHashCache {
 
     /// Retrieves the block hash for the given block number, if it exists in the cache.
     #[inline]
-    pub const fn get(&self, block_number: u64) -> Option<B256> {
+    pub fn get(&self, block_number: u64) -> Option<B256> {
         let index = (block_number % BLOCK_HASH_HISTORY) as usize;
         let (stored_block_number, stored_hash) = self.hashes[index];
-        if let Some(stored) = stored_block_number {
-            if stored == block_number {
-                return Some(stored_hash);
-            }
+        if Some(block_number) == stored_block_number {
+            Some(stored_hash)
+        } else {
+            None
         }
-        None
     }
 }
