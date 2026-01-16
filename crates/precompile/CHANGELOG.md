@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v32.0.0...revm-precompile-v32.0.1) - 2026-01-16
+
+### Other
+
+- rename misleading calc_linear_cost_u32 function ([#3318](https://github.com/bluealloy/revm/pull/3318))
+
 ## [32.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v31.0.0...revm-precompile-v32.0.0) - 2026-01-15
 
 ### Added

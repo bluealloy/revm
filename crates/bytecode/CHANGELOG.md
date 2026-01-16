@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v8.0.0...revm-bytecode-v8.0.1) - 2026-01-16
+
+### Other
+
+- *(tests)* remove redundant clones in legacy analysis tests ([#3317](https://github.com/bluealloy/revm/pull/3317))
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v7.1.1...revm-bytecode-v8.0.0) - 2026-01-15
 
 ### Added
