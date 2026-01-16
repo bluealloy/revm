@@ -19,7 +19,9 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     }
 
     /// Maps the item variant using the provided function, leaving results unchanged.
-    #[deprecated(note = "Use map_item() instead; this maps the Item variant (not necessarily a frame)")]
+    #[deprecated(
+        note = "Use map_item() instead; this maps the Item variant (not necessarily a frame)"
+    )]
     pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         self.map_item(f)
     }
