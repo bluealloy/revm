@@ -12,7 +12,7 @@ use revm::{
         LocalContextTr,
     },
     context_interface::{
-        context::ContextError,
+        context::take_error,
         result::{EVMError, ExecutionResult, FromStringError},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
@@ -346,11 +346,7 @@ where
         evm: &mut Self::Evm,
         frame_result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        match core::mem::replace(evm.ctx().error(), Ok(())) {
-            Err(ContextError::Db(e)) => return Err(e.into()),
-            Err(ContextError::Custom(e)) => return Err(Self::Error::from_string(e)),
-            Ok(_) => (),
-        }
+        take_error::<Self::Error, _>(evm.ctx().error())?;
 
         let exec_result =
             post_execution::output(evm.ctx(), frame_result).map_haltreason(OpHaltReason::Base);
