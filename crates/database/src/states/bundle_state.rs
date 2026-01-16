@@ -536,6 +536,14 @@ impl BundleState {
         self.contracts.get(hash).cloned()
     }
 
+    /// Gets storage value from state.
+    ///
+    /// Returns `None` if the account is not present in the bundle state or the slot is not known.
+    pub fn storage(&self, address: &Address, storage_key: StorageKey) -> Option<StorageValue> {
+        self.account(address)
+            .and_then(|account| account.storage_slot(storage_key))
+    }
+
     /// Consumes [`TransitionState`] by applying the changes and creating the
     /// reverts.
     ///
