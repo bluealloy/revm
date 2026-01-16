@@ -9,7 +9,7 @@ use database_interface::{
     bal::{BalState, EvmDatabaseError},
     Database, DatabaseCommit, DatabaseRef, EmptyDB,
 };
-use primitives::{hash_map, Address, FixedBytes, HashMap, StorageKey, StorageValue, B256};
+use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal},
     Account, AccountInfo,
@@ -486,8 +486,8 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     }
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
-        if let Some(entry) = self.block_hashes.get(number) {
-            return Ok(FixedBytes(*entry));
+        if let Some(hash) = self.block_hashes.get(number) {
+            return Ok(hash);
         }
         // If not found, load it from database
         self.database
@@ -528,6 +528,28 @@ mod tests {
         assert_eq!(state.block_hashes.get(1), Some(block1_hash));
         assert_eq!(state.block_hashes.get(2), None);
         assert_eq!(state.block_hashes.get(test_number), Some(block_test_hash));
+    }
+
+    /// Test that block 0 can be correctly fetched and cached.
+    /// This is a regression test for a bug where the cache was initialized with
+    /// (0, B256::ZERO) entries, causing block 0 lookups to incorrectly return
+    /// B256::ZERO from cache instead of fetching from the database.
+    #[test]
+    fn block_hash_cache_block_zero() {
+        let mut state = State::builder().build();
+
+        // Block 0 should not be in cache initially
+        assert_eq!(state.block_hashes.get(0), None);
+
+        // Fetch block 0 - this should go to database and cache the result
+        let block0_hash = state.block_hash(0u64).unwrap();
+
+        // EmptyDB returns keccak256("0") for block 0
+        let expected_hash = keccak256(U256::from(0).to_string().as_bytes());
+        assert_eq!(block0_hash, expected_hash);
+
+        // Block 0 should now be in cache with correct value
+        assert_eq!(state.block_hashes.get(0), Some(expected_hash));
     }
     /// Checks that if accounts is touched multiple times in the same block,
     /// then the old values from the first change are preserved and not overwritten.
