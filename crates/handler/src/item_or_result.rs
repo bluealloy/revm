@@ -11,11 +11,17 @@ pub enum ItemOrResult<ITEM, RES> {
 
 impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     /// Maps the item variant using the provided function, leaving results unchanged.
-    pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
+    pub fn map_item<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
         match self {
             ItemOrResult::Item(item) => ItemOrResult::Item(f(item)),
             ItemOrResult::Result(result) => ItemOrResult::Result(result),
         }
+    }
+
+    /// Maps the item variant using the provided function, leaving results unchanged.
+    #[deprecated(note = "Use map_item() instead; this maps the Item variant (not necessarily a frame)")]
+    pub fn map_frame<OITEM>(self, f: impl FnOnce(ITEM) -> OITEM) -> ItemOrResult<OITEM, RES> {
+        self.map_item(f)
     }
 
     /// Maps the result variant using the provided function, leaving items unchanged.
