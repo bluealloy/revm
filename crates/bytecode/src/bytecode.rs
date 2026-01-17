@@ -180,7 +180,7 @@ impl Bytecode {
         self.original_byte_slice().len()
     }
 
-    /// Returns whether the bytecode is empty.
+    /// Returns `true` if the bytecode is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0

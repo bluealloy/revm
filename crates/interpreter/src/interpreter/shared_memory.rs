@@ -435,7 +435,7 @@ impl SharedMemory {
     }
 
     /// Set memory from data. Our memory offset+len is expected to be correct but we
-    /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
+    /// are doing bound checks on data/data_offset/len and zeroing parts that is not copied.
     ///
     /// # Panics
     ///
