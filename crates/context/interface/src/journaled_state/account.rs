@@ -426,8 +426,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
     #[inline]
     fn set_code(&mut self, code_hash: B256, code: Bytecode) {
         self.touch();
-        self.account.info.set_code_hash(code_hash);
-        self.account.info.set_code(code);
+        self.account.info.set_code_and_hash(code, code_hash);
         self.journal_entries.push(ENTRY::code_changed(self.address));
     }
 
