@@ -79,14 +79,14 @@ impl GasInspector {
 mod tests {
     use super::*;
     use crate::{InspectEvm, Inspector};
-    use context::{Context, TxEnv};
+    use context::{CfgEnv, Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
         interpreter_types::{Jumps, ReturnData},
         CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
     };
-    use primitives::{Address, Bytes, TxKind};
+    use primitives::{hardfork::SpecId, Address, Bytes, TxKind};
     use state::bytecode::{opcode, Bytecode};
 
     #[derive(Default, Debug)]
@@ -250,8 +250,12 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(contract_data);
 
+        let mut cfg = CfgEnv::<SpecId>::default();
+        cfg.tx_gas_limit_cap = Some(u64::MAX);
+
         let mut evm = Context::mainnet()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .with_cfg(cfg)
             .build_mainnet_with_inspector(inspector);
 
         let _ = evm
