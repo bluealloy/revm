@@ -78,7 +78,7 @@ impl Gas {
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
-        self.spent().saturating_sub(self.refunded as u64)
+        self.used()
     }
 
     /// Returns the amount of gas remaining.
