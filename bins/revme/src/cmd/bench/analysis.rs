@@ -14,7 +14,10 @@ pub fn run(criterion: &mut Criterion) {
     // BenchmarkDB is dummy state that implements Database trait.
     let context = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
-        .modify_cfg_chained(|c| c.disable_nonce_check = true);
+        .modify_cfg_chained(|c| {
+            c.disable_nonce_check = true;
+            c.tx_gas_limit_cap = Some(u64::MAX);
+        });
     let tx = TxEnv::builder()
         .caller(BENCH_CALLER)
         .kind(TxKind::Call(BENCH_TARGET))

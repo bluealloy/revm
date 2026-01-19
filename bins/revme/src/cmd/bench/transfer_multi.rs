@@ -30,7 +30,10 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(db)
-        .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
+        .modify_cfg_chained(|cfg| {
+            cfg.disable_nonce_check = true;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
         .build_mainnet();
 
     let target = U256::from(10000);
