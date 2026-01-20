@@ -296,6 +296,12 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[REVERT as usize] = Instruction::new(control::revert, 0);
     table[INVALID as usize] = Instruction::new(control::invalid, 0);
     table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct, 0);
+
+    // EIP-8024: Backward Compatible SWAPN, DUPN, EXCHANGE
+    table[DUPN as usize] = Instruction::new(stack::dupn, 3);
+    table[SWAPN as usize] = Instruction::new(stack::swapn, 3);
+    table[EXCHANGE as usize] = Instruction::new(stack::exchange, 3);
+
     table
 }
 
