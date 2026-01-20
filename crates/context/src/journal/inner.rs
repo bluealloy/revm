@@ -12,10 +12,11 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
+    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_TO_SELF_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
-    Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, TransientStorage};
 use std::vec::Vec;
@@ -357,6 +358,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.journal
             .push(ENTRY::balance_transfer(from, to, balance));
 
+        // EIP-7708: emit ETH transfer log
+        self.eip7708_transfer_log(from, to, balance);
+
         None
     }
 
@@ -442,6 +446,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
+
+        // EIP-7708: emit ETH transfer log
+        self.eip7708_transfer_log(caller, target_address, balance);
 
         Ok(checkpoint)
     }
@@ -554,6 +561,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(entry) = journal_entry {
             self.journal.push(entry);
         };
+
+        // EIP-7708: emit appropriate log for selfdestruct
+        // Note: We only emit logs when state actually changes
+        if address != target {
+            // Balance transferred to different address - emit transfer log
+            self.eip7708_transfer_log(address, target, balance);
+        } else if acc.is_selfdestructed_locally() || !is_cancun_enabled {
+            // Balance burned (selfdestruct to self with actual destruction)
+            // Only emit log if the balance was actually zeroed
+            self.eip7708_selfdestruct_to_self_log(address, balance);
+        }
+        // Note: If address == target and after Cancun and not created locally,
+        // no state change occurs, so no log is emitted.
 
         Ok(StateLoad {
             data: SelfDestructResult {
@@ -922,6 +942,66 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
+    }
+
+    /// Creates and pushes an EIP-7708 ETH transfer log.
+    ///
+    /// This emits a LOG3 with the Transfer event signature, matching ERC-20 transfer events.
+    /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_transfer_log(&mut self, from: Address, to: Address, balance: U256) {
+        // Only emit log if EIP-7708 is enabled and balance is non-zero
+        if !self.spec.is_enabled_in(AMSTERDAM) || balance.is_zero() {
+            return;
+        }
+
+        // Create LOG3 with Transfer(address,address,uint256) event signature
+        // Topic[0]: Transfer event signature
+        // Topic[1]: from address (zero-padded to 32 bytes)
+        // Topic[2]: to address (zero-padded to 32 bytes)
+        // Data: amount in wei (big-endian uint256)
+        let topics = std::vec![
+            ETH_TRANSFER_LOG_TOPIC,
+            B256::left_padding_from(from.as_slice()),
+            B256::left_padding_from(to.as_slice()),
+        ];
+        let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
+
+        self.logs.push(Log {
+            address: ETH_TRANSFER_LOG_ADDRESS,
+            data: LogData::new(topics, data).expect("3 topics is valid"),
+        });
+    }
+
+    /// Creates and pushes an EIP-7708 selfdestruct-to-self log.
+    ///
+    /// This emits a LOG2 when a contract self-destructs to itself.
+    /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_selfdestruct_to_self_log(&mut self, address: Address, balance: U256) {
+        // Only emit log if EIP-7708 is enabled and balance is non-zero
+        if !self.spec.is_enabled_in(AMSTERDAM) || balance.is_zero() {
+            return;
+        }
+
+        // Create LOG2 with SelfBalanceLog(address,uint256) event signature
+        // Topic[0]: SelfBalanceLog event signature
+        // Topic[1]: account address (zero-padded to 32 bytes)
+        // Data: amount in wei (big-endian uint256)
+        let topics = std::vec![
+            SELFDESTRUCT_TO_SELF_LOG_TOPIC,
+            B256::left_padding_from(address.as_slice()),
+        ];
+        let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
+
+        self.logs.push(Log {
+            address: ETH_TRANSFER_LOG_ADDRESS,
+            data: LogData::new(topics, data).expect("2 topics is valid"),
+        });
     }
 }
 
