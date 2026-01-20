@@ -433,6 +433,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // saved even empty.
         Self::touch_account(last_journal, target_address, target_acc);
 
+        // If balance is zero, we don't need to add any journal entries or emit any logs.
+        if balance.is_zero() {
+            return Ok(checkpoint);
+        }
+
         // Add balance to created account, as we already have target here.
         let Some(new_balance) = target_acc.info.balance.checked_add(balance) else {
             self.checkpoint_revert(checkpoint);
@@ -541,6 +546,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
             acc.mark_selfdestructed_locally();
             acc.info.balance = U256::ZERO;
+
+            // EIP-7708: emit appropriate log for selfdestruct
+            if target != address {
+                // Transfer log for balance transferred to different address
+                self.eip7708_transfer_log(address, target, balance);
+            } else {
+                // Selfdestruct to self log
+                self.eip7708_selfdestruct_to_self_log(address, balance);
+            }
             Some(ENTRY::account_destroyed(
                 address,
                 target,
@@ -549,6 +563,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             ))
         } else if address != target {
             acc.info.balance = U256::ZERO;
+            // EIP-7708: emit appropriate log for selfdestruct
+            // Transfer log for balance transferred to different address
+            self.eip7708_transfer_log(address, target, balance);
             Some(ENTRY::balance_transfer(address, target, balance))
         } else {
             // State is not changed:
@@ -561,19 +578,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if let Some(entry) = journal_entry {
             self.journal.push(entry);
         };
-
-        // EIP-7708: emit appropriate log for selfdestruct
-        // Note: We only emit logs when state actually changes
-        if address != target {
-            // Balance transferred to different address - emit transfer log
-            self.eip7708_transfer_log(address, target, balance);
-        } else if acc.is_selfdestructed_locally() || !is_cancun_enabled {
-            // Balance burned (selfdestruct to self with actual destruction)
-            // Only emit log if the balance was actually zeroed
-            self.eip7708_selfdestruct_to_self_log(address, balance);
-        }
-        // Note: If address == target and after Cancun and not created locally,
-        // no state change occurs, so no log is emitted.
 
         Ok(StateLoad {
             data: SelfDestructResult {
