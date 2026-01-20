@@ -31,16 +31,13 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
             iterator = unsafe { iterator.add(1) };
         } else {
             let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-            let dupn_offset = opcode.wrapping_sub(opcode::DUPN);
-            let skip = if push_offset < 32 {
-                2 + push_offset as usize
-            } else if dupn_offset < 3 {
-                2
+            if push_offset < 32 {
+                // SAFETY: Iterator access range is checked in the while loop
+                iterator = unsafe { iterator.add(push_offset as usize + 2) };
             } else {
-                1
-            };
-            // SAFETY: Iterator access range is checked in the while loop
-            iterator = unsafe { iterator.add(skip) };
+                // SAFETY: Iterator access range is checked in the while loop
+                iterator = unsafe { iterator.add(1) };
+            }
         }
     }
 
@@ -50,11 +47,11 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     let overflow = (iterator as usize) - (end as usize);
     let mut padding = overflow + (opcode != opcode::STOP) as usize;
 
-    // Additional padding if previous opcode is SWAPN/DUPN/EXCHANGE and bytecode
-    // doesn't end with STOP. This handles edge cases like [SWAPN, STOP] where
-    // the STOP byte is consumed as the immediate operand, not as an instruction.
+    // Additional padding if previous opcode is DUPN/SWAPN/EXCHANGE.
+    // These opcodes have 1-byte immediates that aren't handled by the loop above,
+    // so we need extra padding to ensure safe execution.
     let prev_dupn_offset = prev_opcode.wrapping_sub(opcode::DUPN);
-    if prev_dupn_offset < 3 && bytecode.last() != Some(&opcode::STOP) {
+    if prev_dupn_offset < 3 {
         padding += 1;
     }
 
@@ -204,6 +201,13 @@ mod tests {
             assert_eq!(padded_bytecode[0], op);
             assert_eq!(padded_bytecode[1], opcode::STOP);
             assert_eq!(padded_bytecode[2], opcode::STOP);
+
+            // test when there is only opcode with immediate data missing.
+            let bytecode = vec![op];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.into());
+            assert_eq!(padded_bytecode.len(), 2);
+            assert_eq!(padded_bytecode[0], op);
+            assert_eq!(padded_bytecode[1], opcode::STOP);
         }
     }
 }
