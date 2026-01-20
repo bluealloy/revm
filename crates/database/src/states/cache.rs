@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use bytecode::Bytecode;
-use primitives::{Address, AddressMap, B256Map, HashMap};
+use primitives::{Address, AddressMap, B256Map, HashMap, StorageKey, StorageValue};
 use state::{Account, AccountInfo};
 use std::vec::Vec;
 
@@ -61,6 +61,15 @@ impl CacheState {
     pub fn insert_not_existing(&mut self, address: Address) {
         self.accounts
             .insert(address, CacheAccount::new_loaded_not_existing());
+    }
+
+    /// Gets storage value from state.
+    ///
+    /// Returns `None` if the account is not present in the cache state or the slot is not known.
+    pub fn storage(&self, address: &Address, storage_key: StorageKey) -> Option<StorageValue> {
+        self.accounts
+            .get(address)
+            .and_then(|account| account.storage_slot(storage_key))
     }
 
     /// Inserts Loaded (Or LoadedEmptyEip161 if account is empty) account.
