@@ -6,7 +6,10 @@ use std::borrow::Cow;
 ///
 /// Returns the first `LEN` bytes if it does not need padding.
 #[inline]
-pub(crate) fn right_pad_with_offset<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
+pub(crate) fn right_pad_with_offset<const LEN: usize>(
+    data: &[u8],
+    offset: usize,
+) -> Cow<'_, [u8; LEN]> {
     right_pad(data.get(offset..).unwrap_or_default())
 }
 
