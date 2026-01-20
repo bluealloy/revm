@@ -144,7 +144,6 @@ fn decode_pair(x: usize) -> Option<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        gas::params::GasParams,
         host::DummyHost,
         instructions::instruction_table,
         interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
@@ -164,10 +163,9 @@ mod tests {
             false,
             SpecId::AMSTERDAM,
             u64::MAX,
-            GasParams::default(),
         );
         let table = instruction_table::<EthInterpreter, DummyHost>();
-        let mut host = DummyHost;
+        let mut host = DummyHost::new(SpecId::AMSTERDAM);
         interpreter.run_plain(&table, &mut host);
         interpreter
     }
