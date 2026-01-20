@@ -6,15 +6,16 @@ use std::borrow::Cow;
 ///
 /// Returns the first `LEN` bytes if it does not need padding.
 #[inline]
-pub fn right_pad_with_offset<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
+pub(crate) fn right_pad_with_offset<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
     right_pad(data.get(offset..).unwrap_or_default())
 }
 
 /// Right-pads the given slice at `offset` with zeroes until `len`.
 ///
 /// Returns the first `len` bytes if it does not need padding.
+#[cfg(test)]
 #[inline]
-pub fn right_pad_with_offset_vec(data: &[u8], offset: usize, len: usize) -> Cow<'_, [u8]> {
+pub(crate) fn right_pad_with_offset_vec(data: &[u8], offset: usize, len: usize) -> Cow<'_, [u8]> {
     right_pad_vec(data.get(offset..).unwrap_or_default(), len)
 }
 
@@ -22,7 +23,7 @@ pub fn right_pad_with_offset_vec(data: &[u8], offset: usize, len: usize) -> Cow<
 ///
 /// Returns the first `LEN` bytes if it does not need padding.
 #[inline]
-pub fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
+pub(crate) fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
     if let Some(data) = data.get(..LEN) {
         Cow::Borrowed(data.try_into().unwrap())
     } else {
@@ -36,7 +37,7 @@ pub fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
 ///
 /// Returns the first `len` bytes if it does not need padding.
 #[inline]
-pub fn right_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
+pub(crate) fn right_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
     if let Some(data) = data.get(..len) {
         Cow::Borrowed(data)
     } else {
@@ -50,7 +51,7 @@ pub fn right_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
 ///
 /// Returns the first `LEN` bytes if it does not need padding.
 #[inline]
-pub fn left_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
+pub(crate) fn left_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
     if let Some(data) = data.get(..LEN) {
         Cow::Borrowed(data.try_into().unwrap())
     } else {
@@ -64,7 +65,7 @@ pub fn left_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
 ///
 /// Returns the first `len` bytes if it does not need padding.
 #[inline]
-pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
+pub(crate) fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
     if let Some(data) = data.get(..len) {
         Cow::Borrowed(data)
     } else {
@@ -78,7 +79,7 @@ pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
 ///
 /// This is optimized to not allocate at runtime by using 2 static arrays.
 #[inline]
-pub const fn bool_to_bytes32(value: bool) -> Bytes {
+pub(crate) const fn bool_to_bytes32(value: bool) -> Bytes {
     Bytes::from_static(&bool_to_b256(value).0)
 }
 
@@ -86,7 +87,7 @@ pub const fn bool_to_bytes32(value: bool) -> Bytes {
 ///
 /// This is optimized to not allocate at runtime by using 2 static arrays.
 #[inline]
-pub const fn bool_to_b256(value: bool) -> &'static B256 {
+pub(crate) const fn bool_to_b256(value: bool) -> &'static B256 {
     const TRUE: &B256 =
         &b256!("0x0000000000000000000000000000000000000000000000000000000000000001");
     const FALSE: &B256 =

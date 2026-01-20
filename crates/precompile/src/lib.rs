@@ -21,7 +21,7 @@ pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
 pub mod secp256r1;
-pub mod utilities;
+mod utilities;
 
 pub use id::PrecompileId;
 pub use interface::*;
