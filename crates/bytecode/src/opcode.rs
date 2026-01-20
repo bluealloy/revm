@@ -194,6 +194,13 @@ impl OpCode {
                 | OpCode::CALLCODE
                 | OpCode::DELEGATECALL
                 | OpCode::STATICCALL
+                | OpCode::LOG0
+                | OpCode::LOG1
+                | OpCode::LOG2
+                | OpCode::LOG3
+                | OpCode::LOG4
+                | OpCode::CREATE
+                | OpCode::CREATE2
         )
     }
 
@@ -778,5 +785,12 @@ mod tests {
         assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
         assert!(OpCode::new(KECCAK256).unwrap().modifies_memory());
         assert!(!OpCode::new(ADD).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG0).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG1).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG2).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG3).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG4).unwrap().modifies_memory());
+        assert!(OpCode::new(CREATE).unwrap().modifies_memory());
+        assert!(OpCode::new(CREATE2).unwrap().modifies_memory());
     }
 }
