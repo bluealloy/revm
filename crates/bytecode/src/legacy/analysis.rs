@@ -19,9 +19,11 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     let start = range.start;
     let mut iterator = start;
     let end = range.end;
-    let mut opcode = 0;
+    let mut prev_opcode: u8 = 0;
+    let mut opcode: u8 = 0;
 
     while iterator < end {
+        prev_opcode = opcode;
         opcode = unsafe { *iterator };
         if opcode == opcode::JUMPDEST {
             // SAFETY: Jumps are max length of the code
@@ -42,7 +44,20 @@ pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         }
     }
 
-    let padding = (iterator as usize) - (end as usize) + (opcode != opcode::STOP) as usize;
+    // Calculate padding needed:
+    // - overflow: bytes needed for incomplete immediate data
+    // - Additional STOP if bytecode doesn't end with a STOP instruction
+    let overflow = (iterator as usize) - (end as usize);
+    let mut padding = overflow + (opcode != opcode::STOP) as usize;
+
+    // Additional padding if previous opcode is SWAPN/DUPN/EXCHANGE and bytecode
+    // doesn't end with STOP. This handles edge cases like [SWAPN, STOP] where
+    // the STOP byte is consumed as the immediate operand, not as an instruction.
+    let prev_dupn_offset = prev_opcode.wrapping_sub(opcode::DUPN);
+    if prev_dupn_offset < 3 && bytecode.last() != Some(&opcode::STOP) {
+        padding += 1;
+    }
+
     let bytecode = if padding > 0 {
         let mut padded = Vec::with_capacity(bytecode.len() + padding);
         padded.extend_from_slice(&bytecode);
@@ -175,5 +190,20 @@ mod tests {
         ];
         let (jump_table, _) = analyze_legacy(bytecode.into());
         assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
+    }
+
+    #[test]
+    fn test_bytecode_ends_with_immediate_opcode_and_stop_requires_padding() {
+        // For SWAPN/DUPN/EXCHANGE, the STOP (0x00) is consumed as the immediate operand,
+        // not as an actual STOP instruction, so padding is needed.
+        // [OPCODE, STOP] -> [OPCODE, STOP, STOP] (3 bytes)
+        for op in [opcode::SWAPN, opcode::DUPN, opcode::EXCHANGE] {
+            let bytecode = vec![op, opcode::STOP];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.into());
+            assert_eq!(padded_bytecode.len(), 3);
+            assert_eq!(padded_bytecode[0], op);
+            assert_eq!(padded_bytecode[1], opcode::STOP);
+            assert_eq!(padded_bytecode[2], opcode::STOP);
+        }
     }
 }
