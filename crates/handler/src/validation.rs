@@ -3,7 +3,6 @@ use context_interface::{
     transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
-use core::cmp;
 use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
 use primitives::{eip4844, hardfork::SpecId, B256};
 
@@ -52,8 +51,7 @@ pub fn validate_priority_fee_tx(
 
     // Check minimal cost against basefee
     if let Some(base_fee) = base_fee {
-        let effective_gas_price = cmp::min(max_fee, base_fee.saturating_add(max_priority_fee));
-        if effective_gas_price < base_fee {
+        if max_fee < base_fee {
             return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
     }
