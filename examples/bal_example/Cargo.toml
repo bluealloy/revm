@@ -1,0 +1,24 @@
+[package]
+name = "example-bal"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true
+
+[dependencies]
+revm = { workspace = true, features = ["std"] }
+
+# misc
+anyhow = "1.0.89"
