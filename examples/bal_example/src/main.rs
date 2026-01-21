@@ -28,18 +28,20 @@ fn main() -> anyhow::Result<()> {
     //
     // Bytecode: PUSH0 SLOAD PUSH1 1 ADD DUP1 PUSH0 SSTORE PUSH0 MSTORE PUSH1 32 PUSH0 RETURN
     let counter_contract: Bytes = [
-        opcode::PUSH0,       // Push slot 0
-        opcode::SLOAD,       // Load current value from slot 0
-        opcode::PUSH1, 0x01, // Push 1
-        opcode::ADD,         // Add 1 to current value
-        opcode::DUP1,        // Duplicate for return
-        opcode::PUSH0,       // Push slot 0
-        opcode::SSTORE,      // Store incremented value
-        opcode::PUSH0,       // Push memory offset 0
-        opcode::MSTORE,      // Store result in memory
-        opcode::PUSH1, 0x20, // Push 32 (return size)
-        opcode::PUSH0,       // Push 0 (return offset)
-        opcode::RETURN,      // Return 32 bytes from memory
+        opcode::PUSH0, // Push slot 0
+        opcode::SLOAD, // Load current value from slot 0
+        opcode::PUSH1,
+        0x01,           // Push 1
+        opcode::ADD,    // Add 1 to current value
+        opcode::DUP1,   // Duplicate for return
+        opcode::PUSH0,  // Push slot 0
+        opcode::SSTORE, // Store incremented value
+        opcode::PUSH0,  // Push memory offset 0
+        opcode::MSTORE, // Store result in memory
+        opcode::PUSH1,
+        0x20,           // Push 32 (return size)
+        opcode::PUSH0,  // Push 0 (return offset)
+        opcode::RETURN, // Return 32 bytes from memory
     ]
     .into();
 
@@ -89,7 +91,9 @@ fn main() -> anyhow::Result<()> {
 
     let result1 = evm.transact_commit(tx1.clone())?;
     match &result1 {
-        ExecutionResult::Success { gas_used, output, .. } => {
+        ExecutionResult::Success {
+            gas_used, output, ..
+        } => {
             println!("  TX 1: Counter incremented (0 -> 1), gas used: {gas_used}");
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
@@ -111,7 +115,9 @@ fn main() -> anyhow::Result<()> {
 
     let result2 = evm.transact_commit(tx2.clone())?;
     match &result2 {
-        ExecutionResult::Success { gas_used, output, .. } => {
+        ExecutionResult::Success {
+            gas_used, output, ..
+        } => {
             println!("  TX 2: Counter incremented (1 -> 2), gas used: {gas_used}");
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
@@ -122,10 +128,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Extract the built BAL
-    let bal = evm
-        .db_mut()
-        .take_built_bal()
-        .expect("BAL should be built");
+    let bal = evm.db_mut().take_built_bal().expect("BAL should be built");
 
     println!("\n  Built BAL with {} accounts tracked", bal.accounts.len());
     println!();
@@ -170,7 +173,9 @@ fn main() -> anyhow::Result<()> {
     evm2.db_mut().bump_bal_index(); // BAL index 1
     let result1_replay = evm2.transact_commit(tx1)?;
     match &result1_replay {
-        ExecutionResult::Success { gas_used, output, .. } => {
+        ExecutionResult::Success {
+            gas_used, output, ..
+        } => {
             println!("  TX 1 replayed with BAL, gas used: {gas_used}");
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
@@ -184,7 +189,9 @@ fn main() -> anyhow::Result<()> {
     evm2.db_mut().bump_bal_index(); // BAL index 2
     let result2_replay = evm2.transact_commit(tx2)?;
     match &result2_replay {
-        ExecutionResult::Success { gas_used, output, .. } => {
+        ExecutionResult::Success {
+            gas_used, output, ..
+        } => {
             println!("  TX 2 replayed with BAL, gas used: {gas_used}");
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
