@@ -346,6 +346,7 @@ impl BlockHeader {
                 None
             },
             blob_excess_gas_and_price,
+            slot_num: 0,
         }
     }
 }

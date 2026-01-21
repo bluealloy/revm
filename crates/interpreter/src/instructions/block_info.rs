@@ -83,3 +83,11 @@ pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(context.interpreter, CANCUN);
     push!(context.interpreter, context.host.blob_gasprice());
 }
+
+/// EIP-7843: SLOTNUM opcode
+pub fn slot_num<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) {
+    check!(context.interpreter, AMSTERDAM);
+    push!(context.interpreter, context.host.slot_num());
+}
