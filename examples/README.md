@@ -1,4 +1,5 @@
 # examples:
+* `bal_example`: Demonstrates Block Access List (BAL/EIP-7928) - building a BAL during execution and using it for optimized re-execution.
 * `contract_deployment`: Example of deployment of the contract from solidity compilation and calling deployed contract.
 * `my_evm`: Example and tutorial on how to create your custom evm.
 * `erc20_gas`: Example of custom EVM that uses ERC20 token to pay for Gas.
