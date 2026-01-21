@@ -40,6 +40,12 @@ pub struct BlockEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub blob_excess_gas_and_price: Option<BlobExcessGasAndPrice>,
+    /// The slot number of the block.
+    ///
+    /// Incorporated as part of the Amsterdam upgrade via [EIP-7843].
+    ///
+    /// [EIP-7843]: https://eips.ethereum.org/EIPS/eip-7843
+    pub slot_num: u64,
 }
 
 impl BlockEnv {
@@ -97,6 +103,11 @@ impl Block for BlockEnv {
     fn blob_excess_gas_and_price(&self) -> Option<BlobExcessGasAndPrice> {
         self.blob_excess_gas_and_price
     }
+
+    #[inline]
+    fn slot_num(&self) -> u64 {
+        self.slot_num
+    }
 }
 
 impl Default for BlockEnv {
@@ -113,6 +124,7 @@ impl Default for BlockEnv {
                 0,
                 BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE,
             )),
+            slot_num: 0,
         }
     }
 }

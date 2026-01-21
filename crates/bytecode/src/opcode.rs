@@ -473,7 +473,7 @@ opcodes! {
     0x48 => BASEFEE      => stack_io(0, 1);
     0x49 => BLOBHASH     => stack_io(1, 1);
     0x4A => BLOBBASEFEE  => stack_io(0, 1);
-    // 0x4B
+    0x4B => SLOTNUM      => stack_io(0, 1);
     // 0x4C
     // 0x4D
     // 0x4E
@@ -731,7 +731,7 @@ mod tests {
         for _ in OPCODE_INFO.into_iter().flatten() {
             opcode_num += 1;
         }
-        assert_eq!(opcode_num, 153);
+        assert_eq!(opcode_num, 154);
     }
 
     #[test]

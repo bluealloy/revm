@@ -192,6 +192,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[BASEFEE as usize] = Instruction::new(block_info::basefee, 2);
     table[BLOBHASH as usize] = Instruction::new(tx_info::blob_hash, 3);
     table[BLOBBASEFEE as usize] = Instruction::new(block_info::blob_basefee, 2);
+    table[SLOTNUM as usize] = Instruction::new(block_info::slot_num, 2);
 
     table[POP as usize] = Instruction::new(stack::pop, 2);
     table[MLOAD as usize] = Instruction::new(memory::mload, 3);
