@@ -169,9 +169,7 @@ strip = false
 
 # Make sure debug symbols are in the bench profile
 [profile.bench]
-debug = 2
-inherits = "release"
-strip = false
+inherits = "profiling"
 
 [profile.ethtests]
 inherits = "test"

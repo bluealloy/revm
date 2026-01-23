@@ -140,15 +140,14 @@ impl Jumps for ExtBytecode {
 
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
-        self.base
-            .legacy_jump_table()
-            .expect("Panic if not legacy")
-            .is_valid(offset)
+        let jt = self.base.legacy_jump_table();
+        // SAFETY: Only called by legacy bytecode. Panics in debug mode.
+        unsafe { jt.unwrap_unchecked() }.is_valid(offset)
     }
 
     #[inline]
     fn opcode(&self) -> u8 {
-        // SAFETY: `instruction_pointer` always point to bytecode.
+        // SAFETY: `instruction_pointer` always points to bytecode.
         unsafe { *self.instruction_pointer }
     }
 

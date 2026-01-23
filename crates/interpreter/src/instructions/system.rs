@@ -106,7 +106,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], offset_ptr, context.interpreter);
     let mut word = B256::ZERO;
-    let offset = as_usize_saturated!(offset_ptr);
+    let offset = as_usize_saturated!(*offset_ptr);
     let input = context.interpreter.input.input();
     let input_len = input.len();
     if offset < input_len {
