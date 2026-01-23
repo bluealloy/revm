@@ -68,7 +68,7 @@ impl TestUnit {
         for (address, info) in &self.pre {
             let code_hash = keccak256(&info.code);
             let bytecode = Bytecode::new_raw_checked(info.code.clone())
-                .unwrap_or(Bytecode::new_legacy(info.code.clone()));
+                .unwrap_or_else(|_| Bytecode::new_legacy(info.code.clone()));
             let acc_info = state::AccountInfo {
                 balance: info.balance,
                 code_hash,
