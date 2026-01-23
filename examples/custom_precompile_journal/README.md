@@ -117,7 +117,7 @@ The example will demonstrate the custom EVM architecture and show how the variou
 
 ## Integration with Existing Code
 
-This example extends the op-revm pattern and demonstrates how to:
+This example extends the custom EVM pattern (similar to [op-revm](https://github.com/ethereum-optimism/optimism)) and demonstrates how to:
 - Create custom precompile providers that can access the journal
 - Integrate custom precompiles into REVM's execution model
 - Maintain compatibility with existing REVM patterns and interfaces
