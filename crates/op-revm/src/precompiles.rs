@@ -97,18 +97,7 @@ pub fn jovian() -> &'static Precompiles {
     static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
     INSTANCE.get_or_init(|| {
         let mut precompiles = isthmus().clone();
-
-        let mut to_remove = Precompiles::default();
-        to_remove.extend([
-            bn254::pair::ISTANBUL,
-            bls12_381::ISTHMUS_G1_MSM,
-            bls12_381::ISTHMUS_G2_MSM,
-            bls12_381::ISTHMUS_PAIRING,
-        ]);
-
         // Replace the 4 variable-input precompiles with Jovian versions (reduced limits)
-        precompiles.difference(&to_remove);
-
         precompiles.extend([
             bn254_pair::JOVIAN,
             bls12_381::JOVIAN_G1_MSM,
