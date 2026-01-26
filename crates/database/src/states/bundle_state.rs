@@ -433,7 +433,7 @@ impl BundleState {
                 Address,
                 Option<AccountInfo>,
                 Option<AccountInfo>,
-                HashMap<StorageKey, (StorageValue, StorageValue)>,
+                FxHashMap<StorageKey, (StorageValue, StorageValue)>,
             ),
         >,
         reverts: impl IntoIterator<
