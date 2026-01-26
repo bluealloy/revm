@@ -14,6 +14,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
+use rustc_hash::FxHashMap;
 
 /// This builder is used to help to facilitate the initialization of `BundleState` struct
 #[derive(Debug)]
@@ -404,9 +405,9 @@ impl BundleRetention {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleState {
     /// Account state
-    pub state: HashMap<Address, BundleAccount>,
+    pub state: FxHashMap<Address, BundleAccount>,
     /// All created contracts in this block.
-    pub contracts: HashMap<B256, Bytecode>,
+    pub contracts: FxHashMap<B256, Bytecode>,
     /// Changes to revert
     ///
     /// **Note**: Inside vector is *not* sorted by address.
