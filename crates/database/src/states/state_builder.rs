@@ -178,6 +178,14 @@ impl<DB: Database> StateBuilder<DB> {
         self
     }
 
+    /// Conditionally set BAL builder based on the flag.
+    pub fn with_bal_builder_if(mut self, enable: bool) -> Self {
+        if enable {
+            self.bal_state.bal_builder = Some(Bal::new());
+        }
+        self
+    }
+
     /// Builds the State with the configured settings.
     pub fn build(mut self) -> State<DB> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
