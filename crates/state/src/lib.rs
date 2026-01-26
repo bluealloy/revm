@@ -55,7 +55,7 @@ impl Account {
             .get_or_init(|| Self {
                 info: AccountInfo::default(),
                 storage: HashMap::default(),
-                transaction_id:0,
+                transaction_id: 0,
                 status: AccountStatus::LoadedAsNotExisting,
                 original_info: Box::new(AccountInfo::default()),
             })
