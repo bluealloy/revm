@@ -47,4 +47,20 @@ impl BlockHashCache {
             None
         }
     }
+
+    /// Returns an iterator over all cached (block_number, block_hash) pairs.
+    ///
+    /// Note: Entries are not yielded in block number order.
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = (u64, B256)> + '_ {
+        self.hashes
+            .iter()
+            .filter_map(|(block_number, hash)| block_number.map(|n| (n, *hash)))
+    }
+
+    /// Returns the entry with the lowest block number, if any exists.
+    #[inline]
+    pub fn lowest(&self) -> Option<(u64, B256)> {
+        self.iter().min_by_key(|(block_number, _)| *block_number)
+    }
 }
