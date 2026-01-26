@@ -680,6 +680,30 @@ impl GasParams {
         self.get(GasId::tx_access_list_storage_key_cost())
     }
 
+    /// Calculate the total gas cost for an access list.
+    ///
+    /// This is a helper method that calculates the combined cost of:
+    /// - `accounts` addresses in the access list
+    /// - `storages` storage keys in the access list
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use revm_context_interface::cfg::gas_params::GasParams;
+    /// use primitives::hardfork::SpecId;
+    ///
+    /// let gas_params = GasParams::new_spec(SpecId::BERLIN);
+    /// // Calculate cost for 2 addresses and 5 storage keys
+    /// let cost = gas_params.tx_access_list_cost(2, 5);
+    /// assert_eq!(cost, 2 * 2400 + 5 * 1900); // 2 * ACCESS_LIST_ADDRESS + 5 * ACCESS_LIST_STORAGE_KEY
+    /// ```
+    #[inline]
+    pub fn tx_access_list_cost(&self, accounts: u64, storages: u64) -> u64 {
+        accounts
+            .saturating_mul(self.tx_access_list_address_cost())
+            .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
     pub fn tx_base_stipend(&self) -> u64 {
         self.get(GasId::tx_base_stipend())
@@ -1159,5 +1183,44 @@ mod tests {
             "Expected 38 unique GasIds, found {}",
             unique_names.len()
         );
+    }
+
+    #[test]
+    fn test_tx_access_list_cost() {
+        use crate::cfg::gas;
+
+        // Test with Berlin spec (when access list was introduced)
+        let gas_params = GasParams::new_spec(SpecId::BERLIN);
+
+        // Test with 0 accounts and 0 storages
+        assert_eq!(gas_params.tx_access_list_cost(0, 0), 0);
+
+        // Test with 1 account and 0 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(1, 0),
+            gas::ACCESS_LIST_ADDRESS
+        );
+
+        // Test with 0 accounts and 1 storage
+        assert_eq!(
+            gas_params.tx_access_list_cost(0, 1),
+            gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with 2 accounts and 5 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(2, 5),
+            2 * gas::ACCESS_LIST_ADDRESS + 5 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with large numbers to ensure no overflow
+        assert_eq!(
+            gas_params.tx_access_list_cost(100, 200),
+            100 * gas::ACCESS_LIST_ADDRESS + 200 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with pre-Berlin spec (should return 0)
+        let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
+        assert_eq!(gas_params_pre_berlin.tx_access_list_cost(10, 20), 0);
     }
 }
