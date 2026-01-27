@@ -12,8 +12,8 @@ use crate::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, AddressMap, Bytes, HashSet, Log, StorageKey, StorageValue, B256,
-    U256,
+    hardfork::SpecId, Address, AddressMap, AddressSet, Bytes, HashSet, Log, StorageKey,
+    StorageValue, B256, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
@@ -111,10 +111,10 @@ pub trait JournalTr {
     fn warm_coinbase_account(&mut self, address: Address);
 
     /// Warms the precompiles.
-    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+    fn warm_precompiles(&mut self, addresses: AddressSet);
 
     /// Returns the addresses of the precompiles.
-    fn precompile_addresses(&self) -> &HashSet<Address>;
+    fn precompile_addresses(&self) -> &AddressSet;
 
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);

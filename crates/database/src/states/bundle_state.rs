@@ -7,7 +7,7 @@ use super::{
 use bytecode::Bytecode;
 use core::{mem, ops::RangeInclusive};
 use primitives::{
-    hash_map::Entry, Address, AddressMap, B256Map, HashMap, HashSet, StorageKey, StorageKeyMap,
+    hash_map::Entry, Address, AddressMap, AddressSet, B256Map, HashMap, StorageKey, StorageKeyMap,
     StorageValue, B256, KECCAK_EMPTY,
 };
 use state::AccountInfo;
@@ -19,7 +19,7 @@ use std::{
 /// This builder is used to help to facilitate the initialization of `BundleState` struct
 #[derive(Debug)]
 pub struct BundleBuilder {
-    states: HashSet<Address>,
+    states: AddressSet,
     state_original: AddressMap<AccountInfo>,
     state_present: AddressMap<AccountInfo>,
     state_storage: AddressMap<StorageKeyMap<(StorageValue, StorageValue)>>,
@@ -57,7 +57,7 @@ impl OriginalValuesKnown {
 impl Default for BundleBuilder {
     fn default() -> Self {
         BundleBuilder {
-            states: HashSet::default(),
+            states: AddressSet::default(),
             state_original: AddressMap::default(),
             state_present: AddressMap::default(),
             state_storage: AddressMap::default(),
@@ -320,12 +320,12 @@ impl BundleBuilder {
     }
 
     /// Getter for `states` field
-    pub fn get_states(&self) -> &HashSet<Address> {
+    pub fn get_states(&self) -> &AddressSet {
         &self.states
     }
 
     /// Mutable getter for `states` field
-    pub fn get_states_mut(&mut self) -> &mut HashSet<Address> {
+    pub fn get_states_mut(&mut self) -> &mut AddressSet {
         &mut self.states
     }
 

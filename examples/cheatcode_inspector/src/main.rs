@@ -28,7 +28,8 @@ use revm::{
         SelfDestructResult, StateLoad,
     },
     primitives::{
-        hardfork::SpecId, Address, AddressMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
+        hardfork::SpecId, Address, AddressMap, AddressSet, HashSet, Log, StorageKey, StorageValue,
+        B256, U256,
     },
     state::{Account, Bytecode, EvmState},
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
@@ -127,11 +128,11 @@ impl JournalTr for Backend {
         self.journaled_state.warm_coinbase_account(address)
     }
 
-    fn warm_precompiles(&mut self, addresses: HashSet<Address>) {
+    fn warm_precompiles(&mut self, addresses: AddressSet) {
         self.journaled_state.warm_precompiles(addresses)
     }
 
-    fn precompile_addresses(&self) -> &HashSet<Address> {
+    fn precompile_addresses(&self) -> &AddressSet {
         self.journaled_state.precompile_addresses()
     }
 
