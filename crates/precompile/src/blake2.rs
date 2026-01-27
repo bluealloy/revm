@@ -33,22 +33,16 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     };
 
     // Parse state vector h (8 × u64)
-    let mut h = [0u64; 8];
-    input[4..68]
-        .chunks_exact(8)
-        .enumerate()
-        .for_each(|(i, chunk)| {
-            h[i] = u64::from_le_bytes(chunk.try_into().unwrap());
-        });
+    let mut h: [u64; 8] = core::array::from_fn(|i| {
+        let start = 4 + i * 8;
+        u64::from_le_bytes(input[start..start + 8].try_into().unwrap())
+    });
 
     // Parse message block m (16 × u64)
-    let mut m = [0u64; 16];
-    input[68..196]
-        .chunks_exact(8)
-        .enumerate()
-        .for_each(|(i, chunk)| {
-            m[i] = u64::from_le_bytes(chunk.try_into().unwrap());
-        });
+    let m: [u64; 16] = core::array::from_fn(|i| {
+        let start = 68 + i * 8;
+        u64::from_le_bytes(input[start..start + 8].try_into().unwrap())
+    });
 
     // Parse offset counters
     let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
