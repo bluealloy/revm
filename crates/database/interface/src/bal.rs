@@ -130,9 +130,16 @@ impl BalState {
     #[inline]
     pub fn basic_by_account_id(&self, account_id: usize, basic: &mut Option<AccountInfo>) -> bool {
         if let Some(bal) = &self.bal {
+            let is_none = basic.is_none();
             let mut bal_basic = core::mem::take(basic).unwrap_or_default();
-            bal.populate_account_info(account_id, self.bal_index, &mut bal_basic)
+            let changed = bal
+                .populate_account_info(account_id, self.bal_index, &mut bal_basic)
                 .expect("Invalid account id");
+
+            // If account was not in DB and BAL has no changes, keep it as None.
+            if !changed && is_none {
+                return true;
+            }
 
             *basic = Some(bal_basic);
             return true;
