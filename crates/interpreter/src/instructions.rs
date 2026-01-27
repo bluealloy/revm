@@ -114,7 +114,7 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     }
 
     if spec.is_enabled_in(BERLIN) {
-        // warm account cost is base gas that is spend. Additional gas depends if account is cold loaded.
+        // warm account cost is base gas that is spent. Additional gas depends if account is cold loaded.
         table[SLOAD as usize].static_gas = gas::WARM_STORAGE_READ_COST;
         table[BALANCE as usize].static_gas = gas::WARM_STORAGE_READ_COST;
         table[EXTCODESIZE as usize].static_gas = gas::WARM_STORAGE_READ_COST;
