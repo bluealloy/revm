@@ -328,7 +328,7 @@ mod serde_impl {
     struct AccountSerde {
         info: AccountInfo,
         original_info: Option<AccountInfo>,
-        storage: HashMap<StorageKey, EvmStorageSlot>,
+        storage: EvmStorage,
         transaction_id: usize,
         status: AccountStatus,
     }

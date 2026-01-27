@@ -9,7 +9,7 @@ use database_interface::{
     bal::{BalState, EvmDatabaseError},
     Database, DatabaseCommit, DatabaseRef, EmptyDB,
 };
-use primitives::{hash_map, Address, HashMap, StorageKey, StorageValue, B256};
+use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal},
     Account, AccountInfo,
@@ -372,7 +372,7 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.bal_state.commit(&changes);
         let transitions = self.cache.apply_evm_state_iter(changes, |_, _| {});
         if let Some(s) = self.transition_state.as_mut() {

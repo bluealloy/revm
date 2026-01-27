@@ -27,7 +27,9 @@ use revm::{
         interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
         SelfDestructResult, StateLoad,
     },
-    primitives::{hardfork::SpecId, Address, HashSet, Log, StorageKey, StorageValue, B256, U256},
+    primitives::{
+        hardfork::SpecId, Address, AddressMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    },
     state::{Account, Bytecode, EvmState},
     Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
@@ -117,10 +119,7 @@ impl JournalTr for Backend {
             .selfdestruct(address, target, skip_cold_load)
     }
 
-    fn warm_access_list(
-        &mut self,
-        access_list: revm::primitives::HashMap<Address, HashSet<StorageKey>>,
-    ) {
+    fn warm_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>) {
         self.journaled_state.warm_access_list(access_list);
     }
 

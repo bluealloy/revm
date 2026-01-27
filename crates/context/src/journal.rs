@@ -19,7 +19,7 @@ use context_interface::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, Address, AddressMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
 };
 use state::{Account, EvmState};
 use std::vec::Vec;
@@ -168,7 +168,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn warm_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>) {
+    fn warm_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>) {
         self.inner.warm_addresses.set_access_list(access_list);
     }
 

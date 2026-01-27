@@ -4,7 +4,7 @@
 
 use bitvec::{bitvec, vec::BitVec};
 use context_interface::journaled_state::JournalLoadError;
-use primitives::{short_address, Address, HashMap, HashSet, StorageKey, SHORT_ADDRESS_CAP};
+use primitives::{short_address, Address, AddressMap, HashSet, StorageKey, SHORT_ADDRESS_CAP};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
 ///
@@ -28,7 +28,7 @@ pub struct WarmAddresses {
     /// Coinbase address.
     coinbase: Option<Address>,
     /// Access list
-    access_list: HashMap<Address, HashSet<StorageKey>>,
+    access_list: AddressMap<HashSet<StorageKey>>,
 }
 
 impl Default for WarmAddresses {
@@ -46,7 +46,7 @@ impl WarmAddresses {
             precompile_short_addresses: bitvec![0; SHORT_ADDRESS_CAP],
             precompile_all_short_addresses: true,
             coinbase: None,
-            access_list: HashMap::default(),
+            access_list: AddressMap::default(),
         }
     }
 
@@ -88,13 +88,13 @@ impl WarmAddresses {
 
     /// Set the access list.
     #[inline]
-    pub fn set_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>) {
+    pub fn set_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>) {
         self.access_list = access_list;
     }
 
     /// Returns the access list.
     #[inline]
-    pub fn access_list(&self) -> &HashMap<Address, HashSet<StorageKey>> {
+    pub fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
         &self.access_list
     }
 
