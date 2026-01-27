@@ -30,7 +30,7 @@ jobs:
           cache-targets: true
 
       - name: Build revm release binary 
-        run: cargo build --bin revm --jobs 2
+        run: cargo build --bin revm
 
       - name: Install nexttest
         uses: taiki-e/install-action@nextest
