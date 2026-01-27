@@ -1,0 +1,40 @@
+name: Build on push
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config libclang-dev
+
+      - name: Install stable rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          profile: minimal
+          components: rustfmt, clippy
+
+      - name: Cache Cargo & target directory
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./
+          cache-on-failure: true
+          cache-targets: true
+
+      - name: Build revm release binary 
+        run: cargo build --bin revm --release --jobs 2
+
+      - name: Install nexttest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run basic tests
+        run: |
+          cargo nextest run --workspace --all-features --release
