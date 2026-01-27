@@ -182,9 +182,11 @@ fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_
         return p1_scalar_mul(&g1_points[0], &scalars[0]);
     }
 
-    let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
+    // SAFETY: blst_scalar is repr(C) with a single `b: [u8; 32]` field.
+    let scalars_bytes =
+        unsafe { core::slice::from_raw_parts(scalars.as_ptr() as *const u8, scalars.len() * 32) };
     // Perform multi-scalar multiplication
-    let multiexp = g1_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
+    let multiexp = g1_points.mult(scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p1_to_affine(&multiexp)
@@ -220,10 +222,12 @@ fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_
         return p2_scalar_mul(&g2_points[0], &scalars[0]);
     }
 
-    let scalars_bytes: Vec<_> = scalars.into_iter().flat_map(|s| s.b).collect();
+    // SAFETY: blst_scalar is repr(C) with a single `b: [u8; 32]` field.
+    let scalars_bytes =
+        unsafe { core::slice::from_raw_parts(scalars.as_ptr() as *const u8, scalars.len() * 32) };
 
     // Perform multi-scalar multiplication
-    let multiexp = g2_points.mult(&scalars_bytes, SCALAR_LENGTH_BITS);
+    let multiexp = g2_points.mult(scalars_bytes, SCALAR_LENGTH_BITS);
 
     // Convert result back to affine coordinates
     p2_to_affine(&multiexp)
