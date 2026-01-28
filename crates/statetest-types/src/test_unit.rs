@@ -107,6 +107,12 @@ impl TestUnit {
                 .unwrap_or(u64::MAX),
             difficulty: self.env.current_difficulty,
             prevrandao: self.env.current_random,
+            slot_num: self
+                .env
+                .slot_number
+                .unwrap_or_default()
+                .try_into()
+                .unwrap_or(u64::MAX),
             ..BlockEnv::default()
         };
 
@@ -154,6 +160,7 @@ mod tests {
                 current_beacon_root: None,
                 current_withdrawals_root: None,
                 current_excess_blob_gas: Some(U256::from(excess_blob_gas)),
+                slot_number: Some(U256::from(1u64)),
             },
             pre: HashMap::default(),
             post: BTreeMap::default(),

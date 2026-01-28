@@ -327,6 +327,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             if balance > from_balance {
                 return Some(TransferError::OutOfFunds);
             }
+
+            // EIP-7708: emit ETH transfer log
+            self.eip7708_transfer_log(from, to, balance);
             return None;
         }
 
@@ -570,8 +573,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         } else {
             // State is not changed:
             // * if we are after Cancun upgrade and
-            // * Selfdestruct account that is created in the same transaction and
+            // * Pre-existing account (not created in this transaction) and
             // * Specify the target is same as selfdestructed account. The balance stays unchanged.
+            // EIP-7708: emit selfdestruct-to-self log even when balance doesn't move
+            self.eip7708_selfdestruct_to_self_log(address, balance);
+
             None
         };
 
