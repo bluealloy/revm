@@ -132,7 +132,7 @@ impl JournalTr for Backend {
         self.journaled_state.warm_precompiles(addresses)
     }
 
-    fn precompile_addresses(&self) -> &AddressSet {
+    fn precompile_addresses(&self) -> Vec<Address> {
         self.journaled_state.precompile_addresses()
     }
 

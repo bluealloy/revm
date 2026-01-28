@@ -184,7 +184,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn precompile_addresses(&self) -> &AddressSet {
+    fn precompile_addresses(&self) -> Vec<Address> {
         self.inner.warm_addresses.precompiles()
     }
 

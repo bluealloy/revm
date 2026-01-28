@@ -114,7 +114,7 @@ pub trait JournalTr {
     fn warm_precompiles(&mut self, addresses: AddressSet);
 
     /// Returns the addresses of the precompiles.
-    fn precompile_addresses(&self) -> &AddressSet;
+    fn precompile_addresses(&self) -> Vec<Address>;
 
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);
