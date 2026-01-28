@@ -176,15 +176,15 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.warm_addresses.set_coinbase(address);
     }
 
-    fn warm_precompiles(&mut self, precompiles: HashSet<Address>) {
+    fn warm_precompiles(&mut self, precompiles: Vec<Address>) {
         self.inner
             .warm_addresses
-            .set_precompile_addresses(precompiles);
+            .set_precompiles(precompiles);
     }
 
     #[inline]
-    fn precompile_addresses(&self) -> &HashSet<Address> {
-        self.inner.warm_addresses.precompiles()
+    fn precompile_addresses(&self) -> Vec<Address> {
+        self.inner.warm_addresses.all_precompile_addresses()
     }
 
     /// Returns call depth.

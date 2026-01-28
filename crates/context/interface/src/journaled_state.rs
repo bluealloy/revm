@@ -110,10 +110,10 @@ pub trait JournalTr {
     fn warm_coinbase_account(&mut self, address: Address);
 
     /// Warms the precompiles.
-    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+    fn warm_precompiles(&mut self, addresses: Vec<Address>);
 
     /// Returns the addresses of the precompiles.
-    fn precompile_addresses(&self) -> &HashSet<Address>;
+    fn precompile_addresses(&self) -> Vec<Address>;
 
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);

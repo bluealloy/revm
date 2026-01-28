@@ -128,11 +128,11 @@ impl JournalTr for Backend {
         self.journaled_state.warm_coinbase_account(address)
     }
 
-    fn warm_precompiles(&mut self, addresses: HashSet<Address>) {
+    fn warm_precompiles(&mut self, addresses: Vec<Address>) {
         self.journaled_state.warm_precompiles(addresses)
     }
 
-    fn precompile_addresses(&self) -> &HashSet<Address> {
+    fn precompile_addresses(&self) -> Vec<Address> {
         self.journaled_state.precompile_addresses()
     }
 
