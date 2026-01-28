@@ -263,6 +263,7 @@ impl SharedMemory {
         self.full_len() - self.my_checkpoint
     }
 
+    #[inline]
     fn full_len(&self) -> usize {
         self.buffer_ref().len()
     }
