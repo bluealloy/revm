@@ -178,9 +178,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     fn warm_precompiles(&mut self, precompiles: AddressSet) {
-        self.inner
-            .warm_addresses
-            .set_precompiles(precompiles);
+        self.inner.warm_addresses.set_precompiles(precompiles);
     }
 
     #[inline]
