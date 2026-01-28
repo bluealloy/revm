@@ -11,7 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use primitives::{eip7702, hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
+use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -191,24 +191,30 @@ pub fn apply_eip7702_auth_list<
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
+    let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund();
     let (tx, journal) = context.tx_journal_mut();
 
     // Return if not EIP-7702 transaction.
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
-    apply_auth_list(chain_id, tx.authorization_list(), journal)
+    apply_auth_list(chain_id, refund_per_auth, tx.authorization_list(), journal)
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.
 ///
 /// It is more granular function from [`apply_eip7702_auth_list`] function as it takes only the list, journal and chain id.
+///
+/// The `refund_per_auth` parameter specifies the gas refund per existing account authorization.
+/// By default this is `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500),
+/// but can be configured via [`GasParams::tx_eip7702_auth_refund`](context_interface::cfg::gas_params::GasParams::tx_eip7702_auth_refund).
 #[inline]
 pub fn apply_auth_list<
     JOURNAL: JournalTr,
     ERROR: From<InvalidTransaction> + From<<JOURNAL::Database as Database>::Error>,
 >(
     chain_id: u64,
+    refund_per_auth: u64,
     auth_list: impl Iterator<Item = impl AuthorizationTr>,
     journal: &mut JOURNAL,
 ) -> Result<u64, ERROR> {
@@ -265,8 +271,7 @@ pub fn apply_auth_list<
         authority_acc.delegate(authorization.address());
     }
 
-    let refunded_gas =
-        refunded_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
+    let refunded_gas = refunded_accounts * refund_per_auth;
 
     Ok(refunded_gas)
 }
