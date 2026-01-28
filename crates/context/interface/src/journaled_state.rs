@@ -139,6 +139,7 @@ pub trait JournalTr {
     ) -> Option<TransferError>;
 
     /// Increments the balance of the account.
+    #[deprecated]
     fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -154,6 +155,7 @@ pub trait JournalTr {
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     /// Increments the nonce of the account.
+    #[deprecated]
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.

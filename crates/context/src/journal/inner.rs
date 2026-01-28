@@ -270,6 +270,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Add journal entry for caller accounting.
     #[inline]
+    #[deprecated]
     pub fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -305,6 +306,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Increments the nonce of the account.
     #[inline]
+    #[deprecated]
     pub fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journal.push(ENTRY::nonce_bumped(address));
     }
