@@ -23,9 +23,9 @@ pub enum OpSpecId {
     /// Holocene spec id.
     HOLOCENE,
     /// Isthmus spec id.
-    #[default]
     ISTHMUS,
     /// Jovian spec id.
+    #[default]
     JOVIAN,
     /// Interop spec id.
     INTEROP,
@@ -243,6 +243,6 @@ mod tests {
 
     #[test]
     fn default_op_spec_id() {
-        assert_eq!(OpSpecId::default(), OpSpecId::ISTHMUS);
+        assert_eq!(OpSpecId::default(), OpSpecId::JOVIAN);
     }
 }

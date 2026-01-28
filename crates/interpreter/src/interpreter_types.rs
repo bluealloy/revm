@@ -227,6 +227,7 @@ pub trait StackTr {
     /// Exchanges two values on the stack.
     ///
     /// Indexes are based from the top of the stack.
+    /// `n` is the first index, and the second index is calculated as `n + m`.
     ///
     /// Returns `true` if swap was successful, `false` if stack underflow.
     #[must_use]

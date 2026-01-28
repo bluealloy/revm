@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v14.1.0...revm-inspector-v15.0.0) - 2026-01-15
+
+### Added
+
+- *(inspector)* make TestInspector public for testing EVM variants ([#3282](https://github.com/bluealloy/revm/pull/3282))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- Gas params ([#3132](https://github.com/bluealloy/revm/pull/3132))
+
+### Other
+
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- replace HashMap with fixed-size array for opcode counts in CountInspector ([#3203](https://github.com/bluealloy/revm/pull/3203))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/revm-inspector-v14.0.0...revm-inspector-v14.1.0) - 2025-11-14
 
 ### Other

@@ -3,23 +3,9 @@
 //! It is used to optimize access to precompile addresses.
 
 use context_interface::journaled_state::JournalLoadError;
-use primitives::{Address, HashMap, HashSet, StorageKey};
-
-/// Bitmask for precompile addresses (0x01-0x3F).
-/// All EVM implementations keep precompiles at low sequential addresses.
-type PrecompileMask = u64;
-
-/// Ethereum mainnet precompiles as a bitmask.
-const ETH_PRECOMPILES: PrecompileMask = (1u64 << 1)  |  // 0x01: ECRecover
-    (1u64 << 2)  |  // 0x02: SHA2-256
-    (1u64 << 3)  |  // 0x03: RIPEMD-160
-    (1u64 << 4)  |  // 0x04: Identity
-    (1u64 << 5)  |  // 0x05: ModExp
-    (1u64 << 6)  |  // 0x06: BN256Add
-    (1u64 << 7)  |  // 0x07: BN256Mul
-    (1u64 << 8)  |  // 0x08: BN256Pairing
-    (1u64 << 9)  |  // 0x09: Blake2F
-    (1u64 << 10); // 0x0a: Point evaluation
+use primitives::{
+    short_address, Address, AddressMap, AddressSet, HashSet, StorageKey, SHORT_ADDRESS_CAP,
+};
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
 ///
@@ -33,15 +19,17 @@ const ETH_PRECOMPILES: PrecompileMask = (1u64 << 1)  |  // 0x01: ECRecover
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WarmAddresses {
-    /// Fast path: Precompiles at 0x00-0x3F (covers 99.9% of cases)
-    precompiles_mask: u64,
-
-    /// Slow path: Non-standard precompiles (if any)
-    /// Only allocated if a chain actually has high-address precompiles
-    extended_precompiles: Option<HashSet<Address>>,
-
+    /// Set of warm loaded precompile addresses.
+    precompile_set: AddressSet,
+    /// Bit vector of precompile short addresses. If address is shorter than [`SHORT_ADDRESS_CAP`] it
+    /// will be stored in this bit vector for faster access.
+    precompile_short_addresses: BitVec,
+    /// `true` if all precompiles are short addresses.
+    precompile_all_short_addresses: bool,
+    /// Coinbase address.
     coinbase: Option<Address>,
-    access_list: HashMap<Address, HashSet<StorageKey>>,
+    /// Access list
+    access_list: AddressMap<HashSet<StorageKey>>,
 }
 
 impl Default for WarmAddresses {
@@ -55,22 +43,18 @@ impl WarmAddresses {
     #[inline]
     pub fn new() -> Self {
         Self {
-            precompiles_mask: ETH_PRECOMPILES,
-            extended_precompiles: None,
+            precompile_set: AddressSet::default(),
+            precompile_short_addresses: bitvec![0; SHORT_ADDRESS_CAP],
+            precompile_all_short_addresses: true,
             coinbase: None,
-            access_list: HashMap::default(),
+            access_list: AddressMap::default(),
         }
     }
 
     /// Create with custom precompile mask.
     #[inline]
-    pub fn with_precompiles(mask: PrecompileMask) -> Self {
-        Self {
-            precompiles_mask: mask,
-            extended_precompiles: None,
-            coinbase: None,
-            access_list: HashMap::default(),
-        }
+    pub fn precompiles(&self) -> &AddressSet {
+        &self.precompile_set
     }
 
     /// Returns the precompile mask.
@@ -81,11 +65,17 @@ impl WarmAddresses {
 
     /// Add an extended precompile at a non-standard address.
     #[inline]
-    pub fn add_extended_precompile(&mut self, address: Address) {
-        self.extended_precompiles
-            .get_or_insert_with(HashSet::default)
-            .insert(address);
-    }
+    pub fn set_precompile_addresses(&mut self, addresses: AddressSet) {
+        self.precompile_short_addresses.fill(false);
+
+        let mut all_short_addresses = true;
+        for address in addresses.iter() {
+            if let Some(short_address) = short_address(address) {
+                self.precompile_short_addresses.set(short_address, true);
+            } else {
+                all_short_addresses = false;
+            }
+        }
 
     /// Set multiple extended precompiles at once.
     #[inline]
@@ -105,13 +95,13 @@ impl WarmAddresses {
 
     /// Set the access list.
     #[inline]
-    pub fn set_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>) {
+    pub fn set_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>) {
         self.access_list = access_list;
     }
 
     /// Returns the access list.
     #[inline]
-    pub fn access_list(&self) -> &HashMap<Address, HashSet<StorageKey>> {
+    pub fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
         &self.access_list
     }
 

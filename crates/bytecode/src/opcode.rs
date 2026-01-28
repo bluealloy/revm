@@ -194,6 +194,13 @@ impl OpCode {
                 | OpCode::CALLCODE
                 | OpCode::DELEGATECALL
                 | OpCode::STATICCALL
+                | OpCode::LOG0
+                | OpCode::LOG1
+                | OpCode::LOG2
+                | OpCode::LOG3
+                | OpCode::LOG4
+                | OpCode::CREATE
+                | OpCode::CREATE2
         )
     }
 
@@ -466,7 +473,7 @@ opcodes! {
     0x48 => BASEFEE      => stack_io(0, 1);
     0x49 => BLOBHASH     => stack_io(1, 1);
     0x4A => BLOBBASEFEE  => stack_io(0, 1);
-    // 0x4B
+    0x4B => SLOTNUM      => stack_io(0, 1);
     // 0x4C
     // 0x4D
     // 0x4E
@@ -625,9 +632,9 @@ opcodes! {
     // 0xE3
     // 0xE4
     // 0xE5
-    // 0xE6
-    // 0xE7
-    // 0xE8
+    0xE6 => DUPN     => stack_io(0, 1), immediate_size(1);
+    0xE7 => SWAPN    => stack_io(0, 0), immediate_size(1);
+    0xE8 => EXCHANGE => stack_io(0, 0), immediate_size(1);
     // 0xE9
     // 0xEA
     // 0xEB
@@ -670,9 +677,13 @@ mod tests {
     #[test]
     fn test_immediate_size() {
         let mut expected = [0u8; 256];
-        // PUSH opcodes
+
         for push in PUSH1..=PUSH32 {
             expected[push as usize] = push - PUSH1 + 1;
+        }
+
+        for stack_op in [DUPN, SWAPN, EXCHANGE] {
+            expected[stack_op as usize] = 1;
         }
 
         for (i, opcode) in OPCODE_INFO.iter().enumerate() {
@@ -720,7 +731,7 @@ mod tests {
         for _ in OPCODE_INFO.into_iter().flatten() {
             opcode_num += 1;
         }
-        assert_eq!(opcode_num, 150);
+        assert_eq!(opcode_num, 154);
     }
 
     #[test]
@@ -774,5 +785,12 @@ mod tests {
         assert!(OpCode::new(MSTORE).unwrap().modifies_memory());
         assert!(OpCode::new(KECCAK256).unwrap().modifies_memory());
         assert!(!OpCode::new(ADD).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG0).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG1).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG2).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG3).unwrap().modifies_memory());
+        assert!(OpCode::new(LOG4).unwrap().modifies_memory());
+        assert!(OpCode::new(CREATE).unwrap().modifies_memory());
+        assert!(OpCode::new(CREATE2).unwrap().modifies_memory());
     }
 }

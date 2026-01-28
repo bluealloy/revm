@@ -8,7 +8,7 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use primitives::{address, Address, HashMap, StorageKey, StorageValue, B256, U256};
+use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
@@ -92,13 +92,13 @@ pub trait Database {
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: HashMap<Address, Account>);
+    fn commit(&mut self, changes: AddressMap<Account>);
 
     /// Commit changes to the database with an iterator.
     ///
     /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
-    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`HashMap`].
+    /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`AddressMap`].
     ///
     /// # Dyn Compatibility
     ///
@@ -106,7 +106,7 @@ pub trait DatabaseCommit {
     /// For ergonomic usage with `impl IntoIterator`, use the inherent method
     /// `commit_from_iter` on `dyn DatabaseCommit`.
     fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
-        let changes: HashMap<Address, Account> = changes.collect();
+        let changes: AddressMap<Account> = changes.collect();
         self.commit(changes);
     }
 }
@@ -206,7 +206,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.0.commit(changes)
     }
 }
@@ -321,7 +321,7 @@ mod tests {
         }
 
         impl DatabaseCommit for MockDb {
-            fn commit(&mut self, changes: HashMap<Address, Account>) {
+            fn commit(&mut self, changes: AddressMap<Account>) {
                 let std_map: StdHashMap<_, _> = changes.into_iter().collect();
                 self.commits.push(std_map);
             }
@@ -337,7 +337,7 @@ mod tests {
         // Test commit() on trait objects
         {
             let db_dyn: &mut dyn DatabaseCommit = &mut db;
-            db_dyn.commit(HashMap::default());
+            db_dyn.commit(AddressMap::default());
         }
         assert_eq!(db.commits.len(), 2);
 

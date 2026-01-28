@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.0.0](https://github.com/bluealloy/revm/compare/revm-v33.1.0...revm-v34.0.0) - 2026-01-15
+
+### Added
+
+- Propagate `map-foldhash` Feature Through Dependency Chain ([#3252](https://github.com/bluealloy/revm/pull/3252))
+- dynamically link gmp ([#3250](https://github.com/bluealloy/revm/pull/3250))
+
+### Other
+
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- re-export statetest-types from revm crate behind test-types feature ([#3247](https://github.com/bluealloy/revm/pull/3247))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [33.1.0](https://github.com/bluealloy/revm/compare/revm-v33.0.0...revm-v33.1.0) - 2025-11-14
 
 ### Fixed

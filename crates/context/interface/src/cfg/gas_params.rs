@@ -91,7 +91,7 @@ mod serde {
 
 impl Default for GasParams {
     fn default() -> Self {
-        Self::new_spec(SpecId::default()).clone()
+        Self::new_spec(SpecId::default())
     }
 }
 
@@ -220,6 +220,12 @@ impl GasParams {
             gas::SSTORE_SET - gas::SSTORE_RESET;
         // SSTORE RESET Is covered in SSTORE_STATIC.
         table[GasId::sstore_reset_without_cold_load_cost().as_usize()] = 0;
+        // SSTORE SET REFUND (same as sstore_set_without_load_cost but used only in sstore_refund)
+        table[GasId::sstore_set_refund().as_usize()] =
+            table[GasId::sstore_set_without_load_cost().as_usize()];
+        // SSTORE RESET REFUND (same as sstore_reset_without_cold_load_cost but used only in sstore_refund)
+        table[GasId::sstore_reset_refund().as_usize()] =
+            table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
         // SSTORE CLEARING SLOT REFUND
         table[GasId::sstore_clearing_slot_refund().as_usize()] = 15000;
         table[GasId::selfdestruct_refund().as_usize()] = 24000;
@@ -251,6 +257,10 @@ impl GasParams {
                 gas::SSTORE_SET - gas::ISTANBUL_SLOAD_GAS;
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
                 gas::SSTORE_RESET - gas::ISTANBUL_SLOAD_GAS;
+            table[GasId::sstore_set_refund().as_usize()] =
+                table[GasId::sstore_set_without_load_cost().as_usize()];
+            table[GasId::sstore_reset_refund().as_usize()] =
+                table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
             table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
                 gas::NON_ZERO_BYTE_MULTIPLIER_ISTANBUL;
         }
@@ -268,6 +278,10 @@ impl GasParams {
                 gas::WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
             table[GasId::sstore_set_without_load_cost().as_usize()] =
                 gas::SSTORE_SET - gas::WARM_STORAGE_READ_COST;
+            table[GasId::sstore_set_refund().as_usize()] =
+                table[GasId::sstore_set_without_load_cost().as_usize()];
+            table[GasId::sstore_reset_refund().as_usize()] =
+                table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
 
             table[GasId::tx_access_list_address_cost().as_usize()] = gas::ACCESS_LIST_ADDRESS;
             table[GasId::tx_access_list_storage_key_cost().as_usize()] =
@@ -389,6 +403,18 @@ impl GasParams {
         self.get(GasId::sstore_clearing_slot_refund())
     }
 
+    /// SSTORE set refund. Used in sstore_refund for SSTORE_SET_GAS - SLOAD_GAS.
+    #[inline]
+    pub fn sstore_set_refund(&self) -> u64 {
+        self.get(GasId::sstore_set_refund())
+    }
+
+    /// SSTORE reset refund. Used in sstore_refund for SSTORE_RESET_GAS - SLOAD_GAS.
+    #[inline]
+    pub fn sstore_reset_refund(&self) -> u64 {
+        self.get(GasId::sstore_reset_refund())
+    }
+
     /// Dynamic gas cost for SSTORE opcode.
     ///
     /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
@@ -469,11 +495,11 @@ impl GasParams {
             // If original value is 0
             if vals.is_original_zero() {
                 // add SSTORE_SET_GAS - SLOAD_GAS to refund counter.
-                refund += self.sstore_set_without_load_cost() as i64;
+                refund += self.sstore_set_refund() as i64;
             // Otherwise
             } else {
                 // add SSTORE_RESET_GAS - SLOAD_GAS gas to refund counter.
-                refund += self.sstore_reset_without_cold_load_cost() as i64;
+                refund += self.sstore_reset_refund() as i64;
             }
         }
         refund
@@ -654,6 +680,30 @@ impl GasParams {
         self.get(GasId::tx_access_list_storage_key_cost())
     }
 
+    /// Calculate the total gas cost for an access list.
+    ///
+    /// This is a helper method that calculates the combined cost of:
+    /// - `accounts` addresses in the access list
+    /// - `storages` storage keys in the access list
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use revm_context_interface::cfg::gas_params::GasParams;
+    /// use primitives::hardfork::SpecId;
+    ///
+    /// let gas_params = GasParams::new_spec(SpecId::BERLIN);
+    /// // Calculate cost for 2 addresses and 5 storage keys
+    /// let cost = gas_params.tx_access_list_cost(2, 5);
+    /// assert_eq!(cost, 2 * 2400 + 5 * 1900); // 2 * ACCESS_LIST_ADDRESS + 5 * ACCESS_LIST_STORAGE_KEY
+    /// ```
+    #[inline]
+    pub fn tx_access_list_cost(&self, accounts: u64, storages: u64) -> u64 {
+        accounts
+            .saturating_mul(self.tx_access_list_address_cost())
+            .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
     pub fn tx_base_stipend(&self) -> u64 {
         self.get(GasId::tx_base_stipend())
@@ -827,6 +877,8 @@ impl GasId {
             x if x == Self::tx_base_stipend().as_u8() => "tx_base_stipend",
             x if x == Self::tx_create_cost().as_u8() => "tx_create_cost",
             x if x == Self::tx_initcode_cost().as_u8() => "tx_initcode_cost",
+            x if x == Self::sstore_set_refund().as_u8() => "sstore_set_refund",
+            x if x == Self::sstore_reset_refund().as_u8() => "sstore_reset_refund",
             _ => "unknown",
         }
     }
@@ -884,6 +936,8 @@ impl GasId {
             "tx_base_stipend" => Some(Self::tx_base_stipend()),
             "tx_create_cost" => Some(Self::tx_create_cost()),
             "tx_initcode_cost" => Some(Self::tx_initcode_cost()),
+            "sstore_set_refund" => Some(Self::sstore_set_refund()),
+            "sstore_reset_refund" => Some(Self::sstore_reset_refund()),
             _ => None,
         }
     }
@@ -1070,6 +1124,16 @@ impl GasId {
     pub const fn tx_initcode_cost() -> GasId {
         Self::new(36)
     }
+
+    /// SSTORE set refund. Used in sstore_refund for SSTORE_SET_GAS - SLOAD_GAS refund calculation.
+    pub const fn sstore_set_refund() -> GasId {
+        Self::new(37)
+    }
+
+    /// SSTORE reset refund. Used in sstore_refund for SSTORE_RESET_GAS - SLOAD_GAS refund calculation.
+    pub const fn sstore_reset_refund() -> GasId {
+        Self::new(38)
+    }
 }
 
 #[cfg(test)]
@@ -1112,12 +1176,51 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 36 known GasIds (based on the indices 1-36 used)
+        // We should have exactly 38 known GasIds (based on the indices 1-38 used)
         assert_eq!(
             unique_names.len(),
-            36,
-            "Expected 36 unique GasIds, found {}",
+            38,
+            "Expected 38 unique GasIds, found {}",
             unique_names.len()
         );
+    }
+
+    #[test]
+    fn test_tx_access_list_cost() {
+        use crate::cfg::gas;
+
+        // Test with Berlin spec (when access list was introduced)
+        let gas_params = GasParams::new_spec(SpecId::BERLIN);
+
+        // Test with 0 accounts and 0 storages
+        assert_eq!(gas_params.tx_access_list_cost(0, 0), 0);
+
+        // Test with 1 account and 0 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(1, 0),
+            gas::ACCESS_LIST_ADDRESS
+        );
+
+        // Test with 0 accounts and 1 storage
+        assert_eq!(
+            gas_params.tx_access_list_cost(0, 1),
+            gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with 2 accounts and 5 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(2, 5),
+            2 * gas::ACCESS_LIST_ADDRESS + 5 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with large numbers to ensure no overflow
+        assert_eq!(
+            gas_params.tx_access_list_cost(100, 200),
+            100 * gas::ACCESS_LIST_ADDRESS + 200 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with pre-Berlin spec (should return 0)
+        let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
+        assert_eq!(gas_params_pre_berlin.tx_access_list_cost(10, 20), 0);
     }
 }

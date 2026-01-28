@@ -34,7 +34,6 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
         return;
     }
 
-    // Can ignore return. as relative N jump is safe operation
     context.interpreter.bytecode.relative_jump(N as isize);
 }
 
@@ -58,5 +57,176 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     assert!(N != 0);
     if !context.interpreter.stack.exchange(0, N) {
         context.interpreter.halt(InstructionResult::StackOverflow);
+    }
+}
+
+/// Implements the DUPN instruction.
+///
+/// Duplicates the Nth stack item to the top of the stack, with N given by an immediate.
+pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, AMSTERDAM);
+    let x: usize = context.interpreter.bytecode.read_u8().into();
+    if let Some(n) = decode_single(x) {
+        if !context.interpreter.stack.dup(n) {
+            context.interpreter.halt(InstructionResult::StackOverflow);
+        }
+        context.interpreter.bytecode.relative_jump(1);
+    } else {
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
+    }
+}
+
+/// Implements the SWAPN instruction.
+///
+/// Swaps the top stack item with the N+1th stack item, with N given by an immediate.
+pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, AMSTERDAM);
+    let x: usize = context.interpreter.bytecode.read_u8().into();
+    if let Some(n) = decode_single(x) {
+        if !context.interpreter.stack.exchange(0, n) {
+            context.interpreter.halt(InstructionResult::StackOverflow);
+        }
+        context.interpreter.bytecode.relative_jump(1);
+    } else {
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
+    }
+}
+
+/// Implements the EXCHANGE instruction.
+///
+/// Swaps the N+1th stack item with the M+1th stack item, with N, M given by an immediate.
+pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+    check!(context.interpreter, AMSTERDAM);
+    let x: usize = context.interpreter.bytecode.read_u8().into();
+    if let Some((n, m)) = decode_pair(x) {
+        if !context.interpreter.stack.exchange(n, m - n) {
+            context.interpreter.halt(InstructionResult::StackOverflow);
+        }
+        context.interpreter.bytecode.relative_jump(1);
+    } else {
+        context
+            .interpreter
+            .halt(InstructionResult::InvalidImmediateEncoding);
+    }
+}
+
+fn decode_single(x: usize) -> Option<usize> {
+    if x <= 90 {
+        Some(x + 17)
+    } else if x >= 128 {
+        Some(x - 20)
+    } else {
+        None
+    }
+}
+
+fn decode_pair(x: usize) -> Option<(usize, usize)> {
+    let k = if x <= 79 {
+        x
+    } else if x >= 128 {
+        x - 48
+    } else {
+        return None;
+    };
+    let q = k / 16;
+    let r = k % 16;
+    if q < r {
+        Some((q + 1, r + 1))
+    } else {
+        Some((r + 1, 29 - q))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        host::DummyHost,
+        instructions::instruction_table,
+        interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
+        interpreter_types::LoopControl,
+        Interpreter,
+    };
+    use bytecode::opcode::*;
+    use bytecode::Bytecode;
+    use primitives::{hardfork::SpecId, Bytes, U256};
+
+    fn run_bytecode(code: &[u8]) -> Interpreter {
+        let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(code));
+        let mut interpreter = Interpreter::<EthInterpreter>::new(
+            SharedMemory::new(),
+            ExtBytecode::new(bytecode),
+            InputsImpl::default(),
+            false,
+            SpecId::AMSTERDAM,
+            u64::MAX,
+        );
+        let table = instruction_table::<EthInterpreter, DummyHost>();
+        let mut host = DummyHost::new(SpecId::AMSTERDAM);
+        interpreter.run_plain(&table, &mut host);
+        interpreter
+    }
+
+    #[test]
+    fn test_dupn() {
+        let interpreter = run_bytecode(&[
+            PUSH1, 0x01, PUSH1, 0x00, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1,
+            DUP1, DUP1, DUP1, DUP1, DUP1, DUPN, 0x00,
+        ]);
+        assert_eq!(interpreter.stack.len(), 18);
+        assert_eq!(interpreter.stack.data()[17], U256::from(1));
+        assert_eq!(interpreter.stack.data()[0], U256::from(1));
+        for i in 1..17 {
+            assert_eq!(interpreter.stack.data()[i], U256::ZERO);
+        }
+    }
+
+    #[test]
+    fn test_swapn() {
+        let interpreter = run_bytecode(&[
+            PUSH1, 0x01, PUSH1, 0x00, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1, DUP1,
+            DUP1, DUP1, DUP1, DUP1, DUP1, PUSH1, 0x02, SWAPN, 0x00,
+        ]);
+        assert_eq!(interpreter.stack.len(), 18);
+        assert_eq!(interpreter.stack.data()[17], U256::from(1));
+        assert_eq!(interpreter.stack.data()[0], U256::from(2));
+        for i in 1..17 {
+            assert_eq!(interpreter.stack.data()[i], U256::ZERO);
+        }
+    }
+
+    #[test]
+    fn test_exchange() {
+        let interpreter = run_bytecode(&[PUSH1, 0x00, PUSH1, 0x01, PUSH1, 0x02, EXCHANGE, 0x01]);
+        assert_eq!(interpreter.stack.len(), 3);
+        assert_eq!(interpreter.stack.data()[2], U256::from(2));
+        assert_eq!(interpreter.stack.data()[1], U256::from(0));
+        assert_eq!(interpreter.stack.data()[0], U256::from(1));
+    }
+
+    #[test]
+    fn test_swapn_invalid_immediate() {
+        let mut interpreter = run_bytecode(&[SWAPN, JUMPDEST]);
+        assert!(interpreter.bytecode.instruction_result().is_none());
+    }
+
+    #[test]
+    fn test_jump_over_invalid_dupn() {
+        let interpreter = run_bytecode(&[PUSH1, 0x04, JUMP, DUPN, JUMPDEST]);
+        assert!(interpreter.bytecode.is_not_end());
+    }
+
+    #[test]
+    fn test_exchange_with_iszero() {
+        let interpreter = run_bytecode(&[
+            PUSH1, 0x00, PUSH1, 0x00, PUSH1, 0x00, EXCHANGE, 0x01, ISZERO,
+        ]);
+        assert_eq!(interpreter.stack.len(), 3);
+        assert_eq!(interpreter.stack.data()[2], U256::from(1));
+        assert_eq!(interpreter.stack.data()[1], U256::ZERO);
+        assert_eq!(interpreter.stack.data()[0], U256::ZERO);
     }
 }

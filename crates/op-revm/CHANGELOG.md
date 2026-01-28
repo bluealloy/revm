@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/op-revm-v14.1.0...op-revm-v15.0.0) - 2026-01-15
+
+### Added
+
+- new gas params, tx initial gas and codedeposit ([#3260](https://github.com/bluealloy/revm/pull/3260))
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- early return if the l1 fee scalar is zero ([#3213](https://github.com/bluealloy/revm/pull/3213))
+- Restrict Database::Error. JournaledAccountTr ([#3199](https://github.com/bluealloy/revm/pull/3199))
+
+### Other
+
+- fix typos, grammar errors, and improve documentation consistency ([#3294](https://github.com/bluealloy/revm/pull/3294))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- Remove redundant tx fetch in Optimism handler gas accounting ([#3220](https://github.com/bluealloy/revm/pull/3220))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [14.1.0](https://github.com/bluealloy/revm/compare/op-revm-v14.0.0...op-revm-v14.1.0) - 2025-11-14
 
 ### Fixed

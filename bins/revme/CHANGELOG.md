@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revme-v10.0.2...revme-v11.0.0) - 2026-01-15
+
+### Added
+
+- move GasParams to Cfg ([#3229](https://github.com/bluealloy/revm/pull/3229))
+- Propagate `map-foldhash` Feature Through Dependency Chain ([#3252](https://github.com/bluealloy/revm/pull/3252))
+- BAL EIP-7928 ([#3070](https://github.com/bluealloy/revm/pull/3070))
+- DatabaseCommitExt + increment_balances ([#3195](https://github.com/bluealloy/revm/pull/3195))
+- sort accounts by address in blockchaintest output ([#3182](https://github.com/bluealloy/revm/pull/3182))
+
+### Fixed
+
+- incorrect bytecode value in blockchain test error output ([#3288](https://github.com/bluealloy/revm/pull/3288))
+- use expected_exception instead of error field for unexpected_success status ([#3244](https://github.com/bluealloy/revm/pull/3244))
+- deduplicate post-state validation error handling ([#3228](https://github.com/bluealloy/revm/pull/3228))
+- *(revme)* incorrect debug log message in btest ([#3233](https://github.com/bluealloy/revm/pull/3233))
+- *(statetest)* use spec-aware blob base fee update fraction ([#3210](https://github.com/bluealloy/revm/pull/3210))
+
+### Other
+
+- apply improvements from ai-bot labeled PRs ([#3297](https://github.com/bluealloy/revm/pull/3297))
+- *(revme)* consolidate find_all_json_tests into dir_utils ([#3262](https://github.com/bluealloy/revm/pull/3262))
+- happy new year, 2026 licence ([#3272](https://github.com/bluealloy/revm/pull/3272))
+- *(revme)* use unwrap_or_default for non-UTF8 path safety ([#3259](https://github.com/bluealloy/revm/pull/3259))
+- sort storage keys and test files in blockchaintest output ([#3186](https://github.com/bluealloy/revm/pull/3186))
+- *(revme)* extract JSON printing helper in blockchaintest ([#3257](https://github.com/bluealloy/revm/pull/3257))
+- remove redundant clone calls ([#3258](https://github.com/bluealloy/revm/pull/3258))
+- re-export statetest-types from revm crate behind test-types feature ([#3247](https://github.com/bluealloy/revm/pull/3247))
+- *(fmt)* merge all imports ([#3184](https://github.com/bluealloy/revm/pull/3184))
+
 ## [10.0.2](https://github.com/bluealloy/revm/compare/revme-v10.0.0...revme-v10.0.2) - 2025-11-14
 
 ### Other

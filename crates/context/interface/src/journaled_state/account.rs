@@ -13,7 +13,8 @@ use super::entry::JournalEntryTr;
 use auto_impl::auto_impl;
 use database_interface::Database;
 use primitives::{
-    hash_map::Entry, Address, HashMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    hash_map::Entry, Address, AddressMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
+    U256,
 };
 use state::{Account, Bytecode, EvmStorageSlot};
 use std::vec::Vec;
@@ -129,7 +130,7 @@ pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
     /// Journal entries.
     journal_entries: &'a mut Vec<ENTRY>,
     /// Access list.
-    access_list: &'a HashMap<Address, HashSet<StorageKey>>,
+    access_list: &'a AddressMap<HashSet<StorageKey>>,
     /// Transaction ID.
     transaction_id: usize,
     /// Database used to load storage.
@@ -144,7 +145,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         account: &'a mut Account,
         journal_entries: &'a mut Vec<ENTRY>,
         db: &'a mut DB,
-        access_list: &'a HashMap<Address, HashSet<StorageKey>>,
+        access_list: &'a AddressMap<HashSet<StorageKey>>,
         transaction_id: usize,
     ) -> Self {
         Self {
@@ -426,8 +427,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
     #[inline]
     fn set_code(&mut self, code_hash: B256, code: Bytecode) {
         self.touch();
-        self.account.info.set_code_hash(code_hash);
-        self.account.info.set_code(code);
+        self.account.info.set_code_and_hash(code, code_hash);
         self.journal_entries.push(ENTRY::code_changed(self.address));
     }
 

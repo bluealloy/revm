@@ -467,6 +467,10 @@ impl<
         self.block().beneficiary()
     }
 
+    fn slot_num(&self) -> U256 {
+        U256::from(self.block().slot_num())
+    }
+
     fn chain_id(&self) -> U256 {
         U256::from(self.cfg().chain_id())
     }

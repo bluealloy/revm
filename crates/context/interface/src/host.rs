@@ -44,6 +44,8 @@ pub trait Host {
     fn timestamp(&self) -> U256;
     /// Block beneficiary, calls ContextTr::block().beneficiary()
     fn beneficiary(&self) -> Address;
+    /// Block slot number, calls ContextTr::block().slot_num()
+    fn slot_num(&self) -> U256;
     /// Chain id, calls ContextTr::cfg().chain_id()
     fn chain_id(&self) -> U256;
 
@@ -213,7 +215,7 @@ impl DummyHost {
     /// Create a new dummy host with the given spec.
     pub fn new(spec: SpecId) -> Self {
         Self {
-            gas_params: GasParams::new_spec(spec).clone(),
+            gas_params: GasParams::new_spec(spec),
         }
     }
 }
@@ -253,6 +255,10 @@ impl Host for DummyHost {
 
     fn beneficiary(&self) -> Address {
         Address::ZERO
+    }
+
+    fn slot_num(&self) -> U256 {
+        U256::ZERO
     }
 
     fn chain_id(&self) -> U256 {

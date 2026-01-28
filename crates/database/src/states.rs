@@ -2,6 +2,8 @@
 
 /// Account status tracking.
 pub mod account_status;
+/// Block hash cache.
+pub mod block_hash_cache;
 /// Bundle account representation.
 pub mod bundle_account;
 /// Bundle state management.
