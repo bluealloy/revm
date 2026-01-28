@@ -89,6 +89,8 @@ pub struct BlockHeader {
     pub requests_hash: Option<B256>,
     /// Target blobs per block (EIP-4844 related)
     pub target_blobs_per_block: Option<U256>,
+    /// Slot number (EIP-7843)
+    pub slot_number: Option<U256>,
 }
 
 /// Block structure containing header and transactions
@@ -346,7 +348,7 @@ impl BlockHeader {
                 None
             },
             blob_excess_gas_and_price,
-            slot_num: 0,
+            slot_num: self.slot_number.unwrap_or_default().try_into().unwrap_or(u64::MAX),
         }
     }
 }
