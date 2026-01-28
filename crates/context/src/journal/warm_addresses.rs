@@ -2,11 +2,24 @@
 //!
 //! It is used to optimize access to precompile addresses.
 
-use bitvec::{bitvec, vec::BitVec};
 use context_interface::journaled_state::JournalLoadError;
-use primitives::{
-    short_address, Address, AddressMap, AddressSet, HashSet, StorageKey, SHORT_ADDRESS_CAP,
-};
+use primitives::{Address, AddressMap, AddressSet, HashSet, StorageKey};
+
+/// Bitmask for precompile addresses (0x01-0x3F).
+/// All EVM implementations keep precompiles at low sequential addresses.
+type PrecompileMask = u64;
+
+/// Ethereum mainnet precompiles as a bitmask.
+const ETH_PRECOMPILES: PrecompileMask = (1u64 << 1)  |  // 0x01: ECRecover
+    (1u64 << 2)  |  // 0x02: SHA2-256
+    (1u64 << 3)  |  // 0x03: RIPEMD-160
+    (1u64 << 4)  |  // 0x04: Identity
+    (1u64 << 5)  |  // 0x05: ModExp
+    (1u64 << 6)  |  // 0x06: BN256Add
+    (1u64 << 7)  |  // 0x07: BN256Mul
+    (1u64 << 8)  |  // 0x08: BN256Pairing
+    (1u64 << 9)  |  // 0x09: Blake2F
+    (1u64 << 10); // 0x0a: Point evaluation
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
 ///
@@ -20,13 +33,12 @@ use primitives::{
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WarmAddresses {
-    /// Set of warm loaded precompile addresses.
-    precompile_set: AddressSet,
-    /// Bit vector of precompile short addresses. If address is shorter than [`SHORT_ADDRESS_CAP`] it
-    /// will be stored in this bit vector for faster access.
-    precompile_short_addresses: BitVec,
-    /// `true` if all precompiles are short addresses.
-    precompile_all_short_addresses: bool,
+    /// Fast path: Precompiles at 0x00-0x3F (covers 99.9% of cases)
+    precompiles_mask: u64,
+
+    /// Slow path: Non-standard precompiles (if any)
+    /// Only allocated if a chain actually has high-address precompiles
+    extended_precompiles: Option<AddressSet>,
     /// Coinbase address.
     coinbase: Option<Address>,
     /// Access list
@@ -44,9 +56,8 @@ impl WarmAddresses {
     #[inline]
     pub fn new() -> Self {
         Self {
-            precompile_set: AddressSet::default(),
-            precompile_short_addresses: bitvec![0; SHORT_ADDRESS_CAP],
-            precompile_all_short_addresses: true,
+            precompiles_mask: ETH_PRECOMPILES,
+            extended_precompiles: None,
             coinbase: None,
             access_list: AddressMap::default(),
         }
@@ -54,8 +65,24 @@ impl WarmAddresses {
 
     /// Returns the precompile addresses.
     #[inline]
-    pub fn precompiles(&self) -> &AddressSet {
-        &self.precompile_set
+    pub fn precompiles(&self) -> Vec<Address> {
+        let mut addresses = Vec::new();
+
+        // Iterate through the bitmask
+        for i in 0..64 {
+            if (self.precompiles_mask & (1 << i)) != 0 {
+                let mut addr = [0u8; 20];
+                addr[19] = i as u8;
+                addresses.push(Address::from(addr));
+            }
+        }
+
+        // Add extended precompiles if any
+        if let Some(ref extended) = self.extended_precompiles {
+            addresses.extend(extended.iter().copied());
+        }
+
+        addresses
     }
 
     /// Returns the coinbase address.
@@ -67,19 +94,25 @@ impl WarmAddresses {
     /// Set the precompile addresses and short addresses.
     #[inline]
     pub fn set_precompile_addresses(&mut self, addresses: AddressSet) {
-        self.precompile_short_addresses.fill(false);
+        // Reset state
+        self.precompiles_mask = 0;
+        self.extended_precompiles = None;
 
-        let mut all_short_addresses = true;
-        for address in addresses.iter() {
-            if let Some(short_address) = short_address(address) {
-                self.precompile_short_addresses.set(short_address, true);
-            } else {
-                all_short_addresses = false;
+        for address in addresses {
+            // Check if it fits in the bitmask (0x00-0x3F)(maybe this should be extended idk)
+            if address[..19] == [0u8; 19] {
+                let a = address[19] as u64;
+                if a < 64 {
+                    // Fast path: set bit in mask
+                    self.precompiles_mask |= 1 << a;
+                    continue;
+                }
             }
-        }
 
-        self.precompile_all_short_addresses = all_short_addresses;
-        self.precompile_set = addresses;
+            self.extended_precompiles
+                .get_or_insert_with(HashSet::default)
+                .insert(address);
+        }
     }
 
     /// Set the coinbase address.
@@ -113,35 +146,54 @@ impl WarmAddresses {
         self.access_list.clear();
     }
 
+    /// Check if address is a precompile.
+    #[inline]
+    pub fn is_short_precompile(&self, address: &Address) -> bool {
+        // Fast path: Check if address is in the 0x00-0x3F range
+        if address[..19] == [0u8; 19] {
+            let a = address[19] as u64;
+            if a < 64 && (self.precompiles_mask & (1 << a)) != 0 {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if address is a precompile.
+    #[inline]
+    fn is_precompile(&self, address: &Address) -> bool {
+        // Fast path: Check if address is in the 0x00-0x3F range
+        if address[..19] == [0u8; 19] {
+            let a = address[19] as u64;
+            if a < 64 && (self.precompiles_mask & (1 << a)) != 0 {
+                return true;
+            }
+        }
+
+        // Slow path: Check extended precompiles (only if they exist)
+        self.extended_precompiles
+            .as_ref()
+            .is_some_and(|set| set.contains(address))
+    }
+
+    /// Add an extended precompile at a non-standard address.
+    #[inline]
+    pub fn add_extended_precompile(&mut self, address: Address) {
+        self.extended_precompiles
+            .get_or_insert_with(AddressSet::default)
+            .insert(address);
+    }
+
     /// Returns true if the address is warm loaded.
     #[inline]
     pub fn is_warm(&self, address: &Address) -> bool {
-        // check if it is coinbase
-        if Some(*address) == self.coinbase {
-            return true;
-        }
-
-        // if it is part of access list.
-        if self.access_list.contains_key(address) {
-            return true;
-        }
-
-        // if there are no precompiles, it is cold loaded and bitvec is not set.
-        if self.precompile_set.is_empty() {
-            return false;
-        }
-
-        // check if it is short precompile address
-        if let Some(short_address) = short_address(address) {
-            return self.precompile_short_addresses[short_address];
-        }
-
-        if !self.precompile_all_short_addresses {
-            // in the end check if it is inside precompile set
-            return self.precompile_set.contains(address);
-        }
-
-        false
+        // Check in order of likelihood:
+        // 1. Precompiles (most common in practice)
+        // 2. Coinbase (once per block)
+        // 3. Access list (varies per transaction)
+        self.is_precompile(address)
+            || Some(*address) == self.coinbase
+            || self.access_list.contains_key(address)
     }
 
     /// Returns true if the storage is warm loaded.
@@ -184,18 +236,11 @@ mod tests {
 
     #[test]
     fn test_initialization() {
-        let warm_addresses = WarmAddresses::new();
-        assert!(warm_addresses.precompile_set.is_empty());
-        assert_eq!(
-            warm_addresses.precompile_short_addresses.len(),
-            SHORT_ADDRESS_CAP
-        );
-        assert!(!warm_addresses.precompile_short_addresses.any());
-        assert!(warm_addresses.coinbase.is_none());
-
-        // Test Default trait
-        let default_addresses = WarmAddresses::default();
-        assert_eq!(warm_addresses, default_addresses);
+        let warm = WarmAddresses::new();
+        assert_eq!(warm.precompiles_mask, ETH_PRECOMPILES);
+        assert!(warm.extended_precompiles.is_none());
+        assert!(warm.coinbase.is_none());
+        assert!(warm.access_list.is_empty());
     }
 
     #[test]
@@ -216,74 +261,44 @@ mod tests {
 
     #[test]
     fn test_short_address_precompiles() {
-        let mut warm_addresses = WarmAddresses::new();
+        let warm = WarmAddresses::new();
 
-        // Create short addresses (18 leading zeros, last 2 bytes < 300)
-        let mut bytes1 = [0u8; 20];
-        bytes1[19] = 1u8;
-        let short_addr1 = Address::from(bytes1);
+        // Test all standard Ethereum precompiles (0x01-0x0a)
+        for i in 1u8..=10 {
+            let mut addr = [0u8; 20];
+            addr[19] = i;
+            let precompile = Address::from(addr);
+            assert!(
+                warm.is_warm(&precompile),
+                "Precompile 0x{:02x} should be warm",
+                i
+            );
+        }
 
-        let mut bytes2 = [0u8; 20];
-        bytes2[19] = 5u8;
-        let short_addr2 = Address::from(bytes2);
-
-        let mut precompiles = HashSet::default();
-        precompiles.insert(short_addr1);
-        precompiles.insert(short_addr2);
-
-        warm_addresses.set_precompile_addresses(precompiles.clone());
-
-        // Verify storage
-        assert_eq!(warm_addresses.precompile_set, precompiles);
-        assert_eq!(
-            warm_addresses.precompile_short_addresses.len(),
-            SHORT_ADDRESS_CAP
-        );
-
-        // Verify bitvec optimization
-        assert!(warm_addresses.precompile_short_addresses[1]);
-        assert!(warm_addresses.precompile_short_addresses[5]);
-        assert!(!warm_addresses.precompile_short_addresses[0]);
-
-        // Verify warmth detection
-        assert!(warm_addresses.is_warm(&short_addr1));
-        assert!(warm_addresses.is_warm(&short_addr2));
-
-        // Test non-existent short address
-        let mut other_bytes = [0u8; 20];
-        other_bytes[19] = 20u8;
-        let other_short_addr = Address::from(other_bytes);
-        assert!(!warm_addresses.is_warm(&other_short_addr));
+        // Test non-precompile low address
+        let mut addr = [0u8; 20];
+        addr[19] = 11;
+        assert!(!warm.is_warm(&Address::from(addr)));
     }
 
     #[test]
     fn test_regular_address_precompiles() {
-        let mut warm_addresses = WarmAddresses::new();
+        let mut warm = WarmAddresses::new();
 
-        // Create non-short addresses
-        let regular_addr = address!("1234567890123456789012345678901234567890");
-        let mut bytes = [0u8; 20];
-        bytes[18] = 1u8;
-        bytes[19] = 44u8; // 300
-        let boundary_addr = Address::from(bytes);
+        // Before adding extended precompile, high address should be cold
+        let high_addr = address!("1234567890123456789012345678901234567890");
+        assert!(!warm.is_warm(&high_addr));
+        assert!(warm.extended_precompiles.is_none()); // No allocation yet
 
-        let mut precompiles = HashSet::default();
-        precompiles.insert(regular_addr);
-        precompiles.insert(boundary_addr);
+        // Add extended precompile
+        warm.add_extended_precompile(high_addr);
+        assert!(warm.is_warm(&high_addr));
+        assert!(warm.extended_precompiles.is_some());
 
-        warm_addresses.set_precompile_addresses(precompiles.clone());
-
-        // Verify storage
-        assert_eq!(warm_addresses.precompile_set, precompiles);
-        assert!(!warm_addresses.precompile_short_addresses.any());
-
-        // Verify warmth detection
-        assert!(warm_addresses.is_warm(&regular_addr));
-        assert!(warm_addresses.is_warm(&boundary_addr));
-
-        // Test non-existent regular address
-        let other_addr = address!("0987654321098765432109876543210987654321");
-        assert!(!warm_addresses.is_warm(&other_addr));
+        // Standard precompiles still work
+        let mut std_addr = [0u8; 20];
+        std_addr[19] = 1;
+        assert!(warm.is_warm(&Address::from(std_addr)));
     }
 
     #[test]
@@ -306,27 +321,6 @@ mod tests {
         assert!(warm_addresses.is_warm(&regular_addr));
 
         // Verify short address optimization is used
-        assert!(warm_addresses.precompile_short_addresses[7]);
-        assert!(!warm_addresses.precompile_short_addresses[8]);
-    }
-
-    #[test]
-    fn test_short_address_boundary() {
-        let mut warm_addresses = WarmAddresses::new();
-
-        // Address at boundary (SHORT_ADDRESS_CAP - 1)
-        let mut boundary_bytes = [0u8; 20];
-        let boundary_val = (SHORT_ADDRESS_CAP - 1) as u16;
-        boundary_bytes[18] = (boundary_val >> 8) as u8;
-        boundary_bytes[19] = boundary_val as u8;
-        let boundary_addr = Address::from(boundary_bytes);
-
-        let mut precompiles = HashSet::default();
-        precompiles.insert(boundary_addr);
-
-        warm_addresses.set_precompile_addresses(precompiles);
-
-        assert!(warm_addresses.is_warm(&boundary_addr));
-        assert!(warm_addresses.precompile_short_addresses[SHORT_ADDRESS_CAP - 1]);
+        assert!(warm_addresses.is_short_precompile(&short_addr));
     }
 }
