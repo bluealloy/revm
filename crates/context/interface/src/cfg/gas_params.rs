@@ -307,6 +307,10 @@ impl GasParams {
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
                 eip7702::PER_EMPTY_ACCOUNT_COST;
 
+            // EIP-7702 authorization refund for existing accounts
+            table[GasId::tx_eip7702_auth_refund().as_usize()] =
+                eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST;
+
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
         }
@@ -640,6 +644,16 @@ impl GasParams {
         self.get(GasId::tx_eip7702_per_empty_account_cost())
     }
 
+    /// EIP-7702 authorization refund per existing account.
+    ///
+    /// This is the gas refund given when an EIP-7702 authorization is applied
+    /// to an account that already exists in the trie. By default this is
+    /// `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500).
+    #[inline]
+    pub fn tx_eip7702_auth_refund(&self) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund())
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
     #[inline]
     pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
@@ -879,6 +893,7 @@ impl GasId {
             x if x == Self::tx_initcode_cost().as_u8() => "tx_initcode_cost",
             x if x == Self::sstore_set_refund().as_u8() => "sstore_set_refund",
             x if x == Self::sstore_reset_refund().as_u8() => "sstore_reset_refund",
+            x if x == Self::tx_eip7702_auth_refund().as_u8() => "tx_eip7702_auth_refund",
             _ => "unknown",
         }
     }
@@ -938,6 +953,7 @@ impl GasId {
             "tx_initcode_cost" => Some(Self::tx_initcode_cost()),
             "sstore_set_refund" => Some(Self::sstore_set_refund()),
             "sstore_reset_refund" => Some(Self::sstore_reset_refund()),
+            "tx_eip7702_auth_refund" => Some(Self::tx_eip7702_auth_refund()),
             _ => None,
         }
     }
@@ -1134,6 +1150,13 @@ impl GasId {
     pub const fn sstore_reset_refund() -> GasId {
         Self::new(38)
     }
+
+    /// EIP-7702 authorization refund per existing account.
+    /// This is the refund given when an authorization is applied to an already existing account.
+    /// Calculated as PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST (25000 - 12500 = 12500).
+    pub const fn tx_eip7702_auth_refund() -> GasId {
+        Self::new(39)
+    }
 }
 
 #[cfg(test)]
@@ -1176,11 +1199,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 38 known GasIds (based on the indices 1-38 used)
+        // We should have exactly 39 known GasIds (based on the indices 1-39 used)
         assert_eq!(
             unique_names.len(),
-            38,
-            "Expected 38 unique GasIds, found {}",
+            39,
+            "Expected 39 unique GasIds, found {}",
             unique_names.len()
         );
     }
