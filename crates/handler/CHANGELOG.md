@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v15.0.0...revm-handler-v15.0.1) - 2026-01-28
+
+### Other
+
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+- *(revm-handler)* add ItemOrResult::map_item (alias map_frame) ([#3320](https://github.com/bluealloy/revm/pull/3320))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v15.0.0) - 2026-01-15
 
 ### Added
