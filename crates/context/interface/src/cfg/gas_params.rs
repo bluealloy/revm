@@ -585,9 +585,22 @@ impl GasParams {
     }
 
     /// Cold storage cost.
+    ///
+    /// This is calculated as the sum of warm storage read cost and cold storage additional cost.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use revm_context_interface::cfg::gas_params::GasParams;
+    /// use primitives::hardfork::SpecId;
+    ///
+    /// let gas_params = GasParams::new_spec(SpecId::BERLIN);
+    /// // Cold storage cost = warm (100) + additional (2000) = 2100
+    /// assert_eq!(gas_params.cold_storage_cost(), 2100);
+    /// ```
     #[inline]
     pub fn cold_storage_cost(&self) -> u64 {
-        self.get(GasId::cold_storage_cost())
+        self.warm_storage_read_cost() + self.cold_storage_additional_cost()
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.
@@ -1222,5 +1235,27 @@ mod tests {
         // Test with pre-Berlin spec (should return 0)
         let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
         assert_eq!(gas_params_pre_berlin.tx_access_list_cost(10, 20), 0);
+    }
+
+    #[test]
+    fn test_cold_storage_cost() {
+        use crate::cfg::gas;
+
+        // Test with Berlin spec (when cold/warm storage was introduced)
+        let gas_params = GasParams::new_spec(SpecId::BERLIN);
+
+        // Cold storage cost should equal warm + additional
+        assert_eq!(
+            gas_params.cold_storage_cost(),
+            gas_params.warm_storage_read_cost() + gas_params.cold_storage_additional_cost()
+        );
+
+        // Verify the actual value
+        assert_eq!(gas_params.cold_storage_cost(), gas::COLD_SLOAD_COST);
+        assert_eq!(gas_params.cold_storage_cost(), 2100);
+
+        // Test with pre-Berlin spec (should return 0)
+        let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
+        assert_eq!(gas_params_pre_berlin.cold_storage_cost(), 0);
     }
 }
