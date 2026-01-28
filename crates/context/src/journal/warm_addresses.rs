@@ -68,13 +68,20 @@ impl WarmAddresses {
     pub fn precompiles(&self) -> Vec<Address> {
         let mut addresses = Vec::new();
 
-        // Iterate through the bitmask
-        for i in 0..64 {
-            if (self.precompiles_mask & (1 << i)) != 0 {
-                let mut addr = [0u8; 20];
-                addr[19] = i as u8;
-                addresses.push(Address::from(addr));
+        unsafe {
+            let ptr: *mut Address = addresses.as_mut_ptr();
+            let mut idx = 0;
+
+            // Iterate through the bitmask
+            for i in 0..64 {
+                if (self.precompiles_mask & (1 << i)) != 0 {
+                    let mut addr = [0u8; 20];
+                    addr[19] = i as u8;
+                    ptr.add(idx).write(Address::from(addr));
+                    idx += 1;
+                }
             }
+            addresses.set_len(idx);
         }
 
         // Add extended precompiles if any
