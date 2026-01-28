@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v14.0.0...revm-context-interface-v15.0.0) - 2026-01-28
+
+### Added
+
+- *(gas)* add tx_access_list_cost helper to GasParams ([#3349](https://github.com/bluealloy/revm/pull/3349))
+- Implement EIP-7843 SLOTNUM opcode for Amsterdam ([#3340](https://github.com/bluealloy/revm/pull/3340))
+
+### Fixed
+
+- use provided code hash when setting account code ([#3324](https://github.com/bluealloy/revm/pull/3324))
+
+### Other
+
+- mark journal entry functions as deprecated ([#3367](https://github.com/bluealloy/revm/pull/3367))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+
 ## [14.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v13.1.0...revm-context-interface-v14.0.0) - 2026-01-15
 
 ### Added

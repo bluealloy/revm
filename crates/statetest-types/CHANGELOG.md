@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.1.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v14.0.0...revm-statetest-types-v14.1.0) - 2026-01-28
+
+### Added
+
+- Implement EIP-7843 SLOTNUM opcode for Amsterdam ([#3340](https://github.com/bluealloy/revm/pull/3340))
+
+### Other
+
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+
 ## [14.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v13.1.0...revm-statetest-types-v14.0.0) - 2026-01-15
 
 ### Added

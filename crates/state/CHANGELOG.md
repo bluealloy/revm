@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.1](https://github.com/bluealloy/revm/compare/revm-state-v9.0.0...revm-state-v9.0.1) - 2026-01-28
+
+### Fixed
+
+- set transition_id to account ([#3353](https://github.com/bluealloy/revm/pull/3353))
+
+### Other
+
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-state-v8.1.1...revm-state-v9.0.0) - 2026-01-15
 
 ### Added
