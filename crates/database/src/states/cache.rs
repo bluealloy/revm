@@ -211,7 +211,7 @@ impl CacheState {
 
         // Transform evm storage to storage with previous value.
         let evm_storage = core::mem::take(&mut account.storage);
-        let mut changed_storage = HashMap::with_capacity(evm_storage.len());
+        let mut changed_storage = HashMap::with_capacity_and_hasher(evm_storage.len(), Default::default());
         for (key, slot) in evm_storage {
             if slot.is_changed() {
                 changed_storage.insert(key, slot.into());
