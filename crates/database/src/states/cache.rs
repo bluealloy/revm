@@ -187,7 +187,7 @@ impl CacheState {
     /// Returns account transition if applicable.
     pub(crate) fn apply_account_state(
         &mut self,
-        address: Address,
+        mut account: Account,
         account: Account,
     ) -> Option<TransitionAccount> {
         // Not touched account are never changed.
@@ -210,12 +210,13 @@ impl CacheState {
         let is_empty = account.is_empty();
 
         // Transform evm storage to storage with previous value.
-        let changed_storage = account
-            .storage
-            .into_iter()
-            .filter(|(_, slot)| slot.is_changed())
-            .map(|(key, slot)| (key, slot.into()))
-            .collect();
+        let evm_storage = core::mem::take(&mut account.storage);
+        let mut changed_storage = HashMap::with_capacity(evm_storage.len());
+        for (key, slot) in evm_storage {
+            if slot.is_changed() {
+                changed_storage.insert(key, slot.into());
+            }
+        }
 
         // Note: It can happen that created contract get selfdestructed in same block
         // that is why is_created is checked after selfdestructed
