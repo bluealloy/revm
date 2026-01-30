@@ -225,9 +225,11 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     fn slice_range_with_base(&self, range: Range<usize>, base: usize) -> Ref<'_, [u8]> {
         let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(range.start + base..range.end + base) {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+        Ref::map(buffer, |b| {
+            match b.get(range.start + base..range.end + base) {
+                Some(slice) => slice,
+                None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+            }
         })
     }
 
