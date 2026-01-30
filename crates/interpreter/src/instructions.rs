@@ -68,8 +68,8 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
     }
 }
 
-impl<W: InterpreterTypes, H: Host + ?Sized> Copy for Instruction<W, H> {}
-impl<W: InterpreterTypes, H: Host + ?Sized> Clone for Instruction<W, H> {
+impl<W: InterpreterTypes, H: ?Sized> Copy for Instruction<W, H> {}
+impl<W: InterpreterTypes, H: ?Sized> Clone for Instruction<W, H> {
     fn clone(&self) -> Self {
         *self
     }
