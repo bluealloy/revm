@@ -7,16 +7,14 @@
 use crate::{
     eip7702::{Eip7702DecodeError, EIP7702_MAGIC_BYTES, EIP7702_VERSION},
     legacy::analyze_legacy,
-    BytecodeDecodeError, JumpTable,
+    opcode, BytecodeDecodeError, JumpTable,
 };
 use primitives::{
     alloy_primitives::Sealable, keccak256, Address, Bytes, OnceLock, B256, KECCAK_EMPTY,
 };
 use std::sync::Arc;
 
-/// Main bytecode structure.
-///
-/// This is a wrapper around an `Arc<BytecodeInner>` that provides a convenient API.
+/// Ethereum EVM bytecode.
 #[derive(Clone, Debug)]
 pub struct Bytecode(Arc<BytecodeInner>);
 
@@ -25,6 +23,7 @@ pub struct Bytecode(Arc<BytecodeInner>);
 /// This struct is flattened to avoid nested allocations. The `kind` field determines
 /// how the bytecode should be interpreted.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 struct BytecodeInner {
     /// The kind of bytecode (Legacy or EIP-7702).
     kind: BytecodeKind,
@@ -40,6 +39,7 @@ struct BytecodeInner {
     /// The jump table for legacy bytecode. Empty for EIP-7702.
     jump_table: JumpTable,
     /// Cached hash of the original bytecode.
+    #[cfg_attr(feature = "serde", serde(skip, default))]
     hash: OnceLock<B256>,
 }
 
@@ -62,31 +62,34 @@ impl Default for Bytecode {
 }
 
 impl PartialEq for Bytecode {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.0.kind == other.0.kind && self.original_byte_slice() == other.original_byte_slice()
+        self.kind() == other.kind() && self.original_byte_slice() == other.original_byte_slice()
     }
 }
 
 impl Eq for Bytecode {}
 
 impl core::hash::Hash for Bytecode {
+    #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.0.kind.hash(state);
+        self.kind().hash(state);
         self.original_byte_slice().hash(state);
     }
 }
 
 impl PartialOrd for Bytecode {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for Bytecode {
+    #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.0
-            .kind
-            .cmp(&other.0.kind)
+        self.kind()
+            .cmp(&other.kind())
             .then_with(|| self.original_byte_slice().cmp(other.original_byte_slice()))
     }
 }
@@ -95,40 +98,6 @@ impl Sealable for Bytecode {
     #[inline]
     fn hash_slow(&self) -> B256 {
         self.hash_slow()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Bytecode {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeStruct;
-        let mut s = serializer.serialize_struct("Bytecode", 4)?;
-        s.serialize_field("kind", &self.0.kind)?;
-        s.serialize_field("bytecode", &self.0.bytecode)?;
-        s.serialize_field("original_len", &self.0.original_len)?;
-        s.serialize_field("jump_table", &self.0.jump_table)?;
-        s.end()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Bytecode {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        #[derive(serde::Deserialize)]
-        struct Inner {
-            kind: BytecodeKind,
-            bytecode: Bytes,
-            original_len: usize,
-            jump_table: JumpTable,
-        }
-        let inner = Inner::deserialize(deserializer)?;
-        Ok(Self(Arc::new(BytecodeInner {
-            kind: inner.kind,
-            bytecode: inner.bytecode,
-            original_len: inner.original_len,
-            jump_table: inner.jump_table,
-            hash: OnceLock::new(),
-        })))
     }
 }
 
@@ -141,10 +110,14 @@ impl Bytecode {
             .get_or_init(|| {
                 Self(Arc::new(BytecodeInner {
                     kind: BytecodeKind::LegacyAnalyzed,
-                    bytecode: Bytes::from_static(&[0]),
+                    bytecode: Bytes::from_static(&[opcode::STOP]),
                     original_len: 0,
                     jump_table: JumpTable::default(),
-                    hash: OnceLock::new(),
+                    hash: {
+                        let hash = OnceLock::new();
+                        let _ = hash.set(KECCAK_EMPTY);
+                        hash
+                    },
                 }))
             })
             .clone()
@@ -153,6 +126,10 @@ impl Bytecode {
     /// Creates a new legacy [`Bytecode`] by analyzing raw bytes.
     #[inline]
     pub fn new_legacy(raw: Bytes) -> Self {
+        if raw.is_empty() {
+            return Self::new();
+        }
+
         let original_len = raw.len();
         let (jump_table, bytecode) = analyze_legacy(raw);
         Self(Arc::new(BytecodeInner {
@@ -260,13 +237,13 @@ impl Bytecode {
     /// Returns `true` if bytecode is legacy.
     #[inline]
     pub fn is_legacy(&self) -> bool {
-        self.0.kind == BytecodeKind::LegacyAnalyzed
+        self.kind() == BytecodeKind::LegacyAnalyzed
     }
 
     /// Returns `true` if bytecode is EIP-7702.
     #[inline]
     pub fn is_eip7702(&self) -> bool {
-        self.0.kind == BytecodeKind::Eip7702
+        self.kind() == BytecodeKind::Eip7702
     }
 
     /// Returns the EIP-7702 delegated address if this is EIP-7702 bytecode.
@@ -292,13 +269,10 @@ impl Bytecode {
     /// Calculates or returns cached hash of the bytecode.
     #[inline]
     pub fn hash_slow(&self) -> B256 {
-        *self.0.hash.get_or_init(|| {
-            if self.is_empty() {
-                KECCAK_EMPTY
-            } else {
-                keccak256(self.original_byte_slice())
-            }
-        })
+        *self
+            .0
+            .hash
+            .get_or_init(|| keccak256(self.original_byte_slice()))
     }
 
     /// Returns a reference to the bytecode bytes.
@@ -370,6 +344,20 @@ mod tests {
     use crate::{eip7702::Eip7702DecodeError, opcode};
     use bitvec::{bitvec, order::Lsb0};
     use primitives::bytes;
+
+    #[test]
+    fn test_new_empty() {
+        for bytecode in [
+            Bytecode::default(),
+            Bytecode::new(),
+            Bytecode::new().clone(),
+            Bytecode::new_legacy(Bytes::new()),
+        ] {
+            assert_eq!(bytecode.kind(), BytecodeKind::LegacyAnalyzed);
+            assert_eq!(bytecode.len(), 0);
+            assert_eq!(bytecode.bytes_slice(), [opcode::STOP]);
+        }
+    }
 
     #[test]
     fn test_new_analyzed() {

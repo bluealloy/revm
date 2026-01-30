@@ -3,5 +3,5 @@
 mod analysis;
 mod jump_map;
 
-pub use analysis::analyze_legacy;
+pub(crate) use analysis::analyze_legacy;
 pub use jump_map::JumpTable;
