@@ -314,8 +314,9 @@ pub trait Handler {
         let bytecode = if let Some(&to) = tx.kind().to() {
             let account = &journal.load_account_with_code(to)?.info;
 
-            if let Some(eip7702_bytecode) = account.code.as_ref().and_then(Bytecode::eip7702) {
-                let delegated_address = eip7702_bytecode.delegated_address;
+            if let Some(delegated_address) =
+                account.code.as_ref().and_then(Bytecode::eip7702_address)
+            {
                 let account = &journal.load_account_with_code(delegated_address)?.info;
                 Some((
                     account.code.clone().unwrap_or_default(),
