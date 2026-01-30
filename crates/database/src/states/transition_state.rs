@@ -32,15 +32,14 @@ impl TransitionState {
         &mut self,
         transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
     ) {
+        let transitions = transitions.into_iter();
+        if let Some(upper) = transitions.size_hint().1 {
+            self.transitions.reserve(upper);
+        }
         for (address, account) in transitions {
             match self.transitions.entry(address) {
-                Entry::Occupied(entry) => {
-                    let entry = entry.into_mut();
-                    entry.update(account);
-                }
-                Entry::Vacant(entry) => {
-                    entry.insert(account);
-                }
+                Entry::Occupied(entry) => entry.into_mut().update(account),
+                Entry::Vacant(entry) => _ = entry.insert(account),
             }
         }
     }
