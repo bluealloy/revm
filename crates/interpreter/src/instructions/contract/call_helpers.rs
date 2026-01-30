@@ -163,7 +163,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     }
 
     // load delegate code if account is EIP-7702
-    if let Some(Bytecode::Eip7702(code)) = &account.code {
+    if let Some(code) = account.code.as_ref().and_then(Bytecode::eip7702) {
         // EIP-7702 is enabled after berlin hardfork.
         cost += warm_storage_read_cost;
         if cost > remaining_gas {

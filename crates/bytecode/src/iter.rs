@@ -1,3 +1,4 @@
+use super::bytecode::BytecodeKind;
 use crate::{opcode, Bytecode, OpCode};
 
 /// Iterator over opcodes in a bytecode, skipping immediates.
@@ -16,9 +17,9 @@ impl<'a> BytecodeIterator<'a> {
     /// Creates a new iterator from a bytecode reference.
     #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
-        let bytes = match bytecode {
-            Bytecode::LegacyAnalyzed(_) => &bytecode.bytecode()[..],
-            Bytecode::Eip7702(_) => &[],
+        let bytes = match bytecode.inner() {
+            BytecodeKind::LegacyAnalyzed(_) => &bytecode.bytecode()[..],
+            BytecodeKind::Eip7702(_) => &[],
         };
         Self {
             bytes: bytes.iter(),
@@ -119,7 +120,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        let bytecode = Bytecode::new_legacy_analyzed(raw_bytecode.into_analyzed());
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         // We should only see the opcodes, not the immediates
         assert_eq!(
@@ -144,7 +145,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        let bytecode = Bytecode::new_legacy_analyzed(raw_bytecode.into_analyzed());
 
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
 
@@ -207,7 +208,7 @@ mod tests {
         ];
 
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        let bytecode = Bytecode::new_legacy_analyzed(raw_bytecode.into_analyzed());
 
         // Use the iterator directly
         let iter = BytecodeIterator::new(&bytecode);
@@ -255,7 +256,7 @@ mod tests {
             opcode::STOP,
         ];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        let bytecode = Bytecode::new_legacy_analyzed(raw_bytecode.into_analyzed());
 
         let mut iter = bytecode.iter_opcodes();
 
@@ -287,7 +288,7 @@ mod tests {
         // Empty bytecode (just STOP)
         let bytecode_data = vec![opcode::STOP];
         let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        let bytecode = Bytecode::new_legacy_analyzed(raw_bytecode.into_analyzed());
 
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::STOP]);

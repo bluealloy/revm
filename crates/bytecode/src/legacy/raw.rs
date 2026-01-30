@@ -17,6 +17,7 @@ impl LegacyRawBytecode {
     }
 
     /// Analyzes the bytecode, instantiating a [`LegacyAnalyzedBytecode`] and wrapping it in an [`Arc`].
+    #[deprecated = "use `into_analyzed` instead"]
     pub fn into_analyzed_arc(self) -> Arc<LegacyAnalyzedBytecode> {
         Arc::new(self.into_analyzed())
     }

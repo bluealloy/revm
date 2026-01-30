@@ -1,5 +1,5 @@
 use core::fmt;
-use primitives::{b256, bytes, Address, Bytes, B256};
+use primitives::{b256, hex, Address, Bytes, B256};
 
 /// Hash of EF01 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const EIP7702_MAGIC_HASH: B256 =
@@ -9,7 +9,7 @@ pub const EIP7702_MAGIC_HASH: B256 =
 pub const EIP7702_MAGIC: u16 = 0xEF01;
 
 /// EIP-7702 magic number in array form
-pub static EIP7702_MAGIC_BYTES: Bytes = bytes!("ef01");
+pub const EIP7702_MAGIC_BYTES: &[u8] = &hex!("ef01");
 
 /// EIP-7702 first version of bytecode
 pub const EIP7702_VERSION: u8 = 0;
@@ -36,7 +36,7 @@ impl Eip7702Bytecode {
         if raw.len() != 23 {
             return Err(Eip7702DecodeError::InvalidLength);
         }
-        if !raw.starts_with(&EIP7702_MAGIC_BYTES) {
+        if !raw.starts_with(EIP7702_MAGIC_BYTES) {
             return Err(Eip7702DecodeError::InvalidMagic);
         }
 
@@ -54,9 +54,7 @@ impl Eip7702Bytecode {
 
     /// Creates a new EIP-7702 bytecode with the given address.
     pub fn new(address: Address) -> Self {
-        let mut raw = EIP7702_MAGIC_BYTES.to_vec();
-        raw.push(EIP7702_VERSION);
-        raw.extend(&address);
+        let raw = [EIP7702_MAGIC_BYTES, &[EIP7702_VERSION][..], &address[..]].concat();
         Self {
             delegated_address: address,
             version: EIP7702_VERSION,
@@ -117,6 +115,7 @@ impl core::error::Error for Eip7702DecodeError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use primitives::bytes;
 
     #[test]
     fn sanity_decode() {

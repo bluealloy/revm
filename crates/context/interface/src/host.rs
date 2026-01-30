@@ -161,7 +161,7 @@ pub trait Host {
         );
 
         // load delegate code if account is EIP-7702
-        if let Some(Bytecode::Eip7702(code)) = &account.code {
+        if let Some(code) = account.code.as_ref().and_then(Bytecode::eip7702) {
             let address = code.address();
             let delegate_account = self
                 .load_account_info_skip_cold_load(address, true, false)
