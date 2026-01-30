@@ -31,7 +31,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
-default = ["std"]
+default = ["std", "match-dispatch"]
 std = [
 	"serde?/std",
 	"primitives/std",
