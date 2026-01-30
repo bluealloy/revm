@@ -1,0 +1,16 @@
+{
+  "name": "revm-static-site",
+  "version": "1.0.0",
+  "description": "REVM - Rust Ethereum Virtual Machine static website",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Static site build complete - no build needed'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bluealloy/revm"
+  },
+  "keywords": ["revm", "ethereum", "evm", "rust", "blockchain"],
+  "author": "REVM Contributors",
+  "license": "MIT"
+}

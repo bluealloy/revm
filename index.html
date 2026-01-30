@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REVM - Rust Ethereum Virtual Machine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+        
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #60a5fa;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .card h3 {
+            color: #a78bfa;
+            margin: 1.5rem 0 0.5rem;
+        }
+        
+        ul {
+            list-style-position: inside;
+            margin: 1rem 0;
+        }
+        
+        li {
+            margin: 0.5rem 0;
+            color: #cbd5e1;
+        }
+        
+        code {
+            background: #1e293b;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #334155;
+        }
+        
+        pre {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #334155;
+        }
+        
+        pre code {
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+        
+        .links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, opacity 0.2s;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn.secondary {
+            background: #334155;
+        }
+        
+        .btn.secondary:hover {
+            background: #475569;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #334155;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">REVM</div>
+            <h1>Rust Ethereum Virtual Machine</h1>
+            <p class="subtitle">High-performance EVM implementation in Rust, powering Foundry and other blockchain tools</p>
+            
+            <div class="badges">
+                <div class="badge">Rust</div>
+                <div class="badge">EVM Compatible</div>
+                <div class="badge">High Performance</div>
+            </div>
+        </header>
+        
+        <div class="content">
+            <div class="card">
+                <h2>About REVM</h2>
+                <p>REVM is a pure Rust implementation of the Ethereum Virtual Machine (EVM) used by major blockchain projects:</p>
+                
+                <ul>
+                    <li><strong>Foundry</strong> - Smart contract development toolchain</li>
+                    <li><strong>Reth</strong> - Ethereum execution client</li>
+                    <li><strong>Helios</strong> - Ethereum light client</li>
+                    <li><strong>Alloy</strong> - Ethereum development framework</li>
+                </ul>
+                
+                <h3>Key Features</h3>
+                <ul>
+                    <li>Blazing Fast - Optimized Rust performance</li>
+                    <li>Memory Safe - No undefined behavior</li>
+                    <li>Modular Design - Pluggable components</li>
+                    <li>No-std Support - Embedded environments</li>
+                    <li>Full EVM Compatibility - All opcodes supported</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2>Quick Start</h2>
+                
+                <h3>Installation</h3>
+                <p>Add REVM to your <code>Cargo.toml</code>:</p>
+                <pre><code>[dependencies]
+revm = "34.0.0"</code></pre>
+                
+                <h3>Basic Usage</h3>
+                <pre><code>use revm::{
+    db::{CacheDB, EmptyDB},
+    primitives::{address, U256},
+    Evm,
+};
+
+fn main() {
+    let db = CacheDB::new(EmptyDB::default());
+    let evm = Evm::builder()
+        .with_db(db)
+        .build();
+    
+    let result = evm.transact().unwrap();
+    println!("Gas used: {:?}", result.result.gas_used());
+}</code></pre>
+                
+                <h3>Run Examples</h3>
+                <pre><code>git clone https://github.com/bluealloy/revm
+cd revm
+cargo run --example my_evm</code></pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Documentation & Resources</h2>
+            
+            <div class="links">
+                <a href="https://docs.rs/revm" class="btn" target="_blank">API Docs</a>
+                <a href="https://github.com/bluealloy/revm" class="btn" target="_blank">GitHub</a>
+                <a href="https://crates.io/crates/revm" class="btn secondary" target="_blank">Crates.io</a>
+                <a href="https://github.com/bluealloy/revm/tree/main/examples" class="btn secondary" target="_blank">Examples</a>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2024 REVM - Rust Ethereum Virtual Machine</p>
+            <p>Repository: <a href="https://github.com/bluealloy/revm" style="color: #60a5fa;">github.com/bluealloy/revm</a></p>
+        </footer>
+    </div>
+</body>
+</html>
