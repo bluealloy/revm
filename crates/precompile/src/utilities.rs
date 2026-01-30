@@ -32,6 +32,17 @@ pub fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
     }
 }
 
+/// Right-pads the given slice with zeroes until `LEN`.
+///
+/// Returns the first `LEN` bytes if it does not need padding.
+#[inline]
+pub fn right_pad_slice<const LEN: usize>(data: &[u8]) -> [u8; LEN] {
+    let mut padded = [0u8; LEN];
+    let n = data.len().min(LEN);
+    padded[..n].copy_from_slice(&data[..n]);
+    padded
+}
+
 /// Right-pads the given slice with zeroes until `len`.
 ///
 /// Returns the first `len` bytes if it does not need padding.

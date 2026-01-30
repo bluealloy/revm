@@ -17,8 +17,8 @@ pub mod bitcoin_secp256k1;
 pub mod k256;
 
 use crate::{
-    crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
-    PrecompileResult,
+    crypto, utilities::right_pad_slice, Precompile, PrecompileError, PrecompileId,
+    PrecompileOutput, PrecompileResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -37,7 +37,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let input = right_pad::<128>(input);
+    let input = right_pad_slice::<128>(input);
 
     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
