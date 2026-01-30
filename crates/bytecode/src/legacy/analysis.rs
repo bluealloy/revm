@@ -4,11 +4,9 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
 use std::vec::Vec;
 
-/// Analyzes the bytecode for use in [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode).
+/// Analyzes the bytecode to produce a jump table and potentially padded bytecode.
 ///
-/// See [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode) for more details.
-///
-/// Prefer using [`LegacyAnalyzedBytecode::analyze`](crate::LegacyAnalyzedBytecode::analyze) instead.
+/// Prefer using [`Bytecode::new_legacy`](crate::Bytecode::new_legacy) instead.
 pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
     let range = bytecode.as_ptr_range();

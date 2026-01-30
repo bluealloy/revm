@@ -1,6 +1,7 @@
 use bitvec::vec::BitVec;
 use core::fmt;
 use primitives::hex;
+use std::boxed::Box;
 
 /// A table of valid `jump` destinations.
 ///

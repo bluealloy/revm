@@ -101,6 +101,20 @@ impl Sealable for Bytecode {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for Bytecode {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Bytecode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        BytecodeInner::deserialize(deserializer).map(|inner| Self(Arc::new(inner)))
+    }
+}
+
 impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
