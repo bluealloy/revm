@@ -3,6 +3,7 @@ use core::{fmt, ptr};
 use primitives::U256;
 use std::vec::Vec;
 
+use super::stack_top::StackTop;
 use super::StackTr;
 
 /// EVM interpreter stack limit.
@@ -146,6 +147,17 @@ impl Stack {
     #[inline]
     pub fn into_data(self) -> Vec<U256> {
         self.data
+    }
+
+    /// Create a StackTop view for unsafe hot-path operations.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure bounds are checked before operations
+    /// and call `write_back_len` after modifications.
+    #[inline]
+    pub unsafe fn as_stack_top(&mut self) -> StackTop {
+        StackTop::new(self.data.as_mut_ptr(), self.data.len())
     }
 
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is

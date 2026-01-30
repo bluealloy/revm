@@ -8,6 +8,7 @@ mod return_data;
 mod runtime_flags;
 mod shared_memory;
 mod stack;
+mod stack_top;
 
 use context_interface::cfg::GasParams;
 // re-exports
@@ -17,6 +18,7 @@ pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, resize_memory, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
+pub use stack_top::StackTop;
 
 // imports
 use crate::{
