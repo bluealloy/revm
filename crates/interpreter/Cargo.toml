@@ -51,3 +51,5 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+# Use match-based dispatch instead of function pointer table for potentially better branch prediction.
+match-dispatch = []
