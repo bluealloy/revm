@@ -22,6 +22,8 @@ pub mod instructions;
 pub mod interpreter;
 /// Types for interpreter actions like calls and contract creation.
 pub mod interpreter_action;
+/// Interpreter pooling by call depth for reduced allocation overhead.
+pub mod interpreter_pool;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
@@ -42,4 +44,5 @@ pub use interpreter_action::{
     CallInput, CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome,
     FrameInput, InterpreterAction,
 };
+pub use interpreter_pool::{InterpreterPool, MAX_CALL_DEPTH_POOL_SIZE};
 pub use interpreter_types::InterpreterTypes;
