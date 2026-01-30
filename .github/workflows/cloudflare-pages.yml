@@ -1,0 +1,214 @@
+name: Deploy to Cloudflare Pages
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.ref}}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build & Deploy to Cloudflare
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        
+      - name: Cache Rust Dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Install mdbook
+        run: |
+          mkdir mdbook
+          curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.14/mdbook-v0.4.14-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook
+          echo `pwd`/mdbook >> $GITHUB_PATH
+
+      - name: Install mdbook-template
+        run: |
+          mkdir mdbook-template
+          curl -sSL https://github.com/sgoudham/mdbook-template/releases/latest/download/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
+          echo `pwd`/mdbook-template >> $GITHUB_PATH
+
+      - name: Build mdBook Documentation
+        run: |
+          # Copy README for mdbook
+          cp README.md book/src/README.md
+          sed -i -e 's|../../README.md|./README.md|g' book/src/SUMMARY.md
+          
+          # Build mdBook
+          mdbook build book
+
+      - name: Build Rust API Documentation
+        run: |
+          RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo doc --all --no-deps
+
+      - name: Prepare Cloudflare Output Directory
+        run: |
+          # Create cloudflare output directory
+          mkdir -p cloudflare-output
+          
+          # Copy mdBook output (main documentation)
+          cp -r book/book/* cloudflare-output/
+          
+          # Copy Rust API docs to /docs subdirectory
+          mkdir -p cloudflare-output/docs
+          cp -r target/doc/* cloudflare-output/docs/
+          
+          # Create a root index.html if it doesn't exist
+          if [ ! -f "cloudflare-output/index.html" ]; then
+            cat > cloudflare-output/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>REVM - Rust Ethereum Virtual Machine</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                      line-height: 1.6;
+                      color: #333;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                  }
+                  .container {
+                      max-width: 800px;
+                      margin: 2rem;
+                      padding: 3rem;
+                      background: white;
+                      border-radius: 12px;
+                      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                  }
+                  h1 {
+                      color: #667eea;
+                      margin-bottom: 1rem;
+                      font-size: 2.5rem;
+                  }
+                  p {
+                      color: #666;
+                      margin-bottom: 2rem;
+                      font-size: 1.1rem;
+                  }
+                  .links {
+                      display: grid;
+                      gap: 1rem;
+                  }
+                  a {
+                      display: block;
+                      padding: 1.2rem;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      text-decoration: none;
+                      border-radius: 8px;
+                      transition: transform 0.2s, box-shadow 0.2s;
+                      font-weight: 500;
+                  }
+                  a:hover {
+                      transform: translateY(-2px);
+                      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+                  }
+                  .description {
+                      color: rgba(255,255,255,0.9);
+                      font-size: 0.9rem;
+                      margin-top: 0.5rem;
+                  }
+                  .badge {
+                      display: inline-block;
+                      padding: 0.25rem 0.75rem;
+                      background: rgba(255,255,255,0.2);
+                      border-radius: 12px;
+                      font-size: 0.8rem;
+                      margin-top: 0.5rem;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🚀 REVM Documentation</h1>
+                  <p>Rust Ethereum Virtual Machine - High-performance EVM implementation written in Rust</p>
+                  
+                  <div class="links">
+                      <a href="./book/index.html">
+                          📚 User Guide & Documentation
+                          <div class="description">Complete documentation built with mdBook</div>
+                      </a>
+                      
+                      <a href="./docs/revm/index.html">
+                          🔧 Rust API Documentation
+                          <div class="description">Generated rustdoc API reference</div>
+                      </a>
+                      
+                      <a href="https://github.com/bluealloy/revm" target="_blank">
+                          💻 GitHub Repository
+                          <div class="description">Source code, issues, and contributions</div>
+                      </a>
+                      
+                      <a href="https://crates.io/crates/revm" target="_blank">
+                          📦 Crates.io Package
+                          <div class="description">Download and integrate REVM</div>
+                      </a>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+          fi
+          
+          # Create _headers file for Cloudflare Pages
+          cat > cloudflare-output/_headers << 'EOF'
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            Referrer-Policy: strict-origin-when-cross-origin
+            Permissions-Policy: camera=(), microphone=(), geolocation=()
+          EOF
+          
+          # Create _redirects file for SPA routing (if needed)
+          echo "/api/* /docs/:splat 200" > cloudflare-output/_redirects
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: revm-docs
+          directory: cloudflare-output
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref || github.ref_name }}
+
+      - name: Comment PR with Preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const branch = context.payload.pull_request.head.ref;
+            const previewUrl = `https://${branch}.revm-docs.pages.dev`;
+            
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Cloudflare Pages Preview Deployed\n\n✅ Your changes are now live!\n\n**Preview URL:** ${previewUrl}\n\n- 📚 [Documentation](${previewUrl}/book/index.html)\n- 🔧 [API Docs](${previewUrl}/docs/revm/index.html)`
+            });
