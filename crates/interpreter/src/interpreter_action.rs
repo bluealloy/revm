@@ -10,7 +10,6 @@ pub use create_outcome::CreateOutcome;
 use primitives::Bytes;
 
 use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
-use std::boxed::Box;
 
 /// Input data for creating a new execution frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,9 +18,9 @@ pub enum FrameInput {
     /// No input data (empty frame)
     Empty,
     /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL` instruction called.
-    Call(Box<CallInputs>),
+    Call(CallInputs),
     /// `CREATE` or `CREATE2` instruction called.
-    Create(Box<CreateInputs>),
+    Create(CreateInputs),
 }
 
 /// Initialization data for creating a new execution frame.
