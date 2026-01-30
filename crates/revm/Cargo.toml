@@ -115,7 +115,7 @@ asm-sha2 = ["precompile/asm-sha2"]
 # Binary can be executed on all systems.
 portable = ["precompile/portable"]
 
-# Use GMP for modexp precompile (LGPL; dynamically linked via system libs).
+# Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["precompile/gmp"]
 
 # Statetest types for running ethereum tests
