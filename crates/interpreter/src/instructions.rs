@@ -18,6 +18,8 @@ pub mod host;
 pub mod i256;
 /// Memory operations (MLOAD, MSTORE, MSIZE, etc.).
 pub mod memory;
+/// Optimized PUSH immediate data loading.
+pub mod push_opt;
 /// Stack operations (PUSH, POP, DUP, SWAP, etc.).
 pub mod stack;
 /// System information instructions (ADDRESS, CALLER, etc.).

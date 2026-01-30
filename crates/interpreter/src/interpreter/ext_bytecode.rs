@@ -188,6 +188,11 @@ impl Immediates for ExtBytecode {
             )
         }
     }
+
+    #[inline]
+    fn instruction_ptr(&self) -> *const u8 {
+        self.instruction_pointer
+    }
 }
 
 impl LegacyBytecode for ExtBytecode {

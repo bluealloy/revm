@@ -37,6 +37,15 @@ pub trait Immediates {
     ///
     /// Used by PUSH opcode.
     fn read_slice(&self, len: usize) -> &[u8];
+
+    /// Returns the current instruction pointer for unchecked reads.
+    ///
+    /// # Safety
+    ///
+    /// The returned pointer is valid for reads as long as the bytecode is padded
+    /// appropriately. For PUSH operations, bytecode should be padded with at least
+    /// 33 bytes to allow unchecked PUSH32 reads.
+    fn instruction_ptr(&self) -> *const u8;
 }
 
 /// Trait for fetching inputs of the call.

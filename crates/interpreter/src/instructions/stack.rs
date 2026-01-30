@@ -1,4 +1,5 @@
 use crate::{
+    instructions::push_opt::load_push_data,
     interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
     InstructionResult,
 };
@@ -10,7 +11,6 @@ use crate::InstructionContext;
 ///
 /// Removes the top item from the stack.
 pub fn pop<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    // Can ignore return. as relative N jump is safe operation.
     popn!([_i], context.interpreter);
 }
 
@@ -25,11 +25,19 @@ pub fn push0<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 /// Implements the PUSH1-PUSH32 instructions.
 ///
 /// Pushes N bytes from bytecode onto the stack as a 32-byte value.
+/// Uses optimized loading with unchecked pointer reads for performance.
+///
+/// # Safety
+///
+/// This function relies on bytecode being padded with at least 33 bytes
+/// (as done by legacy bytecode analysis) to allow unchecked reads.
 pub fn push<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
-    let slice = context.interpreter.bytecode.read_slice(N);
-    if !context.interpreter.stack.push_slice(slice) {
+    let ptr = context.interpreter.bytecode.instruction_ptr();
+    let value = unsafe { load_push_data::<N>(ptr) };
+
+    if !context.interpreter.stack.push(value) {
         context.interpreter.halt(InstructionResult::StackOverflow);
         return;
     }
