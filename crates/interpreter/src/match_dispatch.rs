@@ -813,6 +813,10 @@ macro_rules! step_match {
 }
 
 impl<IW: InterpreterTypes> Interpreter<IW> {
+    /// Executes a single instruction using match-based dispatch.
+    ///
+    /// This uses a giant `match` statement instead of function pointer lookups,
+    /// which can improve branch prediction on some CPUs.
     #[inline]
     pub fn step_match<H: Host + ?Sized>(&mut self, host: &mut H) {
         let opcode = self.bytecode.opcode();
@@ -826,6 +830,10 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         step_match!(self, host, opcode);
     }
 
+    /// Executes the interpreter until it returns or stops, using match-based dispatch.
+    ///
+    /// This is the match-dispatch equivalent of [`run_plain`](Interpreter::run_plain),
+    /// potentially offering better performance on some CPUs.
     #[inline]
     pub fn run_match<H: Host + ?Sized>(&mut self, host: &mut H) -> InterpreterAction {
         while self.bytecode.is_not_end() {
