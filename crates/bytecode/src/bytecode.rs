@@ -6,7 +6,8 @@
 
 use crate::{
     eip7702::{Eip7702DecodeError, EIP7702_MAGIC_BYTES, EIP7702_VERSION},
-    BytecodeDecodeError, JumpTable, LegacyRawBytecode,
+    legacy::analyze_legacy,
+    BytecodeDecodeError, JumpTable,
 };
 use primitives::{
     alloy_primitives::Sealable, keccak256, Address, Bytes, OnceLock, B256, KECCAK_EMPTY,
@@ -24,7 +25,7 @@ pub struct Bytecode(Arc<BytecodeInner>);
 /// This struct is flattened to avoid nested allocations. The `kind` field determines
 /// how the bytecode should be interpreted.
 #[derive(Debug)]
-pub struct BytecodeInner {
+struct BytecodeInner {
     /// The kind of bytecode (Legacy or EIP-7702).
     kind: BytecodeKind,
     /// The bytecode bytes.
@@ -86,7 +87,7 @@ impl Ord for Bytecode {
         self.0
             .kind
             .cmp(&other.0.kind)
-            .then_with(|| self.original_byte_slice().cmp(&other.original_byte_slice()))
+            .then_with(|| self.original_byte_slice().cmp(other.original_byte_slice()))
     }
 }
 
@@ -152,12 +153,13 @@ impl Bytecode {
     /// Creates a new legacy [`Bytecode`] by analyzing raw bytes.
     #[inline]
     pub fn new_legacy(raw: Bytes) -> Self {
-        let analyzed = LegacyRawBytecode(raw).into_analyzed();
+        let original_len = raw.len();
+        let (jump_table, bytecode) = analyze_legacy(raw);
         Self(Arc::new(BytecodeInner {
             kind: BytecodeKind::LegacyAnalyzed,
-            original_len: analyzed.original_len(),
-            bytecode: analyzed.bytecode().clone(),
-            jump_table: analyzed.jump_table().clone(),
+            original_len,
+            bytecode,
+            jump_table,
             hash: OnceLock::new(),
         }))
     }
@@ -247,12 +249,6 @@ impl Bytecode {
             jump_table,
             hash: OnceLock::new(),
         }))
-    }
-
-    /// Returns a reference to the inner bytecode.
-    #[inline]
-    pub fn inner(&self) -> &BytecodeInner {
-        &self.0
     }
 
     /// Returns the kind of bytecode.
@@ -365,5 +361,86 @@ impl Bytecode {
     #[inline]
     pub fn iter_opcodes(&self) -> crate::BytecodeIterator<'_> {
         crate::BytecodeIterator::new(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{eip7702::Eip7702DecodeError, opcode};
+    use bitvec::{bitvec, order::Lsb0};
+    use primitives::bytes;
+
+    #[test]
+    fn test_new_analyzed() {
+        let raw = Bytes::from_static(&[opcode::PUSH1, 0x01]);
+        let bytecode = Bytecode::new_legacy(raw);
+        let _ = Bytecode::new_analyzed(
+            bytecode.bytecode().clone(),
+            bytecode.len(),
+            bytecode.legacy_jump_table().unwrap().clone(),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "original_len is greater than bytecode length")]
+    fn test_panic_on_large_original_len() {
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::PUSH1, 0x01]));
+        let _ = Bytecode::new_analyzed(
+            bytecode.bytecode().clone(),
+            100,
+            bytecode.legacy_jump_table().unwrap().clone(),
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "jump table length is less than original length")]
+    fn test_panic_on_short_jump_table() {
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::PUSH1, 0x01]));
+        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 1]);
+        let _ = Bytecode::new_analyzed(bytecode.bytecode().clone(), bytecode.len(), jump_table);
+    }
+
+    #[test]
+    #[should_panic(expected = "bytecode cannot be empty")]
+    fn test_panic_on_empty_bytecode() {
+        let bytecode = Bytes::from_static(&[]);
+        let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 0]);
+        let _ = Bytecode::new_analyzed(bytecode, 0, jump_table);
+    }
+
+    #[test]
+    fn eip7702_sanity_decode() {
+        let raw = bytes!("ef01deadbeef");
+        assert_eq!(
+            Bytecode::new_eip7702_raw(raw),
+            Err(Eip7702DecodeError::InvalidLength)
+        );
+
+        let raw = bytes!("ef0101deadbeef00000000000000000000000000000000");
+        assert_eq!(
+            Bytecode::new_eip7702_raw(raw),
+            Err(Eip7702DecodeError::UnsupportedVersion)
+        );
+
+        let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
+        let bytecode = Bytecode::new_eip7702_raw(raw.clone()).unwrap();
+        assert!(bytecode.is_eip7702());
+        assert_eq!(
+            bytecode.eip7702_address(),
+            Some(Address::from_slice(&raw[3..]))
+        );
+        assert_eq!(bytecode.original_bytes(), raw);
+    }
+
+    #[test]
+    fn eip7702_from_address() {
+        let address = Address::new([0x01; 20]);
+        let bytecode = Bytecode::new_eip7702(address);
+        assert_eq!(bytecode.eip7702_address(), Some(address));
+        assert_eq!(
+            bytecode.original_bytes(),
+            bytes!("ef01000101010101010101010101010101010101010101")
+        );
     }
 }
