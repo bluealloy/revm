@@ -24,9 +24,6 @@ pub mod interpreter;
 pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
-/// Match-based dispatch for improved branch prediction (enabled with `match-dispatch` feature).
-#[cfg(all(feature = "std", feature = "match-dispatch"))]
-pub mod match_dispatch;
 
 // Reexport primary types.
 pub use context_interface::{

@@ -31,7 +31,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
-default = ["std", "match-dispatch"]
+default = ["std"]
 std = [
 	"serde?/std",
 	"primitives/std",
@@ -51,5 +51,3 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
-# Use match-based dispatch instead of function pointer table for potentially better branch prediction.
-match-dispatch = []

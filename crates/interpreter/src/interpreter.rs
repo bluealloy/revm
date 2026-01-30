@@ -20,9 +20,16 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost,
+    instruction_context::InstructionContext,
+    instructions::{
+        arithmetic, bitwise, block_info, contract, control, gas, host, memory, stack, system,
+        tx_info,
+    },
+    interpreter_types::*,
+    Gas, Host, InstructionResult, InstructionTable, InterpreterAction,
 };
+use bytecode::opcode::*;
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
 
@@ -277,13 +284,16 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         ));
     }
 
-    /// Executes the instruction at the current instruction pointer.
+    /// Executes the instruction at the current instruction pointer using match-based dispatch.
+    ///
+    /// This uses a match statement for better branch prediction compared to
+    /// indirect function pointer calls.
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
     pub fn step<H: Host + ?Sized>(
         &mut self,
-        instruction_table: &InstructionTable<IW, H>,
+        _instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) {
         // Get current opcode.
@@ -294,16 +304,12 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
-        let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
-
-        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+        let gas_cost = static_gas(opcode);
+        if gas_cost != 0 && self.gas.record_cost_unsafe(gas_cost) {
             return self.halt_oog();
         }
-        let context = InstructionContext {
-            interpreter: self,
-            host,
-        };
-        instruction.execute(context);
+
+        execute_instruction(self, host, opcode);
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -327,6 +333,298 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             self.step(instruction_table, host);
         }
         self.take_next_action()
+    }
+}
+
+/// Returns the static gas cost for an opcode.
+///
+/// This is a const function that allows the compiler to inline and optimize
+/// gas cost lookups at compile time where possible.
+#[inline]
+const fn static_gas(opcode: u8) -> u64 {
+    match opcode {
+        STOP => 0,
+        ADD => 3,
+        MUL => 5,
+        SUB => 3,
+        DIV => 5,
+        SDIV => 5,
+        MOD => 5,
+        SMOD => 5,
+        ADDMOD => 8,
+        MULMOD => 8,
+        EXP => gas::EXP,
+        SIGNEXTEND => 5,
+
+        LT => 3,
+        GT => 3,
+        SLT => 3,
+        SGT => 3,
+        EQ => 3,
+        ISZERO => 3,
+        AND => 3,
+        OR => 3,
+        XOR => 3,
+        NOT => 3,
+        BYTE => 3,
+        SHL => 3,
+        SHR => 3,
+        SAR => 3,
+        CLZ => 5,
+
+        KECCAK256 => gas::KECCAK256,
+
+        ADDRESS => 2,
+        BALANCE => 20,
+        ORIGIN => 2,
+        CALLER => 2,
+        CALLVALUE => 2,
+        CALLDATALOAD => 3,
+        CALLDATASIZE => 2,
+        CALLDATACOPY => 3,
+        CODESIZE => 2,
+        CODECOPY => 3,
+
+        GASPRICE => 2,
+        EXTCODESIZE => 20,
+        EXTCODECOPY => 20,
+        RETURNDATASIZE => 2,
+        RETURNDATACOPY => 3,
+        EXTCODEHASH => 400,
+        BLOCKHASH => 20,
+        COINBASE => 2,
+        TIMESTAMP => 2,
+        NUMBER => 2,
+        DIFFICULTY => 2,
+        GASLIMIT => 2,
+        CHAINID => 2,
+        SELFBALANCE => 5,
+        BASEFEE => 2,
+        BLOBHASH => 3,
+        BLOBBASEFEE => 2,
+        SLOTNUM => 2,
+
+        POP => 2,
+        MLOAD => 3,
+        MSTORE => 3,
+        MSTORE8 => 3,
+        SLOAD => 50,
+        SSTORE => 0,
+        JUMP => 8,
+        JUMPI => 10,
+        PC => 2,
+        MSIZE => 2,
+        GAS => 2,
+        JUMPDEST => 1,
+        TLOAD => 100,
+        TSTORE => 100,
+        MCOPY => 3,
+
+        PUSH0 => 2,
+        PUSH1..=PUSH32 => 3,
+
+        DUP1..=DUP16 => 3,
+        SWAP1..=SWAP16 => 3,
+
+        DUPN => 3,
+        SWAPN => 3,
+        EXCHANGE => 3,
+
+        LOG0..=LOG4 => gas::LOG,
+
+        CREATE => 0,
+        CALL => 40,
+        CALLCODE => 40,
+        RETURN => 0,
+        DELEGATECALL => 40,
+        CREATE2 => 0,
+        STATICCALL => 40,
+        REVERT => 0,
+        INVALID => 0,
+        SELFDESTRUCT => 0,
+
+        _ => 0,
+    }
+}
+
+/// Execute an instruction using match-based dispatch.
+///
+/// This provides better branch prediction than function pointer tables
+/// by allowing the compiler to generate a jump table with statically known targets.
+#[inline]
+fn execute_instruction<IW: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<IW>,
+    host: &mut H,
+    opcode: u8,
+) {
+    match opcode {
+        STOP => control::stop(InstructionContext { interpreter, host }),
+        ADD => arithmetic::add(InstructionContext { interpreter, host }),
+        MUL => arithmetic::mul(InstructionContext { interpreter, host }),
+        SUB => arithmetic::sub(InstructionContext { interpreter, host }),
+        DIV => arithmetic::div(InstructionContext { interpreter, host }),
+        SDIV => arithmetic::sdiv(InstructionContext { interpreter, host }),
+        MOD => arithmetic::rem(InstructionContext { interpreter, host }),
+        SMOD => arithmetic::smod(InstructionContext { interpreter, host }),
+        ADDMOD => arithmetic::addmod(InstructionContext { interpreter, host }),
+        MULMOD => arithmetic::mulmod(InstructionContext { interpreter, host }),
+        EXP => arithmetic::exp(InstructionContext { interpreter, host }),
+        SIGNEXTEND => arithmetic::signextend(InstructionContext { interpreter, host }),
+
+        LT => bitwise::lt(InstructionContext { interpreter, host }),
+        GT => bitwise::gt(InstructionContext { interpreter, host }),
+        SLT => bitwise::slt(InstructionContext { interpreter, host }),
+        SGT => bitwise::sgt(InstructionContext { interpreter, host }),
+        EQ => bitwise::eq(InstructionContext { interpreter, host }),
+        ISZERO => bitwise::iszero(InstructionContext { interpreter, host }),
+        AND => bitwise::bitand(InstructionContext { interpreter, host }),
+        OR => bitwise::bitor(InstructionContext { interpreter, host }),
+        XOR => bitwise::bitxor(InstructionContext { interpreter, host }),
+        NOT => bitwise::not(InstructionContext { interpreter, host }),
+        BYTE => bitwise::byte(InstructionContext { interpreter, host }),
+        SHL => bitwise::shl(InstructionContext { interpreter, host }),
+        SHR => bitwise::shr(InstructionContext { interpreter, host }),
+        SAR => bitwise::sar(InstructionContext { interpreter, host }),
+        CLZ => bitwise::clz(InstructionContext { interpreter, host }),
+
+        KECCAK256 => system::keccak256(InstructionContext { interpreter, host }),
+
+        ADDRESS => system::address(InstructionContext { interpreter, host }),
+        BALANCE => host::balance(InstructionContext { interpreter, host }),
+        ORIGIN => tx_info::origin(InstructionContext { interpreter, host }),
+        CALLER => system::caller(InstructionContext { interpreter, host }),
+        CALLVALUE => system::callvalue(InstructionContext { interpreter, host }),
+        CALLDATALOAD => system::calldataload(InstructionContext { interpreter, host }),
+        CALLDATASIZE => system::calldatasize(InstructionContext { interpreter, host }),
+        CALLDATACOPY => system::calldatacopy(InstructionContext { interpreter, host }),
+        CODESIZE => system::codesize(InstructionContext { interpreter, host }),
+        CODECOPY => system::codecopy(InstructionContext { interpreter, host }),
+
+        GASPRICE => tx_info::gasprice(InstructionContext { interpreter, host }),
+        EXTCODESIZE => host::extcodesize(InstructionContext { interpreter, host }),
+        EXTCODECOPY => host::extcodecopy(InstructionContext { interpreter, host }),
+        RETURNDATASIZE => system::returndatasize(InstructionContext { interpreter, host }),
+        RETURNDATACOPY => system::returndatacopy(InstructionContext { interpreter, host }),
+        EXTCODEHASH => host::extcodehash(InstructionContext { interpreter, host }),
+        BLOCKHASH => host::blockhash(InstructionContext { interpreter, host }),
+        COINBASE => block_info::coinbase(InstructionContext { interpreter, host }),
+        TIMESTAMP => block_info::timestamp(InstructionContext { interpreter, host }),
+        NUMBER => block_info::block_number(InstructionContext { interpreter, host }),
+        DIFFICULTY => block_info::difficulty(InstructionContext { interpreter, host }),
+        GASLIMIT => block_info::gaslimit(InstructionContext { interpreter, host }),
+        CHAINID => block_info::chainid(InstructionContext { interpreter, host }),
+        SELFBALANCE => host::selfbalance(InstructionContext { interpreter, host }),
+        BASEFEE => block_info::basefee(InstructionContext { interpreter, host }),
+        BLOBHASH => tx_info::blob_hash(InstructionContext { interpreter, host }),
+        BLOBBASEFEE => block_info::blob_basefee(InstructionContext { interpreter, host }),
+        SLOTNUM => block_info::slot_num(InstructionContext { interpreter, host }),
+
+        POP => stack::pop(InstructionContext { interpreter, host }),
+        MLOAD => memory::mload(InstructionContext { interpreter, host }),
+        MSTORE => memory::mstore(InstructionContext { interpreter, host }),
+        MSTORE8 => memory::mstore8(InstructionContext { interpreter, host }),
+        SLOAD => host::sload(InstructionContext { interpreter, host }),
+        SSTORE => host::sstore(InstructionContext { interpreter, host }),
+        JUMP => control::jump(InstructionContext { interpreter, host }),
+        JUMPI => control::jumpi(InstructionContext { interpreter, host }),
+        PC => control::pc(InstructionContext { interpreter, host }),
+        MSIZE => memory::msize(InstructionContext { interpreter, host }),
+        GAS => system::gas(InstructionContext { interpreter, host }),
+        JUMPDEST => control::jumpdest(InstructionContext { interpreter, host }),
+        TLOAD => host::tload(InstructionContext { interpreter, host }),
+        TSTORE => host::tstore(InstructionContext { interpreter, host }),
+        MCOPY => memory::mcopy(InstructionContext { interpreter, host }),
+
+        PUSH0 => stack::push0(InstructionContext { interpreter, host }),
+        PUSH1 => stack::push::<1, _, _>(InstructionContext { interpreter, host }),
+        PUSH2 => stack::push::<2, _, _>(InstructionContext { interpreter, host }),
+        PUSH3 => stack::push::<3, _, _>(InstructionContext { interpreter, host }),
+        PUSH4 => stack::push::<4, _, _>(InstructionContext { interpreter, host }),
+        PUSH5 => stack::push::<5, _, _>(InstructionContext { interpreter, host }),
+        PUSH6 => stack::push::<6, _, _>(InstructionContext { interpreter, host }),
+        PUSH7 => stack::push::<7, _, _>(InstructionContext { interpreter, host }),
+        PUSH8 => stack::push::<8, _, _>(InstructionContext { interpreter, host }),
+        PUSH9 => stack::push::<9, _, _>(InstructionContext { interpreter, host }),
+        PUSH10 => stack::push::<10, _, _>(InstructionContext { interpreter, host }),
+        PUSH11 => stack::push::<11, _, _>(InstructionContext { interpreter, host }),
+        PUSH12 => stack::push::<12, _, _>(InstructionContext { interpreter, host }),
+        PUSH13 => stack::push::<13, _, _>(InstructionContext { interpreter, host }),
+        PUSH14 => stack::push::<14, _, _>(InstructionContext { interpreter, host }),
+        PUSH15 => stack::push::<15, _, _>(InstructionContext { interpreter, host }),
+        PUSH16 => stack::push::<16, _, _>(InstructionContext { interpreter, host }),
+        PUSH17 => stack::push::<17, _, _>(InstructionContext { interpreter, host }),
+        PUSH18 => stack::push::<18, _, _>(InstructionContext { interpreter, host }),
+        PUSH19 => stack::push::<19, _, _>(InstructionContext { interpreter, host }),
+        PUSH20 => stack::push::<20, _, _>(InstructionContext { interpreter, host }),
+        PUSH21 => stack::push::<21, _, _>(InstructionContext { interpreter, host }),
+        PUSH22 => stack::push::<22, _, _>(InstructionContext { interpreter, host }),
+        PUSH23 => stack::push::<23, _, _>(InstructionContext { interpreter, host }),
+        PUSH24 => stack::push::<24, _, _>(InstructionContext { interpreter, host }),
+        PUSH25 => stack::push::<25, _, _>(InstructionContext { interpreter, host }),
+        PUSH26 => stack::push::<26, _, _>(InstructionContext { interpreter, host }),
+        PUSH27 => stack::push::<27, _, _>(InstructionContext { interpreter, host }),
+        PUSH28 => stack::push::<28, _, _>(InstructionContext { interpreter, host }),
+        PUSH29 => stack::push::<29, _, _>(InstructionContext { interpreter, host }),
+        PUSH30 => stack::push::<30, _, _>(InstructionContext { interpreter, host }),
+        PUSH31 => stack::push::<31, _, _>(InstructionContext { interpreter, host }),
+        PUSH32 => stack::push::<32, _, _>(InstructionContext { interpreter, host }),
+
+        DUP1 => stack::dup::<1, _, _>(InstructionContext { interpreter, host }),
+        DUP2 => stack::dup::<2, _, _>(InstructionContext { interpreter, host }),
+        DUP3 => stack::dup::<3, _, _>(InstructionContext { interpreter, host }),
+        DUP4 => stack::dup::<4, _, _>(InstructionContext { interpreter, host }),
+        DUP5 => stack::dup::<5, _, _>(InstructionContext { interpreter, host }),
+        DUP6 => stack::dup::<6, _, _>(InstructionContext { interpreter, host }),
+        DUP7 => stack::dup::<7, _, _>(InstructionContext { interpreter, host }),
+        DUP8 => stack::dup::<8, _, _>(InstructionContext { interpreter, host }),
+        DUP9 => stack::dup::<9, _, _>(InstructionContext { interpreter, host }),
+        DUP10 => stack::dup::<10, _, _>(InstructionContext { interpreter, host }),
+        DUP11 => stack::dup::<11, _, _>(InstructionContext { interpreter, host }),
+        DUP12 => stack::dup::<12, _, _>(InstructionContext { interpreter, host }),
+        DUP13 => stack::dup::<13, _, _>(InstructionContext { interpreter, host }),
+        DUP14 => stack::dup::<14, _, _>(InstructionContext { interpreter, host }),
+        DUP15 => stack::dup::<15, _, _>(InstructionContext { interpreter, host }),
+        DUP16 => stack::dup::<16, _, _>(InstructionContext { interpreter, host }),
+
+        SWAP1 => stack::swap::<1, _, _>(InstructionContext { interpreter, host }),
+        SWAP2 => stack::swap::<2, _, _>(InstructionContext { interpreter, host }),
+        SWAP3 => stack::swap::<3, _, _>(InstructionContext { interpreter, host }),
+        SWAP4 => stack::swap::<4, _, _>(InstructionContext { interpreter, host }),
+        SWAP5 => stack::swap::<5, _, _>(InstructionContext { interpreter, host }),
+        SWAP6 => stack::swap::<6, _, _>(InstructionContext { interpreter, host }),
+        SWAP7 => stack::swap::<7, _, _>(InstructionContext { interpreter, host }),
+        SWAP8 => stack::swap::<8, _, _>(InstructionContext { interpreter, host }),
+        SWAP9 => stack::swap::<9, _, _>(InstructionContext { interpreter, host }),
+        SWAP10 => stack::swap::<10, _, _>(InstructionContext { interpreter, host }),
+        SWAP11 => stack::swap::<11, _, _>(InstructionContext { interpreter, host }),
+        SWAP12 => stack::swap::<12, _, _>(InstructionContext { interpreter, host }),
+        SWAP13 => stack::swap::<13, _, _>(InstructionContext { interpreter, host }),
+        SWAP14 => stack::swap::<14, _, _>(InstructionContext { interpreter, host }),
+        SWAP15 => stack::swap::<15, _, _>(InstructionContext { interpreter, host }),
+        SWAP16 => stack::swap::<16, _, _>(InstructionContext { interpreter, host }),
+
+        DUPN => stack::dupn(InstructionContext { interpreter, host }),
+        SWAPN => stack::swapn(InstructionContext { interpreter, host }),
+        EXCHANGE => stack::exchange(InstructionContext { interpreter, host }),
+
+        LOG0 => host::log::<0, _>(InstructionContext { interpreter, host }),
+        LOG1 => host::log::<1, _>(InstructionContext { interpreter, host }),
+        LOG2 => host::log::<2, _>(InstructionContext { interpreter, host }),
+        LOG3 => host::log::<3, _>(InstructionContext { interpreter, host }),
+        LOG4 => host::log::<4, _>(InstructionContext { interpreter, host }),
+
+        CREATE => contract::create::<_, false, _>(InstructionContext { interpreter, host }),
+        CALL => contract::call(InstructionContext { interpreter, host }),
+        CALLCODE => contract::call_code(InstructionContext { interpreter, host }),
+        RETURN => control::ret(InstructionContext { interpreter, host }),
+        DELEGATECALL => contract::delegate_call(InstructionContext { interpreter, host }),
+        CREATE2 => contract::create::<_, true, _>(InstructionContext { interpreter, host }),
+        STATICCALL => contract::static_call(InstructionContext { interpreter, host }),
+        REVERT => control::revert(InstructionContext { interpreter, host }),
+        INVALID => control::invalid(InstructionContext { interpreter, host }),
+        SELFDESTRUCT => host::selfdestruct(InstructionContext { interpreter, host }),
+
+        _ => control::unknown(InstructionContext { interpreter, host }),
     }
 }
 
