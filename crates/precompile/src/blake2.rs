@@ -172,7 +172,7 @@ pub mod algo {
         }
     }
 
-    #[inline(always)]
+    #[inline(never)]
     fn round(v: &mut [u64; 16], m: &[u64; 16], r: usize) {
         // Message word selection permutation for this round.
         let s = &SIGMA[r % 10];
