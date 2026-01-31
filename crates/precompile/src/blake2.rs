@@ -99,30 +99,30 @@ pub mod algo {
         0x5be0cd19137e2179,
     ];
 
-    // #[inline(always)]
-    // #[allow(clippy::many_single_char_names)]
-    // /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
-    // fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
-    //     let mut va = v[a];
-    //     let mut vb = v[b];
-    //     let mut vc = v[c];
-    //     let mut vd = v[d];
+    #[inline(always)]
+    #[allow(clippy::many_single_char_names)]
+    /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
+    fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+        let mut va = v[a];
+        let mut vb = v[b];
+        let mut vc = v[c];
+        let mut vd = v[d];
 
-    //     va = va.wrapping_add(vb).wrapping_add(x);
-    //     vd = (vd ^ va).rotate_right(32);
-    //     vc = vc.wrapping_add(vd);
-    //     vb = (vb ^ vc).rotate_right(24);
+        va = va.wrapping_add(vb).wrapping_add(x);
+        vd = (vd ^ va).rotate_right(32);
+        vc = vc.wrapping_add(vd);
+        vb = (vb ^ vc).rotate_right(24);
 
-    //     va = va.wrapping_add(vb).wrapping_add(y);
-    //     vd = (vd ^ va).rotate_right(16);
-    //     vc = vc.wrapping_add(vd);
-    //     vb = (vb ^ vc).rotate_right(63);
+        va = va.wrapping_add(vb).wrapping_add(y);
+        vd = (vd ^ va).rotate_right(16);
+        vc = vc.wrapping_add(vd);
+        vb = (vb ^ vc).rotate_right(63);
 
-    //     v[a] = va;
-    //     v[b] = vb;
-    //     v[c] = vc;
-    //     v[d] = vd;
-    // }
+        v[a] = va;
+        v[b] = vb;
+        v[c] = vc;
+        v[d] = vd;
+    }
 
     /// Compression function F takes as an argument the state vector "h",
     /// message block vector "m" (last block is padded with zeros to full
@@ -173,127 +173,20 @@ pub mod algo {
     }
 
     #[inline(always)]
-    #[allow(clippy::many_single_char_names)]
     fn round(v: &mut [u64; 16], m: &[u64; 16], r: usize) {
+        // Message word selection permutation for this round.
         let s = &SIGMA[r % 10];
+        // g1
+        g(v, 0, 4, 8, 12, m[s[0]], m[s[1]]);
+        g(v, 1, 5, 9, 13, m[s[2]], m[s[3]]);
+        g(v, 2, 6, 10, 14, m[s[4]], m[s[5]]);
+        g(v, 3, 7, 11, 15, m[s[6]], m[s[7]]);
 
-        // Load v elements into local variables to help register allocation
-        let mut v0 = v[0];
-        let mut v1 = v[1];
-        let mut v2 = v[2];
-        let mut v3 = v[3];
-        let mut v4 = v[4];
-        let mut v5 = v[5];
-        let mut v6 = v[6];
-        let mut v7 = v[7];
-        let mut v8 = v[8];
-        let mut v9 = v[9];
-        let mut v10 = v[10];
-        let mut v11 = v[11];
-        let mut v12 = v[12];
-        let mut v13 = v[13];
-        let mut v14 = v[14];
-        let mut v15 = v[15];
-
-        // G function inlined - column round
-        // g(0, 4, 8, 12)
-        v0 = v0.wrapping_add(v4).wrapping_add(m[s[0]]);
-        v12 = (v12 ^ v0).rotate_right(32);
-        v8 = v8.wrapping_add(v12);
-        v4 = (v4 ^ v8).rotate_right(24);
-        v0 = v0.wrapping_add(v4).wrapping_add(m[s[1]]);
-        v12 = (v12 ^ v0).rotate_right(16);
-        v8 = v8.wrapping_add(v12);
-        v4 = (v4 ^ v8).rotate_right(63);
-
-        // g(1, 5, 9, 13)
-        v1 = v1.wrapping_add(v5).wrapping_add(m[s[2]]);
-        v13 = (v13 ^ v1).rotate_right(32);
-        v9 = v9.wrapping_add(v13);
-        v5 = (v5 ^ v9).rotate_right(24);
-        v1 = v1.wrapping_add(v5).wrapping_add(m[s[3]]);
-        v13 = (v13 ^ v1).rotate_right(16);
-        v9 = v9.wrapping_add(v13);
-        v5 = (v5 ^ v9).rotate_right(63);
-
-        // g(2, 6, 10, 14)
-        v2 = v2.wrapping_add(v6).wrapping_add(m[s[4]]);
-        v14 = (v14 ^ v2).rotate_right(32);
-        v10 = v10.wrapping_add(v14);
-        v6 = (v6 ^ v10).rotate_right(24);
-        v2 = v2.wrapping_add(v6).wrapping_add(m[s[5]]);
-        v14 = (v14 ^ v2).rotate_right(16);
-        v10 = v10.wrapping_add(v14);
-        v6 = (v6 ^ v10).rotate_right(63);
-
-        // g(3, 7, 11, 15)
-        v3 = v3.wrapping_add(v7).wrapping_add(m[s[6]]);
-        v15 = (v15 ^ v3).rotate_right(32);
-        v11 = v11.wrapping_add(v15);
-        v7 = (v7 ^ v11).rotate_right(24);
-        v3 = v3.wrapping_add(v7).wrapping_add(m[s[7]]);
-        v15 = (v15 ^ v3).rotate_right(16);
-        v11 = v11.wrapping_add(v15);
-        v7 = (v7 ^ v11).rotate_right(63);
-
-        // Diagonal round
-        // g(0, 5, 10, 15)
-        v0 = v0.wrapping_add(v5).wrapping_add(m[s[8]]);
-        v15 = (v15 ^ v0).rotate_right(32);
-        v10 = v10.wrapping_add(v15);
-        v5 = (v5 ^ v10).rotate_right(24);
-        v0 = v0.wrapping_add(v5).wrapping_add(m[s[9]]);
-        v15 = (v15 ^ v0).rotate_right(16);
-        v10 = v10.wrapping_add(v15);
-        v5 = (v5 ^ v10).rotate_right(63);
-
-        // g(1, 6, 11, 12)
-        v1 = v1.wrapping_add(v6).wrapping_add(m[s[10]]);
-        v12 = (v12 ^ v1).rotate_right(32);
-        v11 = v11.wrapping_add(v12);
-        v6 = (v6 ^ v11).rotate_right(24);
-        v1 = v1.wrapping_add(v6).wrapping_add(m[s[11]]);
-        v12 = (v12 ^ v1).rotate_right(16);
-        v11 = v11.wrapping_add(v12);
-        v6 = (v6 ^ v11).rotate_right(63);
-
-        // g(2, 7, 8, 13)
-        v2 = v2.wrapping_add(v7).wrapping_add(m[s[12]]);
-        v13 = (v13 ^ v2).rotate_right(32);
-        v8 = v8.wrapping_add(v13);
-        v7 = (v7 ^ v8).rotate_right(24);
-        v2 = v2.wrapping_add(v7).wrapping_add(m[s[13]]);
-        v13 = (v13 ^ v2).rotate_right(16);
-        v8 = v8.wrapping_add(v13);
-        v7 = (v7 ^ v8).rotate_right(63);
-
-        // g(3, 4, 9, 14)
-        v3 = v3.wrapping_add(v4).wrapping_add(m[s[14]]);
-        v14 = (v14 ^ v3).rotate_right(32);
-        v9 = v9.wrapping_add(v14);
-        v4 = (v4 ^ v9).rotate_right(24);
-        v3 = v3.wrapping_add(v4).wrapping_add(m[s[15]]);
-        v14 = (v14 ^ v3).rotate_right(16);
-        v9 = v9.wrapping_add(v14);
-        v4 = (v4 ^ v9).rotate_right(63);
-
-        // Write back all values
-        v[0] = v0;
-        v[1] = v1;
-        v[2] = v2;
-        v[3] = v3;
-        v[4] = v4;
-        v[5] = v5;
-        v[6] = v6;
-        v[7] = v7;
-        v[8] = v8;
-        v[9] = v9;
-        v[10] = v10;
-        v[11] = v11;
-        v[12] = v12;
-        v[13] = v13;
-        v[14] = v14;
-        v[15] = v15;
+        // g2
+        g(v, 0, 5, 10, 15, m[s[8]], m[s[9]]);
+        g(v, 1, 6, 11, 12, m[s[10]], m[s[11]]);
+        g(v, 2, 7, 8, 13, m[s[12]], m[s[13]]);
+        g(v, 3, 4, 9, 14, m[s[14]], m[s[15]]);
     }
 }
 
