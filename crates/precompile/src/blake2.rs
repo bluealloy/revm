@@ -33,32 +33,39 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     };
 
     // Parse state vector h (8 × u64)
-    let mut h = [0u64; 8];
-    input[4..68]
-        .chunks_exact(8)
-        .enumerate()
-        .for_each(|(i, chunk)| {
-            h[i] = u64::from_le_bytes(chunk.try_into().unwrap());
-        });
+    // SAFETY: input.len() == INPUT_LENGTH guarantees input[4..68] has 64 bytes
+    let mut h = unsafe {
+        core::array::from_fn(|i| {
+            let ptr = input.as_ptr().add(4 + i * 8) as *const u64;
+            u64::from_le(ptr.read_unaligned())
+        })
+    };
 
     // Parse message block m (16 × u64)
-    let mut m = [0u64; 16];
-    input[68..196]
-        .chunks_exact(8)
-        .enumerate()
-        .for_each(|(i, chunk)| {
-            m[i] = u64::from_le_bytes(chunk.try_into().unwrap());
-        });
+    let m = unsafe {
+        core::array::from_fn(|i| {
+            let ptr = input.as_ptr().add(68 + i * 8) as *const u64;
+            u64::from_le(ptr.read_unaligned())
+        })
+    };
 
     // Parse offset counters
-    let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
-    let t_1 = u64::from_le_bytes(input[204..212].try_into().unwrap());
+    // SAFETY: input.len() == INPUT_LENGTH guarantees these ranges exist
+    let t_0 = unsafe {
+        let ptr = input.as_ptr().add(196) as *const u64;
+        u64::from_le(ptr.read_unaligned())
+    };
+    let t_1 = unsafe {
+        let ptr = input.as_ptr().add(204) as *const u64;
+        u64::from_le(ptr.read_unaligned())
+    };
 
     crypto().blake2_compress(rounds, &mut h, m, [t_0, t_1], f);
 
     let mut out = [0u8; 64];
-    for (i, h) in (0..64).step_by(8).zip(h.iter()) {
-        out[i..i + 8].copy_from_slice(&h.to_le_bytes());
+    for (i, &h_val) in h.iter().enumerate() {
+        let offset = i * 8;
+        out[offset..offset + 8].copy_from_slice(&h_val.to_le_bytes());
     }
 
     Ok(PrecompileOutput::new(gas_used, out.into()))
