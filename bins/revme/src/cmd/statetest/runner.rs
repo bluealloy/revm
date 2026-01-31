@@ -238,30 +238,26 @@ fn check_evm_execution(
         print_json(Some(e));
     })?;
 
-    // If exception was expected and occurred, we're done
-    if exception_expected {
-        print_json(None);
-        return Ok(());
+    // Validate output if execution succeeded (skip if exception was expected)
+    if !exception_expected {
+        if let Ok(result) = exec_result {
+            validate_output(expected_output, result).inspect_err(|e| {
+                print_json(Some(e));
+            })?;
+        }
+
+        // Validate logs root (only when no exception expected)
+        if validation.logs_root != test.logs {
+            let error = TestErrorKind::LogsRootMismatch {
+                got: validation.logs_root,
+                expected: test.logs,
+            };
+            print_json(Some(&error));
+            return Err(error);
+        }
     }
 
-    // Validate output if execution succeeded
-    if let Ok(result) = exec_result {
-        validate_output(expected_output, result).inspect_err(|e| {
-            print_json(Some(e));
-        })?;
-    }
-
-    // Validate logs root
-    if validation.logs_root != test.logs {
-        let error = TestErrorKind::LogsRootMismatch {
-            got: validation.logs_root,
-            expected: test.logs,
-        };
-        print_json(Some(&error));
-        return Err(error);
-    }
-
-    // Validate state root
+    // Validate state root (always, even when exception was expected)
     if validation.state_root != test.hash {
         let error = TestErrorKind::StateRootMismatch {
             got: validation.state_root,
