@@ -39,7 +39,7 @@ pub struct Account {
     pub info: AccountInfo,
     /// Original account info used by BAL, changed only on cold load by BAL.
     pub original_info: Box<AccountInfo>,
-    /// Transaction id, used to track when account was toched/loaded into journal.
+    /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
