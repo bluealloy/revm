@@ -13,6 +13,8 @@ pub mod bytecode;
 mod decode_errors;
 /// EIP-7702 bytecode.
 pub mod eip7702;
+/// Opcode fusion helpers.
+pub mod fusion;
 /// Iterator for the bytecode.
 mod iter;
 /// Legacy bytecode.

@@ -165,8 +165,9 @@ mod tests {
             u64::MAX,
         );
         let table = instruction_table::<EthInterpreter, DummyHost>();
+        let fusion = crate::instructions::fusion_table::<EthInterpreter, DummyHost>();
         let mut host = DummyHost::new(SpecId::AMSTERDAM);
-        interpreter.run_plain(&table, &mut host);
+        interpreter.run_plain(&table, Some(&fusion), &mut host);
         interpreter
     }
 

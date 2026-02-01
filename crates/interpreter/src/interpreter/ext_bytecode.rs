@@ -1,8 +1,9 @@
-use super::{Immediates, Jumps, LegacyBytecode};
+use super::{Fusion, Immediates, Jumps, LegacyBytecode};
 use crate::{interpreter_types::LoopControl, InterpreterAction};
 use bytecode::{utils::read_u16, Bytecode};
 use core::ops::Deref;
 use primitives::B256;
+use std::sync::Arc;
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -23,6 +24,8 @@ pub struct ExtBytecode {
     pub action: Option<InterpreterAction>,
     /// The base bytecode.
     base: Bytecode,
+    /// Optional fusion map for legacy bytecode.
+    fusion_map: Option<Arc<[u8]>>,
 }
 
 impl Deref for ExtBytecode {
@@ -59,12 +62,14 @@ impl ExtBytecode {
     #[inline]
     pub fn new_with_optional_hash(base: Bytecode, hash: Option<B256>) -> Self {
         let instruction_pointer = base.bytecode_ptr();
+        let fusion_map = base.legacy_fusion_map_arc();
         Self {
             base,
             instruction_pointer,
             bytecode_hash: hash,
             action: None,
             continue_execution: true,
+            fusion_map,
         }
     }
 
@@ -197,6 +202,21 @@ impl LegacyBytecode for ExtBytecode {
 
     fn bytecode_slice(&self) -> &[u8] {
         self.base.original_byte_slice()
+    }
+}
+
+impl Fusion for ExtBytecode {
+    #[inline]
+    fn has_fusion(&self) -> bool {
+        self.fusion_map.is_some()
+    }
+
+    #[inline]
+    fn fusion_kind(&self, pc: usize) -> u8 {
+        self.fusion_map
+            .as_ref()
+            .and_then(|map| map.get(pc).copied())
+            .unwrap_or(0)
     }
 }
 

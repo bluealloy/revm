@@ -34,10 +34,13 @@ pub use context_interface::{
 pub use gas::Gas;
 pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
-pub use instructions::{instruction_table, Instruction, InstructionTable};
+pub use instructions::{fusion_table, instruction_table, FusionTable, Instruction, InstructionTable};
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
 };
+pub use no_fusion_bytecode::NoFusionBytecode;
+
+mod no_fusion_bytecode;
 pub use interpreter_action::{
     CallInput, CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome,
     FrameInput, InterpreterAction,

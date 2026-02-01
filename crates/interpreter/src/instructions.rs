@@ -12,6 +12,8 @@ pub mod block_info;
 pub mod contract;
 /// Control flow instructions (JUMP, JUMPI, REVERT, etc.).
 pub mod control;
+/// Fused opcode handlers.
+pub mod fused;
 /// Host environment interactions (SLOAD, SSTORE, LOG, etc.).
 pub mod host;
 /// Signed 256-bit integer operations.
@@ -30,6 +32,10 @@ pub mod utility;
 pub use context_interface::cfg::gas::{self, *};
 
 use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
+use bytecode::fusion::{
+    FUSION_PUSH1_ADD, FUSION_PUSH1_JUMP, FUSION_PUSH1_JUMPI, FUSION_PUSH1_MUL, FUSION_PUSH1_SUB,
+    FUSION_TABLE_LEN,
+};
 use primitives::hardfork::SpecId;
 
 /// EVM opcode function signature.
@@ -77,11 +83,19 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Clone for Instruction<W, H> {
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
+/// Fusion table is list of instruction function pointers mapped to fusion kinds.
+pub type FusionTable<W, H> = [Instruction<W, H>; FUSION_TABLE_LEN];
 
 /// Returns the default instruction table for the given interpreter types and host.
 #[inline]
 pub const fn instruction_table<WIRE: InterpreterTypes, H: Host>() -> [Instruction<WIRE, H>; 256] {
     const { instruction_table_impl::<WIRE, H>() }
+}
+
+/// Returns the default fusion table for the given interpreter types and host.
+#[inline]
+pub const fn fusion_table<WIRE: InterpreterTypes, H: Host>() -> FusionTable<WIRE, H> {
+    const { fusion_table_impl::<WIRE, H>() }
 }
 
 /// Create a instruction table with applied spec changes to static gas cost.
@@ -301,6 +315,16 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> [Instructi
     table[REVERT as usize] = Instruction::new(control::revert, 0);
     table[INVALID as usize] = Instruction::new(control::invalid, 0);
     table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct, 0);
+    table
+}
+
+const fn fusion_table_impl<WIRE: InterpreterTypes, H: Host>() -> FusionTable<WIRE, H> {
+    let mut table = [Instruction::unknown(); FUSION_TABLE_LEN];
+    table[FUSION_PUSH1_ADD as usize] = Instruction::new(fused::push1_add, 6);
+    table[FUSION_PUSH1_SUB as usize] = Instruction::new(fused::push1_sub, 6);
+    table[FUSION_PUSH1_MUL as usize] = Instruction::new(fused::push1_mul, 8);
+    table[FUSION_PUSH1_JUMP as usize] = Instruction::new(fused::push1_jump, 11);
+    table[FUSION_PUSH1_JUMPI as usize] = Instruction::new(fused::push1_jumpi, 13);
     table
 }
 

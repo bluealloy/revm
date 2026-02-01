@@ -1,6 +1,6 @@
 use auto_impl::auto_impl;
 use interpreter::{
-    instructions::{instruction_table_gas_changes_spec, InstructionTable},
+    instructions::{fusion_table, instruction_table_gas_changes_spec, FusionTable, InstructionTable},
     Host, Instruction, InterpreterTypes,
 };
 use primitives::hardfork::SpecId;
@@ -16,6 +16,8 @@ pub trait InstructionProvider {
 
     /// Returns the instruction table that is used by EvmTr to execute instructions.
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context>;
+    /// Returns the fusion table that is used by EvmTr to execute fused instructions.
+    fn fusion_table(&self) -> &FusionTable<Self::InterpreterTypes, Self::Context>;
 }
 
 /// Ethereum instruction contains list of mainnet instructions that is used for Interpreter execution.
@@ -23,6 +25,8 @@ pub trait InstructionProvider {
 pub struct EthInstructions<WIRE: InterpreterTypes, HOST: ?Sized> {
     /// Table containing instruction implementations indexed by opcode.
     pub instruction_table: Box<InstructionTable<WIRE, HOST>>,
+    /// Table containing fused instruction implementations indexed by fusion kind.
+    pub fusion_table: Box<FusionTable<WIRE, HOST>>,
     /// Spec that is used to set gas costs for instructions.
     pub spec: SpecId,
 }
@@ -34,6 +38,7 @@ where
     fn clone(&self) -> Self {
         Self {
             instruction_table: self.instruction_table.clone(),
+            fusion_table: self.fusion_table.clone(),
             spec: self.spec,
         }
     }
@@ -60,6 +65,7 @@ where
     pub fn new(base_table: InstructionTable<WIRE, HOST>, spec: SpecId) -> Self {
         Self {
             instruction_table: Box::new(base_table),
+            fusion_table: Box::new(fusion_table()),
             spec,
         }
     }
@@ -81,6 +87,10 @@ where
 
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table
+    }
+
+    fn fusion_table(&self) -> &FusionTable<Self::InterpreterTypes, Self::Context> {
+        &self.fusion_table
     }
 }
 

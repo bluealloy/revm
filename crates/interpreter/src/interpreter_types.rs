@@ -64,6 +64,18 @@ pub trait LegacyBytecode {
     fn bytecode_slice(&self) -> &[u8];
 }
 
+/// Trait for accessing opcode fusion metadata.
+pub trait Fusion {
+    /// Returns true if fusion is enabled for this bytecode.
+    fn has_fusion(&self) -> bool {
+        false
+    }
+    /// Returns fusion kind for the given PC, or 0 if none.
+    fn fusion_kind(&self, _pc: usize) -> u8 {
+        0
+    }
+}
+
 /// Trait for Interpreter to be able to jump
 pub trait Jumps {
     /// Relative jumps does not require checking for overflow.
@@ -306,7 +318,7 @@ pub trait InterpreterTypes {
     /// Memory implementation type.
     type Memory: MemoryTr;
     /// Bytecode implementation type.
-    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode;
+    type Bytecode: Jumps + Immediates + LoopControl + LegacyBytecode + Fusion;
     /// Return data implementation type.
     type ReturnData: ReturnData;
     /// Input data implementation type.

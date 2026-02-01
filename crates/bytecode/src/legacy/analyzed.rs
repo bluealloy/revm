@@ -1,5 +1,7 @@
 use super::JumpTable;
+use crate::fusion::analyze_fusion;
 use primitives::Bytes;
+use std::sync::Arc;
 
 /// Legacy analyzed bytecode represents the original bytecode format used in Ethereum.
 ///
@@ -34,6 +36,8 @@ pub struct LegacyAnalyzedBytecode {
     original_len: usize,
     /// The jump table.
     jump_table: JumpTable,
+    /// Optional fusion map, indexed by original PC.
+    fusion_map: Option<Arc<[u8]>>,
 }
 
 impl Default for LegacyAnalyzedBytecode {
@@ -43,6 +47,7 @@ impl Default for LegacyAnalyzedBytecode {
             bytecode: Bytes::from_static(&[0]),
             original_len: 0,
             jump_table: JumpTable::default(),
+            fusion_map: None,
         }
     }
 }
@@ -76,10 +81,12 @@ impl LegacyAnalyzedBytecode {
             "jump table length is less than original length"
         );
         assert!(!bytecode.is_empty(), "bytecode cannot be empty");
+        let fusion_analysis = analyze_fusion(&bytecode[..original_len]);
         Self {
             bytecode,
             original_len,
             jump_table,
+            fusion_map: fusion_analysis.map.map(|v| v.into()),
         }
     }
 
@@ -108,6 +115,16 @@ impl LegacyAnalyzedBytecode {
     /// Returns [JumpTable] of analyzed bytes.
     pub fn jump_table(&self) -> &JumpTable {
         &self.jump_table
+    }
+
+    /// Returns fusion map for the original bytecode, if available.
+    pub fn fusion_map(&self) -> Option<&[u8]> {
+        self.fusion_map.as_deref()
+    }
+
+    /// Returns a cloned fusion map reference.
+    pub fn fusion_map_arc(&self) -> Option<Arc<[u8]>> {
+        self.fusion_map.clone()
     }
 }
 

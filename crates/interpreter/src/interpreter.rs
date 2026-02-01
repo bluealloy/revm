@@ -21,7 +21,7 @@ pub use stack::{Stack, STACK_LIMIT};
 // imports
 use crate::{
     host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    FusionTable, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use primitives::{hardfork::SpecId, Bytes};
@@ -277,21 +277,16 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         ));
     }
 
-    /// Executes the instruction at the current instruction pointer.
+    /// Executes the instruction at the current instruction pointer (no fusion).
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline]
-    pub fn step<H: Host + ?Sized>(
+    #[inline(always)]
+    fn step_no_fusion<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) {
-        // Get current opcode.
         let opcode = self.bytecode.opcode();
-
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
@@ -306,6 +301,55 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction.execute(context);
     }
 
+    /// Executes the instruction at the current instruction pointer (with fusion).
+    ///
+    /// Internally it will increment instruction pointer by one.
+    #[inline(always)]
+    fn step_with_fusion<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        fusion_table: &FusionTable<IW, H>,
+        host: &mut H,
+    ) {
+        let opcode = self.bytecode.opcode();
+        let pc = self.bytecode.pc();
+        self.bytecode.relative_jump(1);
+
+        let fused = self.bytecode.fusion_kind(pc);
+        let instruction = if fused != 0 {
+            unsafe { fusion_table.get_unchecked(fused as usize) }
+        } else {
+            unsafe { instruction_table.get_unchecked(opcode as usize) }
+        };
+
+        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+            return self.halt_oog();
+        }
+        let context = InstructionContext {
+            interpreter: self,
+            host,
+        };
+        instruction.execute(context);
+    }
+
+    /// Executes the instruction at the current instruction pointer.
+    ///
+    /// Internally it will increment instruction pointer by one.
+    #[inline]
+    pub fn step<H: Host + ?Sized>(
+        &mut self,
+        instruction_table: &InstructionTable<IW, H>,
+        fusion_table: Option<&FusionTable<IW, H>>,
+        host: &mut H,
+    ) {
+        match fusion_table {
+            Some(ft) if self.bytecode.has_fusion() => {
+                self.step_with_fusion(instruction_table, ft, host)
+            }
+            _ => self.step_no_fusion(instruction_table, host),
+        }
+    }
+
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
@@ -313,7 +357,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// This uses dummy Host.
     #[inline]
     pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        self.step(instruction_table, &mut DummyHost::default());
+        self.step_no_fusion(instruction_table, &mut DummyHost::default());
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -321,10 +365,22 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        fusion_table: Option<&FusionTable<IW, H>>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
+        // Check fusion once at the start, then use the appropriate loop.
+        // This avoids per-instruction has_fusion() checks.
+        match fusion_table {
+            Some(ft) if self.bytecode.has_fusion() => {
+                while self.bytecode.is_not_end() {
+                    self.step_with_fusion(instruction_table, ft, host);
+                }
+            }
+            _ => {
+                while self.bytecode.is_not_end() {
+                    self.step_no_fusion(instruction_table, host);
+                }
+            }
         }
         self.take_next_action()
     }
@@ -414,9 +470,10 @@ where
     pub fn run_plain_as_output<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        fusion_table: Option<&FusionTable<IW, H>>,
         host: &mut H,
     ) -> IW::Output {
-        From::from(self.run_plain(instruction_table, host))
+        From::from(self.run_plain(instruction_table, fusion_table, host))
     }
 }
 
@@ -477,8 +534,9 @@ fn test_mstore_big_offset_memory_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let fusion = crate::instructions::fusion_table::<EthInterpreter, DummyHost>();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, Some(&fusion), &mut host);
 
     assert!(action.is_return());
     assert_eq!(
@@ -515,8 +573,9 @@ fn test_mstore_big_offset_memory_limit_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let fusion = crate::instructions::fusion_table::<EthInterpreter, DummyHost>();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, Some(&fusion), &mut host);
 
     assert!(action.is_return());
     assert_eq!(

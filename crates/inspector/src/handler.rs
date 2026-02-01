@@ -214,7 +214,7 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
-        interpreter.step(instructions, context);
+        interpreter.step(instructions, None, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);

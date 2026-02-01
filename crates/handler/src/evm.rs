@@ -204,7 +204,11 @@ where
 
         let action = frame
             .interpreter
-            .run_plain(instructions.instruction_table(), context);
+            .run_plain(
+                instructions.instruction_table(),
+                Some(instructions.fusion_table()),
+                context,
+            );
 
         frame.process_next_action(context, action).inspect(|i| {
             if i.is_result() {

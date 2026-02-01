@@ -56,6 +56,24 @@ impl Bytecode {
         }
     }
 
+    /// Returns fusion map if bytecode is analyzed.
+    #[inline]
+    pub fn legacy_fusion_map(&self) -> Option<&[u8]> {
+        match &self {
+            Self::LegacyAnalyzed(analyzed) => analyzed.fusion_map(),
+            _ => None,
+        }
+    }
+
+    /// Returns a cloned fusion map reference if bytecode is analyzed.
+    #[inline]
+    pub fn legacy_fusion_map_arc(&self) -> Option<Arc<[u8]>> {
+        match &self {
+            Self::LegacyAnalyzed(analyzed) => analyzed.fusion_map_arc(),
+            _ => None,
+        }
+    }
+
     /// Calculates hash of the bytecode.
     #[inline]
     pub fn hash_slow(&self) -> B256 {
