@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.3.0"
-DEVNET_VERSION="fusaka-devnet-5@v2.1.0"
+DEVNET_VERSION="bal%40v5.1.0"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"
@@ -25,7 +25,7 @@ FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download
 MAIN_STABLE_TAR="fixtures_stable.tar.gz"
 MAIN_DEVELOP_TAR="fixtures_develop.tar.gz"
 
-DEVNET_TAR="fixtures_fusaka-devnet-5.tar.gz"
+DEVNET_TAR="fixtures_bal.tar.gz"
 
 LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 
