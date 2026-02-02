@@ -413,12 +413,13 @@ impl Stack {
                 return true;
             }
 
-            // Write limbs of partial last word
+            // Write limbs of partial last word (process from end backwards)
             let num_full_limbs = partial_last_word.len() / 8;
-            let partial_limb_start = num_full_limbs * 8;
+            let partial_limb_len = partial_last_word.len() % 8;
 
-            for limb_idx in (0..num_full_limbs).rev() {
-                let limb_start = limb_idx * 8;
+            // Process full 8-byte limbs from the end of the slice backwards
+            for limb_offset in 0..num_full_limbs {
+                let limb_start = partial_last_word.len() - (limb_offset + 1) * 8;
                 let limb_bytes = [
                     partial_last_word[limb_start],
                     partial_last_word[limb_start + 1],
@@ -433,7 +434,7 @@ impl Stack {
                 i += 1;
             }
 
-            let partial_last_limb = &partial_last_word[partial_limb_start..];
+            let partial_last_limb = &partial_last_word[..partial_limb_len];
 
             // Write partial last limb by padding with zeros
             if !partial_last_limb.is_empty() {
