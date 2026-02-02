@@ -347,8 +347,7 @@ impl<DB: Database> Database for State<DB> {
             return Ok(storage);
         }
 
-        self.database
-            .storage(address, key)
+        self.storage(address, key)
             .map_err(EvmDatabaseError::Database)
     }
 

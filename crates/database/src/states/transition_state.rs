@@ -24,6 +24,11 @@ impl TransitionState {
         core::mem::take(self)
     }
 
+    /// Clear the transition state.
+    pub fn clear(&mut self) {
+        self.transitions.clear();
+    }
+
     /// Add transitions to the transition state.
     ///
     /// This will insert new [`TransitionAccount`]s, or update existing ones via

@@ -96,8 +96,9 @@ impl AccountBal {
     /// Consumes AccountBal and converts it into [`AlloyAccountChanges`].
     #[inline]
     pub fn into_alloy_account(self, address: Address) -> AlloyAccountChanges {
-        let mut storage_reads = Vec::new();
-        let mut storage_changes = Vec::new();
+        let storage_len = self.storage.storage.len();
+        let mut storage_reads = Vec::with_capacity(storage_len);
+        let mut storage_changes = Vec::with_capacity(storage_len);
         for (key, value) in self.storage.storage {
             if value.writes.is_empty() {
                 storage_reads.push(key);
@@ -180,12 +181,14 @@ impl AccountInfoBal {
         self.nonce.update(index, &original.nonce, present.nonce);
         self.balance
             .update(index, &original.balance, present.balance);
-        self.code.update_with_key(
-            index,
-            &original.code_hash,
-            (present.code_hash, present.code.clone().unwrap_or_default()),
-            |i| &i.0,
-        );
+        if original.code_hash != present.code_hash {
+            self.code.update_with_key(
+                index,
+                &original.code_hash,
+                (present.code_hash, present.code.clone().unwrap_or_default()),
+                |i| &i.0,
+            );
+        }
     }
 
     /// Extend account info from another account info.
