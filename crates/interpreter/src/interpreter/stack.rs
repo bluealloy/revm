@@ -343,31 +343,97 @@ impl Stack {
             let dst = self.data.as_mut_ptr().add(self.data.len()).cast::<u64>();
             self.data.set_len(new_len);
 
-            let mut i = 0;
+            let mut i: usize = 0;
 
             // Write full words
-            let words = slice.chunks_exact(32);
-            let partial_last_word = words.remainder();
-            for word in words {
-                // Note: We unroll `U256::from_be_bytes` here to write directly into the buffer,
-                // instead of creating a 32 byte array on the stack and then copying it over.
-                for l in word.rchunks_exact(8) {
-                    dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
-                    i += 1;
-                }
+            let num_full_words = slice.len() / 32;
+            let partial_start = num_full_words * 32;
+
+            for word_idx in 0..num_full_words {
+                let word_start = word_idx * 32;
+                // write 4 limbs (32 bytes) in reverse order for big-endian
+
+                let limb_start = word_start + 24;
+                let limb_bytes = [
+                    slice[limb_start],
+                    slice[limb_start + 1],
+                    slice[limb_start + 2],
+                    slice[limb_start + 3],
+                    slice[limb_start + 4],
+                    slice[limb_start + 5],
+                    slice[limb_start + 6],
+                    slice[limb_start + 7],
+                ];
+                dst.add(i).write(u64::from_be_bytes(limb_bytes));
+
+                let limb_start = word_start + 16;
+                let limb_bytes = [
+                    slice[limb_start],
+                    slice[limb_start + 1],
+                    slice[limb_start + 2],
+                    slice[limb_start + 3],
+                    slice[limb_start + 4],
+                    slice[limb_start + 5],
+                    slice[limb_start + 6],
+                    slice[limb_start + 7],
+                ];
+                dst.add(i + 1).write(u64::from_be_bytes(limb_bytes));
+
+                let limb_start = word_start + 8;
+                let limb_bytes = [
+                    slice[limb_start],
+                    slice[limb_start + 1],
+                    slice[limb_start + 2],
+                    slice[limb_start + 3],
+                    slice[limb_start + 4],
+                    slice[limb_start + 5],
+                    slice[limb_start + 6],
+                    slice[limb_start + 7],
+                ];
+                dst.add(i + 2).write(u64::from_be_bytes(limb_bytes));
+
+                let limb_start = word_start;
+                let limb_bytes = [
+                    slice[limb_start],
+                    slice[limb_start + 1],
+                    slice[limb_start + 2],
+                    slice[limb_start + 3],
+                    slice[limb_start + 4],
+                    slice[limb_start + 5],
+                    slice[limb_start + 6],
+                    slice[limb_start + 7],
+                ];
+                dst.add(i + 3).write(u64::from_be_bytes(limb_bytes));
+
+                i += 4;
             }
 
+            let partial_last_word = &slice[partial_start..];
             if partial_last_word.is_empty() {
                 return true;
             }
 
             // Write limbs of partial last word
-            let limbs = partial_last_word.rchunks_exact(8);
-            let partial_last_limb = limbs.remainder();
-            for l in limbs {
-                dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
+            let num_full_limbs = partial_last_word.len() / 8;
+            let partial_limb_start = num_full_limbs * 8;
+
+            for limb_idx in (0..num_full_limbs).rev() {
+                let limb_start = limb_idx * 8;
+                let limb_bytes = [
+                    partial_last_word[limb_start],
+                    partial_last_word[limb_start + 1],
+                    partial_last_word[limb_start + 2],
+                    partial_last_word[limb_start + 3],
+                    partial_last_word[limb_start + 4],
+                    partial_last_word[limb_start + 5],
+                    partial_last_word[limb_start + 6],
+                    partial_last_word[limb_start + 7],
+                ];
+                dst.add(i).write(u64::from_be_bytes(limb_bytes));
                 i += 1;
             }
+
+            let partial_last_limb = &partial_last_word[partial_limb_start..];
 
             // Write partial last limb by padding with zeros
             if !partial_last_limb.is_empty() {
