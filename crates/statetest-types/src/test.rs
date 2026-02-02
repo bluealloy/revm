@@ -8,7 +8,7 @@ use crate::{
 
 /// State test indexed state result deserialization.
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct Test {
     /// Expected exception for this test case, if any.
     ///
