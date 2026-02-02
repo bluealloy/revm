@@ -33,4 +33,7 @@ pub struct Env {
 
     /// Current block excess blob gas (EIP-4844)
     pub current_excess_blob_gas: Option<U256>,
+
+    /// Current slot number (EIP-7843)
+    pub slot_number: Option<U256>,
 }
