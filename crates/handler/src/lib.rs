@@ -28,6 +28,8 @@ pub mod pre_execution;
 mod precompile_provider;
 /// System call implementations for special EVM operations.
 pub mod system_call;
+/// Configurable transaction validation with bitflags.
+pub mod tx_validation;
 /// Transaction and environment validation utilities.
 pub mod validation;
 
@@ -42,3 +44,6 @@ pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
 pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};
+pub use tx_validation::{
+    CallerFee, TxValidator, ValidationChecks, ValidationKind, ValidationParams,
+};

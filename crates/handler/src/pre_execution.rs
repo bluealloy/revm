@@ -2,15 +2,14 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use crate::tx_validation::{self, ValidationChecks, ValidationKind, ValidationParams};
 use crate::{EvmTr, PrecompileProvider};
-use bytecode::Bytecode;
 use context_interface::{
     journaled_state::{account::JournaledAccountTr, JournalTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
 };
-use core::cmp::Ordering;
 use primitives::{eip7702, hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
@@ -64,21 +63,21 @@ pub fn load_accounts<
 }
 
 /// Validates caller account nonce and code according to EIP-3607.
+///
+/// This function uses the [`tx_validation`] module internally to perform validation.
 #[inline]
 pub fn validate_account_nonce_and_code_with_components(
     caller_info: &AccountInfo,
     tx: impl Transaction,
     cfg: impl Cfg,
 ) -> Result<(), InvalidTransaction> {
-    validate_account_nonce_and_code(
-        caller_info,
-        tx.nonce(),
-        cfg.is_eip3607_disabled(),
-        cfg.is_nonce_check_disabled(),
-    )
+    let params = ValidationParams::caller_params_from_cfg(&cfg);
+    tx_validation::validate_caller(caller_info, tx.nonce(), params.validation_kind)
 }
 
 /// Validates caller account nonce and code according to EIP-3607.
+///
+/// This function uses the [`tx_validation`] module internally to perform validation.
 #[inline]
 pub fn validate_account_nonce_and_code(
     caller_info: &AccountInfo,
@@ -86,41 +85,22 @@ pub fn validate_account_nonce_and_code(
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
 ) -> Result<(), InvalidTransaction> {
-    // EIP-3607: Reject transactions from senders with deployed code
-    // This EIP is introduced after london but there was no collision in past
-    // so we can leave it enabled always
-    if !is_eip3607_disabled {
-        let bytecode = match caller_info.code.as_ref() {
-            Some(code) => code,
-            None => &Bytecode::default(),
-        };
-        // Allow EOAs whose code is a valid delegation designation,
-        // i.e. 0xef0100 || address, to continue to originate transactions.
-        if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode);
-        }
+    let mut checks = ValidationChecks::ALL;
+    if is_eip3607_disabled {
+        checks.remove(ValidationChecks::EIP3607);
     }
-
-    // Check that the transaction's nonce is correct
-    if !is_nonce_check_disabled {
-        let tx = tx_nonce;
-        let state = caller_info.nonce;
-        match tx.cmp(&state) {
-            Ordering::Greater => {
-                return Err(InvalidTransaction::NonceTooHigh { tx, state });
-            }
-            Ordering::Less => {
-                return Err(InvalidTransaction::NonceTooLow { tx, state });
-            }
-            _ => {}
-        }
+    if is_nonce_check_disabled {
+        checks.remove(ValidationChecks::NONCE);
     }
-    Ok(())
+    let kind = ValidationKind::Custom(checks);
+    tx_validation::validate_caller(caller_info, tx_nonce, kind)
 }
 
 /// Check maximum possible fee and deduct the effective fee.
 ///
 /// Returns new balance.
+///
+/// This function uses the [`tx_validation`] module internally to perform validation.
 #[inline]
 pub fn calculate_caller_fee(
     balance: U256,
@@ -128,32 +108,16 @@ pub fn calculate_caller_fee(
     block: impl Block,
     cfg: impl Cfg,
 ) -> Result<U256, InvalidTransaction> {
-    let basefee = block.basefee() as u128;
-    let blob_price = block.blob_gasprice().unwrap_or_default();
-    let is_balance_check_disabled = cfg.is_balance_check_disabled();
-
-    if !is_balance_check_disabled {
-        tx.ensure_enough_balance(balance)?;
-    }
-
-    let effective_balance_spending = tx
-        .effective_balance_spending(basefee, blob_price)
-        .expect("effective balance is always smaller than max balance so it can't overflow");
-
-    let gas_balance_spending = effective_balance_spending - tx.value();
-
-    // new balance
-    let mut new_balance = balance.saturating_sub(gas_balance_spending);
-
-    if is_balance_check_disabled {
-        // Make sure the caller's balance is at least the value of the transaction.
-        new_balance = new_balance.max(tx.value());
-    }
-
-    Ok(new_balance)
+    let skip_balance_check = cfg.is_balance_check_disabled();
+    let caller_fee = tx_validation::calculate_caller_fee(balance, &tx, &block, skip_balance_check)?;
+    Ok(caller_fee.new_balance)
 }
 
 /// Validates caller state and deducts transaction costs from the caller's balance.
+///
+/// This function uses the [`tx_validation`] module internally to perform validation.
+/// The actual state mutation (setting balance and bumping nonce) is performed
+/// by this function after validation.
 #[inline]
 pub fn validate_against_state_and_deduct_caller<
     CTX: ContextTr,
@@ -163,14 +127,20 @@ pub fn validate_against_state_and_deduct_caller<
 ) -> Result<(), ERROR> {
     let (block, tx, cfg, journal, _, _) = context.all_mut();
 
+    // Create validation params from config
+    let params = ValidationParams::caller_params_from_cfg(cfg);
+    let skip_balance_check = cfg.is_balance_check_disabled();
+
     // Load caller's account.
     let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
-    validate_account_nonce_and_code_with_components(&caller.account().info, tx, cfg)?;
+    // Validate (no mutation)
+    tx_validation::validate_caller(&caller.account().info, tx.nonce(), params.validation_kind)?;
+    let caller_fee =
+        tx_validation::calculate_caller_fee(*caller.balance(), tx, block, skip_balance_check)?;
 
-    let new_balance = calculate_caller_fee(*caller.balance(), tx, block, cfg)?;
-
-    caller.set_balance(new_balance);
+    // Apply mutation (Handler responsibility)
+    caller.set_balance(caller_fee.new_balance);
     if tx.kind().is_call() {
         caller.bump_nonce();
     }

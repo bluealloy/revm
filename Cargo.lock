@@ -3634,6 +3634,7 @@ dependencies = [
  "alloy-signer",
  "alloy-signer-local",
  "auto_impl",
+ "bitflags",
  "derive-where",
  "revm-bytecode",
  "revm-context",
