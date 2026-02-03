@@ -12,7 +12,7 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
-    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_TO_SELF_LOG_TOPIC},
+    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
@@ -59,6 +59,16 @@ pub struct JournalInner<ENTRY> {
     pub spec: SpecId,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
+    /// Addresses that were self-destructed for the first time in this transaction.
+    ///
+    /// This is used by [EIP-7708] to emit logs for self-destructed accounts that still
+    /// have balance at the end of the transaction.
+    ///
+    /// The vec is indexed by checkpoint - on revert, entries added after the checkpoint
+    /// are removed.
+    ///
+    /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
+    pub selfdestructed_addresses: Vec<Address>,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -82,12 +92,18 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth: 0,
             spec: SpecId::default(),
             warm_addresses: WarmAddresses::new(),
+            selfdestructed_addresses: Vec::new(),
         }
     }
 
-    /// Returns the logs
+    /// Returns the logs.
+    ///
+    /// Before returning, this function emits EIP-7708 logs for any self-destructed
+    /// accounts that still have a non-zero balance.
     #[inline]
     pub fn take_logs(&mut self) -> Vec<Log> {
+        // EIP-7708: Emit logs for self-destructed accounts with remaining balance
+        self.eip7708_emit_selfdestruct_remaining_balance_logs();
         mem::take(&mut self.logs)
     }
 
@@ -110,6 +126,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
         // Spec, precompiles, BAL and state are not changed. It is always set again execution.
         let _ = spec;
@@ -126,6 +143,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *transaction_id += 1;
 
         logs.clear();
+        selfdestructed_addresses.clear();
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -140,6 +158,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
         let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
@@ -149,6 +168,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
         logs.clear();
+        selfdestructed_addresses.clear();
         *transaction_id += 1;
 
         // Clear coinbase address warming for next tx
@@ -172,11 +192,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transaction_id,
             spec,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
         // Spec is not changed. And it is always set again in execution.
         let _ = spec;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
+        selfdestructed_addresses.clear();
 
         let state = mem::take(state);
         logs.clear();
@@ -189,6 +211,45 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *transaction_id = 0;
 
         state
+    }
+
+    /// Emit EIP-7708 logs for self-destructed accounts that still have balance.
+    ///
+    /// This should be called before `take_logs()` at the end of transaction execution.
+    /// It checks all accounts that were self-destructed in this transaction and emits
+    /// a `SelfBalanceLog` for any that still have a non-zero balance.
+    ///
+    /// This can happen when an account receives ETH after being self-destructed
+    /// in the same transaction.
+    ///
+    /// Logs are emitted sorted by address in ascending order.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_emit_selfdestruct_remaining_balance_logs(&mut self) {
+        if !self.spec.is_enabled_in(AMSTERDAM) {
+            return;
+        }
+
+        // Collect addresses with non-zero balance and sort by address
+        let mut addresses_with_balance: Vec<(Address, U256)> = self
+            .selfdestructed_addresses
+            .iter()
+            .filter_map(|address| {
+                self.state
+                    .get(address)
+                    .filter(|account| !account.info.balance.is_zero())
+                    .map(|account| (*address, account.info.balance))
+            })
+            .collect();
+
+        // Sort by address (ascending)
+        addresses_with_balance.sort_by_key(|(addr, _)| *addr);
+
+        // Emit logs in sorted order
+        for (address, balance) in addresses_with_balance {
+            self.eip7708_selfdestruct_to_self_log(address, balance);     
+        }
     }
 
     /// Return reference to state.
@@ -466,6 +527,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
+            selfdestructed_i: self.selfdestructed_addresses.len(),
         };
         self.depth += 1;
         checkpoint
@@ -485,6 +547,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let transient_storage = &mut self.transient_storage;
         self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
+        // EIP-7708: Remove selfdestructed addresses added after checkpoint
+        self.selfdestructed_addresses
+            .truncate(checkpoint.selfdestructed_i);
 
         // iterate over last N journals sets and revert our global state
         if checkpoint.journal_i < self.journal.len() {
@@ -546,6 +611,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
+            // EIP-7708: Track first self-destruction for remaining balance log.
+            // Only track when account is actually destroyed.
+            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed {
+                self.selfdestructed_addresses.push(address);
+            }
+
             acc.mark_selfdestructed_locally();
             acc.info.balance = U256::ZERO;
 
@@ -999,7 +1070,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Topic[1]: account address (zero-padded to 32 bytes)
         // Data: amount in wei (big-endian uint256)
         let topics = std::vec![
-            SELFDESTRUCT_TO_SELF_LOG_TOPIC,
+            SELFDESTRUCT_LOG_TOPIC,
             B256::left_padding_from(address.as_slice()),
         ];
         let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
