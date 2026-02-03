@@ -289,7 +289,7 @@ fn test_disable_balance_check() {
 // ============================================================================
 
 use revm::primitives::eip7708::{
-    ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_TO_SELF_LOG_TOPIC,
+    ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_LOG_TOPIC,
 };
 use revm::primitives::B256;
 
@@ -487,9 +487,9 @@ fn test_eip7708_selfdestruct_to_self() {
 
     // Find the selfdestruct-to-self log
     let logs = result.logs();
-    let selfdestruct_to_self_log = logs.iter().find(|log| {
-        log.data.topics().len() == 2 && log.data.topics()[0] == SELFDESTRUCT_TO_SELF_LOG_TOPIC
-    });
+    let selfdestruct_to_self_log = logs
+        .iter()
+        .find(|log| log.data.topics().len() == 2 && log.data.topics()[0] == SELFDESTRUCT_LOG_TOPIC);
 
     assert!(
         selfdestruct_to_self_log.is_some(),
