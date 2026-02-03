@@ -406,6 +406,8 @@ pub struct JournalCheckpoint {
     pub log_i: usize,
     /// Checkpoint to where on revert we will go back to and revert other journal entries.
     pub journal_i: usize,
+    /// Checkpoint for self-destructed addresses tracking (EIP-7708).
+    pub selfdestructed_i: usize,
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded
