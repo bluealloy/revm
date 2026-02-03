@@ -116,11 +116,7 @@ impl MemoryTr for SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(range) {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
-        })
+        self.global_slice_range(range)
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
@@ -224,6 +220,19 @@ impl SharedMemory {
         self.buffer().dbg_borrow_mut()
     }
 
+    /// Returns a byte slice of the backing buffer, applying `base` to `range`.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    fn slice_range_with_base(&self, range: Range<usize>, base: usize) -> Ref<'_, [u8]> {
+        let buffer = self.buffer_ref();
+        Ref::map(buffer, |b| {
+            match b.get(range.start + base..range.end + base) {
+                Some(slice) => slice,
+                None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
+            }
+        })
+    }
+
     /// Prepares the shared memory for a new child context.
     ///
     /// # Panics
@@ -306,13 +315,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| {
-            match b.get(range.start + self.my_checkpoint..range.end + self.my_checkpoint) {
-                Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
-            }
-        })
+        self.slice_range_with_base(range, self.my_checkpoint)
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -328,11 +331,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(range) {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: range; len: {}", self.len()),
-        })
+        self.slice_range_with_base(range, 0)
     }
 
     /// Returns a byte slice of the memory region at the given offset.
