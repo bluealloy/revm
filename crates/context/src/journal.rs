@@ -200,6 +200,12 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
+    fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+        self.inner
+            .set_eip7708_config(disabled, delayed_burn_disabled);
+    }
+
+    #[inline]
     fn transfer(
         &mut self,
         from: Address,
