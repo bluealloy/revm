@@ -248,7 +248,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Emit logs in sorted order
         for (address, balance) in addresses_with_balance {
-            self.eip7708_selfdestruct_to_self_log(address, balance);     
+            self.eip7708_selfdestruct_to_self_log(address, balance);
         }
     }
 
