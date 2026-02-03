@@ -4,6 +4,9 @@
 //! - Legacy bytecode with jump table analysis
 //! - EIP-7702 bytecode, introduced in Prague and contains address to delegated account
 
+#[cfg(feature = "serde")]
+mod serde_impl;
+
 use crate::{
     eip7702::{Eip7702DecodeError, EIP7702_MAGIC_BYTES, EIP7702_VERSION},
     legacy::analyze_legacy,
@@ -98,81 +101,6 @@ impl Sealable for Bytecode {
     #[inline]
     fn hash_slow(&self) -> B256 {
         self.hash_slow()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Bytecode {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeMap;
-
-        // Serialize in the legacy tagged enum format for backwards compatibility
-        let mut map = serializer.serialize_map(Some(1))?;
-        match self.kind() {
-            BytecodeKind::LegacyAnalyzed => {
-                #[derive(serde::Serialize)]
-                struct LegacyAnalyzed<'a> {
-                    bytecode: &'a Bytes,
-                    original_len: usize,
-                    jump_table: &'a JumpTable,
-                }
-                map.serialize_entry(
-                    "LegacyAnalyzed",
-                    &LegacyAnalyzed {
-                        bytecode: &self.0.bytecode,
-                        original_len: self.0.original_len,
-                        jump_table: &self.0.jump_table,
-                    },
-                )?;
-            }
-            BytecodeKind::Eip7702 => {
-                #[derive(serde::Serialize)]
-                struct Eip7702 {
-                    delegated_address: primitives::Address,
-                }
-                map.serialize_entry(
-                    "Eip7702",
-                    &Eip7702 {
-                        delegated_address: self.eip7702_address().unwrap(),
-                    },
-                )?;
-            }
-        }
-        map.end()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Bytecode {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        #[derive(serde::Deserialize)]
-        enum BytecodeSerde {
-            LegacyAnalyzed {
-                bytecode: Bytes,
-                original_len: usize,
-                jump_table: JumpTable,
-            },
-            Eip7702 {
-                delegated_address: primitives::Address,
-            },
-        }
-
-        match BytecodeSerde::deserialize(deserializer)? {
-            BytecodeSerde::LegacyAnalyzed {
-                bytecode,
-                original_len,
-                jump_table,
-            } => Ok(Self(Arc::new(BytecodeInner {
-                kind: BytecodeKind::LegacyAnalyzed,
-                bytecode,
-                original_len,
-                jump_table,
-                hash: OnceLock::new(),
-            }))),
-            BytecodeSerde::Eip7702 { delegated_address } => {
-                Ok(Self::new_eip7702(delegated_address))
-            }
-        }
     }
 }
 
