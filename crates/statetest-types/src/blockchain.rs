@@ -315,6 +315,8 @@ pub enum ForkSpec {
     Osaka,
     /// BPO1 to BPO2 transition
     BPO1ToBPO2AtTime15k,
+    /// BPO2 to Amsterdam transition
+    BPO2ToAmsterdamAtTime15k,
     /// Amsterdam
     Amsterdam,
 }
