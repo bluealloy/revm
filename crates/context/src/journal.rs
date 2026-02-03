@@ -6,7 +6,7 @@ pub mod inner;
 pub mod warm_addresses;
 
 pub use context_interface::journaled_state::entry::{JournalEntry, JournalEntryTr};
-pub use inner::JournalInner;
+pub use inner::{JournalCfg, JournalInner};
 
 use bytecode::Bytecode;
 use context_interface::{
@@ -196,7 +196,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     #[inline]
     fn set_spec_id(&mut self, spec_id: SpecId) {
-        self.inner.spec = spec_id;
+        self.inner.cfg.spec = spec_id;
     }
 
     #[inline]
@@ -390,7 +390,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         load_code: bool,
         skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>> {
-        let spec = self.inner.spec;
+        let spec = self.inner.cfg.spec;
         self.inner
             .load_account_optional(&mut self.database, address, load_code, skip_cold_load)
             .map(|a| {
