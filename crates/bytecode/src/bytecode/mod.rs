@@ -67,7 +67,7 @@ impl Default for Bytecode {
 impl PartialEq for Bytecode {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.kind() == other.kind() && self.original_byte_slice() == other.original_byte_slice()
+        self.original_byte_slice() == other.original_byte_slice()
     }
 }
 
@@ -76,7 +76,6 @@ impl Eq for Bytecode {}
 impl core::hash::Hash for Bytecode {
     #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.kind().hash(state);
         self.original_byte_slice().hash(state);
     }
 }
