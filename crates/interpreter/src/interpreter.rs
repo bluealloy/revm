@@ -19,6 +19,7 @@ pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, resize_memory, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 pub use stack_arena::{StackArena, MAX_ARENA_FRAMES};
+use std::vec;
 
 // imports
 use crate::{
