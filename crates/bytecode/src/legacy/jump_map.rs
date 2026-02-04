@@ -13,7 +13,7 @@ pub struct JumpTable {
     drop: bool,
 }
 
-// SAFETY: JumpTable is immutable, and just a simple Box<[u8]>, but len.
+// SAFETY: JumpTable is immutable, and just a simple Box<[u8]>.
 unsafe impl Send for JumpTable {}
 unsafe impl Sync for JumpTable {}
 
