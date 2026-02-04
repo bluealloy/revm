@@ -5,7 +5,7 @@
 //! allocations and improves cache locality.
 
 use primitives::U256;
-use std::sync::Arc;
+use std::{sync::Arc, vec::Vec};
 
 /// Maximum number of frames the arena can support.
 pub const MAX_ARENA_FRAMES: usize = 16;
