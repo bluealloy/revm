@@ -1,27 +1,64 @@
 use bitvec::vec::BitVec;
 use core::fmt;
 use primitives::hex;
-use std::boxed::Box;
+use std::{borrow::Cow, cmp::Ordering};
 
 /// A table of valid `jump` destinations.
 ///
 /// It is immutable and memory efficient, with one bit per byte in the bytecode.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct JumpTable {
-    table: *const [u8],
+    table: Cow<'static, [u8]>,
     bit_len: usize,
-    drop: bool,
 }
 
-// SAFETY: JumpTable is immutable, and just a simple Box<[u8]>.
-unsafe impl Send for JumpTable {}
-unsafe impl Sync for JumpTable {}
+impl Clone for JumpTable {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            table: match &self.table {
+                Cow::Borrowed(b) => Cow::Borrowed(b),
+                Cow::Owned(o) => Cow::Owned(o.clone()),
+            },
+            bit_len: self.bit_len,
+        }
+    }
+}
 
 impl fmt::Debug for JumpTable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("JumpTable")
             .field("map", &hex::encode(self.as_slice()))
             .finish()
+    }
+}
+
+impl PartialEq for JumpTable {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.as_slice().eq(other.as_slice())
+    }
+}
+
+impl Eq for JumpTable {}
+
+impl PartialOrd for JumpTable {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for JumpTable {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.as_slice().cmp(other.as_slice())
+    }
+}
+
+impl std::hash::Hash for JumpTable {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.as_slice().hash(state);
     }
 }
 
@@ -59,7 +96,7 @@ impl JumpTable {
     #[inline]
     pub fn new(jumps: BitVec<u8>) -> Self {
         let bit_len = jumps.len();
-        Self::from_boxed_slice(jumps.into_vec().into_boxed_slice(), bit_len)
+        Self::from_vec(jumps.into_vec(), bit_len)
     }
 
     /// Constructs a jump map from raw bytes and length.
@@ -72,17 +109,16 @@ impl JumpTable {
     #[inline]
     pub fn from_slice(slice: &[u8], bit_len: usize) -> Self {
         Self::size_assert(slice.len(), bit_len);
-        Self::from_boxed_slice(slice.into(), bit_len)
+        Self::from_vec(slice.to_vec(), bit_len)
     }
 
     #[inline]
-    fn from_boxed_slice(slice: Box<[u8]>, bit_len: usize) -> Self {
+    fn from_vec(slice: Vec<u8>, bit_len: usize) -> Self {
         #[cfg(debug_assertions)]
         Self::size_assert(slice.len(), bit_len);
         Self {
-            table: Box::into_raw(slice),
+            table: slice.into(),
             bit_len,
-            drop: true,
         }
     }
 
@@ -97,9 +133,8 @@ impl JumpTable {
     pub fn from_static_slice(slice: &'static [u8], bit_len: usize) -> Self {
         Self::size_assert(slice.len(), bit_len);
         Self {
-            table: slice,
+            table: Cow::Borrowed(slice),
             bit_len,
-            drop: false,
         }
     }
 
@@ -118,7 +153,7 @@ impl JumpTable {
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         // SAFETY: always valid.
-        unsafe { &*self.table }
+        &self.table
     }
 
     /// Gets the bit length of the jump map.
@@ -136,15 +171,8 @@ impl JumpTable {
     /// Checks if `pc` is a valid jump destination.
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.bit_len && unsafe { *self.table.cast::<u8>().add(pc >> 3) & (1 << (pc & 7)) != 0 }
-    }
-}
-
-impl Drop for JumpTable {
-    fn drop(&mut self) {
-        if self.drop {
-            unsafe { drop(Box::from_raw(self.table.cast_mut())) };
-        }
+        pc < self.bit_len
+            && unsafe { *self.as_slice().as_ptr().add(pc >> 3) & (1 << (pc & 7)) != 0 }
     }
 }
 
