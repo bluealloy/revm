@@ -1,7 +1,7 @@
 use bitvec::vec::BitVec;
-use core::fmt;
+use core::{cmp::Ordering, fmt, hash};
 use primitives::hex;
-use std::{borrow::Cow, cmp::Ordering};
+use std::{borrow::Cow, vec::Vec};
 
 /// A table of valid `jump` destinations.
 ///
@@ -55,9 +55,9 @@ impl Ord for JumpTable {
     }
 }
 
-impl std::hash::Hash for JumpTable {
+impl hash::Hash for JumpTable {
     #[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.as_slice().hash(state);
     }
 }
