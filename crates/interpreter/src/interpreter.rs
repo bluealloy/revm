@@ -330,24 +330,6 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 }
 
-/* used for cargo asm
-pub fn asm_step(
-    interpreter: &mut Interpreter<EthInterpreter>,
-    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
-    host: &mut DummyHost,
-) {
-    interpreter.step(instruction_table, host);
-}
-
-pub fn asm_run(
-    interpreter: &mut Interpreter<EthInterpreter>,
-    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
-    host: &mut DummyHost,
-) {
-    interpreter.run_plain(instruction_table, host);
-}
-*/
-
 /// The result of an interpreter operation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
