@@ -328,6 +328,7 @@ mod tests {
             "Ordering should be equal after ignoring code in Ord"
         );
 
+        #[allow(clippy::mutable_key_type)] // Not observable
         let mut set = BTreeSet::new();
         assert!(set.insert(account1.clone()), "Inserted account1");
         assert!(
