@@ -31,7 +31,7 @@ impl StackArena {
     /// Creates a new stack arena with pre-allocated memory for all frames.
     pub fn new() -> Self {
         Self {
-            memory: Arc::new(vec![U256::ZERO; MAX_ARENA_FRAMES * STACK_LIMIT]),
+            memory: Arc::new(std::vec![U256::ZERO; MAX_ARENA_FRAMES * STACK_LIMIT]),
         }
     }
 

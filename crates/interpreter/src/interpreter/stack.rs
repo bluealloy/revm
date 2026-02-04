@@ -137,7 +137,7 @@ impl Stack {
     /// Instantiate a new stack with the [default stack limit][STACK_LIMIT].
     #[inline]
     pub fn new() -> Self {
-        let backing = Arc::new(vec![U256::ZERO; STACK_LIMIT]);
+        let backing = Arc::new(std::vec![U256::ZERO; STACK_LIMIT]);
         let ptr = backing.as_ptr().cast_mut();
         Self {
             ptr,
