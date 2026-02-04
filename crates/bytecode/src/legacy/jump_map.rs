@@ -8,8 +8,9 @@ use std::boxed::Box;
 /// It is immutable and memory efficient, with one bit per byte in the bytecode.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct JumpTable {
-    table: Box<[u8]>,
+    table: *const [u8],
     bit_len: usize,
+    drop: bool,
 }
 
 // SAFETY: JumpTable is immutable, and just a simple Box<[u8]>, but len.
@@ -37,7 +38,7 @@ impl serde::Serialize for JumpTable {
     where
         S: serde::Serializer,
     {
-        let mut bitvec = BitVec::<u8>::from_vec(self.table.to_vec());
+        let mut bitvec = BitVec::<u8>::from_vec(self.as_slice().to_vec());
         bitvec.resize(self.bit_len, false);
         bitvec.serialize(serializer)
     }
@@ -58,10 +59,7 @@ impl JumpTable {
     #[inline]
     pub fn new(jumps: BitVec<u8>) -> Self {
         let bit_len = jumps.len();
-        Self {
-            table: jumps.into_vec().into_boxed_slice(),
-            bit_len,
-        }
+        Self::from_boxed_slice(jumps.into_vec().into_boxed_slice(), bit_len)
     }
 
     /// Constructs a jump map from raw bytes and length.
@@ -73,24 +71,54 @@ impl JumpTable {
     /// Panics if number of bits in slice is less than bit_len.
     #[inline]
     pub fn from_slice(slice: &[u8], bit_len: usize) -> Self {
+        Self::size_assert(slice.len(), bit_len);
+        Self::from_boxed_slice(slice.into(), bit_len)
+    }
+
+    #[inline]
+    fn from_boxed_slice(slice: Box<[u8]>, bit_len: usize) -> Self {
+        #[cfg(debug_assertions)]
+        Self::size_assert(slice.len(), bit_len);
+        Self {
+            table: Box::into_raw(slice),
+            bit_len,
+            drop: true,
+        }
+    }
+
+    /// Constructs a jump map from raw bytes and length.
+    ///
+    /// Bit length represents number of used bits inside slice.
+    ///
+    /// # Panics
+    ///
+    /// Panics if number of bits in slice is less than bit_len.
+    #[inline]
+    pub fn from_static_slice(slice: &'static [u8], bit_len: usize) -> Self {
+        Self::size_assert(slice.len(), bit_len);
+        Self {
+            table: slice,
+            bit_len,
+            drop: false,
+        }
+    }
+
+    #[inline]
+    fn size_assert(len: usize, bit_len: usize) {
         const BYTE_LEN: usize = 8;
         assert!(
-            slice.len() * BYTE_LEN >= bit_len,
+            len * BYTE_LEN >= bit_len,
             "slice bit length {} is less than bit_len {}",
-            slice.len() * BYTE_LEN,
+            len * BYTE_LEN,
             bit_len
         );
-
-        Self {
-            table: slice.into(),
-            bit_len,
-        }
     }
 
     /// Gets the raw bytes of the jump map.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
-        &self.table
+        // SAFETY: always valid.
+        unsafe { &*self.table }
     }
 
     /// Gets the bit length of the jump map.
@@ -108,7 +136,15 @@ impl JumpTable {
     /// Checks if `pc` is a valid jump destination.
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.bit_len && unsafe { *self.table.as_ptr().add(pc >> 3) & (1 << (pc & 7)) != 0 }
+        pc < self.bit_len && unsafe { *self.table.cast::<u8>().add(pc >> 3) & (1 << (pc & 7)) != 0 }
+    }
+}
+
+impl Drop for JumpTable {
+    fn drop(&mut self) {
+        if self.drop {
+            unsafe { drop(Box::from_raw(self.table.cast_mut())) };
+        }
     }
 }
 

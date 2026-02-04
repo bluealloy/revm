@@ -143,6 +143,25 @@ impl Bytecode {
         }))
     }
 
+    /// Create a new legacy [`Bytecode`] without analyzing raw bytes.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the raw bytes are padded and the jump table is correct for the given bytecode.
+    pub unsafe fn new_legacy_unchecked(
+        original_len: usize,
+        bytecode: Bytes,
+        jump_table: JumpTable,
+    ) -> Self {
+        Self(Arc::new(BytecodeInner {
+            kind: BytecodeKind::LegacyAnalyzed,
+            original_len,
+            bytecode,
+            jump_table,
+            hash: OnceLock::new(),
+        }))
+    }
+
     /// Creates a new raw [`Bytecode`].
     ///
     /// # Panics
