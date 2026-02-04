@@ -189,8 +189,14 @@ where
 
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res =
-            Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input, arena, frame_index)?;
+        let res = Self::Frame::init_with_context(
+            new_frame,
+            ctx,
+            precompiles,
+            frame_input,
+            arena,
+            frame_index,
+        )?;
 
         Ok(res.map_item(|token| {
             if is_first_init {

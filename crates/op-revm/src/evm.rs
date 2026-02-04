@@ -10,7 +10,8 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::{interpreter::EthInterpreter, InterpreterResult},
-    primitives::U256, Database, Inspector,
+    primitives::U256,
+    Database, Inspector,
 };
 
 /// Optimism EVM extends the [`Evm`] type with Optimism specific types and logic.

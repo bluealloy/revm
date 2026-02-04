@@ -128,12 +128,22 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit, arena, frame_index);
+        interpreter.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            spec_id,
+            gas_limit,
+            arena,
+            frame_index,
+        );
         *checkpoint_ref = checkpoint;
     }
 
     /// Make call frame
     #[inline]
+    #[allow(clippy::too_many_arguments)]
     pub fn make_call_frame<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -380,9 +390,16 @@ impl EthFrame<EthInterpreter> {
         } = frame_init;
 
         match frame_input {
-            FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs, arena, frame_index)
-            }
+            FrameInput::Call(inputs) => Self::make_call_frame(
+                this,
+                ctx,
+                precompiles,
+                depth,
+                memory,
+                inputs,
+                arena,
+                frame_index,
+            ),
             FrameInput::Create(inputs) => {
                 Self::make_create_frame(this, ctx, depth, memory, inputs, arena, frame_index)
             }

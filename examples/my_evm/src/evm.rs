@@ -6,7 +6,8 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
-    primitives::U256, Database, Inspector,
+    primitives::U256,
+    Database, Inspector,
 };
 
 /// MyEvm variant of the EVM.
