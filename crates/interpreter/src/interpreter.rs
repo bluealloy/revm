@@ -8,6 +8,7 @@ mod return_data;
 mod runtime_flags;
 mod shared_memory;
 mod stack;
+mod stack_arena;
 
 use context_interface::cfg::GasParams;
 // re-exports
@@ -17,6 +18,7 @@ pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, resize_memory, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
+pub use stack_arena::{StackArena, MAX_ARENA_FRAMES};
 
 // imports
 use crate::{
@@ -24,7 +26,8 @@ use crate::{
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
-use primitives::{hardfork::SpecId, Bytes};
+use primitives::{hardfork::SpecId, Bytes, U256};
+use std::sync::Arc;
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
@@ -124,6 +127,8 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        stack_arena: Arc<Vec<U256>>,
+        frame_index: usize,
     ) {
         let Self {
             bytecode: bytecode_ref,
@@ -137,7 +142,9 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         } = self;
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
-        if stack.data().capacity() == 0 {
+        if frame_index < MAX_ARENA_FRAMES {
+            *stack = Stack::new_with_arena(stack_arena, frame_index);
+        } else if !stack.is_valid() {
             *stack = Stack::new();
         } else {
             stack.clear();

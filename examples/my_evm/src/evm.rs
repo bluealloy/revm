@@ -6,7 +6,7 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
-    Database, Inspector,
+    primitives::U256, Database, Inspector,
 };
 
 /// MyEvm variant of the EVM.
@@ -50,6 +50,7 @@ impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
             instruction: EthInstructions::new_mainnet(),
             precompiles: EthPrecompiles::default(),
             frame_stack: FrameStack::new(),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; 16 * 1024]),
         })
     }
 }

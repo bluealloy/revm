@@ -25,7 +25,7 @@ use primitives::{
     keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
-use std::{borrow::ToOwned, boxed::Box, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, sync::Arc, vec::Vec};
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -113,6 +113,8 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
+        arena: Arc<Vec<U256>>,
+        frame_index: usize,
     ) {
         let Self {
             data: data_ref,
@@ -126,7 +128,7 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
+        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit, arena, frame_index);
         *checkpoint_ref = checkpoint;
     }
 
@@ -143,6 +145,8 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
+        arena: Arc<Vec<U256>>,
+        frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -242,6 +246,8 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
+            arena,
+            frame_index,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -257,6 +263,8 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
+        arena: Arc<Vec<U256>>,
+        frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -343,6 +351,8 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             checkpoint,
+            arena,
+            frame_index,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -356,6 +366,8 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
+        arena: Arc<Vec<U256>>,
+        frame_index: usize,
     ) -> Result<
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
@@ -369,9 +381,11 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs, arena, frame_index)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => {
+                Self::make_create_frame(this, ctx, depth, memory, inputs, arena, frame_index)
+            }
             FrameInput::Empty => unreachable!(),
         }
     }

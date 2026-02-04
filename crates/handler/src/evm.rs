@@ -175,6 +175,12 @@ where
         frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<CTX>> {
         let is_first_init = self.frame_stack.index().is_none();
+        let frame_index = if is_first_init {
+            0
+        } else {
+            self.frame_stack.index().unwrap() + 1
+        };
+        let arena = self.stack_arena.clone();
         let new_frame = if is_first_init {
             self.frame_stack.start_init()
         } else {
@@ -183,7 +189,8 @@ where
 
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input)?;
+        let res =
+            Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input, arena, frame_index)?;
 
         Ok(res.map_item(|token| {
             if is_first_init {
