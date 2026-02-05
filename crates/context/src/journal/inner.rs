@@ -318,8 +318,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In case of EIP-7702 code with zero address, the bytecode will be erased.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
-        if let Bytecode::Eip7702(eip7702_bytecode) = &code {
-            if eip7702_bytecode.address().is_zero() {
+        if let Some(eip7702_address) = code.eip7702_address() {
+            if eip7702_address.is_zero() {
                 self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
                 return;
             }
@@ -706,8 +706,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         );
 
         // load delegate code if account is EIP-7702
-        if let Some(Bytecode::Eip7702(code)) = &account.info.code {
-            let address = code.address();
+        if let Some(address) = account
+            .info
+            .code
+            .as_ref()
+            .and_then(Bytecode::eip7702_address)
+        {
             let delegate_account = self
                 .load_account_optional(db, address, true, false)
                 .map_err(JournalLoadError::unwrap_db_error)?;

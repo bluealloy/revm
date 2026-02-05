@@ -16,9 +16,10 @@ impl<'a> BytecodeIterator<'a> {
     /// Creates a new iterator from a bytecode reference.
     #[inline]
     pub fn new(bytecode: &'a Bytecode) -> Self {
-        let bytes = match bytecode {
-            Bytecode::LegacyAnalyzed(_) => &bytecode.bytecode()[..],
-            Bytecode::Eip7702(_) => &[],
+        let bytes = if bytecode.is_legacy() {
+            &bytecode.bytecode()[..]
+        } else {
+            &[]
         };
         Self {
             bytes: bytes.iter(),
@@ -104,24 +105,20 @@ impl core::iter::FusedIterator for BytecodeIterator<'_> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::LegacyRawBytecode;
     use primitives::Bytes;
 
     #[test]
     fn test_simple_bytecode_iteration() {
         // Create a simple bytecode: PUSH1 0x01 PUSH1 0x02 ADD STOP
-        let bytecode_data = vec![
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[
             opcode::PUSH1,
             0x01,
             opcode::PUSH1,
             0x02,
             opcode::ADD,
             opcode::STOP,
-        ];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        ]));
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
-        // We should only see the opcodes, not the immediates
         assert_eq!(
             opcodes,
             vec![opcode::PUSH1, opcode::PUSH1, opcode::ADD, opcode::STOP]
@@ -130,8 +127,7 @@ mod tests {
 
     #[test]
     fn test_bytecode_with_various_push_sizes() {
-        // PUSH1 0x01, PUSH2 0x0203, PUSH3 0x040506, STOP
-        let bytecode_data = vec![
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[
             opcode::PUSH1,
             0x01,
             opcode::PUSH2,
@@ -142,9 +138,7 @@ mod tests {
             0x05,
             0x06,
             opcode::STOP,
-        ];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        ]));
 
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
 
@@ -157,23 +151,22 @@ mod tests {
 
     #[test]
     fn test_bytecode_skips_immediates() {
-        // Create a bytecode with various PUSH operations
-        let bytecode_data = vec![
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[
             opcode::PUSH1,
-            0x01, // PUSH1 0x01
+            0x01,
             opcode::PUSH2,
             0x02,
-            0x03,        // PUSH2 0x0203
-            opcode::ADD, // ADD
+            0x03,
+            opcode::ADD,
             opcode::PUSH3,
             0x04,
             0x05,
-            0x06, // PUSH3 0x040506
+            0x06,
             opcode::PUSH32,
             0x10,
             0x11,
             0x12,
-            0x13, // PUSH32 with 32 bytes of immediate data
+            0x13,
             0x14,
             0x15,
             0x16,
@@ -202,32 +195,10 @@ mod tests {
             0x2d,
             0x2e,
             0x2f,
-            opcode::MUL,  // MUL
-            opcode::STOP, // STOP
-        ];
+            opcode::MUL,
+            opcode::STOP,
+        ]));
 
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
-
-        // Use the iterator directly
-        let iter = BytecodeIterator::new(&bytecode);
-        let opcodes: Vec<u8> = iter.collect();
-
-        // Should only include the opcodes, not the immediates
-        assert_eq!(
-            opcodes,
-            vec![
-                opcode::PUSH1,
-                opcode::PUSH2,
-                opcode::ADD,
-                opcode::PUSH3,
-                opcode::PUSH32,
-                opcode::MUL,
-                opcode::STOP,
-            ]
-        );
-
-        // Use the method on the bytecode struct
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(
             opcodes,
@@ -245,50 +216,37 @@ mod tests {
 
     #[test]
     fn test_position_tracking() {
-        // PUSH1 0x01, PUSH1 0x02, ADD, STOP
-        let bytecode_data = vec![
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[
             opcode::PUSH1,
             0x01,
             opcode::PUSH1,
             0x02,
             opcode::ADD,
             opcode::STOP,
-        ];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
+        ]));
 
         let mut iter = bytecode.iter_opcodes();
 
-        // Start at position 0
         assert_eq!(iter.position(), 0);
         assert_eq!(iter.next(), Some(opcode::PUSH1));
-        // After PUSH1, position should be 2 (PUSH1 + immediate)
         assert_eq!(iter.position(), 2);
 
         assert_eq!(iter.next(), Some(opcode::PUSH1));
-        // After second PUSH1, position should be 4 (2 + PUSH1 + immediate)
         assert_eq!(iter.position(), 4);
 
         assert_eq!(iter.next(), Some(opcode::ADD));
-        // After ADD, position should be 5 (4 + ADD)
         assert_eq!(iter.position(), 5);
 
         assert_eq!(iter.next(), Some(opcode::STOP));
-        // After STOP, position should be 6 (5 + STOP)
         assert_eq!(iter.position(), 6);
 
-        // No more opcodes
         assert_eq!(iter.next(), None);
         assert_eq!(iter.position(), 6);
     }
 
     #[test]
     fn test_empty_bytecode() {
-        // Empty bytecode (just STOP)
-        let bytecode_data = vec![opcode::STOP];
-        let raw_bytecode = LegacyRawBytecode(Bytes::from(bytecode_data));
-        let bytecode = Bytecode::LegacyAnalyzed(raw_bytecode.into_analyzed_arc());
-
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::STOP]));
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::STOP]);
     }

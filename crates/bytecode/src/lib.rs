@@ -15,15 +15,14 @@ mod decode_errors;
 pub mod eip7702;
 /// Iterator for the bytecode.
 mod iter;
-/// Legacy bytecode.
-pub mod legacy;
+mod legacy;
 pub mod opcode;
 pub mod utils;
 
 /// Re-export of bitvec crate, used to store legacy bytecode jump table.
 pub use bitvec;
-pub use bytecode::Bytecode;
+pub use bytecode::{Bytecode, BytecodeKind};
 pub use decode_errors::BytecodeDecodeError;
 pub use iter::BytecodeIterator;
-pub use legacy::{JumpTable, LegacyAnalyzedBytecode, LegacyRawBytecode};
+pub use legacy::JumpTable;
 pub use opcode::OpCode;

@@ -4,16 +4,10 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
 use std::vec::Vec;
 
-/// Analyzes the bytecode for use in [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode).
+/// Analyzes the bytecode to produce a jump table and potentially padded bytecode.
 ///
-/// See [`LegacyAnalyzedBytecode`](crate::LegacyAnalyzedBytecode) for more details.
-///
-/// Prefer using [`LegacyAnalyzedBytecode::analyze`](crate::LegacyAnalyzedBytecode::analyze) instead.
-pub fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
-    if bytecode.is_empty() {
-        return (JumpTable::default(), Bytes::from_static(&[opcode::STOP]));
-    }
-
+/// Prefer using [`Bytecode::new_legacy`](crate::Bytecode::new_legacy) instead.
+pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
     let range = bytecode.as_ptr_range();
     let start = range.start;
@@ -109,13 +103,6 @@ mod tests {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::PUSH2, 0x02];
         let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
         assert_eq!(padded_bytecode.len(), bytecode.len() + 2);
-    }
-
-    #[test]
-    fn test_empty_bytecode_requires_stop() {
-        let bytecode = vec![];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.into());
-        assert_eq!(padded_bytecode.len(), 1); // Just STOP
     }
 
     #[test]
