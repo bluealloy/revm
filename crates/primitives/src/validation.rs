@@ -41,6 +41,7 @@ bitflags! {
     /// The default value is [`ALL`](Self::ALL), enabling all validation checks.
     /// Use [`ValidationChecks::empty()`] to start with no checks enabled.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     pub struct ValidationChecks: u16 {
         /// Validate chain ID matches (EIP-155).
         const CHAIN_ID = 1 << 0;
