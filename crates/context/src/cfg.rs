@@ -2,7 +2,7 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::GasParams;
-use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, hardfork::SpecId, ValidationChecks};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -46,8 +46,18 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// Useful to increase this because of tests.
     pub limit_contract_initcode_size: Option<usize>,
-    /// Skips the nonce validation against the account's nonce
+    /// Skips the nonce validation against the account's nonce.
+    ///
+    /// Deprecated: Use `disabled_checks` with `ValidationChecks::NONCE` instead.
     pub disable_nonce_check: bool,
+    /// Pre-computed disabled validation checks.
+    ///
+    /// This field stores which validation checks should be skipped.
+    /// Use builder methods like `disable_balance_check()` to modify.
+    ///
+    /// This replaces the individual `disable_*` boolean fields with a single
+    /// bitflag field for better performance and smaller memory footprint.
+    pub disabled_checks: ValidationChecks,
     /// Blob max count. EIP-7840 Add blob schedule to EL config files.
     ///
     /// If this config is not set, the check for max blobs will be skipped.
@@ -149,6 +159,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_initcode_size: None,
             spec,
             disable_nonce_check: false,
+            disabled_checks: ValidationChecks::empty(),
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
             blob_base_fee_update_fraction: None,
@@ -251,6 +262,7 @@ impl<SPEC> CfgEnv<SPEC> {
             limit_contract_initcode_size: self.limit_contract_initcode_size,
             spec,
             disable_nonce_check: self.disable_nonce_check,
+            disabled_checks: self.disabled_checks,
             tx_gas_limit_cap: self.tx_gas_limit_cap,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
@@ -310,6 +322,93 @@ impl<SPEC> CfgEnv<SPEC> {
     #[cfg(feature = "optional_eip7623")]
     pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
+        self
+    }
+
+    // === ValidationChecks builder methods ===
+
+    /// Set the disabled validation checks directly.
+    #[inline]
+    pub fn with_disabled_checks(mut self, checks: ValidationChecks) -> Self {
+        self.disabled_checks = checks;
+        self
+    }
+
+    /// Disable specific validation checks (adds to disabled set).
+    #[inline]
+    pub fn disable_checks(mut self, checks: ValidationChecks) -> Self {
+        self.disabled_checks.insert(checks);
+        self
+    }
+
+    /// Enable specific validation checks (removes from disabled set).
+    #[inline]
+    pub fn enable_checks(mut self, checks: ValidationChecks) -> Self {
+        self.disabled_checks.remove(checks);
+        self
+    }
+
+    /// Disable balance validation check.
+    #[inline]
+    pub fn disable_balance_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::BALANCE);
+        self
+    }
+
+    /// Disable nonce validation check.
+    #[inline]
+    pub fn disable_nonce_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::NONCE);
+        self
+    }
+
+    /// Disable base fee validation check.
+    #[inline]
+    pub fn disable_base_fee_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::BASE_FEE);
+        self
+    }
+
+    /// Disable priority fee validation check.
+    #[inline]
+    pub fn disable_priority_fee_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::PRIORITY_FEE);
+        self
+    }
+
+    /// Disable block gas limit validation check.
+    #[inline]
+    pub fn disable_block_gas_limit_check(mut self) -> Self {
+        self.disabled_checks
+            .insert(ValidationChecks::BLOCK_GAS_LIMIT);
+        self
+    }
+
+    /// Disable EIP-3607 (reject senders with code) validation check.
+    #[inline]
+    pub fn disable_eip3607_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::EIP3607);
+        self
+    }
+
+    /// Disable EIP-7623 floor gas validation check.
+    #[inline]
+    pub fn disable_eip7623_check(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::EIP7623);
+        self
+    }
+
+    /// Disable all caller-related validation checks (nonce, balance, EIP-3607).
+    #[inline]
+    pub fn disable_caller_checks(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::CALLER);
+        self
+    }
+
+    /// Disable all gas and fee validation checks.
+    #[inline]
+    pub fn disable_gas_fee_checks(mut self) -> Self {
+        self.disabled_checks.insert(ValidationChecks::GAS_FEES);
         self
     }
 }
@@ -501,6 +600,68 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
+    }
+
+    /// Returns the disabled validation checks.
+    ///
+    /// This returns the stored `disabled_checks` field combined with any
+    /// legacy feature-gated disabled checks for backwards compatibility.
+    #[inline]
+    fn disabled_validation_checks(&self) -> ValidationChecks {
+        let mut disabled = self.disabled_checks;
+
+        // Combine with legacy fields for backwards compatibility
+        if !self.tx_chain_id_check {
+            disabled.insert(ValidationChecks::CHAIN_ID);
+        }
+        if self.disable_nonce_check {
+            disabled.insert(ValidationChecks::NONCE);
+        }
+
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_balance_check")] {
+                if self.disable_balance_check {
+                    disabled.insert(ValidationChecks::BALANCE);
+                }
+            }
+        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_block_gas_limit")] {
+                if self.disable_block_gas_limit {
+                    disabled.insert(ValidationChecks::BLOCK_GAS_LIMIT);
+                }
+            }
+        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_eip3607")] {
+                if self.disable_eip3607 {
+                    disabled.insert(ValidationChecks::EIP3607);
+                }
+            }
+        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_eip7623")] {
+                if self.disable_eip7623 {
+                    disabled.insert(ValidationChecks::EIP7623);
+                }
+            }
+        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_no_base_fee")] {
+                if self.disable_base_fee {
+                    disabled.insert(ValidationChecks::BASE_FEE);
+                }
+            }
+        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_priority_fee_check")] {
+                if self.disable_priority_fee_check {
+                    disabled.insert(ValidationChecks::PRIORITY_FEE);
+                }
+            }
+        }
+
+        disabled
     }
 }
 
