@@ -85,7 +85,8 @@ pub fn validate_account_nonce_and_code(
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
 ) -> Result<(), InvalidTransaction> {
-    let mut checks = ValidationChecks::ALL;
+    // Start with CALLER checks only (NONCE, BALANCE, EIP3607) - not ALL
+    let mut checks = ValidationChecks::CALLER;
     if is_eip3607_disabled {
         checks.remove(ValidationChecks::EIP3607);
     }

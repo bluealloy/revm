@@ -78,11 +78,31 @@ pub trait Cfg {
 
     /// Returns the validation checks that are disabled.
     ///
-    /// This method aggregates all the individual `is_*_disabled()` checks into a single
-    /// bitflag value, allowing efficient validation configuration without multiple method calls.
+    /// This method aggregates the individual `is_*_disabled()` methods into a single
+    /// [`ValidationChecks`] bitflag value, enabling efficient validation configuration.
     ///
-    /// The default implementation computes the disabled checks from individual methods.
-    /// Implementations can override this to pre-compute the value for better performance.
+    /// # Covered Checks
+    ///
+    /// The following checks can be disabled via their corresponding methods:
+    /// - [`CHAIN_ID`](ValidationChecks::CHAIN_ID) - via [`tx_chain_id_check()`](Self::tx_chain_id_check) (inverted)
+    /// - [`BASE_FEE`](ValidationChecks::BASE_FEE) - via [`is_base_fee_check_disabled()`](Self::is_base_fee_check_disabled)
+    /// - [`PRIORITY_FEE`](ValidationChecks::PRIORITY_FEE) - via [`is_priority_fee_check_disabled()`](Self::is_priority_fee_check_disabled)
+    /// - [`BLOCK_GAS_LIMIT`](ValidationChecks::BLOCK_GAS_LIMIT) - via [`is_block_gas_limit_disabled()`](Self::is_block_gas_limit_disabled)
+    /// - [`NONCE`](ValidationChecks::NONCE) - via [`is_nonce_check_disabled()`](Self::is_nonce_check_disabled)
+    /// - [`BALANCE`](ValidationChecks::BALANCE) - via [`is_balance_check_disabled()`](Self::is_balance_check_disabled)
+    /// - [`EIP3607`](ValidationChecks::EIP3607) - via [`is_eip3607_disabled()`](Self::is_eip3607_disabled)
+    /// - [`EIP7623`](ValidationChecks::EIP7623) - via [`is_eip7623_disabled()`](Self::is_eip7623_disabled)
+    ///
+    /// # Not Covered
+    ///
+    /// The following checks are always enabled (cannot be disabled via this trait):
+    /// `TX_GAS_LIMIT`, `BLOB_FEE`, `AUTH_LIST`, `MAX_INITCODE_SIZE`, `HEADER`
+    ///
+    /// # Performance
+    ///
+    /// The default implementation calls 8 individual methods. Implementations can
+    /// override this to return a pre-computed value for better performance.
+    #[inline]
     fn disabled_validation_checks(&self) -> ValidationChecks {
         let mut disabled = ValidationChecks::empty();
         if !self.tx_chain_id_check() {
@@ -110,6 +130,15 @@ pub trait Cfg {
             disabled |= ValidationChecks::EIP7623;
         }
         disabled
+    }
+
+    /// Returns the validation checks that are enabled.
+    ///
+    /// This is the inverse of [`disabled_validation_checks()`](Self::disabled_validation_checks),
+    /// returning `ALL - disabled`.
+    #[inline]
+    fn enabled_validation_checks(&self) -> ValidationChecks {
+        ValidationChecks::ALL - self.disabled_validation_checks()
     }
 }
 

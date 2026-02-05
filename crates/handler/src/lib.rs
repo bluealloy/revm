@@ -5,6 +5,9 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// Used in tests only, but kept in dependencies for feature propagation
+use bytecode as _;
+
 // Mainnet related handlers.
 
 /// EVM execution API traits and implementations.

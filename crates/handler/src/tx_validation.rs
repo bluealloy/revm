@@ -250,10 +250,37 @@ impl TxValidator {
         self
     }
 
-    /// Set custom validation checks.
+    /// Set custom validation checks (replaces all existing checks).
     #[inline]
     pub fn with_checks(mut self, checks: ValidationChecks) -> Self {
         self.checks = checks;
+        self
+    }
+
+    /// Set the spec version.
+    #[inline]
+    pub fn with_spec(mut self, spec: SpecId) -> Self {
+        self.spec = spec;
+        self
+    }
+
+    /// Disable specific validation checks (additive removal).
+    ///
+    /// Unlike [`with_checks`](Self::with_checks), this removes checks from the
+    /// current set rather than replacing all checks.
+    #[inline]
+    pub fn with_disabled_checks(mut self, checks: ValidationChecks) -> Self {
+        self.checks.remove(checks);
+        self
+    }
+
+    /// Enable specific validation checks (additive insertion).
+    ///
+    /// Unlike [`with_checks`](Self::with_checks), this adds checks to the
+    /// current set rather than replacing all checks.
+    #[inline]
+    pub fn with_enabled_checks(mut self, checks: ValidationChecks) -> Self {
+        self.checks.insert(checks);
         self
     }
 
@@ -623,14 +650,13 @@ impl TxValidator {
     ) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         if self.should_check(ValidationChecks::EIP3607) {
-            let bytecode = match caller_info.code.as_ref() {
-                Some(code) => code,
-                None => &bytecode::Bytecode::default(),
-            };
-
-            if !bytecode.is_empty() && !bytecode.is_eip7702() {
-                return Err(InvalidTransaction::RejectCallerWithCode);
+            if let Some(code) = caller_info.code.as_ref() {
+                // Reject if code is non-empty and not an EIP-7702 delegation
+                if !code.is_empty() && !code.is_eip7702() {
+                    return Err(InvalidTransaction::RejectCallerWithCode);
+                }
             }
+            // If code is None, it's empty - check passes
         }
 
         // Nonce validation
@@ -1070,9 +1096,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_validation_checks_default() {
+    fn test_validation_checks_default_is_all() {
+        // ValidationChecks::default() now returns ALL for safety
         let checks = ValidationChecks::default();
-        assert!(checks.is_empty());
+        assert_eq!(checks, ValidationChecks::ALL);
     }
 
     #[test]
@@ -1082,6 +1109,11 @@ mod tests {
         assert!(checks.contains(ValidationChecks::NONCE));
         assert!(checks.contains(ValidationChecks::BALANCE));
         assert!(checks.contains(ValidationChecks::EIP3607));
+        // Verify ALL = TX_STATELESS | CALLER
+        assert_eq!(
+            checks,
+            ValidationChecks::TX_STATELESS | ValidationChecks::CALLER
+        );
     }
 
     #[test]
@@ -1239,5 +1271,76 @@ mod tests {
         assert!(checks.contains(ValidationChecks::BLOB_FEE));
         assert!(checks.contains(ValidationChecks::BLOCK_GAS_LIMIT));
         assert!(checks.contains(ValidationChecks::EIP7623));
+    }
+
+    #[test]
+    fn test_with_spec() {
+        let validator = TxValidator::new(SpecId::CANCUN).with_spec(SpecId::PRAGUE);
+        assert_eq!(validator.spec, SpecId::PRAGUE);
+    }
+
+    #[test]
+    fn test_with_disabled_checks() {
+        let validator = TxValidator::new(SpecId::CANCUN)
+            .with_disabled_checks(ValidationChecks::NONCE | ValidationChecks::BALANCE);
+
+        assert!(!validator.should_check(ValidationChecks::NONCE));
+        assert!(!validator.should_check(ValidationChecks::BALANCE));
+        assert!(validator.should_check(ValidationChecks::CHAIN_ID)); // others preserved
+    }
+
+    #[test]
+    fn test_with_enabled_checks() {
+        let validator = TxValidator::new(SpecId::CANCUN)
+            .skip_all()
+            .with_enabled_checks(ValidationChecks::NONCE | ValidationChecks::CHAIN_ID);
+
+        assert!(validator.should_check(ValidationChecks::NONCE));
+        assert!(validator.should_check(ValidationChecks::CHAIN_ID));
+        assert!(!validator.should_check(ValidationChecks::BALANCE)); // not enabled
+    }
+
+    #[test]
+    fn test_tx_stateless_composite() {
+        let checks = ValidationChecks::TX_STATELESS;
+        assert!(checks.contains(ValidationChecks::CHAIN_ID));
+        assert!(checks.contains(ValidationChecks::GAS_FEES));
+        assert!(checks.contains(ValidationChecks::AUTH_LIST));
+        assert!(checks.contains(ValidationChecks::MAX_INITCODE_SIZE));
+        assert!(checks.contains(ValidationChecks::HEADER));
+        // Should NOT contain caller checks
+        assert!(!checks.contains(ValidationChecks::NONCE));
+        assert!(!checks.contains(ValidationChecks::BALANCE));
+        assert!(!checks.contains(ValidationChecks::EIP3607));
+    }
+
+    #[test]
+    fn test_caller_composite() {
+        let checks = ValidationChecks::CALLER;
+        assert!(checks.contains(ValidationChecks::NONCE));
+        assert!(checks.contains(ValidationChecks::BALANCE));
+        assert!(checks.contains(ValidationChecks::EIP3607));
+        // Should NOT contain stateless checks
+        assert!(!checks.contains(ValidationChecks::CHAIN_ID));
+        assert!(!checks.contains(ValidationChecks::BASE_FEE));
+    }
+
+    #[test]
+    fn test_enable_all_restores_all_checks() {
+        let validator = TxValidator::new(SpecId::CANCUN).skip_all().enable_all();
+        assert!(validator.has_all_checks());
+        assert_eq!(validator.enabled_checks(), ValidationChecks::ALL);
+    }
+
+    #[test]
+    fn test_validate_caller_with_empty_checks() {
+        let validator = TxValidator::new(SpecId::CANCUN).skip_all();
+        let caller_info = AccountInfo {
+            nonce: 999,                            // wrong nonce
+            code: Some(bytecode::Bytecode::new()), // has code
+            ..Default::default()
+        };
+        // Should pass because all checks are skipped
+        assert!(validator.validate_caller(&caller_info, 0).is_ok());
     }
 }
