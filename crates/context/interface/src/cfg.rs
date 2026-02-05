@@ -7,7 +7,7 @@ pub use gas_params::{GasId, GasParams};
 
 use auto_impl::auto_impl;
 use core::{fmt::Debug, hash::Hash};
-use primitives::{hardfork::SpecId, Address, TxKind, U256};
+use primitives::{hardfork::SpecId, Address, TxKind, ValidationChecks, U256};
 
 /// Configuration for the EVM.
 #[auto_impl(&, &mut, Box, Arc)]
@@ -75,6 +75,42 @@ pub trait Cfg {
 
     /// Returns the gas params for the EVM.
     fn gas_params(&self) -> &GasParams;
+
+    /// Returns the validation checks that are disabled.
+    ///
+    /// This method aggregates all the individual `is_*_disabled()` checks into a single
+    /// bitflag value, allowing efficient validation configuration without multiple method calls.
+    ///
+    /// The default implementation computes the disabled checks from individual methods.
+    /// Implementations can override this to pre-compute the value for better performance.
+    fn disabled_validation_checks(&self) -> ValidationChecks {
+        let mut disabled = ValidationChecks::empty();
+        if !self.tx_chain_id_check() {
+            disabled |= ValidationChecks::CHAIN_ID;
+        }
+        if self.is_base_fee_check_disabled() {
+            disabled |= ValidationChecks::BASE_FEE;
+        }
+        if self.is_priority_fee_check_disabled() {
+            disabled |= ValidationChecks::PRIORITY_FEE;
+        }
+        if self.is_block_gas_limit_disabled() {
+            disabled |= ValidationChecks::BLOCK_GAS_LIMIT;
+        }
+        if self.is_nonce_check_disabled() {
+            disabled |= ValidationChecks::NONCE;
+        }
+        if self.is_balance_check_disabled() {
+            disabled |= ValidationChecks::BALANCE;
+        }
+        if self.is_eip3607_disabled() {
+            disabled |= ValidationChecks::EIP3607;
+        }
+        if self.is_eip7623_disabled() {
+            disabled |= ValidationChecks::EIP7623;
+        }
+        disabled
+    }
 }
 
 /// What bytecode analysis to perform

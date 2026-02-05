@@ -2,7 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::tx_validation::{self, ValidationChecks, ValidationKind, ValidationParams};
+use crate::tx_validation::{self, ValidationKind, ValidationParams};
 use crate::{EvmTr, PrecompileProvider};
 use context_interface::{
     journaled_state::{account::JournaledAccountTr, JournalTr},
@@ -10,8 +10,7 @@ use context_interface::{
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
 };
-use core::cmp::Ordering;
-use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
+use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, ValidationChecks, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.

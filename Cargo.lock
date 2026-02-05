@@ -3634,7 +3634,6 @@ dependencies = [
  "alloy-signer",
  "alloy-signer-local",
  "auto_impl",
- "bitflags",
  "derive-where",
  "revm-bytecode",
  "revm-context",
@@ -3710,6 +3709,7 @@ name = "revm-primitives"
 version = "22.0.0"
 dependencies = [
  "alloy-primitives",
+ "bitflags",
  "num_enum",
  "once_cell",
  "serde",

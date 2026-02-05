@@ -26,6 +26,7 @@ alloy-primitives = { workspace = true, features = [
 ] }
 
 # mics
+bitflags.workspace = true
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.21", default-features = false, features = [
     "alloc",
@@ -37,8 +38,8 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = ["alloy-primitives/std", "serde?/std", "num_enum/std", "once_cell/std"]
-serde = ["dep:serde", "alloy-primitives/serde"]
+std = ["alloy-primitives/std", "bitflags/std", "serde?/std", "num_enum/std", "once_cell/std"]
+serde = ["dep:serde", "alloy-primitives/serde", "bitflags/serde"]
 map-foldhash = ["alloy-primitives/map-foldhash"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]

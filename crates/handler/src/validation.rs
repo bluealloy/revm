@@ -35,7 +35,12 @@ pub fn validate_priority_fee_tx(
     base_fee: Option<u128>,
     disable_priority_fee_check: bool,
 ) -> Result<(), InvalidTransaction> {
-    tx_validation::validate_priority_fee(max_fee, max_priority_fee, base_fee, disable_priority_fee_check)
+    tx_validation::validate_priority_fee(
+        max_fee,
+        max_priority_fee,
+        base_fee,
+        disable_priority_fee_check,
+    )
 }
 
 /// Validate EIP-4844 transaction.

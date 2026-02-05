@@ -43,7 +43,6 @@ pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
+pub use primitives::ValidationChecks;
 pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};
-pub use tx_validation::{
-    CallerFee, TxValidator, ValidationChecks, ValidationKind, ValidationParams,
-};
+pub use tx_validation::{CallerFee, TxValidator, ValidationKind, ValidationParams};

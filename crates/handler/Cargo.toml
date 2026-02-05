@@ -29,7 +29,6 @@ state.workspace = true
 bytecode.workspace = true
 
 auto_impl.workspace = true
-bitflags.workspace = true
 derive-where.workspace = true
 
 # Optional
@@ -45,7 +44,6 @@ alloy-signer-local.workspace = true
 default = ["std"]
 std = [
 	"serde?/std",
-	"bitflags/std",
 	"bytecode/std",
 	"context/std",
 	"context-interface/std",
@@ -58,7 +56,6 @@ std = [
 ]
 serde = [
 	"dep:serde",
-	"bitflags/serde",
 	"primitives/serde",
 	"state/serde",
 	"context-interface/serde",
