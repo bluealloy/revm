@@ -37,7 +37,7 @@
 //! let validator = TxValidator::new(SpecId::CANCUN)
 //!     .skip_all()
 //!     .enable_chain_id_check()
-//!     .enable_gas_checks();
+//!     .enable_gas_fee_checks();
 //! ```
 
 use context_interface::{
@@ -56,6 +56,9 @@ use state::AccountInfo;
 /// It can be configured to skip certain checks (e.g., for L2 deposit transactions)
 /// or to validate only specific aspects of a transaction.
 ///
+/// All builder methods return `Self` and should be chained. The `#[must_use]`
+/// attribute ensures the result is not accidentally discarded.
+///
 /// # Example
 ///
 /// ```ignore
@@ -70,6 +73,7 @@ use state::AccountInfo;
 ///     .skip_balance_check();
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[must_use]
 pub struct TxValidator {
     /// Ethereum specification version.
     pub spec: SpecId,
@@ -498,9 +502,9 @@ impl TxValidator {
         self
     }
 
-    /// Enable all gas-related checks.
+    /// Enable all gas and fee related checks.
     #[inline]
-    pub fn enable_gas_checks(mut self) -> Self {
+    pub fn enable_gas_fee_checks(mut self) -> Self {
         self.checks.insert(ValidationChecks::GAS_FEES);
         self
     }
@@ -883,12 +887,27 @@ pub fn validate_eip4844_tx(
     Ok(())
 }
 
-/// Result of fee calculation.
+/// Result of caller fee calculation.
+///
+/// Returned by [`TxValidator::caller_fee`] to provide both the fee to deduct
+/// and the resulting balance.
+///
+/// # Usage
+///
+/// After calling `caller_fee()`, use these values to update state:
+/// - Set caller's balance to `new_balance`
+/// - The `gas_fee_to_deduct` is provided for accounting/logging purposes
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CallerFee {
-    /// The gas fee amount that was deducted.
+    /// The gas fee amount calculated for the transaction.
+    ///
+    /// This is the value that was subtracted from the caller's balance to
+    /// compute `new_balance`. It does NOT include the transaction value.
     pub gas_fee_to_deduct: U256,
-    /// The new balance after deducting gas fees.
+    /// The caller's new balance after deducting gas fees.
+    ///
+    /// This is the balance that should be set on the caller's account.
+    /// The transaction value has NOT been deducted from this balance yet.
     pub new_balance: U256,
 }
 
@@ -1246,10 +1265,10 @@ mod tests {
         assert!(!validator.should_check(ValidationChecks::BLOCK_GAS_LIMIT));
         assert!(validator.should_check(ValidationChecks::NONCE)); // other checks preserved
 
-        // Test enable_gas_checks
+        // Test enable_gas_fee_checks
         let validator = TxValidator::new(SpecId::CANCUN)
             .skip_all()
-            .enable_gas_checks();
+            .enable_gas_fee_checks();
         assert!(validator.should_check(ValidationChecks::BASE_FEE));
         assert!(validator.should_check(ValidationChecks::PRIORITY_FEE));
         assert!(validator.should_check(ValidationChecks::BLOCK_GAS_LIMIT));
