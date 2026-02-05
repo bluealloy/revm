@@ -70,6 +70,18 @@ pub trait Cfg {
     /// Returns whether the fee charge is disabled.
     fn is_fee_charge_disabled(&self) -> bool;
 
+    /// Returns whether EIP-7708 (ETH transfers emit logs) is disabled.
+    fn is_eip7708_disabled(&self) -> bool;
+
+    /// Returns whether EIP-7708 delayed burn logging is disabled.
+    ///
+    /// When enabled, revm tracks all self-destructed addresses and emits logs for
+    /// accounts that still have remaining balance at the end of the transaction.
+    /// This can be disabled for performance reasons as it requires storing and
+    /// iterating over all self-destructed accounts. When disabled, the logging
+    /// can be done outside of revm when applying accounts to database state.
+    fn is_eip7708_delayed_burn_disabled(&self) -> bool;
+
     /// Returns the limit in bytes for the memory buffer.
     fn memory_limit(&self) -> u64;
 
