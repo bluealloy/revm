@@ -893,7 +893,7 @@ mod tests {
                     status: AccountStatus::Changed,
                     info: Some(existing_account_with_storage_info.clone()),
                     previous_status: AccountStatus::Changed,
-                    previous_info: Some(existing_account_with_storage_info.clone()),
+                    previous_info: Some(existing_account_with_storage_info),
                     storage: HashMap::from_iter([
                         (
                             slot1,
@@ -1002,7 +1002,7 @@ mod tests {
                 existing_account_address,
                 BundleAccount {
                     info: Some(existing_account_info.clone()),
-                    original_info: Some(existing_account_info.clone()),
+                    original_info: Some(existing_account_info),
                     storage: HashMap::from_iter([(
                         slot2,
                         StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(2))
