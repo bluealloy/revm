@@ -130,8 +130,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         match exec_result {
             Ok(output) => {
                 result.gas.record_refund(output.gas_refunded);
-                let underflow = result.gas.record_cost(output.gas_used);
-                assert!(underflow, "Gas underflow is not possible");
+                let had_enough_gas = result.gas.record_cost(output.gas_used);
+                assert!(had_enough_gas, "Gas underflow is not possible");
                 result.result = if output.reverted {
                     InstructionResult::Revert
                 } else {
