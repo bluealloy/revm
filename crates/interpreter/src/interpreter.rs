@@ -144,7 +144,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
         if frame_index < MAX_ARENA_FRAMES {
-            *stack = Stack::new_with_arena(stack_arena, frame_index);
+            stack.reinit_with_arena(stack_arena, frame_index);
         } else if !stack.is_valid() {
             *stack = Stack::new();
         } else {

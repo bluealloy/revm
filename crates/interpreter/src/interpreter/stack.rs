@@ -161,6 +161,19 @@ impl Stack {
         }
     }
 
+    /// Reinitialize this stack to use a different frame slot in the arena.
+    ///
+    /// This avoids dropping and reallocating - just updates the pointer and length.
+    /// The arena must have been pre-allocated with at least
+    /// `(frame_index + 1) * STACK_LIMIT` elements.
+    #[inline]
+    pub fn reinit_with_arena(&mut self, arena: Arc<Vec<U256>>, frame_index: usize) {
+        debug_assert!(arena.len() >= (frame_index + 1) * STACK_LIMIT);
+        self.ptr = unsafe { arena.as_ptr().cast_mut().add(frame_index * STACK_LIMIT) };
+        self.len = 0;
+        self._backing = arena;
+    }
+
     /// Instantiate a new invalid Stack.
     #[inline]
     pub fn invalid() -> Self {
