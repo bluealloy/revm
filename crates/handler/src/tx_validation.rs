@@ -8,10 +8,9 @@
 //!
 //! ```ignore
 //! use revm_handler::TxValidator;
-//! use primitives::hardfork::SpecId;
 //!
-//! // Create validator from EVM context
-//! let validator = TxValidator::from_cfg_and_block(&cfg, &block);
+//! // Create validator from EVM context (holds references, zero-cost initialization)
+//! let validator = TxValidator::new(&cfg, &block);
 //!
 //! // Validate transaction (stateless)
 //! validator.validate_tx(&tx)?;
@@ -26,15 +25,15 @@
 //!
 //! ```ignore
 //! // Skip all validation (system/deposit transactions)
-//! let validator = TxValidator::new(SpecId::CANCUN).skip_all();
+//! let validator = TxValidator::new(&cfg, &block).skip_all();
 //!
 //! // Skip specific checks
-//! let validator = TxValidator::new(SpecId::CANCUN)
+//! let validator = TxValidator::new(&cfg, &block)
 //!     .skip_nonce_check()
 //!     .skip_balance_check();
 //!
 //! // Enable only specific checks
-//! let validator = TxValidator::new(SpecId::CANCUN)
+//! let validator = TxValidator::new(&cfg, &block)
 //!     .skip_all()
 //!     .enable_chain_id_check()
 //!     .enable_gas_fee_checks();
@@ -50,79 +49,62 @@ use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloor
 use primitives::{eip4844, hardfork::SpecId, ValidationChecks, B256, U256};
 use state::AccountInfo;
 
-/// Transaction validator with configurable checks.
+/// Transaction validator that works with Cfg and Block references.
 ///
 /// This struct provides a fluent API for validating Ethereum transactions.
-/// It can be configured to skip certain checks (e.g., for L2 deposit transactions)
-/// or to validate only specific aspects of a transaction.
+/// It holds references to the configuration and block, avoiding data copying
+/// and providing efficient validation.
 ///
-/// All builder methods return `Self` and should be chained. The `#[must_use]`
-/// attribute ensures the result is not accidentally discarded.
+/// The validator can be configured to skip certain checks (e.g., for L2 deposit
+/// transactions) or to validate only specific aspects of a transaction.
+///
+/// # Type Parameters
+///
+/// - `C`: Configuration type implementing [`Cfg`]. Can be a reference (`&CfgEnv`),
+///   owned value, `Arc<CfgEnv>`, etc.
+/// - `B`: Block type implementing [`Block`]. Can be a reference (`&BlockEnv`),
+///   owned value, `Arc<BlockEnv>`, etc.
 ///
 /// # Example
 ///
 /// ```ignore
-/// // Standard validation
-/// let validator = TxValidator::from_cfg_and_block(&cfg, &block);
+/// // Standard validation with references (recommended)
+/// let validator = TxValidator::new(&cfg, &block);
 /// validator.validate_tx(&tx)?;
 ///
 /// // Optimism deposit - skip fee checks
-/// let validator = TxValidator::new(SpecId::CANCUN)
+/// let validator = TxValidator::new(&cfg, &block)
 ///     .skip_base_fee_check()
 ///     .skip_priority_fee_check()
 ///     .skip_balance_check();
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 #[must_use]
-pub struct TxValidator {
-    /// Ethereum specification version.
-    pub spec: SpecId,
-    /// Chain ID for validation.
-    pub chain_id: u64,
-    /// Base fee from block (None skips base fee check).
-    pub base_fee: Option<u128>,
-    /// Blob gas price from block.
-    pub blob_gasprice: Option<u128>,
-    /// Transaction gas limit cap (EIP-7825).
-    pub tx_gas_limit_cap: u64,
-    /// Block gas limit.
-    pub block_gas_limit: u64,
-    /// Maximum blobs per transaction.
-    pub max_blobs_per_tx: Option<u64>,
-    /// Maximum initcode size.
-    pub max_initcode_size: usize,
-    /// Enabled validation checks.
-    pub checks: ValidationChecks,
+pub struct TxValidator<C: Cfg, B: Block> {
+    /// Configuration reference.
+    pub cfg: C,
+    /// Block reference.
+    pub block: B,
+    /// Override for validation checks.
+    /// If None, uses `cfg.enabled_validation_checks()`.
+    checks_override: Option<ValidationChecks>,
 }
 
-impl Default for TxValidator {
+impl<C: Cfg, B: Block> TxValidator<C, B> {
+    /// Create a new validator from Cfg and Block.
+    ///
+    /// This is the primary constructor. Pass references for zero-cost initialization:
+    /// ```ignore
+    /// let validator = TxValidator::new(&cfg, &block);
+    /// ```
     #[inline]
-    fn default() -> Self {
+    pub fn new(cfg: C, block: B) -> Self {
         Self {
-            spec: SpecId::PRAGUE,
-            chain_id: 1,
-            base_fee: None,
-            blob_gasprice: None,
-            tx_gas_limit_cap: u64::MAX,
-            block_gas_limit: u64::MAX,
-            max_blobs_per_tx: None,
-            max_initcode_size: primitives::eip3860::MAX_INITCODE_SIZE,
-            checks: ValidationChecks::ALL,
+            cfg,
+            block,
+            checks_override: None,
         }
     }
-}
-
-impl TxValidator {
-    /// Create a new validator for the given spec with all checks enabled.
-    #[inline]
-    pub fn new(spec: SpecId) -> Self {
-        Self {
-            spec,
-            ..Default::default()
-        }
-    }
-
-    // === Preset Constructors ===
 
     /// Create validator for L2 deposit transactions.
     ///
@@ -132,14 +114,16 @@ impl TxValidator {
     /// - No nonce check (system-managed)
     /// - Keeps: chain ID, block gas limit, initcode size, auth list
     #[inline]
-    pub fn for_deposit(spec: SpecId) -> Self {
+    pub fn for_deposit(cfg: C, block: B) -> Self {
         Self {
-            spec,
-            checks: ValidationChecks::CHAIN_ID
-                | ValidationChecks::BLOCK_GAS_LIMIT
-                | ValidationChecks::AUTH_LIST
-                | ValidationChecks::MAX_INITCODE_SIZE,
-            ..Default::default()
+            cfg,
+            block,
+            checks_override: Some(
+                ValidationChecks::CHAIN_ID
+                    | ValidationChecks::BLOCK_GAS_LIMIT
+                    | ValidationChecks::AUTH_LIST
+                    | ValidationChecks::MAX_INITCODE_SIZE,
+            ),
         }
     }
 
@@ -151,13 +135,15 @@ impl TxValidator {
     /// - No header validation (no block context yet)
     /// - No nonce/balance/EIP-3607 checks (state may change before inclusion)
     #[inline]
-    pub fn for_tx_pool(spec: SpecId) -> Self {
+    pub fn for_tx_pool(cfg: C, block: B) -> Self {
         Self {
-            spec,
-            checks: ValidationChecks::TX_STATELESS
-                - ValidationChecks::BLOCK_GAS_LIMIT
-                - ValidationChecks::HEADER,
-            ..Default::default()
+            cfg,
+            block,
+            checks_override: Some(
+                ValidationChecks::TX_STATELESS
+                    - ValidationChecks::BLOCK_GAS_LIMIT
+                    - ValidationChecks::HEADER,
+            ),
         }
     }
 
@@ -168,123 +154,100 @@ impl TxValidator {
     /// - Skip balance check (can ensure profitability differently)
     /// - Keep all stateless transaction checks
     #[inline]
-    pub fn for_block_builder(spec: SpecId) -> Self {
+    pub fn for_block_builder(cfg: C, block: B) -> Self {
         Self {
-            spec,
-            checks: ValidationChecks::TX_STATELESS,
-            ..Default::default()
+            cfg,
+            block,
+            checks_override: Some(ValidationChecks::TX_STATELESS),
         }
     }
 
-    /// Create validator from Cfg and Block traits.
+    // === Accessors ===
+
+    /// Returns the spec ID from cfg.
+    #[inline]
+    pub fn spec(&self) -> SpecId {
+        self.cfg.spec().into()
+    }
+
+    /// Returns the chain ID from cfg.
+    #[inline]
+    pub fn chain_id(&self) -> u64 {
+        self.cfg.chain_id()
+    }
+
+    /// Returns the base fee from block, or None if BASE_FEE check is disabled.
+    #[inline]
+    pub fn base_fee(&self) -> Option<u128> {
+        if self.checks().contains(ValidationChecks::BASE_FEE) {
+            Some(self.block.basefee() as u128)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the blob gas price from block.
+    #[inline]
+    pub fn blob_gasprice(&self) -> Option<u128> {
+        self.block.blob_gasprice()
+    }
+
+    /// Returns the transaction gas limit cap from cfg.
+    #[inline]
+    pub fn tx_gas_limit_cap(&self) -> u64 {
+        self.cfg.tx_gas_limit_cap()
+    }
+
+    /// Returns the block gas limit.
+    #[inline]
+    pub fn block_gas_limit(&self) -> u64 {
+        self.block.gas_limit()
+    }
+
+    /// Returns the maximum blobs per transaction from cfg.
+    #[inline]
+    pub fn max_blobs_per_tx(&self) -> Option<u64> {
+        self.cfg.max_blobs_per_tx()
+    }
+
+    /// Returns the maximum initcode size from cfg.
+    #[inline]
+    pub fn max_initcode_size(&self) -> usize {
+        self.cfg.max_initcode_size()
+    }
+
+    /// Returns the enabled validation checks.
     ///
-    /// This is the recommended way to create a validator when you have
-    /// access to the EVM context.
+    /// If checks were overridden via builder methods, returns the override.
+    /// Otherwise returns `cfg.enabled_validation_checks()`.
     #[inline]
-    pub fn from_cfg_and_block(cfg: &impl Cfg, block: &impl Block) -> Self {
-        // Get disabled checks in a single call (pre-computed or aggregated in Cfg)
-        let disabled = cfg.disabled_validation_checks();
-        let checks = ValidationChecks::ALL - disabled;
-
-        Self {
-            spec: cfg.spec().into(),
-            chain_id: cfg.chain_id(),
-            base_fee: if disabled.contains(ValidationChecks::BASE_FEE) {
-                None
-            } else {
-                Some(block.basefee() as u128)
-            },
-            blob_gasprice: block.blob_gasprice(),
-            tx_gas_limit_cap: cfg.tx_gas_limit_cap(),
-            block_gas_limit: block.gas_limit(),
-            max_blobs_per_tx: cfg.max_blobs_per_tx(),
-            max_initcode_size: cfg.max_initcode_size(),
-            checks,
-        }
+    pub fn checks(&self) -> ValidationChecks {
+        self.checks_override
+            .unwrap_or_else(|| self.cfg.enabled_validation_checks())
     }
 
-    // === Builder methods for configuration ===
-
-    /// Set the chain ID.
-    #[inline]
-    pub fn with_chain_id(mut self, chain_id: u64) -> Self {
-        self.chain_id = chain_id;
-        self
-    }
-
-    /// Set the base fee.
-    #[inline]
-    pub fn with_base_fee(mut self, base_fee: u128) -> Self {
-        self.base_fee = Some(base_fee);
-        self
-    }
-
-    /// Set the blob gas price.
-    #[inline]
-    pub fn with_blob_gasprice(mut self, price: u128) -> Self {
-        self.blob_gasprice = Some(price);
-        self
-    }
-
-    /// Set the block gas limit.
-    #[inline]
-    pub fn with_block_gas_limit(mut self, limit: u64) -> Self {
-        self.block_gas_limit = limit;
-        self
-    }
-
-    /// Set the transaction gas limit cap.
-    #[inline]
-    pub fn with_tx_gas_limit_cap(mut self, cap: u64) -> Self {
-        self.tx_gas_limit_cap = cap;
-        self
-    }
-
-    /// Set maximum blobs per transaction.
-    #[inline]
-    pub fn with_max_blobs(mut self, max: u64) -> Self {
-        self.max_blobs_per_tx = Some(max);
-        self
-    }
-
-    /// Set maximum initcode size.
-    #[inline]
-    pub fn with_max_initcode_size(mut self, size: usize) -> Self {
-        self.max_initcode_size = size;
-        self
-    }
+    // === Builder methods for check configuration ===
 
     /// Set custom validation checks (replaces all existing checks).
     #[inline]
     pub fn with_checks(mut self, checks: ValidationChecks) -> Self {
-        self.checks = checks;
-        self
-    }
-
-    /// Set the spec version.
-    #[inline]
-    pub fn with_spec(mut self, spec: SpecId) -> Self {
-        self.spec = spec;
+        self.checks_override = Some(checks);
         self
     }
 
     /// Disable specific validation checks (additive removal).
-    ///
-    /// Unlike [`with_checks`](Self::with_checks), this removes checks from the
-    /// current set rather than replacing all checks.
     #[inline]
-    pub fn with_disabled_checks(mut self, checks: ValidationChecks) -> Self {
-        self.checks.remove(checks);
+    pub fn with_disabled_checks(mut self, disabled: ValidationChecks) -> Self {
+        let current = self.checks();
+        self.checks_override = Some(current - disabled);
         self
     }
 
     /// Enable specific validation checks (additive insertion).
-    ///
-    /// Unlike [`with_checks`](Self::with_checks), this adds checks to the
-    /// current set rather than replacing all checks.
     #[inline]
-    pub fn with_enabled_checks(mut self, checks: ValidationChecks) -> Self {
-        self.checks.insert(checks);
+    pub fn with_enabled_checks(mut self, enabled: ValidationChecks) -> Self {
+        let current = self.checks();
+        self.checks_override = Some(current | enabled);
         self
     }
 
@@ -293,113 +256,98 @@ impl TxValidator {
     /// Skip all validation checks.
     #[inline]
     pub fn skip_all(mut self) -> Self {
-        self.checks = ValidationChecks::empty();
+        self.checks_override = Some(ValidationChecks::empty());
         self
     }
 
     /// Skip chain ID validation (EIP-155).
     #[inline]
-    pub fn skip_chain_id_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::CHAIN_ID);
-        self
+    pub fn skip_chain_id_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::CHAIN_ID)
     }
 
     /// Skip transaction gas limit cap validation (EIP-7825).
     #[inline]
-    pub fn skip_tx_gas_limit_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::TX_GAS_LIMIT);
-        self
+    pub fn skip_tx_gas_limit_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::TX_GAS_LIMIT)
     }
 
     /// Skip base fee validation.
     #[inline]
-    pub fn skip_base_fee_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::BASE_FEE);
-        self
+    pub fn skip_base_fee_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::BASE_FEE)
     }
 
     /// Skip priority fee validation.
     #[inline]
-    pub fn skip_priority_fee_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::PRIORITY_FEE);
-        self
+    pub fn skip_priority_fee_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::PRIORITY_FEE)
     }
 
     /// Skip blob fee validation (EIP-4844).
     #[inline]
-    pub fn skip_blob_fee_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::BLOB_FEE);
-        self
+    pub fn skip_blob_fee_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::BLOB_FEE)
     }
 
     /// Skip authorization list validation (EIP-7702).
     #[inline]
-    pub fn skip_auth_list_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::AUTH_LIST);
-        self
+    pub fn skip_auth_list_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::AUTH_LIST)
     }
 
     /// Skip block gas limit check.
     #[inline]
-    pub fn skip_block_gas_limit_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::BLOCK_GAS_LIMIT);
-        self
+    pub fn skip_block_gas_limit_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::BLOCK_GAS_LIMIT)
     }
 
     /// Skip max initcode size validation (EIP-3860).
     #[inline]
-    pub fn skip_max_initcode_size_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::MAX_INITCODE_SIZE);
-        self
+    pub fn skip_max_initcode_size_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::MAX_INITCODE_SIZE)
     }
 
     /// Skip nonce validation.
     #[inline]
-    pub fn skip_nonce_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::NONCE);
-        self
+    pub fn skip_nonce_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::NONCE)
     }
 
     /// Skip balance validation.
     #[inline]
-    pub fn skip_balance_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::BALANCE);
-        self
+    pub fn skip_balance_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::BALANCE)
     }
 
     /// Skip EIP-3607 code check (reject senders with deployed code).
     #[inline]
-    pub fn skip_eip3607_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::EIP3607);
-        self
+    pub fn skip_eip3607_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::EIP3607)
     }
 
     /// Skip EIP-7623 floor gas check.
     #[inline]
-    pub fn skip_eip7623_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::EIP7623);
-        self
+    pub fn skip_eip7623_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::EIP7623)
     }
 
     /// Skip header validation.
     #[inline]
-    pub fn skip_header_check(mut self) -> Self {
-        self.checks.remove(ValidationChecks::HEADER);
-        self
+    pub fn skip_header_check(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::HEADER)
     }
 
     /// Skip all caller/state validation checks (nonce, balance, EIP-3607).
     #[inline]
-    pub fn skip_caller_checks(mut self) -> Self {
-        self.checks.remove(ValidationChecks::CALLER);
-        self
+    pub fn skip_caller_checks(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::CALLER)
     }
 
     /// Skip all gas and fee related checks.
     #[inline]
-    pub fn skip_gas_fee_checks(mut self) -> Self {
-        self.checks.remove(ValidationChecks::GAS_FEES);
-        self
+    pub fn skip_gas_fee_checks(self) -> Self {
+        self.with_disabled_checks(ValidationChecks::GAS_FEES)
     }
 
     // === Enable methods (for use after skip_all) ===
@@ -407,113 +355,98 @@ impl TxValidator {
     /// Enable all validation checks.
     #[inline]
     pub fn enable_all(mut self) -> Self {
-        self.checks = ValidationChecks::ALL;
+        self.checks_override = Some(ValidationChecks::ALL);
         self
     }
 
     /// Enable chain ID validation (EIP-155).
     #[inline]
-    pub fn enable_chain_id_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::CHAIN_ID);
-        self
+    pub fn enable_chain_id_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::CHAIN_ID)
     }
 
     /// Enable transaction gas limit cap validation (EIP-7825).
     #[inline]
-    pub fn enable_tx_gas_limit_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::TX_GAS_LIMIT);
-        self
+    pub fn enable_tx_gas_limit_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::TX_GAS_LIMIT)
     }
 
     /// Enable base fee validation.
     #[inline]
-    pub fn enable_base_fee_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::BASE_FEE);
-        self
+    pub fn enable_base_fee_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::BASE_FEE)
     }
 
     /// Enable priority fee validation.
     #[inline]
-    pub fn enable_priority_fee_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::PRIORITY_FEE);
-        self
+    pub fn enable_priority_fee_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::PRIORITY_FEE)
     }
 
     /// Enable blob fee validation (EIP-4844).
     #[inline]
-    pub fn enable_blob_fee_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::BLOB_FEE);
-        self
+    pub fn enable_blob_fee_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::BLOB_FEE)
     }
 
     /// Enable authorization list validation (EIP-7702).
     #[inline]
-    pub fn enable_auth_list_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::AUTH_LIST);
-        self
+    pub fn enable_auth_list_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::AUTH_LIST)
     }
 
     /// Enable block gas limit validation.
     #[inline]
-    pub fn enable_block_gas_limit_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::BLOCK_GAS_LIMIT);
-        self
+    pub fn enable_block_gas_limit_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::BLOCK_GAS_LIMIT)
     }
 
     /// Enable max initcode size validation (EIP-3860).
     #[inline]
-    pub fn enable_max_initcode_size_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::MAX_INITCODE_SIZE);
-        self
+    pub fn enable_max_initcode_size_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::MAX_INITCODE_SIZE)
     }
 
     /// Enable nonce validation.
     #[inline]
-    pub fn enable_nonce_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::NONCE);
-        self
+    pub fn enable_nonce_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::NONCE)
     }
 
     /// Enable balance validation.
     #[inline]
-    pub fn enable_balance_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::BALANCE);
-        self
+    pub fn enable_balance_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::BALANCE)
     }
 
     /// Enable EIP-3607 code check (reject senders with deployed code).
     #[inline]
-    pub fn enable_eip3607_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::EIP3607);
-        self
+    pub fn enable_eip3607_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::EIP3607)
     }
 
     /// Enable EIP-7623 floor gas check.
     #[inline]
-    pub fn enable_eip7623_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::EIP7623);
-        self
+    pub fn enable_eip7623_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::EIP7623)
     }
 
     /// Enable header validation.
     #[inline]
-    pub fn enable_header_check(mut self) -> Self {
-        self.checks.insert(ValidationChecks::HEADER);
-        self
+    pub fn enable_header_check(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::HEADER)
     }
 
     /// Enable all gas and fee related checks.
     #[inline]
-    pub fn enable_gas_fee_checks(mut self) -> Self {
-        self.checks.insert(ValidationChecks::GAS_FEES);
-        self
+    pub fn enable_gas_fee_checks(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::GAS_FEES)
     }
 
     /// Enable all caller/state checks (nonce, balance, EIP-3607).
     #[inline]
-    pub fn enable_caller_checks(mut self) -> Self {
-        self.checks.insert(ValidationChecks::CALLER);
-        self
+    pub fn enable_caller_checks(self) -> Self {
+        self.with_enabled_checks(ValidationChecks::CALLER)
     }
 
     // === Query methods ===
@@ -521,25 +454,25 @@ impl TxValidator {
     /// Check if a specific validation is enabled.
     #[inline]
     pub fn should_check(&self, check: ValidationChecks) -> bool {
-        self.checks.contains(check)
+        self.checks().contains(check)
     }
 
     /// Check if any validation is enabled.
     #[inline]
     pub fn has_any_checks(&self) -> bool {
-        !self.checks.is_empty()
+        !self.checks().is_empty()
     }
 
     /// Check if all validations are enabled.
     #[inline]
     pub fn has_all_checks(&self) -> bool {
-        self.checks == ValidationChecks::ALL
+        self.checks() == ValidationChecks::ALL
     }
 
     /// Returns the currently enabled validation checks.
     #[inline]
     pub fn enabled_checks(&self) -> ValidationChecks {
-        self.checks
+        self.checks()
     }
 
     // === Validation methods ===
@@ -550,16 +483,17 @@ impl TxValidator {
     /// - `prevrandao` is required after the Merge
     /// - `excess_blob_gas` is required after Cancun
     #[inline]
-    pub fn validate_header(&self, block: &impl Block) -> Result<(), InvalidHeader> {
+    pub fn validate_header(&self) -> Result<(), InvalidHeader> {
         if !self.should_check(ValidationChecks::HEADER) {
             return Ok(());
         }
 
-        if self.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao().is_none() {
+        let spec = self.spec();
+        if spec.is_enabled_in(SpecId::MERGE) && self.block.prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet);
         }
 
-        if self.spec.is_enabled_in(SpecId::CANCUN) && block.blob_excess_gas_and_price().is_none() {
+        if spec.is_enabled_in(SpecId::CANCUN) && self.block.blob_excess_gas_and_price().is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
 
@@ -574,42 +508,44 @@ impl TxValidator {
     /// - Transaction type support
     /// - Blob and authorization list validation
     pub fn validate_tx(&self, tx: &impl Transaction) -> Result<(), InvalidTransaction> {
-        if self.checks.is_empty() {
+        let checks = self.checks();
+        if checks.is_empty() {
             return Ok(());
         }
 
         let tx_type = TransactionType::from(tx.tx_type());
+        let spec = self.spec();
 
         // Chain ID validation (EIP-155)
-        if self.should_check(ValidationChecks::CHAIN_ID) {
+        if checks.contains(ValidationChecks::CHAIN_ID) {
             self.validate_chain_id(tx, tx_type)?;
         }
 
         // Transaction gas limit cap (EIP-7825)
-        if self.should_check(ValidationChecks::TX_GAS_LIMIT)
-            && tx.gas_limit() > self.tx_gas_limit_cap
+        if checks.contains(ValidationChecks::TX_GAS_LIMIT)
+            && tx.gas_limit() > self.tx_gas_limit_cap()
         {
             return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
                 gas_limit: tx.gas_limit(),
-                cap: self.tx_gas_limit_cap,
+                cap: self.tx_gas_limit_cap(),
             });
         }
 
         // Type-specific validation
-        self.validate_tx_type(tx, tx_type)?;
+        self.validate_tx_type(tx, tx_type, spec, checks)?;
 
         // Block gas limit check
-        if self.should_check(ValidationChecks::BLOCK_GAS_LIMIT)
-            && tx.gas_limit() > self.block_gas_limit
+        if checks.contains(ValidationChecks::BLOCK_GAS_LIMIT)
+            && tx.gas_limit() > self.block_gas_limit()
         {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
 
         // Initcode size limit (EIP-3860)
-        if self.should_check(ValidationChecks::MAX_INITCODE_SIZE)
-            && self.spec.is_enabled_in(SpecId::SHANGHAI)
+        if checks.contains(ValidationChecks::MAX_INITCODE_SIZE)
+            && spec.is_enabled_in(SpecId::SHANGHAI)
             && tx.kind().is_create()
-            && tx.input().len() > self.max_initcode_size
+            && tx.input().len() > self.max_initcode_size()
         {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit);
         }
@@ -623,7 +559,8 @@ impl TxValidator {
         &self,
         tx: &impl Transaction,
     ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-        let mut gas = calculate_initial_tx_gas_for_tx(tx, self.spec);
+        let spec = self.spec();
+        let mut gas = calculate_initial_tx_gas_for_tx(tx, spec);
 
         if !self.should_check(ValidationChecks::EIP7623) {
             gas.floor_gas = 0;
@@ -636,7 +573,7 @@ impl TxValidator {
             });
         }
 
-        if self.spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
+        if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
             return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
                 gas_floor: gas.floor_gas,
                 gas_limit: tx.gas_limit(),
@@ -652,8 +589,10 @@ impl TxValidator {
         caller_info: &AccountInfo,
         tx_nonce: u64,
     ) -> Result<(), InvalidTransaction> {
+        let checks = self.checks();
+
         // EIP-3607: Reject transactions from senders with deployed code
-        if self.should_check(ValidationChecks::EIP3607) {
+        if checks.contains(ValidationChecks::EIP3607) {
             if let Some(code) = caller_info.code.as_ref() {
                 // Reject if code is non-empty and not an EIP-7702 delegation
                 if !code.is_empty() && !code.is_eip7702() {
@@ -664,7 +603,7 @@ impl TxValidator {
         }
 
         // Nonce validation
-        if self.should_check(ValidationChecks::NONCE) {
+        if checks.contains(ValidationChecks::NONCE) {
             let state = caller_info.nonce;
             match tx_nonce.cmp(&state) {
                 Ordering::Greater => {
@@ -696,10 +635,11 @@ impl TxValidator {
         caller_balance: U256,
         tx: &impl Transaction,
     ) -> Result<CallerFee, InvalidTransaction> {
-        let basefee = self.base_fee.unwrap_or(0);
-        let blob_price = self.blob_gasprice.unwrap_or(0);
+        let basefee = self.base_fee().unwrap_or(0);
+        let blob_price = self.blob_gasprice().unwrap_or(0);
+        let checks = self.checks();
 
-        if self.should_check(ValidationChecks::BALANCE) {
+        if checks.contains(ValidationChecks::BALANCE) {
             tx.ensure_enough_balance(caller_balance)?;
         }
 
@@ -711,7 +651,7 @@ impl TxValidator {
 
         let mut new_balance = caller_balance.saturating_sub(gas_balance_spending);
 
-        if !self.should_check(ValidationChecks::BALANCE) {
+        if !checks.contains(ValidationChecks::BALANCE) {
             new_balance = new_balance.max(tx.value());
         }
 
@@ -730,7 +670,7 @@ impl TxValidator {
         tx_type: TransactionType,
     ) -> Result<(), InvalidTransaction> {
         if let Some(tx_chain_id) = tx.chain_id() {
-            if tx_chain_id != self.chain_id {
+            if tx_chain_id != self.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         } else if !tx_type.is_legacy() && !tx_type.is_custom() {
@@ -743,48 +683,49 @@ impl TxValidator {
         &self,
         tx: &impl Transaction,
         tx_type: TransactionType,
+        spec: SpecId,
+        checks: ValidationChecks,
     ) -> Result<(), InvalidTransaction> {
         match tx_type {
             TransactionType::Legacy => {
-                if self.should_check(ValidationChecks::BASE_FEE) {
-                    validate_legacy_gas_price(tx.gas_price(), self.base_fee)?;
+                if checks.contains(ValidationChecks::BASE_FEE) {
+                    validate_legacy_gas_price(tx.gas_price(), self.base_fee())?;
                 }
             }
             TransactionType::Eip2930 => {
-                if !self.spec.is_enabled_in(SpecId::BERLIN) {
+                if !spec.is_enabled_in(SpecId::BERLIN) {
                     return Err(InvalidTransaction::Eip2930NotSupported);
                 }
-                if self.should_check(ValidationChecks::BASE_FEE) {
-                    validate_legacy_gas_price(tx.gas_price(), self.base_fee)?;
+                if checks.contains(ValidationChecks::BASE_FEE) {
+                    validate_legacy_gas_price(tx.gas_price(), self.base_fee())?;
                 }
             }
             TransactionType::Eip1559 => {
-                if !self.spec.is_enabled_in(SpecId::LONDON) {
+                if !spec.is_enabled_in(SpecId::LONDON) {
                     return Err(InvalidTransaction::Eip1559NotSupported);
                 }
-                self.validate_eip1559_fees(tx)?;
+                self.validate_eip1559_fees(tx, checks)?;
             }
             TransactionType::Eip4844 => {
-                if !self.spec.is_enabled_in(SpecId::CANCUN) {
+                if !spec.is_enabled_in(SpecId::CANCUN) {
                     return Err(InvalidTransaction::Eip4844NotSupported);
                 }
-                self.validate_eip1559_fees(tx)?;
-                if self.should_check(ValidationChecks::BLOB_FEE) {
+                self.validate_eip1559_fees(tx, checks)?;
+                if checks.contains(ValidationChecks::BLOB_FEE) {
                     validate_eip4844_tx(
                         tx.blob_versioned_hashes(),
                         tx.max_fee_per_blob_gas(),
-                        self.blob_gasprice.unwrap_or(0),
-                        self.max_blobs_per_tx,
+                        self.blob_gasprice().unwrap_or(0),
+                        self.max_blobs_per_tx(),
                     )?;
                 }
             }
             TransactionType::Eip7702 => {
-                if !self.spec.is_enabled_in(SpecId::PRAGUE) {
+                if !spec.is_enabled_in(SpecId::PRAGUE) {
                     return Err(InvalidTransaction::Eip7702NotSupported);
                 }
-                self.validate_eip1559_fees(tx)?;
-                if self.should_check(ValidationChecks::AUTH_LIST)
-                    && tx.authorization_list_len() == 0
+                self.validate_eip1559_fees(tx, checks)?;
+                if checks.contains(ValidationChecks::AUTH_LIST) && tx.authorization_list_len() == 0
                 {
                     return Err(InvalidTransaction::EmptyAuthorizationList);
                 }
@@ -795,9 +736,13 @@ impl TxValidator {
     }
 
     #[inline]
-    fn validate_eip1559_fees(&self, tx: &impl Transaction) -> Result<(), InvalidTransaction> {
-        let check_base_fee = self.should_check(ValidationChecks::BASE_FEE);
-        let check_priority_fee = self.should_check(ValidationChecks::PRIORITY_FEE);
+    fn validate_eip1559_fees(
+        &self,
+        tx: &impl Transaction,
+        checks: ValidationChecks,
+    ) -> Result<(), InvalidTransaction> {
+        let check_base_fee = checks.contains(ValidationChecks::BASE_FEE);
+        let check_priority_fee = checks.contains(ValidationChecks::PRIORITY_FEE);
 
         if !check_base_fee && !check_priority_fee {
             return Ok(());
@@ -806,13 +751,17 @@ impl TxValidator {
         validate_priority_fee(
             tx.max_fee_per_gas(),
             tx.max_priority_fee_per_gas().unwrap_or_default(),
-            if check_base_fee { self.base_fee } else { None },
+            if check_base_fee {
+                self.base_fee()
+            } else {
+                None
+            },
             !check_priority_fee,
         )
     }
 }
 
-// === Standalone helper functions (kept for backward compatibility) ===
+// === Standalone helper functions ===
 
 /// Validate legacy transaction gas price against basefee.
 #[inline]
@@ -911,7 +860,7 @@ pub struct CallerFee {
     pub new_balance: U256,
 }
 
-// === Legacy API (for backward compatibility with validation.rs and pre_execution.rs) ===
+// === Legacy API (for backward compatibility) ===
 
 /// Specifies how transaction validation should be performed.
 ///
@@ -965,39 +914,36 @@ pub struct ValidationParams {
 impl ValidationParams {
     /// Create ValidationParams from Cfg and Block traits.
     pub fn from_cfg_and_block(cfg: &impl Cfg, block: &impl Block) -> Self {
-        let validator = TxValidator::from_cfg_and_block(cfg, block);
+        let checks = cfg.enabled_validation_checks();
         Self {
-            spec: validator.spec,
-            chain_id: validator.chain_id,
-            base_fee: validator.base_fee,
-            blob_gasprice: validator.blob_gasprice,
-            tx_gas_limit_cap: validator.tx_gas_limit_cap,
-            block_gas_limit: validator.block_gas_limit,
-            max_blobs_per_tx: validator.max_blobs_per_tx,
-            max_initcode_size: validator.max_initcode_size,
-            validation_kind: if validator.checks == ValidationChecks::ALL {
+            spec: cfg.spec().into(),
+            chain_id: cfg.chain_id(),
+            base_fee: if checks.contains(ValidationChecks::BASE_FEE) {
+                Some(block.basefee() as u128)
+            } else {
+                None
+            },
+            blob_gasprice: block.blob_gasprice(),
+            tx_gas_limit_cap: cfg.tx_gas_limit_cap(),
+            block_gas_limit: block.gas_limit(),
+            max_blobs_per_tx: cfg.max_blobs_per_tx(),
+            max_initcode_size: cfg.max_initcode_size(),
+            validation_kind: if checks == ValidationChecks::ALL {
                 ValidationKind::ByTxType
-            } else if validator.checks.is_empty() {
+            } else if checks.is_empty() {
                 ValidationKind::None
             } else {
-                ValidationKind::Custom(validator.checks)
+                ValidationKind::Custom(checks)
             },
         }
     }
 
     /// Create params for caller validation from Cfg trait.
     pub fn caller_params_from_cfg(cfg: &impl Cfg) -> Self {
-        let mut checks = ValidationChecks::CALLER;
-
-        if cfg.is_nonce_check_disabled() {
-            checks.remove(ValidationChecks::NONCE);
-        }
-        if cfg.is_balance_check_disabled() {
-            checks.remove(ValidationChecks::BALANCE);
-        }
-        if cfg.is_eip3607_disabled() {
-            checks.remove(ValidationChecks::EIP3607);
-        }
+        let disabled = cfg.disabled_validation_checks();
+        let mut checks = ValidationChecks::CALLER - disabled;
+        // Only keep caller-relevant checks
+        checks &= ValidationChecks::CALLER;
 
         Self {
             spec: cfg.spec().into(),
@@ -1021,75 +967,48 @@ impl ValidationParams {
 
 // === Legacy standalone functions ===
 
-/// Validate block header fields.
-pub fn validate_block_header(
-    spec: SpecId,
-    block: &impl Block,
-    kind: ValidationKind,
-) -> Result<(), InvalidHeader> {
-    let validator = TxValidator {
-        spec,
-        checks: match kind {
-            ValidationKind::None => ValidationChecks::empty(),
-            ValidationKind::ByTxType => ValidationChecks::ALL,
-            ValidationKind::Custom(c) => c,
-        },
-        ..Default::default()
-    };
-    validator.validate_header(block)
-}
-
-/// Validate transaction against parameters.
-pub fn validate_tx(
-    tx: &impl Transaction,
-    params: &ValidationParams,
-) -> Result<(), InvalidTransaction> {
-    let validator = TxValidator {
-        spec: params.spec,
-        chain_id: params.chain_id,
-        base_fee: params.base_fee,
-        blob_gasprice: params.blob_gasprice,
-        tx_gas_limit_cap: params.tx_gas_limit_cap,
-        block_gas_limit: params.block_gas_limit,
-        max_blobs_per_tx: params.max_blobs_per_tx,
-        max_initcode_size: params.max_initcode_size,
-        checks: match params.validation_kind {
-            ValidationKind::None => ValidationChecks::empty(),
-            ValidationKind::ByTxType => ValidationChecks::ALL,
-            ValidationKind::Custom(c) => c,
-        },
-    };
-    validator.validate_tx(tx)
-}
-
-/// Calculate initial and floor gas.
-pub fn calculate_initial_gas(
-    tx: &impl Transaction,
-    spec: SpecId,
-    skip_eip7623: bool,
-) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut validator = TxValidator::new(spec);
-    if skip_eip7623 {
-        validator = validator.skip_eip7623_check();
-    }
-    validator.initial_gas(tx)
-}
-
 /// Validate caller account state.
 pub fn validate_caller(
     caller_info: &AccountInfo,
     tx_nonce: u64,
     kind: ValidationKind,
 ) -> Result<(), InvalidTransaction> {
-    let validator = TxValidator {
-        checks: match kind {
-            ValidationKind::None => ValidationChecks::empty(),
-            ValidationKind::ByTxType => ValidationChecks::ALL,
-            ValidationKind::Custom(c) => c,
-        },
-        ..Default::default()
+    let checks = match kind {
+        ValidationKind::None => ValidationChecks::empty(),
+        ValidationKind::ByTxType => ValidationChecks::CALLER,
+        ValidationKind::Custom(c) => c,
     };
-    validator.validate_caller(caller_info, tx_nonce)
+
+    // EIP-3607: Reject transactions from senders with deployed code
+    if checks.contains(ValidationChecks::EIP3607) {
+        if let Some(code) = caller_info.code.as_ref() {
+            if !code.is_empty() && !code.is_eip7702() {
+                return Err(InvalidTransaction::RejectCallerWithCode);
+            }
+        }
+    }
+
+    // Nonce validation
+    if checks.contains(ValidationChecks::NONCE) {
+        let state = caller_info.nonce;
+        match tx_nonce.cmp(&state) {
+            Ordering::Greater => {
+                return Err(InvalidTransaction::NonceTooHigh {
+                    tx: tx_nonce,
+                    state,
+                });
+            }
+            Ordering::Less => {
+                return Err(InvalidTransaction::NonceTooLow {
+                    tx: tx_nonce,
+                    state,
+                });
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
 }
 
 /// Calculate fee to deduct from caller.
@@ -1099,85 +1018,68 @@ pub fn calculate_caller_fee(
     block: &impl Block,
     skip_balance_check: bool,
 ) -> Result<CallerFee, InvalidTransaction> {
-    let mut validator = TxValidator::default()
-        .with_base_fee(block.basefee() as u128)
-        .with_blob_gasprice(block.blob_gasprice().unwrap_or(0));
+    let basefee = block.basefee() as u128;
+    let blob_price = block.blob_gasprice().unwrap_or(0);
 
-    if skip_balance_check {
-        validator = validator.skip_balance_check();
+    if !skip_balance_check {
+        tx.ensure_enough_balance(caller_balance)?;
     }
 
-    validator.caller_fee(caller_balance, tx)
+    let effective_balance_spending = tx
+        .effective_balance_spending(basefee, blob_price)
+        .expect("effective balance is always smaller than max balance so it can't overflow");
+
+    let gas_balance_spending = effective_balance_spending - tx.value();
+
+    let mut new_balance = caller_balance.saturating_sub(gas_balance_spending);
+
+    if skip_balance_check {
+        new_balance = new_balance.max(tx.value());
+    }
+
+    Ok(CallerFee {
+        gas_fee_to_deduct: gas_balance_spending,
+        new_balance,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use context::{BlockEnv, CfgEnv};
 
     #[test]
-    fn test_validation_checks_default_is_all() {
-        // ValidationChecks::default() now returns ALL for safety
-        let checks = ValidationChecks::default();
-        assert_eq!(checks, ValidationChecks::ALL);
+    fn test_tx_validator_with_references() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
+
+        // Create validator with references
+        let validator = TxValidator::new(&cfg, &block);
+
+        assert_eq!(validator.spec(), SpecId::CANCUN);
+        assert!(validator.has_all_checks());
     }
 
     #[test]
-    fn test_validation_checks_all() {
-        let checks = ValidationChecks::ALL;
-        assert!(checks.contains(ValidationChecks::CHAIN_ID));
-        assert!(checks.contains(ValidationChecks::NONCE));
-        assert!(checks.contains(ValidationChecks::BALANCE));
-        assert!(checks.contains(ValidationChecks::EIP3607));
-        // Verify ALL = TX_STATELESS | CALLER
-        assert_eq!(
-            checks,
-            ValidationChecks::TX_STATELESS | ValidationChecks::CALLER
-        );
-    }
+    fn test_tx_validator_skip_checks() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
 
-    #[test]
-    fn test_tx_validator_builder() {
-        let validator = TxValidator::new(SpecId::CANCUN)
-            .with_chain_id(42)
-            .with_base_fee(1000)
+        let validator = TxValidator::new(&cfg, &block)
             .skip_nonce_check()
             .skip_balance_check();
 
-        assert_eq!(validator.spec, SpecId::CANCUN);
-        assert_eq!(validator.chain_id, 42);
-        assert_eq!(validator.base_fee, Some(1000));
         assert!(!validator.should_check(ValidationChecks::NONCE));
         assert!(!validator.should_check(ValidationChecks::BALANCE));
         assert!(validator.should_check(ValidationChecks::CHAIN_ID));
     }
 
     #[test]
-    fn test_tx_validator_skip_all_then_enable() {
-        let validator = TxValidator::new(SpecId::CANCUN)
-            .skip_all()
-            .enable_chain_id_check()
-            .enable_nonce_check();
+    fn test_tx_validator_for_deposit() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
 
-        assert!(validator.should_check(ValidationChecks::CHAIN_ID));
-        assert!(validator.should_check(ValidationChecks::NONCE));
-        assert!(!validator.should_check(ValidationChecks::BALANCE));
-        assert!(!validator.should_check(ValidationChecks::BASE_FEE));
-    }
-
-    #[test]
-    fn test_validation_kind_should_check() {
-        assert!(!ValidationKind::None.should_check(ValidationChecks::CHAIN_ID));
-        assert!(ValidationKind::ByTxType.should_check(ValidationChecks::CHAIN_ID));
-
-        let custom = ValidationKind::Custom(ValidationChecks::CHAIN_ID | ValidationChecks::NONCE);
-        assert!(custom.should_check(ValidationChecks::CHAIN_ID));
-        assert!(custom.should_check(ValidationChecks::NONCE));
-        assert!(!custom.should_check(ValidationChecks::BALANCE));
-    }
-
-    #[test]
-    fn test_preset_for_deposit() {
-        let validator = TxValidator::for_deposit(SpecId::CANCUN);
+        let validator = TxValidator::for_deposit(&cfg, &block);
 
         // Should have chain ID and block gas limit checks
         assert!(validator.should_check(ValidationChecks::CHAIN_ID));
@@ -1188,15 +1090,16 @@ mod tests {
         // Should NOT have fee and state checks
         assert!(!validator.should_check(ValidationChecks::BASE_FEE));
         assert!(!validator.should_check(ValidationChecks::PRIORITY_FEE));
-        assert!(!validator.should_check(ValidationChecks::BLOB_FEE));
         assert!(!validator.should_check(ValidationChecks::NONCE));
         assert!(!validator.should_check(ValidationChecks::BALANCE));
-        assert!(!validator.should_check(ValidationChecks::EIP3607));
     }
 
     #[test]
-    fn test_preset_for_tx_pool() {
-        let validator = TxValidator::for_tx_pool(SpecId::CANCUN);
+    fn test_tx_validator_for_tx_pool() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
+
+        let validator = TxValidator::for_tx_pool(&cfg, &block);
 
         // Should have fee checks
         assert!(validator.should_check(ValidationChecks::BASE_FEE));
@@ -1213,8 +1116,11 @@ mod tests {
     }
 
     #[test]
-    fn test_preset_for_block_builder() {
-        let validator = TxValidator::for_block_builder(SpecId::CANCUN);
+    fn test_tx_validator_for_block_builder() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
+
+        let validator = TxValidator::for_block_builder(&cfg, &block);
 
         // Should have all stateless checks
         assert!(validator.should_check(ValidationChecks::CHAIN_ID));
@@ -1228,132 +1134,43 @@ mod tests {
     }
 
     #[test]
-    fn test_query_methods() {
-        let full_validator = TxValidator::new(SpecId::CANCUN);
-        assert!(full_validator.has_any_checks());
-        assert!(full_validator.has_all_checks());
-        assert_eq!(full_validator.enabled_checks(), ValidationChecks::ALL);
+    fn test_tx_validator_skip_all_enable() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
 
-        let empty_validator = TxValidator::new(SpecId::CANCUN).skip_all();
-        assert!(!empty_validator.has_any_checks());
-        assert!(!empty_validator.has_all_checks());
-        assert_eq!(empty_validator.enabled_checks(), ValidationChecks::empty());
-    }
-
-    #[test]
-    fn test_composite_skip_enable() {
-        // Test skip_caller_checks
-        let validator = TxValidator::new(SpecId::CANCUN).skip_caller_checks();
-        assert!(!validator.should_check(ValidationChecks::NONCE));
-        assert!(!validator.should_check(ValidationChecks::BALANCE));
-        assert!(!validator.should_check(ValidationChecks::EIP3607));
-        assert!(validator.should_check(ValidationChecks::BASE_FEE)); // other checks preserved
-
-        // Test enable_caller_checks
-        let validator = TxValidator::new(SpecId::CANCUN)
+        let validator = TxValidator::new(&cfg, &block)
             .skip_all()
-            .enable_caller_checks();
-        assert!(validator.should_check(ValidationChecks::NONCE));
-        assert!(validator.should_check(ValidationChecks::BALANCE));
-        assert!(validator.should_check(ValidationChecks::EIP3607));
+            .enable_chain_id_check()
+            .enable_nonce_check();
 
-        // Test skip_gas_fee_checks
-        let validator = TxValidator::new(SpecId::CANCUN).skip_gas_fee_checks();
-        assert!(!validator.should_check(ValidationChecks::BASE_FEE));
-        assert!(!validator.should_check(ValidationChecks::PRIORITY_FEE));
-        assert!(!validator.should_check(ValidationChecks::BLOB_FEE));
-        assert!(!validator.should_check(ValidationChecks::BLOCK_GAS_LIMIT));
-        assert!(validator.should_check(ValidationChecks::NONCE)); // other checks preserved
-
-        // Test enable_gas_fee_checks
-        let validator = TxValidator::new(SpecId::CANCUN)
-            .skip_all()
-            .enable_gas_fee_checks();
-        assert!(validator.should_check(ValidationChecks::BASE_FEE));
-        assert!(validator.should_check(ValidationChecks::PRIORITY_FEE));
-        assert!(validator.should_check(ValidationChecks::BLOCK_GAS_LIMIT));
-    }
-
-    #[test]
-    fn test_tx_validator_is_copy() {
-        let validator = TxValidator::new(SpecId::CANCUN);
-        let copy = validator; // This works because TxValidator is Copy
-        assert_eq!(validator.spec, copy.spec);
-    }
-
-    #[test]
-    fn test_gas_fees_composite_flag() {
-        let checks = ValidationChecks::GAS_FEES;
-        assert!(checks.contains(ValidationChecks::TX_GAS_LIMIT));
-        assert!(checks.contains(ValidationChecks::BASE_FEE));
-        assert!(checks.contains(ValidationChecks::PRIORITY_FEE));
-        assert!(checks.contains(ValidationChecks::BLOB_FEE));
-        assert!(checks.contains(ValidationChecks::BLOCK_GAS_LIMIT));
-        assert!(checks.contains(ValidationChecks::EIP7623));
-    }
-
-    #[test]
-    fn test_with_spec() {
-        let validator = TxValidator::new(SpecId::CANCUN).with_spec(SpecId::PRAGUE);
-        assert_eq!(validator.spec, SpecId::PRAGUE);
-    }
-
-    #[test]
-    fn test_with_disabled_checks() {
-        let validator = TxValidator::new(SpecId::CANCUN)
-            .with_disabled_checks(ValidationChecks::NONCE | ValidationChecks::BALANCE);
-
-        assert!(!validator.should_check(ValidationChecks::NONCE));
-        assert!(!validator.should_check(ValidationChecks::BALANCE));
-        assert!(validator.should_check(ValidationChecks::CHAIN_ID)); // others preserved
-    }
-
-    #[test]
-    fn test_with_enabled_checks() {
-        let validator = TxValidator::new(SpecId::CANCUN)
-            .skip_all()
-            .with_enabled_checks(ValidationChecks::NONCE | ValidationChecks::CHAIN_ID);
-
-        assert!(validator.should_check(ValidationChecks::NONCE));
         assert!(validator.should_check(ValidationChecks::CHAIN_ID));
-        assert!(!validator.should_check(ValidationChecks::BALANCE)); // not enabled
+        assert!(validator.should_check(ValidationChecks::NONCE));
+        assert!(!validator.should_check(ValidationChecks::BALANCE));
+        assert!(!validator.should_check(ValidationChecks::BASE_FEE));
     }
 
     #[test]
-    fn test_tx_stateless_composite() {
-        let checks = ValidationChecks::TX_STATELESS;
-        assert!(checks.contains(ValidationChecks::CHAIN_ID));
-        assert!(checks.contains(ValidationChecks::GAS_FEES));
-        assert!(checks.contains(ValidationChecks::AUTH_LIST));
-        assert!(checks.contains(ValidationChecks::MAX_INITCODE_SIZE));
-        assert!(checks.contains(ValidationChecks::HEADER));
-        // Should NOT contain caller checks
-        assert!(!checks.contains(ValidationChecks::NONCE));
-        assert!(!checks.contains(ValidationChecks::BALANCE));
-        assert!(!checks.contains(ValidationChecks::EIP3607));
+    fn test_cfg_disabled_checks_integration() {
+        // Create cfg with disabled checks
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN)
+            .disable_nonce_check()
+            .disable_balance_check();
+        let block = BlockEnv::default();
+
+        // Validator should respect cfg's disabled checks
+        let validator = TxValidator::new(&cfg, &block);
+
+        assert!(!validator.should_check(ValidationChecks::NONCE));
+        assert!(!validator.should_check(ValidationChecks::BALANCE));
+        assert!(validator.should_check(ValidationChecks::CHAIN_ID));
     }
 
     #[test]
-    fn test_caller_composite() {
-        let checks = ValidationChecks::CALLER;
-        assert!(checks.contains(ValidationChecks::NONCE));
-        assert!(checks.contains(ValidationChecks::BALANCE));
-        assert!(checks.contains(ValidationChecks::EIP3607));
-        // Should NOT contain stateless checks
-        assert!(!checks.contains(ValidationChecks::CHAIN_ID));
-        assert!(!checks.contains(ValidationChecks::BASE_FEE));
-    }
+    fn test_validate_caller_empty_checks() {
+        let cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = BlockEnv::default();
 
-    #[test]
-    fn test_enable_all_restores_all_checks() {
-        let validator = TxValidator::new(SpecId::CANCUN).skip_all().enable_all();
-        assert!(validator.has_all_checks());
-        assert_eq!(validator.enabled_checks(), ValidationChecks::ALL);
-    }
-
-    #[test]
-    fn test_validate_caller_with_empty_checks() {
-        let validator = TxValidator::new(SpecId::CANCUN).skip_all();
+        let validator = TxValidator::new(&cfg, &block).skip_all();
         let caller_info = AccountInfo {
             nonce: 999,                            // wrong nonce
             code: Some(bytecode::Bytecode::new()), // has code
@@ -1361,5 +1178,19 @@ mod tests {
         };
         // Should pass because all checks are skipped
         assert!(validator.validate_caller(&caller_info, 0).is_ok());
+    }
+
+    #[test]
+    fn test_validation_checks_composites() {
+        // Test that composite flags work as expected
+        assert_eq!(
+            ValidationChecks::ALL,
+            ValidationChecks::TX_STATELESS | ValidationChecks::CALLER
+        );
+
+        let checks = ValidationChecks::CALLER;
+        assert!(checks.contains(ValidationChecks::NONCE));
+        assert!(checks.contains(ValidationChecks::BALANCE));
+        assert!(checks.contains(ValidationChecks::EIP3607));
     }
 }

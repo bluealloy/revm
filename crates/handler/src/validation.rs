@@ -1,4 +1,4 @@
-use crate::tx_validation::{self, validate_block_header, validate_tx, ValidationParams};
+use crate::tx_validation::{self, TxValidator};
 use context_interface::{
     result::{InvalidHeader, InvalidTransaction},
     transaction::Transaction,
@@ -9,14 +9,13 @@ use primitives::{hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
 ///
-/// This function uses the [`tx_validation`] module internally to perform validation.
+/// This function uses the [`TxValidator`] internally to perform validation.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {
-    let params = ValidationParams::from_cfg_and_block(context.cfg(), context.block());
-
-    validate_block_header(params.spec, context.block(), params.validation_kind)?;
-    validate_tx(context.tx(), &params).map_err(Into::into)
+    let validator = TxValidator::new(context.cfg(), context.block());
+    validator.validate_header()?;
+    validator.validate_tx(context.tx()).map_err(Into::into)
 }
 
 /// Validate legacy transaction gas price against basefee.
@@ -55,24 +54,32 @@ pub fn validate_eip4844_tx(
 
 /// Validate transaction against block and configuration for mainnet.
 ///
-/// This function uses the [`tx_validation`] module internally to perform validation.
+/// This function uses the [`TxValidator`] internally to perform validation.
 pub fn validate_tx_env<CTX: ContextTr>(
     context: CTX,
     _spec_id: SpecId,
 ) -> Result<(), InvalidTransaction> {
-    let params = ValidationParams::from_cfg_and_block(context.cfg(), context.block());
-    validate_tx(context.tx(), &params)
+    let validator = TxValidator::new(context.cfg(), context.block());
+    validator.validate_tx(context.tx())
 }
 
 /// Validate initial transaction gas.
 ///
-/// This function uses the [`tx_validation`] module internally to perform validation.
+/// This function uses the [`TxValidator`] internally to perform validation.
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    tx_validation::calculate_initial_gas(&tx, spec, is_eip7623_disabled)
+    // Create a minimal validator with just the spec and check override
+    use context::{BlockEnv, CfgEnv};
+    let cfg = CfgEnv::new_with_spec(spec);
+    let block = BlockEnv::default();
+    let mut validator = TxValidator::new(&cfg, &block);
+    if is_eip7623_disabled {
+        validator = validator.skip_eip7623_check();
+    }
+    validator.initial_gas(&tx)
 }
 
 #[cfg(test)]
