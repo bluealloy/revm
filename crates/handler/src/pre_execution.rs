@@ -128,6 +128,12 @@ pub fn calculate_caller_fee(
     block: impl Block,
     cfg: impl Cfg,
 ) -> Result<U256, InvalidTransaction> {
+    // If fee charge is disabled, return the balance as-is without deducting fees.
+    // This is useful for `eth_call` and similar simulation scenarios.
+    if cfg.is_fee_charge_disabled() {
+        return Ok(balance);
+    }
+
     let basefee = block.basefee() as u128;
     let blob_price = block.blob_gasprice().unwrap_or_default();
     let is_balance_check_disabled = cfg.is_balance_check_disabled();
