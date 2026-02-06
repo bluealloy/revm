@@ -128,7 +128,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        stack_arena: Arc<Vec<U256>>,
+        stack_arena: &Arc<Vec<U256>>,
         frame_index: usize,
     ) {
         let Self {
@@ -144,7 +144,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
         if frame_index < MAX_ARENA_FRAMES {
-            stack.reinit_with_arena(stack_arena, frame_index);
+            stack.reinit_with_arena(Arc::clone(stack_arena), frame_index);
         } else if !stack.is_valid() {
             *stack = Stack::new();
         } else {
