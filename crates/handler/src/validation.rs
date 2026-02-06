@@ -212,8 +212,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
-    if !cfg.is_block_gas_limit_disabled() && tx.gas_limit() > block.gas_limit()
-    {
+    if !cfg.is_block_gas_limit_disabled() && tx.gas_limit() > block.gas_limit() {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 

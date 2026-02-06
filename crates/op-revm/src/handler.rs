@@ -150,11 +150,7 @@ where
         let mut caller_account = journal.load_account_with_code_mut(tx.caller())?.data;
 
         // validates account nonce and code
-        validate_account_nonce_and_code_with_components(
-            &caller_account.account().info,
-            &*tx,
-            cfg,
-        )?;
+        validate_account_nonce_and_code_with_components(&caller_account.account().info, &*tx, cfg)?;
 
         // check additional cost and deduct it from the caller's balances
         let mut balance = caller_account.account().info.balance;
