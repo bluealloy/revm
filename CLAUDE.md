@@ -57,7 +57,7 @@ The workspace consists of these core crates:
 - **revm-database**: State database traits and implementations
 - **revm-precompile**: Ethereum precompiled contracts
 - **revm-inspector**: Tracing and debugging framework
-- **op-revm**: Moved to [op-rs/op-revm](https://github.com/op-rs/op-revm)
+- **op-revm**: Moved to [bluealloy/op-revm](https://github.com/bluealloy/op-revm)
 
 ### Key Design Patterns
 
