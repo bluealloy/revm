@@ -17,7 +17,6 @@ workspace = true
 serde.workspace = true
 serde_json = { workspace = true, features = ["preserve_order"] }
 revm = { workspace = true, features = ["serde"] }
-op-revm = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 rstest = { workspace = true }
@@ -29,5 +28,4 @@ alloy-primitives = { workspace = true }
 default = []
 optional_balance_check = [
     "revm/optional_balance_check",
-    "op-revm/optional_balance_check",
 ]

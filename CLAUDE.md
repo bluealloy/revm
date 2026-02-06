@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 REVM is a highly efficient Rust implementation of the Ethereum Virtual Machine (EVM). It serves both as:
 1. A standard EVM for executing Ethereum transactions
-2. A framework for building custom EVM variants (like Optimism's op-revm)
+2. A framework for building custom EVM variants
 
 The project is used by major Ethereum infrastructure including Reth, Foundry, Hardhat, Optimism, Scroll, and many zkVMs.
 
@@ -57,7 +57,7 @@ The workspace consists of these core crates:
 - **revm-database**: State database traits and implementations
 - **revm-precompile**: Ethereum precompiled contracts
 - **revm-inspector**: Tracing and debugging framework
-- **op-revm**: Example of custom EVM variant (Optimism)
+- **op-revm**: Moved to [op-rs/op-revm](https://github.com/op-rs/op-revm)
 
 ### Key Design Patterns
 
