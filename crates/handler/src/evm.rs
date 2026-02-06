@@ -5,7 +5,12 @@ use crate::{
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{
+    interpreter::EthInterpreter,
+    interpreter_action::FrameInit,
+    stack_arena::MAX_ARENA_FRAMES,
+    InterpreterResult,
+};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;
@@ -174,16 +179,15 @@ where
         &mut self,
         frame_input: <Self::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameInitResult<'_, Self::Frame>, ContextDbError<CTX>> {
-        let is_first_init = self.frame_stack.index().is_none();
-        let frame_index = if is_first_init {
-            0
-        } else {
-            self.frame_stack.index().unwrap() + 1
+        let index = self.frame_stack.index();
+        let (is_first_init, frame_index, new_frame) = match index {
+            None => (true, 0, self.frame_stack.start_init()),
+            Some(i) => (false, i + 1, self.frame_stack.get_next()),
         };
-        let new_frame = if is_first_init {
-            self.frame_stack.start_init()
+        let arena = if frame_index < MAX_ARENA_FRAMES {
+            Some(&self.stack_arena)
         } else {
-            self.frame_stack.get_next()
+            None
         };
 
         let ctx = &mut self.ctx;
@@ -193,7 +197,7 @@ where
             ctx,
             precompiles,
             frame_input,
-            &self.stack_arena,
+            arena,
             frame_index,
         )?;
 

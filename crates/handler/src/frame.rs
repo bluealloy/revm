@@ -113,7 +113,7 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
-        arena: &Arc<Vec<U256>>,
+        arena: Option<&Arc<Vec<U256>>>,
         frame_index: usize,
     ) {
         let Self {
@@ -155,7 +155,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         mut inputs: Box<CallInputs>,
-        arena: &Arc<Vec<U256>>,
+        arena: Option<&Arc<Vec<U256>>>,
         frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
@@ -274,7 +274,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-        arena: &Arc<Vec<U256>>,
+        arena: Option<&Arc<Vec<U256>>>,
         frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
@@ -377,7 +377,7 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
-        arena: &Arc<Vec<U256>>,
+        arena: Option<&Arc<Vec<U256>>>,
         frame_index: usize,
     ) -> Result<
         ItemOrResult<FrameToken, FrameResult>,
