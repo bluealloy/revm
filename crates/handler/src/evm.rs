@@ -8,8 +8,8 @@ use context_interface::context::ContextError;
 use interpreter::{
     interpreter::EthInterpreter,
     interpreter_action::FrameInit,
-    stack_arena::MAX_ARENA_FRAMES,
     InterpreterResult,
+    MAX_ARENA_FRAMES,
 };
 
 /// Type alias for database error within a context
