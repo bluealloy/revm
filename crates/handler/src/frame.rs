@@ -154,7 +154,7 @@ impl EthFrame<EthInterpreter> {
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CallInputs>,
+        mut inputs: Box<CallInputs>,
         arena: &Arc<Vec<U256>>,
         frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
@@ -204,6 +204,7 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit;
 
         if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+            let return_memory_offset = core::mem::take(&mut inputs.return_memory_offset);
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
@@ -215,7 +216,7 @@ impl EthFrame<EthInterpreter> {
             }
             return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result,
-                memory_offset: inputs.return_memory_offset.clone(),
+                memory_offset: return_memory_offset,
                 was_precompile_called: true,
                 precompile_call_logs: logs,
             })));
