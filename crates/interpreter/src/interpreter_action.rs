@@ -34,6 +34,9 @@ pub struct FrameInit {
     pub memory: SharedMemory,
     /// Data needed as input for Interpreter.
     pub frame_input: FrameInput,
+    /// CPU gas remaining from the parent frame.
+    /// Child frames inherit this directly (not divided by 63/64).
+    pub cpu_gas_remaining: u64,
 }
 
 impl AsMut<Self> for FrameInput {

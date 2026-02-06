@@ -3,28 +3,60 @@
 pub use context_interface::cfg::gas::*;
 
 /// Represents the state of gas during execution.
+///
+/// Supports dual-limit gas accounting (TIP-1016):
+/// - `remaining`: gas remaining against `tx.gas_limit` (both execution + state gas)
+/// - `cpu_gas_remaining`: gas remaining against CPU cap (execution gas only)
+/// - `state_gas`: accumulated storage creation gas
+///
+/// On mainnet (no state gas), `cpu_gas_remaining = u64::MAX` so the CPU check
+/// in `record_cost` is always a no-op (~0 overhead).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Gas {
     /// The initial gas limit. This is constant throughout execution.
     limit: u64,
-    /// The remaining gas.
+    /// The remaining gas against tx.gas_limit.
     remaining: u64,
+    /// Gas remaining against CPU cap. Set to `u64::MAX` on mainnet (no state gas).
+    cpu_gas_remaining: u64,
     /// Refunded gas. This is used only at the end of execution.
     refunded: i64,
     /// Memoisation of values for memory expansion cost.
     memory: MemoryGas,
+    /// Accumulated storage creation gas (state gas).
+    state_gas: u64,
 }
 
 impl Gas {
     /// Creates a new `Gas` struct with the given gas limit.
+    ///
+    /// Sets `cpu_gas_remaining = u64::MAX` so the CPU check in `record_cost`
+    /// is always a no-op (standard mainnet behavior).
     #[inline]
     pub const fn new(limit: u64) -> Self {
         Self {
             limit,
             remaining: limit,
+            cpu_gas_remaining: u64::MAX,
             refunded: 0,
             memory: MemoryGas::new(),
+            state_gas: 0,
+        }
+    }
+
+    /// Creates a new `Gas` struct with a CPU gas limit (state gas / Tempo enabled).
+    ///
+    /// `cpu_gas_remaining` tracks gas remaining against the CPU cap.
+    #[inline]
+    pub const fn new_with_cpu_remaining(limit: u64, cpu_gas_remaining: u64) -> Self {
+        Self {
+            limit,
+            remaining: limit,
+            cpu_gas_remaining,
+            refunded: 0,
+            memory: MemoryGas::new(),
+            state_gas: 0,
         }
     }
 
@@ -34,8 +66,10 @@ impl Gas {
         Self {
             limit,
             remaining: 0,
+            cpu_gas_remaining: 0,
             refunded: 0,
             memory: MemoryGas::new(),
+            state_gas: 0,
         }
     }
 
@@ -87,7 +121,38 @@ impl Gas {
         self.remaining
     }
 
-    /// Erases a gas cost from the totals.
+    /// Returns the accumulated state gas.
+    #[inline]
+    pub const fn state_gas(&self) -> u64 {
+        self.state_gas
+    }
+
+    /// Returns the CPU gas remaining.
+    #[inline]
+    pub const fn cpu_gas_remaining(&self) -> u64 {
+        self.cpu_gas_remaining
+    }
+
+    /// Execution gas spent = total spent - state gas.
+    #[inline]
+    pub const fn execution_gas_spent(&self) -> u64 {
+        self.spent().saturating_sub(self.state_gas)
+    }
+
+    /// Sets cpu_gas_remaining (used when propagating from child frame).
+    #[inline]
+    pub fn set_cpu_gas_remaining(&mut self, val: u64) {
+        self.cpu_gas_remaining = val;
+    }
+
+    /// Adds state gas from a child frame.
+    #[inline]
+    pub fn add_state_gas(&mut self, gas: u64) {
+        self.state_gas += gas;
+    }
+
+    /// Erases a gas cost from remaining (returns gas from child frame).
+    /// Does NOT affect cpu_gas_remaining — CPU flows separately.
     #[inline]
     pub fn erase_cost(&mut self, returned: u64) {
         self.remaining += returned;
@@ -131,28 +196,62 @@ impl Gas {
         self.remaining = self.limit.saturating_sub(spent);
     }
 
-    /// Records an explicit cost.
+    /// Records an execution gas cost. Checks BOTH `remaining` AND `cpu_gas_remaining`.
+    ///
+    /// On mainnet (`cpu_gas_remaining = u64::MAX`), the CPU check is always a no-op.
     ///
     /// Returns `false` if the gas limit is exceeded.
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
-            self.remaining = new_remaining;
-            return true;
-        }
-        false
+        let new_remaining = match self.remaining.checked_sub(cost) {
+            Some(r) => r,
+            None => return false,
+        };
+        let new_cpu = match self.cpu_gas_remaining.checked_sub(cost) {
+            Some(c) => c,
+            None => return false,
+        };
+        self.remaining = new_remaining;
+        self.cpu_gas_remaining = new_cpu;
+        true
     }
 
     /// Records an explicit cost. In case of underflow the gas will wrap around cost.
+    ///
+    /// On mainnet: `cpu_gas_remaining = u64::MAX`, so `cpu < cost` is always false.
     ///
     /// Returns `true` if the gas limit is exceeded.
     #[inline(always)]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
-        let oog = self.remaining < cost;
+        let oog = self.remaining < cost || self.cpu_gas_remaining < cost;
         self.remaining = self.remaining.wrapping_sub(cost);
+        self.cpu_gas_remaining = self.cpu_gas_remaining.wrapping_sub(cost);
         oog
+    }
+
+    /// Records storage creation gas. ONLY deducts from `remaining` (not cpu).
+    /// State gas counts toward `tx.gas_limit` but NOT toward CPU cap.
+    #[inline]
+    pub fn record_state_gas(&mut self, cost: u64) -> bool {
+        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
+            self.remaining = new_remaining;
+            self.state_gas += cost;
+            return true;
+        }
+        false
+    }
+
+    /// Deducts from `remaining` only, without tracking as state gas.
+    /// Used for forwarding gas to child frames (not execution, not state).
+    #[inline]
+    pub fn record_remaining_cost(&mut self, cost: u64) -> bool {
+        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
+            self.remaining = new_remaining;
+            return true;
+        }
+        false
     }
 }
 
