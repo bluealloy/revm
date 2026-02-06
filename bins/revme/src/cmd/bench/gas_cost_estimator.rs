@@ -2,7 +2,9 @@ use criterion::Criterion;
 use revm::{
     bytecode::Bytecode,
     context::TxEnv,
+    context_interface::result::{EVMError, InvalidTransaction},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    database_interface::Database,
     handler::{Handler, MainnetHandler},
     primitives::{hex, Bytes, TxKind},
     Context, MainBuilder, MainContext,
@@ -38,8 +40,11 @@ pub fn run(criterion: &mut Criterion) {
             .unwrap();
         evm.ctx.tx = tx;
 
+        type BenchError = EVMError<<BenchmarkDB as Database>::Error, InvalidTransaction>;
+        let mut handler: MainnetHandler<_, BenchError, _> = MainnetHandler::default();
+
         criterion.bench_function(name, |b| {
-            b.iter(|| MainnetHandler::default().run(&mut evm).unwrap());
+            b.iter(|| handler.run(&mut evm).unwrap());
         });
     }
 }
