@@ -36,8 +36,8 @@ pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
 pub use instructions::{instruction_table, Instruction, InstructionTable};
 pub use interpreter::{
-    num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
-    MAX_ARENA_FRAMES,
+    num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, MAX_ARENA_FRAMES,
+    STACK_LIMIT,
 };
 pub use interpreter_action::{
     CallInput, CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome,

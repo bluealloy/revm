@@ -6,10 +6,7 @@ use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
 use interpreter::{
-    interpreter::EthInterpreter,
-    interpreter_action::FrameInit,
-    InterpreterResult,
-    MAX_ARENA_FRAMES,
+    interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult, MAX_ARENA_FRAMES,
 };
 
 /// Type alias for database error within a context
