@@ -54,7 +54,11 @@ where
         // Load caller's account.
         let mut caller_account = journal.load_account_with_code_mut(tx.caller())?;
 
-        validate_account_nonce_and_code_with_components(&caller_account.account().info, tx, cfg)?;
+        validate_account_nonce_and_code_with_components(
+            &caller_account.account().info,
+            &*tx,
+            cfg,
+        )?;
 
         // make changes to the account. Account balance stays the same
         caller_account.touch();
@@ -69,7 +73,7 @@ where
         // load account balance
         let account_balance = journal.sload(TOKEN, account_balance_slot)?.data;
 
-        let new_balance = calculate_caller_fee(account_balance, tx, block, cfg)?;
+        let new_balance = calculate_caller_fee(account_balance, &*tx, block, cfg)?;
 
         // store deducted balance.
         journal.sstore(TOKEN, account_balance_slot, new_balance)?;
