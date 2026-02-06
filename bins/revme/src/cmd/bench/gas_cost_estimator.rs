@@ -3,8 +3,9 @@ use revm::{
     bytecode::Bytecode,
     context::TxEnv,
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    handler::{Handler, MainnetHandler},
     primitives::{hex, Bytes, TxKind},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, MainBuilder, MainContext,
 };
 use std::io::Cursor;
 
@@ -35,13 +36,10 @@ pub fn run(criterion: &mut Criterion) {
             .gas_limit(1_000_000_000)
             .build()
             .unwrap();
+        evm.ctx.tx = tx;
 
         criterion.bench_function(name, |b| {
-            b.iter_batched(
-                || tx.clone(),
-                |input| evm.transact_one(input).unwrap(),
-                criterion::BatchSize::SmallInput,
-            );
+            b.iter(|| MainnetHandler::default().run(&mut evm).unwrap());
         });
     }
 }
