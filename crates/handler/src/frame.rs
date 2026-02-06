@@ -112,6 +112,7 @@ impl EthFrame<EthInterpreter> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        cpu_gas_remaining: u64,
         checkpoint: JournalCheckpoint,
     ) {
         let Self {
@@ -126,7 +127,15 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
+        interpreter.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            spec_id,
+            gas_limit,
+            cpu_gas_remaining,
+        );
         *checkpoint_ref = checkpoint;
     }
 
@@ -143,6 +152,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
+        cpu_gas_remaining: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -241,6 +251,7 @@ impl EthFrame<EthInterpreter> {
             is_static,
             ctx.cfg().spec().into(),
             gas_limit,
+            cpu_gas_remaining,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -257,6 +268,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
+        cpu_gas_remaining: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -342,6 +354,7 @@ impl EthFrame<EthInterpreter> {
             false,
             spec,
             gas_limit,
+            cpu_gas_remaining,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -365,13 +378,22 @@ impl EthFrame<EthInterpreter> {
             depth,
             memory,
             frame_input,
+            cpu_gas_remaining,
         } = frame_init;
 
         match frame_input {
-            FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+            FrameInput::Call(inputs) => Self::make_call_frame(
+                this,
+                ctx,
+                precompiles,
+                depth,
+                memory,
+                inputs,
+                cpu_gas_remaining,
+            ),
+            FrameInput::Create(inputs) => {
+                Self::make_create_frame(this, ctx, depth, memory, inputs, cpu_gas_remaining)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -396,6 +418,7 @@ impl EthFrame<EthInterpreter> {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
+                    cpu_gas_remaining: self.interpreter.gas.cpu_gas_remaining(),
                 }));
             }
             InterpreterAction::Return(result) => result,
@@ -478,9 +501,15 @@ impl EthFrame<EthInterpreter> {
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
+                // CPU gas ALWAYS propagates (CPU work happened regardless of outcome)
+                interpreter
+                    .gas
+                    .set_cpu_gas_remaining(out_gas.cpu_gas_remaining());
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
+                    // State gas only propagates on success
+                    interpreter.gas.add_state_gas(out_gas.state_gas());
                 }
             }
             FrameResult::Create(outcome) => {
@@ -507,9 +536,13 @@ impl EthFrame<EthInterpreter> {
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
+                // CPU gas ALWAYS propagates (CPU work happened regardless of outcome)
+                this_gas.set_cpu_gas_remaining(outcome.gas().cpu_gas_remaining());
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
+                    // State gas only propagates on success
+                    this_gas.add_state_gas(outcome.gas().state_gas());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO
@@ -575,6 +608,21 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
             return;
         } else {
             interpreter_result.output = Bytes::new();
+        }
+    }
+    // State gas for code deposit (TIP-1016)
+    if cfg.is_state_gas_enabled() {
+        let state_gas_for_code = cfg
+            .gas_params()
+            .code_deposit_state_gas(interpreter_result.output.len());
+        if state_gas_for_code > 0 && !interpreter_result.gas.record_state_gas(state_gas_for_code) {
+            if spec_id.is_enabled_in(HOMESTEAD) {
+                journal.checkpoint_revert(checkpoint);
+                interpreter_result.result = InstructionResult::OutOfGas;
+                return;
+            } else {
+                interpreter_result.output = Bytes::new();
+            }
         }
     }
     // If we have enough gas we can commit changes.

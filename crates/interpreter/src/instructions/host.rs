@@ -278,6 +278,14 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
         )
     );
 
+    // state gas for new slot creation (TIP-1016)
+    if context.host.is_state_gas_enabled() {
+        state_gas!(
+            context.interpreter,
+            context.host.gas_params().sstore_state_gas(&state_load.data)
+        );
+    }
+
     // refund
     context.interpreter.gas.record_refund(
         context
@@ -384,6 +392,14 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .gas_params()
             .selfdestruct_cost(should_charge_topup, res.is_cold)
     );
+
+    // State gas for new account creation (TIP-1016)
+    if context.host.is_state_gas_enabled() && should_charge_topup {
+        state_gas!(
+            context.interpreter,
+            context.host.gas_params().new_account_state_gas()
+        );
+    }
 
     if !res.previously_destroyed {
         context

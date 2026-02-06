@@ -124,6 +124,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        cpu_gas_remaining: u64,
     ) {
         let Self {
             bytecode: bytecode_ref,
@@ -136,7 +137,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             extend,
         } = self;
         *bytecode_ref = bytecode;
-        *gas = Gas::new(gas_limit);
+        *gas = Gas::new_with_cpu_remaining(gas_limit, cpu_gas_remaining);
         if stack.data().capacity() == 0 {
             *stack = Stack::new();
         } else {

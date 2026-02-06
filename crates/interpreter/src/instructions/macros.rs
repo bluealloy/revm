@@ -28,6 +28,27 @@ macro_rules! check {
     };
 }
 
+/// Records a state gas cost (TIP-1016) and fails the instruction if it would exceed the available gas.
+/// State gas only deducts from `remaining` (not `cpu_gas_remaining`).
+#[macro_export]
+#[collapse_debuginfo(yes)]
+macro_rules! state_gas {
+    ($interpreter:expr, $gas:expr) => {{
+        let cost = $gas;
+        if cost > 0 && !$interpreter.gas.record_state_gas(cost) {
+            $interpreter.halt_oog();
+            return;
+        }
+    }};
+    ($interpreter:expr, $gas:expr, $ret:expr) => {{
+        let cost = $gas;
+        if cost > 0 && !$interpreter.gas.record_state_gas(cost) {
+            $interpreter.halt_oog();
+            return $ret;
+        }
+    }};
+}
+
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
 #[collapse_debuginfo(yes)]

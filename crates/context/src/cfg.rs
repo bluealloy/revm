@@ -144,6 +144,11 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// By default, it is set to `false`.
     pub amsterdam_eip7708_delayed_burn_disabled: bool,
+    /// Enables state gas (TIP-1016) where storage creation gas is tracked separately.
+    ///
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_state_gas")]
+    pub enable_state_gas: bool,
 }
 
 impl CfgEnv {
@@ -187,6 +192,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_fee_charge: false,
             amsterdam_eip7708_disabled: false,
             amsterdam_eip7708_delayed_burn_disabled: false,
+            #[cfg(feature = "optional_state_gas")]
+            enable_state_gas: false,
         }
     }
 
@@ -291,6 +298,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_fee_charge: self.disable_fee_charge,
             amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
             amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
+            #[cfg(feature = "optional_state_gas")]
+            enable_state_gas: self.enable_state_gas,
         }
     }
 
@@ -328,6 +337,13 @@ impl<SPEC> CfgEnv<SPEC> {
     #[cfg(feature = "optional_eip7623")]
     pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
+        self
+    }
+
+    /// Sets the enable state gas flag (TIP-1016).
+    #[cfg(feature = "optional_state_gas")]
+    pub fn with_enable_state_gas(mut self, enable: bool) -> Self {
+        self.enable_state_gas = enable;
         self
     }
 }
@@ -527,6 +543,16 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
+    }
+
+    fn is_state_gas_enabled(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_state_gas")] {
+                self.enable_state_gas
+            } else {
+                false
+            }
+        }
     }
 }
 
