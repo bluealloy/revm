@@ -5,6 +5,7 @@ use std::{sync::Arc, vec::Vec};
 
 use super::StackTr;
 
+
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
@@ -13,7 +14,7 @@ pub const STACK_LIMIT: usize = 1024;
 /// The stack uses a cached raw pointer (`ptr`) to the start of its region
 /// for fast access on the hot path, backed by an `Arc<Vec<U256>>` that keeps
 /// the memory alive. Multiple stacks can share the same backing `Vec` when
-/// created via a [`StackArena`].
+/// created via a [`StackArena`](crate::interpreter::StackArena).
 #[derive(Debug)]
 pub struct Stack {
     /// Cached pointer to the first slot of this stack's region.

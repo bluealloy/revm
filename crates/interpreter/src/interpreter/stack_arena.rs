@@ -1,6 +1,6 @@
 //! Arena allocator for EVM stacks.
 //!
-//! Instead of each frame having its own Vec<U256> stack, we use a single
+//! Instead of each frame having its own `Vec<U256> stack`, we use a single
 //! contiguous arena that pre-allocates space for multiple frames. This reduces
 //! allocations and improves cache locality.
 

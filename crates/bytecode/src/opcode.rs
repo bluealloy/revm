@@ -96,7 +96,8 @@ impl OpCode {
         Self(opcode)
     }
 
-    /// Returns the opcode as a string. This is the inverse of [`parse`](Self::parse).
+    /// Returns the opcode as a string. This is the inverse of `OpCode::parse`
+    /// (when the `parse` feature is enabled).
     #[doc(alias = "name")]
     #[inline]
     pub const fn as_str(self) -> &'static str {
