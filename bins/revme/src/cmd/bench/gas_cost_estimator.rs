@@ -2,9 +2,12 @@ use criterion::Criterion;
 use revm::{
     bytecode::Bytecode,
     context::TxEnv,
+    context_interface::result::{EVMError, InvalidTransaction},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
+    database_interface::Database,
+    handler::{Handler, MainnetHandler},
     primitives::{hex, Bytes, TxKind},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, MainBuilder, MainContext,
 };
 use std::io::Cursor;
 
@@ -35,13 +38,13 @@ pub fn run(criterion: &mut Criterion) {
             .gas_limit(1_000_000_000)
             .build()
             .unwrap();
+        evm.ctx.tx = tx;
+
+        type BenchError = EVMError<<BenchmarkDB as Database>::Error, InvalidTransaction>;
+        let mut handler: MainnetHandler<_, BenchError, _> = MainnetHandler::default();
 
         criterion.bench_function(name, |b| {
-            b.iter_batched(
-                || tx.clone(),
-                |input| evm.transact_one(input).unwrap(),
-                criterion::BatchSize::SmallInput,
-            );
+            b.iter(|| handler.run(&mut evm).unwrap());
         });
     }
 }

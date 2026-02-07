@@ -50,7 +50,7 @@ pub trait ContextTr: Host {
         &mut self,
     ) -> (
         &Self::Block,
-        &Self::Tx,
+        &mut Self::Tx,
         &Self::Cfg,
         &mut Self::Journal,
         &mut Self::Chain,
@@ -133,7 +133,7 @@ pub trait ContextTr: Host {
 
     /// Get the transaction and journal. It is used to efficiently load access list
     /// into journal without copying them from transaction.
-    fn tx_journal_mut(&mut self) -> (&Self::Tx, &mut Self::Journal) {
+    fn tx_journal_mut(&mut self) -> (&mut Self::Tx, &mut Self::Journal) {
         let (_, tx, _, journal, _, _) = self.all_mut();
         (tx, journal)
     }

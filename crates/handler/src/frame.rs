@@ -25,7 +25,7 @@ use primitives::{
     keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
-use std::{borrow::ToOwned, boxed::Box, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, sync::Arc, vec::Vec};
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -113,6 +113,8 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         checkpoint: JournalCheckpoint,
+        arena: Option<&Arc<Vec<U256>>>,
+        frame_index: usize,
     ) {
         let Self {
             data: data_ref,
@@ -126,12 +128,22 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
+        interpreter.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            spec_id,
+            gas_limit,
+            arena,
+            frame_index,
+        );
         *checkpoint_ref = checkpoint;
     }
 
     /// Make call frame
     #[inline]
+    #[allow(clippy::too_many_arguments)]
     pub fn make_call_frame<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -142,7 +154,9 @@ impl EthFrame<EthInterpreter> {
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CallInputs>,
+        mut inputs: Box<CallInputs>,
+        arena: Option<&Arc<Vec<U256>>>,
+        frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -190,6 +204,7 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit;
 
         if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+            let return_memory_offset = core::mem::take(&mut inputs.return_memory_offset);
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
@@ -201,14 +216,14 @@ impl EthFrame<EthInterpreter> {
             }
             return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result,
-                memory_offset: inputs.return_memory_offset.clone(),
+                memory_offset: return_memory_offset,
                 was_precompile_called: true,
                 precompile_call_logs: logs,
             })));
         }
 
         // Get bytecode and hash - either from known_bytecode or load from account
-        let (bytecode, bytecode_hash) = if let Some((hash, code)) = inputs.known_bytecode.clone() {
+        let (bytecode, bytecode_hash) = if let Some((hash, code)) = inputs.known_bytecode.take() {
             // Use provided bytecode and hash
             (code, hash)
         } else {
@@ -242,6 +257,8 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             checkpoint,
+            arena,
+            frame_index,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -257,6 +274,8 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
+        arena: Option<&Arc<Vec<U256>>>,
+        frame_index: usize,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -343,6 +362,8 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             checkpoint,
+            arena,
+            frame_index,
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -356,6 +377,8 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         frame_init: FrameInit,
+        arena: Option<&Arc<Vec<U256>>>,
+        frame_index: usize,
     ) -> Result<
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
@@ -368,10 +391,19 @@ impl EthFrame<EthInterpreter> {
         } = frame_init;
 
         match frame_input {
-            FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+            FrameInput::Call(inputs) => Self::make_call_frame(
+                this,
+                ctx,
+                precompiles,
+                depth,
+                memory,
+                inputs,
+                arena,
+                frame_index,
+            ),
+            FrameInput::Create(inputs) => {
+                Self::make_create_frame(this, ctx, depth, memory, inputs, arena, frame_index)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
