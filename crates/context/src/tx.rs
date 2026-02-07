@@ -612,9 +612,7 @@ impl core::fmt::Display for TxEnvBuildError {
             Self::MissingGasPriorityFeeForEip1559 => {
                 f.write_str("missing gas priority fee for EIP-1559")
             }
-            Self::MissingBlobHashesForEip4844 => {
-                f.write_str("missing blob hashes for EIP-4844")
-            }
+            Self::MissingBlobHashesForEip4844 => f.write_str("missing blob hashes for EIP-4844"),
             Self::MissingAuthorizationListForEip7702 => {
                 f.write_str("missing authorization list for EIP-7702")
             }
