@@ -2,7 +2,7 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
-use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
+use precompile::{eth_precompile::Precompiles, PrecompileError, PrecompileSpecId};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
     boxed::Box,
@@ -54,7 +54,7 @@ impl EthPrecompiles {
 
     /// Returns addresses of the precompiles.
     pub fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
-        Box::new(self.precompiles.addresses().cloned())
+        Box::new(self.precompiles.addresses())
     }
 
     /// Returns whether the address is a precompile.
@@ -101,7 +101,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         context: &mut CTX,
         inputs: &CallInputs,
     ) -> Result<Option<InterpreterResult>, String> {
-        let Some(precompile) = self.precompiles.get(&inputs.bytecode_address) else {
+        let Some(precompilefns) = self.precompiles.get(&inputs.bytecode_address) else {
             return Ok(None);
         };
 
@@ -124,7 +124,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 }
                 CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
             };
-            precompile.execute(input_bytes, inputs.gas_limit)
+            precompilefns(input_bytes, inputs.gas_limit)
         };
 
         match exec_result {

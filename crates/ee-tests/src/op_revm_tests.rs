@@ -1174,6 +1174,6 @@ fn test_system_call() {
     let _ = evm.system_call_one(BENCH_TARGET, bytes!("0x0001"));
     let state = evm.finalize();
 
-    assert!(state.get(&SYSTEM_ADDRESS).is_none());
+    assert!(!state.contains_key(&SYSTEM_ADDRESS));
     assert!(state.get(&BENCH_TARGET).unwrap().is_touched());
 }
