@@ -201,20 +201,16 @@ impl Gas {
     /// On mainnet (`cpu_gas_remaining = u64::MAX`), the CPU check is always a no-op.
     ///
     /// Returns `false` if the gas limit is exceeded.
+    /// On failure, `remaining` and `cpu_gas_remaining` contain wrapped (invalid) values —
+    /// callers must not read them after an out-of-gas condition.
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let new_remaining = match self.remaining.checked_sub(cost) {
-            Some(r) => r,
-            None => return false,
-        };
-        let new_cpu = match self.cpu_gas_remaining.checked_sub(cost) {
-            Some(c) => c,
-            None => return false,
-        };
+        let (new_remaining, o1) = self.remaining.overflowing_sub(cost);
+        let (new_cpu, o2) = self.cpu_gas_remaining.overflowing_sub(cost);
         self.remaining = new_remaining;
         self.cpu_gas_remaining = new_cpu;
-        true
+        !(o1 | o2)
     }
 
     /// Records an explicit cost. In case of underflow the gas will wrap around cost.
@@ -318,6 +314,12 @@ impl MemoryGas {
         // Notice the swap above.
         Some(self.expansion_cost - cost)
     }
+}
+
+/// Standalone wrapper for [`Gas::record_cost`] to inspect assembly via `cargo asm`.
+#[inline(never)]
+pub fn record_cost_asm(gas: &mut Gas, cost: u64) -> bool {
+    gas.record_cost(cost)
 }
 
 /// Memory expansion cost calculation for a given number of words.
