@@ -60,7 +60,10 @@ pub fn fjord() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // RIP-7212: secp256r1 P256verify
-        precompiles.set_extended(*secp256r1::P256VERIFY.address(), *secp256r1::P256VERIFY.precompile());
+        precompiles.set_extended(
+            *secp256r1::P256VERIFY.address(),
+            *secp256r1::P256VERIFY.precompile(),
+        );
         precompiles
     })
 }
@@ -73,7 +76,7 @@ pub fn granite() -> &'static Precompiles {
         // Restrict bn254Pairing input size
         let binding = bn254_pair::GRANITE;
         let add = binding.address();
-        let index = address_to_index(&add).unwrap();
+        let index = address_to_index(add).unwrap();
         precompiles.set(index, *bn254_pair::GRANITE.precompile());
         precompiles
     })
@@ -98,7 +101,7 @@ pub fn isthmus() -> &'static Precompiles {
             bls12_381::ISTHMUS_PAIRING,
         ] {
             precompiles.set(
-                address_to_index(&precompile.address()).unwrap(),
+                address_to_index(precompile.address()).unwrap(),
                 *precompile.precompile(),
             );
         }
@@ -120,7 +123,7 @@ pub fn jovian() -> &'static Precompiles {
             bls12_381::ISTHMUS_PAIRING,
         ] {
             precompiles.set(
-                address_to_index(&precompile.address()).unwrap(),
+                address_to_index(precompile.address()).unwrap(),
                 *precompile.precompile(),
             );
         }
@@ -135,7 +138,7 @@ pub fn jovian() -> &'static Precompiles {
             bls12_381::JOVIAN_PAIRING,
         ] {
             precompiles.set(
-                address_to_index(&precompile.address()).unwrap(),
+                address_to_index(precompile.address()).unwrap(),
                 *precompile.precompile(),
             );
         }

@@ -241,6 +241,7 @@ impl JournalTr for Backend {
         old_balance: U256,
         bump_nonce: bool,
     ) {
+        #[allow(deprecated)]
         self.journaled_state
             .caller_accounting_journal_entry(address, old_balance, bump_nonce)
     }
@@ -254,6 +255,7 @@ impl JournalTr for Backend {
     }
 
     fn nonce_bump_journal_entry(&mut self, address: Address) {
+        #[allow(deprecated)]
         self.journaled_state.nonce_bump_journal_entry(address)
     }
 

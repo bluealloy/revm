@@ -189,7 +189,10 @@ impl Precompiles {
             // Update ModExp with new gas costs
             precompiles.set(5, *modexp::OSAKA.precompile());
             // P256VERIFY lives at 0x0100 (address 256), which doesn't fit in the lookup table.
-            precompiles.set_extended(u64_to_address(secp256r1::P256VERIFY_ADDRESS), secp256r1::p256_verify_osaka);
+            precompiles.set_extended(
+                u64_to_address(secp256r1::P256VERIFY_ADDRESS),
+                secp256r1::p256_verify_osaka,
+            );
             precompiles
         })
     }
