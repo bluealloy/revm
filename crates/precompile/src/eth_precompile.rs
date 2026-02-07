@@ -2,10 +2,10 @@
 //! Goes to 128 because of Fjord
 use crate::OnceLock;
 
-use primitives::Address;
+use primitives::{Address, AddressMap};
 
 use crate::{
-    blake2, bls12_381, bn254, hash, identity, kzg_point_evaluation, modexp, secp256k1,
+    blake2, bls12_381, bn254, hash, identity, kzg_point_evaluation, modexp, secp256k1, secp256r1,
     PrecompileFn, PrecompileResult, PrecompileSpecId,
 };
 
@@ -59,6 +59,8 @@ pub struct Precompiles {
     /// Lookup table indexed by address last byte for O(1) access
     /// precompile_fns[address_byte] = Some(function) if precompile exists
     precompile_fns: [Option<PrecompileFn>; MAX_PRECOMPILE_INDEX],
+    /// Extended precompiles at higher addresses (e.g., P256VERIFY at 0x0100).
+    extended_precompile_fns: AddressMap<PrecompileFn>,
 }
 
 impl Default for Precompiles {
@@ -66,6 +68,7 @@ impl Default for Precompiles {
         Self {
             eth_precompile_addresses: 0_u128,
             precompile_fns: [None; MAX_PRECOMPILE_INDEX],
+            extended_precompile_fns: AddressMap::default(),
         }
     }
 }
@@ -185,8 +188,8 @@ impl Precompiles {
             precompiles.eth_precompile_addresses = OSAKA_PRECOMPILES;
             // Update ModExp with new gas costs
             precompiles.set(5, *modexp::OSAKA.precompile());
-            // Note: P256VERIFY might be at a higher address that doesn't fit in the lookup table
-            // In that case, you'd need a fallback mechanism or extend the lookup table
+            // P256VERIFY lives at 0x0100 (address 256), which doesn't fit in the lookup table.
+            precompiles.set_extended(u64_to_address(secp256r1::P256VERIFY_ADDRESS), secp256r1::p256_verify_osaka);
             precompiles
         })
     }
@@ -205,6 +208,12 @@ impl Precompiles {
         }
     }
 
+    /// Set a precompile function at a non-standard address.
+    #[inline]
+    pub fn set_extended(&mut self, address: Address, fun: PrecompileFn) {
+        self.extended_precompile_fns.insert(address, fun);
+    }
+
     /// Checks if the given address is a precompile.
     /// Uses bitmask for O(1) lookup.
     #[inline]
@@ -212,7 +221,7 @@ impl Precompiles {
         if let Some(index) = address_to_index(address) {
             return (self.eth_precompile_addresses & (1u128 << index)) != 0;
         }
-        false
+        self.extended_precompile_fns.contains_key(address)
     }
 
     /// Executes the precompile at the given address with O(1) lookup.
@@ -223,28 +232,33 @@ impl Precompiles {
         input: &[u8],
         gas_limit: u64,
     ) -> Option<PrecompileResult> {
-        let index = address_to_index(address)?;
-        let fun = self.precompile_fns[index]?;
+        if let Some(index) = address_to_index(address) {
+            let fun = self.precompile_fns[index]?;
+            return Some(fun(input, gas_limit));
+        }
+        let fun = self.extended_precompile_fns.get(address)?;
         Some(fun(input, gas_limit))
     }
 
     /// Returns the precompile function for the given address.
     #[inline]
     pub fn get(&self, address: &Address) -> Option<PrecompileFn> {
-        let index = address_to_index(address)?;
-        self.precompile_fns[index]
+        if let Some(index) = address_to_index(address) {
+            return self.precompile_fns[index];
+        }
+        self.extended_precompile_fns.get(address).copied()
     }
 
     /// Returns the number of precompiles.
     #[inline]
     pub fn len(&self) -> usize {
-        self.eth_precompile_addresses.count_ones() as usize
+        self.eth_precompile_addresses.count_ones() as usize + self.extended_precompile_fns.len()
     }
 
     /// Checks if the precompiles list is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.eth_precompile_addresses == 0
+        self.eth_precompile_addresses == 0 && self.extended_precompile_fns.is_empty()
     }
 
     /// Returns an iterator over precompile addresses.
@@ -253,6 +267,7 @@ impl Precompiles {
             precompiles: self,
             current: 1,
         }
+        .chain(self.extended_precompile_fns.keys().copied())
     }
 
     /// Returns the complement of `other` in `self`.
@@ -269,6 +284,11 @@ impl Precompiles {
                     result.precompile_fns[i] = Some(fun);
                     result.eth_precompile_addresses |= 1u128 << i;
                 }
+            }
+        }
+        for (addr, fun) in self.extended_precompile_fns.iter() {
+            if !other.extended_precompile_fns.contains_key(addr) {
+                result.extended_precompile_fns.insert(*addr, *fun);
             }
         }
 
@@ -290,6 +310,11 @@ impl Precompiles {
                     result.precompile_fns[i] = Some(fun);
                     result.eth_precompile_addresses |= 1u128 << i;
                 }
+            }
+        }
+        for (addr, fun) in self.extended_precompile_fns.iter() {
+            if other.extended_precompile_fns.contains_key(addr) {
+                result.extended_precompile_fns.insert(*addr, *fun);
             }
         }
 

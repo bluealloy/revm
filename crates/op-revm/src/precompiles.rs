@@ -57,12 +57,10 @@ impl OpPrecompiles {
 /// Returns precompiles for Fjord spec.
 pub fn fjord() -> &'static Precompiles {
     static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-    //fjord index should be 100: sadly address_to_index only supports up to the last byte bascially 0-99 should be fixed later
-    const INDEX: usize = 100;
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // RIP-7212: secp256r1 P256verify
-        precompiles.set(INDEX, *secp256r1::P256VERIFY.precompile());
+        precompiles.set_extended(*secp256r1::P256VERIFY.address(), *secp256r1::P256VERIFY.precompile());
         precompiles
     })
 }
