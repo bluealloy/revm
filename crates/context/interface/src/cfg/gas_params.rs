@@ -638,6 +638,38 @@ impl GasParams {
             .saturating_mul(len as u64)
     }
 
+    /// State gas for SSTORE: charges for new slot creation (zero → non-zero).
+    #[inline]
+    pub fn sstore_state_gas(&self, vals: &SStoreResult) -> u64 {
+        if vals.new_values_changes_present()
+            && vals.is_original_eq_present()
+            && vals.is_original_zero()
+        {
+            self.get(GasId::sstore_set_state_gas())
+        } else {
+            0
+        }
+    }
+
+    /// State gas for new account creation.
+    #[inline]
+    pub fn new_account_state_gas(&self) -> u64 {
+        self.get(GasId::new_account_state_gas())
+    }
+
+    /// State gas per byte for code deposit.
+    #[inline]
+    pub fn code_deposit_state_gas(&self, len: usize) -> u64 {
+        self.get(GasId::code_deposit_state_gas())
+            .saturating_mul(len as u64)
+    }
+
+    /// State gas for contract metadata creation.
+    #[inline]
+    pub fn create_state_gas(&self) -> u64 {
+        self.get(GasId::create_state_gas())
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per empty account cost.
     #[inline]
     pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
@@ -894,6 +926,10 @@ impl GasId {
             x if x == Self::sstore_set_refund().as_u8() => "sstore_set_refund",
             x if x == Self::sstore_reset_refund().as_u8() => "sstore_reset_refund",
             x if x == Self::tx_eip7702_auth_refund().as_u8() => "tx_eip7702_auth_refund",
+            x if x == Self::sstore_set_state_gas().as_u8() => "sstore_set_state_gas",
+            x if x == Self::new_account_state_gas().as_u8() => "new_account_state_gas",
+            x if x == Self::code_deposit_state_gas().as_u8() => "code_deposit_state_gas",
+            x if x == Self::create_state_gas().as_u8() => "create_state_gas",
             _ => "unknown",
         }
     }
@@ -954,6 +990,10 @@ impl GasId {
             "sstore_set_refund" => Some(Self::sstore_set_refund()),
             "sstore_reset_refund" => Some(Self::sstore_reset_refund()),
             "tx_eip7702_auth_refund" => Some(Self::tx_eip7702_auth_refund()),
+            "sstore_set_state_gas" => Some(Self::sstore_set_state_gas()),
+            "new_account_state_gas" => Some(Self::new_account_state_gas()),
+            "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
+            "create_state_gas" => Some(Self::create_state_gas()),
             _ => None,
         }
     }
@@ -1157,6 +1197,26 @@ impl GasId {
     pub const fn tx_eip7702_auth_refund() -> GasId {
         Self::new(39)
     }
+
+    /// State gas for new storage slot creation (SSTORE zero → non-zero).
+    pub const fn sstore_set_state_gas() -> GasId {
+        Self::new(40)
+    }
+
+    /// State gas for new account creation.
+    pub const fn new_account_state_gas() -> GasId {
+        Self::new(41)
+    }
+
+    /// State gas per byte for code deposit.
+    pub const fn code_deposit_state_gas() -> GasId {
+        Self::new(42)
+    }
+
+    /// State gas for contract metadata creation.
+    pub const fn create_state_gas() -> GasId {
+        Self::new(43)
+    }
 }
 
 #[cfg(test)]
@@ -1199,11 +1259,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 39 known GasIds (based on the indices 1-39 used)
+        // We should have exactly 43 known GasIds (based on the indices 1-43 used)
         assert_eq!(
             unique_names.len(),
-            39,
-            "Expected 39 unique GasIds, found {}",
+            43,
+            "Expected 43 unique GasIds, found {}",
             unique_names.len()
         );
     }

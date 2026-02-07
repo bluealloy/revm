@@ -130,6 +130,11 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_fee_charge")]
     pub disable_fee_charge: bool,
+    /// Enables state gas (TIP-1016) where storage creation gas is tracked separately.
+    ///
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_state_gas")]
+    pub enable_state_gas: bool,
 }
 
 impl CfgEnv {
@@ -171,6 +176,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_priority_fee_check: false,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: false,
+            #[cfg(feature = "optional_state_gas")]
+            enable_state_gas: false,
         }
     }
 
@@ -273,6 +280,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_priority_fee_check: self.disable_priority_fee_check,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: self.disable_fee_charge,
+            #[cfg(feature = "optional_state_gas")]
+            enable_state_gas: self.enable_state_gas,
         }
     }
 
@@ -310,6 +319,13 @@ impl<SPEC> CfgEnv<SPEC> {
     #[cfg(feature = "optional_eip7623")]
     pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
+        self
+    }
+
+    /// Sets the enable state gas flag (TIP-1016).
+    #[cfg(feature = "optional_state_gas")]
+    pub fn with_enable_state_gas(mut self, enable: bool) -> Self {
+        self.enable_state_gas = enable;
         self
     }
 }
@@ -501,6 +517,16 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     #[inline]
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
+    }
+
+    fn is_state_gas_enabled(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optional_state_gas")] {
+                self.enable_state_gas
+            } else {
+                false
+            }
+        }
     }
 }
 
