@@ -56,8 +56,8 @@ const OSAKA_PRECOMPILES: PrecompileMask = PRAGUE_PRECOMPILES;
 pub struct Precompiles {
     /// Bitmask for Ethereum precompiles (addresses 0x01-0x3f can fit in u64)
     eth_precompile_addresses: PrecompileMask,
-    /// Lookup table indexed by address last byte for O(1) access
-    /// precompile_fns[address_byte] = Some(function) if precompile exists
+    /// Lookup table indexed by address last byte for O(1) access.
+    /// Use `precompile_fns[address_byte] = Some(function)` when a precompile exists.
     precompile_fns: [Option<PrecompileFn>; MAX_PRECOMPILE_INDEX],
     /// Extended precompiles at higher addresses (e.g., P256VERIFY at 0x0100).
     extended_precompile_fns: AddressMap<PrecompileFn>,
