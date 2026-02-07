@@ -208,9 +208,12 @@ impl Gas {
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (new_remaining, o1) = self.remaining.overflowing_sub(cost);
         let (new_cpu, o2) = self.cpu_gas_remaining.overflowing_sub(cost);
-        self.remaining = new_remaining;
-        self.cpu_gas_remaining = new_cpu;
-        !(o1 | o2)
+        let success = !(o1 | o2);
+        if success {
+            self.remaining = new_remaining;
+            self.cpu_gas_remaining = new_cpu;
+        }
+        success
     }
 
     /// Records an explicit cost. In case of underflow the gas will wrap around cost.
