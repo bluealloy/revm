@@ -106,6 +106,19 @@ pub enum DeriveTxTypeError {
     MissingTargetForEip7873,
 }
 
+impl core::fmt::Display for DeriveTxTypeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let s = match self {
+            Self::MissingTargetForEip4844 => "missing target for EIP-4844",
+            Self::MissingTargetForEip7702 => "missing target for EIP-7702",
+            Self::MissingTargetForEip7873 => "missing target for EIP-7873",
+        };
+        f.write_str(s)
+    }
+}
+
+impl core::error::Error for DeriveTxTypeError {}
+
 impl TxEnv {
     /// Creates a new TxEnv with benchmark-specific values.
     pub fn new_bench() -> Self {
@@ -590,6 +603,33 @@ pub enum TxEnvBuildError {
     MissingAuthorizationListForEip7702,
     /// Missing target for EIP-4844
     MissingTargetForEip4844,
+}
+
+impl core::fmt::Display for TxEnvBuildError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::DeriveErr(err) => write!(f, "derive tx type error: {err}"),
+            Self::MissingGasPriorityFeeForEip1559 => {
+                f.write_str("missing gas priority fee for EIP-1559")
+            }
+            Self::MissingBlobHashesForEip4844 => {
+                f.write_str("missing blob hashes for EIP-4844")
+            }
+            Self::MissingAuthorizationListForEip7702 => {
+                f.write_str("missing authorization list for EIP-7702")
+            }
+            Self::MissingTargetForEip4844 => f.write_str("missing target for EIP-4844"),
+        }
+    }
+}
+
+impl core::error::Error for TxEnvBuildError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::DeriveErr(err) => Some(err),
+            _ => None,
+        }
+    }
 }
 
 impl From<DeriveTxTypeError> for TxEnvBuildError {
