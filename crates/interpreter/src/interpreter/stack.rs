@@ -5,7 +5,6 @@ use std::{sync::Arc, vec::Vec};
 
 use super::StackTr;
 
-
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
