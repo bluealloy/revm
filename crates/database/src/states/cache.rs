@@ -215,11 +215,12 @@ impl CacheState {
         let is_created = account.is_created();
         let is_empty = account.is_empty();
 
-        // Transform evm storage to storage with previous value.
-        let changed_storage = account
-            .storage
+        // Filter unchanged storage slots in-place, then convert to StorageSlot.
+        // retain() avoids allocating a new map and gives collect() an exact size hint.
+        let mut storage = account.storage;
+        storage.retain(|_, slot| slot.is_changed());
+        let changed_storage = storage
             .into_iter()
-            .filter(|(_, slot)| slot.is_changed())
             .map(|(key, slot)| (key, slot.into()))
             .collect();
 
