@@ -130,6 +130,20 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_fee_charge")]
     pub disable_fee_charge: bool,
+    /// Disables EIP-7708 (ETH transfers emit logs).
+    ///
+    /// By default, it is set to `false`.
+    pub amsterdam_eip7708_disabled: bool,
+    /// Disables EIP-7708 delayed burn logging.
+    ///
+    /// When enabled, revm tracks all self-destructed addresses and emits logs for
+    /// accounts that still have remaining balance at the end of the transaction.
+    /// This can be disabled for performance reasons as it requires storing and
+    /// iterating over all self-destructed accounts. When disabled, the logging
+    /// can be done outside of revm when applying accounts to database state.
+    ///
+    /// By default, it is set to `false`.
+    pub amsterdam_eip7708_delayed_burn_disabled: bool,
 }
 
 impl CfgEnv {
@@ -171,6 +185,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_priority_fee_check: false,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: false,
+            amsterdam_eip7708_disabled: false,
+            amsterdam_eip7708_delayed_burn_disabled: false,
         }
     }
 
@@ -273,6 +289,8 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_priority_fee_check: self.disable_priority_fee_check,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: self.disable_fee_charge,
+            amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
+            amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
         }
     }
 
@@ -486,6 +504,14 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
                 false
             }
         }
+    }
+
+    fn is_eip7708_disabled(&self) -> bool {
+        self.amsterdam_eip7708_disabled
+    }
+
+    fn is_eip7708_delayed_burn_disabled(&self) -> bool {
+        self.amsterdam_eip7708_delayed_burn_disabled
     }
 
     fn memory_limit(&self) -> u64 {

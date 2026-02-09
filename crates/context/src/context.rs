@@ -141,12 +141,17 @@ impl<
     ///
     /// This will create a new [`Journal`] object.
     pub fn new(db: DB, spec: SPEC) -> Self {
+        let cfg = CfgEnv::new_with_spec(spec);
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(spec.clone().into());
+        journaled_state.set_spec_id(cfg.spec.clone().into());
+        journaled_state.set_eip7708_config(
+            cfg.amsterdam_eip7708_disabled,
+            cfg.amsterdam_eip7708_delayed_burn_disabled,
+        );
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv::new_with_spec(spec),
+            cfg,
             local: LOCAL::default(),
             journaled_state,
             chain: Default::default(),
@@ -170,6 +175,10 @@ where
         mut journal: OJOURNAL,
     ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN, LOCAL> {
         journal.set_spec_id(self.cfg.spec().into());
+        journal.set_eip7708_config(
+            self.cfg.is_eip7708_disabled(),
+            self.cfg.is_eip7708_delayed_burn_disabled(),
+        );
         Context {
             tx: self.tx,
             block: self.block,
@@ -188,9 +197,12 @@ where
         self,
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN, LOCAL> {
-        let spec = self.cfg.spec().into();
         let mut journaled_state = Journal::new(db);
-        journaled_state.set_spec_id(spec);
+        journaled_state.set_spec_id(self.cfg.spec().into());
+        journaled_state.set_eip7708_config(
+            self.cfg.is_eip7708_disabled(),
+            self.cfg.is_eip7708_delayed_burn_disabled(),
+        );
         Context {
             tx: self.tx,
             block: self.block,
@@ -208,9 +220,12 @@ where
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL>
     {
-        let spec = self.cfg.spec().into();
         let mut journaled_state = Journal::new(WrapDatabaseRef(db));
-        journaled_state.set_spec_id(spec);
+        journaled_state.set_spec_id(self.cfg.spec().into());
+        journaled_state.set_eip7708_config(
+            self.cfg.is_eip7708_disabled(),
+            self.cfg.is_eip7708_delayed_burn_disabled(),
+        );
         Context {
             tx: self.tx,
             block: self.block,
@@ -272,6 +287,10 @@ where
         cfg: OCFG,
     ) -> Context<BLOCK, TX, OCFG, DB, JOURNAL, CHAIN, LOCAL> {
         self.journaled_state.set_spec_id(cfg.spec().into());
+        self.journaled_state.set_eip7708_config(
+            cfg.is_eip7708_disabled(),
+            cfg.is_eip7708_delayed_burn_disabled(),
+        );
         Context {
             tx: self.tx,
             block: self.block,
@@ -307,6 +326,10 @@ where
     {
         f(&mut self.cfg);
         self.journaled_state.set_spec_id(self.cfg.spec().into());
+        self.journaled_state.set_eip7708_config(
+            self.cfg.is_eip7708_disabled(),
+            self.cfg.is_eip7708_delayed_burn_disabled(),
+        );
         self
     }
 
@@ -383,6 +406,10 @@ where
     {
         f(&mut self.cfg);
         self.journaled_state.set_spec_id(self.cfg.spec().into());
+        self.journaled_state.set_eip7708_config(
+            self.cfg.is_eip7708_disabled(),
+            self.cfg.is_eip7708_delayed_burn_disabled(),
+        );
     }
 
     /// Modifies the context chain.

@@ -20,6 +20,37 @@ use primitives::{
 };
 use state::{Account, EvmState, TransientStorage};
 use std::vec::Vec;
+
+/// Configuration for the journal that affects EVM execution behavior.
+///
+/// This struct bundles the spec ID and EIP-7708 configuration flags.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct JournalCfg {
+    /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
+    /// JournalInner to be functional.
+    ///
+    /// If spec is set it assumed that precompile addresses are set as well for this particular spec.
+    ///
+    /// This spec is used for two things:
+    ///
+    /// - [EIP-161]: Prior to this EIP, Ethereum had separate definitions for empty and non-existing accounts.
+    /// - [EIP-6780]: `SELFDESTRUCT` only in same transaction
+    ///
+    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
+    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
+    pub spec: SpecId,
+    /// Whether EIP-7708 (ETH transfers emit logs) is disabled.
+    pub eip7708_disabled: bool,
+    /// Whether EIP-7708 delayed burn logging is disabled.
+    ///
+    /// When enabled, revm tracks all self-destructed addresses and emits logs for
+    /// accounts that still have remaining balance at the end of the transaction.
+    /// This can be disabled for performance reasons as it requires storing and
+    /// iterating over all self-destructed accounts. When disabled, the logging
+    /// can be done outside of revm when applying accounts to database state.
+    pub eip7708_delayed_burn_disabled: bool,
+}
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -44,19 +75,8 @@ pub struct JournalInner<ENTRY> {
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
     pub transaction_id: usize,
-    /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
-    /// JournalInner to be functional.
-    ///
-    /// If spec is set it assumed that precompile addresses are set as well for this particular spec.
-    ///
-    /// This spec is used for two things:
-    ///
-    /// - [EIP-161]: Prior to this EIP, Ethereum had separate definitions for empty and non-existing accounts.
-    /// - [EIP-6780]: `SELFDESTRUCT` only in same transaction
-    ///
-    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
-    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
-    pub spec: SpecId,
+    /// Journal configuration containing spec ID and EIP-7708 flags.
+    pub cfg: JournalCfg,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
     /// Addresses that were self-destructed for the first time in this transaction.
@@ -90,7 +110,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal: Vec::default(),
             transaction_id: 0,
             depth: 0,
-            spec: SpecId::default(),
+            cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
             selfdestructed_addresses: Vec::new(),
         }
@@ -124,12 +144,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
             selfdestructed_addresses,
         } = self;
-        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
-        let _ = spec;
+        // Cfg and state are not changed. They are always set again before execution.
+        let _ = cfg;
         let _ = state;
         transient_storage.clear();
         *depth = 0;
@@ -156,11 +176,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
             selfdestructed_addresses,
         } = self;
-        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
             entry.revert(state, None, is_spurious_dragon_enabled);
@@ -190,12 +210,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
             selfdestructed_addresses,
         } = self;
-        // Spec is not changed. And it is always set again in execution.
-        let _ = spec;
+        // Cfg is not changed. It is always set again before execution.
+        let _ = cfg;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
         selfdestructed_addresses.clear();
@@ -227,7 +247,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
     #[inline]
     pub fn eip7708_emit_selfdestruct_remaining_balance_logs(&mut self) {
-        if !self.spec.is_enabled_in(AMSTERDAM) {
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM)
+            || self.cfg.eip7708_disabled
+            || self.cfg.eip7708_delayed_burn_disabled
+        {
             return;
         }
 
@@ -261,7 +284,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Sets SpecId.
     #[inline]
     pub fn set_spec_id(&mut self, spec: SpecId) {
-        self.spec = spec;
+        self.cfg.spec = spec;
+    }
+
+    /// Sets EIP-7708 configuration flags.
+    #[inline]
+    pub fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+        self.cfg.eip7708_disabled = disabled;
+        self.cfg.eip7708_delayed_burn_disabled = delayed_burn_disabled;
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -542,7 +572,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = self.cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth = self.depth.saturating_sub(1);
@@ -581,7 +611,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target: Address,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<DB::Error>> {
-        let spec = self.spec;
+        let spec = self.cfg.spec;
         let account_load = self.load_account_optional(db, target, false, skip_cold_load)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
@@ -612,8 +642,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
             // EIP-7708: Track first self-destruction for remaining balance log.
-            // Only track when account is actually destroyed.
-            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed {
+            // Only track when account is actually destroyed and delayed burn is not disabled.
+            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed
+                && !self.cfg.eip7708_delayed_burn_disabled
+            {
                 self.selfdestructed_addresses.push(address);
             }
 
@@ -690,7 +722,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
-        let spec = self.spec;
+        let spec = self.cfg.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
         let account = self
             .load_account_optional(db, address, is_eip7702_enabled, false)
@@ -1034,7 +1066,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn eip7708_transfer_log(&mut self, from: Address, to: Address, balance: U256) {
         // Only emit log if EIP-7708 is enabled and balance is non-zero
-        if !self.spec.is_enabled_in(AMSTERDAM) || balance.is_zero() {
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
+        {
             return;
         }
 
@@ -1065,7 +1098,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn eip7708_selfdestruct_to_self_log(&mut self, address: Address, balance: U256) {
         // Only emit log if EIP-7708 is enabled and balance is non-zero
-        if !self.spec.is_enabled_in(AMSTERDAM) || balance.is_zero() {
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
+        {
             return;
         }
 

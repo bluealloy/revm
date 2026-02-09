@@ -119,6 +119,17 @@ pub trait JournalTr {
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);
 
+    /// Sets EIP-7708 configuration flags.
+    ///
+    /// - `disabled`: Whether EIP-7708 (ETH transfers emit logs) is completely disabled.
+    /// - `delayed_burn_disabled`: Whether delayed burn logging is disabled. When enabled,
+    ///   revm tracks all self-destructed addresses and emits logs for accounts that still
+    ///   have remaining balance at the end of the transaction. This can be disabled for
+    ///   performance reasons as it requires storing and iterating over all self-destructed
+    ///   accounts. When disabled, the logging can be done outside of revm when applying
+    ///   accounts to database state.
+    fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool);
+
     /// Touches the account.
     fn touch_account(&mut self, address: Address);
 
