@@ -129,7 +129,7 @@ pub trait Handler {
         // call execution and than output.
         match self
             .execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.execution_result(evm, exec_result))
+            .and_then(|exec_result| self.execution_result(evm, exec_result, init_and_floor_gas))
         {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
@@ -153,7 +153,7 @@ pub trait Handler {
         self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
 
         // Prepare the output
-        self.execution_result(evm, exec_result)
+        self.execution_result(evm, exec_result, init_and_floor_gas)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -464,10 +464,11 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        init_and_floor_gas: InitialAndFloorGas,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result = post_execution::output(evm.ctx(), result);
+        let exec_result = post_execution::output(evm.ctx(), result, init_and_floor_gas);
 
         // commit transaction
         evm.ctx().journal_mut().commit_tx();

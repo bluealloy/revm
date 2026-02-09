@@ -13,7 +13,7 @@ use revm::{
     },
     context_interface::{
         context::take_error,
-        result::{EVMError, ExecutionResult, FromStringError},
+        result::{EVMError, ExecutionResult, FromStringError, ResultGas},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
@@ -24,7 +24,9 @@ use revm::{
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
-    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
+    interpreter::{
+        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas, InitialAndFloorGas,
+    },
     primitives::{hardfork::SpecId, U256},
 };
 use std::boxed::Box;
@@ -345,11 +347,12 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        init_and_floor_gas: InitialAndFloorGas,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result =
-            post_execution::output(evm.ctx(), frame_result).map_haltreason(OpHaltReason::Base);
+        let exec_result = post_execution::output(evm.ctx(), frame_result, init_and_floor_gas)
+            .map_haltreason(OpHaltReason::Base);
 
         if exec_result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
@@ -422,7 +425,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas_used,
+                gas: ResultGas::new(gas_used, 0, gas_used, 0),
             })
         }
 
@@ -1296,7 +1299,8 @@ mod tests {
                         gas: Default::default(),
                     },
                     Default::default()
-                ))
+                )),
+                InitialAndFloorGas::new(0, 0),
             ),
             Err(EVMError::Transaction(
                 OpTransactionError::HaltedDepositPostRegolith

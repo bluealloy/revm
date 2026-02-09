@@ -1,8 +1,12 @@
 [
   {
     "Success": {
-      "gas_refunded": 0,
-      "gas_used": 54260,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 54260,
+        "gas_used": 54260
+      },
       "logs": [],
       "output": {
         "Create": [
@@ -15,8 +19,12 @@
   },
   {
     "Success": {
-      "gas_refunded": 14301,
-      "gas_used": 14302,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 14301,
+        "gas_spent": 28603,
+        "gas_used": 14302
+      },
       "logs": [],
       "output": {
         "Call": "0x"
@@ -26,8 +34,12 @@
   },
   {
     "Success": {
-      "gas_refunded": 0,
-      "gas_used": 54260,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 54260,
+        "gas_used": 54260
+      },
       "logs": [],
       "output": {
         "Create": [

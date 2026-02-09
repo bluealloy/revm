@@ -1,7 +1,12 @@
 {
   "result": {
     "Halt": {
-      "gas_used": 46848,
+      "gas": {
+        "floor_gas": 26080,
+        "gas_refunded": 0,
+        "gas_spent": 46848,
+        "gas_used": 46848
+      },
       "reason": {
         "Base": {
           "PrecompileErrorWithContext": "bls12-381 map fp2 to g2 input length error"

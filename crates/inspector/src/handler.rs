@@ -59,7 +59,7 @@ where
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
         self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
-        self.execution_result(evm, frame_result)
+        self.execution_result(evm, frame_result, init_and_floor_gas)
     }
 
     /// Run execution loop with inspection support
@@ -139,7 +139,7 @@ where
         // call execution with inspection and then output.
         match self
             .inspect_execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.execution_result(evm, exec_result))
+            .and_then(|exec_result| self.execution_result(evm, exec_result, init_and_floor_gas))
         {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
