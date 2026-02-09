@@ -204,7 +204,7 @@ where
 
         let action = frame
             .interpreter
-            .run_plain(instructions.instruction_table(), context);
+            .run_plain_state_gas(instructions.instruction_table(), context);
 
         frame.process_next_action(context, action).inspect(|i| {
             if i.is_result() {

@@ -230,6 +230,20 @@ impl Gas {
         oog
     }
 
+    /// Records an explicit cost without checking `cpu_gas_remaining`.
+    /// In case of underflow the gas will wrap around cost.
+    ///
+    /// This is the fast path used when state gas is not enabled.
+    ///
+    /// Returns `true` if the gas limit is exceeded.
+    #[inline(always)]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
+    pub fn record_cost_unsafe_no_cpu(&mut self, cost: u64) -> bool {
+        let oog = self.remaining < cost;
+        self.remaining = self.remaining.wrapping_sub(cost);
+        oog
+    }
+
     /// Records storage creation gas. ONLY deducts from `remaining` (not cpu).
     /// State gas counts toward `tx.gas_limit` but NOT toward CPU cap.
     #[inline]
