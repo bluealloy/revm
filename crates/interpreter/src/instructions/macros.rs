@@ -34,15 +34,13 @@ macro_rules! check {
 #[collapse_debuginfo(yes)]
 macro_rules! state_gas {
     ($interpreter:expr, $gas:expr) => {{
-        let cost = $gas;
-        if cost > 0 && !$interpreter.gas.record_state_gas(cost) {
+        if !$interpreter.gas.record_state_gas($gas) {
             $interpreter.halt_oog();
             return;
         }
     }};
     ($interpreter:expr, $gas:expr, $ret:expr) => {{
-        let cost = $gas;
-        if cost > 0 && !$interpreter.gas.record_state_gas(cost) {
+        if !$interpreter.gas.record_state_gas($gas) {
             $interpreter.halt_oog();
             return $ret;
         }
