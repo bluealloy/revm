@@ -6,10 +6,7 @@
 use revm::{
     bytecode::opcode,
     context::TxEnv,
-    context_interface::{
-        cfg::GasId,
-        result::HaltReason,
-    },
+    context_interface::{cfg::GasId, result::HaltReason},
     database::{BenchmarkDB, BENCH_CALLER},
     handler::{MainnetContext, MainnetEvm},
     primitives::{address, hardfork::SpecId, U256},
@@ -59,8 +56,10 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
 fn sstore_bytecode(key: u8, value: u8) -> Bytecode {
     Bytecode::new_legacy(
         [
-            opcode::PUSH1, value, // value
-            opcode::PUSH1, key, // key
+            opcode::PUSH1,
+            value, // value
+            opcode::PUSH1,
+            key,            // key
             opcode::SSTORE, //
             opcode::STOP,
         ]
@@ -73,11 +72,15 @@ fn sstore_bytecode(key: u8, value: u8) -> Bytecode {
 fn sstore_overwrite_bytecode() -> Bytecode {
     Bytecode::new_legacy(
         [
-            opcode::PUSH1, 1, // value=1
-            opcode::PUSH1, 0, // key=0
+            opcode::PUSH1,
+            1, // value=1
+            opcode::PUSH1,
+            0,              // key=0
             opcode::SSTORE, //
-            opcode::PUSH1, 2, // value=2
-            opcode::PUSH1, 0, // key=0
+            opcode::PUSH1,
+            2, // value=2
+            opcode::PUSH1,
+            0,              // key=0
             opcode::SSTORE, //
             opcode::STOP,
         ]
@@ -90,9 +93,21 @@ fn sstore_overwrite_bytecode() -> Bytecode {
 fn sstore_multi_bytecode() -> Bytecode {
     Bytecode::new_legacy(
         [
-            opcode::PUSH1, 1, opcode::PUSH1, 0, opcode::SSTORE, //
-            opcode::PUSH1, 1, opcode::PUSH1, 1, opcode::SSTORE, //
-            opcode::PUSH1, 1, opcode::PUSH1, 2, opcode::SSTORE, //
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            0,
+            opcode::SSTORE, //
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            1,
+            opcode::SSTORE, //
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            2,
+            opcode::SSTORE, //
             opcode::STOP,
         ]
         .into(),
@@ -104,11 +119,15 @@ fn sstore_multi_bytecode() -> Bytecode {
 fn sstore_set_then_clear_bytecode() -> Bytecode {
     Bytecode::new_legacy(
         [
-            opcode::PUSH1, 1, // value=1
-            opcode::PUSH1, 0, // key=0
+            opcode::PUSH1,
+            1, // value=1
+            opcode::PUSH1,
+            0,              // key=0
             opcode::SSTORE, //
-            opcode::PUSH1, 0, // value=0
-            opcode::PUSH1, 0, // key=0
+            opcode::PUSH1,
+            0, // value=0
+            opcode::PUSH1,
+            0,              // key=0
             opcode::SSTORE, //
             opcode::STOP,
         ]
@@ -119,25 +138,23 @@ fn sstore_set_then_clear_bytecode() -> Bytecode {
 /// Init code that returns `code_len` zero bytes as runtime code.
 fn return_n_bytes_init_code(code_len: u8) -> Vec<u8> {
     // PUSH1 code_len; PUSH1 0; RETURN (returns `code_len` zero bytes from memory).
-    vec![
-        opcode::PUSH1,
-        code_len,
-        opcode::PUSH1,
-        0,
-        opcode::RETURN,
-    ]
+    vec![opcode::PUSH1, code_len, opcode::PUSH1, 0, opcode::RETURN]
 }
 
 /// Init code that does SSTORE(0, 1) and returns 1 byte of code.
 fn init_code_sstore_and_return() -> Vec<u8> {
     vec![
         // SSTORE(0, 1)
-        opcode::PUSH1, 1, // value
-        opcode::PUSH1, 0, // key
+        opcode::PUSH1,
+        1, // value
+        opcode::PUSH1,
+        0,              // key
         opcode::SSTORE, //
         // RETURN 1 byte of zero from memory
-        opcode::PUSH1, 1, // length
-        opcode::PUSH1, 0, // offset
+        opcode::PUSH1,
+        1, // length
+        opcode::PUSH1,
+        0, // offset
         opcode::RETURN,
     ]
 }
@@ -146,12 +163,16 @@ fn init_code_sstore_and_return() -> Vec<u8> {
 fn init_code_sstore_and_revert() -> Vec<u8> {
     vec![
         // SSTORE(0, 1)
-        opcode::PUSH1, 1, // value
-        opcode::PUSH1, 0, // key
+        opcode::PUSH1,
+        1, // value
+        opcode::PUSH1,
+        0,              // key
         opcode::SSTORE, //
         // REVERT(0, 0)
-        opcode::PUSH1, 0,
-        opcode::PUSH1, 0,
+        opcode::PUSH1,
+        0,
+        opcode::PUSH1,
+        0,
         opcode::REVERT,
     ]
 }
@@ -398,10 +419,8 @@ fn test_tip1016_create_with_sstore() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_NEW_ACCOUNT
-        + STATE_GAS_CREATE
-        + STATE_GAS_SSTORE_SET
-        + STATE_GAS_CODE_DEPOSIT; // 1 byte
+    let expected =
+        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT; // 1 byte
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(
         delta, expected,
@@ -600,10 +619,8 @@ fn test_tip1016_create_child_propagates() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_NEW_ACCOUNT
-        + STATE_GAS_CREATE
-        + STATE_GAS_SSTORE_SET
-        + STATE_GAS_CODE_DEPOSIT;
+    let expected =
+        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(
         delta, expected,

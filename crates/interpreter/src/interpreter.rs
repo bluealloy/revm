@@ -343,7 +343,10 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if self.gas.record_cost_unsafe_no_regular(instruction.static_gas()) {
+        if self
+            .gas
+            .record_cost_unsafe_no_regular(instruction.static_gas())
+        {
             return self.halt_oog();
         }
         let context = InstructionContext {

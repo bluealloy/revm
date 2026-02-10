@@ -611,7 +611,11 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         let state_gas_for_code = cfg
             .gas_params()
             .code_deposit_state_gas(interpreter_result.output.len());
-        if state_gas_for_code > 0 && !interpreter_result.gas.record_remaining_cost(state_gas_for_code) {
+        if state_gas_for_code > 0
+            && !interpreter_result
+                .gas
+                .record_remaining_cost(state_gas_for_code)
+        {
             if spec_id.is_enabled_in(HOMESTEAD) {
                 journal.checkpoint_revert(checkpoint);
                 interpreter_result.result = InstructionResult::OutOfGas;
