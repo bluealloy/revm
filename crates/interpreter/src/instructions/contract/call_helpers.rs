@@ -92,8 +92,8 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     } else {
         stack_gas_limit
     };
-    // Deduct gas forwarded to child from remaining only (not cpu).
-    // Child inherits parent's cpu_gas_remaining directly.
+    // Deduct gas forwarded to child from remaining only (not regular gas).
+    // Child inherits parent's regular_gas_remaining directly.
     if !interpreter.gas.record_remaining_cost(gas_limit) {
         interpreter.halt_oog();
         return None;
@@ -109,7 +109,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
 /// Loads accounts and its delegate account.
 ///
-/// Returns `(execution_gas_cost, state_gas_cost, bytecode, code_hash)`.
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
 #[inline]
 pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
@@ -142,7 +142,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 ///
 /// Assumption is that warm gas is already deducted.
 ///
-/// Returns `(execution_gas_cost, state_gas_cost, bytecode, code_hash)`.
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
 /// `state_gas_cost` is non-zero only when creating a new empty account (TIP-1016).
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(

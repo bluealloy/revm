@@ -197,13 +197,12 @@ where
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
-        let cpu_remaining = gas.cpu_gas_remaining();
-        let state_gas_acc = gas.state_gas();
+        let regular_remaining = gas.regular_gas_remaining();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
-        // CPU gas always preserved (reflects actual CPU consumption)
-        gas.set_cpu_gas_remaining(cpu_remaining);
+        // Regular gas always preserved (reflects actual consumption)
+        gas.set_regular_gas_remaining(regular_remaining);
 
         if instruction_result.is_ok() {
             // On Optimism, deposit transactions report gas usage uniquely to other
@@ -224,7 +223,6 @@ where
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
-                gas.add_state_gas(state_gas_acc);
             } else if is_deposit && tx.is_system_transaction() {
                 // System transactions were a special type of deposit transaction in
                 // the Bedrock hardfork that did not incur any gas costs.

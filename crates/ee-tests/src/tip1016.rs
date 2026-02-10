@@ -1,7 +1,7 @@
 //! TIP-1016 State Gas integration tests.
 //!
 //! Verifies dual-limit gas accounting where storage creation gas (state gas)
-//! is tracked separately from execution gas.
+//! is tracked separately from regular gas.
 
 use revm::{
     bytecode::opcode,
@@ -460,13 +460,13 @@ fn test_tip1016_call_existing_account() {
     );
 }
 
-// ---- Category 4: CPU Gas Cap Enforcement ----
+// ---- Category 4: Regular Gas Cap Enforcement ----
 
-/// 4.1 Tight CPU cap causes OOG.
-/// With gas_limit=cap=30,000, CPU budget = cap - initial_gas(21,000) = 9,000.
-/// The SSTORE execution needs ~22,106 gas beyond intrinsic, so 9,000 CPU is insufficient.
+/// 4.1 Tight regular gas cap causes OOG.
+/// With gas_limit=cap=30,000, regular gas budget = cap - initial_gas(21,000) = 9,000.
+/// The SSTORE needs ~22,106 regular gas beyond intrinsic, so 9,000 is insufficient.
 #[test]
-fn test_tip1016_cpu_cap_causes_oog() {
+fn test_tip1016_regular_gas_cap_causes_oog() {
     let bytecode = sstore_bytecode(0, 1);
 
     // Baseline with 100k succeeds.
@@ -481,7 +481,7 @@ fn test_tip1016_cpu_cap_causes_oog() {
         .unwrap();
     assert!(baseline_result.is_success());
 
-    // State gas with gas_limit=cap=30,000 → CPU = 30k - 21k = 9k (insufficient).
+    // State gas with gas_limit=cap=30,000 → regular gas = 30k - 21k = 9k (insufficient).
     let mut evm = state_gas_evm(bytecode, 30_000);
     let result = evm
         .transact_one(
@@ -494,7 +494,7 @@ fn test_tip1016_cpu_cap_causes_oog() {
 
     assert!(
         result.is_halt(),
-        "Expected OOG halt with tight CPU cap, got success with gas_used={}",
+        "Expected OOG halt with tight regular gas cap, got success with gas_used={}",
         result.gas_used()
     );
     match &result {
@@ -508,9 +508,9 @@ fn test_tip1016_cpu_cap_causes_oog() {
     }
 }
 
-/// 4.2 Adequate CPU cap: success.
+/// 4.2 Adequate regular gas cap: success.
 #[test]
-fn test_tip1016_cpu_cap_sufficient() {
+fn test_tip1016_regular_gas_cap_sufficient() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -525,7 +525,7 @@ fn test_tip1016_cpu_cap_sufficient() {
     let baseline_gas = baseline_result.gas_used();
     assert!(baseline_result.is_success());
 
-    // cap=100,000 → cpu = 100,000 - 20,000 = 80,000. Plenty for execution.
+    // cap=100,000 → regular gas = 100,000 - 20,000 = 80,000. Plenty.
     let mut evm = state_gas_evm(bytecode, 100_000);
     let result = evm
         .transact_one(
@@ -559,7 +559,7 @@ fn test_tip1016_state_gas_oog_remaining() {
         .unwrap();
     assert!(baseline_result.is_success());
 
-    // With state gas: gas_limit=50,000, cap=u64::MAX (no cpu constraint).
+    // With state gas: gas_limit=50,000, cap=u64::MAX (no regular gas constraint).
     // Execution needs ~43,106 + 20,000 state gas = ~63,106 > 50,000 → OOG.
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -674,14 +674,14 @@ fn test_tip1016_sstore_set_then_clear_refund() {
     );
 }
 
-/// 6.2 State gas does not reduce CPU budget.
-/// With gas_limit=cap=50,000, CPU = cap - intrinsic(21,000) = 29,000.
-/// SSTORE execution gas ~22,106 fits in CPU. State gas (20,000) is separate.
+/// 6.2 State gas does not reduce regular gas budget.
+/// With gas_limit=cap=50,000, regular gas = cap - intrinsic(21,000) = 29,000.
+/// SSTORE regular gas ~22,106 fits in budget. State gas (20,000) is separate.
 /// Total gas_used = ~43,106 + 20,000 = ~63,106 which exceeds gas_limit=50,000.
-/// But this shows the *CPU* check passes — the OOG happens on `remaining`, not CPU.
+/// But this shows the *regular gas* check passes — the OOG happens on `remaining`, not regular gas.
 /// So we use gas_limit=100,000 and cap=100,000 to have enough remaining too.
 #[test]
-fn test_tip1016_state_gas_does_not_reduce_cpu() {
+fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
     let bytecode = sstore_bytecode(0, 1);
 
     // Baseline succeeds.
@@ -693,8 +693,8 @@ fn test_tip1016_state_gas_does_not_reduce_cpu() {
     let baseline_gas = baseline_result.gas_used();
 
     // cap = baseline_gas + STATE_GAS_SSTORE_SET + 1 (just enough for execution + state).
-    // This ensures the CPU budget = cap - intrinsic is tight but sufficient for execution,
-    // proving state gas is not subtracted from the CPU budget.
+    // This ensures regular gas budget = cap - intrinsic is tight but sufficient,
+    // proving state gas is not subtracted from the regular gas budget.
     let tight_cap = baseline_gas + STATE_GAS_SSTORE_SET + 1;
     let mut evm = state_gas_evm(bytecode, tight_cap);
     let result = evm
@@ -708,7 +708,7 @@ fn test_tip1016_state_gas_does_not_reduce_cpu() {
 
     assert!(
         result.is_success(),
-        "Should succeed: state gas doesn't consume CPU budget. Gas used: {}",
+        "Should succeed: state gas doesn't consume regular gas budget. Gas used: {}",
         result.gas_used()
     );
     let delta = result.gas_used() - baseline_gas;

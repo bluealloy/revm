@@ -90,7 +90,7 @@ pub trait Cfg {
 
     /// Returns whether state gas (TIP-1016) is enabled.
     ///
-    /// When enabled, storage creation gas is tracked separately from execution gas.
+    /// When enabled, storage creation gas is tracked separately from regular gas.
     fn is_state_gas_enabled(&self) -> bool;
 }
 

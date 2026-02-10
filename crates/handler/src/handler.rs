@@ -322,10 +322,10 @@ pub trait Handler {
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
-        // For the first frame, determine CPU gas remaining.
-        // When state gas is enabled, cpu_gas_remaining = min(tx_gas_limit_cap, tx.gas_limit) - initial_gas.
-        // On mainnet (state gas disabled), cpu_gas_remaining = u64::MAX (no CPU cap tracking).
-        let cpu_gas_remaining = if ctx.cfg().is_state_gas_enabled() {
+        // For the first frame, determine regular gas remaining.
+        // When state gas is enabled, regular_gas_remaining = min(tx_gas_limit_cap, tx.gas_limit) - initial_gas.
+        // On mainnet (state gas disabled), regular_gas_remaining = u64::MAX (no regular gas cap tracking).
+        let regular_gas_remaining = if ctx.cfg().is_state_gas_enabled() {
             let initial_gas = ctx.tx().gas_limit() - gas_limit;
             core::cmp::min(ctx.cfg().tx_gas_limit_cap(), ctx.tx().gas_limit())
                 .saturating_sub(initial_gas)
@@ -359,7 +359,7 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
-            cpu_gas_remaining,
+            regular_gas_remaining,
         })
     }
 
@@ -374,8 +374,7 @@ pub trait Handler {
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
-        let cpu_remaining = gas.cpu_gas_remaining();
-        let state_gas_acc = gas.state_gas();
+        let regular_remaining = gas.regular_gas_remaining();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
@@ -383,12 +382,11 @@ pub trait Handler {
         if instruction_result.is_ok_or_revert() {
             gas.erase_cost(remaining);
         }
-        // CPU gas always preserved (reflects actual CPU consumption)
-        gas.set_cpu_gas_remaining(cpu_remaining);
+        // Regular gas always preserved (reflects actual consumption)
+        gas.set_regular_gas_remaining(regular_remaining);
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
-            gas.add_state_gas(state_gas_acc);
         }
         Ok(())
     }

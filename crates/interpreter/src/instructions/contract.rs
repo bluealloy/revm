@@ -111,8 +111,8 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // Take remaining gas and deduce l64 part of it.
         gas_limit = context.host.gas_params().call_stipend_reduction(gas_limit);
     }
-    // Deduct gas forwarded to child from remaining only (not cpu).
-    // Child inherits parent's cpu_gas_remaining directly.
+    // Deduct gas forwarded to child from remaining only (not regular gas).
+    // Child inherits parent's regular_gas_remaining directly.
     if !context.interpreter.gas.record_remaining_cost(gas_limit) {
         context.interpreter.halt_oog();
         return;

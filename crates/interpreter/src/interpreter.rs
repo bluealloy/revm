@@ -124,7 +124,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        cpu_gas_remaining: u64,
+        regular_gas_remaining: u64,
     ) {
         let Self {
             bytecode: bytecode_ref,
@@ -137,7 +137,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             extend,
         } = self;
         *bytecode_ref = bytecode;
-        *gas = Gas::new_with_cpu_remaining(gas_limit, cpu_gas_remaining);
+        *gas = Gas::new_with_regular_gas_remaining(gas_limit, regular_gas_remaining);
         if stack.data().capacity() == 0 {
             *stack = Stack::new();
         } else {
@@ -330,7 +330,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.take_next_action()
     }
 
-    /// Executes a single instruction without checking `cpu_gas_remaining`.
+    /// Executes a single instruction without checking `regular_gas_remaining`.
     ///
     /// This is the fast path used when state gas (TIP-1016) is not enabled.
     #[inline]
@@ -343,7 +343,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if self.gas.record_cost_unsafe_no_cpu(instruction.static_gas()) {
+        if self.gas.record_cost_unsafe_no_regular(instruction.static_gas()) {
             return self.halt_oog();
         }
         let context = InstructionContext {
@@ -354,7 +354,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 
     /// Executes the interpreter until it returns or stops, dispatching to the
-    /// fast loop (no `cpu_gas_remaining` check) when state gas is not enabled.
+    /// fast loop (no `regular_gas_remaining` check) when state gas is not enabled.
     #[inline]
     pub fn run_plain_state_gas<H: Host + ?Sized>(
         &mut self,
