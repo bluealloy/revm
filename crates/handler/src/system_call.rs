@@ -306,7 +306,7 @@ mod tests {
             output.result,
             ExecutionResult::Success {
                 reason: SuccessReason::Stop,
-                gas: ResultGas::new(22143, 0, 22143, 0),
+                gas: ResultGas::new(22143, 0, 0),
                 logs: vec![],
                 output: Output::Call(Bytes::default())
             }

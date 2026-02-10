@@ -4,8 +4,7 @@
       "gas": {
         "floor_gas": 36360,
         "gas_refunded": 0,
-        "gas_spent": 97444,
-        "gas_used": 97444
+        "gas_spent": 97444
       },
       "reason": {
         "Base": {

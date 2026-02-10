@@ -94,7 +94,7 @@ fn main() -> anyhow::Result<()> {
         ExecutionResult::Success { gas, output, .. } => {
             println!(
                 "  TX 1: Counter incremented (0 -> 1), gas used: {}",
-                gas.gas_used
+                gas.gas_used()
             );
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
@@ -119,7 +119,7 @@ fn main() -> anyhow::Result<()> {
         ExecutionResult::Success { gas, output, .. } => {
             println!(
                 "  TX 2: Counter incremented (1 -> 2), gas used: {}",
-                gas.gas_used
+                gas.gas_used()
             );
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
@@ -176,7 +176,7 @@ fn main() -> anyhow::Result<()> {
     let result1_replay = evm2.transact_commit(tx1)?;
     match &result1_replay {
         ExecutionResult::Success { gas, output, .. } => {
-            println!("  TX 1 replayed with BAL, gas used: {}", gas.gas_used);
+            println!("  TX 1 replayed with BAL, gas used: {}", gas.gas_used());
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
                 println!("         Returned value: {value}");
@@ -190,7 +190,7 @@ fn main() -> anyhow::Result<()> {
     let result2_replay = evm2.transact_commit(tx2)?;
     match &result2_replay {
         ExecutionResult::Success { gas, output, .. } => {
-            println!("  TX 2 replayed with BAL, gas used: {}", gas.gas_used);
+            println!("  TX 2 replayed with BAL, gas used: {}", gas.gas_used());
             if let revm::context_interface::result::Output::Call(bytes) = output {
                 let value = U256::from_be_slice(bytes);
                 println!("         Returned value: {value}");

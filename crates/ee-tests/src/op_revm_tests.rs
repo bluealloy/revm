@@ -101,7 +101,6 @@ fn test_halted_deposit_tx() {
             gas: revm::context_interface::result::ResultGas::new(
                 eip7825::TX_GAS_LIMIT_CAP,
                 0,
-                eip7825::TX_GAS_LIMIT_CAP,
                 0
             ),
         }

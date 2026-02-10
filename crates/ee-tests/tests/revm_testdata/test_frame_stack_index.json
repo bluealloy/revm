@@ -3,8 +3,7 @@
     "gas": {
       "floor_gas": 0,
       "gas_refunded": 0,
-      "gas_spent": 21000,
-      "gas_used": 21000
+      "gas_spent": 21000
     },
     "logs": [],
     "output": {

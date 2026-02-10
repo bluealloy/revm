@@ -91,14 +91,8 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
 ) -> ExecutionResult<HALTREASON> {
     // Used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
-    let gas_used = result.gas().used();
     let gas_spent = result.gas().spent();
-    let result_gas = ResultGas::new(
-        gas_used,
-        gas_refunded,
-        gas_spent,
-        init_and_floor_gas.floor_gas,
-    );
+    let result_gas = ResultGas::new(gas_spent, gas_refunded, init_and_floor_gas.floor_gas);
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 

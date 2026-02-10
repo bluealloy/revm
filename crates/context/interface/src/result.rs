@@ -44,17 +44,20 @@ impl<R, S> ExecResultAndState<R, S> {
 
 /// Gas accounting result from transaction execution.
 ///
-/// Contains detailed gas information including the final used amount,
-/// refund amount, pre-refund spent gas, and EIP-7623 floor gas.
+/// Stores the three independent gas values from which all other
+/// gas metrics can be derived:
+/// - `gas_spent`: total gas consumed before refund (limit − remaining)
+/// - `gas_refunded`: refund amount
+/// - `floor_gas`: EIP-7623 floor gas
+///
+/// The final `gas_used` (spent − refunded) is derived via [`ResultGas::gas_used()`].
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultGas {
-    /// Final gas used: spent - refunded.
-    pub gas_used: u64,
-    /// Gas refund amount.
-    pub gas_refunded: u64,
     /// Gas consumed before final refund (limit - remaining).
     pub gas_spent: u64,
+    /// Gas refund amount.
+    pub gas_refunded: u64,
     /// EIP-7623 floor gas.
     pub floor_gas: u64,
 }
@@ -62,13 +65,18 @@ pub struct ResultGas {
 impl ResultGas {
     /// Creates a new `ResultGas`.
     #[inline]
-    pub const fn new(gas_used: u64, gas_refunded: u64, gas_spent: u64, floor_gas: u64) -> Self {
+    pub const fn new(gas_spent: u64, gas_refunded: u64, floor_gas: u64) -> Self {
         Self {
-            gas_used,
-            gas_refunded,
             gas_spent,
+            gas_refunded,
             floor_gas,
         }
+    }
+
+    /// Returns the final gas used: `gas_spent - gas_refunded`.
+    #[inline]
+    pub const fn gas_used(&self) -> u64 {
+        self.gas_spent.saturating_sub(self.gas_refunded)
     }
 }
 
@@ -201,7 +209,7 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
 
     /// Returns the gas used.
     pub fn gas_used(&self) -> u64 {
-        self.gas().gas_used
+        self.gas().gas_used()
     }
 }
 
@@ -217,7 +225,7 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                 write!(
                     f,
                     "Success ({}): {} gas used, {} refunded",
-                    reason, gas.gas_used, gas.gas_refunded
+                    reason, gas.gas_used(), gas.gas_refunded
                 )?;
                 if !logs.is_empty() {
                     write!(
@@ -230,14 +238,14 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                 write!(f, ", {}", output)
             }
             Self::Revert { gas, output } => {
-                write!(f, "Revert: {} gas used", gas.gas_used)?;
+                write!(f, "Revert: {} gas used", gas.gas_used())?;
                 if !output.is_empty() {
                     write!(f, ", {} bytes output", output.len())?;
                 }
                 Ok(())
             }
             Self::Halt { reason, gas } => {
-                write!(f, "Halted: {} ({} gas used)", reason, gas.gas_used)
+                write!(f, "Halted: {} ({} gas used)", reason, gas.gas_used())
             }
         }
     }
@@ -867,7 +875,7 @@ mod tests {
     fn test_execution_result_display() {
         let result: ExecutionResult<HaltReason> = ExecutionResult::Success {
             reason: SuccessReason::Return,
-            gas: ResultGas::new(21000, 5000, 26000, 0),
+            gas: ResultGas::new(26000, 5000, 0),
             logs: vec![Log::default(), Log::default()],
             output: Output::Call(Bytes::from(vec![1, 2, 3])),
         };
@@ -877,7 +885,7 @@ mod tests {
         );
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Revert {
-            gas: ResultGas::new(100000, 0, 100000, 0),
+            gas: ResultGas::new(100000, 0, 0),
             output: Bytes::from(vec![1, 2, 3, 4]),
         };
         assert_eq!(
@@ -887,7 +895,7 @@ mod tests {
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
             reason: HaltReason::OutOfGas(OutOfGasError::Basic),
-            gas: ResultGas::new(1000000, 0, 1000000, 0),
+            gas: ResultGas::new(1000000, 0, 0),
         };
         assert_eq!(result.to_string(), "Halted: out of gas (1000000 gas used)");
     }
