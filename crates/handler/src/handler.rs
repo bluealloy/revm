@@ -10,7 +10,7 @@ use context::{
 };
 use context_interface::{
     context::{take_error, ContextError},
-    result::{HaltReasonTr, InvalidHeader, InvalidTransaction},
+    result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
@@ -127,10 +127,12 @@ pub trait Handler {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.
-        match self
-            .execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.execution_result(evm, exec_result, init_and_floor_gas))
-        {
+        match self.execution(evm, &init_and_floor_gas).and_then(|exec_result| {
+            // System calls have no intrinsic gas; build ResultGas from frame result.
+            let gas = exec_result.gas();
+            let result_gas = ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+            self.execution_result(evm, exec_result, result_gas)
+        }) {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }
@@ -150,10 +152,11 @@ pub trait Handler {
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
+        let result_gas =
+            self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
 
         // Prepare the output
-        self.execution_result(evm, exec_result, init_and_floor_gas)
+        self.execution_result(evm, exec_result, result_gas)
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -222,7 +225,7 @@ pub trait Handler {
         exec_result: &mut FrameResult,
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<ResultGas, Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(evm, exec_result, eip7702_gas_refund);
         // Ensure gas floor is met and minimum floor gas is spent.
@@ -232,7 +235,11 @@ pub trait Handler {
         self.reimburse_caller(evm, exec_result)?;
         // Pay transaction fees to beneficiary
         self.reward_beneficiary(evm, exec_result)?;
-        Ok(())
+        // Build ResultGas from the final gas state
+        Ok(post_execution::build_result_gas(
+            exec_result.gas(),
+            init_and_floor_gas,
+        ))
     }
 
     /* VALIDATION */
@@ -464,11 +471,11 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
-        init_and_floor_gas: InitialAndFloorGas,
+        result_gas: ResultGas,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result = post_execution::output(evm.ctx(), result, init_and_floor_gas);
+        let exec_result = post_execution::output(evm.ctx(), result, result_gas);
 
         // commit transaction
         evm.ctx().journal_mut().commit_tx();

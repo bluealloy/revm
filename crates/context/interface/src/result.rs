@@ -52,6 +52,7 @@ impl<R, S> ExecResultAndState<R, S> {
 /// | `spent`     | `Gas::spent()` = limit − remaining | Total gas consumed before refund       |
 /// | `refunded`  | `Gas::refunded()` as u64        | Gas refunded (capped per EIP-3529)        |
 /// | `floor_gas` | `InitialAndFloorGas::floor_gas` | EIP-7623 floor gas (0 if not applicable)  |
+/// | `intrinsic_gas` | `InitialAndFloorGas::initial_gas` | Initial tx overhead gas (0 for system calls) |
 ///
 /// Derived values:
 /// - [`used()`](ResultGas::used) = `spent − refunded` (the value that goes into receipts)
@@ -69,17 +70,27 @@ pub struct ResultGas {
     pub refunded: u64,
     /// EIP-7623 floor gas. Zero when not applicable.
     pub floor_gas: u64,
+    /// Intrinsic gas: the initial transaction overhead (calldata, access list, etc.).
+    /// Zero for system calls.
+    pub intrinsic_gas: u64,
 }
 
 impl ResultGas {
     /// Creates a new `ResultGas`.
     #[inline]
-    pub const fn new(limit: u64, spent: u64, refunded: u64, floor_gas: u64) -> Self {
+    pub const fn new(
+        limit: u64,
+        spent: u64,
+        refunded: u64,
+        floor_gas: u64,
+        intrinsic_gas: u64,
+    ) -> Self {
         Self {
             limit,
             spent,
             refunded,
             floor_gas,
+            intrinsic_gas,
         }
     }
 
@@ -113,6 +124,9 @@ impl fmt::Display for ResultGas {
         }
         if self.floor_gas > 0 {
             write!(f, ", floor: {}", self.floor_gas)?;
+        }
+        if self.intrinsic_gas > 0 {
+            write!(f, ", intrinsic: {}", self.intrinsic_gas)?;
         }
         Ok(())
     }
@@ -909,7 +923,7 @@ mod tests {
     fn test_execution_result_display() {
         let result: ExecutionResult<HaltReason> = ExecutionResult::Success {
             reason: SuccessReason::Return,
-            gas: ResultGas::new(100000, 26000, 5000, 0),
+            gas: ResultGas::new(100000, 26000, 5000, 0, 0),
             logs: vec![Log::default(), Log::default()],
             output: Output::Call(Bytes::from(vec![1, 2, 3])),
         };
@@ -919,7 +933,7 @@ mod tests {
         );
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Revert {
-            gas: ResultGas::new(100000, 100000, 0, 0),
+            gas: ResultGas::new(100000, 100000, 0, 0, 0),
             output: Bytes::from(vec![1, 2, 3, 4]),
         };
         assert_eq!(
@@ -929,7 +943,7 @@ mod tests {
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
             reason: HaltReason::OutOfGas(OutOfGasError::Basic),
-            gas: ResultGas::new(1000000, 1000000, 0, 0),
+            gas: ResultGas::new(1000000, 1000000, 0, 0, 0),
         };
         assert_eq!(
             result.to_string(),
@@ -941,24 +955,24 @@ mod tests {
     fn test_result_gas_display() {
         // No refund, no floor
         assert_eq!(
-            ResultGas::new(100000, 21000, 0, 0).to_string(),
+            ResultGas::new(100000, 21000, 0, 0, 0).to_string(),
             "gas used: 21000, limit: 100000, spent: 21000"
         );
         // With refund
         assert_eq!(
-            ResultGas::new(100000, 50000, 10000, 0).to_string(),
+            ResultGas::new(100000, 50000, 10000, 0, 0).to_string(),
             "gas used: 40000, limit: 100000, spent: 50000, refunded: 10000"
         );
         // With refund and floor
         assert_eq!(
-            ResultGas::new(100000, 50000, 10000, 30000).to_string(),
+            ResultGas::new(100000, 50000, 10000, 30000, 0).to_string(),
             "gas used: 40000, limit: 100000, spent: 50000, refunded: 10000, floor: 30000"
         );
     }
 
     #[test]
     fn test_result_gas_used_and_remaining() {
-        let gas = ResultGas::new(200, 100, 30, 0);
+        let gas = ResultGas::new(200, 100, 30, 0, 0);
         assert_eq!(gas.limit, 200);
         assert_eq!(gas.spent, 100);
         assert_eq!(gas.refunded, 30);
@@ -966,7 +980,7 @@ mod tests {
         assert_eq!(gas.remaining(), 100);
 
         // Saturating: refunded > spent
-        let gas = ResultGas::new(100, 10, 50, 0);
+        let gas = ResultGas::new(100, 10, 50, 0, 0);
         assert_eq!(gas.used(), 0);
         assert_eq!(gas.remaining(), 90);
     }

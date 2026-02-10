@@ -25,7 +25,7 @@ use revm::{
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{
-        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas, InitialAndFloorGas,
+        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas,
     },
     primitives::{hardfork::SpecId, U256},
 };
@@ -347,11 +347,11 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
-        init_and_floor_gas: InitialAndFloorGas,
+        result_gas: ResultGas,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result = post_execution::output(evm.ctx(), frame_result, init_and_floor_gas)
+        let exec_result = post_execution::output(evm.ctx(), frame_result, result_gas)
             .map_haltreason(OpHaltReason::Base);
 
         if exec_result.is_halt() {
@@ -425,7 +425,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas: ResultGas::new(gas_limit, gas_used, 0, 0),
+                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
             })
         }
 
@@ -1300,7 +1300,7 @@ mod tests {
                     },
                     Default::default()
                 )),
-                InitialAndFloorGas::new(0, 0),
+                ResultGas::default(),
             ),
             Err(EVMError::Transaction(
                 OpTransactionError::HaltedDepositPostRegolith

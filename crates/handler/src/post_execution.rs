@@ -8,6 +8,17 @@ use context_interface::{
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 
+/// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
+pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+    ResultGas::new(
+        gas.limit(),
+        gas.spent(),
+        gas.refunded() as u64,
+        init_and_floor_gas.floor_gas,
+        init_and_floor_gas.initial_gas,
+    )
+}
+
 /// Ensures minimum gas floor is spent according to EIP-7623.
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
@@ -87,16 +98,8 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
     // TODO, make this more generic and nice.
     // FrameResult should be a generic that returns gas and interpreter result.
     result: FrameResult,
-    init_and_floor_gas: InitialAndFloorGas,
+    result_gas: ResultGas,
 ) -> ExecutionResult<HALTREASON> {
-    // Build result gas from the execution Gas struct.
-    let gas = result.gas();
-    let result_gas = ResultGas::new(
-        gas.limit(),
-        gas.spent(),
-        gas.refunded() as u64,
-        init_and_floor_gas.floor_gas,
-    );
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 

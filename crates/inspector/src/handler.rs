@@ -1,5 +1,8 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
-use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr, Transaction};
+use context::{
+    result::{ExecutionResult, ResultGas},
+    ContextTr, JournalEntry, JournalTr, Transaction,
+};
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::InstructionTable,
@@ -58,8 +61,9 @@ where
         let init_and_floor_gas = self.validate(evm)?;
         let eip7702_refund = self.pre_execution(evm)? as i64;
         let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
-        self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
-        self.execution_result(evm, frame_result, init_and_floor_gas)
+        let result_gas =
+            self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
+        self.execution_result(evm, frame_result, result_gas)
     }
 
     /// Run execution loop with inspection support
@@ -139,7 +143,13 @@ where
         // call execution with inspection and then output.
         match self
             .inspect_execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| self.execution_result(evm, exec_result, init_and_floor_gas))
+            .and_then(|exec_result| {
+                // System calls have no intrinsic gas; build ResultGas from frame result.
+                let gas = exec_result.gas();
+                let result_gas =
+                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                self.execution_result(evm, exec_result, result_gas)
+            })
         {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),

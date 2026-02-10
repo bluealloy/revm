@@ -5,6 +5,7 @@
         "floor_gas": 23520,
         "gas_refunded": 0,
         "gas_spent": 27524,
+        "intrinsic_gas": 22008,
         "limit": 27524
       },
       "reason": {

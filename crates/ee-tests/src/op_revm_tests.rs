@@ -103,6 +103,7 @@ fn test_halted_deposit_tx() {
                 eip7825::TX_GAS_LIMIT_CAP,
                 0,
                 0,
+                0,
             ),
         }
     );
