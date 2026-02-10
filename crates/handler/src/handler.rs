@@ -231,6 +231,11 @@ pub trait Handler {
     ) -> Result<ResultGas, Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(evm, exec_result, eip7702_gas_refund);
+
+        // Build ResultGas from the final gas state
+        // This include all necesary fields and gas values.
+        let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
+
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
         self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
@@ -239,10 +244,7 @@ pub trait Handler {
         // Pay transaction fees to beneficiary
         self.reward_beneficiary(evm, exec_result)?;
         // Build ResultGas from the final gas state
-        Ok(post_execution::build_result_gas(
-            exec_result.gas(),
-            init_and_floor_gas,
-        ))
+        Ok(result_gas)
     }
 
     /* VALIDATION */

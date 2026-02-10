@@ -61,18 +61,23 @@ impl<R, S> ExecResultAndState<R, S> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultGas {
     /// Transaction gas limit.
-    pub limit: u64,
+    limit: u64,
     /// Gas consumed before final refund (limit − remaining).
+    /// For actual gas used, use [`used()`](ResultGas::used).
     #[cfg_attr(feature = "serde", serde(rename = "gas_spent"))]
-    pub spent: u64,
+    spent: u64,
     /// Gas refund amount (capped per EIP-3529).
+    ///
+    /// Note: It does not apply EIP-7623 floor gas check for the refund amount.
+    /// If tx
+    ///
     #[cfg_attr(feature = "serde", serde(rename = "gas_refunded"))]
-    pub refunded: u64,
+    refunded: u64,
     /// EIP-7623 floor gas. Zero when not applicable.
-    pub floor_gas: u64,
+    floor_gas: u64,
     /// Intrinsic gas: the initial transaction overhead (calldata, access list, etc.).
     /// Zero for system calls.
-    pub intrinsic_gas: u64,
+    intrinsic_gas: u64,
 }
 
 impl ResultGas {
@@ -94,12 +99,119 @@ impl ResultGas {
         }
     }
 
+    /// Returns the transaction gas limit.
+    #[inline]
+    pub const fn limit(&self) -> u64 {
+        self.limit
+    }
+
+    /// Returns the gas spent (consumed before refund).
+    #[inline]
+    pub const fn spent(&self) -> u64 {
+        self.spent
+    }
+
+    /// Returns the gas refunded (capped per EIP-3529).
+    #[inline]
+    pub const fn refunded(&self) -> u64 {
+        self.refunded
+    }
+
+    /// Returns the EIP-7623 floor gas.
+    #[inline]
+    pub const fn floor_gas(&self) -> u64 {
+        self.floor_gas
+    }
+
+    /// Returns the intrinsic gas.
+    #[inline]
+    pub const fn intrinsic_gas(&self) -> u64 {
+        self.intrinsic_gas
+    }
+
+    /// Sets the `limit` field.
+    #[inline]
+    pub const fn with_limit(mut self, limit: u64) -> Self {
+        self.limit = limit;
+        self
+    }
+
+    /// Sets the `spent` field.
+    #[inline]
+    pub const fn with_spent(mut self, spent: u64) -> Self {
+        self.spent = spent;
+        self
+    }
+
+    /// Sets the `refunded` field.
+    #[inline]
+    pub const fn with_refunded(mut self, refunded: u64) -> Self {
+        self.refunded = refunded;
+        self
+    }
+
+    /// Sets the `floor_gas` field.
+    #[inline]
+    pub const fn with_floor_gas(mut self, floor_gas: u64) -> Self {
+        self.floor_gas = floor_gas;
+        self
+    }
+
+    /// Sets the `intrinsic_gas` field.
+    #[inline]
+    pub const fn with_intrinsic_gas(mut self, intrinsic_gas: u64) -> Self {
+        self.intrinsic_gas = intrinsic_gas;
+        self
+    }
+
+    /// Sets the `limit` field by mutable reference.
+    #[inline]
+    pub fn set_limit(&mut self, limit: u64) {
+        self.limit = limit;
+    }
+
+    /// Sets the `spent` field by mutable reference.
+    #[inline]
+    pub fn set_spent(&mut self, spent: u64) {
+        self.spent = spent;
+    }
+
+    /// Sets the `refunded` field by mutable reference.
+    #[inline]
+    pub fn set_refunded(&mut self, refunded: u64) {
+        self.refunded = refunded;
+    }
+
+    /// Sets the `floor_gas` field by mutable reference.
+    #[inline]
+    pub fn set_floor_gas(&mut self, floor_gas: u64) {
+        self.floor_gas = floor_gas;
+    }
+
+    /// Sets the `intrinsic_gas` field by mutable reference.
+    #[inline]
+    pub fn set_intrinsic_gas(&mut self, intrinsic_gas: u64) {
+        self.intrinsic_gas = intrinsic_gas;
+    }
+
     /// Returns the final gas used: `spent - refunded`.
     ///
     /// This is the value used for receipt `cumulative_gas_used` accumulation
     /// and the per-transaction gas charge.
     #[inline]
     pub const fn used(&self) -> u64 {
+        // EIP-7623: Increase calldata cost
+        // spend at least a gas_floor amount of gas.
+        let spent_sub_refunded = self.spent_sub_refunded();
+        if spent_sub_refunded < self.floor_gas {
+            return self.floor_gas;
+        }
+        spent_sub_refunded
+    }
+
+    /// Returns the gas spent minus the refunded gas.
+    #[inline]
+    pub const fn spent_sub_refunded(&self) -> u64 {
         self.spent.saturating_sub(self.refunded)
     }
 
@@ -107,6 +219,32 @@ impl ResultGas {
     #[inline]
     pub const fn remaining(&self) -> u64 {
         self.limit.saturating_sub(self.spent)
+    }
+
+    /// Returns the final gas used, same as [`used()`](ResultGas::used).
+    ///
+    /// This is `max(spent - refunded, floor_gas)` — the value that goes into receipts.
+    #[inline]
+    pub const fn final_used(&self) -> u64 {
+        self.used()
+    }
+
+    /// Returns the raw refund from EVM execution, before EIP-7623 floor gas adjustment.
+    ///
+    /// This is the `refunded` field value (capped per EIP-3529 but not adjusted for floor gas).
+    /// See [`final_refunded()`](ResultGas::final_refunded) for the effective refund.
+    #[inline]
+    pub const fn inner_refunded(&self) -> u64 {
+        self.refunded
+    }
+
+    /// Returns the effective refund after EIP-7623 floor gas adjustment: `spent - used()`.
+    ///
+    /// When `floor_gas` kicks in, this may be less than [`inner_refunded()`](ResultGas::inner_refunded).
+    /// Always satisfies: `spent == final_used() + final_refunded()`.
+    #[inline]
+    pub const fn final_refunded(&self) -> u64 {
+        self.spent.saturating_sub(self.used())
     }
 }
 
@@ -973,9 +1111,9 @@ mod tests {
     #[test]
     fn test_result_gas_used_and_remaining() {
         let gas = ResultGas::new(200, 100, 30, 0, 0);
-        assert_eq!(gas.limit, 200);
-        assert_eq!(gas.spent, 100);
-        assert_eq!(gas.refunded, 30);
+        assert_eq!(gas.limit(), 200);
+        assert_eq!(gas.spent(), 100);
+        assert_eq!(gas.refunded(), 30);
         assert_eq!(gas.used(), 70);
         assert_eq!(gas.remaining(), 100);
 
