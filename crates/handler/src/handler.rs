@@ -127,12 +127,15 @@ pub trait Handler {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.
-        match self.execution(evm, &init_and_floor_gas).and_then(|exec_result| {
-            // System calls have no intrinsic gas; build ResultGas from frame result.
-            let gas = exec_result.gas();
-            let result_gas = ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
-            self.execution_result(evm, exec_result, result_gas)
-        }) {
+        match self
+            .execution(evm, &init_and_floor_gas)
+            .and_then(|exec_result| {
+                // System calls have no intrinsic gas; build ResultGas from frame result.
+                let gas = exec_result.gas();
+                let result_gas =
+                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                self.execution_result(evm, exec_result, result_gas)
+            }) {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }

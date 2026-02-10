@@ -149,8 +149,7 @@ where
                 let result_gas =
                     ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
                 self.execution_result(evm, exec_result, result_gas)
-            })
-        {
+            }) {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }
