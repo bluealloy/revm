@@ -44,39 +44,59 @@ impl<R, S> ExecResultAndState<R, S> {
 
 /// Gas accounting result from transaction execution.
 ///
-/// Stores the three independent gas values from which all other
-/// gas metrics can be derived:
-/// - `gas_spent`: total gas consumed before refund (limit − remaining)
-/// - `gas_refunded`: refund amount
-/// - `floor_gas`: EIP-7623 floor gas
+/// Contains three independent gas values; all other metrics are derived:
 ///
-/// The final `gas_used` (spent − refunded) is derived via [`ResultGas::gas_used()`].
+/// | Field       | Source                          | Description                               |
+/// |-------------|---------------------------------|-------------------------------------------|
+/// | `spent`     | `Gas::spent()` = limit − remaining | Total gas consumed before refund       |
+/// | `refunded`  | `Gas::refunded()` as u64        | Gas refunded (capped per EIP-3529)        |
+/// | `floor_gas` | `InitialAndFloorGas::floor_gas` | EIP-7623 floor gas (0 if not applicable)  |
+///
+/// Derived: [`used()`](ResultGas::used) = `spent − refunded` (the value that goes into receipts).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultGas {
-    /// Gas consumed before final refund (limit - remaining).
-    pub gas_spent: u64,
-    /// Gas refund amount.
-    pub gas_refunded: u64,
-    /// EIP-7623 floor gas.
+    /// Gas consumed before final refund (limit − remaining).
+    #[cfg_attr(feature = "serde", serde(rename = "gas_spent"))]
+    pub spent: u64,
+    /// Gas refund amount (capped per EIP-3529).
+    #[cfg_attr(feature = "serde", serde(rename = "gas_refunded"))]
+    pub refunded: u64,
+    /// EIP-7623 floor gas. Zero when not applicable.
     pub floor_gas: u64,
 }
 
 impl ResultGas {
     /// Creates a new `ResultGas`.
     #[inline]
-    pub const fn new(gas_spent: u64, gas_refunded: u64, floor_gas: u64) -> Self {
+    pub const fn new(spent: u64, refunded: u64, floor_gas: u64) -> Self {
         Self {
-            gas_spent,
-            gas_refunded,
+            spent,
+            refunded,
             floor_gas,
         }
     }
 
-    /// Returns the final gas used: `gas_spent - gas_refunded`.
+    /// Returns the final gas used: `spent - refunded`.
+    ///
+    /// This is the value used for receipt `cumulative_gas_used` accumulation
+    /// and the per-transaction gas charge.
     #[inline]
-    pub const fn gas_used(&self) -> u64 {
-        self.gas_spent.saturating_sub(self.gas_refunded)
+    pub const fn used(&self) -> u64 {
+        self.spent.saturating_sub(self.refunded)
+    }
+}
+
+impl fmt::Display for ResultGas {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "gas used: {}, spent: {}", self.used(), self.spent)?;
+        if self.refunded > 0 {
+            write!(f, ", refunded: {}", self.refunded)?;
+        }
+        if self.floor_gas > 0 {
+            write!(f, ", floor: {}", self.floor_gas)?;
+        }
+        Ok(())
     }
 }
 
@@ -209,7 +229,7 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
 
     /// Returns the gas used.
     pub fn gas_used(&self) -> u64 {
-        self.gas().gas_used()
+        self.gas().used()
     }
 }
 
@@ -222,11 +242,7 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                 logs,
                 output,
             } => {
-                write!(
-                    f,
-                    "Success ({}): {} gas used, {} refunded",
-                    reason, gas.gas_used(), gas.gas_refunded
-                )?;
+                write!(f, "Success ({reason}): {gas}")?;
                 if !logs.is_empty() {
                     write!(
                         f,
@@ -235,17 +251,17 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                         if logs.len() == 1 { "" } else { "s" }
                     )?;
                 }
-                write!(f, ", {}", output)
+                write!(f, ", {output}")
             }
             Self::Revert { gas, output } => {
-                write!(f, "Revert: {} gas used", gas.gas_used())?;
+                write!(f, "Revert: {gas}")?;
                 if !output.is_empty() {
                     write!(f, ", {} bytes output", output.len())?;
                 }
                 Ok(())
             }
             Self::Halt { reason, gas } => {
-                write!(f, "Halted: {} ({} gas used)", reason, gas.gas_used())
+                write!(f, "Halted: {reason} ({gas})")
             }
         }
     }
@@ -881,7 +897,7 @@ mod tests {
         };
         assert_eq!(
             result.to_string(),
-            "Success (Return): 21000 gas used, 5000 refunded, 2 logs, 3 bytes output"
+            "Success (Return): gas used: 21000, spent: 26000, refunded: 5000, 2 logs, 3 bytes output"
         );
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Revert {
@@ -890,13 +906,47 @@ mod tests {
         };
         assert_eq!(
             result.to_string(),
-            "Revert: 100000 gas used, 4 bytes output"
+            "Revert: gas used: 100000, spent: 100000, 4 bytes output"
         );
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
             reason: HaltReason::OutOfGas(OutOfGasError::Basic),
             gas: ResultGas::new(1000000, 0, 0),
         };
-        assert_eq!(result.to_string(), "Halted: out of gas (1000000 gas used)");
+        assert_eq!(
+            result.to_string(),
+            "Halted: out of gas (gas used: 1000000, spent: 1000000)"
+        );
+    }
+
+    #[test]
+    fn test_result_gas_display() {
+        // No refund, no floor
+        assert_eq!(
+            ResultGas::new(21000, 0, 0).to_string(),
+            "gas used: 21000, spent: 21000"
+        );
+        // With refund
+        assert_eq!(
+            ResultGas::new(50000, 10000, 0).to_string(),
+            "gas used: 40000, spent: 50000, refunded: 10000"
+        );
+        // With refund and floor
+        assert_eq!(
+            ResultGas::new(50000, 10000, 30000).to_string(),
+            "gas used: 40000, spent: 50000, refunded: 10000, floor: 30000"
+        );
+    }
+
+    #[test]
+    fn test_result_gas_used() {
+        let gas = ResultGas::new(100, 30, 0);
+        assert_eq!(gas.used(), 70);
+        assert_eq!(gas.spent, 100);
+        assert_eq!(gas.refunded, 30);
+
+        // Saturating: refunded > spent
+        let gas = ResultGas::new(10, 50, 0);
+        assert_eq!(gas.used(), 0);
     }
 }
