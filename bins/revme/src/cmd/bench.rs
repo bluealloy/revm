@@ -51,7 +51,7 @@ pub struct Cmd {
     /// Warmup represents warm up time for benchmarks ran
     #[arg(short = 'w', long)]
     pub warmup: Option<f64>,
-    /// Samples represents default measurement time for benchmarks ran
+    /// Time represents default measurement time for benchmarks ran
     #[arg(short = 'm', long)]
     pub time: Option<f64>,
     /// Samples represents size of the sample for benchmarks ran
