@@ -4,7 +4,8 @@
       "gas": {
         "floor_gas": 0,
         "gas_refunded": 0,
-        "gas_spent": 54260
+        "gas_spent": 54260,
+        "limit": 1000000000
       },
       "logs": [],
       "output": {
@@ -21,7 +22,8 @@
       "gas": {
         "floor_gas": 0,
         "gas_refunded": 14301,
-        "gas_spent": 28603
+        "gas_spent": 28603,
+        "limit": 1000000000
       },
       "logs": [],
       "output": {
@@ -35,7 +37,8 @@
       "gas": {
         "floor_gas": 0,
         "gas_refunded": 0,
-        "gas_spent": 54260
+        "gas_spent": 54260,
+        "limit": 1000000000
       },
       "logs": [],
       "output": {
