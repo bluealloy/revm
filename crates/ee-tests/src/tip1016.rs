@@ -159,7 +159,7 @@ fn init_code_sstore_and_return() -> Vec<u8> {
     ]
 }
 
-/// Init code that does SSTORE(0, 1) and then REVERTs.
+/// Init code that does SSTORE(0, 1) and then REVERT.
 fn init_code_sstore_and_revert() -> Vec<u8> {
     vec![
         // SSTORE(0, 1)
