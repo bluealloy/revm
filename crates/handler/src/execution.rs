@@ -4,7 +4,6 @@ use interpreter::{
 };
 use primitives::{TxKind, B256};
 use state::Bytecode;
-use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
 #[inline]
@@ -18,7 +17,7 @@ pub fn create_init_frame(
     match tx.kind() {
         TxKind::Call(target_address) => {
             let known_bytecode = bytecode.map(|(code, hash)| (hash, code));
-            FrameInput::Call(Box::new(CallInputs {
+            FrameInput::Call(CallInputs {
                 input: CallInput::Bytes(input),
                 gas_limit,
                 target_address,
@@ -29,14 +28,14 @@ pub fn create_init_frame(
                 scheme: CallScheme::Call,
                 is_static: false,
                 return_memory_offset: 0..0,
-            }))
+            })
         }
-        TxKind::Create => FrameInput::Create(Box::new(CreateInputs::new(
+        TxKind::Create => FrameInput::Create(CreateInputs::new(
             tx.caller(),
             CreateScheme::Create,
             tx.value(),
             input,
             gas_limit,
-        ))),
+        )),
     }
 }
