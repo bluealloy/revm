@@ -513,13 +513,18 @@ struct TestRunnerState {
 }
 
 impl TestRunnerState {
-    fn new(test_files: Vec<PathBuf>) -> Self {
+    fn new(test_files: Vec<PathBuf>, omit_progress: bool) -> Self {
         let n_files = test_files.len();
+        let draw_target = if omit_progress {
+            ProgressDrawTarget::hidden()
+        } else {
+            ProgressDrawTarget::stdout()
+        };
         Self {
             n_errors: Arc::new(AtomicUsize::new(0)),
             console_bar: Arc::new(ProgressBar::with_draw_target(
                 Some(n_files as u64),
-                ProgressDrawTarget::stdout(),
+                draw_target,
             )),
             queue: Arc::new(Mutex::new((0usize, test_files))),
             elapsed: Arc::new(Mutex::new(Duration::ZERO)),
@@ -584,10 +589,11 @@ pub fn run(
     trace: bool,
     print_outcome: bool,
     keep_going: bool,
+    omit_progress: bool,
 ) -> Result<(), TestError> {
     let config = TestRunnerConfig::new(single_thread, trace, print_outcome, keep_going);
     let n_files = test_files.len();
-    let state = TestRunnerState::new(test_files);
+    let state = TestRunnerState::new(test_files, omit_progress);
     let num_threads = determine_thread_count(config.single_thread, n_files);
 
     // Spawn worker threads
