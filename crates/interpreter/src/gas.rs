@@ -4,21 +4,27 @@ pub use context_interface::cfg::gas::*;
 
 /// Represents the state of gas during execution.
 ///
-/// Supports dual-limit gas accounting (TIP-1016):
-/// - `remaining`: gas remaining against `tx.gas_limit` (both regular + state gas)
-/// - `regular_gas_remaining`: gas remaining against regular gas cap (regular gas only)
+/// Implements the EIP-8037 reservoir model for dual-limit gas accounting:
+/// - `remaining`: total gas left = `gas_left` + `reservoir`
+/// - `reservoir`: state gas pool (gas exceeding regular gas budget)
+/// - `gas_spent`: tracks total state gas spent
 ///
-/// On mainnet (no state gas), `regular_gas_remaining = u64::MAX` so the regular gas check
-/// in `record_cost` is always a no-op (~0 overhead).
+/// **Regular gas charges** (`record_cost`): deduct from `remaining` only, checked against implicit `gas_left`.
+/// **State gas charges** (`record_state_cost`): deduct from `reservoir` first; when exhausted, spill into `gas_left`.
+///
+/// On mainnet (no state gas), `reservoir = 0` so all gas is regular gas and behavior is unchanged.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Gas {
     /// The initial gas limit. This is constant throughout execution.
     limit: u64,
-    /// The remaining gas against tx.gas_limit.
+    /// Total gas remaining: `gas_left` + `reservoir`.
     remaining: u64,
-    /// Gas remaining against regular gas cap. Set to `u64::MAX` on mainnet (no state gas).
-    regular_gas_remaining: u64,
+    /// State gas reservoir (gas exceeding TX_MAX_GAS_LIMIT). Starts as `execution_gas - min(execution_gas, regular_gas_budget)`.
+    /// When 0, all remaining gas is regular gas with hard cap at `TX_MAX_GAS_LIMIT`.
+    reservoir: u64,
+    /// Total state gas spent so far.
+    state_gas_spent: u64,
     /// Refunded gas. This is used only at the end of execution.
     refunded: i64,
     /// Memoisation of values for memory expansion cost.
@@ -28,31 +34,52 @@ pub struct Gas {
 impl Gas {
     /// Creates a new `Gas` struct with the given gas limit.
     ///
-    /// Sets `regular_gas_remaining = u64::MAX` so the regular gas check in `record_cost`
-    /// is always a no-op (standard mainnet behavior).
+    /// Sets `reservoir = 0` so all gas is regular gas (standard mainnet behavior).
     #[inline]
     pub const fn new(limit: u64) -> Self {
         Self {
             limit,
             remaining: limit,
-            regular_gas_remaining: u64::MAX,
+            reservoir: 0,
+            state_gas_spent: 0,
             refunded: 0,
             memory: MemoryGas::new(),
         }
     }
 
-    /// Creates a new `Gas` struct with an regular gas limit (state gas / Tempo enabled).
+    /// Creates a new `Gas` struct with a regular gas budget and reservoir (EIP-8037 reservoir model).
     ///
-    /// `regular_gas_remaining` tracks gas remaining against the regular gas cap.
+    /// Following the EIP-8037 spec:
+    /// - `gas_left = min(regular_gas_budget, execution_gas)`
+    /// - `state_gas_reservoir = execution_gas - gas_left`
+    /// - `remaining = gas_left + state_gas_reservoir = execution_gas`
+    ///
+    /// # Arguments
+    /// * `limit`: total execution gas (tx.gas - intrinsic_gas)
+    /// * `regular_gas_budget`: regular gas cap (TX_MAX_GAS_LIMIT - intrinsic_regular_gas)
     #[inline]
-    pub const fn new_with_regular_gas_remaining(limit: u64, regular_gas_remaining: u64) -> Self {
+    pub const fn new_with_regular_gas_budget(limit: u64, regular_gas_budget: u64) -> Self {
+        // Compute reservoir: if limit exceeds budget, excess goes to reservoir
+        let reservoir = limit.saturating_sub(regular_gas_budget);
         Self {
             limit,
             remaining: limit,
-            regular_gas_remaining,
+            reservoir,
+            state_gas_spent: 0,
             refunded: 0,
             memory: MemoryGas::new(),
         }
+    }
+
+    /// Deprecated: use `new_with_regular_gas_budget` instead.
+    /// Alias for backwards compatibility.
+    #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "use new_with_regular_gas_budget for EIP-8037 semantics"
+    )]
+    pub const fn new_with_regular_gas_remaining(limit: u64, regular_gas_remaining: u64) -> Self {
+        Self::new_with_regular_gas_budget(limit, regular_gas_remaining)
     }
 
     /// Creates a new `Gas` struct with the given gas limit, but without any gas remaining.
@@ -61,7 +88,8 @@ impl Gas {
         Self {
             limit,
             remaining: 0,
-            regular_gas_remaining: 0,
+            reservoir: 0,
+            state_gas_spent: 0,
             refunded: 0,
             memory: MemoryGas::new(),
         }
@@ -115,16 +143,22 @@ impl Gas {
         self.remaining
     }
 
-    /// Returns the regular gas remaining.
+    /// Returns the state gas reservoir.
     #[inline]
-    pub const fn regular_gas_remaining(&self) -> u64 {
-        self.regular_gas_remaining
+    pub const fn reservoir(&self) -> u64 {
+        self.reservoir
     }
 
-    /// Sets `regular_gas_remaining` (used when propagating from child frame).
+    /// Sets the state gas reservoir (used when propagating from child frame).
     #[inline]
-    pub fn set_regular_gas_remaining(&mut self, val: u64) {
-        self.regular_gas_remaining = val;
+    pub fn set_reservoir(&mut self, val: u64) {
+        self.reservoir = val;
+    }
+
+    /// Returns total state gas spent so far.
+    #[inline]
+    pub const fn state_gas_spent(&self) -> u64 {
+        self.state_gas_spent
     }
 
     /// Erases a gas cost from remaining (returns gas from child frame).
@@ -166,50 +200,52 @@ impl Gas {
         self.refunded = refund;
     }
 
+    /// Set a remaining value. This overrides the current remaining value.
+    #[inline]
+    pub fn set_remaining(&mut self, remaining: u64) {
+        self.remaining = remaining;
+    }
+
     /// Set a spent value. This overrides the current spent value.
     #[inline]
     pub fn set_spent(&mut self, spent: u64) {
         self.remaining = self.limit.saturating_sub(spent);
     }
 
-    /// Records an regular gas cost. Checks BOTH `remaining` AND `regular_gas_remaining`.
+    /// Records a regular gas cost (EIP-8037 reservoir model).
     ///
-    /// On mainnet (`regular_gas_remaining = u64::MAX`), the regular gas check is always a no-op.
+    /// Deducts from `remaining` and checks against implicit `gas_left` budget.
+    /// Regular gas charges cannot draw from the reservoir.
     ///
-    /// Returns `false` if the gas limit is exceeded.
-    /// On failure, `remaining` and `regular_gas_remaining` contain wrapped (invalid) values —
-    /// callers must not read them after an out-of-gas condition.
+    /// Returns `false` if the regular gas limit is exceeded.
+    /// On failure, values contain wrapped (invalid) state — callers must not read after OOG.
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let (new_remaining, o1) = self.remaining.overflowing_sub(cost);
-        let (new_exec, o2) = self.regular_gas_remaining.overflowing_sub(cost);
-        let success = !(o1 | o2);
-        if success {
+        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
             self.remaining = new_remaining;
-            self.regular_gas_remaining = new_exec;
+            return true;
         }
-        success
+        false
     }
 
-    /// Records an explicit cost. In case of underflow the gas will wrap around cost.
+    /// Records an explicit cost without bounds checking (unsafe path).
     ///
-    /// On mainnet: `regular_gas_remaining = u64::MAX`, so `exec < cost` is always false.
-    ///
-    /// Returns `true` if the gas limit is exceeded.
+    /// Returns `true` if the gas limit is exceeded. Values wrap on underflow.
+    /// Only the regular gas check is meaningful here; total remaining can underflow
+    /// without consequence if the caller handles it.
     #[inline(always)]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
-        let oog = self.remaining < cost || self.regular_gas_remaining < cost;
+        let oog = self.remaining < cost;
         self.remaining = self.remaining.wrapping_sub(cost);
-        self.regular_gas_remaining = self.regular_gas_remaining.wrapping_sub(cost);
         oog
     }
 
-    /// Records an explicit cost without checking `regular_gas_remaining`.
+    /// Records an explicit cost without checking regular gas budget.
     /// In case of underflow the gas will wrap around cost.
     ///
-    /// This is the fast path used when state gas is not enabled.
+    /// This is the fast path used when state gas is not enabled (mainnet).
     ///
     /// Returns `true` if the gas limit is exceeded.
     #[inline(always)]
@@ -220,8 +256,32 @@ impl Gas {
         oog
     }
 
-    /// Deducts from `remaining` only (not `regular_gas_remaining`).
-    /// Used for forwarding gas to child frames and for storage creation gas (TIP-1016).
+    /// Records a state gas cost (EIP-8037 reservoir model).
+    ///
+    /// State gas charges deduct from the reservoir first. If the reservoir is exhausted,
+    /// remaining charges spill into `gas_left` (requiring total `remaining >= cost`).
+    /// Tracks state gas spent.
+    ///
+    /// Returns `false` if total remaining gas is insufficient.
+    #[inline]
+    pub fn record_state_cost(&mut self, cost: u64) -> bool {
+        if self.reservoir > cost {
+            self.reservoir -= cost;
+            return true;
+        }
+
+        let mut spill = 0;
+        if self.reservoir != 0 {
+            spill = cost - self.reservoir;
+            self.reservoir = 0;
+        }
+
+        self.record_cost(spill)
+    }
+
+    /// Deducts from `remaining` only (used for child frame gas forwarding).
+    /// Does not affect reservoir or regular gas budget.
+    /// Used for forwarding gas to child frames.
     #[inline]
     pub fn record_remaining_cost(&mut self, cost: u64) -> bool {
         if let Some(new_remaining) = self.remaining.checked_sub(cost) {
