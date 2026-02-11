@@ -113,6 +113,10 @@ pub const CALL_STIPEND: u64 = 2300;
 pub struct InitialAndFloorGas {
     /// Initial gas for transaction.
     pub initial_gas: u64,
+    /// State gas component of initial_gas (subset of initial_gas).
+    /// For CREATE transactions, this includes `new_account_state_gas` and `create_state_gas`.
+    /// For CALL transactions, this is 0 as state gas is unpredictable at validation time.
+    pub initial_state_gas: u64,
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
@@ -124,6 +128,17 @@ impl InitialAndFloorGas {
     pub const fn new(initial_gas: u64, floor_gas: u64) -> Self {
         Self {
             initial_gas,
+            initial_state_gas: 0,
+            floor_gas,
+        }
+    }
+
+    /// Create a new InitialAndFloorGas instance with state gas tracking.
+    #[inline]
+    pub const fn new_with_state_gas(initial_gas: u64, initial_state_gas: u64, floor_gas: u64) -> Self {
+        Self {
+            initial_gas,
+            initial_state_gas,
             floor_gas,
         }
     }

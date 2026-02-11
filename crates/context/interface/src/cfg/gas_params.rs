@@ -239,6 +239,12 @@ impl GasParams {
         table[GasId::tx_token_cost().as_usize()] = gas::STANDARD_TOKEN_COST;
         table[GasId::tx_base_stipend().as_usize()] = 21000;
 
+        // TIP-1016: State gas constants
+        table[GasId::sstore_set_state_gas().as_usize()] = 20000;
+        table[GasId::new_account_state_gas().as_usize()] = 25000;
+        table[GasId::code_deposit_state_gas().as_usize()] = 200;
+        table[GasId::create_state_gas().as_usize()] = 32000;
+
         if spec.is_enabled_in(SpecId::HOMESTEAD) {
             table[GasId::tx_create_cost().as_usize()] = gas::CREATE;
         }
@@ -773,9 +779,15 @@ impl GasParams {
     /// Initial gas that is deducted for transaction to be included.
     /// Initial gas contains initial stipend gas, gas for access list and input data.
     ///
+    /// For CREATE transactions, also includes predictable state gas costs:
+    /// - `new_account_state_gas`: Creating the contract account
+    /// - `create_state_gas`: Contract metadata creation
+    ///
+    /// Note: `code_deposit_state_gas` is not included since deployed code size is unknown at validation time.
+    ///
     /// # Returns
     ///
-    /// - Intrinsic gas
+    /// - Intrinsic gas (including state gas for CREATE)
     /// - Number of tokens in calldata
     pub fn initial_tx_gas(
         &self,
@@ -806,6 +818,13 @@ impl GasParams {
 
             // EIP-3860: Limit and meter initcode
             gas.initial_gas += self.tx_initcode_cost(input.len());
+
+            // TIP-1016: State gas for CREATE transactions
+            // These charges happen during CREATE execution and are predictable at validation time:
+            // - new_account_state_gas: Creating the contract account
+            // - create_state_gas: Contract metadata creation
+            // Note: initial_state_gas is tracked separately from initial_gas for visibility
+            gas.initial_state_gas = self.new_account_state_gas() + self.create_state_gas();
         }
 
         // Calculate gas floor for EIP-7623
@@ -1305,5 +1324,28 @@ mod tests {
         // Test with pre-Berlin spec (should return 0)
         let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
         assert_eq!(gas_params_pre_berlin.tx_access_list_cost(10, 20), 0);
+    }
+
+    #[test]
+    fn test_initial_state_gas_for_create() {
+        let gas_params = GasParams::new_spec(SpecId::default());
+
+        // Test CREATE transaction (is_create = true)
+        let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0);
+        let expected_state_gas = gas_params.new_account_state_gas() + gas_params.create_state_gas();
+
+        assert_eq!(create_gas.initial_state_gas, expected_state_gas);
+        assert_eq!(create_gas.initial_state_gas, 25000 + 32000); // 57,000
+
+        // initial_gas should NOT include state_gas (tracked separately)
+        let create_cost = gas_params.tx_create_cost();
+        let initcode_cost = gas_params.tx_initcode_cost(0);
+        assert_eq!(create_gas.initial_gas, gas_params.tx_base_stipend() + create_cost + initcode_cost);
+
+        // Test CALL transaction (is_create = false)
+        let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0);
+        assert_eq!(call_gas.initial_state_gas, 0);
+        // initial_gas should be unchanged for calls
+        assert_eq!(call_gas.initial_gas, gas_params.tx_base_stipend());
     }
 }
