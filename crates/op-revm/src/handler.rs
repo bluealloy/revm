@@ -197,12 +197,12 @@ where
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
-        let regular_remaining = gas.regular_gas_remaining();
+        let reservoir = gas.reservoir();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
         // Regular gas always preserved (reflects actual consumption)
-        gas.set_regular_gas_remaining(regular_remaining);
+        gas.set_reservoir(reservoir);
 
         if instruction_result.is_ok() {
             // On Optimism, deposit transactions report gas usage uniquely to other

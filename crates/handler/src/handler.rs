@@ -374,7 +374,7 @@ pub trait Handler {
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
-        let regular_remaining = gas.regular_gas_remaining();
+        let reservoir = gas.reservoir();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
@@ -383,7 +383,7 @@ pub trait Handler {
             gas.erase_cost(remaining);
         }
         // Regular gas always preserved (reflects actual consumption)
-        gas.set_regular_gas_remaining(regular_remaining);
+        gas.set_reservoir(reservoir);
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);

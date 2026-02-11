@@ -418,7 +418,7 @@ impl EthFrame<EthInterpreter> {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
-                    regular_gas_remaining: self.interpreter.gas.regular_gas_remaining(),
+                    regular_gas_remaining: self.interpreter.gas.remaining(),
                 }));
             }
             InterpreterAction::Return(result) => result,
@@ -502,9 +502,7 @@ impl EthFrame<EthInterpreter> {
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
                 // Regular gas ALWAYS propagates (work happened regardless of outcome)
-                interpreter
-                    .gas
-                    .set_regular_gas_remaining(out_gas.regular_gas_remaining());
+                interpreter.gas.set_reservoir(out_gas.reservoir());
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -535,7 +533,7 @@ impl EthFrame<EthInterpreter> {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
                 // Regular gas ALWAYS propagates (work happened regardless of outcome)
-                this_gas.set_regular_gas_remaining(outcome.gas().regular_gas_remaining());
+                this_gas.set_reservoir(outcome.gas().reservoir());
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
