@@ -8,6 +8,7 @@ pub use call_outcome::CallOutcome;
 pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
 use primitives::Bytes;
+use std::boxed::Box;
 
 use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
 
@@ -18,9 +19,9 @@ pub enum FrameInput {
     /// No input data (empty frame)
     Empty,
     /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL` instruction called.
-    Call(CallInputs),
+    Call(Box<CallInputs>),
     /// `CREATE` or `CREATE2` instruction called.
-    Create(CreateInputs),
+    Create(Box<CreateInputs>),
 }
 
 /// Initialization data for creating a new execution frame.

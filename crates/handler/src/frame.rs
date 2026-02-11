@@ -25,7 +25,7 @@ use primitives::{
     keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
-use std::{borrow::ToOwned, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -142,7 +142,7 @@ impl EthFrame<EthInterpreter> {
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
-        mut inputs: CallInputs,
+        mut inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_memory_offset = inputs.return_memory_offset.clone();
@@ -257,7 +257,7 @@ impl EthFrame<EthInterpreter> {
         context: &mut CTX,
         depth: usize,
         memory: SharedMemory,
-        inputs: CreateInputs,
+        inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
