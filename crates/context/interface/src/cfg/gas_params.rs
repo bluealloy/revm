@@ -803,7 +803,7 @@ impl GasParams {
         let tokens_in_calldata =
             get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
 
-        gas.initial_gas += tokens_in_calldata * self.tx_token_cost()
+        gas.initial_total_gas += tokens_in_calldata * self.tx_token_cost()
             // before berlin tx_access_list_address_cost will be zero
             + access_list_accounts * self.tx_access_list_address_cost()
             // before berlin tx_access_list_storage_key_cost will be zero
@@ -814,10 +814,10 @@ impl GasParams {
 
         if is_create {
             // EIP-2: Homestead Hard-fork Changes
-            gas.initial_gas += self.tx_create_cost();
+            gas.initial_total_gas += self.tx_create_cost();
 
             // EIP-3860: Limit and meter initcode
-            gas.initial_gas += self.tx_initcode_cost(input.len());
+            gas.initial_total_gas += self.tx_initcode_cost(input.len());
 
             // TIP-1016: State gas for CREATE transactions
             // These charges happen during CREATE execution and are predictable at validation time:
@@ -1340,12 +1340,15 @@ mod tests {
         // initial_gas should NOT include state_gas (tracked separately)
         let create_cost = gas_params.tx_create_cost();
         let initcode_cost = gas_params.tx_initcode_cost(0);
-        assert_eq!(create_gas.initial_gas, gas_params.tx_base_stipend() + create_cost + initcode_cost);
+        assert_eq!(
+            create_gas.initial_total_gas,
+            gas_params.tx_base_stipend() + create_cost + initcode_cost
+        );
 
         // Test CALL transaction (is_create = false)
         let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0);
         assert_eq!(call_gas.initial_state_gas, 0);
         // initial_gas should be unchanged for calls
-        assert_eq!(call_gas.initial_gas, gas_params.tx_base_stipend());
+        assert_eq!(call_gas.initial_total_gas, gas_params.tx_base_stipend());
     }
 }

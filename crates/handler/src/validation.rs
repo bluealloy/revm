@@ -242,10 +242,10 @@ pub fn validate_initial_tx_gas(
     }
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if gas.initial_gas > tx.gas_limit() {
+    if gas.initial_total_gas > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
             gas_limit: tx.gas_limit(),
-            initial_gas: gas.initial_gas,
+            initial_gas: gas.initial_total_gas,
         });
     }
 

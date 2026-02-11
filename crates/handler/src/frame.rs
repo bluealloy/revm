@@ -112,7 +112,7 @@ impl EthFrame<EthInterpreter> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        regular_gas_remaining: u64,
+        reservoir_remaining_gas: u64,
         checkpoint: JournalCheckpoint,
     ) {
         let Self {
@@ -134,7 +134,7 @@ impl EthFrame<EthInterpreter> {
             is_static,
             spec_id,
             gas_limit,
-            regular_gas_remaining,
+            reservoir_remaining_gas,
         );
         *checkpoint_ref = checkpoint;
     }
@@ -152,7 +152,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-        regular_gas_remaining: u64,
+        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -251,7 +251,7 @@ impl EthFrame<EthInterpreter> {
             is_static,
             ctx.cfg().spec().into(),
             gas_limit,
-            regular_gas_remaining,
+            reservoir_remaining_gas,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -268,7 +268,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-        regular_gas_remaining: u64,
+        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -354,7 +354,7 @@ impl EthFrame<EthInterpreter> {
             false,
             spec,
             gas_limit,
-            regular_gas_remaining,
+            reservoir_remaining_gas,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -378,7 +378,7 @@ impl EthFrame<EthInterpreter> {
             depth,
             memory,
             frame_input,
-            regular_gas_remaining,
+            reservoir_remaining_gas,
         } = frame_init;
 
         match frame_input {
@@ -389,10 +389,10 @@ impl EthFrame<EthInterpreter> {
                 depth,
                 memory,
                 inputs,
-                regular_gas_remaining,
+                reservoir_remaining_gas,
             ),
             FrameInput::Create(inputs) => {
-                Self::make_create_frame(this, ctx, depth, memory, inputs, regular_gas_remaining)
+                Self::make_create_frame(this, ctx, depth, memory, inputs, reservoir_remaining_gas)
             }
             FrameInput::Empty => unreachable!(),
         }
@@ -418,7 +418,7 @@ impl EthFrame<EthInterpreter> {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
-                    regular_gas_remaining: self.interpreter.gas.remaining(),
+                    reservoir_remaining_gas: self.interpreter.gas.reservoir(),
                 }));
             }
             InterpreterAction::Return(result) => result,
@@ -532,8 +532,6 @@ impl EthFrame<EthInterpreter> {
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
-                // Regular gas ALWAYS propagates (work happened regardless of outcome)
-                this_gas.set_reservoir(outcome.gas().reservoir());
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());

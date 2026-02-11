@@ -124,7 +124,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
-        regular_gas_remaining: u64,
+        reservoir_remaining_gas: u64,
     ) {
         let Self {
             bytecode: bytecode_ref,
@@ -137,7 +137,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             extend,
         } = self;
         *bytecode_ref = bytecode;
-        *gas = Gas::new_with_regular_gas_remaining(gas_limit, regular_gas_remaining);
+        *gas = Gas::new_with_regular_gas_budget(gas_limit, reservoir_remaining_gas);
         if stack.data().capacity() == 0 {
             *stack = Stack::new();
         } else {

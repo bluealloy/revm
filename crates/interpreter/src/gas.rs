@@ -58,9 +58,7 @@ impl Gas {
     /// * `limit`: total execution gas (tx.gas - intrinsic_gas)
     /// * `regular_gas_budget`: regular gas cap (TX_MAX_GAS_LIMIT - intrinsic_regular_gas)
     #[inline]
-    pub const fn new_with_regular_gas_budget(limit: u64, regular_gas_budget: u64) -> Self {
-        // Compute reservoir: if limit exceeds budget, excess goes to reservoir
-        let reservoir = limit.saturating_sub(regular_gas_budget);
+    pub const fn new_with_regular_gas_budget(limit: u64, reservoir: u64) -> Self {
         Self {
             limit,
             remaining: limit,

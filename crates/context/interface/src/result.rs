@@ -55,12 +55,14 @@ impl<R, S> ExecResultAndState<R, S> {
 /// | [`inner_refunded()`] | `Gas::refunded()` as u64        | Gas refunded (capped per EIP-3529)        |
 /// | [`floor_gas()`]   | `InitialAndFloorGas::floor_gas`    | EIP-7623 floor gas (0 if not applicable)  |
 /// | [`intrinsic_gas()`] | `InitialAndFloorGas::initial_gas`| Initial tx overhead gas (0 for system calls) |
+/// | [`state_gas_spent()`] | `Gas::state_gas_spent`       | State gas consumed during execution (TIP-1016) |
 ///
 /// [`limit()`]: ResultGas::limit
 /// [`spent()`]: ResultGas::spent
 /// [`inner_refunded()`]: ResultGas::inner_refunded
 /// [`floor_gas()`]: ResultGas::floor_gas
 /// [`intrinsic_gas()`]: ResultGas::intrinsic_gas
+/// [`state_gas_spent()`]: ResultGas::state_gas_spent
 ///
 /// ## Derived values
 ///
@@ -88,6 +90,11 @@ pub struct ResultGas {
     /// Intrinsic gas: the initial transaction overhead (calldata, access list, etc.).
     /// Zero for system calls.
     intrinsic_gas: u64,
+    /// State gas consumed during execution (TIP-1016).
+    /// Tracks gas for storage creation, account creation, and code deposit.
+    /// Zero when state gas is not enabled.
+    #[cfg_attr(feature = "serde", serde(default))]
+    state_gas_spent: u64,
 }
 
 impl ResultGas {
@@ -106,6 +113,27 @@ impl ResultGas {
             refunded,
             floor_gas,
             intrinsic_gas,
+            state_gas_spent: 0,
+        }
+    }
+
+    /// Creates a new `ResultGas` with state gas tracking.
+    #[inline]
+    pub const fn new_with_state_gas(
+        limit: u64,
+        spent: u64,
+        refunded: u64,
+        floor_gas: u64,
+        intrinsic_gas: u64,
+        state_gas_spent: u64,
+    ) -> Self {
+        Self {
+            limit,
+            spent,
+            refunded,
+            floor_gas,
+            intrinsic_gas,
+            state_gas_spent,
         }
     }
 
@@ -133,6 +161,12 @@ impl ResultGas {
     #[inline]
     pub const fn intrinsic_gas(&self) -> u64 {
         self.intrinsic_gas
+    }
+
+    /// Returns the state gas spent during execution (TIP-1016).
+    #[inline]
+    pub const fn state_gas_spent(&self) -> u64 {
+        self.state_gas_spent
     }
 
     /// Sets the `limit` field.
@@ -170,6 +204,13 @@ impl ResultGas {
         self
     }
 
+    /// Sets the `state_gas_spent` field.
+    #[inline]
+    pub const fn with_state_gas_spent(mut self, state_gas_spent: u64) -> Self {
+        self.state_gas_spent = state_gas_spent;
+        self
+    }
+
     /// Sets the `limit` field by mutable reference.
     #[inline]
     pub fn set_limit(&mut self, limit: u64) {
@@ -198,6 +239,12 @@ impl ResultGas {
     #[inline]
     pub fn set_intrinsic_gas(&mut self, intrinsic_gas: u64) {
         self.intrinsic_gas = intrinsic_gas;
+    }
+
+    /// Sets the `state_gas_spent` field by mutable reference.
+    #[inline]
+    pub fn set_state_gas_spent(&mut self, state_gas_spent: u64) {
+        self.state_gas_spent = state_gas_spent;
     }
 
     /// Returns the final gas used: `max(spent - refunded, floor_gas)`.
@@ -263,6 +310,9 @@ impl fmt::Display for ResultGas {
         }
         if self.intrinsic_gas > 0 {
             write!(f, ", intrinsic: {}", self.intrinsic_gas)?;
+        }
+        if self.state_gas_spent > 0 {
+            write!(f, ", state_gas: {}", self.state_gas_spent)?;
         }
         Ok(())
     }

@@ -199,7 +199,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_total_gas;
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
@@ -316,22 +316,23 @@ pub trait Handler {
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
-        gas_limit: u64,
+        mut gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
-        // For the first frame, determine regular gas remaining.
-        // When state gas is enabled, regular_gas_remaining = min(tx_gas_limit_cap, tx.gas_limit) - initial_gas.
-        // On mainnet (state gas disabled), regular_gas_remaining = u64::MAX (no regular gas cap tracking).
-        let regular_gas_remaining = if ctx.cfg().is_state_gas_enabled() {
-            let initial_gas = ctx.tx().gas_limit() - gas_limit;
+        // For the first frame, determine remaining gas in the reservoir.
+        // When state gas is enabled, reservoir_remaining_gas = min(tx_gas_limit_cap, tx.gas_limit) - initial_total_gas.
+        // On mainnet (state gas disabled), reservoir_remaining_gas = 0.
+        let reservoir_remaining_gas = if ctx.cfg().is_state_gas_enabled() {
             core::cmp::min(ctx.cfg().tx_gas_limit_cap(), ctx.tx().gas_limit())
-                .saturating_sub(initial_gas)
         } else {
-            u64::MAX
+            0
         };
+
+        // TODO(tip1016): check edge cases of gas_limit-initial_total_gas and what is correct here.
+        gas_limit = core::cmp::min(gas_limit, ctx.cfg().tx_gas_limit_cap());
 
         let (tx, journal) = ctx.tx_journal_mut();
         let bytecode = if let Some(&to) = tx.kind().to() {
@@ -359,7 +360,7 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
-            regular_gas_remaining,
+            reservoir_remaining_gas,
         })
     }
 
