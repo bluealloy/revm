@@ -503,6 +503,8 @@ impl EthFrame<EthInterpreter> {
                 }
                 // Regular gas ALWAYS propagates (work happened regardless of outcome)
                 interpreter.gas.set_reservoir(out_gas.reservoir());
+                // State gas spent ALWAYS propagates (state changes happened regardless of outcome)
+                interpreter.gas.set_state_gas_spent(out_gas.state_gas_spent());
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -532,6 +534,8 @@ impl EthFrame<EthInterpreter> {
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
+                // State gas spent ALWAYS propagates (state changes happened regardless of outcome)
+                this_gas.set_state_gas_spent(outcome.gas().state_gas_spent());
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());

@@ -159,6 +159,12 @@ impl Gas {
         self.state_gas_spent
     }
 
+    /// Sets the total state gas spent (used when propagating from child frame).
+    #[inline]
+    pub fn set_state_gas_spent(&mut self, val: u64) {
+        self.state_gas_spent = val;
+    }
+
     /// Erases a gas cost from remaining (returns gas from child frame).
     /// Does NOT affect `regular_gas_remaining` — regular gas flows separately.
     #[inline]
@@ -263,7 +269,10 @@ impl Gas {
     /// Returns `false` if total remaining gas is insufficient.
     #[inline]
     pub fn record_state_cost(&mut self, cost: u64) -> bool {
-        if self.reservoir > cost {
+        // bump state gas spent
+        self.state_gas_spent = self.state_gas_spent.saturating_add(cost);
+
+        if self.reservoir >= cost {
             self.reservoir -= cost;
             return true;
         }
