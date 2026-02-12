@@ -251,14 +251,15 @@ impl Gas {
     /// In case of underflow the gas will wrap around cost.
     ///
     /// This is the fast path used when state gas is not enabled (mainnet).
+    /// Currently equivalent to `record_cost_unsafe` because `remaining` tracks
+    /// only regular gas (`gas_left`). If the gas model changes to include reservoir
+    /// in `remaining`, this method should skip the regular gas budget check.
     ///
     /// Returns `true` if the gas limit is exceeded.
     #[inline(always)]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_cost_unsafe_no_regular(&mut self, cost: u64) -> bool {
-        let oog = self.remaining < cost;
-        self.remaining = self.remaining.wrapping_sub(cost);
-        oog
+        self.record_cost_unsafe(cost)
     }
 
     /// Records a state gas cost (EIP-8037 reservoir model).
