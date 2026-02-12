@@ -173,10 +173,14 @@ impl Gas {
         self.remaining += returned;
     }
 
-    /// Spends all remaining gas.
+    /// Spends all remaining gas including the reservoir.
+    ///
+    /// On exceptional halt, both gas_left and reservoir must be zeroed
+    /// to prevent state operations from succeeding via remaining reservoir gas.
     #[inline]
     pub fn spend_all(&mut self) {
         self.remaining = 0;
+        self.reservoir = 0;
     }
 
     /// Records a refund value.
