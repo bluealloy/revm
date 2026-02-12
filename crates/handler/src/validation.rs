@@ -222,7 +222,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     if spec_id.is_enabled_in(SpecId::SHANGHAI)
         && tx.kind().is_create()
         && tx.input().len() > context.cfg().max_initcode_size()
-    {   
+    {
         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
     }
 

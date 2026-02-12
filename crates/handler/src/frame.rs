@@ -501,10 +501,9 @@ impl EthFrame<EthInterpreter> {
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
-                // Regular gas ALWAYS propagates (work happened regardless of outcome)
-                interpreter.gas.set_reservoir(out_gas.reservoir());
-                // State gas spent ALWAYS propagates (state changes happened regardless of outcome)
-                interpreter.gas.set_state_gas_spent(out_gas.state_gas_spent());
+
+                // handle reservoir remaining gas
+                handle_reservoir_remaining_gas(&mut interpreter.gas, &out_gas, ins_result);
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -534,8 +533,9 @@ impl EthFrame<EthInterpreter> {
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
-                // State gas spent ALWAYS propagates (state changes happened regardless of outcome)
-                this_gas.set_state_gas_spent(outcome.gas().state_gas_spent());
+
+                // handle reservoir remaining gas
+                handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
 
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
@@ -551,6 +551,44 @@ impl EthFrame<EthInterpreter> {
 
         Ok(())
     }
+}
+
+/// Handles the remaining gas of the parent frame.
+#[inline]
+pub fn handle_reservoir_remaining_gas(
+    parent_gas: &mut Gas,
+    child_gas: &Gas,
+    ins_result: InstructionResult,
+) {
+    // handle reservoir remaining gas only in case of success.
+    // In case of revert or halt, reservoir gas is not deducted and can be even increased.
+    if ins_result.is_ok() {
+        parent_gas.set_reservoir(child_gas.reservoir());
+        parent_gas.set_state_gas_spent(child_gas.state_gas_spent());
+    } else {
+        // state gas spent should stay the same in case of revert or halt.
+        // the difference that happened between state gases should be checked
+        // if it is done agains regular gas, and return this gas to reservoir.
+        let spent_state_gas = child_gas
+            .state_gas_spent()
+            .saturating_sub(parent_gas.state_gas_spent());
+
+        let new_reservoir = handler_reservoir_refill(parent_gas.reservoir(), spent_state_gas);
+        parent_gas.set_reservoir(new_reservoir);
+    }
+}
+
+/// Takes reservoir and refills it
+///
+/// This can happen when we spent more state gas than we had in reservoir and
+/// we need to refill it.
+#[inline]
+pub fn handler_reservoir_refill(reservoir: u64, spent_state_gas: u64) -> u64 {
+    // if we spent more state gas than we have in reservoir, we need to refill it.
+    let state_gas_in_regular = spent_state_gas.saturating_sub(reservoir);
+
+    // we are incresing reservoir by the amount of state gas that was in regular gas.
+    reservoir + state_gas_in_regular
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.

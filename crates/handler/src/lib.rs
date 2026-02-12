@@ -34,7 +34,10 @@ pub mod validation;
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};
-pub use frame::{return_create, ContextTrDbError, EthFrame};
+pub use frame::{
+    handle_reservoir_remaining_gas, handler_reservoir_refill, return_create, ContextTrDbError,
+    EthFrame,
+};
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};

@@ -135,7 +135,11 @@ impl InitialAndFloorGas {
 
     /// Create a new InitialAndFloorGas instance with state gas tracking.
     #[inline]
-    pub const fn new_with_state_gas(initial_total_gas: u64, initial_state_gas: u64, floor_gas: u64) -> Self {
+    pub const fn new_with_state_gas(
+        initial_total_gas: u64,
+        initial_state_gas: u64,
+        floor_gas: u64,
+    ) -> Self {
         Self {
             initial_total_gas,
             initial_state_gas,

@@ -1,6 +1,6 @@
 use crate::{
     evm::FrameTr,
-    execution, post_execution,
+    execution, handler_reservoir_refill, post_execution,
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
@@ -383,8 +383,13 @@ pub trait Handler {
         if instruction_result.is_ok_or_revert() {
             gas.erase_cost(remaining);
         }
-        // Regular gas always preserved (reflects actual consumption)
-        gas.set_reservoir(reservoir);
+
+        // handle reservoir refill in case of revert or halt.
+        if !instruction_result.is_ok() {
+            // handle reservoir refill in case that call reverted.
+            let new_reservoir = handler_reservoir_refill(reservoir, gas.state_gas_spent());
+            gas.set_reservoir(new_reservoir);
+        }
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);

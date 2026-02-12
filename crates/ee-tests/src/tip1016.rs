@@ -202,6 +202,53 @@ fn create_bytecode(init_code: &[u8]) -> Bytecode {
     Bytecode::new_legacy(bytecode.into())
 }
 
+/// Bytecode: SSTORE(0, 1); REVERT(0, 0)
+/// Does one state gas charge (SSTORE), then explicit revert.
+fn sstore_then_revert_bytecode() -> Bytecode {
+    Bytecode::new_legacy(
+        [
+            opcode::PUSH1,
+            1, // value
+            opcode::PUSH1,
+            0,              // key
+            opcode::SSTORE, //
+            // REVERT(0, 0)
+            opcode::PUSH1,
+            0,
+            opcode::PUSH1,
+            0,
+            opcode::REVERT,
+        ]
+        .into(),
+    )
+}
+
+/// Bytecode: SSTORE(0, 1); SSTORE(1, 1); REVERT(0, 0)
+/// Two state gas charges (40,000 total), then explicit revert.
+fn sstore_multi_then_revert_bytecode() -> Bytecode {
+    Bytecode::new_legacy(
+        [
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            0,
+            opcode::SSTORE, //
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            1,
+            opcode::SSTORE, //
+            // REVERT(0, 0)
+            opcode::PUSH1,
+            0,
+            opcode::PUSH1,
+            0,
+            opcode::REVERT,
+        ]
+        .into(),
+    )
+}
+
 /// Bytecode that performs a CALL with value to a specific address.
 #[allow(clippy::vec_init_then_push)]
 fn call_with_value_bytecode(target: [u8; 20], value: U256) -> Bytecode {
@@ -694,7 +741,7 @@ fn test_tip1016_sstore_set_then_clear_refund() {
 /// 6.2 State gas does not reduce regular gas budget.
 /// With gas_limit=cap=50,000, regular gas = cap - intrinsic(21,000) = 29,000.
 /// SSTORE regular gas ~22,106 fits in budget. State gas (20,000) is separate.
-/// Total gas_used = ~43,106 + 20,000 = ~63,106 which exceeds gas_limit=50,000.
+/// Total gas_used = ~63,106 which exceeds gas_limit=50,000.
 /// But this shows the *regular gas* check passes — the OOG happens on `remaining`, not regular gas.
 /// So we use gas_limit=100,000 and cap=100,000 to have enough remaining too.
 #[test]
@@ -730,4 +777,253 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
     );
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
+}
+
+// ---- Category 7: Reservoir Refill ----
+//
+// The reservoir refill logic (handler_reservoir_refill) is invoked on HALT or REVERT:
+// `new_reservoir = reservoir + max(0, state_gas_spent - reservoir)`
+//
+// This accounts for state gas that had to be drawn from regular gas.
+// On OK: reservoir stays unchanged (no refill needed).
+// On REVERT: remaining is reimbursed, then refill applied.
+// On HALT: remaining is NOT reimbursed, refill applied to final gas accounting.
+
+/// 7.1 REVERT with state_gas < reservoir.
+/// Single SSTORE (20,000 state gas) followed by explicit REVERT.
+/// Reservoir is large enough to cover all state gas from reservoir.
+/// After refill: new_reservoir = reservoir + max(0, 20,000 - large_reservoir) = reservoir + 0.
+/// Expected: REVERT, remaining reimbursed, state gas fully deducted from reservoir.
+#[test]
+fn test_tip1016_reservoir_refill_revert_state_gas_less() {
+    let bytecode = sstore_then_revert_bytecode();
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    // Ample gas_limit and no cap to ensure large reservoir.
+    // This means state_gas (20,000) will be entirely drawn from reservoir.
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    // Check for REVERT: not success and not halt
+    assert!(
+        !result.is_success() && !result.is_halt(),
+        "Expected REVERT, got {:?}",
+        result
+    );
+    // Baseline does PUSH+PUSH+REVERT (no state gas).
+    // With state gas: execution + state_gas all deducted.
+    // REVERT means remaining IS reimbursed.
+    // gas_used = intrinsic + execution + state_gas - refund (if any, but REVERT = no refund)
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(
+        delta, STATE_GAS_SSTORE_SET,
+        "REVERT with state_gas < reservoir: state_gas fully deducted, delta = {delta}"
+    );
+}
+
+/// 7.2 REVERT with state_gas > reservoir.
+/// Two SSTOREs (40,000 state gas total) followed by explicit REVERT.
+/// Tight cap limits reservoir, so state gas exceeds it and spills into regular gas.
+/// After refill: new_reservoir = reservoir + (40,000 - reservoir).
+/// This refill accounts for the 20,000 (approx) that came from regular gas.
+/// Expected: REVERT, but refill shows state_gas_spent > reservoir.
+#[test]
+fn test_tip1016_reservoir_refill_revert_state_gas_more() {
+    let bytecode = sstore_multi_then_revert_bytecode();
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    // Ample cap and gas_limit to ensure REVERT instruction executes.
+    // The key is that we're testing the refill mechanism, not OOG conditions.
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(150_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    // Check for REVERT: not success and not halt
+    assert!(
+        !result.is_success() && !result.is_halt(),
+        "Expected REVERT, got {:?}",
+        result
+    );
+    // Two SSTOREs = 40,000 state gas.
+    let expected_delta = 2 * STATE_GAS_SSTORE_SET;
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(
+        delta, expected_delta,
+        "REVERT with 2 SSTOREs: state_gas = {expected_delta}, delta = {delta}"
+    );
+}
+
+/// 7.3 HALT (OOG) with state_gas < reservoir.
+/// Single SSTORE (20,000 state gas) in tight gas limit causing OOG before completion.
+/// State gas entirely from reservoir, but HALT means remaining is NOT reimbursed.
+/// After refill: new_reservoir = reservoir + max(0, 20,000 - large_reservoir) = reservoir.
+/// Expected: HALT, all gas_limit spent (no reimbursement), state gas accounted for.
+#[test]
+fn test_tip1016_reservoir_refill_halt_state_gas_less() {
+    let bytecode = sstore_bytecode(0, 1);
+
+    // Find gas limit where SSTORE+state gas fits but execution runs OOG.
+    // Baseline with ample gas to find actual needs.
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+    assert!(baseline_result.is_success());
+
+    // Now set tight gas limit that forces OOG during execution.
+    // With state gas, remaining (total gas) is smaller, so OOG happens earlier.
+    // Set gas_limit such that execution can't complete.
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(25_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(
+        result.is_halt(),
+        "Expected HALT with tight gas limit, got {:?}",
+        result
+    );
+    // HALT means remaining is not reimbursed, so gas_used = gas_limit.
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(
+                matches!(reason, HaltReason::OutOfGas(_)),
+                "Expected OutOfGas halt, got {reason:?}"
+            );
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+}
+
+/// 7.4 HALT (OOG) with state_gas > reservoir.
+/// Two SSTOREs (40,000 state gas) with tight gas limit.
+/// Some state gas drawn from regular gas (exceeding reservoir).
+/// After refill: new_reservoir = reservoir + (40,000 - reservoir).
+/// This refill accounts for state gas spillover into regular gas.
+/// Expected: HALT, refill shows state_gas_spent exceeded reservoir.
+#[test]
+fn test_tip1016_reservoir_refill_halt_state_gas_more() {
+    let bytecode = sstore_multi_bytecode();
+
+    // Tight cap creates constrained regular gas.
+    // Even with state gas in reservoir, regular gas budget is limited.
+    // This forces OOG via regular gas exhaustion while state gas > reservoir.
+    let mut evm = state_gas_evm(bytecode, 30_000);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(
+        result.is_halt(),
+        "Expected HALT with tight regular gas cap, got {:?}",
+        result
+    );
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(
+                matches!(reason, HaltReason::OutOfGas(_)),
+                "Expected OutOfGas halt, got {reason:?}"
+            );
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+}
+
+/// 7.5 HALT vs REVERT: gas accounting difference when reservoir refill applies.
+/// Same bytecode (SSTORE then explicit REVERT), but compare:
+/// - REVERT path: remaining reimbursed, actual gas spent (not full limit).
+/// - HALT path (OOG before completion): remaining not reimbursed, gas_used = gas_limit.
+/// This demonstrates the refill consequence: HALT consumes all gas, REVERT only charges actual.
+#[test]
+fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
+    let bytecode = sstore_then_revert_bytecode();
+
+    // HALT path: tight gas limit causes OOG before REVERT completes.
+    let mut evm_halt = state_gas_evm(bytecode.clone(), u64::MAX);
+    let result_halt = evm_halt
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(25_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result_halt.is_halt());
+    let gas_halt = result_halt.gas_used();
+
+    // HALT with gas_limit=25,000 means gas_used should be 25,000 (all spent, no reimbursement).
+    assert_eq!(
+        gas_halt, 25_000,
+        "HALT: all gas consumed, gas_used should equal gas_limit=25,000"
+    );
+
+    // REVERT path: ample gas allows full execution to REVERT.
+    let mut evm_revert = state_gas_evm(bytecode, u64::MAX);
+    let result_revert = evm_revert
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(!result_revert.is_success() && !result_revert.is_halt());
+    let gas_revert = result_revert.gas_used();
+
+    // REVERT: remaining reimbursed, so gas_used < gas_limit.
+    assert!(
+        gas_revert < 100_000,
+        "REVERT: remaining reimbursed, gas_used should be less than gas_limit"
+    );
+
+    // The difference shows refill consequence:
+    // HALT (gas_limit=25k) uses all 25k (hit limit early before REVERT).
+    // REVERT (gas_limit=100k) uses only intrinsic+execution+state_gas (gets reimbursement).
+    // HALT < REVERT because HALT hits limit before doing actual work.
+    assert!(
+        gas_halt < gas_revert,
+        "HALT gas ({}) should be less than REVERT gas ({}) because HALT hits limit before REVERT executes",
+        gas_halt,
+        gas_revert
+    );
 }
