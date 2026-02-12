@@ -357,6 +357,30 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+
+        // For top-level CREATE transactions (depth == 0), charge initial state gas (TIP-1016).
+        // Inner CREATEs are charged by the CREATE opcode handler before frame creation.
+        if depth == 0 && context.cfg().is_state_gas_enabled() {
+            let gas_params = context.cfg().gas_params();
+            let initial_state_gas =
+                gas_params.new_account_state_gas() + gas_params.create_state_gas();
+            if initial_state_gas > 0 {
+                let frame = this.get(EthFrame::invalid);
+                if !frame.interpreter.gas.record_state_cost(initial_state_gas) {
+                    let cp = frame.checkpoint;
+                    context.journal_mut().checkpoint_revert(cp);
+                    return Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
+                        result: InterpreterResult {
+                            result: InstructionResult::OutOfGas,
+                            gas: Gas::new(gas_limit),
+                            output: Bytes::new(),
+                        },
+                        address: None,
+                    })));
+                }
+            }
+        }
+
         Ok(ItemOrResult::Item(this.consume()))
     }
 
