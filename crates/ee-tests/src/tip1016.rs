@@ -971,6 +971,7 @@ fn test_tip1016_reservoir_refill_halt_state_gas_more() {
 /// Same bytecode (SSTORE then explicit REVERT), but compare:
 /// - REVERT path: remaining reimbursed, actual gas spent (not full limit).
 /// - HALT path (OOG before completion): remaining not reimbursed, gas_used = gas_limit.
+///
 /// This demonstrates the refill consequence: HALT consumes all gas, REVERT only charges actual.
 #[test]
 fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
