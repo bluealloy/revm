@@ -119,12 +119,10 @@ either = { version = "1.15.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0"
-eyre = "0.6.12"
 hash-db = "0.15"
 indicatif = "0.18"
 plain_hasher = "0.2"
 rstest = "0.26.0"
-serde_derive = "1.0"
 thiserror = { version = "2.0", default-features = false }
 triehash = "0.8"
 walkdir = "2.5"
