@@ -754,6 +754,10 @@ fn execute_blockchain_test(
         // Pre block system calls
         pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root);
 
+        // Track cumulative gas used across all transactions in this block
+        let mut cumulative_gas_used: u64 = 0;
+        let mut block_completed = true;
+
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
             if tx.sender.is_none() {
@@ -784,6 +788,7 @@ fn execute_blockchain_test(
                 } else {
                     eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
                 }
+                block_completed = false;
                 break; // Skip to next block
             }
 
@@ -823,6 +828,7 @@ fn execute_blockchain_test(
                             "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
                         );
                     }
+                    block_completed = false;
                     break; // Skip to next block
                 }
             };
@@ -881,8 +887,18 @@ fn execute_blockchain_test(
                                 "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {expected_exception})"
                             );
                         }
+                        block_completed = false;
                         break; // Skip to next block
                     }
+                    // EIP-7778: Block gas accounting without refunds.
+                    // For Amsterdam+, block gas = max(spent, floor_gas).
+                    // For pre-Amsterdam, block gas = used() = max(spent - refunded, floor_gas).
+                    let gas = result.result.gas();
+                    cumulative_gas_used += if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
+                        gas.spent().max(gas.floor_gas())
+                    } else {
+                        gas.used()
+                    };
                     evm.commit(result.state);
                 }
                 Err(e) => {
@@ -924,6 +940,7 @@ fn execute_blockchain_test(
                                 "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
                             );
                         }
+                        block_completed = false;
                         break; // Skip to next block
                     } else if json_output {
                         // Expected failure
@@ -935,6 +952,25 @@ fn execute_blockchain_test(
                         });
                         print_json(&output);
                     }
+                }
+            }
+        }
+
+        // Validate block gas used against header
+        if block_completed && !should_fail {
+            if let Some(block_header) = block.block_header.as_ref() {
+                let expected_gas_used = block_header.gas_used.to::<u64>();
+                if cumulative_gas_used != expected_gas_used {
+                    if print_env_on_error {
+                        eprintln!(
+                            "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {cumulative_gas_used}"
+                        );
+                    }
+                    return Err(TestExecutionError::BlockGasUsedMismatch {
+                        block_idx,
+                        expected: expected_gas_used,
+                        actual: cumulative_gas_used,
+                    });
                 }
             }
         }
@@ -1125,6 +1161,13 @@ pub enum TestExecutionError {
         tx_idx: usize,
         reason: HaltReason,
         gas_used: u64,
+    },
+
+    #[error("Block gas used mismatch at block {block_idx}: expected {expected}, got {actual}")]
+    BlockGasUsedMismatch {
+        block_idx: usize,
+        expected: u64,
+        actual: u64,
     },
 
     #[error("BAL error")]
