@@ -328,17 +328,23 @@ pub trait Handler {
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
-        // For the first frame, determine remaining gas in the reservoir.
-        // When state gas is enabled, reservoir_remaining_gas = min(tx_gas_limit_cap, tx.gas_limit) - initial_total_gas.
-        // On mainnet (state gas disabled), reservoir_remaining_gas = 0.
-        let reservoir_remaining_gas = if ctx.cfg().is_state_gas_enabled() {
-            core::cmp::min(ctx.cfg().tx_gas_limit_cap(), ctx.tx().gas_limit())
+        // For the first frame, determine the reservoir and cap gas_limit to the regular gas budget.
+        //
+        // EIP-8037 reservoir model:
+        //   execution_gas = tx.gas_limit - intrinsic_gas  (= gas_limit parameter)
+        //   regular_gas_budget = min(execution_gas, TX_MAX_GAS_LIMIT - intrinsic_gas)
+        //   reservoir = execution_gas - regular_gas_budget
+        //
+        // On mainnet (state gas disabled), reservoir = 0 and gas_limit is unchanged.
+        let execution_gas = gas_limit;
+        let regular_gas_cap = if ctx.cfg().is_state_gas_enabled() {
+            let intrinsic_gas = ctx.tx().gas_limit() - execution_gas;
+            ctx.cfg().tx_gas_limit_cap().saturating_sub(intrinsic_gas)
         } else {
-            0
+            ctx.cfg().tx_gas_limit_cap()
         };
-
-        // TODO(tip1016): check edge cases of gas_limit-initial_total_gas and what is correct here.
-        gas_limit = core::cmp::min(gas_limit, ctx.cfg().tx_gas_limit_cap());
+        gas_limit = core::cmp::min(gas_limit, regular_gas_cap);
+        let reservoir_remaining_gas = execution_gas - gas_limit;
 
         let (tx, journal) = ctx.tx_journal_mut();
         let bytecode = if let Some(&to) = tx.kind().to() {
