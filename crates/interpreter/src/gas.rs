@@ -5,12 +5,13 @@ pub use context_interface::cfg::gas::*;
 /// Represents the state of gas during execution.
 ///
 /// Implements the EIP-8037 reservoir model for dual-limit gas accounting:
-/// - `remaining`: total gas left = `gas_left` + `reservoir`
-/// - `reservoir`: state gas pool (gas exceeding regular gas budget)
-/// - `gas_spent`: tracks total state gas spent
+/// - `remaining`: regular gas left (`gas_left`). Does NOT include `reservoir`.
+/// - `reservoir`: state gas pool (separate from `remaining`). Starts as `execution_gas - gas_left`.
+/// - `state_gas_spent`: tracks total state gas spent
 ///
-/// **Regular gas charges** (`record_cost`): deduct from `remaining` only, checked against implicit `gas_left`.
-/// **State gas charges** (`record_state_cost`): deduct from `reservoir` first; when exhausted, spill into `gas_left`.
+/// **Regular gas charges** (`record_cost`): deduct from `remaining`, checked against `remaining`.
+/// **State gas charges** (`record_state_cost`): deduct from `reservoir` first; when exhausted, spill into `remaining`.
+/// Total gas available = `remaining` + `reservoir`.
 ///
 /// On mainnet (no state gas), `reservoir = 0` so all gas is regular gas and behavior is unchanged.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -18,7 +19,7 @@ pub use context_interface::cfg::gas::*;
 pub struct Gas {
     /// The initial gas limit. This is constant throughout execution.
     limit: u64,
-    /// Total gas remaining: `gas_left` + `reservoir`.
+    /// Regular gas remaining (`gas_left`). Reservoir is tracked separately.
     remaining: u64,
     /// State gas reservoir (gas exceeding TX_MAX_GAS_LIMIT). Starts as `execution_gas - min(execution_gas, regular_gas_budget)`.
     /// When 0, all remaining gas is regular gas with hard cap at `TX_MAX_GAS_LIMIT`.
@@ -50,13 +51,13 @@ impl Gas {
     /// Creates a new `Gas` struct with a regular gas budget and reservoir (EIP-8037 reservoir model).
     ///
     /// Following the EIP-8037 spec:
-    /// - `gas_left = min(regular_gas_budget, execution_gas)`
-    /// - `state_gas_reservoir = execution_gas - gas_left`
-    /// - `remaining = gas_left + state_gas_reservoir = execution_gas`
+    /// - `remaining = limit` (regular gas available, i.e. `gas_left`)
+    /// - `reservoir` = state gas pool (separate from `remaining`)
+    /// - Total gas available = `remaining + reservoir = limit + reservoir`
     ///
     /// # Arguments
-    /// * `limit`: total execution gas (tx.gas - intrinsic_gas)
-    /// * `regular_gas_budget`: regular gas cap (TX_MAX_GAS_LIMIT - intrinsic_regular_gas)
+    /// * `limit`: regular gas budget (capped execution gas, i.e. `gas_left`)
+    /// * `reservoir`: state gas pool (execution gas exceeding the regular gas cap)
     #[inline]
     pub const fn new_with_regular_gas_budget(limit: u64, reservoir: u64) -> Self {
         Self {
