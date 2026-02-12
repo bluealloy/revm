@@ -202,8 +202,9 @@ where
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
-        // Regular gas always preserved (reflects actual consumption)
-        gas.set_reservoir(reservoir);
+
+        // Total unused gas includes both gas_left (remaining) and unused reservoir.
+        let total_remaining = remaining + reservoir;
 
         if instruction_result.is_ok() {
             // On Optimism, deposit transactions report gas usage uniquely to other
@@ -222,7 +223,7 @@ where
             if !is_deposit || is_regolith {
                 // For regular transactions prior to Regolith and all transactions after
                 // Regolith, gas is reported as normal.
-                gas.erase_cost(remaining);
+                gas.erase_cost(total_remaining);
                 gas.record_refund(refunded);
             } else if is_deposit && tx.is_system_transaction() {
                 // System transactions were a special type of deposit transaction in
@@ -243,7 +244,7 @@ where
             //     gas used on failure. Refunds on remaining gas enabled.
             //   - Regular transactions receive a refund on remaining gas as normal.
             if !is_deposit || is_regolith {
-                gas.erase_cost(remaining);
+                gas.erase_cost(total_remaining);
             }
         }
 

@@ -394,7 +394,10 @@ pub trait Handler {
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
-            gas.erase_cost(remaining);
+            // Refund both unused gas_left and unused reservoir.
+            // remaining tracks gas_left only; reservoir is separate.
+            // Total unused gas = remaining + reservoir.
+            gas.erase_cost(remaining + reservoir);
         }
 
         // handle reservoir refill in case of revert or halt.
