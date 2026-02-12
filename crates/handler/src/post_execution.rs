@@ -2,11 +2,22 @@ use crate::FrameResult;
 use context::journaled_state::account::JournaledAccountTr;
 use context_interface::{
     journaled_state::JournalTr,
-    result::{ExecutionResult, HaltReason, HaltReasonTr},
+    result::{ExecutionResult, HaltReason, HaltReasonTr, ResultGas},
     Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
+
+/// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
+pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+    ResultGas::new(
+        gas.limit(),
+        gas.spent(),
+        gas.refunded() as u64,
+        init_and_floor_gas.floor_gas,
+        init_and_floor_gas.initial_gas,
+    )
+}
 
 /// Ensures minimum gas floor is spent according to EIP-7623.
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
@@ -87,10 +98,8 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
     // TODO, make this more generic and nice.
     // FrameResult should be a generic that returns gas and interpreter result.
     result: FrameResult,
+    result_gas: ResultGas,
 ) -> ExecutionResult<HALTREASON> {
-    // Used gas with refund calculated.
-    let gas_refunded = result.gas().refunded() as u64;
-    let gas_used = result.gas().used();
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 
@@ -100,13 +109,12 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
     match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
-            gas_used,
-            gas_refunded,
+            gas: result_gas,
             logs,
             output,
         },
         SuccessOrHalt::Revert => ExecutionResult::Revert {
-            gas_used,
+            gas: result_gas,
             output: output.into_data(),
         },
         SuccessOrHalt::Halt(reason) => {
@@ -118,11 +126,14 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
                 if let Some(message) = context.local_mut().take_precompile_error_context() {
                     return ExecutionResult::Halt {
                         reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
-                        gas_used,
+                        gas: result_gas,
                     };
                 }
             }
-            ExecutionResult::Halt { reason, gas_used }
+            ExecutionResult::Halt {
+                reason,
+                gas: result_gas,
+            }
         }
         // Only two internal return flags.
         flag @ (SuccessOrHalt::FatalExternalError | SuccessOrHalt::Internal(_)) => {

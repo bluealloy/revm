@@ -1,8 +1,13 @@
 [
   {
     "Success": {
-      "gas_refunded": 0,
-      "gas_used": 54260,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 54260,
+        "intrinsic_gas": 53236,
+        "limit": 1000000000
+      },
       "logs": [],
       "output": {
         "Create": [
@@ -15,8 +20,13 @@
   },
   {
     "Success": {
-      "gas_refunded": 14301,
-      "gas_used": 14302,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 14301,
+        "gas_spent": 28603,
+        "intrinsic_gas": 21000,
+        "limit": 1000000000
+      },
       "logs": [],
       "output": {
         "Call": "0x"
@@ -26,8 +36,13 @@
   },
   {
     "Success": {
-      "gas_refunded": 0,
-      "gas_used": 54260,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 54260,
+        "intrinsic_gas": 53236,
+        "limit": 1000000000
+      },
       "logs": [],
       "output": {
         "Create": [

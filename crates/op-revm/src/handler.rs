@@ -13,7 +13,7 @@ use revm::{
     },
     context_interface::{
         context::take_error,
-        result::{EVMError, ExecutionResult, FromStringError},
+        result::{EVMError, ExecutionResult, FromStringError, ResultGas},
         Block, Cfg, ContextTr, JournalTr, Transaction,
     },
     handler::{
@@ -345,11 +345,12 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        result_gas: ResultGas,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result =
-            post_execution::output(evm.ctx(), frame_result).map_haltreason(OpHaltReason::Base);
+        let exec_result = post_execution::output(evm.ctx(), frame_result, result_gas)
+            .map_haltreason(OpHaltReason::Base);
 
         if exec_result.is_halt() {
             // Post-regolith, if the transaction is a deposit transaction and it halts,
@@ -422,7 +423,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas_used,
+                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
             })
         }
 
@@ -1296,7 +1297,8 @@ mod tests {
                         gas: Default::default(),
                     },
                     Default::default()
-                ))
+                )),
+                ResultGas::default(),
             ),
             Err(EVMError::Transaction(
                 OpTransactionError::HaltedDepositPostRegolith

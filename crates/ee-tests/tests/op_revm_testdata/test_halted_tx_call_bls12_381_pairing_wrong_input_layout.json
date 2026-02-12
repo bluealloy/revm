@@ -1,7 +1,13 @@
 {
   "result": {
     "Halt": {
-      "gas_used": 97444,
+      "gas": {
+        "floor_gas": 36360,
+        "gas_refunded": 0,
+        "gas_spent": 97444,
+        "intrinsic_gas": 27144,
+        "limit": 97444
+      },
       "reason": {
         "Base": {
           "PrecompileErrorWithContext": "bls12-381 fp 64 top bytes of input are not zero"
