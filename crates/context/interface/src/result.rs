@@ -296,7 +296,8 @@ pub enum ExecutionResult<HaltReasonTy = HaltReason> {
         reason: HaltReasonTy,
         /// Gas accounting for the transaction.
         ///
-        /// Halting will spend all the gas, and will be equal to gas_limit.
+        /// For standard EVM halts, gas used typically equals the gas limit.
+        /// Some system- or L2-specific halts may intentionally report less gas used.
         gas: ResultGas,
     },
 }
