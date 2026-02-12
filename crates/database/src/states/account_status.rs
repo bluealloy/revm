@@ -112,7 +112,7 @@ impl AccountStatus {
             Self::Loaded => Self::Destroyed,
             // Changed account cannot be empty.
             Self::Changed => {
-                panic!("Wrong state transition, touch empty is not possible from Changed");
+                unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
         }
     }
