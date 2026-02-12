@@ -239,7 +239,7 @@ pub trait Handler {
         self.refund(evm, exec_result, eip7702_gas_refund);
 
         // Build ResultGas from the final gas state
-        // This include all necessary fields and gas values.
+        // This includes all necessary fields and gas values.
         let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
 
         // Ensure gas floor is met and minimum floor gas is spent.
