@@ -592,7 +592,7 @@ pub fn handle_reservoir_remaining_gas(
     } else {
         // state gas spent should stay the same in case of revert or halt.
         // the difference that happened between state gases should be checked
-        // if it is done agains regular gas, and return this gas to reservoir.
+        // if it is done against regular gas, and return this gas to reservoir.
         let spent_state_gas = child_gas
             .state_gas_spent()
             .saturating_sub(parent_gas.state_gas_spent());
@@ -611,7 +611,7 @@ pub fn handler_reservoir_refill(reservoir: u64, spent_state_gas: u64) -> u64 {
     // if we spent more state gas than we have in reservoir, we need to refill it.
     let state_gas_in_regular = spent_state_gas.saturating_sub(reservoir);
 
-    // we are incresing reservoir by the amount of state gas that was in regular gas.
+    // we are increasing reservoir by the amount of state gas that was in regular gas.
     reservoir + state_gas_in_regular
 }
 
