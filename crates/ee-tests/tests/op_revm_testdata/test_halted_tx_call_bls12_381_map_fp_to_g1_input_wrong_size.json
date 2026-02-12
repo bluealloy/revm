@@ -8,6 +8,7 @@
         "intrinsic_gas": 22008,
         "limit": 27524
       },
+      "logs": [],
       "reason": {
         "Base": {
           "PrecompileErrorWithContext": "bls12-381 map fp to g1 input length error"

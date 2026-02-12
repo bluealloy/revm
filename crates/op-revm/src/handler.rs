@@ -424,6 +424,7 @@ where
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
                 gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
+                logs: Vec::new(),
             })
         }
 

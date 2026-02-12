@@ -287,6 +287,8 @@ pub enum ExecutionResult<HaltReasonTy = HaltReason> {
     Revert {
         /// Gas accounting for the transaction.
         gas: ResultGas,
+        /// Logs emitted before the revert.
+        logs: Vec<Log>,
         /// Output of the transaction.
         output: Bytes,
     },
@@ -299,6 +301,8 @@ pub enum ExecutionResult<HaltReasonTy = HaltReason> {
         /// For standard EVM halts, gas used typically equals the gas limit.
         /// Some system- or L2-specific halts may intentionally report less gas used.
         gas: ResultGas,
+        /// Logs emitted before the halt.
+        logs: Vec<Log>,
     },
 }
 
@@ -329,10 +333,11 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
                 logs,
                 output,
             },
-            Self::Revert { gas, output } => ExecutionResult::Revert { gas, output },
-            Self::Halt { reason, gas } => ExecutionResult::Halt {
+            Self::Revert { gas, logs, output } => ExecutionResult::Revert { gas, logs, output },
+            Self::Halt { reason, gas, logs } => ExecutionResult::Halt {
                 reason: op(reason),
                 gas,
+                logs,
             },
         }
     }
@@ -373,19 +378,21 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
         }
     }
 
-    /// Returns the logs if execution is successful, or an empty list otherwise.
+    /// Returns the logs emitted during execution.
     pub fn logs(&self) -> &[Log] {
         match self {
-            Self::Success { logs, .. } => logs.as_slice(),
-            _ => &[],
+            Self::Success { logs, .. }
+            | Self::Revert { logs, .. }
+            | Self::Halt { logs, .. } => logs.as_slice(),
         }
     }
 
-    /// Consumes [`self`] and returns the logs if execution is successful, or an empty list otherwise.
+    /// Consumes [`self`] and returns the logs emitted during execution.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
-            Self::Success { logs, .. } => logs,
-            _ => Vec::new(),
+            Self::Success { logs, .. }
+            | Self::Revert { logs, .. }
+            | Self::Halt { logs, .. } => logs,
         }
     }
 
@@ -422,15 +429,32 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                 }
                 write!(f, ", {output}")
             }
-            Self::Revert { gas, output } => {
+            Self::Revert { gas, logs, output } => {
                 write!(f, "Revert: {gas}")?;
+                if !logs.is_empty() {
+                    write!(
+                        f,
+                        ", {} log{}",
+                        logs.len(),
+                        if logs.len() == 1 { "" } else { "s" }
+                    )?;
+                }
                 if !output.is_empty() {
                     write!(f, ", {} bytes output", output.len())?;
                 }
                 Ok(())
             }
-            Self::Halt { reason, gas } => {
-                write!(f, "Halted: {reason} ({gas})")
+            Self::Halt { reason, gas, logs } => {
+                write!(f, "Halted: {reason} ({gas})")?;
+                if !logs.is_empty() {
+                    write!(
+                        f,
+                        ", {} log{}",
+                        logs.len(),
+                        if logs.len() == 1 { "" } else { "s" }
+                    )?;
+                }
+                Ok(())
             }
         }
     }
@@ -1071,6 +1095,7 @@ mod tests {
 
         let result: ExecutionResult<HaltReason> = ExecutionResult::Revert {
             gas: ResultGas::new(100000, 100000, 0, 0, 0),
+            logs: vec![],
             output: Bytes::from(vec![1, 2, 3, 4]),
         };
         assert_eq!(
@@ -1081,6 +1106,7 @@ mod tests {
         let result: ExecutionResult<HaltReason> = ExecutionResult::Halt {
             reason: HaltReason::OutOfGas(OutOfGasError::Basic),
             gas: ResultGas::new(1000000, 1000000, 0, 0, 0),
+            logs: vec![],
         };
         assert_eq!(
             result.to_string(),
