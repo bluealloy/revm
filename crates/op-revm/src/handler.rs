@@ -198,6 +198,7 @@ where
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
+        let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
@@ -245,6 +246,10 @@ where
                 gas.erase_cost(remaining);
             }
         }
+
+        // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
+        gas.set_state_gas_spent(state_gas_spent);
+
         Ok(())
     }
 
@@ -426,7 +431,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
+                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0, 0),
             })
         }
 

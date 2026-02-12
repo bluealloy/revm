@@ -388,6 +388,7 @@ pub trait Handler {
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
+        let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
@@ -406,6 +407,10 @@ pub trait Handler {
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
         }
+
+        // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
+        gas.set_state_gas_spent(state_gas_spent);
+
         Ok(())
     }
 
