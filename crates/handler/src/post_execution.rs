@@ -16,6 +16,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
         gas.refunded() as u64,
         init_and_floor_gas.floor_gas,
         init_and_floor_gas.initial_total_gas,
+        gas.state_gas_spent(),
     )
 }
 

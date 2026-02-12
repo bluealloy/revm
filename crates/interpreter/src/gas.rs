@@ -277,9 +277,9 @@ impl Gas {
             return true;
         }
 
-        let mut spill = 0;
+        let mut spill = cost;
         if self.reservoir != 0 {
-            spill = cost - self.reservoir;
+            spill -= self.reservoir;
             self.reservoir = 0;
         }
 

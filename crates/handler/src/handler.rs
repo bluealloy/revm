@@ -132,8 +132,14 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas =
-                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                let result_gas = ResultGas::new(
+                    gas.limit(),
+                    gas.spent(),
+                    gas.refunded() as u64,
+                    0,
+                    0,
+                    gas.state_gas_spent(),
+                );
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
