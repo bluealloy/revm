@@ -402,8 +402,9 @@ pub trait Handler {
 
         // handle reservoir refill in case of revert or halt.
         if !instruction_result.is_ok() {
-            // handle reservoir refill in case that call reverted.
-            let new_reservoir = handler_reservoir_refill(reservoir, gas.state_gas_spent());
+            // Use the saved state_gas_spent (not gas.state_gas_spent() which is zeroed
+            // by Gas::new_spent and only restored later).
+            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
             gas.set_reservoir(new_reservoir);
         }
 
