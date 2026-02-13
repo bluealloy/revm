@@ -6,8 +6,9 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, secp256r1, Precompile, PrecompileError, PrecompileId, PrecompileResult,
-        Precompiles,
+        self, bn254,
+        eth_precompile::{address_to_index, Precompiles},
+        secp256r1, Precompile, PrecompileError, PrecompileId, PrecompileResult,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };
@@ -59,7 +60,10 @@ pub fn fjord() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = Precompiles::cancun().clone();
         // RIP-7212: secp256r1 P256verify
-        precompiles.extend([secp256r1::P256VERIFY]);
+        precompiles.set_extended(
+            *secp256r1::P256VERIFY.address(),
+            *secp256r1::P256VERIFY.precompile(),
+        );
         precompiles
     })
 }
@@ -70,7 +74,10 @@ pub fn granite() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = fjord().clone();
         // Restrict bn254Pairing input size
-        precompiles.extend([bn254_pair::GRANITE]);
+        let binding = bn254_pair::GRANITE;
+        let add = binding.address();
+        let index = address_to_index(add).unwrap();
+        precompiles.set(index, *bn254_pair::GRANITE.precompile());
         precompiles
     })
 }
@@ -81,13 +88,23 @@ pub fn isthmus() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = granite().clone();
         // Prague bls12 precompiles
-        precompiles.extend(precompile::bls12_381::precompiles());
-        // Isthmus bls12 precompile modifications
-        precompiles.extend([
+        for precompile in precompile::bls12_381::precompiles() {
+            precompiles.set(
+                address_to_index(precompile.address()).unwrap(),
+                *precompile.precompile(),
+            );
+        }
+
+        for precompile in &[
             bls12_381::ISTHMUS_G1_MSM,
             bls12_381::ISTHMUS_G2_MSM,
             bls12_381::ISTHMUS_PAIRING,
-        ]);
+        ] {
+            precompiles.set(
+                address_to_index(precompile.address()).unwrap(),
+                *precompile.precompile(),
+            );
+        }
         precompiles
     })
 }
@@ -98,23 +115,33 @@ pub fn jovian() -> &'static Precompiles {
     INSTANCE.get_or_init(|| {
         let mut precompiles = isthmus().clone();
 
-        let mut to_remove = Precompiles::default();
-        to_remove.extend([
+        let to_remove = Precompiles::default();
+        for precompile in &[
             bn254::pair::ISTANBUL,
             bls12_381::ISTHMUS_G1_MSM,
             bls12_381::ISTHMUS_G2_MSM,
             bls12_381::ISTHMUS_PAIRING,
-        ]);
+        ] {
+            precompiles.set(
+                address_to_index(precompile.address()).unwrap(),
+                *precompile.precompile(),
+            );
+        }
 
         // Replace the 4 variable-input precompiles with Jovian versions (reduced limits)
         precompiles.difference(&to_remove);
 
-        precompiles.extend([
+        for precompile in &[
             bn254_pair::JOVIAN,
             bls12_381::JOVIAN_G1_MSM,
             bls12_381::JOVIAN_G2_MSM,
             bls12_381::JOVIAN_PAIRING,
-        ]);
+        ] {
+            precompiles.set(
+                address_to_index(precompile.address()).unwrap(),
+                *precompile.precompile(),
+            );
+        }
 
         precompiles
     })
@@ -412,7 +439,7 @@ mod tests {
         assert!(bad_input_len < bn254_pair::GRANITE_MAX_INPUT_SIZE);
         let input = vec![0u8; bad_input_len];
 
-        let res = bn254_pair_precompile.execute(&input, u64::MAX);
+        let res = bn254_pair_precompile(&input, u64::MAX);
         assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
 
         let bls12_381_g1_msm_precompile = precompiles
@@ -422,7 +449,7 @@ mod tests {
         bad_input_len = bls12_381::JOVIAN_G1_MSM_MAX_INPUT_SIZE + 1;
         assert!(bad_input_len < bls12_381::ISTHMUS_G1_MSM_MAX_INPUT_SIZE);
         let input = vec![0u8; bad_input_len];
-        let res = bls12_381_g1_msm_precompile.execute(&input, u64::MAX);
+        let res = bls12_381_g1_msm_precompile(&input, u64::MAX);
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
         );
@@ -434,7 +461,7 @@ mod tests {
         bad_input_len = bls12_381::JOVIAN_G2_MSM_MAX_INPUT_SIZE + 1;
         assert!(bad_input_len < bls12_381::ISTHMUS_G2_MSM_MAX_INPUT_SIZE);
         let input = vec![0u8; bad_input_len];
-        let res = bls12_381_g2_msm_precompile.execute(&input, u64::MAX);
+        let res = bls12_381_g2_msm_precompile(&input, u64::MAX);
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
         );
@@ -446,7 +473,7 @@ mod tests {
         bad_input_len = bls12_381::JOVIAN_PAIRING_MAX_INPUT_SIZE + 1;
         assert!(bad_input_len < bls12_381::ISTHMUS_PAIRING_MAX_INPUT_SIZE);
         let input = vec![0u8; bad_input_len];
-        let res = bls12_381_pairing_precompile.execute(&input, u64::MAX);
+        let res = bls12_381_pairing_precompile(&input, u64::MAX);
         assert!(
             matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
         );

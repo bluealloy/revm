@@ -13,6 +13,7 @@ pub mod bls12_381;
 pub mod bls12_381_const;
 pub mod bls12_381_utils;
 pub mod bn254;
+pub mod eth_precompile;
 pub mod hash;
 mod id;
 pub mod identity;
