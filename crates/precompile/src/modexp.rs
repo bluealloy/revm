@@ -148,7 +148,8 @@ pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 }
 
 /// See: <https://eips.ethereum.org/EIPS/eip-7823>
-/// Gas cost of berlin is modified from byzantium.
+/// See: <https://eips.ethereum.org/EIPS/eip-7883>
+/// Gas cost and input size limits are modified from berlin.
 pub fn osaka_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner::<_, true>(input, gas_limit, 500, |a, b, c, d| {
         osaka_gas_calc(a, b, c, d)
