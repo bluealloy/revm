@@ -87,6 +87,11 @@ pub trait Cfg {
 
     /// Returns the gas params for the EVM.
     fn gas_params(&self) -> &GasParams;
+
+    /// Returns whether state gas (TIP-1016) is enabled.
+    ///
+    /// When enabled, storage creation gas is tracked separately from regular gas.
+    fn is_state_gas_enabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform

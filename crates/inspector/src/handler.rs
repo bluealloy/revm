@@ -74,7 +74,7 @@ where
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_total_gas;
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
@@ -146,8 +146,14 @@ where
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas =
-                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                let result_gas = ResultGas::new(
+                    gas.limit(),
+                    gas.spent(),
+                    gas.refunded() as u64,
+                    0,
+                    0,
+                    gas.state_gas_spent(),
+                );
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,

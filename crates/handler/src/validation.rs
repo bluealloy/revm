@@ -146,13 +146,16 @@ pub fn validate_tx_env<CTX: ContextTr>(
         }
     }
 
-    // EIP-7825: Transaction Gas Limit Cap
-    let cap = context.cfg().tx_gas_limit_cap();
-    if tx.gas_limit() > cap {
-        return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
-            gas_limit: tx.gas_limit(),
-            cap,
-        });
+    // tx gas cap is not enforced if state gas is enabled.
+    if !context.cfg().is_state_gas_enabled() {
+        // EIP-7825: Transaction Gas Limit Cap
+        let cap = context.cfg().tx_gas_limit_cap();
+        if tx.gas_limit() > cap {
+            return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+                gas_limit: tx.gas_limit(),
+                cap,
+            });
+        }
     }
 
     let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
@@ -208,6 +211,8 @@ pub fn validate_tx_env<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
+    // TODO(tip1016) should we enforce to `min(tx.gas_limit(), 16M) < block.gas_limit`?
+    // This would enforce that regular gas is constrained.
     if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
@@ -237,10 +242,10 @@ pub fn validate_initial_tx_gas(
     }
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if gas.initial_gas > tx.gas_limit() {
+    if gas.initial_total_gas > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
             gas_limit: tx.gas_limit(),
-            initial_gas: gas.initial_gas,
+            initial_gas: gas.initial_total_gas,
         });
     }
 

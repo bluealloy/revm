@@ -482,6 +482,10 @@ impl<
         self.cfg().gas_params()
     }
 
+    fn is_state_gas_enabled(&self) -> bool {
+        self.cfg().is_state_gas_enabled()
+    }
+
     fn block_number(&self) -> U256 {
         self.block().number()
     }

@@ -112,6 +112,7 @@ impl EthFrame<EthInterpreter> {
         is_static: bool,
         spec_id: SpecId,
         gas_limit: u64,
+        reservoir_remaining_gas: u64,
         checkpoint: JournalCheckpoint,
     ) {
         let Self {
@@ -126,7 +127,15 @@ impl EthFrame<EthInterpreter> {
         *input_ref = input;
         *depth_ref = depth;
         *is_finished_ref = false;
-        interpreter.clear(memory, bytecode, inputs, is_static, spec_id, gas_limit);
+        interpreter.clear(
+            memory,
+            bytecode,
+            inputs,
+            is_static,
+            spec_id,
+            gas_limit,
+            reservoir_remaining_gas,
+        );
         *checkpoint_ref = checkpoint;
     }
 
@@ -143,6 +152,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
+        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
         let return_result = |instruction_result: InstructionResult| {
@@ -241,6 +251,7 @@ impl EthFrame<EthInterpreter> {
             is_static,
             ctx.cfg().spec().into(),
             gas_limit,
+            reservoir_remaining_gas,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -257,6 +268,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
+        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let spec = context.cfg().spec().into();
         let return_error = |e| {
@@ -342,8 +354,10 @@ impl EthFrame<EthInterpreter> {
             false,
             spec,
             gas_limit,
+            reservoir_remaining_gas,
             checkpoint,
         );
+
         Ok(ItemOrResult::Item(this.consume()))
     }
 
@@ -365,13 +379,22 @@ impl EthFrame<EthInterpreter> {
             depth,
             memory,
             frame_input,
+            reservoir_remaining_gas,
         } = frame_init;
 
         match frame_input {
-            FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+            FrameInput::Call(inputs) => Self::make_call_frame(
+                this,
+                ctx,
+                precompiles,
+                depth,
+                memory,
+                inputs,
+                reservoir_remaining_gas,
+            ),
+            FrameInput::Create(inputs) => {
+                Self::make_create_frame(this, ctx, depth, memory, inputs, reservoir_remaining_gas)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -396,6 +419,7 @@ impl EthFrame<EthInterpreter> {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
+                    reservoir_remaining_gas: self.interpreter.gas.reservoir(),
                 }));
             }
             InterpreterAction::Return(result) => result,
@@ -479,6 +503,9 @@ impl EthFrame<EthInterpreter> {
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
+                // handle reservoir remaining gas
+                handle_reservoir_remaining_gas(&mut interpreter.gas, &out_gas, ins_result);
+
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
                 }
@@ -508,6 +535,9 @@ impl EthFrame<EthInterpreter> {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
 
+                // handle reservoir remaining gas
+                handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
+
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
@@ -522,6 +552,44 @@ impl EthFrame<EthInterpreter> {
 
         Ok(())
     }
+}
+
+/// Handles the remaining gas of the parent frame.
+#[inline]
+pub fn handle_reservoir_remaining_gas(
+    parent_gas: &mut Gas,
+    child_gas: &Gas,
+    ins_result: InstructionResult,
+) {
+    // handle reservoir remaining gas only in case of success.
+    // In case of revert or halt, reservoir gas is not deducted and can be even increased.
+    if ins_result.is_ok() {
+        parent_gas.set_reservoir(child_gas.reservoir());
+        parent_gas.set_state_gas_spent(child_gas.state_gas_spent());
+    } else {
+        // state gas spent should stay the same in case of revert or halt.
+        // the difference that happened between state gases should be checked
+        // if it is done against regular gas, and return this gas to reservoir.
+        let spent_state_gas = child_gas
+            .state_gas_spent()
+            .saturating_sub(parent_gas.state_gas_spent());
+
+        let new_reservoir = handler_reservoir_refill(parent_gas.reservoir(), spent_state_gas);
+        parent_gas.set_reservoir(new_reservoir);
+    }
+}
+
+/// Takes reservoir and refills it
+///
+/// This can happen when we spent more state gas than we had in reservoir and
+/// we need to refill it.
+#[inline]
+pub fn handler_reservoir_refill(reservoir: u64, spent_state_gas: u64) -> u64 {
+    // if we spent more state gas than we have in reservoir, we need to refill it.
+    let state_gas_in_regular = spent_state_gas.saturating_sub(reservoir);
+
+    // we are increasing reservoir by the amount of state gas that was in regular gas.
+    reservoir + state_gas_in_regular
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
@@ -564,7 +632,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     let gas_for_code = cfg
         .gas_params()
         .code_deposit_cost(interpreter_result.output.len());
-    if !interpreter_result.gas.record_cost(gas_for_code) {
+    if !interpreter_result.gas.record_regular_cost(gas_for_code) {
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract
@@ -575,6 +643,21 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
             return;
         } else {
             interpreter_result.output = Bytes::new();
+        }
+    }
+    // State gas for code deposit (TIP-1016)
+    if cfg.is_state_gas_enabled() {
+        let state_gas_for_code = cfg
+            .gas_params()
+            .code_deposit_state_gas(interpreter_result.output.len());
+        if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
+            if spec_id.is_enabled_in(HOMESTEAD) {
+                journal.checkpoint_revert(checkpoint);
+                interpreter_result.result = InstructionResult::OutOfGas;
+                return;
+            } else {
+                interpreter_result.output = Bytes::new();
+            }
         }
     }
     // If we have enough gas we can commit changes.

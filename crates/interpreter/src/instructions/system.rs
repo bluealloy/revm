@@ -237,11 +237,11 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the GAS instruction.
 ///
 /// Pushes the amount of remaining gas onto the stack.
+/// Returns `gas_left` only (excluding the state gas reservoir) per EIP-8037.
+/// On mainnet (no state gas), this is equivalent to returning `remaining`.
 pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
-    push!(
-        context.interpreter,
-        U256::from(context.interpreter.gas.remaining())
-    );
+    let gas = &context.interpreter.gas;
+    push!(context.interpreter, U256::from(gas.remaining()));
 }
 
 /// Common logic for copying data from a source buffer to the EVM's memory.

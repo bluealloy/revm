@@ -1,6 +1,6 @@
 use crate::{
     evm::FrameTr,
-    execution, post_execution,
+    execution, handler_reservoir_refill, post_execution,
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
@@ -132,8 +132,14 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas =
-                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                let result_gas = ResultGas::new(
+                    gas.limit(),
+                    gas.spent(),
+                    gas.refunded() as u64,
+                    0,
+                    0,
+                    gas.state_gas_spent(),
+                );
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -199,7 +205,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_total_gas;
         // Create first frame action
         let first_frame_input = self.first_frame_input(evm, gas_limit)?;
 
@@ -316,11 +322,29 @@ pub trait Handler {
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
-        gas_limit: u64,
+        mut gas_limit: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
+
+        // For the first frame, determine the reservoir and cap gas_limit to the regular gas budget.
+        //
+        // EIP-8037 reservoir model:
+        //   execution_gas = tx.gas_limit - intrinsic_gas  (= gas_limit parameter)
+        //   regular_gas_budget = min(execution_gas, TX_MAX_GAS_LIMIT - intrinsic_gas)
+        //   reservoir = execution_gas - regular_gas_budget
+        //
+        // On mainnet (state gas disabled), reservoir = 0 and gas_limit is unchanged.
+        let execution_gas = gas_limit;
+        let regular_gas_cap = if ctx.cfg().is_state_gas_enabled() {
+            let intrinsic_gas = ctx.tx().gas_limit() - execution_gas;
+            ctx.cfg().tx_gas_limit_cap().saturating_sub(intrinsic_gas)
+        } else {
+            ctx.cfg().tx_gas_limit_cap()
+        };
+        gas_limit = core::cmp::min(gas_limit, regular_gas_cap);
+        let reservoir_remaining_gas = execution_gas - gas_limit;
 
         let (tx, journal) = ctx.tx_journal_mut();
         let bytecode = if let Some(&to) = tx.kind().to() {
@@ -348,6 +372,7 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
+            reservoir_remaining_gas,
         })
     }
 
@@ -362,17 +387,34 @@ pub trait Handler {
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
+        let reservoir = gas.reservoir();
+        let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
-            gas.erase_cost(remaining);
+            // Refund both unused gas_left and unused reservoir.
+            // remaining tracks gas_left only; reservoir is separate.
+            // Total unused gas = remaining + reservoir.
+            gas.erase_cost(remaining + reservoir);
+        }
+
+        // handle reservoir refill in case of revert or halt.
+        if !instruction_result.is_ok() {
+            // Use the saved state_gas_spent (not gas.state_gas_spent() which is zeroed
+            // by Gas::new_spent and only restored later).
+            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
+            gas.set_reservoir(new_reservoir);
         }
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
         }
+
+        // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
+        gas.set_state_gas_spent(state_gas_spent);
+
         Ok(())
     }
 

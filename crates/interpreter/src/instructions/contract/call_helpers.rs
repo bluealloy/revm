@@ -69,12 +69,15 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     }
 
     // load account delegated and deduct dynamic gas.
-    let (gas, bytecode, code_hash) =
+    let (gas, state_gas_cost, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
     let interpreter = &mut context.interpreter;
 
     // deduct dynamic gas.
     gas!(interpreter, gas, None);
+
+    // deduct state gas (TIP-1016) if any.
+    state_gas!(interpreter, state_gas_cost, None);
 
     let interpreter = &mut context.interpreter;
     let host = &mut context.host;
@@ -89,7 +92,12 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     } else {
         stack_gas_limit
     };
-    gas!(interpreter, gas_limit, None);
+    // Deduct gas forwarded to child from remaining only (not regular gas).
+    // Child inherits parent's regular_gas_remaining directly.
+    if !interpreter.gas.record_regular_cost(gas_limit) {
+        interpreter.halt_oog();
+        return None;
+    }
 
     // Add call stipend if there is value to be transferred.
     if transfers_value {
@@ -100,13 +108,15 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 }
 
 /// Loads accounts and its delegate account.
+///
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
 #[inline]
 pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Option<(u64, Bytecode, B256)> {
+) -> Option<(u64, u64, Bytecode, B256)> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
     match load_account_delegated(
@@ -131,6 +141,9 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 /// Loads accounts and its delegate account.
 ///
 /// Assumption is that warm gas is already deducted.
+///
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
+/// `state_gas_cost` is non-zero only when creating a new empty account (TIP-1016).
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(
     host: &mut H,
@@ -139,8 +152,9 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     address: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Result<(u64, Bytecode, B256), LoadError> {
+) -> Result<(u64, u64, Bytecode, B256), LoadError> {
     let mut cost = 0;
+    let mut state_gas_cost = 0;
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
     let is_spurious_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
 
@@ -159,7 +173,10 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         cost += host
             .gas_params()
             .new_account_cost(is_spurious_dragon, transfers_value);
-        return Ok((cost, bytecode, code_hash));
+        if host.is_state_gas_enabled() {
+            state_gas_cost += host.gas_params().new_account_state_gas();
+        }
+        return Ok((cost, state_gas_cost, bytecode, code_hash));
     }
 
     // load delegate code if account is EIP-7702
@@ -182,5 +199,5 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         code_hash = delegate_account.code_hash();
     }
 
-    Ok((cost, bytecode, code_hash))
+    Ok((cost, state_gas_cost, bytecode, code_hash))
 }
