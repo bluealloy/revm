@@ -137,7 +137,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             extend,
         } = self;
         *bytecode_ref = bytecode;
-        *gas = Gas::new_with_regular_gas_budget(gas_limit, reservoir_remaining_gas);
+        *gas = Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir_remaining_gas);
         if stack.data().capacity() == 0 {
             *stack = Stack::new();
         } else {
@@ -343,10 +343,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
-        if self
-            .gas
-            .record_cost_unsafe_no_regular(instruction.static_gas())
-        {
+        if self.gas.record_cost_unsafe(instruction.static_gas()) {
             return self.halt_oog();
         }
         let context = InstructionContext {

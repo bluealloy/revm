@@ -358,29 +358,6 @@ impl EthFrame<EthInterpreter> {
             checkpoint,
         );
 
-        // For top-level CREATE transactions (depth == 0), charge initial state gas (TIP-1016).
-        // Inner CREATEs are charged by the CREATE opcode handler before frame creation.
-        if depth == 0 && context.cfg().is_state_gas_enabled() {
-            let gas_params = context.cfg().gas_params();
-            let initial_state_gas =
-                gas_params.new_account_state_gas() + gas_params.create_state_gas();
-            if initial_state_gas > 0 {
-                let frame = this.get(EthFrame::invalid);
-                if !frame.interpreter.gas.record_state_cost(initial_state_gas) {
-                    let cp = frame.checkpoint;
-                    context.journal_mut().checkpoint_revert(cp);
-                    return Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
-                        result: InterpreterResult {
-                            result: InstructionResult::OutOfGas,
-                            gas: Gas::new(gas_limit),
-                            output: Bytes::new(),
-                        },
-                        address: None,
-                    })));
-                }
-            }
-        }
-
         Ok(ItemOrResult::Item(this.consume()))
     }
 
@@ -655,7 +632,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     let gas_for_code = cfg
         .gas_params()
         .code_deposit_cost(interpreter_result.output.len());
-    if !interpreter_result.gas.record_cost(gas_for_code) {
+    if !interpreter_result.gas.record_regular_cost(gas_for_code) {
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract

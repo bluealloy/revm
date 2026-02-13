@@ -94,7 +94,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     };
     // Deduct gas forwarded to child from remaining only (not regular gas).
     // Child inherits parent's regular_gas_remaining directly.
-    if !interpreter.gas.record_remaining_cost(gas_limit) {
+    if !interpreter.gas.record_regular_cost(gas_limit) {
         interpreter.halt_oog();
         return None;
     }

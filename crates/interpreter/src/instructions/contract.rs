@@ -113,7 +113,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     }
     // Deduct gas forwarded to child from remaining only (not regular gas).
     // Child inherits parent's regular_gas_remaining directly.
-    if !context.interpreter.gas.record_remaining_cost(gas_limit) {
+    if !context.interpreter.gas.record_regular_cost(gas_limit) {
         context.interpreter.halt_oog();
         return;
     }

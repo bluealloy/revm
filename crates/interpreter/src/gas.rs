@@ -59,7 +59,7 @@ impl Gas {
     /// * `limit`: regular gas budget (capped execution gas, i.e. `gas_left`)
     /// * `reservoir`: state gas pool (execution gas exceeding the regular gas cap)
     #[inline]
-    pub const fn new_with_regular_gas_budget(limit: u64, reservoir: u64) -> Self {
+    pub const fn new_with_regular_gas_and_reservoir(limit: u64, reservoir: u64) -> Self {
         Self {
             limit,
             remaining: limit,
@@ -68,17 +68,6 @@ impl Gas {
             refunded: 0,
             memory: MemoryGas::new(),
         }
-    }
-
-    /// Deprecated: use `new_with_regular_gas_budget` instead.
-    /// Alias for backwards compatibility.
-    #[inline]
-    #[deprecated(
-        since = "32.0.0",
-        note = "use new_with_regular_gas_budget for EIP-8037 semantics"
-    )]
-    pub const fn new_with_regular_gas_remaining(limit: u64, regular_gas_remaining: u64) -> Self {
-        Self::new_with_regular_gas_budget(limit, regular_gas_remaining)
     }
 
     /// Creates a new `Gas` struct with the given gas limit, but without any gas remaining.
@@ -173,14 +162,13 @@ impl Gas {
         self.remaining += returned;
     }
 
-    /// Spends all remaining gas including the reservoir.
+    /// Spends all remaining gas excluding the reservoir.
     ///
-    /// On exceptional halt, both gas_left and reservoir must be zeroed
-    /// to prevent state operations from succeeding via remaining reservoir gas.
+    /// On exceptional halt, the remaining gas must be zeroed
+    /// to prevent state operations from succeeding via remaining gas.
     #[inline]
     pub fn spend_all(&mut self) {
         self.remaining = 0;
-        self.reservoir = 0;
     }
 
     /// Records a refund value.
@@ -230,12 +218,9 @@ impl Gas {
     /// On failure, values contain wrapped (invalid) state — callers must not read after OOG.
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
+    #[deprecated(since = "32.0.0", note = "use record_regular_cost instead")]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        if let Some(new_remaining) = self.remaining.checked_sub(cost) {
-            self.remaining = new_remaining;
-            return true;
-        }
-        false
+        self.record_regular_cost(cost)
     }
 
     /// Records an explicit cost without bounds checking (unsafe path).
@@ -249,21 +234,6 @@ impl Gas {
         let oog = self.remaining < cost;
         self.remaining = self.remaining.wrapping_sub(cost);
         oog
-    }
-
-    /// Records an explicit cost without checking regular gas budget.
-    /// In case of underflow the gas will wrap around cost.
-    ///
-    /// This is the fast path used when state gas is not enabled (mainnet).
-    /// Currently equivalent to `record_cost_unsafe` because `remaining` tracks
-    /// only regular gas (`gas_left`). If the gas model changes to include reservoir
-    /// in `remaining`, this method should skip the regular gas budget check.
-    ///
-    /// Returns `true` if the gas limit is exceeded.
-    #[inline(always)]
-    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_cost_unsafe_no_regular(&mut self, cost: u64) -> bool {
-        self.record_cost_unsafe(cost)
     }
 
     /// Records a state gas cost (EIP-8037 reservoir model).
@@ -289,14 +259,14 @@ impl Gas {
             self.reservoir = 0;
         }
 
-        self.record_cost(spill)
+        self.record_regular_cost(spill)
     }
 
     /// Deducts from `remaining` only (used for child frame gas forwarding).
     /// Does not affect reservoir or regular gas budget.
     /// Used for forwarding gas to child frames.
     #[inline]
-    pub fn record_remaining_cost(&mut self, cost: u64) -> bool {
+    pub fn record_regular_cost(&mut self, cost: u64) -> bool {
         if let Some(new_remaining) = self.remaining.checked_sub(cost) {
             self.remaining = new_remaining;
             return true;
@@ -373,7 +343,7 @@ impl MemoryGas {
 /// Standalone wrapper for [`Gas::record_cost`] to inspect assembly via `cargo asm`.
 #[inline(never)]
 pub fn record_cost_asm(gas: &mut Gas, cost: u64) -> bool {
-    gas.record_cost(cost)
+    gas.record_regular_cost(cost)
 }
 
 /// Memory expansion cost calculation for a given number of words.

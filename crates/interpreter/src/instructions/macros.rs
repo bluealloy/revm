@@ -55,7 +55,7 @@ macro_rules! gas {
         $crate::gas!($interpreter, $gas, ())
     };
     ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.gas.record_cost($gas) {
+        if !$interpreter.gas.record_regular_cost($gas) {
             $interpreter.halt_oog();
             return $ret;
         }
