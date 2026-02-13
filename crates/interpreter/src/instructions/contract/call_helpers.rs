@@ -51,7 +51,7 @@ pub fn resize_memory(
 }
 
 /// Calculates gas cost and limit for call instructions.
-#[inline(never)]
+#[inline]
 pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
     to: Address,
@@ -144,8 +144,9 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
     let is_spurious_dragon = spec.is_enabled_in(SpecId::SPURIOUS_DRAGON);
 
-    let additional_cold_cost = host.gas_params().cold_account_additional_cost();
-    let warm_storage_read_cost = host.gas_params().warm_storage_read_cost();
+    let gas_params = host.gas_params();
+    let additional_cold_cost = gas_params.cold_account_additional_cost();
+    let warm_storage_read_cost = gas_params.warm_storage_read_cost();
 
     let skip_cold_load = is_berlin && remaining_gas < additional_cold_cost;
     let account = host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;

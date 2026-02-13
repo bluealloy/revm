@@ -8,9 +8,9 @@ pub use call_outcome::CallOutcome;
 pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
 use primitives::Bytes;
+use std::boxed::Box;
 
 use crate::{Gas, InstructionResult, InterpreterResult, SharedMemory};
-use std::boxed::Box;
 
 /// Input data for creating a new execution frame.
 #[derive(Clone, Debug, PartialEq, Eq)]

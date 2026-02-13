@@ -142,9 +142,10 @@ impl EthFrame<EthInterpreter> {
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
-        inputs: Box<CallInputs>,
+        mut inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
+        let return_memory_offset = inputs.return_memory_offset.clone();
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -152,7 +153,7 @@ impl EthFrame<EthInterpreter> {
                     gas,
                     output: Bytes::new(),
                 },
-                memory_offset: inputs.return_memory_offset.clone(),
+                memory_offset: return_memory_offset.clone(),
                 was_precompile_called: false,
                 precompile_call_logs: Vec::new(),
             })))
@@ -201,7 +202,7 @@ impl EthFrame<EthInterpreter> {
             }
             return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result,
-                memory_offset: inputs.return_memory_offset.clone(),
+                memory_offset: return_memory_offset.clone(),
                 was_precompile_called: true,
                 precompile_call_logs: logs,
             })));
@@ -231,7 +232,7 @@ impl EthFrame<EthInterpreter> {
         // Create interpreter and executes call and push new CallStackFrame.
         this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
-                return_memory_range: inputs.return_memory_offset.clone(),
+                return_memory_range: return_memory_offset.clone(),
             }),
             FrameInput::Call(inputs),
             depth,
