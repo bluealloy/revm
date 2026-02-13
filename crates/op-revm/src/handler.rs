@@ -27,7 +27,7 @@ use revm::{
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
     primitives::{hardfork::SpecId, U256},
 };
-use std::boxed::Box;
+use std::{boxed::Box, vec::Vec};
 
 /// Optimism handler extends the [`Handler`] with Optimism specific logic.
 #[derive(Debug, Clone)]
@@ -424,6 +424,7 @@ where
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
                 gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
+                logs: Vec::new(),
             })
         }
 

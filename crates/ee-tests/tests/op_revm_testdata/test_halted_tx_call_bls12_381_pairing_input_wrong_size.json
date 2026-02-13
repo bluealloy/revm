@@ -8,6 +8,7 @@
         "intrinsic_gas": 27128,
         "limit": 97444
       },
+      "logs": [],
       "reason": {
         "Base": {
           "PrecompileErrorWithContext": "bls12-381 pairing input length error"

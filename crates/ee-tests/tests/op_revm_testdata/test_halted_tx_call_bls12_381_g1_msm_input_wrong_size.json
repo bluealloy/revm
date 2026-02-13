@@ -8,6 +8,7 @@
         "intrinsic_gas": 23544,
         "limit": 35560
       },
+      "logs": [],
       "reason": {
         "Base": {
           "PrecompileErrorWithContext": "bls12-381 g1 msm input length error"
