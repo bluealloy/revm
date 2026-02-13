@@ -381,18 +381,18 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     /// Returns the logs emitted during execution.
     pub fn logs(&self) -> &[Log] {
         match self {
-            Self::Success { logs, .. }
-            | Self::Revert { logs, .. }
-            | Self::Halt { logs, .. } => logs.as_slice(),
+            Self::Success { logs, .. } | Self::Revert { logs, .. } | Self::Halt { logs, .. } => {
+                logs.as_slice()
+            }
         }
     }
 
     /// Consumes [`self`] and returns the logs emitted during execution.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
-            Self::Success { logs, .. }
-            | Self::Revert { logs, .. }
-            | Self::Halt { logs, .. } => logs,
+            Self::Success { logs, .. } | Self::Revert { logs, .. } | Self::Halt { logs, .. } => {
+                logs
+            }
         }
     }
 
