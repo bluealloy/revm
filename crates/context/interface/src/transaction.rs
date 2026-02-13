@@ -14,10 +14,9 @@ pub use eip7702::AuthorizationTr;
 pub use transaction_type::TransactionType;
 
 use crate::result::InvalidTransaction;
-use auto_impl::auto_impl;
 use core::{cmp::min, fmt::Debug};
 use primitives::{eip4844::GAS_PER_BLOB, Address, Bytes, TxKind, B256, U256};
-use std::boxed::Box;
+use std::{boxed::Box, rc::Rc, sync::Arc};
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
@@ -28,7 +27,6 @@ pub trait TransactionError: Debug + core::error::Error {}
 ///
 /// It can be extended to support new transaction types and only transaction types can be
 /// deprecated by not returning tx_type.
-#[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
     /// EIP-2930 Access list item type.
     type AccessListItem<'a>: AccessListItemTr
@@ -64,6 +62,14 @@ pub trait Transaction {
     ///
     /// Note : Common field for all transactions.
     fn input(&self) -> &Bytes;
+
+    /// Takes ownership of the input data, leaving empty input behind if possible.
+    ///
+    /// Default implementation clones the input.
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        self.input().clone()
+    }
 
     /// The nonce of the transaction.
     ///
@@ -242,5 +248,385 @@ pub trait Transaction {
         blob_price: u128,
     ) -> Result<U256, InvalidTransaction> {
         Ok(self.effective_balance_spending(base_fee, blob_price)? - self.value())
+    }
+}
+
+impl<T: Transaction + ?Sized> Transaction for &T {
+    type AccessListItem<'a>
+        = T::AccessListItem<'a>
+    where
+        Self: 'a;
+    type Authorization<'a>
+        = T::Authorization<'a>
+    where
+        Self: 'a;
+
+    #[inline]
+    fn tx_type(&self) -> u8 {
+        (**self).tx_type()
+    }
+    #[inline]
+    fn caller(&self) -> Address {
+        (**self).caller()
+    }
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        (**self).gas_limit()
+    }
+    #[inline]
+    fn value(&self) -> U256 {
+        (**self).value()
+    }
+    #[inline]
+    fn input(&self) -> &Bytes {
+        (**self).input()
+    }
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        self.input().clone()
+    }
+    #[inline]
+    fn nonce(&self) -> u64 {
+        (**self).nonce()
+    }
+    #[inline]
+    fn kind(&self) -> TxKind {
+        (**self).kind()
+    }
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        (**self).chain_id()
+    }
+    #[inline]
+    fn gas_price(&self) -> u128 {
+        (**self).gas_price()
+    }
+    #[inline]
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+        (**self).access_list()
+    }
+    #[inline]
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        (**self).blob_versioned_hashes()
+    }
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        (**self).max_fee_per_blob_gas()
+    }
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        (**self).max_priority_fee_per_gas()
+    }
+    #[inline]
+    fn authorization_list_len(&self) -> usize {
+        (**self).authorization_list_len()
+    }
+    #[inline]
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+        (**self).authorization_list()
+    }
+}
+
+impl<T: Transaction + ?Sized> Transaction for &mut T {
+    type AccessListItem<'a>
+        = T::AccessListItem<'a>
+    where
+        Self: 'a;
+    type Authorization<'a>
+        = T::Authorization<'a>
+    where
+        Self: 'a;
+
+    #[inline]
+    fn tx_type(&self) -> u8 {
+        (**self).tx_type()
+    }
+    #[inline]
+    fn caller(&self) -> Address {
+        (**self).caller()
+    }
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        (**self).gas_limit()
+    }
+    #[inline]
+    fn value(&self) -> U256 {
+        (**self).value()
+    }
+    #[inline]
+    fn input(&self) -> &Bytes {
+        (**self).input()
+    }
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        (**self).take_input()
+    }
+    #[inline]
+    fn nonce(&self) -> u64 {
+        (**self).nonce()
+    }
+    #[inline]
+    fn kind(&self) -> TxKind {
+        (**self).kind()
+    }
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        (**self).chain_id()
+    }
+    #[inline]
+    fn gas_price(&self) -> u128 {
+        (**self).gas_price()
+    }
+    #[inline]
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+        (**self).access_list()
+    }
+    #[inline]
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        (**self).blob_versioned_hashes()
+    }
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        (**self).max_fee_per_blob_gas()
+    }
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        (**self).max_priority_fee_per_gas()
+    }
+    #[inline]
+    fn authorization_list_len(&self) -> usize {
+        (**self).authorization_list_len()
+    }
+    #[inline]
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+        (**self).authorization_list()
+    }
+}
+
+impl<T: Transaction + ?Sized> Transaction for Box<T> {
+    type AccessListItem<'a>
+        = T::AccessListItem<'a>
+    where
+        T: 'a;
+    type Authorization<'a>
+        = T::Authorization<'a>
+    where
+        T: 'a;
+
+    #[inline]
+    fn tx_type(&self) -> u8 {
+        (**self).tx_type()
+    }
+    #[inline]
+    fn caller(&self) -> Address {
+        (**self).caller()
+    }
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        (**self).gas_limit()
+    }
+    #[inline]
+    fn value(&self) -> U256 {
+        (**self).value()
+    }
+    #[inline]
+    fn input(&self) -> &Bytes {
+        (**self).input()
+    }
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        (**self).take_input()
+    }
+    #[inline]
+    fn nonce(&self) -> u64 {
+        (**self).nonce()
+    }
+    #[inline]
+    fn kind(&self) -> TxKind {
+        (**self).kind()
+    }
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        (**self).chain_id()
+    }
+    #[inline]
+    fn gas_price(&self) -> u128 {
+        (**self).gas_price()
+    }
+    #[inline]
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+        (**self).access_list()
+    }
+    #[inline]
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        (**self).blob_versioned_hashes()
+    }
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        (**self).max_fee_per_blob_gas()
+    }
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        (**self).max_priority_fee_per_gas()
+    }
+    #[inline]
+    fn authorization_list_len(&self) -> usize {
+        (**self).authorization_list_len()
+    }
+    #[inline]
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+        (**self).authorization_list()
+    }
+}
+
+impl<T: Transaction + ?Sized> Transaction for Arc<T> {
+    type AccessListItem<'a>
+        = T::AccessListItem<'a>
+    where
+        T: 'a;
+    type Authorization<'a>
+        = T::Authorization<'a>
+    where
+        T: 'a;
+
+    #[inline]
+    fn tx_type(&self) -> u8 {
+        (**self).tx_type()
+    }
+    #[inline]
+    fn caller(&self) -> Address {
+        (**self).caller()
+    }
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        (**self).gas_limit()
+    }
+    #[inline]
+    fn value(&self) -> U256 {
+        (**self).value()
+    }
+    #[inline]
+    fn input(&self) -> &Bytes {
+        (**self).input()
+    }
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        self.input().clone()
+    }
+    #[inline]
+    fn nonce(&self) -> u64 {
+        (**self).nonce()
+    }
+    #[inline]
+    fn kind(&self) -> TxKind {
+        (**self).kind()
+    }
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        (**self).chain_id()
+    }
+    #[inline]
+    fn gas_price(&self) -> u128 {
+        (**self).gas_price()
+    }
+    #[inline]
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+        (**self).access_list()
+    }
+    #[inline]
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        (**self).blob_versioned_hashes()
+    }
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        (**self).max_fee_per_blob_gas()
+    }
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        (**self).max_priority_fee_per_gas()
+    }
+    #[inline]
+    fn authorization_list_len(&self) -> usize {
+        (**self).authorization_list_len()
+    }
+    #[inline]
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+        (**self).authorization_list()
+    }
+}
+
+impl<T: Transaction + ?Sized> Transaction for Rc<T> {
+    type AccessListItem<'a>
+        = T::AccessListItem<'a>
+    where
+        T: 'a;
+    type Authorization<'a>
+        = T::Authorization<'a>
+    where
+        T: 'a;
+
+    #[inline]
+    fn tx_type(&self) -> u8 {
+        (**self).tx_type()
+    }
+    #[inline]
+    fn caller(&self) -> Address {
+        (**self).caller()
+    }
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        (**self).gas_limit()
+    }
+    #[inline]
+    fn value(&self) -> U256 {
+        (**self).value()
+    }
+    #[inline]
+    fn input(&self) -> &Bytes {
+        (**self).input()
+    }
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        self.input().clone()
+    }
+    #[inline]
+    fn nonce(&self) -> u64 {
+        (**self).nonce()
+    }
+    #[inline]
+    fn kind(&self) -> TxKind {
+        (**self).kind()
+    }
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        (**self).chain_id()
+    }
+    #[inline]
+    fn gas_price(&self) -> u128 {
+        (**self).gas_price()
+    }
+    #[inline]
+    fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+        (**self).access_list()
+    }
+    #[inline]
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        (**self).blob_versioned_hashes()
+    }
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        (**self).max_fee_per_blob_gas()
+    }
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        (**self).max_priority_fee_per_gas()
+    }
+    #[inline]
+    fn authorization_list_len(&self) -> usize {
+        (**self).authorization_list_len()
+    }
+    #[inline]
+    fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+        (**self).authorization_list()
     }
 }

@@ -11,13 +11,15 @@ use primitives::{eip4844, hardfork::SpecId, B256};
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
     context: CTX,
 ) -> Result<(), ERROR> {
-    let spec = context.cfg().spec().into();
+    let cfg = context.cfg();
+    let block = context.block();
+    let spec = cfg.spec().into();
     // `prevrandao` is required for the merge
-    if spec.is_enabled_in(SpecId::MERGE) && context.block().prevrandao().is_none() {
+    if spec.is_enabled_in(SpecId::MERGE) && block.prevrandao().is_none() {
         return Err(InvalidHeader::PrevrandaoNotSet.into());
     }
     // `excess_blob_gas` is required for Cancun
-    if spec.is_enabled_in(SpecId::CANCUN) && context.block().blob_excess_gas_and_price().is_none() {
+    if spec.is_enabled_in(SpecId::CANCUN) && block.blob_excess_gas_and_price().is_none() {
         return Err(InvalidHeader::ExcessBlobGasNotSet.into());
     }
     validate_tx_env::<CTX>(context, spec).map_err(Into::into)
@@ -123,21 +125,23 @@ pub fn validate_tx_env<CTX: ContextTr>(
 ) -> Result<(), InvalidTransaction> {
     // Check if the transaction's chain id is correct
     let tx = context.tx();
+    let cfg = context.cfg();
+    let block = context.block();
     let tx_type = tx.tx_type();
 
-    let base_fee = if context.cfg().is_base_fee_check_disabled() {
+    let base_fee = if cfg.is_base_fee_check_disabled() {
         None
     } else {
-        Some(context.block().basefee() as u128)
+        Some(block.basefee() as u128)
     };
 
     let tx_type = TransactionType::from(tx_type);
 
     // Check chain_id if config is enabled.
     // EIP-155: Simple replay attack protection
-    if context.cfg().tx_chain_id_check() {
+    if cfg.tx_chain_id_check() {
         if let Some(chain_id) = tx.chain_id() {
-            if chain_id != context.cfg().chain_id() {
+            if chain_id != cfg.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         } else if !tx_type.is_legacy() && !tx_type.is_custom() {
@@ -147,7 +151,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     }
 
     // EIP-7825: Transaction Gas Limit Cap
-    let cap = context.cfg().tx_gas_limit_cap();
+    let cap = cfg.tx_gas_limit_cap();
     if tx.gas_limit() > cap {
         return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
             gas_limit: tx.gas_limit(),
@@ -155,7 +159,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
         });
     }
 
-    let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
+    let disable_priority_fee_check = cfg.is_priority_fee_check_disabled();
 
     match tx_type {
         TransactionType::Legacy => {
@@ -184,8 +188,8 @@ pub fn validate_tx_env<CTX: ContextTr>(
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
                 tx.max_fee_per_blob_gas(),
-                context.block().blob_gasprice().unwrap_or_default(),
-                context.cfg().max_blobs_per_tx(),
+                block.blob_gasprice().unwrap_or_default(),
+                cfg.max_blobs_per_tx(),
             )?;
         }
         TransactionType::Eip7702 => {
@@ -208,15 +212,14 @@ pub fn validate_tx_env<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
-    if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
-    {
+    if !cfg.is_block_gas_limit_disabled() && tx.gas_limit() > block.gas_limit() {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 
     // EIP-3860: Limit and meter initcode. Still valid with EIP-7907 and increase of initcode size.
     if spec_id.is_enabled_in(SpecId::SHANGHAI)
         && tx.kind().is_create()
-        && tx.input().len() > context.cfg().max_initcode_size()
+        && tx.input().len() > cfg.max_initcode_size()
     {
         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
     }

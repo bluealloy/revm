@@ -166,9 +166,9 @@ pub fn validate_against_state_and_deduct_caller<
     // Load caller's account.
     let mut caller = journal.load_account_with_code_mut(tx.caller())?.data;
 
-    validate_account_nonce_and_code_with_components(&caller.account().info, tx, cfg)?;
+    validate_account_nonce_and_code_with_components(&caller.account().info, &*tx, cfg)?;
 
-    let new_balance = calculate_caller_fee(*caller.balance(), tx, block, cfg)?;
+    let new_balance = calculate_caller_fee(*caller.balance(), &*tx, block, cfg)?;
 
     caller.set_balance(new_balance);
     if tx.kind().is_call() {

@@ -9,7 +9,7 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
-    primitives::hardfork::SpecId,
+    primitives::{hardfork::SpecId, U256},
     Database, Inspector,
 };
 
@@ -54,6 +54,7 @@ where
             instruction: EthInstructions::new_mainnet(),
             precompiles: CustomPrecompileProvider::new_with_spec(SpecId::CANCUN),
             frame_stack: FrameStack::new(),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; 16 * 1024]),
         })
     }
 }

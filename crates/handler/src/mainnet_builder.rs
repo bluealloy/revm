@@ -2,8 +2,8 @@ use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
-use interpreter::interpreter::EthInterpreter;
-use primitives::hardfork::SpecId;
+use interpreter::interpreter::{EthInterpreter, MAX_ARENA_FRAMES, STACK_LIMIT};
+use primitives::{hardfork::SpecId, U256};
 
 /// Type alias for a mainnet EVM instance with standard Ethereum components.
 pub type MainnetEvm<CTX, INSP = ()> =
@@ -43,6 +43,7 @@ where
             instruction: EthInstructions::new_mainnet_with_spec(spec),
             precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; MAX_ARENA_FRAMES * STACK_LIMIT]),
         }
     }
 
@@ -57,6 +58,7 @@ where
             instruction: EthInstructions::new_mainnet_with_spec(spec),
             precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; MAX_ARENA_FRAMES * STACK_LIMIT]),
         }
     }
 }
