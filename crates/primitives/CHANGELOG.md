@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [22.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v22.0.0...revm-primitives-v22.1.0) - 2026-02-13
+
+### Added
+
+- Implement EIP-7708 ETH transfers emit a log ([#3334](https://github.com/bluealloy/revm/pull/3334))
+
+### Fixed
+
+- *(journal)* emit EIP-7708 log for selfdestructed accounts with remaining balance ([#3394](https://github.com/bluealloy/revm/pull/3394))
+
+### Other
+
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- update default hardfork to Osaka (Ethereum) and Jovian (Optimism) ([#3326](https://github.com/bluealloy/revm/pull/3326))
+
 ## [21.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v21.0.2...revm-primitives-v21.1.0) - 2026-01-15
 
 ### Added

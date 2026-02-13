@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/op-revm-v15.0.0...op-revm-v16.0.0) - 2026-02-13
+
+### Other
+
+- [**breaking**] add logs to Revert and Halt variants of ExecutionResult ([#3424](https://github.com/bluealloy/revm/pull/3424))
+- [**breaking**] add ResultGas struct to ExecutionResult ([#3413](https://github.com/bluealloy/revm/pull/3413))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+- update default hardfork to Osaka (Ethereum) and Jovian (Optimism) ([#3326](https://github.com/bluealloy/revm/pull/3326))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/op-revm-v14.1.0...op-revm-v15.0.0) - 2026-01-15
 
 ### Added

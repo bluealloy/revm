@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v15.0.0...revm-handler-v16.0.0) - 2026-02-13
+
+### Added
+
+- *(gas_params)* add configurable EIP-7702 auth refund ([#3366](https://github.com/bluealloy/revm/pull/3366))
+
+### Other
+
+- [**breaking**] add logs to Revert and Halt variants of ExecutionResult ([#3424](https://github.com/bluealloy/revm/pull/3424))
+- [**breaking**] add ResultGas struct to ExecutionResult ([#3413](https://github.com/bluealloy/revm/pull/3413))
+- [**breaking**] flatten Bytecode ([#3375](https://github.com/bluealloy/revm/pull/3375))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+- *(revm-handler)* add ItemOrResult::map_item (alias map_frame) ([#3320](https://github.com/bluealloy/revm/pull/3320))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v15.0.0) - 2026-01-15
 
 ### Added

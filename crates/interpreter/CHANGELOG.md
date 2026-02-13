@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v32.0.0...revm-interpreter-v33.0.0) - 2026-02-13
+
+### Added
+
+- Implement EIP-7843 SLOTNUM opcode for Amsterdam ([#3340](https://github.com/bluealloy/revm/pull/3340))
+- Implement EIP-8024 for Amsterdam ([#3223](https://github.com/bluealloy/revm/pull/3223))
+
+### Fixed
+
+- *(bytecode)* improve analyze_legacy padding for SWAPN/DUPN/EXCHANGE ([#3332](https://github.com/bluealloy/revm/pull/3332))
+
+### Other
+
+- [**breaking**] flatten Bytecode ([#3375](https://github.com/bluealloy/revm/pull/3375))
+- *(interpreter)* deduplicate slice range logic ([#3376](https://github.com/bluealloy/revm/pull/3376))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- elide some jumps in jump ([#3347](https://github.com/bluealloy/revm/pull/3347))
+- remove outdated stack pop TODO ([#3315](https://github.com/bluealloy/revm/pull/3315))
+
 ## [32.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v31.1.0...revm-interpreter-v32.0.0) - 2026-01-15
 
 ### Added

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-context-v13.0.0...revm-context-v14.0.0) - 2026-02-13
+
+### Added
+
+- *(cfg)* add EIP-7708 configuration options ([#3395](https://github.com/bluealloy/revm/pull/3395))
+- *(gas_params)* add configurable EIP-7702 auth refund ([#3366](https://github.com/bluealloy/revm/pull/3366))
+- *(gas)* add tx_access_list_cost helper to GasParams ([#3349](https://github.com/bluealloy/revm/pull/3349))
+- Implement EIP-7843 SLOTNUM opcode for Amsterdam ([#3340](https://github.com/bluealloy/revm/pull/3340))
+- Implement EIP-7708 ETH transfers emit a log ([#3334](https://github.com/bluealloy/revm/pull/3334))
+
+### Fixed
+
+- *(journal)* emit EIP-7708 log for selfdestructed accounts with remaining balance ([#3394](https://github.com/bluealloy/revm/pull/3394))
+
+### Other
+
+- [**breaking**] add logs to Revert and Halt variants of ExecutionResult ([#3424](https://github.com/bluealloy/revm/pull/3424))
+- [**breaking**] add ResultGas struct to ExecutionResult ([#3413](https://github.com/bluealloy/revm/pull/3413))
+- impl Display and Error for TxEnvBuildError and DeriveTxTypeError ([#3409](https://github.com/bluealloy/revm/pull/3409))
+- [**breaking**] flatten Bytecode ([#3375](https://github.com/bluealloy/revm/pull/3375))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- mark journal entry functions as deprecated ([#3367](https://github.com/bluealloy/revm/pull/3367))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+
 ## [13.0.0](https://github.com/bluealloy/revm/compare/revm-context-v12.1.0...revm-context-v13.0.0) - 2026-01-15
 
 ### Added
