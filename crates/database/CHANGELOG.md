@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.0](https://github.com/bluealloy/revm/compare/revm-database-v10.0.0...revm-database-v10.1.0) - 2026-02-13
+
+### Added
+
+- *(database)* add clear() to CacheState and TransitionState ([#3390](https://github.com/bluealloy/revm/pull/3390))
+- *(database)* add iter and lowest helpers to BlockHashCache ([#3352](https://github.com/bluealloy/revm/pull/3352))
+- *(database)* add StateBuilder::with_bal_builder_if ([#3351](https://github.com/bluealloy/revm/pull/3351))
+- *(database)* add storage getter to BundleState ([#3321](https://github.com/bluealloy/revm/pull/3321))
+
+### Fixed
+
+- *(db)* use self.storage() in storage_by_account_id to avoid cache bypass ([#3385](https://github.com/bluealloy/revm/pull/3385))
+- *(bal)* fix populated account if pre-state was none ([#3357](https://github.com/bluealloy/revm/pull/3357))
+- *(database)* BlockHashCache incorrectly returns zero for block 0 ([#3319](https://github.com/bluealloy/revm/pull/3319))
+
+### Other
+
+- reserve capacity in add_transitions ([#3373](https://github.com/bluealloy/revm/pull/3373))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- Use O(1) ring buffer cache for block hashes instead of BTreeMap ([#3299](https://github.com/bluealloy/revm/pull/3299))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-database-v9.0.6...revm-database-v10.0.0) - 2026-01-15
 
 ### Added

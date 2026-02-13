@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/revme-v11.0.0...revme-v11.0.1) - 2026-02-13
+
+### Other
+
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- update default hardfork to Osaka (Ethereum) and Jovian (Optimism) ([#3326](https://github.com/bluealloy/revm/pull/3326))
+
 ## [11.0.0](https://github.com/bluealloy/revm/compare/revme-v10.0.2...revme-v11.0.0) - 2026-01-15
 
 ### Added

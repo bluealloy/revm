@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-state-v9.0.0...revm-state-v10.0.0) - 2026-02-13
+
+### Fixed
+
+- set transition_id to account ([#3353](https://github.com/bluealloy/revm/pull/3353))
+
+### Other
+
+- [**breaking**] flatten Bytecode ([#3375](https://github.com/bluealloy/revm/pull/3375))
+- *(state)* avoid unnecessary clone, prealloc, and fix typo ([#3387](https://github.com/bluealloy/revm/pull/3387))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-state-v8.1.1...revm-state-v9.0.0) - 2026-01-15
 
 ### Added
