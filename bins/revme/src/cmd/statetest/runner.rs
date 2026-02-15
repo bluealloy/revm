@@ -64,7 +64,7 @@ pub enum TestErrorKind {
 
 /// Check if a test should be skipped based on its filename
 /// Some tests are known to be problematic or take too long
-fn skip_test(path: &Path) -> bool {
+pub(super) fn skip_test(path: &Path) -> bool {
     let path_str = path.to_str().unwrap_or_default();
 
     // Skip tets that have storage for newly created account.
