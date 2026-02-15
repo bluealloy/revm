@@ -3545,9 +3545,11 @@ dependencies = [
 name = "revm-bytecode"
 version = "8.0.0"
 dependencies = [
+ "anyhow",
  "bitvec",
  "paste",
  "phf",
+ "rand 0.9.2",
  "revm-primitives",
  "serde",
  "serde_json",
