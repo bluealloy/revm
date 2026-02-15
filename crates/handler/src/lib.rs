@@ -5,6 +5,9 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+// Used in tests only, but kept in dependencies for feature propagation
+use bytecode as _;
+
 // Mainnet related handlers.
 
 /// EVM execution API traits and implementations.
@@ -28,6 +31,8 @@ pub mod pre_execution;
 mod precompile_provider;
 /// System call implementations for special EVM operations.
 pub mod system_call;
+/// Configurable transaction validation with bitflags.
+pub mod tx_validation;
 /// Transaction and environment validation utilities.
 pub mod validation;
 
@@ -41,4 +46,6 @@ pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
 pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
+pub use primitives::ValidationChecks;
 pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};
+pub use tx_validation::{CallerFee, TxValidator, ValidationKind, ValidationParams};
