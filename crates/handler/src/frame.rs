@@ -571,12 +571,13 @@ pub fn handle_reservoir_remaining_gas(
         // rather than overwrite to preserve the parent's prior charges.
         parent_gas.set_state_gas_spent(parent_gas.state_gas_spent() + child_gas.state_gas_spent());
     } else {
-        // On revert/halt, state_gas_spent is NOT propagated (state changes reverted),
-        // but the child's reservoir consumption must be reflected. The child received
-        // a copy of the parent's reservoir and may have consumed state gas from it.
-        // Setting the parent's reservoir to the child's final reservoir ensures the
-        // consumed gas is accounted for in gas_used.
-        parent_gas.set_reservoir(child_gas.reservoir());
+        // state gas spent should stay the same in case of revert or halt.
+        // the difference that happened between state gases should be checked
+        // if it is done against regular gas, and return this gas to reservoir.
+        parent_gas.set_reservoir(handler_reservoir_refill(
+            parent_gas.reservoir(),
+            child_gas.state_gas_spent(),
+        ));
     }
 }
 

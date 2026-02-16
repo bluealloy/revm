@@ -1130,7 +1130,7 @@ fn test_tip1016_create_child_propagates() {
     );
 }
 
-/// 5.2 Reverted CREATE: child's SSTORE state gas is lost but not propagated.
+/// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
 #[test]
 fn test_tip1016_reverted_create_child() {
     let init = init_code_sstore_and_revert();
@@ -1147,18 +1147,17 @@ fn test_tip1016_reverted_create_child() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    let expected_delta = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET;
+    let expected_delta = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE;
     let parent_state_gas = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE;
 
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    // state_gas_spent reflects only parent's state gas (child not propagated on revert).
+    // state_gas_spent reflects only parent's state gas (child's state gas refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    // Child's lost gas = delta - state_gas_spent
-    let child_lost_gas = delta - result.gas().state_gas_spent();
-    assert_eq!(child_lost_gas, STATE_GAS_SSTORE_SET);
+    // All state gas is either spent (parent) or refunded (child on revert).
+    assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
 }
 
@@ -1198,7 +1197,7 @@ fn test_tip1016_call_child_sstore_propagates() {
     assert!(result.gas().remaining() > 0);
 }
 
-/// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas consumed but lost.
+/// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas is refunded.
 #[test]
 fn test_tip1016_call_child_sstore_reverts() {
     let child_runtime: Vec<u8> = vec![
@@ -1217,27 +1216,29 @@ fn test_tip1016_call_child_sstore_reverts() {
 
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
-        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
-        .unwrap();
+        .transact(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap()
+        .result;
     let baseline_gas = baseline_result.gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
-        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
-        .unwrap();
+        .transact(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap()
+        .result;
 
     let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
     let create_state_gas = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + code_deposit_gas;
 
     assert!(result.is_success());
-    // state_gas_spent reflects only CREATE costs (child SSTORE not propagated on revert).
+    // state_gas_spent reflects only CREATE costs (child SSTORE refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), create_state_gas);
-    // Total delta includes CREATE state gas + child's lost SSTORE state gas.
-    let expected_delta = create_state_gas + STATE_GAS_SSTORE_SET;
+    // Total delta equals CREATE state gas (child's SSTORE state gas is refunded).
+    let expected_delta = create_state_gas;
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    let child_lost_gas = delta - result.gas().state_gas_spent();
-    assert_eq!(child_lost_gas, STATE_GAS_SSTORE_SET);
+    // All state gas is either spent (parent CREATE) or refunded (child SSTORE on revert).
+    assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
 }
 
