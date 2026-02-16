@@ -958,8 +958,7 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
-        Self::build_frame(frame_init)
-            .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
+        Self::build_frame(frame_init).build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
     }
 }
 
