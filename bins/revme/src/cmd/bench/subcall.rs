@@ -14,64 +14,30 @@ const SUBCALL_TARGET_B: Address = address!("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 /// Constructs bytecode that loops 1000 times, each iteration doing a CALL to `target`
 /// with the given `value` (0 or 1 wei).
 fn make_loop_call_bytecode(target: Address, value: u8) -> Bytecode {
-    let mut code = Vec::new();
-
-    // PUSH2 0x03E8 (1000) — loop counter
-    code.push(opcode::PUSH2);
-    code.push(0x03);
-    code.push(0xE8);
-
-    // JUMPDEST — loop_start at offset 3
-    code.push(opcode::JUMPDEST);
-
-    // Set up CALL args: retSize, retOffset, argsSize, argsOffset, value, target, gas
-    // PUSH1 0x00 — retSize
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — retOffset
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — argsSize
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — argsOffset
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 <value> — value
-    code.push(opcode::PUSH1);
-    code.push(value);
-    // PUSH20 <target> — target address
-    code.push(opcode::PUSH20);
+    let mut code = vec![
+        opcode::PUSH2, 0x03, 0xE8,  // PUSH2 1000 — loop counter
+        opcode::JUMPDEST,            // loop_start at offset 3
+        opcode::PUSH1, 0x00,        // retSize
+        opcode::PUSH1, 0x00,        // retOffset
+        opcode::PUSH1, 0x00,        // argsSize
+        opcode::PUSH1, 0x00,        // argsOffset
+        opcode::PUSH1, value,       // value
+        opcode::PUSH20,             // target address
+    ];
     code.extend_from_slice(target.as_slice());
-    // GAS — forward all remaining gas
-    code.push(opcode::GAS);
-    // CALL
-    code.push(opcode::CALL);
-    // POP — discard success/failure
-    code.push(opcode::POP);
-
-    // Decrement counter: PUSH1 1, SWAP1, SUB
-    code.push(opcode::PUSH1);
-    code.push(0x01);
-    code.push(opcode::SWAP1);
-    code.push(opcode::SUB);
-
-    // DUP1 — duplicate counter for JUMPI check
-    code.push(opcode::DUP1);
-
-    // PUSH1 0x03 — jump target (JUMPDEST offset)
-    code.push(opcode::PUSH1);
-    code.push(0x03);
-
-    // JUMPI — jump back if counter != 0
-    code.push(opcode::JUMPI);
-
-    // POP — clean up remaining counter (0)
-    code.push(opcode::POP);
-
-    // STOP
-    code.push(opcode::STOP);
-
+    code.extend_from_slice(&[
+        opcode::GAS,                // forward all remaining gas
+        opcode::CALL,
+        opcode::POP,                // discard success/failure
+        opcode::PUSH1, 0x01,        // decrement counter
+        opcode::SWAP1,
+        opcode::SUB,
+        opcode::DUP1,               // duplicate counter for JUMPI check
+        opcode::PUSH1, 0x03,        // jump target (JUMPDEST offset)
+        opcode::JUMPI,              // jump back if counter != 0
+        opcode::POP,                // clean up remaining counter (0)
+        opcode::STOP,
+    ]);
     Bytecode::new_raw(code.into())
 }
 
@@ -82,35 +48,21 @@ fn make_stop_bytecode() -> Bytecode {
 
 /// Constructs bytecode that does a single CALL (no value) to `target`, then STOPs.
 fn make_subcall_bytecode(target: Address) -> Bytecode {
-    let mut code = Vec::new();
-
-    // PUSH1 0x00 — retSize
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — retOffset
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — argsSize
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — argsOffset
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH1 0x00 — value (no transfer)
-    code.push(opcode::PUSH1);
-    code.push(0x00);
-    // PUSH20 <target>
-    code.push(opcode::PUSH20);
+    let mut code = vec![
+        opcode::PUSH1, 0x00,        // retSize
+        opcode::PUSH1, 0x00,        // retOffset
+        opcode::PUSH1, 0x00,        // argsSize
+        opcode::PUSH1, 0x00,        // argsOffset
+        opcode::PUSH1, 0x00,        // value (no transfer)
+        opcode::PUSH20,             // target address
+    ];
     code.extend_from_slice(target.as_slice());
-    // GAS
-    code.push(opcode::GAS);
-    // CALL
-    code.push(opcode::CALL);
-    // POP
-    code.push(opcode::POP);
-    // STOP
-    code.push(opcode::STOP);
-
+    code.extend_from_slice(&[
+        opcode::GAS,
+        opcode::CALL,
+        opcode::POP,
+        opcode::STOP,
+    ]);
     Bytecode::new_raw(code.into())
 }
 
