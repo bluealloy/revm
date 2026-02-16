@@ -1,0 +1,30 @@
+[
+  {
+    "Revert": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 65218,
+        "intrinsic_gas": 21000,
+        "limit": 150000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": "0x"
+    }
+  },
+  {
+    "Revert": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 105218,
+        "intrinsic_gas": 21000,
+        "limit": 150000,
+        "state_gas_spent": 40000
+      },
+      "logs": [],
+      "output": "0x"
+    }
+  }
+]

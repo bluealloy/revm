@@ -3,6 +3,7 @@
 //! Verifies dual-limit gas accounting where storage creation gas (state gas)
 //! is tracked separately from regular gas.
 
+use crate::TestdataConfig;
 use revm::{
     bytecode::opcode,
     context::TxEnv,
@@ -13,6 +14,22 @@ use revm::{
     state::Bytecode,
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
+use std::path::PathBuf;
+
+const TIP1016_TESTDATA: &str = "tests/tip1016_testdata";
+
+fn tip1016_testdata_config() -> TestdataConfig {
+    TestdataConfig {
+        testdata_dir: PathBuf::from(TIP1016_TESTDATA),
+    }
+}
+
+fn compare_or_save_tip1016_testdata<T>(filename: &str, output: &T)
+where
+    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
+{
+    crate::compare_or_save_testdata_with_config(filename, output, tip1016_testdata_config());
+}
 
 /// State gas costs used across all TIP-1016 tests.
 const STATE_GAS_SSTORE_SET: u64 = 20_000;
@@ -490,6 +507,10 @@ fn test_tip1016_sstore_new_slot() {
         result.gas().spent() - baseline_result.gas().spent(),
         STATE_GAS_SSTORE_SET
     );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_sstore_new_slot.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 1.2 Two SSTOREs to same slot: only first charges state gas.
@@ -520,6 +541,10 @@ fn test_tip1016_sstore_overwrite_no_state_gas() {
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_sstore_overwrite_no_state_gas.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 1.3 SSTORE zero→zero: no state gas.
@@ -547,6 +572,10 @@ fn test_tip1016_sstore_zero_to_zero_no_state_gas() {
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_sstore_zero_to_zero_no_state_gas.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 1.4 Three SSTOREs to different new slots: 3× sstore_set_state_gas.
@@ -581,6 +610,10 @@ fn test_tip1016_sstore_multiple_new_slots() {
         result.gas().spent() - baseline_result.gas().spent(),
         expected
     );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_sstore_multiple_new_slots.json",
+        &(baseline_result, result),
+    );
 }
 
 // ---- Category 2: CREATE State Gas ----
@@ -610,6 +643,10 @@ fn test_tip1016_create_empty_code() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas_used(), baseline_gas + expected);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_empty_code.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 2.2 CREATE deploying 10-byte contract: new_account + create + code_deposit(10).
@@ -637,6 +674,10 @@ fn test_tip1016_create_with_code() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas_used(), baseline_gas + expected);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_with_code.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 2.3 CREATE with init code that does SSTORE + returns 1-byte code: all 4 state gas types.
@@ -665,6 +706,10 @@ fn test_tip1016_create_with_sstore() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_with_sstore.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 2.4 CREATE2 deploying 10-byte contract: same state gas as CREATE.
@@ -701,6 +746,10 @@ fn test_tip1016_create2_with_code() {
     assert_eq!(
         result.gas().state_gas_spent(),
         create_result.gas().state_gas_spent()
+    );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create2_with_code.json",
+        &(baseline_result, result, create_result),
     );
 }
 
@@ -751,6 +800,10 @@ fn test_tip1016_create_code_deposit_state_gas_oog() {
     }
     assert_eq!(result.gas_used(), tight_limit);
     assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_code_deposit_state_gas_oog.json",
+        &(baseline_result, baseline_tight_result, result),
+    );
 }
 
 // ---- Category 3: CALL State Gas ----
@@ -788,6 +841,10 @@ fn test_tip1016_call_new_account() {
         result.gas().remaining(),
         baseline_result.gas().remaining() - STATE_GAS_NEW_ACCOUNT
     );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_call_new_account.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 3.2 CALL with value to existing account: no state gas.
@@ -811,6 +868,10 @@ fn test_tip1016_call_existing_account() {
     assert_eq!(result.gas_used(), baseline_gas);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
     assert_eq!(result.gas().remaining(), baseline_result.gas().remaining());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_call_existing_account.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 3.3 SELFDESTRUCT sending balance to non-existent account: new_account_state_gas.
@@ -842,6 +903,10 @@ fn test_tip1016_selfdestruct_new_account() {
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
     );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_selfdestruct_new_account.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 3.4 SELFDESTRUCT sending balance to existing account: no state gas.
@@ -865,6 +930,10 @@ fn test_tip1016_selfdestruct_existing_account() {
     assert_eq!(result.gas_used(), baseline_gas);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
     assert_eq!(result.gas_used(), baseline_gas);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_selfdestruct_existing_account.json",
+        &(baseline_result, result),
+    );
 }
 
 // ---- Category 4: Regular Gas Cap Enforcement ----
@@ -906,6 +975,10 @@ fn test_tip1016_regular_gas_cap_causes_oog() {
     assert_eq!(result.gas().spent(), 30_000);
     assert_eq!(result.gas().remaining(), 0);
     assert_eq!(result.gas().limit(), 30_000);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_regular_gas_cap_causes_oog.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 4.2 Adequate regular gas cap: success.
@@ -942,6 +1015,10 @@ fn test_tip1016_regular_gas_cap_sufficient() {
     assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     assert!(result.gas().remaining() > 0);
     assert_eq!(result.gas().limit(), 100_000);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_regular_gas_cap_sufficient.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 4.3 Remaining gas insufficient after state gas deduction.
@@ -982,6 +1059,10 @@ fn test_tip1016_state_gas_oog_remaining() {
     assert!(baseline_gas < 50_000);
     assert!(baseline_gas + STATE_GAS_SSTORE_SET > 50_000);
     assert_eq!(result.gas().remaining(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_state_gas_oog_remaining.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 4.4 tx_gas_limit_cap is NOT enforced as a hard cap when state gas reservoir covers it.
@@ -1019,6 +1100,10 @@ fn test_tip1016_tx_limit_cap_not_enforced_with_state_gas() {
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     assert!(result.gas().remaining() > 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_tx_limit_cap_not_enforced_with_state_gas.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 4.5 Block gas limit is still enforced even with state gas enabled.
@@ -1094,6 +1179,10 @@ fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(result_fits.is_success());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_block_gas_limit_enforced_with_state_gas.json",
+        &result_fits,
+    );
 }
 
 // ---- Category 5: State Gas Propagation ----
@@ -1128,6 +1217,10 @@ fn test_tip1016_create_child_propagates() {
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
     );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_child_propagates.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
@@ -1159,6 +1252,10 @@ fn test_tip1016_reverted_create_child() {
     // All state gas is either spent (parent) or refunded (child on revert).
     assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reverted_create_child.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent propagates on success.
@@ -1195,6 +1292,10 @@ fn test_tip1016_call_child_sstore_propagates() {
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert!(result.gas().remaining() > 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_call_child_sstore_propagates.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas is refunded.
@@ -1240,6 +1341,10 @@ fn test_tip1016_call_child_sstore_reverts() {
     // All state gas is either spent (parent CREATE) or refunded (child SSTORE on revert).
     assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_call_child_sstore_reverts.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 5.5 Multi-level nesting: CALL -> CREATE -> SSTORE. State gas propagates through frames.
@@ -1285,6 +1390,10 @@ fn test_tip1016_nested_call_create_sstore() {
     assert!(create_result.is_success());
     let sstore_portion = result.gas().state_gas_spent() - create_result.gas().state_gas_spent();
     assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_nested_call_create_sstore.json",
+        &(baseline_result, result, create_result),
+    );
 }
 
 // ---- Category 6: Interactions ----
@@ -1314,6 +1423,10 @@ fn test_tip1016_sstore_set_then_clear_refund() {
     assert!(result.gas().spent() > baseline_result.gas().spent());
     let spent_delta = result.gas().spent() - baseline_result.gas().spent();
     assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_sstore_set_then_clear_refund.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 6.2 State gas does not reduce regular gas budget.
@@ -1348,6 +1461,10 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
         baseline_result.gas().intrinsic_gas()
     );
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_state_gas_does_not_reduce_regular_gas.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 6.3 GAS opcode returns remaining (excludes reservoir).
@@ -1396,6 +1513,10 @@ fn test_tip1016_gas_opcode_excludes_reservoir() {
     let expected_reservoir = execution_gas - regular_budget;
     let gas_diff = baseline_gas_value - gas_opcode_value;
     assert_eq!(gas_diff, U256::from(expected_reservoir));
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_gas_opcode_excludes_reservoir.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 6.4 INVALID opcode after SSTORE: spend_all() zeroes remaining but preserves reservoir.
@@ -1437,6 +1558,10 @@ fn test_tip1016_spend_all_preserves_reservoir() {
     assert_eq!(result.gas_used(), gas_limit);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas_used(), baseline_result.gas_used());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_spend_all_preserves_reservoir.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 6.5 state_gas_spent field in ResultGas.
@@ -1464,6 +1589,10 @@ fn test_tip1016_state_gas_spent_in_result() {
     let gas_used_delta = result.gas_used() - baseline_result.gas_used();
     assert_eq!(gas_used_delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().limit(), baseline_result.gas().limit());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_state_gas_spent_in_result.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 6.6 CALL to precompile: precompile gas is regular, not state gas.
@@ -1492,6 +1621,10 @@ fn test_tip1016_precompile_no_state_gas() {
     assert_eq!(
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
+    );
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_precompile_no_state_gas.json",
+        &(baseline_result, result),
     );
 }
 
@@ -1540,6 +1673,10 @@ fn test_tip1016_reservoir_refill_revert_state_gas_less() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reservoir_refill_revert_state_gas_less.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 7.2 REVERT with state_gas > reservoir (2x SSTORE).
@@ -1578,6 +1715,10 @@ fn test_tip1016_reservoir_refill_revert_state_gas_more() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reservoir_refill_revert_state_gas_more.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 7.3 HALT (OOG) with tight gas limit.
@@ -1620,6 +1761,10 @@ fn test_tip1016_reservoir_refill_halt_state_gas_less() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reservoir_refill_halt_state_gas_less.json",
+        &(baseline_result, result),
+    );
 }
 
 /// 7.4 HALT (OOG) with tight cap forcing regular gas exhaustion.
@@ -1651,6 +1796,10 @@ fn test_tip1016_reservoir_refill_halt_state_gas_more() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reservoir_refill_halt_state_gas_more.json",
+        &result,
+    );
 }
 
 /// 7.5 HALT vs REVERT: gas accounting difference.
@@ -1692,4 +1841,8 @@ fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
     assert!(result_revert.gas().remaining() > 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_reservoir_refill_halt_vs_revert_difference.json",
+        &(result_halt, result_revert),
+    );
 }
