@@ -51,6 +51,7 @@ pub use frame::{
     CreateKind,
     EthFrame,
     FrameBuilder,
+    FrameBuilderKind,
     FrameKind,
 };
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};

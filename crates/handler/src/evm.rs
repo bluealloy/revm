@@ -183,7 +183,10 @@ where
 
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input)?;
+        let res = Self::Frame::build_frame(frame_input)
+            .build::<_, ContextDbError<CTX>>(new_frame, ctx, |ctx, inputs| {
+                precompiles.run(ctx, inputs)
+            })?;
 
         Ok(res.map_item(|token| {
             if is_first_init {

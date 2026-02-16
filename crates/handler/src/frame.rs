@@ -519,7 +519,7 @@ impl FrameKind for CreateKind {
 /// # Note on inspector hooks
 ///
 /// The builder operates below the inspector layer. Direct builder usage
-/// (outside [`EthFrame::init_with_context`]) bypasses inspector hooks
+/// (outside [`EthFrame::build_frame`]) bypasses inspector hooks
 /// (`call`, `create`, `call_end`, `create_end`, `initialize_interp`).
 pub struct FrameBuilder<Kind> {
     /// Call depth in the execution stack.
@@ -721,6 +721,42 @@ impl FrameBuilder<CreateKind> {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
+// FrameBuilderKind
+// ────────────────────────────────────────────────────────────────────────────────
+
+/// Wraps either a [`FrameBuilder<CallKind>`] or [`FrameBuilder<CreateKind>`],
+/// returned by [`EthFrame::build_frame`] when the frame type is determined at runtime.
+#[derive(Debug)]
+pub enum FrameBuilderKind {
+    /// Call frame builder.
+    Call(FrameBuilder<CallKind>),
+    /// Create frame builder.
+    Create(FrameBuilder<CreateKind>),
+}
+
+impl FrameBuilderKind {
+    /// Consume the builder and produce a frame (or an early result).
+    ///
+    /// Dispatches to [`FrameBuilder::build`] on the inner variant.
+    #[inline]
+    pub fn build<CTX, ERROR>(
+        self,
+        this: OutFrame<'_, EthFrame>,
+        ctx: &mut CTX,
+        precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
+    where
+        CTX: ContextTr,
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
+    {
+        match self {
+            Self::Call(builder) => builder.build(this, ctx, precompile_fn),
+            Self::Create(builder) => builder.build(this, ctx, precompile_fn),
+        }
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
 // EthFrame
 // ────────────────────────────────────────────────────────────────────────────────
 
@@ -827,7 +863,54 @@ impl EthFrame<EthInterpreter> {
         *checkpoint_ref = checkpoint;
     }
 
+    /// Returns a [`FrameBuilder<CallKind>`] for constructing a call frame.
+    ///
+    /// The builder can be customized before calling [`.build()`](FrameBuilder::build).
+    #[inline]
+    pub fn build_call_frame(
+        depth: usize,
+        memory: SharedMemory,
+        inputs: Box<CallInputs>,
+    ) -> FrameBuilder<CallKind> {
+        FrameBuilder::new_call(depth, memory, inputs)
+    }
+
+    /// Returns a [`FrameBuilder<CreateKind>`] for constructing a create frame.
+    ///
+    /// The builder can be customized before calling [`.build()`](FrameBuilder::build).
+    #[inline]
+    pub fn build_create_frame(
+        depth: usize,
+        memory: SharedMemory,
+        inputs: Box<CreateInputs>,
+    ) -> FrameBuilder<CreateKind> {
+        FrameBuilder::new_create(depth, memory, inputs)
+    }
+
+    /// Returns a [`FrameBuilderKind`] for constructing a call or create frame
+    /// based on the given [`FrameInput`].
+    ///
+    /// The builder can be customized before calling [`.build()`](FrameBuilderKind::build).
+    pub fn build_frame(frame_init: FrameInit) -> FrameBuilderKind {
+        let FrameInit {
+            depth,
+            memory,
+            frame_input,
+        } = frame_init;
+
+        match frame_input {
+            FrameInput::Call(inputs) => {
+                FrameBuilderKind::Call(FrameBuilder::new_call(depth, memory, inputs))
+            }
+            FrameInput::Create(inputs) => {
+                FrameBuilderKind::Create(FrameBuilder::new_create(depth, memory, inputs))
+            }
+            FrameInput::Empty => unreachable!(),
+        }
+    }
+
     /// Make call frame
+    #[deprecated(note = "Use `build_call_frame` instead")]
     #[inline]
     pub fn make_call_frame<
         CTX: ContextTr,
@@ -841,11 +924,12 @@ impl EthFrame<EthInterpreter> {
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        FrameBuilder::new_call(depth, memory, inputs)
+        Self::build_call_frame(depth, memory, inputs)
             .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
     }
 
     /// Make create frame.
+    #[deprecated(note = "Use `build_create_frame` instead")]
     #[inline]
     pub fn make_create_frame<
         CTX: ContextTr,
@@ -857,10 +941,11 @@ impl EthFrame<EthInterpreter> {
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        FrameBuilder::new_create(depth, memory, inputs).build(this, context, |_, _| Ok(None))
+        Self::build_create_frame(depth, memory, inputs).build(this, context, |_, _| Ok(None))
     }
 
     /// Initializes a frame with the given context and precompiles.
+    #[deprecated(note = "Use `build_frame` instead")]
     pub fn init_with_context<
         CTX: ContextTr,
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -873,22 +958,8 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
-        let FrameInit {
-            depth,
-            memory,
-            frame_input,
-        } = frame_init;
-
-        match frame_input {
-            FrameInput::Call(inputs) => {
-                FrameBuilder::new_call(depth, memory, inputs)
-                    .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
-            }
-            FrameInput::Create(inputs) => {
-                FrameBuilder::new_create(depth, memory, inputs).build(this, ctx, |_, _| Ok(None))
-            }
-            FrameInput::Empty => unreachable!(),
-        }
+        Self::build_frame(frame_init)
+            .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
     }
 }
 
