@@ -565,17 +565,18 @@ pub fn handle_reservoir_remaining_gas(
     // In case of revert or halt, reservoir gas is not deducted and can be even increased.
     if ins_result.is_ok() {
         parent_gas.set_reservoir(child_gas.reservoir());
-        parent_gas.set_state_gas_spent(child_gas.state_gas_spent());
+        // Accumulate child's state gas into parent's total.
+        // Parent may have already charged state gas (e.g., new_account + create) before
+        // creating the child frame. Child starts with state_gas_spent=0, so we must add
+        // rather than overwrite to preserve the parent's prior charges.
+        parent_gas.set_state_gas_spent(parent_gas.state_gas_spent() + child_gas.state_gas_spent());
     } else {
-        // state gas spent should stay the same in case of revert or halt.
-        // the difference that happened between state gases should be checked
-        // if it is done against regular gas, and return this gas to reservoir.
-        let spent_state_gas = child_gas
-            .state_gas_spent()
-            .saturating_sub(parent_gas.state_gas_spent());
-
-        let new_reservoir = handler_reservoir_refill(parent_gas.reservoir(), spent_state_gas);
-        parent_gas.set_reservoir(new_reservoir);
+        // On revert/halt, state_gas_spent is NOT propagated (state changes reverted),
+        // but the child's reservoir consumption must be reflected. The child received
+        // a copy of the parent's reservoir and may have consumed state gas from it.
+        // Setting the parent's reservoir to the child's final reservoir ensures the
+        // consumed gas is accounted for in gas_used.
+        parent_gas.set_reservoir(child_gas.reservoir());
     }
 }
 

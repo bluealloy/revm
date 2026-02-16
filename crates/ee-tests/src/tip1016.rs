@@ -295,6 +295,167 @@ fn call_with_value_bytecode(target: [u8; 20], value: U256) -> Bytecode {
     Bytecode::new_legacy(bytecode.into())
 }
 
+/// Bytecode that executes CREATE2 with given init code (no value, salt=0).
+fn create2_bytecode(init_code: &[u8]) -> Bytecode {
+    assert!(init_code.len() < 256);
+    let mut bytecode = Vec::new();
+    // Store init code in memory byte by byte
+    for (i, byte) in init_code.iter().enumerate() {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(*byte);
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(i as u8);
+        bytecode.push(opcode::MSTORE8);
+    }
+    // CREATE2(value=0, offset=0, length, salt=0)
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // salt = 0
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(init_code.len() as u8); // size
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // offset = 0
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // value = 0
+    bytecode.push(opcode::CREATE2);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// Bytecode: PUSH20 <beneficiary>; SELFDESTRUCT
+fn selfdestruct_bytecode(beneficiary: [u8; 20]) -> Bytecode {
+    let mut bytecode = Vec::new();
+    bytecode.push(opcode::PUSH20);
+    bytecode.extend_from_slice(&beneficiary);
+    bytecode.push(opcode::SELFDESTRUCT);
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// Bytecode that CREATEs a contract with the given child runtime code,
+/// then CALLs the newly created contract.
+fn call_created_child_bytecode(child_runtime: &[u8]) -> Bytecode {
+    assert!(child_runtime.len() < 128, "child_runtime too large");
+
+    // Build init code: stores child_runtime in memory byte-by-byte, then RETURN(0, len).
+    let mut init_code = Vec::new();
+    for (i, &byte) in child_runtime.iter().enumerate() {
+        init_code.push(opcode::PUSH1);
+        init_code.push(byte);
+        init_code.push(opcode::PUSH1);
+        init_code.push(i as u8);
+        init_code.push(opcode::MSTORE8);
+    }
+    init_code.push(opcode::PUSH1);
+    init_code.push(child_runtime.len() as u8);
+    init_code.push(opcode::PUSH1);
+    init_code.push(0);
+    init_code.push(opcode::RETURN);
+
+    assert!(init_code.len() < 256, "init_code too large");
+
+    // Build main bytecode: store init_code in memory, CREATE, then CALL the result.
+    let mut bytecode = Vec::new();
+
+    // Store init code in memory byte by byte.
+    for (i, &byte) in init_code.iter().enumerate() {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(byte);
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(i as u8);
+        bytecode.push(opcode::MSTORE8);
+    }
+
+    // CREATE(value=0, offset=0, length=init_code.len())
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(init_code.len() as u8);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::CREATE);
+    // Stack: [child_addr]
+
+    // Push 5 zeros for CALL args (retSize, retOff, argsSize, argsOff, value)
+    for _ in 0..5 {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(0);
+    }
+    // Stack: [child_addr, 0, 0, 0, 0, 0]
+
+    // SWAP5: bring child_addr to top
+    bytecode.push(opcode::SWAP5);
+    // Stack: [0, 0, 0, 0, 0, child_addr]
+
+    // GAS: push remaining gas
+    bytecode.push(opcode::GAS);
+    // Stack: [0, 0, 0, 0, 0, child_addr, gas]
+
+    // CALL(gas, addr, value, argsOff, argsSize, retOff, retSize)
+    bytecode.push(opcode::CALL);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// Bytecode: GAS, PUSH1 0, MSTORE, PUSH1 32, PUSH1 0, RETURN
+/// Executes GAS opcode, stores result in memory, returns it as 32-byte output.
+fn gas_opcode_return_bytecode() -> Bytecode {
+    Bytecode::new_legacy(
+        [
+            opcode::GAS,
+            opcode::PUSH1,
+            0,
+            opcode::MSTORE,
+            opcode::PUSH1,
+            32,
+            opcode::PUSH1,
+            0,
+            opcode::RETURN,
+        ]
+        .into(),
+    )
+}
+
+/// Bytecode: SSTORE(0, 1); INVALID
+/// One state gas charge then exceptional halt via 0xFE.
+fn sstore_then_invalid_bytecode() -> Bytecode {
+    Bytecode::new_legacy(
+        [
+            opcode::PUSH1,
+            1,
+            opcode::PUSH1,
+            0,
+            opcode::SSTORE,
+            opcode::INVALID,
+        ]
+        .into(),
+    )
+}
+
+/// Bytecode: CALL to identity precompile (0x04) with no args, then STOP.
+#[allow(clippy::vec_init_then_push)]
+fn call_precompile_bytecode() -> Bytecode {
+    let mut bytecode = Vec::new();
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // retSize
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // retOffset
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // argsSize
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // argsOffset
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // value = 0
+    bytecode.push(opcode::PUSH20);
+    bytecode.extend_from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]);
+    bytecode.push(opcode::GAS);
+    bytecode.push(opcode::CALL);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+    Bytecode::new_legacy(bytecode.into())
+}
+
 // ---- Category 1: SSTORE State Gas ----
 
 /// 1.1 SSTORE zero→non-zero charges sstore_set_state_gas.
@@ -313,11 +474,21 @@ fn test_tip1016_sstore_new_slot() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    assert!(result.is_success());
+    assert!(baseline_result.is_success(), "Baseline should succeed");
+    assert!(result.is_success(), "State gas variant should succeed");
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(
         delta, STATE_GAS_SSTORE_SET,
         "SSTORE new slot should add exactly {STATE_GAS_SSTORE_SET} state gas, got delta {delta}"
+    );
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert!(result.logs().is_empty());
+    assert_eq!(
+        result.gas().spent() - baseline_result.gas().spent(),
+        STATE_GAS_SSTORE_SET
     );
 }
 
@@ -337,12 +508,18 @@ fn test_tip1016_sstore_overwrite_no_state_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
+    assert!(baseline_result.is_success());
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(
         delta, STATE_GAS_SSTORE_SET,
         "Only the first SSTORE (0->1) should charge state gas, got delta {delta}"
     );
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert!(result.logs().is_empty());
 }
 
 /// 1.3 SSTORE zero→zero: no state gas.
@@ -361,12 +538,15 @@ fn test_tip1016_sstore_zero_to_zero_no_state_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
+    assert!(baseline_result.is_success());
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
-    assert_eq!(
-        delta, 0,
-        "SSTORE zero→zero should add no state gas, got delta {delta}"
-    );
+    assert_eq!(delta, 0, "SSTORE zero→zero should add no state gas");
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
 }
 
 /// 1.4 Three SSTOREs to different new slots: 3× sstore_set_state_gas.
@@ -385,12 +565,21 @@ fn test_tip1016_sstore_multiple_new_slots() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
+    assert!(baseline_result.is_success());
     assert!(result.is_success());
     let expected = 3 * STATE_GAS_SSTORE_SET;
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(
         delta, expected,
         "3 new slots should add {expected} state gas, got delta {delta}"
+    );
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(
+        result.gas().spent() - baseline_result.gas().spent(),
+        expected
     );
 }
 
@@ -416,10 +605,11 @@ fn test_tip1016_create_empty_code() {
     assert!(result.is_success());
     let expected = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE;
     let delta = result.gas_used() - baseline_gas;
-    assert_eq!(
-        delta, expected,
-        "CREATE empty code should add {expected} state gas (25k+32k), got delta {delta}"
-    );
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas_used(), baseline_gas + expected);
 }
 
 /// 2.2 CREATE deploying 10-byte contract: new_account + create + code_deposit(10).
@@ -442,10 +632,11 @@ fn test_tip1016_create_with_code() {
     assert!(result.is_success());
     let expected = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
     let delta = result.gas_used() - baseline_gas;
-    assert_eq!(
-        delta, expected,
-        "CREATE with 10-byte code should add {expected} state gas (25k+32k+2k), got delta {delta}"
-    );
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas_used(), baseline_gas + expected);
 }
 
 /// 2.3 CREATE with init code that does SSTORE + returns 1-byte code: all 4 state gas types.
@@ -467,12 +658,99 @@ fn test_tip1016_create_with_sstore() {
 
     assert!(result.is_success());
     let expected =
-        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT; // 1 byte
+        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
     let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+}
+
+/// 2.4 CREATE2 deploying 10-byte contract: same state gas as CREATE.
+#[test]
+fn test_tip1016_create2_with_code() {
+    let init = return_n_bytes_init_code(10);
+    let bytecode = create2_bytecode(&init);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+    assert!(baseline_result.is_success());
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    let expected = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    // CREATE2 uses more regular gas than CREATE (hashing) but same state gas
+    let create_init = return_n_bytes_init_code(10);
+    let mut create_evm = state_gas_evm(create_bytecode(&create_init), u64::MAX);
+    let create_result = create_evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
     assert_eq!(
-        delta, expected,
-        "CREATE+SSTORE+1byte code should add {expected} state gas, got delta {delta}"
+        result.gas().state_gas_spent(),
+        create_result.gas().state_gas_spent()
     );
+}
+
+/// 2.5 CREATE deploying code where enough regular gas but insufficient total for code deposit state gas.
+#[test]
+fn test_tip1016_create_code_deposit_state_gas_oog() {
+    let init = return_n_bytes_init_code(100);
+    let bytecode = create_bytecode(&init);
+
+    // Find baseline gas usage with ample gas.
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    assert!(baseline_result.is_success());
+    let baseline_gas = baseline_result.gas_used();
+
+    // Baseline succeeds at tight limit.
+    let tight_limit = baseline_gas + 1;
+    let mut baseline_tight = baseline_evm(bytecode.clone());
+    let baseline_tight_result = baseline_tight
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(tight_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+    assert!(baseline_tight_result.is_success());
+
+    // With state gas at same tight limit: OOG because state gas exceeds remaining.
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(tight_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::OutOfGas(_)));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+    assert_eq!(result.gas_used(), tight_limit);
+    assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
 }
 
 // ---- Category 3: CALL State Gas ----
@@ -495,10 +773,20 @@ fn test_tip1016_call_new_account() {
         .unwrap();
 
     assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
     let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
-        delta, STATE_GAS_NEW_ACCOUNT,
-        "CALL to new account should add {STATE_GAS_NEW_ACCOUNT} state gas, got delta {delta}"
+        result.gas().spent(),
+        baseline_result.gas().spent() + STATE_GAS_NEW_ACCOUNT
+    );
+    assert_eq!(
+        result.gas().intrinsic_gas(),
+        baseline_result.gas().intrinsic_gas()
+    );
+    assert_eq!(
+        result.gas().remaining(),
+        baseline_result.gas().remaining() - STATE_GAS_NEW_ACCOUNT
     );
 }
 
@@ -519,23 +807,73 @@ fn test_tip1016_call_existing_account() {
         .unwrap();
 
     assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
+    assert_eq!(result.gas().remaining(), baseline_result.gas().remaining());
+}
+
+/// 3.3 SELFDESTRUCT sending balance to non-existent account: new_account_state_gas.
+#[test]
+fn test_tip1016_selfdestruct_new_account() {
+    let beneficiary = address!("0xd000000000000000000000000000000000000002");
+    let bytecode = selfdestruct_bytecode(beneficiary.into_array());
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
     let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
-        delta, 0,
-        "CALL to existing account should add no state gas, got delta {delta}"
+        result.gas().spent(),
+        baseline_result.gas().spent() + STATE_GAS_NEW_ACCOUNT
     );
+    assert_eq!(
+        result.gas().intrinsic_gas(),
+        baseline_result.gas().intrinsic_gas()
+    );
+}
+
+/// 3.4 SELFDESTRUCT sending balance to existing account: no state gas.
+#[test]
+fn test_tip1016_selfdestruct_existing_account() {
+    let bytecode = selfdestruct_bytecode(BENCH_CALLER.into_array());
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
+    assert_eq!(result.gas_used(), baseline_gas);
 }
 
 // ---- Category 4: Regular Gas Cap Enforcement ----
 
 /// 4.1 Tight regular gas cap causes OOG.
-/// With gas_limit=cap=30,000, regular gas budget = cap - initial_gas(21,000) = 9,000.
-/// The SSTORE needs ~22,106 regular gas beyond intrinsic, so 9,000 is insufficient.
 #[test]
 fn test_tip1016_regular_gas_cap_causes_oog() {
     let bytecode = sstore_bytecode(0, 1);
 
-    // Baseline with 100k succeeds.
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
         .transact_one(
@@ -547,7 +885,6 @@ fn test_tip1016_regular_gas_cap_causes_oog() {
         .unwrap();
     assert!(baseline_result.is_success());
 
-    // State gas with gas_limit=cap=30,000 → regular gas = 30k - 21k = 9k (insufficient).
     let mut evm = state_gas_evm(bytecode, 30_000);
     let result = evm
         .transact_one(
@@ -558,20 +895,17 @@ fn test_tip1016_regular_gas_cap_causes_oog() {
         )
         .unwrap();
 
-    assert!(
-        result.is_halt(),
-        "Expected OOG halt with tight regular gas cap, got success with gas_used={}",
-        result.gas_used()
-    );
+    assert!(result.is_halt());
     match &result {
         revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
-            assert!(
-                matches!(reason, HaltReason::OutOfGas(_)),
-                "Expected OutOfGas halt, got {reason:?}"
-            );
+            assert!(matches!(reason, HaltReason::OutOfGas(_)));
         }
         _ => panic!("Expected Halt variant"),
     }
+    assert_eq!(result.gas_used(), 30_000);
+    assert_eq!(result.gas().spent(), 30_000);
+    assert_eq!(result.gas().remaining(), 0);
+    assert_eq!(result.gas().limit(), 30_000);
 }
 
 /// 4.2 Adequate regular gas cap: success.
@@ -591,7 +925,6 @@ fn test_tip1016_regular_gas_cap_sufficient() {
     let baseline_gas = baseline_result.gas_used();
     assert!(baseline_result.is_success());
 
-    // cap=100,000 → regular gas = 100,000 - 20,000 = 80,000. Plenty.
     let mut evm = state_gas_evm(bytecode, 100_000);
     let result = evm
         .transact_one(
@@ -605,15 +938,17 @@ fn test_tip1016_regular_gas_cap_sufficient() {
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
+    assert!(result.gas().remaining() > 0);
+    assert_eq!(result.gas().limit(), 100_000);
 }
 
 /// 4.3 Remaining gas insufficient after state gas deduction.
-/// gas_limit=50,000 is enough for execution (~43,106) but NOT for execution + state gas (63,106).
 #[test]
 fn test_tip1016_state_gas_oog_remaining() {
     let bytecode = sstore_bytecode(0, 1);
 
-    // Baseline with 50,000 gas succeeds.
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
         .transact_one(
@@ -624,9 +959,8 @@ fn test_tip1016_state_gas_oog_remaining() {
         )
         .unwrap();
     assert!(baseline_result.is_success());
+    let baseline_gas = baseline_result.gas_used();
 
-    // With state gas: gas_limit=50,000, cap=u64::MAX (no regular gas constraint).
-    // Execution needs ~43,106 + 20,000 state gas = ~63,106 > 50,000 → OOG.
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
         .transact_one(
@@ -637,11 +971,129 @@ fn test_tip1016_state_gas_oog_remaining() {
         )
         .unwrap();
 
-    assert!(
-        result.is_halt(),
-        "Expected OOG when remaining can't cover state gas, got success with gas_used={}",
-        result.gas_used()
-    );
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::OutOfGas(_)));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+    assert_eq!(result.gas_used(), 50_000);
+    assert!(baseline_gas < 50_000);
+    assert!(baseline_gas + STATE_GAS_SSTORE_SET > 50_000);
+    assert_eq!(result.gas().remaining(), 0);
+}
+
+/// 4.4 tx_gas_limit_cap is NOT enforced as a hard cap when state gas reservoir covers it.
+#[test]
+fn test_tip1016_tx_limit_cap_not_enforced_with_state_gas() {
+    let bytecode = sstore_bytecode(0, 1);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+    assert!(baseline_result.is_success());
+    let baseline_gas = baseline_result.gas_used();
+
+    // gas_limit=100k, cap=50k: reservoir covers state gas.
+    let mut evm = state_gas_evm(bytecode, 50_000);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_success());
+    assert!(result.gas_used() > 50_000, "gas_used exceeds cap");
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
+    assert!(result.gas().remaining() > 0);
+}
+
+/// 4.5 Block gas limit is still enforced even with state gas enabled.
+#[test]
+fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
+    use revm::context_interface::result::{EVMError, InvalidTransaction};
+
+    let bytecode = sstore_bytecode(0, 1);
+
+    // tx gas_limit(100k) > block gas_limit(10k) -> validation error.
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_state_gas = true;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+            cfg.gas_params.override_gas([
+                (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
+                (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
+                (GasId::code_deposit_state_gas(), STATE_GAS_CODE_DEPOSIT),
+                (GasId::create_state_gas(), STATE_GAS_CREATE),
+            ]);
+        })
+        .modify_block_chained(|block| {
+            block.gas_limit = 10_000;
+        })
+        .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+        .build_mainnet();
+
+    let err = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .expect_err("Expected validation error when tx gas_limit exceeds block gas_limit");
+
+    assert!(matches!(&err, EVMError::Transaction(_)));
+    match &err {
+        EVMError::Transaction(InvalidTransaction::CallerGasLimitMoreThanBlock) => {}
+        other => panic!("Expected CallerGasLimitMoreThanBlock, got {other:?}"),
+    }
+
+    // Also verify without state gas - same error.
+    let mut evm_no_state = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .modify_block_chained(|block| {
+            block.gas_limit = 10_000;
+        })
+        .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+        .build_mainnet();
+
+    let err_no_state = evm_no_state
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .expect_err("Expected validation error without state gas too");
+
+    match &err_no_state {
+        EVMError::Transaction(InvalidTransaction::CallerGasLimitMoreThanBlock) => {}
+        other => panic!("Expected CallerGasLimitMoreThanBlock, got {other:?}"),
+    }
+
+    // Tx fitting within block limit should succeed.
+    let mut evm_fits = state_gas_evm(bytecode, u64::MAX);
+    let result_fits = evm_fits
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    assert!(result_fits.is_success());
 }
 
 // ---- Category 5: State Gas Propagation ----
@@ -649,8 +1101,6 @@ fn test_tip1016_state_gas_oog_remaining() {
 /// 5.1 CREATE child's state gas propagates to parent on success.
 #[test]
 fn test_tip1016_create_child_propagates() {
-    // Same as test 2.3 — CREATE with init code that SSTOREs and returns 1-byte code.
-    // All 4 state gas types (new_account + create + sstore + code_deposit) propagate.
     let init = init_code_sstore_and_return();
     let bytecode = create_bytecode(&init);
 
@@ -665,19 +1115,22 @@ fn test_tip1016_create_child_propagates() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    assert!(result.is_success());
     let expected =
         STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
+
+    assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert!(result.gas().remaining() > 0);
     assert_eq!(
-        delta, expected,
-        "All child state gas should propagate to parent, got delta {delta}"
+        result.gas().intrinsic_gas(),
+        baseline_result.gas().intrinsic_gas()
     );
 }
 
-/// 5.2 Reverted CREATE: child's SSTORE state gas is NOT propagated to parent's state_gas counter,
-/// but the gas consumed by the child for state gas is not returned on revert (it's lost).
-/// The parent's own state gas (new_account + create) was charged before the child ran.
+/// 5.2 Reverted CREATE: child's SSTORE state gas is lost but not propagated.
 #[test]
 fn test_tip1016_reverted_create_child() {
     let init = init_code_sstore_and_revert();
@@ -694,17 +1147,143 @@ fn test_tip1016_reverted_create_child() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
+    let expected_delta = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET;
+    let parent_state_gas = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE;
+
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
-    // Parent charged new_account(25k) + create(32k) = 57k state gas before child ran.
-    // Child's SSTORE charged 20k state gas on child's gas (reduced child remaining).
-    // On revert: child remaining is returned to parent, but the 20k spent on state gas
-    // in the child is NOT returned. So total gas_used delta = 57k + 20k = 77k.
-    let expected = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + STATE_GAS_SSTORE_SET;
-    assert_eq!(
-        delta, expected,
-        "Reverted CREATE: parent state gas + child's lost state gas, got delta {delta}"
-    );
+    assert_eq!(delta, expected_delta);
+    // state_gas_spent reflects only parent's state gas (child not propagated on revert).
+    assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    // Child's lost gas = delta - state_gas_spent
+    let child_lost_gas = delta - result.gas().state_gas_spent();
+    assert_eq!(child_lost_gas, STATE_GAS_SSTORE_SET);
+    assert!(result.gas().remaining() > 0);
+}
+
+/// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent propagates on success.
+#[test]
+fn test_tip1016_call_child_sstore_propagates() {
+    let child_runtime: Vec<u8> = vec![
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::SSTORE,
+        opcode::STOP,
+    ];
+    let bytecode = call_created_child_bytecode(&child_runtime);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
+    let expected_state_gas =
+        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+
+    assert!(result.is_success());
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected_state_gas);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert!(result.gas().remaining() > 0);
+}
+
+/// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas consumed but lost.
+#[test]
+fn test_tip1016_call_child_sstore_reverts() {
+    let child_runtime: Vec<u8> = vec![
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::SSTORE,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::REVERT,
+    ];
+    let bytecode = call_created_child_bytecode(&child_runtime);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
+    let create_state_gas = STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + code_deposit_gas;
+
+    assert!(result.is_success());
+    // state_gas_spent reflects only CREATE costs (child SSTORE not propagated on revert).
+    assert_eq!(result.gas().state_gas_spent(), create_state_gas);
+    // Total delta includes CREATE state gas + child's lost SSTORE state gas.
+    let expected_delta = create_state_gas + STATE_GAS_SSTORE_SET;
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    let child_lost_gas = delta - result.gas().state_gas_spent();
+    assert_eq!(child_lost_gas, STATE_GAS_SSTORE_SET);
+    assert!(result.gas().remaining() > 0);
+}
+
+/// 5.5 Multi-level nesting: CALL -> CREATE -> SSTORE. State gas propagates through frames.
+#[test]
+fn test_tip1016_nested_call_create_sstore() {
+    let child_runtime: Vec<u8> = vec![
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::SSTORE,
+        opcode::STOP,
+    ];
+    let bytecode = call_created_child_bytecode(&child_runtime);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
+    let expected_state_gas =
+        STATE_GAS_NEW_ACCOUNT + STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+
+    assert!(result.is_success());
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected_state_gas);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+
+    // Cross-validate: CREATE-only run (no CALL child SSTORE).
+    let init = return_n_bytes_init_code(child_runtime.len() as u8);
+    let mut create_evm = state_gas_evm(create_bytecode(&init), u64::MAX);
+    let create_result = create_evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    assert!(create_result.is_success());
+    let sstore_portion = result.gas().state_gas_spent() - create_result.gas().state_gas_spent();
+    assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
 }
 
 // ---- Category 6: Interactions ----
@@ -726,29 +1305,21 @@ fn test_tip1016_sstore_set_then_clear_refund() {
         .unwrap();
 
     assert!(result.is_success());
-    // State gas increases total `spent`, which raises the refund cap (spent/5 in London+).
-    // Raw refund exceeds the cap, so both baseline and state gas use the cap.
-    // This means state gas effectively increases the refund by state_gas/5.
-    // Net delta = state_gas - state_gas/5 = state_gas * 4/5
     let delta = result.gas_used() - baseline_gas;
     let expected = STATE_GAS_SSTORE_SET * 4 / 5; // 16,000
-    assert_eq!(
-        delta, expected,
-        "State gas persists but raises refund cap: net delta = state_gas*4/5, got {delta}"
-    );
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert!(result.gas_used() > baseline_gas);
+    assert!(result.gas().spent() > baseline_result.gas().spent());
+    let spent_delta = result.gas().spent() - baseline_result.gas().spent();
+    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
 }
 
 /// 6.2 State gas does not reduce regular gas budget.
-/// With gas_limit=cap=50,000, regular gas = cap - intrinsic(21,000) = 29,000.
-/// SSTORE regular gas ~22,106 fits in budget. State gas (20,000) is separate.
-/// Total gas_used = ~63,106 which exceeds gas_limit=50,000.
-/// But this shows the *regular gas* check passes — the OOG happens on `remaining`, not regular gas.
-/// So we use gas_limit=100,000 and cap=100,000 to have enough remaining too.
 #[test]
 fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
     let bytecode = sstore_bytecode(0, 1);
 
-    // Baseline succeeds.
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
@@ -756,9 +1327,6 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
     assert!(baseline_result.is_success());
     let baseline_gas = baseline_result.gas_used();
 
-    // cap = baseline_gas + STATE_GAS_SSTORE_SET + 1 (just enough for execution + state).
-    // This ensures regular gas budget = cap - intrinsic is tight but sufficient,
-    // proving state gas is not subtracted from the regular gas budget.
     let tight_cap = baseline_gas + STATE_GAS_SSTORE_SET + 1;
     let mut evm = state_gas_evm(bytecode, tight_cap);
     let result = evm
@@ -770,13 +1338,160 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
         )
         .unwrap();
 
-    assert!(
-        result.is_success(),
-        "Should succeed: state gas doesn't consume regular gas budget. Gas used: {}",
-        result.gas_used()
-    );
+    assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(
+        result.gas().intrinsic_gas(),
+        baseline_result.gas().intrinsic_gas()
+    );
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+}
+
+/// 6.3 GAS opcode returns remaining (excludes reservoir).
+#[test]
+fn test_tip1016_gas_opcode_excludes_reservoir() {
+    let bytecode = gas_opcode_return_bytecode();
+    let gas_limit: u64 = 100_000;
+
+    // Baseline: no state gas, no reservoir.
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+    assert!(baseline_result.is_success());
+    let baseline_output = baseline_result.output().unwrap();
+    let baseline_gas_value = U256::from_be_slice(baseline_output.as_ref());
+
+    // With state gas: cap=50k creates a reservoir.
+    let cap = 50_000u64;
+    let mut evm = state_gas_evm(bytecode, cap);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_success());
+    let output = result.output().unwrap();
+    assert_eq!(output.len(), 32);
+    let gas_opcode_value = U256::from_be_slice(output.as_ref());
+    let intrinsic = result.gas().intrinsic_gas();
+    let execution_gas = gas_limit - intrinsic;
+    assert!(gas_opcode_value < U256::from(execution_gas));
+    // GAS opcode with state gas should be less than baseline (reservoir excluded).
+    assert!(gas_opcode_value < baseline_gas_value);
+    // Difference should equal reservoir size.
+    let regular_budget = cap - intrinsic;
+    let expected_reservoir = execution_gas - regular_budget;
+    let gas_diff = baseline_gas_value - gas_opcode_value;
+    assert_eq!(gas_diff, U256::from(expected_reservoir));
+}
+
+/// 6.4 INVALID opcode after SSTORE: spend_all() zeroes remaining but preserves reservoir.
+#[test]
+fn test_tip1016_spend_all_preserves_reservoir() {
+    let bytecode = sstore_then_invalid_bytecode();
+    let gas_limit: u64 = 100_000;
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(baseline_result.is_halt());
+    assert_eq!(baseline_result.gas_used(), gas_limit);
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::InvalidFEOpcode));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+    assert_eq!(result.gas_used(), gas_limit);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas_used(), baseline_result.gas_used());
+}
+
+/// 6.5 state_gas_spent field in ResultGas.
+#[test]
+fn test_tip1016_state_gas_spent_in_result() {
+    let bytecode = sstore_bytecode(0, 1);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(baseline_result.is_success());
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    let spent_delta = result.gas().spent() - baseline_result.gas().spent();
+    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
+    let gas_used_delta = result.gas_used() - baseline_result.gas_used();
+    assert_eq!(gas_used_delta, STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().limit(), baseline_result.gas().limit());
+}
+
+/// 6.6 CALL to precompile: precompile gas is regular, not state gas.
+#[test]
+fn test_tip1016_precompile_no_state_gas() {
+    let bytecode = call_precompile_bytecode();
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+    assert!(baseline_result.is_success());
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, 0);
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
+    assert_eq!(
+        result.gas().intrinsic_gas(),
+        baseline_result.gas().intrinsic_gas()
+    );
 }
 
 // ---- Category 7: Reservoir Refill ----
@@ -790,22 +1505,21 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
 // On HALT: remaining is NOT reimbursed, refill applied to final gas accounting.
 
 /// 7.1 REVERT with state_gas < reservoir.
-/// Single SSTORE (20,000 state gas) followed by explicit REVERT.
-/// Reservoir is large enough to cover all state gas from reservoir.
-/// After refill: new_reservoir = reservoir + max(0, 20,000 - large_reservoir) = reservoir + 0.
-/// Expected: REVERT, remaining reimbursed, state gas fully deducted from reservoir.
 #[test]
 fn test_tip1016_reservoir_refill_revert_state_gas_less() {
     let bytecode = sstore_then_revert_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
-        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(100_000)
+                .gas_price(0)
+                .build_fill(),
+        )
         .unwrap();
     let baseline_gas = baseline_result.gas_used();
 
-    // Ample gas_limit and no cap to ensure large reservoir.
-    // This means state_gas (20,000) will be entirely drawn from reservoir.
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
         .transact_one(
@@ -816,41 +1530,33 @@ fn test_tip1016_reservoir_refill_revert_state_gas_less() {
         )
         .unwrap();
 
-    // Check for REVERT: not success and not halt
-    assert!(
-        !result.is_success() && !result.is_halt(),
-        "Expected REVERT, got {:?}",
-        result
-    );
-    // Baseline does PUSH+PUSH+REVERT (no state gas).
-    // With state gas: execution + state_gas all deducted.
-    // REVERT means remaining IS reimbursed.
-    // gas_used = intrinsic + execution + state_gas - refund (if any, but REVERT = no refund)
+    assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
     let delta = result.gas_used() - baseline_gas;
-    assert_eq!(
-        delta, STATE_GAS_SSTORE_SET,
-        "REVERT with state_gas < reservoir: state_gas fully deducted, delta = {delta}"
-    );
+    assert_eq!(delta, STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert!(result.gas_used() < 100_000, "REVERT reimburses remaining");
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert!(result.logs().is_empty());
 }
 
-/// 7.2 REVERT with state_gas > reservoir.
-/// Two SSTOREs (40,000 state gas total) followed by explicit REVERT.
-/// Tight cap limits reservoir, so state gas exceeds it and spills into regular gas.
-/// After refill: new_reservoir = reservoir + (40,000 - reservoir).
-/// This refill accounts for the 20,000 (approx) that came from regular gas.
-/// Expected: REVERT, but refill shows state_gas_spent > reservoir.
+/// 7.2 REVERT with state_gas > reservoir (2x SSTORE).
 #[test]
 fn test_tip1016_reservoir_refill_revert_state_gas_more() {
     let bytecode = sstore_multi_then_revert_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
-        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(150_000)
+                .gas_price(0)
+                .build_fill(),
+        )
         .unwrap();
     let baseline_gas = baseline_result.gas_used();
 
-    // Ample cap and gas_limit to ensure REVERT instruction executes.
-    // The key is that we're testing the refill mechanism, not OOG conditions.
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
         .transact_one(
@@ -861,32 +1567,23 @@ fn test_tip1016_reservoir_refill_revert_state_gas_more() {
         )
         .unwrap();
 
-    // Check for REVERT: not success and not halt
-    assert!(
-        !result.is_success() && !result.is_halt(),
-        "Expected REVERT, got {:?}",
-        result
-    );
-    // Two SSTOREs = 40,000 state gas.
+    assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
     let expected_delta = 2 * STATE_GAS_SSTORE_SET;
     let delta = result.gas_used() - baseline_gas;
-    assert_eq!(
-        delta, expected_delta,
-        "REVERT with 2 SSTOREs: state_gas = {expected_delta}, delta = {delta}"
-    );
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), 2 * STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert!(result.gas_used() < 150_000);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert!(result.logs().is_empty());
 }
 
-/// 7.3 HALT (OOG) with state_gas < reservoir.
-/// Single SSTORE (20,000 state gas) in tight gas limit causing OOG before completion.
-/// State gas entirely from reservoir, but HALT means remaining is NOT reimbursed.
-/// After refill: new_reservoir = reservoir + max(0, 20,000 - large_reservoir) = reservoir.
-/// Expected: HALT, all gas_limit spent (no reimbursement), state gas accounted for.
+/// 7.3 HALT (OOG) with tight gas limit.
 #[test]
 fn test_tip1016_reservoir_refill_halt_state_gas_less() {
     let bytecode = sstore_bytecode(0, 1);
 
-    // Find gas limit where SSTORE+state gas fits but execution runs OOG.
-    // Baseline with ample gas to find actual needs.
     let mut baseline = baseline_evm(bytecode.clone());
     let baseline_result = baseline
         .transact_one(
@@ -898,133 +1595,100 @@ fn test_tip1016_reservoir_refill_halt_state_gas_less() {
         .unwrap();
     assert!(baseline_result.is_success());
 
-    // Now set tight gas limit that forces OOG during execution.
-    // With state gas, remaining (total gas) is smaller, so OOG happens earlier.
-    // Set gas_limit such that execution can't complete.
+    let gas_limit = 25_000u64;
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_limit(25_000)
+                .gas_limit(gas_limit)
                 .gas_price(0)
                 .build_fill(),
         )
         .unwrap();
 
-    assert!(
-        result.is_halt(),
-        "Expected HALT with tight gas limit, got {:?}",
-        result
-    );
-    // HALT means remaining is not reimbursed, so gas_used = gas_limit.
+    assert!(result.is_halt());
     match &result {
         revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
-            assert!(
-                matches!(reason, HaltReason::OutOfGas(_)),
-                "Expected OutOfGas halt, got {reason:?}"
-            );
+            assert!(matches!(reason, HaltReason::OutOfGas(_)));
         }
         _ => panic!("Expected Halt variant"),
     }
+    assert_eq!(result.gas_used(), gas_limit);
+    assert_eq!(result.gas().remaining(), 0);
+    assert_eq!(result.gas().spent(), gas_limit);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert!(result.logs().is_empty());
 }
 
-/// 7.4 HALT (OOG) with state_gas > reservoir.
-/// Two SSTOREs (40,000 state gas) with tight gas limit.
-/// Some state gas drawn from regular gas (exceeding reservoir).
-/// After refill: new_reservoir = reservoir + (40,000 - reservoir).
-/// This refill accounts for state gas spillover into regular gas.
-/// Expected: HALT, refill shows state_gas_spent exceeded reservoir.
+/// 7.4 HALT (OOG) with tight cap forcing regular gas exhaustion.
 #[test]
 fn test_tip1016_reservoir_refill_halt_state_gas_more() {
     let bytecode = sstore_multi_bytecode();
+    let gas_limit = 100_000u64;
 
-    // Tight cap creates constrained regular gas.
-    // Even with state gas in reservoir, regular gas budget is limited.
-    // This forces OOG via regular gas exhaustion while state gas > reservoir.
     let mut evm = state_gas_evm(bytecode, 30_000);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_limit(100_000)
+                .gas_limit(gas_limit)
                 .gas_price(0)
                 .build_fill(),
         )
         .unwrap();
 
-    assert!(
-        result.is_halt(),
-        "Expected HALT with tight regular gas cap, got {:?}",
-        result
-    );
+    assert!(result.is_halt());
     match &result {
         revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
-            assert!(
-                matches!(reason, HaltReason::OutOfGas(_)),
-                "Expected OutOfGas halt, got {reason:?}"
-            );
+            assert!(matches!(reason, HaltReason::OutOfGas(_)));
         }
         _ => panic!("Expected Halt variant"),
     }
+    assert_eq!(result.gas_used(), gas_limit);
+    assert_eq!(result.gas().remaining(), 0);
+    assert_eq!(result.gas().spent(), gas_limit);
+    assert_eq!(result.gas().inner_refunded(), 0);
+    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert!(result.logs().is_empty());
 }
 
-/// 7.5 HALT vs REVERT: gas accounting difference when reservoir refill applies.
-/// Same bytecode (SSTORE then explicit REVERT), but compare:
-/// - REVERT path: remaining reimbursed, actual gas spent (not full limit).
-/// - HALT path (OOG before completion): remaining not reimbursed, gas_used = gas_limit.
-///
-/// This demonstrates the refill consequence: HALT consumes all gas, REVERT only charges actual.
+/// 7.5 HALT vs REVERT: gas accounting difference.
 #[test]
 fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
     let bytecode = sstore_then_revert_bytecode();
 
-    // HALT path: tight gas limit causes OOG before REVERT completes.
+    // HALT path: tight gas limit causes OOG.
+    let halt_gas_limit = 25_000u64;
     let mut evm_halt = state_gas_evm(bytecode.clone(), u64::MAX);
     let result_halt = evm_halt
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_limit(25_000)
+                .gas_limit(halt_gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    // REVERT path: ample gas allows full execution.
+    let revert_gas_limit = 100_000u64;
+    let mut evm_revert = state_gas_evm(bytecode, u64::MAX);
+    let result_revert = evm_revert
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(revert_gas_limit)
                 .gas_price(0)
                 .build_fill(),
         )
         .unwrap();
 
     assert!(result_halt.is_halt());
-    let gas_halt = result_halt.gas_used();
-
-    // HALT with gas_limit=25,000 means gas_used should be 25,000 (all spent, no reimbursement).
-    assert_eq!(
-        gas_halt, 25_000,
-        "HALT: all gas consumed, gas_used should equal gas_limit=25,000"
-    );
-
-    // REVERT path: ample gas allows full execution to REVERT.
-    let mut evm_revert = state_gas_evm(bytecode, u64::MAX);
-    let result_revert = evm_revert
-        .transact_one(
-            TxEnv::builder_for_bench()
-                .gas_limit(100_000)
-                .gas_price(0)
-                .build_fill(),
-        )
-        .unwrap();
-
     assert!(!result_revert.is_success() && !result_revert.is_halt());
-    let gas_revert = result_revert.gas_used();
-
-    // REVERT: remaining reimbursed, so gas_used < gas_limit.
-    assert!(
-        gas_revert < 100_000,
-        "REVERT: remaining reimbursed, gas_used should be less than gas_limit"
-    );
-
-    // The difference shows refill consequence:
-    // HALT (gas_limit=25k) uses all 25k (hit limit early before REVERT).
-    // REVERT (gas_limit=100k) uses only intrinsic+execution+state_gas (gets reimbursement).
-    // HALT < REVERT because HALT hits limit before doing actual work.
-    assert!(
-        gas_halt < gas_revert,
-        "HALT gas ({}) should be less than REVERT gas ({}) because HALT hits limit before REVERT executes",
-        gas_halt,
-        gas_revert
-    );
+    assert_eq!(result_halt.gas_used(), halt_gas_limit);
+    assert!(result_revert.gas_used() < revert_gas_limit);
+    assert!(result_halt.gas_used() < result_revert.gas_used());
+    assert_eq!(result_revert.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result_halt.gas().remaining(), 0);
+    assert!(result_revert.gas().remaining() > 0);
+    assert_eq!(result_halt.gas().inner_refunded(), 0);
+    assert_eq!(result_revert.gas().inner_refunded(), 0);
 }
