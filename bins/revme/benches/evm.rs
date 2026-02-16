@@ -9,6 +9,7 @@ fn evm(c: &mut Criterion) {
     bench::transfer_multi::run(c);
     bench::evm_build::run(c);
     bench::gas_cost_estimator::run(c);
+    bench::subcall::run(c);
 }
 criterion_group!(benches, evm);
 criterion_main!(benches);
