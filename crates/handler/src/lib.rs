@@ -34,7 +34,25 @@ pub mod validation;
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};
-pub use frame::{return_create, ContextTrDbError, EthFrame};
+pub use frame::{
+    // Standalone step functions
+    call_interpreter_input,
+    call_load_bytecode,
+    call_transfer_value,
+    check_depth,
+    create_bump_nonce,
+    create_check_balance,
+    create_compute_address,
+    create_interpreter_input,
+    return_create,
+    CallKind,
+    ContextTrDbError,
+    CreateCheckError,
+    CreateKind,
+    EthFrame,
+    FrameBuilder,
+    FrameKind,
+};
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};

@@ -22,10 +22,707 @@ use interpreter::{
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-    keccak256, Address, Bytes, U256,
+    keccak256, Address, Bytes, B256, U256,
 };
 use state::Bytecode;
-use std::{borrow::ToOwned, boxed::Box, vec::Vec};
+use std::{borrow::ToOwned, boxed::Box, string::String, vec::Vec};
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Standalone step functions
+// ────────────────────────────────────────────────────────────────────────────────
+
+/// Returns `Err(CallTooDeep)` if `depth > CALL_STACK_LIMIT`.
+#[inline]
+pub fn check_depth(depth: usize) -> Result<(), InstructionResult> {
+    if depth > CALL_STACK_LIMIT as usize {
+        Err(InstructionResult::CallTooDeep)
+    } else {
+        Ok(())
+    }
+}
+
+/// Transfer value from caller to target. Reverts checkpoint on failure.
+///
+/// Also touches the target account for EIP-158 state clear.
+#[inline]
+pub fn call_transfer_value<J: JournalTr>(
+    journal: &mut J,
+    caller: Address,
+    target: Address,
+    value: &CallValue,
+    checkpoint: JournalCheckpoint,
+) -> Result<(), InstructionResult> {
+    if let CallValue::Transfer(value) = *value {
+        if let Some(e) = journal.transfer_loaded(caller, target, value) {
+            journal.checkpoint_revert(checkpoint);
+            return Err(e.into());
+        }
+    }
+    Ok(())
+}
+
+/// Build [`InputsImpl`] from [`CallInputs`].
+#[inline]
+pub fn call_interpreter_input(inputs: &CallInputs) -> InputsImpl {
+    InputsImpl {
+        target_address: inputs.target_address,
+        caller_address: inputs.caller,
+        bytecode_address: Some(inputs.bytecode_address),
+        input: inputs.input.clone(),
+        call_value: inputs.value.get(),
+    }
+}
+
+/// Load bytecode from account, or use `known_bytecode` if provided.
+///
+/// Returns `(Bytecode, B256)` — the bytecode and its hash.
+#[inline]
+pub fn call_load_bytecode<J: JournalTr>(
+    journal: &mut J,
+    bytecode_address: Address,
+    known_bytecode: Option<(B256, Bytecode)>,
+) -> Result<(Bytecode, B256), <J::Database as Database>::Error> {
+    if let Some((hash, code)) = known_bytecode {
+        Ok((code, hash))
+    } else {
+        let account = journal.load_account_with_code(bytecode_address)?;
+        Ok((
+            account.info.code.clone().unwrap_or_default(),
+            account.info.code_hash,
+        ))
+    }
+}
+
+/// Check that the caller has sufficient balance for the create value transfer.
+#[inline]
+pub fn create_check_balance<J: JournalTr>(
+    journal: &mut J,
+    caller: Address,
+    value: U256,
+) -> Result<(), CreateCheckError<<J::Database as Database>::Error>> {
+    let caller_info = journal.load_account_mut(caller)?;
+    if *caller_info.balance() < value {
+        return Err(CreateCheckError::Instruction(InstructionResult::OutOfFunds));
+    }
+    Ok(())
+}
+
+/// Bump caller nonce. Returns the old nonce.
+///
+/// Errors on nonce overflow.
+#[inline]
+pub fn create_bump_nonce<J: JournalTr>(
+    journal: &mut J,
+    caller: Address,
+) -> Result<u64, CreateCheckError<<J::Database as Database>::Error>> {
+    let mut caller_info = journal.load_account_mut(caller)?;
+    let old_nonce = caller_info.nonce();
+    if !caller_info.bump_nonce() {
+        return Err(CreateCheckError::Instruction(InstructionResult::Return));
+    }
+    Ok(old_nonce)
+}
+
+/// Error type for create check/nonce operations that can fail
+/// with either a database error or an instruction result.
+#[derive(Debug)]
+pub enum CreateCheckError<DbError> {
+    /// Database error.
+    Db(DbError),
+    /// Instruction-level failure (e.g. OutOfFunds, nonce overflow).
+    Instruction(InstructionResult),
+}
+
+impl<DbError> From<DbError> for CreateCheckError<DbError> {
+    fn from(e: DbError) -> Self {
+        Self::Db(e)
+    }
+}
+
+/// Compute the created address from the scheme, caller, nonce, and init_code.
+///
+/// Returns `(address, Option<init_code_hash>)` — the hash is present for CREATE2.
+#[inline]
+pub fn create_compute_address(
+    caller: Address,
+    old_nonce: u64,
+    scheme: &CreateScheme,
+    init_code: &Bytes,
+) -> (Address, Option<B256>) {
+    match scheme {
+        CreateScheme::Create => (caller.create(old_nonce), None),
+        CreateScheme::Create2 { salt } => {
+            let hash = keccak256(init_code);
+            (caller.create2(salt.to_be_bytes(), hash), Some(hash))
+        }
+        CreateScheme::Custom { address } => (*address, None),
+    }
+}
+
+/// Build [`InputsImpl`] for a create frame.
+#[inline]
+pub fn create_interpreter_input(
+    created_address: Address,
+    caller: Address,
+    value: U256,
+) -> InputsImpl {
+    InputsImpl {
+        target_address: created_address,
+        caller_address: caller,
+        bytecode_address: None,
+        input: CallInput::Bytes(Bytes::new()),
+        call_value: value,
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Kind marker types
+// ────────────────────────────────────────────────────────────────────────────────
+
+/// Call frame builder configuration.
+#[derive(Debug)]
+pub struct CallKind {
+    inputs: Box<CallInputs>,
+    transfer_value: bool,
+    check_precompiles: bool,
+    check_empty_bytecode: bool,
+    bytecode: Option<(Bytecode, B256)>,
+    is_static: Option<bool>,
+}
+
+/// Create frame builder configuration.
+#[derive(Debug)]
+pub struct CreateKind {
+    inputs: Box<CreateInputs>,
+    check_balance: bool,
+    bump_nonce: bool,
+    created_address: Option<Address>,
+    bytecode: Option<ExtBytecode>,
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// FrameKind trait
+// ────────────────────────────────────────────────────────────────────────────────
+
+/// Trait enabling a single [`FrameBuilder::build`] method for both [`CallKind`] and [`CreateKind`].
+pub trait FrameKind: Sized {
+    /// Build a frame from the builder, consuming it.
+    fn build_frame<CTX, ERROR>(
+        builder: FrameBuilder<Self>,
+        this: OutFrame<'_, EthFrame>,
+        ctx: &mut CTX,
+        precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
+    where
+        CTX: ContextTr,
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError;
+}
+
+impl FrameKind for CallKind {
+    #[inline]
+    fn build_frame<CTX, ERROR>(
+        builder: FrameBuilder<Self>,
+        mut this: OutFrame<'_, EthFrame>,
+        ctx: &mut CTX,
+        mut precompile_fn: impl FnMut(
+            &mut CTX,
+            &CallInputs,
+        ) -> Result<Option<InterpreterResult>, String>,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
+    where
+        CTX: ContextTr,
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
+    {
+        let FrameBuilder {
+            depth,
+            memory,
+            check_depth: do_check_depth,
+            checkpoint: override_checkpoint,
+            interpreter_input: override_input,
+            gas_limit: override_gas_limit,
+            kind:
+                CallKind {
+                    inputs,
+                    transfer_value,
+                    check_precompiles,
+                    check_empty_bytecode,
+                    bytecode: override_bytecode,
+                    is_static: override_is_static,
+                },
+        } = builder;
+
+        let gas = Gas::new(override_gas_limit.unwrap_or(inputs.gas_limit));
+        let return_result = |instruction_result: InstructionResult| {
+            Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                result: InterpreterResult {
+                    result: instruction_result,
+                    gas,
+                    output: Bytes::new(),
+                },
+                memory_offset: inputs.return_memory_offset.clone(),
+                was_precompile_called: false,
+                precompile_call_logs: Vec::new(),
+            })))
+        };
+
+        // Check depth
+        if do_check_depth {
+            if let Err(e) = check_depth(depth) {
+                return return_result(e);
+            }
+        }
+
+        // Derive interpreter input and other fields before any moves.
+        let interpreter_input = override_input.unwrap_or_else(|| call_interpreter_input(&inputs));
+        let is_static = override_is_static.unwrap_or(inputs.is_static);
+        let gas_limit = override_gas_limit.unwrap_or(inputs.gas_limit);
+
+        // Create subroutine checkpoint
+        let checkpoint = override_checkpoint.unwrap_or_else(|| ctx.journal_mut().checkpoint());
+
+        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
+        if transfer_value {
+            if let Err(e) = call_transfer_value(
+                ctx.journal_mut(),
+                inputs.caller,
+                inputs.target_address,
+                &inputs.value,
+                checkpoint,
+            ) {
+                return return_result(e);
+            }
+        }
+
+        // Check precompiles
+        if check_precompiles {
+            if let Some(result) = precompile_fn(ctx, &inputs).map_err(ERROR::from_string)? {
+                let mut logs = Vec::new();
+                if result.result.is_ok() {
+                    ctx.journal_mut().checkpoint_commit();
+                } else {
+                    logs = ctx.journal_mut().logs()[checkpoint.log_i..].to_vec();
+                    ctx.journal_mut().checkpoint_revert(checkpoint);
+                }
+                return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
+                    result,
+                    memory_offset: inputs.return_memory_offset.clone(),
+                    was_precompile_called: true,
+                    precompile_call_logs: logs,
+                })));
+            }
+        }
+
+        // Get bytecode and hash
+        let (bytecode, bytecode_hash) = if let Some(bch) = override_bytecode {
+            bch
+        } else {
+            call_load_bytecode(
+                ctx.journal_mut(),
+                inputs.bytecode_address,
+                inputs.known_bytecode.clone(),
+            )?
+        };
+
+        // Returns success if bytecode is empty.
+        if check_empty_bytecode && bytecode.is_empty() {
+            ctx.journal_mut().checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
+        // Create interpreter and push new CallStackFrame.
+        this.get(EthFrame::invalid).clear(
+            FrameData::Call(CallFrame {
+                return_memory_range: inputs.return_memory_offset.clone(),
+            }),
+            FrameInput::Call(inputs),
+            depth,
+            memory,
+            ExtBytecode::new_with_hash(bytecode, bytecode_hash),
+            interpreter_input,
+            is_static,
+            ctx.cfg().spec().into(),
+            gas_limit,
+            checkpoint,
+        );
+        Ok(ItemOrResult::Item(this.consume()))
+    }
+}
+
+impl FrameKind for CreateKind {
+    #[inline]
+    fn build_frame<CTX, ERROR>(
+        builder: FrameBuilder<Self>,
+        mut this: OutFrame<'_, EthFrame>,
+        ctx: &mut CTX,
+        _precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
+    where
+        CTX: ContextTr,
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
+    {
+        let FrameBuilder {
+            depth,
+            memory,
+            check_depth: do_check_depth,
+            checkpoint: override_checkpoint,
+            interpreter_input: override_input,
+            gas_limit: override_gas_limit,
+            kind:
+                CreateKind {
+                    inputs,
+                    check_balance,
+                    bump_nonce,
+                    created_address: override_address,
+                    bytecode: override_bytecode,
+                },
+        } = builder;
+
+        let spec: SpecId = ctx.cfg().spec().into();
+        let gas_limit = override_gas_limit.unwrap_or_else(|| inputs.gas_limit());
+        let return_error = |e| {
+            Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
+                result: InterpreterResult {
+                    result: e,
+                    gas: Gas::new(gas_limit),
+                    output: Bytes::new(),
+                },
+                address: None,
+            })))
+        };
+
+        // Check depth
+        if do_check_depth {
+            if let Err(e) = check_depth(depth) {
+                return return_error(e);
+            }
+        }
+
+        // Check balance
+        if check_balance {
+            match create_check_balance(ctx.journal_mut(), inputs.caller(), inputs.value()) {
+                Err(CreateCheckError::Db(e)) => return Err(e.into()),
+                Err(CreateCheckError::Instruction(e)) => return return_error(e),
+                Ok(()) => {}
+            }
+        }
+
+        // Bump nonce and compute address (or use override)
+        let (created_address, init_code_hash) = if let Some(addr) = override_address {
+            // If nonce bump is requested even with an override address, do it.
+            if bump_nonce {
+                match create_bump_nonce(ctx.journal_mut(), inputs.caller()) {
+                    Err(CreateCheckError::Db(e)) => return Err(e.into()),
+                    Err(CreateCheckError::Instruction(e)) => return return_error(e),
+                    Ok(_) => {}
+                }
+            }
+            (addr, None)
+        } else if bump_nonce {
+            let old_nonce = match create_bump_nonce(ctx.journal_mut(), inputs.caller()) {
+                Err(CreateCheckError::Db(e)) => return Err(e.into()),
+                Err(CreateCheckError::Instruction(e)) => return return_error(e),
+                Ok(n) => n,
+            };
+            create_compute_address(
+                inputs.caller(),
+                old_nonce,
+                &inputs.scheme(),
+                inputs.init_code(),
+            )
+        } else {
+            // No nonce bump and no override address — use current nonce for address computation.
+            let caller_info = ctx.journal_mut().load_account_mut(inputs.caller())?;
+            let nonce = caller_info.nonce();
+            drop(caller_info);
+            create_compute_address(inputs.caller(), nonce, &inputs.scheme(), inputs.init_code())
+        };
+
+        // Warm load account.
+        ctx.journal_mut().load_account(created_address)?;
+
+        // Create account, transfer funds and make the journal checkpoint.
+        let checkpoint = if let Some(cp) = override_checkpoint {
+            cp
+        } else {
+            match ctx.journal_mut().create_account_checkpoint(
+                inputs.caller(),
+                created_address,
+                inputs.value(),
+                spec,
+            ) {
+                Ok(checkpoint) => checkpoint,
+                Err(e) => return return_error(e.into()),
+            }
+        };
+
+        let bytecode = override_bytecode.unwrap_or_else(|| {
+            ExtBytecode::new_with_optional_hash(
+                Bytecode::new_legacy(inputs.init_code().clone()),
+                init_code_hash,
+            )
+        });
+
+        let interpreter_input = override_input.unwrap_or_else(|| {
+            create_interpreter_input(created_address, inputs.caller(), inputs.value())
+        });
+
+        this.get(EthFrame::invalid).clear(
+            FrameData::Create(CreateFrame { created_address }),
+            FrameInput::Create(inputs),
+            depth,
+            memory,
+            bytecode,
+            interpreter_input,
+            false,
+            spec,
+            gas_limit,
+            checkpoint,
+        );
+        Ok(ItemOrResult::Item(this.consume()))
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// FrameBuilder<Kind>
+// ────────────────────────────────────────────────────────────────────────────────
+
+/// Configurable builder for constructing EVM call and create frames.
+///
+/// `FrameBuilder` is parameterized by a `Kind` type ([`CallKind`] or [`CreateKind`])
+/// that determines which frame-specific methods and build logic are available.
+///
+/// # Usage
+///
+/// **Default (unchanged behavior):**
+/// ```ignore
+/// FrameBuilder::new_call(depth, memory, inputs)
+///     .build(out_frame, ctx, |ctx, inputs| precompiles.run(ctx, inputs))?
+/// ```
+///
+/// **Custom call frame:**
+/// ```ignore
+/// FrameBuilder::new_call(depth, memory, inputs)
+///     .skip_precompile_check()
+///     .skip_depth_check()
+///     .with_bytecode(my_bytecode, my_hash)
+///     .build(out_frame, ctx, |ctx, inputs| precompiles.run(ctx, inputs))?
+/// ```
+///
+/// **Custom create frame:**
+/// ```ignore
+/// FrameBuilder::new_create(depth, memory, inputs)
+///     .skip_balance_check()
+///     .with_created_address(addr)
+///     .build(out_frame, ctx, |_, _| Ok(None))?
+/// ```
+///
+/// # Note on inspector hooks
+///
+/// The builder operates below the inspector layer. Direct builder usage
+/// (outside [`EthFrame::init_with_context`]) bypasses inspector hooks
+/// (`call`, `create`, `call_end`, `create_end`, `initialize_interp`).
+pub struct FrameBuilder<Kind> {
+    /// Call depth in the execution stack.
+    pub depth: usize,
+    /// Shared memory for the frame.
+    pub memory: SharedMemory,
+    check_depth: bool,
+    checkpoint: Option<JournalCheckpoint>,
+    interpreter_input: Option<InputsImpl>,
+    gas_limit: Option<u64>,
+    kind: Kind,
+}
+
+impl<Kind: core::fmt::Debug> core::fmt::Debug for FrameBuilder<Kind> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("FrameBuilder")
+            .field("depth", &self.depth)
+            .field("check_depth", &self.check_depth)
+            .field("checkpoint", &self.checkpoint)
+            .field("interpreter_input", &self.interpreter_input)
+            .field("gas_limit", &self.gas_limit)
+            .field("kind", &self.kind)
+            .finish()
+    }
+}
+
+// Shared methods for any Kind.
+impl<K> FrameBuilder<K> {
+    /// Skip the call-depth check (`CALL_STACK_LIMIT`).
+    #[inline]
+    pub fn skip_depth_check(mut self) -> Self {
+        self.check_depth = false;
+        self
+    }
+
+    /// Provide an externally-created journal checkpoint instead of
+    /// letting the builder create one.
+    ///
+    /// The caller must ensure the checkpoint matches the current journal state.
+    #[inline]
+    pub fn with_checkpoint(mut self, cp: JournalCheckpoint) -> Self {
+        self.checkpoint = Some(cp);
+        self
+    }
+
+    /// Override the interpreter input that would normally be derived from the call/create inputs.
+    #[inline]
+    pub fn with_interpreter_input(mut self, input: InputsImpl) -> Self {
+        self.interpreter_input = Some(input);
+        self
+    }
+
+    /// Override the gas limit from the call/create inputs.
+    #[inline]
+    pub fn with_gas_limit(mut self, gas: u64) -> Self {
+        self.gas_limit = Some(gas);
+        self
+    }
+}
+
+// Build method for any Kind that implements FrameKind.
+impl<K: FrameKind> FrameBuilder<K> {
+    /// Consume the builder and produce a frame (or an early result).
+    ///
+    /// The `precompile_fn` closure is only used by [`CallKind`]; [`CreateKind`] ignores it.
+    #[inline]
+    pub fn build<CTX, ERROR>(
+        self,
+        this: OutFrame<'_, EthFrame>,
+        ctx: &mut CTX,
+        precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
+    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
+    where
+        CTX: ContextTr,
+        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
+    {
+        K::build_frame(self, this, ctx, precompile_fn)
+    }
+}
+
+// Call-specific methods.
+impl FrameBuilder<CallKind> {
+    /// Create a new call frame builder with default Ethereum behavior.
+    #[inline]
+    pub fn new_call(depth: usize, memory: SharedMemory, inputs: Box<CallInputs>) -> Self {
+        Self {
+            depth,
+            memory,
+            check_depth: true,
+            checkpoint: None,
+            interpreter_input: None,
+            gas_limit: None,
+            kind: CallKind {
+                inputs,
+                transfer_value: true,
+                check_precompiles: true,
+                check_empty_bytecode: true,
+                bytecode: None,
+                is_static: None,
+            },
+        }
+    }
+
+    /// Skip value transfer (and the EIP-158 account touch).
+    #[inline]
+    pub fn skip_value_transfer(mut self) -> Self {
+        self.kind.transfer_value = false;
+        self
+    }
+
+    /// Skip the precompile dispatch check.
+    #[inline]
+    pub fn skip_precompile_check(mut self) -> Self {
+        self.kind.check_precompiles = false;
+        self
+    }
+
+    /// Skip the empty-bytecode early-return check.
+    #[inline]
+    pub fn skip_empty_bytecode_check(mut self) -> Self {
+        self.kind.check_empty_bytecode = false;
+        self
+    }
+
+    /// Provide bytecode directly instead of loading it from the account.
+    ///
+    /// Also auto-skips the precompile check (custom bytecode implies no precompile dispatch).
+    #[inline]
+    pub fn with_bytecode(mut self, bytecode: Bytecode, hash: B256) -> Self {
+        self.kind.bytecode = Some((bytecode, hash));
+        self.kind.check_precompiles = false;
+        self
+    }
+
+    /// Override the `is_static` flag from the call inputs.
+    #[inline]
+    pub fn with_is_static(mut self, is_static: bool) -> Self {
+        self.kind.is_static = Some(is_static);
+        self
+    }
+}
+
+// Create-specific methods.
+impl FrameBuilder<CreateKind> {
+    /// Create a new create frame builder with default Ethereum behavior.
+    #[inline]
+    pub fn new_create(depth: usize, memory: SharedMemory, inputs: Box<CreateInputs>) -> Self {
+        Self {
+            depth,
+            memory,
+            check_depth: true,
+            checkpoint: None,
+            interpreter_input: None,
+            gas_limit: None,
+            kind: CreateKind {
+                inputs,
+                check_balance: true,
+                bump_nonce: true,
+                created_address: None,
+                bytecode: None,
+            },
+        }
+    }
+
+    /// Skip the caller balance check.
+    #[inline]
+    pub fn skip_balance_check(mut self) -> Self {
+        self.kind.check_balance = false;
+        self
+    }
+
+    /// Skip the caller nonce bump.
+    ///
+    /// When nonce bump is skipped, a `created_address` should be provided
+    /// externally since the CREATE address depends on the old nonce.
+    #[inline]
+    pub fn skip_nonce_bump(mut self) -> Self {
+        self.kind.bump_nonce = false;
+        self
+    }
+
+    /// Provide a pre-computed created address.
+    ///
+    /// Also auto-skips the nonce bump (the nonce bump is only needed
+    /// for computing the CREATE address).
+    #[inline]
+    pub fn with_created_address(mut self, addr: Address) -> Self {
+        self.kind.created_address = Some(addr);
+        self.kind.bump_nonce = false;
+        self
+    }
+
+    /// Provide init bytecode directly instead of deriving it from the create inputs.
+    #[inline]
+    pub fn with_bytecode(mut self, bytecode: ExtBytecode) -> Self {
+        self.kind.bytecode = Some(bytecode);
+        self
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// EthFrame
+// ────────────────────────────────────────────────────────────────────────────────
 
 /// Frame implementation for Ethereum.
 #[derive_where(Clone, Debug; IW,
@@ -137,113 +834,15 @@ impl EthFrame<EthInterpreter> {
         PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        this: OutFrame<'_, Self>,
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let gas = Gas::new(inputs.gas_limit);
-        let return_result = |instruction_result: InstructionResult| {
-            Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                result: InterpreterResult {
-                    result: instruction_result,
-                    gas,
-                    output: Bytes::new(),
-                },
-                memory_offset: inputs.return_memory_offset.clone(),
-                was_precompile_called: false,
-                precompile_call_logs: Vec::new(),
-            })))
-        };
-
-        // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_result(InstructionResult::CallTooDeep);
-        }
-
-        // Create subroutine checkpoint
-        let checkpoint = ctx.journal_mut().checkpoint();
-
-        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if let CallValue::Transfer(value) = inputs.value {
-            // Transfer value from caller to called account
-            // Target will get touched even if balance transferred is zero.
-            if let Some(i) =
-                ctx.journal_mut()
-                    .transfer_loaded(inputs.caller, inputs.target_address, value)
-            {
-                ctx.journal_mut().checkpoint_revert(checkpoint);
-                return return_result(i.into());
-            }
-        }
-
-        let interpreter_input = InputsImpl {
-            target_address: inputs.target_address,
-            caller_address: inputs.caller,
-            bytecode_address: Some(inputs.bytecode_address),
-            input: inputs.input.clone(),
-            call_value: inputs.value.get(),
-        };
-        let is_static = inputs.is_static;
-        let gas_limit = inputs.gas_limit;
-
-        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
-            let mut logs = Vec::new();
-            if result.result.is_ok() {
-                ctx.journal_mut().checkpoint_commit();
-            } else {
-                // clone logs that precompile created, only possible with custom precompiles.
-                // checkpoint.log_i will be always correct.
-                logs = ctx.journal_mut().logs()[checkpoint.log_i..].to_vec();
-                ctx.journal_mut().checkpoint_revert(checkpoint);
-            }
-            return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
-                result,
-                memory_offset: inputs.return_memory_offset.clone(),
-                was_precompile_called: true,
-                precompile_call_logs: logs,
-            })));
-        }
-
-        // Get bytecode and hash - either from known_bytecode or load from account
-        let (bytecode, bytecode_hash) = if let Some((hash, code)) = inputs.known_bytecode.clone() {
-            // Use provided bytecode and hash
-            (code, hash)
-        } else {
-            // Load account and get its bytecode
-            let account = ctx
-                .journal_mut()
-                .load_account_with_code(inputs.bytecode_address)?;
-            (
-                account.info.code.clone().unwrap_or_default(),
-                account.info.code_hash,
-            )
-        };
-
-        // Returns success if bytecode is empty.
-        if bytecode.is_empty() {
-            ctx.journal_mut().checkpoint_commit();
-            return return_result(InstructionResult::Stop);
-        }
-
-        // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
-            FrameData::Call(CallFrame {
-                return_memory_range: inputs.return_memory_offset.clone(),
-            }),
-            FrameInput::Call(inputs),
-            depth,
-            memory,
-            ExtBytecode::new_with_hash(bytecode, bytecode_hash),
-            interpreter_input,
-            is_static,
-            ctx.cfg().spec().into(),
-            gas_limit,
-            checkpoint,
-        );
-        Ok(ItemOrResult::Item(this.consume()))
+        FrameBuilder::new_call(depth, memory, inputs)
+            .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
     }
 
     /// Make create frame.
@@ -252,99 +851,13 @@ impl EthFrame<EthInterpreter> {
         CTX: ContextTr,
         ERROR: From<ContextTrDbError<CTX>> + FromStringError,
     >(
-        mut this: OutFrame<'_, Self>,
+        this: OutFrame<'_, Self>,
         context: &mut CTX,
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let spec = context.cfg().spec().into();
-        let return_error = |e| {
-            Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
-                result: InterpreterResult {
-                    result: e,
-                    gas: Gas::new(inputs.gas_limit()),
-                    output: Bytes::new(),
-                },
-                address: None,
-            })))
-        };
-
-        // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_error(InstructionResult::CallTooDeep);
-        }
-
-        // Fetch balance of caller.
-        let journal = context.journal_mut();
-        let mut caller_info = journal.load_account_mut(inputs.caller())?;
-
-        // Check if caller has enough balance to send to the created contract.
-        // decrement of balance is done in the create_account_checkpoint.
-        if *caller_info.balance() < inputs.value() {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let old_nonce = caller_info.nonce();
-        if !caller_info.bump_nonce() {
-            return return_error(InstructionResult::Return);
-        };
-
-        // Create address
-        let mut init_code_hash = None;
-        let created_address = match inputs.scheme() {
-            CreateScheme::Create => inputs.caller().create(old_nonce),
-            CreateScheme::Create2 { salt } => {
-                let init_code_hash = *init_code_hash.insert(keccak256(inputs.init_code()));
-                inputs.caller().create2(salt.to_be_bytes(), init_code_hash)
-            }
-            CreateScheme::Custom { address } => address,
-        };
-
-        drop(caller_info); // Drop caller info to avoid borrow checker issues.
-
-        // warm load account.
-        journal.load_account(created_address)?;
-
-        // Create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match context.journal_mut().create_account_checkpoint(
-            inputs.caller(),
-            created_address,
-            inputs.value(),
-            spec,
-        ) {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => return return_error(e.into()),
-        };
-
-        let bytecode = ExtBytecode::new_with_optional_hash(
-            Bytecode::new_legacy(inputs.init_code().clone()),
-            init_code_hash,
-        );
-
-        let interpreter_input = InputsImpl {
-            target_address: created_address,
-            caller_address: inputs.caller(),
-            bytecode_address: None,
-            input: CallInput::Bytes(Bytes::new()),
-            call_value: inputs.value(),
-        };
-        let gas_limit = inputs.gas_limit();
-
-        this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
-            FrameInput::Create(inputs),
-            depth,
-            memory,
-            bytecode,
-            interpreter_input,
-            false,
-            spec,
-            gas_limit,
-            checkpoint,
-        );
-        Ok(ItemOrResult::Item(this.consume()))
+        FrameBuilder::new_create(depth, memory, inputs).build(this, context, |_, _| Ok(None))
     }
 
     /// Initializes a frame with the given context and precompiles.
@@ -360,7 +873,6 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
-        // TODO cleanup inner make functions
         let FrameInit {
             depth,
             memory,
@@ -369,9 +881,12 @@ impl EthFrame<EthInterpreter> {
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                FrameBuilder::new_call(depth, memory, inputs)
+                    .build(this, ctx, |ctx, inputs| precompiles.run(ctx, inputs))
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => {
+                FrameBuilder::new_create(depth, memory, inputs).build(this, ctx, |_, _| Ok(None))
+            }
             FrameInput::Empty => unreachable!(),
         }
     }
