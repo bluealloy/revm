@@ -1847,3 +1847,201 @@ fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
         &(result_halt, result_revert),
     );
 }
+
+// ---- Gap Tests: Categories A-E from tip1016.md ----
+
+/// Bytecode: CALL(gas, addr, value=0, 0, 0, 0, 0); POP; STOP
+/// CALL without value transfer to given address.
+#[allow(clippy::vec_init_then_push)]
+fn call_no_value_bytecode(target: [u8; 20]) -> Bytecode {
+    let mut bytecode = Vec::new();
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // retSize
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // retOffset
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // argsSize
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // argsOffset
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0); // value = 0
+    bytecode.push(opcode::PUSH20);
+    bytecode.extend_from_slice(&target);
+    bytecode.push(opcode::GAS);
+    bytecode.push(opcode::CALL);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// Bytecode that CREATEs a child, CALLs it (child reverts), then does SSTORE(0,1) itself.
+/// Tests that child's reverted state gas doesn't affect parent's own state gas accounting.
+fn create_call_revert_then_sstore_bytecode(child_runtime: &[u8]) -> Bytecode {
+    assert!(child_runtime.len() < 128, "child_runtime too large");
+
+    // Build init code for child deployment.
+    let mut init_code = Vec::new();
+    for (i, &byte) in child_runtime.iter().enumerate() {
+        init_code.push(opcode::PUSH1);
+        init_code.push(byte);
+        init_code.push(opcode::PUSH1);
+        init_code.push(i as u8);
+        init_code.push(opcode::MSTORE8);
+    }
+    init_code.push(opcode::PUSH1);
+    init_code.push(child_runtime.len() as u8);
+    init_code.push(opcode::PUSH1);
+    init_code.push(0);
+    init_code.push(opcode::RETURN);
+
+    assert!(init_code.len() < 256, "init_code too large");
+
+    let mut bytecode = Vec::new();
+
+    // Store init code in memory.
+    for (i, &byte) in init_code.iter().enumerate() {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(byte);
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(i as u8);
+        bytecode.push(opcode::MSTORE8);
+    }
+
+    // CREATE(value=0, offset=0, length)
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(init_code.len() as u8);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::CREATE);
+    // Stack: [child_addr]
+
+    // CALL child (value=0) — child will SSTORE then REVERT
+    for _ in 0..5 {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(0);
+    }
+    bytecode.push(opcode::SWAP5);
+    bytecode.push(opcode::GAS);
+    bytecode.push(opcode::CALL);
+    bytecode.push(opcode::POP); // discard call result
+
+    // Parent does SSTORE(0, 1) — this state gas should be kept
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(1);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::SSTORE);
+
+    bytecode.push(opcode::STOP);
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// C.1/E.5: CALL to new empty account WITHOUT value transfer — no state gas.
+#[test]
+fn test_tip1016_call_new_account_no_value() {
+    let target = address!("0xd000000000000000000000000000000000000099");
+    let bytecode = call_no_value_bytecode(target.into_array());
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    // No value transfer → no new_account_state_gas even for empty account.
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_call_new_account_no_value.json",
+        &(baseline_result, result),
+    );
+}
+
+/// E.3: Large code deployment — CREATE deploying 200-byte contract.
+/// Verifies code_deposit_state_gas scales correctly with code size.
+#[test]
+fn test_tip1016_create_large_code() {
+    let init = return_n_bytes_init_code(200);
+    let bytecode = create_bytecode(&init);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+    let expected = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 200;
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected);
+    assert_eq!(result.gas().state_gas_spent(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    // Verify code deposit portion is significant
+    let code_deposit_portion = STATE_GAS_CODE_DEPOSIT * 200;
+    assert_eq!(code_deposit_portion, 200_000);
+    assert_eq!(result.gas_used(), baseline_gas + expected);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_create_large_code.json",
+        &(baseline_result, result),
+    );
+}
+
+/// B.2: Parent CREATEs child, CALLs child (child SSTOREs + REVERTs), then parent SSTOREs.
+/// Verifies child's reverted state gas is refunded while parent's own state gas accumulates.
+#[test]
+fn test_tip1016_parent_sstore_after_child_revert() {
+    // Child runtime: SSTORE(0,1); REVERT(0,0)
+    let child_runtime: Vec<u8> = vec![
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::SSTORE,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::REVERT,
+    ];
+    let bytecode = create_call_revert_then_sstore_bytecode(&child_runtime);
+
+    let mut baseline = baseline_evm(bytecode.clone());
+    let baseline_result = baseline
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+    let baseline_gas = baseline_result.gas_used();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
+    // Parent's CREATE state gas + code deposit + parent's own SSTORE.
+    // Child's SSTORE state gas (200k) is refunded on revert.
+    let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+
+    assert!(result.is_success());
+    let delta = result.gas_used() - baseline_gas;
+    assert_eq!(delta, expected_state_gas);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    compare_or_save_tip1016_testdata(
+        "test_tip1016_parent_sstore_after_child_revert.json",
+        &(baseline_result, result),
+    );
+}

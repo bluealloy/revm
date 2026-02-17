@@ -408,4 +408,40 @@ mod tests {
         assert!(gas.record_state_cost(100)); // 100 from remaining
         assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 350, 450));
     }
+
+    /// A.1: Verify state_gas_spent is incremented even after failed record_state_cost.
+    /// This documents the current behavior: state_gas_spent is bumped before validation,
+    /// so a failed spill leaves an inflated counter.
+    #[test]
+    fn test_record_state_cost_oog_inflates_state_gas_spent() {
+        // remaining=30, reservoir=0, cost=100 → OOG
+        let mut gas = Gas::new(30);
+        assert!(!gas.record_state_cost(100));
+        // state_gas_spent is incremented before the OOG check
+        assert_eq!(gas.state_gas_spent(), 100);
+
+        // With reservoir partially covering: reservoir=20, remaining=30, cost=100
+        // spill = 100 - 20 = 80, remaining(30) < 80 → OOG
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(30, 20);
+        assert!(!gas.record_state_cost(100));
+        assert_eq!(gas.state_gas_spent(), 100);
+        // reservoir is consumed even on failure
+        assert_eq!(gas.reservoir(), 0);
+    }
+
+    /// A.3: State gas with zero regular remaining but non-zero reservoir.
+    #[test]
+    fn test_record_state_cost_zero_remaining_with_reservoir() {
+        // remaining=0, reservoir=500: state gas draws entirely from reservoir
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(0, 500);
+        assert!(gas.record_state_cost(200));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (300, 0, 200));
+
+        // Exhaust reservoir exactly
+        assert!(gas.record_state_cost(300));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 0, 500));
+
+        // Now any cost → OOG (both remaining and reservoir are 0)
+        assert!(!gas.record_state_cost(1));
+    }
 }
