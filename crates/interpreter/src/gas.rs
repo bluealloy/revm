@@ -166,6 +166,8 @@ impl Gas {
     ///
     /// On exceptional halt, the remaining gas must be zeroed
     /// to prevent state operations from succeeding via remaining gas.
+    ///
+    /// Note that this does not affect the reservoir.
     #[inline]
     pub fn spend_all(&mut self) {
         self.remaining = 0;
