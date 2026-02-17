@@ -113,7 +113,7 @@ pub const CALL_STIPEND: u64 = 2300;
 pub struct InitialAndFloorGas {
     /// Initial gas for transaction.
     pub initial_total_gas: u64,
-    /// State gas component of initial_gas (subset of initial_gas).
+    /// State gas component of initial_gas (subset of initial_total_gas).
     /// For CREATE transactions, this includes `new_account_state_gas` and `create_state_gas`.
     /// For CALL transactions, this is 0 as state gas is unpredictable at validation time.
     pub initial_state_gas: u64,
