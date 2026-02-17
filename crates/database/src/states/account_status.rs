@@ -96,8 +96,6 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on touched empty account post state clear EIP (EIP-161).
-    ///
-    /// # Panics
 /// Returns the next account status on touched empty account post state clear EIP (EIP-161).
     /// If current status is [AccountStatus::Changed].
     pub fn on_touched_empty_post_eip161(&self) -> Self {
