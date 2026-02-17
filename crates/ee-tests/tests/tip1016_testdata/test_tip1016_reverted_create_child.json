@@ -21,10 +21,10 @@
       "gas": {
         "floor_gas": 21000,
         "gas_refunded": 0,
-        "gas_spent": 132218,
+        "gas_spent": 405218,
         "intrinsic_gas": 21000,
         "limit": 1000000000,
-        "state_gas_spent": 57000
+        "state_gas_spent": 330000
       },
       "logs": [],
       "output": {

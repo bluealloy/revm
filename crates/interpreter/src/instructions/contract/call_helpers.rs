@@ -168,7 +168,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         cost += host
             .gas_params()
             .new_account_cost(is_spurious_dragon, transfers_value);
-        if host.is_state_gas_enabled() {
+        if host.is_state_gas_enabled() && transfers_value {
             state_gas_cost += host.gas_params().new_account_state_gas();
         }
         return Ok((cost, state_gas_cost, bytecode, code_hash));

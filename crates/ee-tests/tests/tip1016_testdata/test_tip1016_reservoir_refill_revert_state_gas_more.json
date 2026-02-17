@@ -6,7 +6,7 @@
         "gas_refunded": 0,
         "gas_spent": 65218,
         "intrinsic_gas": 21000,
-        "limit": 150000,
+        "limit": 1000000,
         "state_gas_spent": 0
       },
       "logs": [],
@@ -18,10 +18,10 @@
       "gas": {
         "floor_gas": 21000,
         "gas_refunded": 0,
-        "gas_spent": 105218,
+        "gas_spent": 465218,
         "intrinsic_gas": 21000,
-        "limit": 150000,
-        "state_gas_spent": 40000
+        "limit": 1000000,
+        "state_gas_spent": 400000
       },
       "logs": [],
       "output": "0x"

@@ -24,7 +24,7 @@
         "gas_spent": 50000,
         "intrinsic_gas": 21000,
         "limit": 50000,
-        "state_gas_spent": 20000
+        "state_gas_spent": 200000
       },
       "logs": [],
       "reason": {
