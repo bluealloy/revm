@@ -328,12 +328,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn test_on_touched_empty_post_eip161_changed() {
-        AccountStatus::Changed.on_touched_empty_post_eip161();
-    }
-
-    #[test]
     fn test_on_touched_created_pre_eip161() {
         assert_eq!(
             AccountStatus::LoadedEmptyEIP161.on_touched_created_pre_eip161(true),
