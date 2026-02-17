@@ -92,12 +92,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     } else {
         stack_gas_limit
     };
-    // Deduct gas forwarded to child from remaining only (not regular gas).
-    // Child inherits parent's regular_gas_remaining directly.
-    if !interpreter.gas.record_regular_cost(gas_limit) {
-        interpreter.halt_oog();
-        return None;
-    }
+    gas!(interpreter, gas_limit, None);
 
     // Add call stipend if there is value to be transferred.
     if transfers_value {
@@ -173,7 +168,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         cost += host
             .gas_params()
             .new_account_cost(is_spurious_dragon, transfers_value);
-        if host.is_state_gas_enabled() && transfers_value {
+        if host.is_state_gas_enabled() {
             state_gas_cost += host.gas_params().new_account_state_gas();
         }
         return Ok((cost, state_gas_cost, bytecode, code_hash));

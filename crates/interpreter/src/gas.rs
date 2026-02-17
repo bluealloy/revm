@@ -356,3 +356,56 @@ pub const fn memory_gas(num_words: usize, linear_cost: u64, quadratic_cost: u64)
         .saturating_mul(num_words)
         .saturating_add(num_words.saturating_mul(num_words) / quadratic_cost)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_record_state_cost() {
+        // Test 1: Cost from reservoir only
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
+        assert!(gas.record_state_cost(200));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (300, 1000, 200));
+
+        // Test 2: Exhaust reservoir exactly
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
+        assert!(gas.record_state_cost(500));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 1000, 500));
+
+        // Test 3: Spill to remaining (reservoir < cost)
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 300);
+        assert!(gas.record_state_cost(500));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 800, 500));
+
+        // Test 4: No reservoir (mainnet standard)
+        let mut gas = Gas::new(1000);
+        assert!(gas.record_state_cost(200));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 800, 200));
+
+        // Test 5: Zero cost
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
+        assert!(gas.record_state_cost(0));
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (50, 100, 0));
+
+        // Test 6: Out of gas (cost > remaining + reservoir)
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
+        assert!(!gas.record_state_cost(200));
+
+        // Test 7: Multiple operations accumulate state_gas_spent
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(2000, 1000);
+        assert!(gas.record_state_cost(100));
+        assert!(gas.record_state_cost(200));
+        assert!(gas.record_state_cost(150));
+        assert_eq!(gas.state_gas_spent(), 450);
+
+        // Test 8: Complex scenario exhausting reservoir then remaining
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(500, 300);
+        assert!(gas.record_state_cost(150)); // 150 from reservoir
+        assert_eq!((gas.reservoir(), gas.remaining()), (150, 500));
+        assert!(gas.record_state_cost(200)); // 150 from reservoir, 50 from remaining
+        assert_eq!((gas.reservoir(), gas.remaining()), (0, 450));
+        assert!(gas.record_state_cost(100)); // 100 from remaining
+        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 350, 450));
+    }
+}

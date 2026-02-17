@@ -91,10 +91,6 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     if context.host.is_state_gas_enabled() {
         state_gas!(
             context.interpreter,
-            context.host.gas_params().new_account_state_gas()
-        );
-        state_gas!(
-            context.interpreter,
             context.host.gas_params().create_state_gas()
         );
     }
@@ -111,12 +107,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // Take remaining gas and deduce l64 part of it.
         gas_limit = context.host.gas_params().call_stipend_reduction(gas_limit);
     }
-    // Deduct gas forwarded to child from remaining only (not regular gas).
-    // Child inherits parent's regular_gas_remaining directly.
-    if !context.interpreter.gas.record_regular_cost(gas_limit) {
-        context.interpreter.halt_oog();
-        return;
-    }
+    gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
     context
