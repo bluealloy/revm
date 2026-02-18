@@ -3708,6 +3708,7 @@ name = "revm-primitives"
 version = "22.0.0"
 dependencies = [
  "alloy-primitives",
+ "bitflags",
  "num_enum",
  "once_cell",
  "serde",

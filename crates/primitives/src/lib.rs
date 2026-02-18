@@ -27,9 +27,11 @@ pub mod eip7907;
 pub mod hardfork;
 pub mod hints_util;
 mod once_lock;
+pub mod validation;
 
 pub use constants::*;
 pub use once_lock::OnceLock;
+pub use validation::ValidationChecks;
 
 // Reexport alloy primitives.
 
