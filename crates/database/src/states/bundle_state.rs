@@ -564,6 +564,7 @@ impl BundleState {
         };
         let mut reverts = Vec::with_capacity(reverts_capacity);
 
+        self.state.reserve(transitions.transitions.len());
         for (address, transition) in transitions.transitions.into_iter() {
             // Add new contract if it was created/changed.
             if let Some((hash, new_bytecode)) = transition.has_new_contract() {
@@ -691,6 +692,7 @@ impl BundleState {
     ///
     /// Updates the `other` state only if `other` is not flagged as destroyed.
     pub fn extend_state(&mut self, other_state: AddressMap<BundleAccount>) {
+        self.state.reserve(other_state.len());
         for (address, other_account) in other_state {
             match self.state.entry(address) {
                 Entry::Occupied(mut entry) => {
@@ -703,6 +705,7 @@ impl BundleState {
                         this.storage = other_account.storage;
                     } else {
                         // Otherwise extend this storage with other
+                        this.storage.reserve(other_account.storage.len());
                         for (key, storage_slot) in other_account.storage {
                             // Update present value or insert storage slot.
                             this.storage
