@@ -3630,7 +3630,6 @@ dependencies = [
 name = "revm-handler"
 version = "15.0.0"
 dependencies = [
- "alloy-provider",
  "alloy-signer",
  "alloy-signer-local",
  "auto_impl",

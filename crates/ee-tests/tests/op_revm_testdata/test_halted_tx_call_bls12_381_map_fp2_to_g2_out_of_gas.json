@@ -8,6 +8,7 @@
         "intrinsic_gas": 23048,
         "limit": 46847
       },
+      "logs": [],
       "reason": {
         "Base": {
           "OutOfGas": "Precompile"
