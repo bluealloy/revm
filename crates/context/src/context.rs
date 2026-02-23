@@ -86,14 +86,14 @@ impl<
         &mut self,
     ) -> (
         &Self::Block,
-        &Self::Tx,
+        &mut Self::Tx,
         &Self::Cfg,
         &mut Self::Journal,
         &mut Self::Chain,
         &mut Self::Local,
     ) {
         let block = &self.block;
-        let tx = &self.tx;
+        let tx = &mut self.tx;
         let cfg = &self.cfg;
         let journal = &mut self.journaled_state;
         let chain = &mut self.chain;

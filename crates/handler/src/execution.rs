@@ -9,11 +9,11 @@ use std::boxed::Box;
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
 #[inline]
 pub fn create_init_frame(
-    tx: &impl Transaction,
+    tx: &mut impl Transaction,
     bytecode: Option<(Bytecode, B256)>,
     gas_limit: u64,
 ) -> FrameInput {
-    let input = tx.input().clone();
+    let input = tx.take_input();
 
     match tx.kind() {
         TxKind::Call(target_address) => {

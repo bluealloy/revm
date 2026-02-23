@@ -232,6 +232,11 @@ impl Transaction for TxEnv {
         &self.data
     }
 
+    #[inline]
+    fn take_input(&mut self) -> Bytes {
+        core::mem::take(&mut self.data)
+    }
+
     fn blob_versioned_hashes(&self) -> &[B256] {
         &self.blob_hashes
     }

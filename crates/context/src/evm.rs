@@ -5,6 +5,10 @@ use core::{
 };
 
 use context_interface::FrameStack;
+use primitives::U256;
+
+/// Arena size: space for 16 frames × 1024 stack slots.
+pub const ARENA_SIZE: usize = 16 * 1024;
 
 /// Main EVM structure that contains all data needed for execution.
 #[derive(Debug, Clone)]
@@ -22,6 +26,8 @@ pub struct Evm<CTX, INSP, I, P, F> {
     pub precompiles: P,
     /// Frame that is going to be executed.
     pub frame_stack: FrameStack<F>,
+    /// Shared arena buffer for stack allocations across nested call frames.
+    pub stack_arena: std::sync::Arc<std::vec::Vec<U256>>,
 }
 
 impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
@@ -35,6 +41,7 @@ impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
             instruction,
             precompiles,
             frame_stack: FrameStack::new_prealloc(8),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; ARENA_SIZE]),
         }
     }
 }
@@ -48,6 +55,7 @@ impl<CTX, I, INSP, P, F: Default> Evm<CTX, INSP, I, P, F> {
             instruction,
             precompiles,
             frame_stack: FrameStack::new_prealloc(8),
+            stack_arena: std::sync::Arc::new(std::vec![U256::ZERO; ARENA_SIZE]),
         }
     }
 }
@@ -62,6 +70,7 @@ impl<CTX, INSP, I, P, F> Evm<CTX, INSP, I, P, F> {
             instruction: self.instruction,
             precompiles: self.precompiles,
             frame_stack: self.frame_stack,
+            stack_arena: self.stack_arena,
         }
     }
 
@@ -73,6 +82,7 @@ impl<CTX, INSP, I, P, F> Evm<CTX, INSP, I, P, F> {
             instruction: self.instruction,
             precompiles,
             frame_stack: self.frame_stack,
+            stack_arena: self.stack_arena,
         }
     }
 
