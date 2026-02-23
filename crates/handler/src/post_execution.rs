@@ -115,6 +115,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
         },
         SuccessOrHalt::Revert => ExecutionResult::Revert {
             gas: result_gas,
+            logs,
             output: output.into_data(),
         },
         SuccessOrHalt::Halt(reason) => {
@@ -127,12 +128,14 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
                     return ExecutionResult::Halt {
                         reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
                         gas: result_gas,
+                        logs,
                     };
                 }
             }
             ExecutionResult::Halt {
                 reason,
                 gas: result_gas,
+                logs,
             }
         }
         // Only two internal return flags.

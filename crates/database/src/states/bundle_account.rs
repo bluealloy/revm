@@ -146,6 +146,7 @@ impl BundleAccount {
         let extend_storage =
             |this_storage: &mut StorageWithOriginalValues,
              storage_update: StorageWithOriginalValues| {
+                this_storage.reserve(storage_update.len());
                 for (key, value) in storage_update {
                     this_storage.entry(key).or_insert(value).present_value = value.present_value;
                 }
