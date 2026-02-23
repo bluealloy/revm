@@ -72,16 +72,6 @@ impl Clone for EthPrecompiles {
     }
 }
 
-impl Default for EthPrecompiles {
-    fn default() -> Self {
-        let spec = SpecId::default();
-        Self {
-            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
-            spec,
-        }
-    }
-}
-
 impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
     type Output = InterpreterResult;
 

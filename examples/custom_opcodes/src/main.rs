@@ -12,6 +12,7 @@ use revm::{
         interpreter_types::{Immediates, Jumps},
         Instruction, InstructionContext,
     },
+    primitives::hardfork::SpecId,
     primitives::TxKind,
     state::Bytecode,
     Context, InspectEvm, MainContext,
@@ -51,7 +52,7 @@ pub fn main() {
     );
 
     // Create a new EVM instance.
-    let mut evm = Evm::new(ctx, instructions, EthPrecompiles::default())
+    let mut evm = Evm::new(ctx, instructions, EthPrecompiles::new(SpecId::default()))
         .with_inspector(TracerEip3155::new_stdout().without_summary());
 
     // inspect the transaction.

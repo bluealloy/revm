@@ -83,13 +83,3 @@ where
         &self.instruction_table
     }
 }
-
-impl<WIRE, HOST> Default for EthInstructions<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    fn default() -> Self {
-        Self::new_mainnet()
-    }
-}
