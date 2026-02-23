@@ -1,7 +1,7 @@
 use crate::{inspectors::GasInspector, Inspector};
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
-    interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
+    interpreter_types::{Jumps, LoopControl, MemoryTr, ReturnData, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     InterpreterTypes, Stack,
 };
@@ -24,6 +24,7 @@ pub struct TracerEip3155 {
     mem_size: usize,
     include_memory: bool,
     memory: Option<String>,
+    return_data: String,
 }
 
 impl std::fmt::Debug for TracerEip3155 {
@@ -39,6 +40,7 @@ impl std::fmt::Debug for TracerEip3155 {
             .field("mem_size", &self.mem_size)
             .field("include_memory", &self.include_memory)
             .field("memory", &self.memory)
+            .field("return_data", &self.return_data)
             .finish()
     }
 }
@@ -67,7 +69,7 @@ struct Output<'a> {
     /// Array of all values on the stack
     stack: &'a [U256],
     /// Data returned by the function call
-    return_data: &'static str,
+    return_data: &'a str,
     /// Amount of **global** gas refunded
     #[serde(serialize_with = "serde_hex_u64")]
     refund: u64,
@@ -135,6 +137,7 @@ impl TracerEip3155 {
             include_memory: false,
             stack: Default::default(),
             memory: Default::default(),
+            return_data: "0x".to_string(),
             pc: 0,
             opcode: 0,
             gas: 0,
@@ -172,6 +175,7 @@ impl TracerEip3155 {
             gas,
             refunded,
             mem_size,
+            return_data,
             ..
         } = self;
         *gas_inspector = GasInspector::new();
@@ -181,6 +185,8 @@ impl TracerEip3155 {
         *gas = 0;
         *refunded = 0;
         *mem_size = 0;
+        return_data.clear();
+        return_data.push_str("0x");
     }
 
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut impl ContextTr) {
@@ -240,6 +246,7 @@ where
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
         self.refunded = interp.gas.refunded();
+        self.return_data = hex::encode_prefixed(interp.return_data.buffer());
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
@@ -251,7 +258,7 @@ where
             gas_cost: self.gas_inspector.last_gas_cost(),
             stack: &self.stack,
             depth: context.journal_mut().depth() as u64,
-            return_data: "0x",
+            return_data: &self.return_data,
             refund: self.refunded as u64,
             mem_size: self.mem_size as u64,
 
