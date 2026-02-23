@@ -38,7 +38,7 @@ pub fn main() {
     )));
 
     // Create a new instruction set with our mainnet opcodes.
-    let mut instructions = EthInstructions::new_mainnet();
+    let mut instructions = EthInstructions::new_mainnet_with_spec(SpecId::default());
     // insert our custom opcode
     instructions.insert_instruction(
         MY_STATIC_JUMP,

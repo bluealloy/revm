@@ -524,7 +524,7 @@ where
     let mut evm = Evm::new_with_inspector(
         context,
         inspector,
-        EthInstructions::new_mainnet(),
+        EthInstructions::new_mainnet_with_spec(SpecId::default()),
         EthPrecompiles::new(SpecId::default()),
     );
 
@@ -572,7 +572,7 @@ fn main() -> anyhow::Result<()> {
     let mut evm = Evm::new_with_inspector(
         context,
         &mut inspector,
-        EthInstructions::new_mainnet(),
+        EthInstructions::new_mainnet_with_spec(SpecId::default()),
         EthPrecompiles::new(SpecId::default()),
     );
     evm.inspect_tx(tx)?;

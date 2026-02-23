@@ -45,6 +45,7 @@ where
     HOST: Host,
 {
     /// Returns `EthInstructions` with mainnet spec.
+    #[deprecated(since = "0.2.0", note = "use new_mainnet_with_spec instead")]
     pub fn new_mainnet() -> Self {
         let spec = SpecId::default();
         Self::new(instruction_table_gas_changes_spec(spec), spec)
