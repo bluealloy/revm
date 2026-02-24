@@ -1876,6 +1876,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-revert-inspector"
+version = "0.0.0"
+dependencies = [
+ "alloy-sol-types",
+ "anyhow",
+ "revm",
+]
+
+[[package]]
 name = "example-uniswap-get-reserves"
 version = "0.0.0"
 dependencies = [
