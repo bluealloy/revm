@@ -798,7 +798,14 @@ pub(crate) const fn log2floor(value: U256) -> u64 {
         }
         i -= 1;
     }
-    l
+pub(crate) fn log2floor(value: U256) -> u64 {
+    for i in (0..4).rev() {
+        let limb = value.as_limbs()[i];
+        if limb != 0 {
+            return i as u64 * 64 + 63 - limb.leading_zeros() as u64;
+        }
+    }
+    0
 }
 
 /// Gas identifier that maps onto index in gas table.
