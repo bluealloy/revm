@@ -1175,7 +1175,7 @@ mod tests {
 
             // Test large values
             assert_eq!(log2floor(U256::from(u64::MAX)), 63);
-            assert_eq!(log2floor(U256::from(u64::MAX)+U256::from(1u64)), 64);
+            assert_eq!(log2floor(U256::from(u64::MAX) + U256::from(1u64)), 64);
             assert_eq!(log2floor(U256::MAX), 255);
         }
     }
