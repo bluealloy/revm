@@ -179,6 +179,11 @@ pub fn validate_tx_env<CTX: ContextTr>(
                 return Err(InvalidTransaction::Eip4844NotSupported);
             }
 
+            // Blob transactions cannot be create transactions.
+            if tx.kind().is_create() {
+                return Err(InvalidTransaction::BlobCreateTransaction);
+            }
+
             validate_priority_fee_for_tx(tx, base_fee, disable_priority_fee_check)?;
 
             validate_eip4844_tx(
