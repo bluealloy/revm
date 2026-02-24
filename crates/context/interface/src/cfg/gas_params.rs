@@ -1246,24 +1246,24 @@ mod tests {
 #[cfg(test)]
 mod log2floor_tests {
     use super::*;
-    
+
     #[test]
     fn test_log2floor_edge_cases() {
         // Test zero
         assert_eq!(log2floor(U256::ZERO), 0);
-        
+
         // Test powers of 2
-        assert_eq!(log2floor(U256::from(1u64)), 0);  // log2(1) = 0
-        assert_eq!(log2floor(U256::from(2u64)), 1);  // log2(2) = 1
-        assert_eq!(log2floor(U256::from(4u64)), 2);  // log2(4) = 2
-        assert_eq!(log2floor(U256::from(8u64)), 3);  // log2(8) = 3
+        assert_eq!(log2floor(U256::from(1u64)), 0); // log2(1) = 0
+        assert_eq!(log2floor(U256::from(2u64)), 1); // log2(2) = 1
+        assert_eq!(log2floor(U256::from(4u64)), 2); // log2(4) = 2
+        assert_eq!(log2floor(U256::from(8u64)), 3); // log2(8) = 3
         assert_eq!(log2floor(U256::from(256u64)), 8); // log2(256) = 8
-        
+
         // Test non-powers of 2
-        assert_eq!(log2floor(U256::from(3u64)), 1);   // log2(3) = 1.58... -> floor = 1
-        assert_eq!(log2floor(U256::from(5u64)), 2);   // log2(5) = 2.32... -> floor = 2
+        assert_eq!(log2floor(U256::from(3u64)), 1); // log2(3) = 1.58... -> floor = 1
+        assert_eq!(log2floor(U256::from(5u64)), 2); // log2(5) = 2.32... -> floor = 2
         assert_eq!(log2floor(U256::from(255u64)), 7); // log2(255) = 7.99... -> floor = 7
-        
+
         // Test large values
         assert_eq!(log2floor(U256::from(u64::MAX)), 63);
         assert_eq!(log2floor(U256::MAX), 255);
