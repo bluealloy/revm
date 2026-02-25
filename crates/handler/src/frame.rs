@@ -397,44 +397,36 @@ impl FrameKind for CreateKind {
             }
         }
 
-        // Check balance
-        if check_balance {
-            match create_check_balance(ctx.journal_mut(), inputs.caller(), inputs.value()) {
-                Err(CreateCheckError::Db(e)) => return Err(e.into()),
-                Err(CreateCheckError::Instruction(e)) => return return_error(e),
-                Ok(()) => {}
-            }
-        }
+        // Load caller account once for balance check, nonce bump, and/or address computation.
+        let needs_caller_load = check_balance || bump_nonce || override_address.is_none();
+        let (created_address, init_code_hash) = if needs_caller_load {
+            let mut caller_info = ctx.journal_mut().load_account_mut(inputs.caller())?;
 
-        // Bump nonce and compute address (or use override)
-        let (created_address, init_code_hash) = if let Some(addr) = override_address {
-            // If nonce bump is requested even with an override address, do it.
-            if bump_nonce {
-                match create_bump_nonce(ctx.journal_mut(), inputs.caller()) {
-                    Err(CreateCheckError::Db(e)) => return Err(e.into()),
-                    Err(CreateCheckError::Instruction(e)) => return return_error(e),
-                    Ok(_) => {}
-                }
+            if check_balance && *caller_info.balance() < inputs.value() {
+                return return_error(InstructionResult::OutOfFunds);
             }
-            (addr, None)
-        } else if bump_nonce {
-            let old_nonce = match create_bump_nonce(ctx.journal_mut(), inputs.caller()) {
-                Err(CreateCheckError::Db(e)) => return Err(e.into()),
-                Err(CreateCheckError::Instruction(e)) => return return_error(e),
-                Ok(n) => n,
-            };
-            create_compute_address(
-                inputs.caller(),
-                old_nonce,
-                &inputs.scheme(),
-                inputs.init_code(),
-            )
-        } else {
-            // No nonce bump and no override address — use current nonce for address computation.
-            let caller_info = ctx.journal_mut().load_account_mut(inputs.caller())?;
-            let nonce = caller_info.nonce();
+
+            let old_nonce = caller_info.nonce();
+
+            if bump_nonce && !caller_info.bump_nonce() {
+                return return_error(InstructionResult::Return);
+            }
+
             drop(caller_info);
-            create_compute_address(inputs.caller(), nonce, &inputs.scheme(), inputs.init_code())
+
+            if let Some(addr) = override_address {
+                (addr, None)
+            } else {
+                create_compute_address(
+                    inputs.caller(),
+                    old_nonce,
+                    &inputs.scheme(),
+                    inputs.init_code(),
+                )
+            }
+        } else {
+            // No balance check, no nonce bump, and override address is provided.
+            (override_address.unwrap(), None)
         };
 
         // Warm load account.
@@ -512,6 +504,7 @@ impl FrameKind for CreateKind {
 /// ```ignore
 /// FrameBuilder::new_create(depth, memory, inputs)
 ///     .skip_balance_check()
+///     .skip_nonce_bump()
 ///     .with_created_address(addr)
 ///     .build(out_frame, ctx, |_, _| Ok(None))?
 /// ```
@@ -703,12 +696,12 @@ impl FrameBuilder<CreateKind> {
 
     /// Provide a pre-computed created address.
     ///
-    /// Also auto-skips the nonce bump (the nonce bump is only needed
-    /// for computing the CREATE address).
+    /// This only overrides the address; the nonce bump still happens
+    /// by default. Chain [`.skip_nonce_bump()`](Self::skip_nonce_bump)
+    /// explicitly if the nonce bump should also be skipped.
     #[inline]
     pub fn with_created_address(mut self, addr: Address) -> Self {
         self.kind.created_address = Some(addr);
-        self.kind.bump_nonce = false;
         self
     }
 
