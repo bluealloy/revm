@@ -20,29 +20,21 @@ pub struct CacheState {
     pub accounts: AddressMap<CacheAccount>,
     /// Created contracts
     pub contracts: B256Map<Bytecode>,
-    /// Has EIP-161 state clear enabled (Spurious Dragon hardfork)
-    pub has_state_clear: bool,
 }
 
 impl Default for CacheState {
     fn default() -> Self {
-        Self::new(true)
+        Self::new()
     }
 }
 
 impl CacheState {
     /// Creates a new default state.
-    pub fn new(has_state_clear: bool) -> Self {
+    pub fn new() -> Self {
         Self {
             accounts: HashMap::default(),
             contracts: HashMap::default(),
-            has_state_clear,
         }
-    }
-
-    /// Sets state clear flag. EIP-161.
-    pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
-        self.has_state_clear = has_state_clear;
     }
 
     /// Helper function that returns all accounts.
@@ -124,11 +116,7 @@ impl CacheState {
     pub fn pretty_print(&self) -> String {
         let mut output = String::new();
         output.push_str("CacheState:\n");
-        output.push_str(&format!(
-            "  (state_clear_enabled: {}, ",
-            self.has_state_clear
-        ));
-        output.push_str(&format!("accounts: {} total)\n", self.accounts.len()));
+        output.push_str(&format!("  (accounts: {} total)\n", self.accounts.len()));
 
         // Sort accounts by address for consistent output
         let mut accounts: Vec<_> = self.accounts.iter().collect();
@@ -234,14 +222,9 @@ impl CacheState {
         // And when empty account is touched it needs to be removed from database.
         // EIP-161 state clear
         if is_empty {
-            if self.has_state_clear {
-                // Touch empty account.
-                this_account.touch_empty_eip161()
-            } else {
-                // If account is empty and state clear is not enabled we should save
-                // empty account.
-                this_account.touch_create_pre_eip161(changed_storage)
-            }
+            // EIP-161 state clear: touch empty account to mark for removal.
+            // Pre-EIP-161 behavior is handled by the journal in `finalize()`.
+            this_account.touch_empty_eip161()
         } else {
             Some(this_account.change(account.info, changed_storage))
         }

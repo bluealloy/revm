@@ -11,10 +11,6 @@ use std::{collections::BTreeMap, sync::Arc};
 pub struct StateBuilder<DB> {
     /// Database that we use to fetch data from
     database: DB,
-    /// Enabled state clear flag that is introduced in Spurious Dragon hardfork
-    ///
-    /// Default is true as spurious dragon happened long time ago.
-    with_state_clear: bool,
     /// If there is prestate that we want to use,
     /// this would mean that we have additional state layer between evm and disk/database.
     with_bundle_prestate: Option<BundleState>,
@@ -57,7 +53,6 @@ impl<DB: Database> StateBuilder<DB> {
     pub fn new_with_database(database: DB) -> Self {
         Self {
             database,
-            with_state_clear: true,
             with_cache_prestate: None,
             with_bundle_prestate: None,
             with_bundle_update: false,
@@ -72,7 +67,6 @@ impl<DB: Database> StateBuilder<DB> {
         // Cast to the different database.
         // Note that we return different type depending on the database NewDBError.
         StateBuilder {
-            with_state_clear: self.with_state_clear,
             database,
             with_cache_prestate: self.with_cache_prestate,
             with_bundle_prestate: self.with_bundle_prestate,
@@ -97,15 +91,6 @@ impl<DB: Database> StateBuilder<DB> {
         database: DBBox<'_, Error>,
     ) -> StateBuilder<DBBox<'_, Error>> {
         self.with_database(database)
-    }
-
-    /// By default state clear flag is enabled but for initial sync on mainnet
-    /// we want to disable it so proper consensus changes are in place.
-    pub fn without_state_clear(self) -> Self {
-        Self {
-            with_state_clear: false,
-            ..self
-        }
     }
 
     /// Allows setting prestate that is going to be used for execution.
@@ -137,8 +122,6 @@ impl<DB: Database> StateBuilder<DB> {
     /// It will use different cache for the state.
     ///
     /// **Note**: If set, it will ignore bundle prestate.
-    ///
-    /// And will ignore `without_state_clear` flag as cache contains its own state_clear flag.
     ///
     /// This is useful for testing.
     pub fn with_cached_prestate(self, cache: CacheState) -> Self {
@@ -186,9 +169,7 @@ impl<DB: Database> StateBuilder<DB> {
             self.with_bundle_prestate.is_some()
         };
         State {
-            cache: self
-                .with_cache_prestate
-                .unwrap_or_else(|| CacheState::new(self.with_state_clear)),
+            cache: self.with_cache_prestate.unwrap_or_default(),
             database: self.database,
             transition_state: self.with_bundle_update.then(TransitionState::default),
             bundle_state: self.with_bundle_prestate.unwrap_or_default(),

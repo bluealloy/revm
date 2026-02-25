@@ -400,9 +400,7 @@ pub fn execute_test_suite(
 
 fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
     // Prepare state
-    let mut cache = ctx.cache_state.clone();
-    let spec = ctx.cfg.spec();
-    cache.set_state_clear_flag(spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    let cache = ctx.cache_state.clone();
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()
@@ -447,8 +445,7 @@ fn debug_failed_test(ctx: DebugContext) {
     println!("\nTraces:");
 
     // Re-run with tracing
-    let mut cache = ctx.cache_state.clone();
-    cache.set_state_clear_flag(ctx.cfg.spec().is_enabled_in(SpecId::SPURIOUS_DRAGON));
+    let cache = ctx.cache_state.clone();
     let mut state = database::State::builder()
         .with_cached_prestate(cache)
         .with_bundle_update()

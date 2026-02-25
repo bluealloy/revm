@@ -64,7 +64,7 @@ impl TestUnit {
     ///
     /// A [`CacheState`] object containing the pre-state accounts and storages.
     pub fn state(&self) -> CacheState {
-        let mut cache_state = CacheState::new(false);
+        let mut cache_state = CacheState::new();
         for (address, info) in &self.pre {
             let code_hash = keccak256(&info.code);
             let bytecode = Bytecode::new_raw_checked(info.code.clone())

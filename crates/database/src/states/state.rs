@@ -28,9 +28,8 @@ pub type StateDBBox<'a, E> = State<DBBox<'a, E>>;
 
 /// State of blockchain
 ///
-/// State clear flag is set inside CacheState and by default it is enabled.
-///
-/// If you want to disable it use `set_state_clear_flag` function.
+/// State clear flag is handled by the EVM journal in `finalize()` based on
+/// the spec. The database layer always applies post-EIP-161 commit semantics.
 #[derive(Debug)]
 pub struct State<DB> {
     /// Cached state contains both changed from evm execution and cached/loaded account/storages
@@ -89,11 +88,6 @@ impl<DB: Database> State<DB> {
     /// See [BundleState::size_hint] for more info.
     pub fn bundle_size_hint(&self) -> usize {
         self.bundle_state.size_hint()
-    }
-
-    /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
-    pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
-        self.cache.set_state_clear_flag(has_state_clear);
     }
 
     /// Inserts a non-existing account into the state.
