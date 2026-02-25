@@ -578,7 +578,6 @@ impl<K> FrameBuilder<K> {
     }
 }
 
-
 // Call-specific methods.
 impl FrameBuilder<CallKind> {
     /// Create a new call frame builder with default Ethereum behavior.
@@ -1228,8 +1227,7 @@ mod tests {
 
     #[test]
     fn test_create_compute_address_create() {
-        let (addr, hash) =
-            create_compute_address(CALLER, 0, &CreateScheme::Create, &Bytes::new());
+        let (addr, hash) = create_compute_address(CALLER, 0, &CreateScheme::Create, &Bytes::new());
         assert_eq!(addr, CALLER.create(0));
         assert!(hash.is_none());
     }
@@ -1238,12 +1236,8 @@ mod tests {
     fn test_create_compute_address_create2() {
         let init_code = Bytes::from_static(&[0x60, 0x00]);
         let salt = U256::from(42);
-        let (addr, hash) = create_compute_address(
-            CALLER,
-            0,
-            &CreateScheme::Create2 { salt },
-            &init_code,
-        );
+        let (addr, hash) =
+            create_compute_address(CALLER, 0, &CreateScheme::Create2 { salt }, &init_code);
         let expected_hash = keccak256(&init_code);
         assert_eq!(addr, CALLER.create2(salt.to_be_bytes(), expected_hash));
         assert_eq!(hash, Some(expected_hash));
@@ -1330,12 +1324,8 @@ mod tests {
         let mut inputs = test_create_inputs();
         inputs.set_value(U256::from(999_999_999));
 
-        let result: Result<_, TestError> = FrameBuilder::new_create(
-            0,
-            SharedMemory::new(),
-            inputs,
-        )
-        .build(out, &mut ctx);
+        let result: Result<_, TestError> =
+            FrameBuilder::new_create(0, SharedMemory::new(), inputs).build(out, &mut ctx);
 
         match result.unwrap() {
             ItemOrResult::Result(FrameResult::Create(outcome)) => {
@@ -1355,13 +1345,9 @@ mod tests {
         let mut inputs = test_create_inputs();
         inputs.set_value(U256::from(999_999_999));
 
-        let result: Result<_, TestError> = FrameBuilder::new_create(
-            0,
-            SharedMemory::new(),
-            inputs,
-        )
-        .skip_balance_check()
-        .build(out, &mut ctx);
+        let result: Result<_, TestError> = FrameBuilder::new_create(0, SharedMemory::new(), inputs)
+            .skip_balance_check()
+            .build(out, &mut ctx);
 
         match result.unwrap() {
             ItemOrResult::Item(_) => {} // Frame created despite insufficient balance
@@ -1376,13 +1362,10 @@ mod tests {
         let out = OutFrame::new_init(&mut frame);
         let custom_addr = address!("0x00000000000000000000000000000000deadbeef");
 
-        let result: Result<_, TestError> = FrameBuilder::new_create(
-            0,
-            SharedMemory::new(),
-            test_create_inputs(),
-        )
-        .with_created_address(custom_addr)
-        .build(out, &mut ctx);
+        let result: Result<_, TestError> =
+            FrameBuilder::new_create(0, SharedMemory::new(), test_create_inputs())
+                .with_created_address(custom_addr)
+                .build(out, &mut ctx);
 
         match result.unwrap() {
             ItemOrResult::Item(_) => {
@@ -1405,13 +1388,10 @@ mod tests {
         let out = OutFrame::new_init(&mut frame);
 
         // Target has no code, so bytecode is empty
-        let result: Result<_, TestError> = FrameBuilder::new_call(
-            0,
-            SharedMemory::new(),
-            test_call_inputs(),
-        )
-        .skip_value_transfer()
-        .build(out, &mut ctx, |_, _| Ok(None));
+        let result: Result<_, TestError> =
+            FrameBuilder::new_call(0, SharedMemory::new(), test_call_inputs())
+                .skip_value_transfer()
+                .build(out, &mut ctx, |_, _| Ok(None));
 
         match result.unwrap() {
             ItemOrResult::Result(FrameResult::Call(outcome)) => {
@@ -1428,14 +1408,11 @@ mod tests {
         let out = OutFrame::new_init(&mut frame);
 
         // Target has no code, but we skip the empty bytecode check
-        let result: Result<_, TestError> = FrameBuilder::new_call(
-            0,
-            SharedMemory::new(),
-            test_call_inputs(),
-        )
-        .skip_value_transfer()
-        .skip_empty_bytecode_check()
-        .build(out, &mut ctx, |_, _| Ok(None));
+        let result: Result<_, TestError> =
+            FrameBuilder::new_call(0, SharedMemory::new(), test_call_inputs())
+                .skip_value_transfer()
+                .skip_empty_bytecode_check()
+                .build(out, &mut ctx, |_, _| Ok(None));
 
         match result.unwrap() {
             ItemOrResult::Item(_) => {} // Frame created despite empty bytecode
@@ -1453,14 +1430,13 @@ mod tests {
         let hash = B256::ZERO;
 
         // Precompile fn that would panic if called
-        let result: Result<_, TestError> = FrameBuilder::new_call(
-            0,
-            SharedMemory::new(),
-            test_call_inputs(),
-        )
-        .skip_value_transfer()
-        .with_bytecode(bytecode, hash)
-        .build(out, &mut ctx, |_, _| panic!("precompile should not be called"));
+        let result: Result<_, TestError> =
+            FrameBuilder::new_call(0, SharedMemory::new(), test_call_inputs())
+                .skip_value_transfer()
+                .with_bytecode(bytecode, hash)
+                .build(out, &mut ctx, |_, _| {
+                    panic!("precompile should not be called")
+                });
 
         match result.unwrap() {
             ItemOrResult::Item(_) => {} // Success — precompile was skipped
