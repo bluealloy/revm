@@ -9,24 +9,23 @@
 #[cold]
 pub fn cold_path() {}
 
+#[inline(always)]
+fn cold_if(b: bool) {
+    if b {
+        cold_path();
+    }
+}
+
 /// Returns `b` but mark `false` path as cold
 #[inline(always)]
 pub fn likely(b: bool) -> bool {
-    if b {
-        true
-    } else {
-        cold_path();
-        false
-    }
+    cold_if(!b);
+    b
 }
 
 /// Returns `b` but mark `true` path as cold
 #[inline(always)]
 pub fn unlikely(b: bool) -> bool {
-    if b {
-        cold_path();
-        true
-    } else {
-        false
-    }
+    cold_if(b);
+    b
 }
