@@ -192,7 +192,7 @@ pub struct CallKind {
     transfer_value: bool,
     check_precompiles: bool,
     check_empty_bytecode: bool,
-    bytecode: Option<(Bytecode, B256)>,
+    bytecode: Option<Box<(Bytecode, B256)>>,
     is_static: Option<bool>,
 }
 
@@ -203,7 +203,7 @@ pub struct CreateKind {
     check_balance: bool,
     bump_nonce: bool,
     created_address: Option<Address>,
-    bytecode: Option<ExtBytecode>,
+    bytecode: Option<Box<ExtBytecode>>,
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -230,9 +230,7 @@ impl FrameBuilder<CallKind> {
             depth,
             memory,
             check_depth: do_check_depth,
-            checkpoint: override_checkpoint,
-            interpreter_input: override_input,
-            gas_limit: override_gas_limit,
+            overrides,
             kind:
                 CallKind {
                     inputs,
@@ -243,6 +241,11 @@ impl FrameBuilder<CallKind> {
                     is_static: override_is_static,
                 },
         } = self;
+
+        let (override_checkpoint, override_input, override_gas_limit) = match overrides {
+            Some(o) => (o.checkpoint, o.interpreter_input, o.gas_limit),
+            None => (None, None, None),
+        };
 
         let gas = Gas::new(override_gas_limit.unwrap_or(inputs.gas_limit));
         let return_result = |instruction_result: InstructionResult| {
@@ -307,7 +310,7 @@ impl FrameBuilder<CallKind> {
 
         // Get bytecode and hash
         let (bytecode, bytecode_hash) = if let Some(bch) = override_bytecode {
-            bch
+            *bch
         } else {
             call_load_bytecode(
                 ctx.journal_mut(),
@@ -357,9 +360,7 @@ impl FrameBuilder<CreateKind> {
             depth,
             memory,
             check_depth: do_check_depth,
-            checkpoint: override_checkpoint,
-            interpreter_input: override_input,
-            gas_limit: override_gas_limit,
+            overrides,
             kind:
                 CreateKind {
                     inputs,
@@ -369,6 +370,11 @@ impl FrameBuilder<CreateKind> {
                     bytecode: override_bytecode,
                 },
         } = self;
+
+        let (override_checkpoint, override_input, override_gas_limit) = match overrides {
+            Some(o) => (o.checkpoint, o.interpreter_input, o.gas_limit),
+            None => (None, None, None),
+        };
 
         let spec: SpecId = ctx.cfg().spec().into();
         let gas_limit = override_gas_limit.unwrap_or_else(|| inputs.gas_limit());
@@ -440,7 +446,7 @@ impl FrameBuilder<CreateKind> {
             }
         };
 
-        let bytecode = override_bytecode.unwrap_or_else(|| {
+        let bytecode = override_bytecode.map(|b| *b).unwrap_or_else(|| {
             ExtBytecode::new_with_optional_hash(
                 Bytecode::new_legacy(inputs.init_code().clone()),
                 init_code_hash,
@@ -470,6 +476,18 @@ impl FrameBuilder<CreateKind> {
 // ────────────────────────────────────────────────────────────────────────────────
 // FrameBuilder<Kind>
 // ────────────────────────────────────────────────────────────────────────────────
+
+/// Rarely-used override fields, heap-allocated only when customization
+/// methods are called. On the default (hot) path this is `None` (8 bytes).
+#[derive(Debug, Default)]
+pub struct FrameOverrides {
+    /// Externally-created journal checkpoint.
+    pub checkpoint: Option<JournalCheckpoint>,
+    /// Override for the interpreter input derived from call/create inputs.
+    pub interpreter_input: Option<InputsImpl>,
+    /// Override for the gas limit from the call/create inputs.
+    pub gas_limit: Option<u64>,
+}
 
 /// Configurable builder for constructing EVM call and create frames.
 ///
@@ -513,9 +531,8 @@ pub struct FrameBuilder<Kind> {
     /// Shared memory for the frame.
     memory: SharedMemory,
     check_depth: bool,
-    checkpoint: Option<JournalCheckpoint>,
-    interpreter_input: Option<InputsImpl>,
-    gas_limit: Option<u64>,
+    /// Boxed overrides — `None` on the default path (no heap allocation).
+    overrides: Option<Box<FrameOverrides>>,
     kind: Kind,
 }
 
@@ -524,9 +541,7 @@ impl<Kind: core::fmt::Debug> core::fmt::Debug for FrameBuilder<Kind> {
         f.debug_struct("FrameBuilder")
             .field("depth", &self.depth)
             .field("check_depth", &self.check_depth)
-            .field("checkpoint", &self.checkpoint)
-            .field("interpreter_input", &self.interpreter_input)
-            .field("gas_limit", &self.gas_limit)
+            .field("overrides", &self.overrides)
             .field("kind", &self.kind)
             .finish()
     }
@@ -559,22 +574,28 @@ impl<K> FrameBuilder<K> {
     /// The caller must ensure the checkpoint matches the current journal state.
     #[inline]
     pub fn with_checkpoint(mut self, cp: JournalCheckpoint) -> Self {
-        self.checkpoint = Some(cp);
+        self.overrides_mut().checkpoint = Some(cp);
         self
     }
 
     /// Override the interpreter input that would normally be derived from the call/create inputs.
     #[inline]
     pub fn with_interpreter_input(mut self, input: InputsImpl) -> Self {
-        self.interpreter_input = Some(input);
+        self.overrides_mut().interpreter_input = Some(input);
         self
     }
 
     /// Override the gas limit from the call/create inputs.
     #[inline]
     pub fn with_gas_limit(mut self, gas: u64) -> Self {
-        self.gas_limit = Some(gas);
+        self.overrides_mut().gas_limit = Some(gas);
         self
+    }
+
+    /// Returns a mutable reference to the overrides, allocating the box on first use.
+    #[inline]
+    fn overrides_mut(&mut self) -> &mut FrameOverrides {
+        self.overrides.get_or_insert_with(|| Box::new(FrameOverrides::default()))
     }
 }
 
@@ -587,9 +608,7 @@ impl FrameBuilder<CallKind> {
             depth,
             memory,
             check_depth: true,
-            checkpoint: None,
-            interpreter_input: None,
-            gas_limit: None,
+            overrides: None,
             kind: CallKind {
                 inputs,
                 transfer_value: true,
@@ -627,7 +646,7 @@ impl FrameBuilder<CallKind> {
     /// Also auto-skips the precompile check (custom bytecode implies no precompile dispatch).
     #[inline]
     pub fn with_bytecode(mut self, bytecode: Bytecode, hash: B256) -> Self {
-        self.kind.bytecode = Some((bytecode, hash));
+        self.kind.bytecode = Some(Box::new((bytecode, hash)));
         self.kind.check_precompiles = false;
         self
     }
@@ -649,9 +668,7 @@ impl FrameBuilder<CreateKind> {
             depth,
             memory,
             check_depth: true,
-            checkpoint: None,
-            interpreter_input: None,
-            gas_limit: None,
+            overrides: None,
             kind: CreateKind {
                 inputs,
                 check_balance: true,
@@ -693,7 +710,7 @@ impl FrameBuilder<CreateKind> {
     /// Provide init bytecode directly instead of deriving it from the create inputs.
     #[inline]
     pub fn with_bytecode(mut self, bytecode: ExtBytecode) -> Self {
-        self.kind.bytecode = Some(bytecode);
+        self.kind.bytecode = Some(Box::new(bytecode));
         self
     }
 }
@@ -1452,5 +1469,21 @@ mod tests {
         assert_eq!(builder.depth(), 5);
         // memory() returns a reference — just verify it doesn't panic
         let _ = builder.memory();
+    }
+
+    #[test]
+    fn test_frame_builder_size_reduction() {
+        let call_size = std::mem::size_of::<FrameBuilder<CallKind>>();
+        let create_size = std::mem::size_of::<FrameBuilder<CreateKind>>();
+        // With boxed overrides, builders should be well under 100 bytes on the default path.
+        // Before boxing, CallKind builder was ~300 bytes.
+        assert!(
+            call_size < 100,
+            "FrameBuilder<CallKind> is {call_size} bytes, expected < 100"
+        );
+        assert!(
+            create_size < 100,
+            "FrameBuilder<CreateKind> is {create_size} bytes, expected < 100"
+        );
     }
 }

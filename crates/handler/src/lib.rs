@@ -52,6 +52,7 @@ pub use frame::{
     EthFrame,
     FrameBuilder,
     FrameBuilderKind,
+    FrameOverrides,
 };
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
 pub use handler::{EvmTrError, Handler};
