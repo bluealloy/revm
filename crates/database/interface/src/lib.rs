@@ -199,6 +199,17 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 
     #[inline]
+    fn storage_by_account_id(
+        &mut self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.0
+            .storage_by_account_id_ref(address, account_id, storage_key)
+    }
+
+    #[inline]
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
     }
@@ -231,6 +242,17 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.0.storage_ref(address, index)
+    }
+
+    #[inline]
+    fn storage_by_account_id_ref(
+        &self,
+        address: Address,
+        account_id: usize,
+        storage_key: StorageKey,
+    ) -> Result<StorageValue, Self::Error> {
+        self.0
+            .storage_by_account_id_ref(address, account_id, storage_key)
     }
 
     #[inline]

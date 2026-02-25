@@ -15,6 +15,7 @@ revm = { workspace = true, features = [
     "std",
     "c-kzg",
     "blst",
+    "serde",
     "tracer",
     "parse",
     "test-types",

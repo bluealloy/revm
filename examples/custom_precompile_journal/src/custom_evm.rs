@@ -51,7 +51,7 @@ where
         Self(Evm {
             ctx,
             inspector,
-            instruction: EthInstructions::new_mainnet(),
+            instruction: EthInstructions::new_mainnet_with_spec(SpecId::CANCUN),
             precompiles: CustomPrecompileProvider::new_with_spec(SpecId::CANCUN),
             frame_stack: FrameStack::new(),
         })

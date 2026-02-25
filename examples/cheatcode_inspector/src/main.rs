@@ -18,14 +18,11 @@ use revm::{
         Block, JournalTr, Transaction,
     },
     database::InMemoryDB,
-    handler::{
-        instructions::{EthInstructions, InstructionProvider},
-        EthPrecompiles, PrecompileProvider,
-    },
+    handler::{instructions::EthInstructions, EthPrecompiles},
     inspector::{inspectors::TracerEip3155, JournalExt},
     interpreter::{
-        interpreter::EthInterpreter, CallInputs, CallOutcome, InterpreterResult, SStoreResult,
-        SelfDestructResult, StateLoad,
+        interpreter::EthInterpreter, CallInputs, CallOutcome, SStoreResult, SelfDestructResult,
+        StateLoad,
     },
     primitives::{
         hardfork::SpecId, Address, AddressMap, AddressSet, HashSet, Log, StorageKey, StorageValue,
@@ -349,14 +346,7 @@ impl JournalExt for Backend {
 trait DatabaseExt: JournalTr {
     /// Mimics `DatabaseExt::transact`
     /// See `commit_transaction` for the generics
-    fn method_that_takes_inspector_as_argument<
-        InspectorT,
-        BlockT,
-        TxT,
-        CfgT,
-        InstructionProviderT,
-        PrecompileT,
-    >(
+    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT>(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
@@ -365,44 +355,21 @@ trait DatabaseExt: JournalTr {
         InspectorT: Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>, EthInterpreter>,
         BlockT: Block,
         TxT: Transaction + Clone,
-        CfgT: Cfg,
-        InstructionProviderT: InstructionProvider<
-                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                InterpreterTypes = EthInterpreter,
-            > + Default,
-        PrecompileT: PrecompileProvider<
-                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                Output = InterpreterResult,
-            > + Default;
+        CfgT: Cfg;
 
     /// Mimics `DatabaseExt::roll_fork_to_transaction`
-    fn method_that_constructs_inspector<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+    fn method_that_constructs_inspector<BlockT, TxT, CfgT>(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
     ) -> anyhow::Result<()>
     where
         BlockT: Block,
         TxT: Transaction + Clone,
-        CfgT: Cfg,
-        InstructionProviderT: InstructionProvider<
-                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                InterpreterTypes = EthInterpreter,
-            > + Default,
-        PrecompileT: PrecompileProvider<
-                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                Output = InterpreterResult,
-            > + Default;
+        CfgT: Cfg;
 }
 
 impl DatabaseExt for Backend {
-    fn method_that_takes_inspector_as_argument<
-        InspectorT,
-        BlockT,
-        TxT,
-        CfgT,
-        InstructionProviderT,
-        PrecompileT,
-    >(
+    fn method_that_takes_inspector_as_argument<InspectorT, BlockT, TxT, CfgT>(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
         inspector: InspectorT,
@@ -412,23 +379,13 @@ impl DatabaseExt for Backend {
         BlockT: Block,
         TxT: Transaction + Clone,
         CfgT: Cfg,
-        InstructionProviderT: InstructionProvider<
-                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                InterpreterTypes = EthInterpreter,
-            > + Default,
-        PrecompileT: PrecompileProvider<
-                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                Output = InterpreterResult,
-            > + Default,
     {
-        commit_transaction::<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
-            self, env, inspector,
-        )?;
+        commit_transaction(self, env, inspector)?;
         self.method_with_inspector_counter += 1;
         Ok(())
     }
 
-    fn method_that_constructs_inspector<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+    fn method_that_constructs_inspector<BlockT, TxT, CfgT>(
         &mut self,
         env: Env<BlockT, TxT, CfgT>,
     ) -> anyhow::Result<()>
@@ -436,25 +393,9 @@ impl DatabaseExt for Backend {
         BlockT: Block,
         TxT: Transaction + Clone,
         CfgT: Cfg,
-        InstructionProviderT: InstructionProvider<
-                Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                InterpreterTypes = EthInterpreter,
-            > + Default,
-        PrecompileT: PrecompileProvider<
-                Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-                Output = InterpreterResult,
-            > + Default,
     {
         let inspector = TracerEip3155::new(Box::new(std::io::sink()));
-        commit_transaction::<
-            // Generic interpreter types are not supported yet in the `Evm` implementation
-            TracerEip3155,
-            BlockT,
-            TxT,
-            CfgT,
-            InstructionProviderT,
-            PrecompileT,
-        >(self, env, inspector)?;
+        commit_transaction(self, env, inspector)?;
 
         self.method_without_inspector_counter += 1;
         Ok(())
@@ -464,25 +405,16 @@ impl DatabaseExt for Backend {
 /// An REVM inspector that intercepts calls to the cheatcode address and executes them with the help of the
 /// `DatabaseExt` trait.
 #[derive(Clone, Default)]
-struct Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT> {
+struct Cheatcodes<BlockT, TxT, CfgT> {
     call_count: usize,
-    phantom: core::marker::PhantomData<(BlockT, TxT, CfgT, InstructionProviderT, PrecompileT)>,
+    phantom: core::marker::PhantomData<(BlockT, TxT, CfgT)>,
 }
 
-impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
-    Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
+impl<BlockT, TxT, CfgT> Cheatcodes<BlockT, TxT, CfgT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
     CfgT: Cfg + Clone,
-    InstructionProviderT: InstructionProvider<
-            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            InterpreterTypes = EthInterpreter,
-        > + Default,
-    PrecompileT: PrecompileProvider<
-            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            Output = InterpreterResult,
-        > + Default,
 {
     fn apply_cheatcode(
         &mut self,
@@ -496,7 +428,7 @@ where
         // `transact` cheatcode would do this
         context
             .journal_mut()
-            .method_that_takes_inspector_as_argument::<_, _, _, _, InstructionProviderT, PrecompileT>(
+            .method_that_takes_inspector_as_argument(
                 Env {
                     block: block.clone(),
                     tx: tx.clone(),
@@ -508,28 +440,17 @@ where
         // `rollFork(bytes32 transaction)` cheatcode would do this
         context
             .journal_mut()
-            .method_that_constructs_inspector::<_, _, _, InstructionProviderT, PrecompileT>(
-                Env { block, tx, cfg },
-            )?;
+            .method_that_constructs_inspector(Env { block, tx, cfg })?;
         Ok(())
     }
 }
 
-impl<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
-    Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
-    for Cheatcodes<BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>
+impl<BlockT, TxT, CfgT> Inspector<Context<BlockT, TxT, CfgT, InMemoryDB, Backend>>
+    for Cheatcodes<BlockT, TxT, CfgT>
 where
     BlockT: Block + Clone,
     TxT: Transaction + Clone,
     CfgT: Cfg + Clone,
-    InstructionProviderT: InstructionProvider<
-            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            InterpreterTypes = EthInterpreter,
-        > + Default,
-    PrecompileT: PrecompileProvider<
-            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            Output = InterpreterResult,
-        > + Default,
 {
     /// Note that precompiles are no longer accessible via `EvmContext::precompiles`.
     fn call(
@@ -572,7 +493,7 @@ impl Env<BlockEnv, TxEnv, CfgEnv> {
 
 /// Executes a transaction and runs the inspector using the `Backend` as the state.
 /// Mimics `commit_transaction` <https://github.com/foundry-rs/foundry/blob/25cc1ac68b5f6977f23d713c01ec455ad7f03d21/crates/evm/core/src/backend/mod.rs#L1931>
-fn commit_transaction<InspectorT, BlockT, TxT, CfgT, InstructionProviderT, PrecompileT>(
+fn commit_transaction<InspectorT, BlockT, TxT, CfgT>(
     backend: &mut Backend,
     env: Env<BlockT, TxT, CfgT>,
     inspector: InspectorT,
@@ -582,14 +503,6 @@ where
     BlockT: Block,
     TxT: Transaction + Clone,
     CfgT: Cfg,
-    InstructionProviderT: InstructionProvider<
-            Context = Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            InterpreterTypes = EthInterpreter,
-        > + Default,
-    PrecompileT: PrecompileProvider<
-            Context<BlockT, TxT, CfgT, InMemoryDB, Backend>,
-            Output = InterpreterResult,
-        > + Default,
 {
     // Create new journaled state and backend with the same DB and journaled state as the original for the transaction.
     // This new backend and state will be discarded after the transaction is done and the changes are applied to the
@@ -611,8 +524,8 @@ where
     let mut evm = Evm::new_with_inspector(
         context,
         inspector,
-        InstructionProviderT::default(),
-        PrecompileT::default(),
+        EthInstructions::new_mainnet_with_spec(SpecId::default()),
+        EthPrecompiles::new(SpecId::default()),
     );
 
     let state = evm.inspect_tx(tx)?.state;
@@ -642,13 +555,7 @@ fn update_state<DB: Database>(state: &mut EvmState, db: &mut DB) -> Result<(), D
 
 fn main() -> anyhow::Result<()> {
     let backend = Backend::new(SpecId::default(), InMemoryDB::default());
-    let mut inspector = Cheatcodes::<
-        BlockEnv,
-        TxEnv,
-        CfgEnv,
-        EthInstructions<EthInterpreter, Context<BlockEnv, TxEnv, CfgEnv, InMemoryDB, Backend>>,
-        EthPrecompiles,
-    >::default();
+    let mut inspector = Cheatcodes::<BlockEnv, TxEnv, CfgEnv>::default();
     let env = Env::mainnet();
     let tx = env.tx.clone();
 
@@ -665,8 +572,8 @@ fn main() -> anyhow::Result<()> {
     let mut evm = Evm::new_with_inspector(
         context,
         &mut inspector,
-        EthInstructions::default(),
-        EthPrecompiles::default(),
+        EthInstructions::new_mainnet_with_spec(SpecId::default()),
+        EthPrecompiles::new(SpecId::default()),
     );
     evm.inspect_tx(tx)?;
 

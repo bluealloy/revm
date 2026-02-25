@@ -784,26 +784,14 @@ impl GasParams {
 }
 
 #[inline]
-pub(crate) const fn log2floor(value: U256) -> u64 {
-    let mut l: u64 = 256;
-    let mut i = 3;
-    loop {
-        if value.as_limbs()[i] == 0u64 {
-            l -= 64;
-        } else {
-            l -= value.as_limbs()[i].leading_zeros() as u64;
-            if l == 0 {
-                return l;
-            } else {
-                return l - 1;
-            }
+pub(crate) fn log2floor(value: U256) -> u64 {
+    for i in (0..4).rev() {
+        let limb = value.as_limbs()[i];
+        if limb != 0 {
+            return i as u64 * 64 + 63 - limb.leading_zeros() as u64;
         }
-        if i == 0 {
-            break;
-        }
-        i -= 1;
     }
-    l
+    0
 }
 
 /// Gas identifier that maps onto index in gas table.
@@ -1163,6 +1151,34 @@ impl GasId {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[cfg(test)]
+    mod log2floor_tests {
+        use super::*;
+
+        #[test]
+        fn test_log2floor_edge_cases() {
+            // Test zero
+            assert_eq!(log2floor(U256::ZERO), 0);
+
+            // Test powers of 2
+            assert_eq!(log2floor(U256::from(1u64)), 0); // log2(1) = 0
+            assert_eq!(log2floor(U256::from(2u64)), 1); // log2(2) = 1
+            assert_eq!(log2floor(U256::from(4u64)), 2); // log2(4) = 2
+            assert_eq!(log2floor(U256::from(8u64)), 3); // log2(8) = 3
+            assert_eq!(log2floor(U256::from(256u64)), 8); // log2(256) = 8
+
+            // Test non-powers of 2
+            assert_eq!(log2floor(U256::from(3u64)), 1); // log2(3) = 1.58... -> floor = 1
+            assert_eq!(log2floor(U256::from(5u64)), 2); // log2(5) = 2.32... -> floor = 2
+            assert_eq!(log2floor(U256::from(255u64)), 7); // log2(255) = 7.99... -> floor = 7
+
+            // Test large values
+            assert_eq!(log2floor(U256::from(u64::MAX)), 63);
+            assert_eq!(log2floor(U256::from(u64::MAX) + U256::from(1u64)), 64);
+            assert_eq!(log2floor(U256::MAX), 255);
+        }
+    }
 
     #[test]
     fn test_gas_id_name_and_from_str_coverage() {

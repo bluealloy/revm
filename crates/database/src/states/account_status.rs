@@ -96,10 +96,6 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on touched empty account post state clear EIP (EIP-161).
-    ///
-    /// # Panics
-    ///
-    /// If current status is [AccountStatus::Loaded] or [AccountStatus::Changed].
     pub fn on_touched_empty_post_eip161(&self) -> Self {
         match self {
             // Account can be touched but not existing. The status should remain the same.
@@ -108,10 +104,8 @@ impl AccountStatus {
             Self::InMemoryChange | Self::Destroyed | Self::LoadedEmptyEIP161 => Self::Destroyed,
             // Transition to destroy the account.
             Self::DestroyedAgain | Self::DestroyedChanged => Self::DestroyedAgain,
-            // Account statuses considered unreachable.
-            Self::Loaded | Self::Changed => {
-                unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
-            }
+            // Account can become empty.
+            Self::Changed | Self::Loaded => Self::Destroyed,
         }
     }
 
@@ -318,6 +312,14 @@ mod test {
         assert_eq!(
             AccountStatus::DestroyedChanged.on_touched_empty_post_eip161(),
             AccountStatus::DestroyedAgain
+        );
+        assert_eq!(
+            AccountStatus::Loaded.on_touched_empty_post_eip161(),
+            AccountStatus::Destroyed
+        );
+        assert_eq!(
+            AccountStatus::Changed.on_touched_empty_post_eip161(),
+            AccountStatus::Destroyed
         );
     }
 

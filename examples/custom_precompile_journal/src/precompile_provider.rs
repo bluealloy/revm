@@ -26,7 +26,7 @@ pub struct CustomPrecompileProvider {
 impl CustomPrecompileProvider {
     pub fn new_with_spec(spec: SpecId) -> Self {
         Self {
-            inner: EthPrecompiles::default(),
+            inner: EthPrecompiles::new(spec),
             spec,
         }
     }
@@ -44,7 +44,7 @@ where
         }
         self.spec = spec;
         // Create a new inner provider with the new spec
-        self.inner = EthPrecompiles::default();
+        self.inner = EthPrecompiles::new(spec);
         true
     }
 

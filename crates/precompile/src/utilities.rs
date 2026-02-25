@@ -74,6 +74,22 @@ pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
     }
 }
 
+/// Left-pads the given big-endian slice with zeroes until `len`.
+///
+/// Unlike [`left_pad_vec`], when `data` is longer than `len` this correctly
+/// truncates leading (most-significant) bytes instead of trailing ones.
+#[inline]
+pub fn left_pad_vec_be(data: &[u8], len: usize) -> Cow<'_, [u8]> {
+    if data.len() < len {
+        let mut padded = vec![0; len];
+        padded[len - data.len()..].copy_from_slice(data);
+        Cow::Owned(padded)
+    } else {
+        // Truncate leading bytes (data is big-endian).
+        Cow::Borrowed(&data[data.len() - len..])
+    }
+}
+
 /// Converts a boolean to a left-padded 32-byte [`Bytes`] value.
 ///
 /// This is optimized to not allocate at runtime by using 2 static arrays.
@@ -165,6 +181,24 @@ mod tests {
         let padded = left_pad_vec(&data, 8);
         assert!(matches!(padded, Cow::Borrowed(_)));
         assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    #[test]
+    fn left_padding_be() {
+        let data = [1, 2, 3, 4];
+        let padded = left_pad_vec_be(&data, 8);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [0, 0, 0, 0, 1, 2, 3, 4]);
+
+        let data = [0, 0, 1, 2, 3, 4];
+        let padded = left_pad_vec_be(&data, 4);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4]);
+
+        let data = [1, 2, 3, 4];
+        let padded = left_pad_vec_be(&data, 4);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4]);
     }
 
     #[test]
