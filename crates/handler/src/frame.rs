@@ -94,6 +94,9 @@ pub fn call_load_bytecode<J: JournalTr>(
 }
 
 /// Check that the caller has sufficient balance for the create value transfer.
+///
+/// This is a standalone step function for composing custom create flows.
+/// The [`FrameBuilder`] inlines this logic to avoid redundant account loads.
 #[inline]
 pub fn create_check_balance<J: JournalTr>(
     journal: &mut J,
@@ -110,6 +113,9 @@ pub fn create_check_balance<J: JournalTr>(
 /// Bump caller nonce. Returns the old nonce.
 ///
 /// Errors on nonce overflow.
+///
+/// This is a standalone step function for composing custom create flows.
+/// The [`FrameBuilder`] inlines this logic to avoid redundant account loads.
 #[inline]
 pub fn create_bump_nonce<J: JournalTr>(
     journal: &mut J,
@@ -201,27 +207,14 @@ pub struct CreateKind {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-// FrameKind trait
+// Build implementations
 // ────────────────────────────────────────────────────────────────────────────────
 
-/// Trait enabling a single [`FrameBuilder::build`] method for both [`CallKind`] and [`CreateKind`].
-pub trait FrameKind: Sized {
-    /// Build a frame from the builder, consuming it.
-    fn build_frame<CTX, ERROR>(
-        builder: FrameBuilder<Self>,
-        this: OutFrame<'_, EthFrame>,
-        ctx: &mut CTX,
-        precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
-    where
-        CTX: ContextTr,
-        ERROR: From<ContextTrDbError<CTX>> + FromStringError;
-}
-
-impl FrameKind for CallKind {
+impl FrameBuilder<CallKind> {
+    /// Consume the builder and produce a call frame (or an early result).
     #[inline]
-    fn build_frame<CTX, ERROR>(
-        builder: FrameBuilder<Self>,
+    pub fn build<CTX, ERROR>(
+        self,
         mut this: OutFrame<'_, EthFrame>,
         ctx: &mut CTX,
         mut precompile_fn: impl FnMut(
@@ -249,7 +242,7 @@ impl FrameKind for CallKind {
                     bytecode: override_bytecode,
                     is_static: override_is_static,
                 },
-        } = builder;
+        } = self;
 
         let gas = Gas::new(override_gas_limit.unwrap_or(inputs.gas_limit));
         let return_result = |instruction_result: InstructionResult| {
@@ -348,13 +341,13 @@ impl FrameKind for CallKind {
     }
 }
 
-impl FrameKind for CreateKind {
+impl FrameBuilder<CreateKind> {
+    /// Consume the builder and produce a create frame (or an early result).
     #[inline]
-    fn build_frame<CTX, ERROR>(
-        builder: FrameBuilder<Self>,
+    pub fn build<CTX, ERROR>(
+        self,
         mut this: OutFrame<'_, EthFrame>,
         ctx: &mut CTX,
-        _precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
     where
         CTX: ContextTr,
@@ -375,7 +368,7 @@ impl FrameKind for CreateKind {
                     created_address: override_address,
                     bytecode: override_bytecode,
                 },
-        } = builder;
+        } = self;
 
         let spec: SpecId = ctx.cfg().spec().into();
         let gas_limit = override_gas_limit.unwrap_or_else(|| inputs.gas_limit());
@@ -516,9 +509,9 @@ impl FrameKind for CreateKind {
 /// (`call`, `create`, `call_end`, `create_end`, `initialize_interp`).
 pub struct FrameBuilder<Kind> {
     /// Call depth in the execution stack.
-    pub depth: usize,
+    depth: usize,
     /// Shared memory for the frame.
-    pub memory: SharedMemory,
+    memory: SharedMemory,
     check_depth: bool,
     checkpoint: Option<JournalCheckpoint>,
     interpreter_input: Option<InputsImpl>,
@@ -541,6 +534,18 @@ impl<Kind: core::fmt::Debug> core::fmt::Debug for FrameBuilder<Kind> {
 
 // Shared methods for any Kind.
 impl<K> FrameBuilder<K> {
+    /// Returns the call depth.
+    #[inline]
+    pub fn depth(&self) -> usize {
+        self.depth
+    }
+
+    /// Returns a reference to the shared memory.
+    #[inline]
+    pub fn memory(&self) -> &SharedMemory {
+        &self.memory
+    }
+
     /// Skip the call-depth check (`CALL_STACK_LIMIT`).
     #[inline]
     pub fn skip_depth_check(mut self) -> Self {
@@ -573,25 +578,6 @@ impl<K> FrameBuilder<K> {
     }
 }
 
-// Build method for any Kind that implements FrameKind.
-impl<K: FrameKind> FrameBuilder<K> {
-    /// Consume the builder and produce a frame (or an early result).
-    ///
-    /// The `precompile_fn` closure is only used by [`CallKind`]; [`CreateKind`] ignores it.
-    #[inline]
-    pub fn build<CTX, ERROR>(
-        self,
-        this: OutFrame<'_, EthFrame>,
-        ctx: &mut CTX,
-        precompile_fn: impl FnMut(&mut CTX, &CallInputs) -> Result<Option<InterpreterResult>, String>,
-    ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR>
-    where
-        CTX: ContextTr,
-        ERROR: From<ContextTrDbError<CTX>> + FromStringError,
-    {
-        K::build_frame(self, this, ctx, precompile_fn)
-    }
-}
 
 // Call-specific methods.
 impl FrameBuilder<CallKind> {
@@ -731,6 +717,7 @@ impl FrameBuilderKind {
     /// Consume the builder and produce a frame (or an early result).
     ///
     /// Dispatches to [`FrameBuilder::build`] on the inner variant.
+    /// The `precompile_fn` closure is only used by the [`Call`](Self::Call) variant.
     #[inline]
     pub fn build<CTX, ERROR>(
         self,
@@ -744,7 +731,7 @@ impl FrameBuilderKind {
     {
         match self {
             Self::Call(builder) => builder.build(this, ctx, precompile_fn),
-            Self::Create(builder) => builder.build(this, ctx, precompile_fn),
+            Self::Create(builder) => builder.build(this, ctx),
         }
     }
 }
@@ -934,7 +921,7 @@ impl EthFrame<EthInterpreter> {
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        Self::build_create_frame(depth, memory, inputs).build(this, context, |_, _| Ok(None))
+        Self::build_create_frame(depth, memory, inputs).build(this, context)
     }
 
     /// Initializes a frame with the given context and precompiles.
@@ -1165,4 +1152,329 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use context::Context;
+    use context_interface::context::ContextError;
+    use context_interface::local::OutFrame;
+    use database::InMemoryDB;
+    use interpreter::{CallInput, CallScheme};
+    use primitives::{address, hardfork::SpecId};
+    use state::AccountInfo;
+    use std::convert::Infallible;
+
+    type TestError = ContextError<Infallible>;
+
+    const CALLER: Address = address!("0x0000000000000000000000000000000000000001");
+    const TARGET: Address = address!("0x0000000000000000000000000000000000000002");
+
+    fn test_call_inputs() -> Box<CallInputs> {
+        Box::new(CallInputs {
+            input: CallInput::Bytes(Bytes::new()),
+            return_memory_offset: 0..0,
+            gas_limit: 100_000,
+            bytecode_address: TARGET,
+            known_bytecode: None,
+            target_address: TARGET,
+            caller: CALLER,
+            value: CallValue::Transfer(U256::ZERO),
+            scheme: CallScheme::Call,
+            is_static: false,
+        })
+    }
+
+    fn test_create_inputs() -> Box<CreateInputs> {
+        Box::new(CreateInputs::new(
+            CALLER,
+            CreateScheme::Create,
+            U256::ZERO,
+            Bytes::from_static(&[0x60, 0x00]),
+            100_000,
+        ))
+    }
+
+    fn test_ctx() -> Context<context::BlockEnv, context::TxEnv, context::CfgEnv, InMemoryDB> {
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            CALLER,
+            AccountInfo {
+                balance: U256::from(1_000_000),
+                nonce: 0,
+                ..Default::default()
+            },
+        );
+        Context::new(db, SpecId::CANCUN)
+    }
+
+    // ─── Standalone function tests ───
+
+    #[test]
+    fn test_check_depth_within_limit() {
+        assert!(check_depth(0).is_ok());
+        assert!(check_depth(CALL_STACK_LIMIT as usize - 1).is_ok());
+        assert!(check_depth(CALL_STACK_LIMIT as usize).is_ok());
+    }
+
+    #[test]
+    fn test_check_depth_exceeds_limit() {
+        assert_eq!(
+            check_depth(CALL_STACK_LIMIT as usize + 1),
+            Err(InstructionResult::CallTooDeep)
+        );
+    }
+
+    #[test]
+    fn test_create_compute_address_create() {
+        let (addr, hash) =
+            create_compute_address(CALLER, 0, &CreateScheme::Create, &Bytes::new());
+        assert_eq!(addr, CALLER.create(0));
+        assert!(hash.is_none());
+    }
+
+    #[test]
+    fn test_create_compute_address_create2() {
+        let init_code = Bytes::from_static(&[0x60, 0x00]);
+        let salt = U256::from(42);
+        let (addr, hash) = create_compute_address(
+            CALLER,
+            0,
+            &CreateScheme::Create2 { salt },
+            &init_code,
+        );
+        let expected_hash = keccak256(&init_code);
+        assert_eq!(addr, CALLER.create2(salt.to_be_bytes(), expected_hash));
+        assert_eq!(hash, Some(expected_hash));
+    }
+
+    // ─── Builder depth check tests ───
+
+    #[test]
+    fn test_call_builder_depth_check_returns_early() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        let result: Result<_, TestError> = FrameBuilder::new_call(
+            CALL_STACK_LIMIT as usize + 1,
+            SharedMemory::new(),
+            test_call_inputs(),
+        )
+        .build(out, &mut ctx, |_, _| Ok(None));
+
+        match result.unwrap() {
+            ItemOrResult::Result(FrameResult::Call(outcome)) => {
+                assert_eq!(outcome.result.result, InstructionResult::CallTooDeep);
+            }
+            _ => panic!("expected early return with CallTooDeep"),
+        }
+    }
+
+    #[test]
+    fn test_call_builder_skip_depth_check_succeeds() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[0x00])); // STOP
+        let hash = B256::ZERO;
+
+        let result: Result<_, TestError> = FrameBuilder::new_call(
+            CALL_STACK_LIMIT as usize + 1,
+            SharedMemory::new(),
+            test_call_inputs(),
+        )
+        .skip_depth_check()
+        .skip_value_transfer()
+        .with_bytecode(bytecode, hash) // also skips precompile check
+        .build(out, &mut ctx, |_, _| Ok(None));
+
+        match result.unwrap() {
+            ItemOrResult::Item(_) => {} // Frame was created successfully
+            ItemOrResult::Result(r) => panic!("expected frame creation, got result: {r:?}"),
+        }
+    }
+
+    #[test]
+    fn test_create_builder_depth_check_returns_early() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        let result: Result<_, TestError> = FrameBuilder::new_create(
+            CALL_STACK_LIMIT as usize + 1,
+            SharedMemory::new(),
+            test_create_inputs(),
+        )
+        .build(out, &mut ctx);
+
+        match result.unwrap() {
+            ItemOrResult::Result(FrameResult::Create(outcome)) => {
+                assert_eq!(outcome.result.result, InstructionResult::CallTooDeep);
+            }
+            _ => panic!("expected early return with CallTooDeep"),
+        }
+    }
+
+    // ─── Builder balance / nonce tests ───
+
+    #[test]
+    fn test_create_builder_balance_check_fails() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        // Request more value than the caller has
+        let mut inputs = test_create_inputs();
+        inputs.set_value(U256::from(999_999_999));
+
+        let result: Result<_, TestError> = FrameBuilder::new_create(
+            0,
+            SharedMemory::new(),
+            inputs,
+        )
+        .build(out, &mut ctx);
+
+        match result.unwrap() {
+            ItemOrResult::Result(FrameResult::Create(outcome)) => {
+                assert_eq!(outcome.result.result, InstructionResult::OutOfFunds);
+            }
+            _ => panic!("expected OutOfFunds"),
+        }
+    }
+
+    #[test]
+    fn test_create_builder_skip_balance_check_succeeds() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        // Request more value than the caller has, but skip balance check
+        let mut inputs = test_create_inputs();
+        inputs.set_value(U256::from(999_999_999));
+
+        let result: Result<_, TestError> = FrameBuilder::new_create(
+            0,
+            SharedMemory::new(),
+            inputs,
+        )
+        .skip_balance_check()
+        .build(out, &mut ctx);
+
+        match result.unwrap() {
+            ItemOrResult::Item(_) => {} // Frame created despite insufficient balance
+            ItemOrResult::Result(r) => panic!("expected frame creation, got result: {r:?}"),
+        }
+    }
+
+    #[test]
+    fn test_create_builder_with_created_address() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+        let custom_addr = address!("0x00000000000000000000000000000000deadbeef");
+
+        let result: Result<_, TestError> = FrameBuilder::new_create(
+            0,
+            SharedMemory::new(),
+            test_create_inputs(),
+        )
+        .with_created_address(custom_addr)
+        .build(out, &mut ctx);
+
+        match result.unwrap() {
+            ItemOrResult::Item(_) => {
+                // Verify the frame was created with the custom address
+                match &frame.data {
+                    FrameData::Create(cf) => assert_eq!(cf.created_address, custom_addr),
+                    _ => panic!("expected Create frame data"),
+                }
+            }
+            ItemOrResult::Result(r) => panic!("expected frame creation, got result: {r:?}"),
+        }
+    }
+
+    // ─── Builder call-specific tests ───
+
+    #[test]
+    fn test_call_builder_empty_bytecode_returns_stop() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        // Target has no code, so bytecode is empty
+        let result: Result<_, TestError> = FrameBuilder::new_call(
+            0,
+            SharedMemory::new(),
+            test_call_inputs(),
+        )
+        .skip_value_transfer()
+        .build(out, &mut ctx, |_, _| Ok(None));
+
+        match result.unwrap() {
+            ItemOrResult::Result(FrameResult::Call(outcome)) => {
+                assert_eq!(outcome.result.result, InstructionResult::Stop);
+            }
+            _ => panic!("expected Stop for empty bytecode"),
+        }
+    }
+
+    #[test]
+    fn test_call_builder_skip_empty_bytecode_check() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        // Target has no code, but we skip the empty bytecode check
+        let result: Result<_, TestError> = FrameBuilder::new_call(
+            0,
+            SharedMemory::new(),
+            test_call_inputs(),
+        )
+        .skip_value_transfer()
+        .skip_empty_bytecode_check()
+        .build(out, &mut ctx, |_, _| Ok(None));
+
+        match result.unwrap() {
+            ItemOrResult::Item(_) => {} // Frame created despite empty bytecode
+            ItemOrResult::Result(r) => panic!("expected frame creation, got result: {r:?}"),
+        }
+    }
+
+    #[test]
+    fn test_call_builder_with_bytecode_skips_precompile() {
+        let mut ctx = test_ctx();
+        let mut frame = EthFrame::invalid();
+        let out = OutFrame::new_init(&mut frame);
+
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[0x00]));
+        let hash = B256::ZERO;
+
+        // Precompile fn that would panic if called
+        let result: Result<_, TestError> = FrameBuilder::new_call(
+            0,
+            SharedMemory::new(),
+            test_call_inputs(),
+        )
+        .skip_value_transfer()
+        .with_bytecode(bytecode, hash)
+        .build(out, &mut ctx, |_, _| panic!("precompile should not be called"));
+
+        match result.unwrap() {
+            ItemOrResult::Item(_) => {} // Success — precompile was skipped
+            ItemOrResult::Result(r) => panic!("expected frame creation, got result: {r:?}"),
+        }
+    }
+
+    // ─── Builder getter tests ───
+
+    #[test]
+    fn test_builder_getters() {
+        let builder = FrameBuilder::new_call(5, SharedMemory::new(), test_call_inputs());
+        assert_eq!(builder.depth(), 5);
+        // memory() returns a reference — just verify it doesn't panic
+        let _ = builder.memory();
+    }
 }
