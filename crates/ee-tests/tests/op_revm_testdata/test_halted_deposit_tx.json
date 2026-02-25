@@ -8,6 +8,7 @@
         "intrinsic_gas": 0,
         "limit": 16777216
       },
+      "logs": [],
       "reason": "FailedDeposit"
     }
   },

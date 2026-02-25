@@ -106,6 +106,7 @@ fn test_halted_deposit_tx() {
                 0,
                 0,
             ),
+            logs: vec![],
         }
     );
     assert_eq!(

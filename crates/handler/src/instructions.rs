@@ -45,6 +45,7 @@ where
     HOST: Host,
 {
     /// Returns `EthInstructions` with mainnet spec.
+    #[deprecated(since = "0.2.0", note = "use new_mainnet_with_spec instead")]
     pub fn new_mainnet() -> Self {
         let spec = SpecId::default();
         Self::new(instruction_table_gas_changes_spec(spec), spec)
@@ -81,15 +82,5 @@ where
 
     fn instruction_table(&self) -> &InstructionTable<Self::InterpreterTypes, Self::Context> {
         &self.instruction_table
-    }
-}
-
-impl<WIRE, HOST> Default for EthInstructions<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host,
-{
-    fn default() -> Self {
-        Self::new_mainnet()
     }
 }

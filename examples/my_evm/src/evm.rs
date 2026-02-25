@@ -6,6 +6,7 @@ use revm::{
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
+    primitives::hardfork::SpecId,
     Database, Inspector,
 };
 
@@ -47,8 +48,8 @@ impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
         Self(Evm {
             ctx,
             inspector,
-            instruction: EthInstructions::new_mainnet(),
-            precompiles: EthPrecompiles::default(),
+            instruction: EthInstructions::new_mainnet_with_spec(SpecId::default()),
+            precompiles: EthPrecompiles::new(SpecId::default()),
             frame_stack: FrameStack::new(),
         })
     }
