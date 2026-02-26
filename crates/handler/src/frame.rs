@@ -344,6 +344,26 @@ impl FrameBuilder<CallKind> {
     }
 }
 
+/// Build an early-return error for a create frame.
+///
+/// Marked `#[cold]` so the compiler lays out error-path code away from
+/// the hot instruction stream, keeping `build()` small enough to inline.
+#[cold]
+#[inline(never)]
+fn create_error_result(
+    result: InstructionResult,
+    gas_limit: u64,
+) -> ItemOrResult<FrameToken, FrameResult> {
+    ItemOrResult::Result(FrameResult::Create(CreateOutcome {
+        result: InterpreterResult {
+            result,
+            gas: Gas::new(gas_limit),
+            output: Bytes::new(),
+        },
+        address: None,
+    }))
+}
+
 impl FrameBuilder<CreateKind> {
     /// Consume the builder and produce a create frame (or an early result).
     #[inline]
@@ -371,29 +391,18 @@ impl FrameBuilder<CreateKind> {
                 },
         } = self;
 
-        let (override_checkpoint, override_input, override_gas_limit) = match overrides {
-            Some(o) => (o.checkpoint, o.interpreter_input, o.gas_limit),
-            None => (None, None, None),
-        };
-
         let spec: SpecId = ctx.cfg().spec().into();
-        let gas_limit = override_gas_limit.unwrap_or_else(|| inputs.gas_limit());
-        let return_error = |e| {
-            Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
-                result: InterpreterResult {
-                    result: e,
-                    gas: Gas::new(gas_limit),
-                    output: Bytes::new(),
-                },
-                address: None,
-            })))
-        };
+        let gas_limit = overrides
+            .as_ref()
+            .and_then(|o| o.gas_limit)
+            .unwrap_or_else(|| inputs.gas_limit());
 
         // Check depth
-        if do_check_depth {
-            if let Err(e) = check_depth(depth) {
-                return return_error(e);
-            }
+        if do_check_depth && depth > CALL_STACK_LIMIT as usize {
+            return Ok(create_error_result(
+                InstructionResult::CallTooDeep,
+                gas_limit,
+            ));
         }
 
         // Load caller account once for balance check, nonce bump, and/or address computation.
@@ -402,13 +411,16 @@ impl FrameBuilder<CreateKind> {
             let mut caller_info = ctx.journal_mut().load_account_mut(inputs.caller())?;
 
             if check_balance && *caller_info.balance() < inputs.value() {
-                return return_error(InstructionResult::OutOfFunds);
+                return Ok(create_error_result(
+                    InstructionResult::OutOfFunds,
+                    gas_limit,
+                ));
             }
 
             let old_nonce = caller_info.nonce();
 
             if bump_nonce && !caller_info.bump_nonce() {
-                return return_error(InstructionResult::Return);
+                return Ok(create_error_result(InstructionResult::Return, gas_limit));
             }
 
             drop(caller_info);
@@ -425,13 +437,17 @@ impl FrameBuilder<CreateKind> {
             }
         } else {
             // No balance check, no nonce bump, and override address is provided.
-            (override_address.unwrap(), None)
+            (
+                override_address.expect("override_address must be set when caller load is skipped"),
+                None,
+            )
         };
 
         // Warm load account.
         ctx.journal_mut().load_account(created_address)?;
 
         // Create account, transfer funds and make the journal checkpoint.
+        let override_checkpoint = overrides.as_ref().and_then(|o| o.checkpoint);
         let checkpoint = if let Some(cp) = override_checkpoint {
             cp
         } else {
@@ -442,7 +458,9 @@ impl FrameBuilder<CreateKind> {
                 spec,
             ) {
                 Ok(checkpoint) => checkpoint,
-                Err(e) => return return_error(e.into()),
+                Err(e) => {
+                    return Ok(create_error_result(e.into(), gas_limit));
+                }
             }
         };
 
@@ -453,9 +471,12 @@ impl FrameBuilder<CreateKind> {
             )
         });
 
-        let interpreter_input = override_input.unwrap_or_else(|| {
-            create_interpreter_input(created_address, inputs.caller(), inputs.value())
-        });
+        // Consume `overrides` here to move out interpreter_input without copying.
+        let interpreter_input = overrides
+            .and_then(|o| o.interpreter_input)
+            .unwrap_or_else(|| {
+                create_interpreter_input(created_address, inputs.caller(), inputs.value())
+            });
 
         this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
@@ -595,7 +616,8 @@ impl<K> FrameBuilder<K> {
     /// Returns a mutable reference to the overrides, allocating the box on first use.
     #[inline]
     fn overrides_mut(&mut self) -> &mut FrameOverrides {
-        self.overrides.get_or_insert_with(|| Box::new(FrameOverrides::default()))
+        self.overrides
+            .get_or_insert_with(|| Box::new(FrameOverrides::default()))
     }
 }
 

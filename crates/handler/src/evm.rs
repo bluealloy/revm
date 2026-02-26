@@ -192,16 +192,14 @@ where
         let precompiles = &mut self.precompiles;
 
         let res = match frame_input {
-            FrameInput::Call(inputs) => {
-                EthFrame::build_call_frame(depth, memory, inputs)
-                    .build::<_, ContextDbError<CTX>>(new_frame, ctx, |ctx, inputs| {
-                        precompiles.run(ctx, inputs)
-                    })?
-            }
-            FrameInput::Create(inputs) => {
-                EthFrame::build_create_frame(depth, memory, inputs)
-                    .build::<_, ContextDbError<CTX>>(new_frame, ctx)?
-            }
+            FrameInput::Call(inputs) => EthFrame::build_call_frame(depth, memory, inputs)
+                .build::<_, ContextDbError<CTX>>(
+                new_frame,
+                ctx,
+                |ctx, inputs| precompiles.run(ctx, inputs),
+            )?,
+            FrameInput::Create(inputs) => EthFrame::build_create_frame(depth, memory, inputs)
+                .build::<_, ContextDbError<CTX>>(new_frame, ctx)?,
             FrameInput::Empty => unreachable!(),
         };
 
