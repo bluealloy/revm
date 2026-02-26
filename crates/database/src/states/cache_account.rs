@@ -116,35 +116,6 @@ impl CacheAccount {
         (self.account.map(|a| a.into_components()), self.status)
     }
 
-    /// Account got touched and before EIP161 state clear this account is considered created.
-    pub fn touch_create_pre_eip161(
-        &mut self,
-        storage: StorageWithOriginalValues,
-    ) -> Option<TransitionAccount> {
-        let previous_status = self.status;
-
-        let had_no_info = self
-            .account
-            .as_ref()
-            .map(|a| a.info.is_empty())
-            .unwrap_or_default();
-        self.status = self.status.on_touched_created_pre_eip161(had_no_info)?;
-
-        let plain_storage = storage.iter().map(|(k, v)| (*k, v.present_value)).collect();
-        let previous_info = self.account.take().map(|a| a.info);
-
-        self.account = Some(PlainAccount::new_empty_with_storage(plain_storage));
-
-        Some(TransitionAccount {
-            info: Some(AccountInfo::default()),
-            status: self.status,
-            previous_info,
-            previous_status,
-            storage,
-            storage_was_destroyed: false,
-        })
-    }
-
     /// Touch empty account, related to EIP-161 state clear.
     ///
     /// This account returns the Transition that is used to create the BundleState.

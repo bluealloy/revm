@@ -109,30 +109,6 @@ impl AccountStatus {
         }
     }
 
-    /// Returns the next account status on touched or created account pre state clear EIP (EIP-161).
-    /// Returns `None` if the account status didn't change.
-    ///
-    /// # Panics
-    ///
-    /// If current status is [AccountStatus::Loaded] or [AccountStatus::Changed].
-    pub fn on_touched_created_pre_eip161(&self, had_no_info: bool) -> Option<Self> {
-        match self {
-            Self::LoadedEmptyEIP161 => None,
-            Self::DestroyedChanged => {
-                if had_no_info {
-                    None
-                } else {
-                    Some(Self::DestroyedChanged)
-                }
-            }
-            Self::Destroyed | Self::DestroyedAgain => Some(Self::DestroyedChanged),
-            Self::InMemoryChange | Self::LoadedNotExisting => Some(Self::InMemoryChange),
-            Self::Loaded | Self::Changed => {
-                unreachable!("Wrong state transition, touch crate is not possible from {self:?}")
-            }
-        }
-    }
-
     /// Returns the next account status on change.
     pub fn on_changed(&self, had_no_nonce_and_code: bool) -> Self {
         match self {
@@ -320,63 +296,6 @@ mod test {
         assert_eq!(
             AccountStatus::Changed.on_touched_empty_post_eip161(),
             AccountStatus::Destroyed
-        );
-    }
-
-    #[test]
-    fn test_on_touched_created_pre_eip161() {
-        assert_eq!(
-            AccountStatus::LoadedEmptyEIP161.on_touched_created_pre_eip161(true),
-            None
-        );
-        assert_eq!(
-            AccountStatus::LoadedEmptyEIP161.on_touched_created_pre_eip161(false),
-            None
-        );
-
-        assert_eq!(
-            AccountStatus::DestroyedChanged.on_touched_created_pre_eip161(true),
-            None
-        );
-        assert_eq!(
-            AccountStatus::DestroyedChanged.on_touched_created_pre_eip161(false),
-            Some(AccountStatus::DestroyedChanged)
-        );
-
-        assert_eq!(
-            AccountStatus::Destroyed.on_touched_created_pre_eip161(true),
-            Some(AccountStatus::DestroyedChanged)
-        );
-        assert_eq!(
-            AccountStatus::Destroyed.on_touched_created_pre_eip161(false),
-            Some(AccountStatus::DestroyedChanged)
-        );
-
-        assert_eq!(
-            AccountStatus::DestroyedAgain.on_touched_created_pre_eip161(true),
-            Some(AccountStatus::DestroyedChanged)
-        );
-        assert_eq!(
-            AccountStatus::DestroyedAgain.on_touched_created_pre_eip161(false),
-            Some(AccountStatus::DestroyedChanged)
-        );
-
-        assert_eq!(
-            AccountStatus::InMemoryChange.on_touched_created_pre_eip161(true),
-            Some(AccountStatus::InMemoryChange)
-        );
-        assert_eq!(
-            AccountStatus::InMemoryChange.on_touched_created_pre_eip161(false),
-            Some(AccountStatus::InMemoryChange)
-        );
-
-        assert_eq!(
-            AccountStatus::LoadedNotExisting.on_touched_created_pre_eip161(true),
-            Some(AccountStatus::InMemoryChange)
-        );
-        assert_eq!(
-            AccountStatus::LoadedNotExisting.on_touched_created_pre_eip161(false),
-            Some(AccountStatus::InMemoryChange)
         );
     }
 
