@@ -321,19 +321,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        let basic = match self.cache.accounts.entry(address) {
-            Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(entry) => entry.insert(
-                self.db
-                    .basic_ref(address)?
-                    .map(|info| DbAccount {
-                        info,
-                        ..Default::default()
-                    })
-                    .unwrap_or_else(DbAccount::new_not_existing),
-            ),
-        };
-        Ok(basic.info())
+        Ok(self.load_account(address)?.info())
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
