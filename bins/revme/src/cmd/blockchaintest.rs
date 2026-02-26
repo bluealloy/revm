@@ -14,7 +14,7 @@ use revm::{
     database::{states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
-    primitives::{hardfork::SpecId, hex, Address, HashMap, U256},
+    primitives::{hardfork::SpecId, hex, Address, AddressMap, U256Map, U256},
     state::{bal::Bal, AccountInfo},
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
@@ -272,7 +272,7 @@ fn run_test_file(
 #[derive(Debug, Clone)]
 struct DebugInfo {
     /// Initial pre-state before any execution
-    pre_state: HashMap<Address, (AccountInfo, HashMap<U256, U256>)>,
+    pre_state: AddressMap<(AccountInfo, U256Map<U256>)>,
     /// Transaction environment
     tx_env: Option<revm::context::tx::TxEnv>,
     /// Block environment
@@ -289,15 +289,13 @@ struct DebugInfo {
 
 impl DebugInfo {
     /// Capture current state from the State database
-    fn capture_committed_state(
-        state: &State<EmptyDB>,
-    ) -> HashMap<Address, (AccountInfo, HashMap<U256, U256>)> {
-        let mut committed_state = HashMap::default();
+    fn capture_committed_state(state: &State<EmptyDB>) -> AddressMap<(AccountInfo, U256Map<U256>)> {
+        let mut committed_state = AddressMap::default();
 
         // Access the cache state to get all accounts
         for (address, cache_account) in &state.cache.accounts {
             if let Some(plain_account) = &cache_account.account {
-                let mut storage = HashMap::default();
+                let mut storage = U256Map::default();
                 for (key, value) in &plain_account.storage {
                     storage.insert(*key, *value);
                 }
@@ -668,7 +666,7 @@ fn execute_blockchain_test(
     let mut state = State::builder().with_bal_builder().build();
 
     // Capture pre-state for debug info
-    let mut pre_state_debug = HashMap::default();
+    let mut pre_state_debug = AddressMap::default();
 
     // Insert genesis state into database
     let genesis_state = test_case.pre.clone().into_genesis_state();
@@ -756,6 +754,10 @@ fn execute_blockchain_test(
         // Pre block system calls
         pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root);
 
+        // Track cumulative gas used across all transactions in this block
+        let mut cumulative_gas_used: u64 = 0;
+        let mut block_completed = true;
+
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
             if tx.sender.is_none() {
@@ -786,6 +788,7 @@ fn execute_blockchain_test(
                 } else {
                     eprintln!("⚠️  Skipping block {block_idx} due to missing sender");
                 }
+                block_completed = false;
                 break; // Skip to next block
             }
 
@@ -825,6 +828,7 @@ fn execute_blockchain_test(
                             "⚠️  Skipping block {block_idx} due to transaction env creation error: {e}"
                         );
                     }
+                    block_completed = false;
                     break; // Skip to next block
                 }
             };
@@ -883,8 +887,18 @@ fn execute_blockchain_test(
                                 "⚠️  Skipping block {block_idx}: transaction unexpectedly succeeded (expected failure: {expected_exception})"
                             );
                         }
+                        block_completed = false;
                         break; // Skip to next block
                     }
+                    // EIP-7778: Block gas accounting without refunds.
+                    // For Amsterdam+, block gas = max(spent, floor_gas).
+                    // For pre-Amsterdam, block gas = used() = max(spent - refunded, floor_gas).
+                    let gas = result.result.gas();
+                    cumulative_gas_used += if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
+                        gas.spent().max(gas.floor_gas())
+                    } else {
+                        gas.used()
+                    };
                     evm.commit(result.state);
                 }
                 Err(e) => {
@@ -926,6 +940,7 @@ fn execute_blockchain_test(
                                 "⚠️  Skipping block {block_idx} due to unexpected failure: {e:?}"
                             );
                         }
+                        block_completed = false;
                         break; // Skip to next block
                     } else if json_output {
                         // Expected failure
@@ -937,6 +952,25 @@ fn execute_blockchain_test(
                         });
                         print_json(&output);
                     }
+                }
+            }
+        }
+
+        // Validate block gas used against header
+        if block_completed && !should_fail {
+            if let Some(block_header) = block.block_header.as_ref() {
+                let expected_gas_used = block_header.gas_used.to::<u64>();
+                if cumulative_gas_used != expected_gas_used {
+                    if print_env_on_error {
+                        eprintln!(
+                            "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {cumulative_gas_used}"
+                        );
+                    }
+                    return Err(TestExecutionError::BlockGasUsedMismatch {
+                        block_idx,
+                        expected: expected_gas_used,
+                        actual: cumulative_gas_used,
+                    });
                 }
             }
         }
@@ -1127,6 +1161,13 @@ pub enum TestExecutionError {
         tx_idx: usize,
         reason: HaltReason,
         gas_used: u64,
+    },
+
+    #[error("Block gas used mismatch at block {block_idx}: expected {expected}, got {actual}")]
+    BlockGasUsedMismatch {
+        block_idx: usize,
+        expected: u64,
+        actual: u64,
     },
 
     #[error("BAL error")]

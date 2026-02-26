@@ -12,13 +12,45 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
+    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
-    Address, HashMap, Log, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
+    Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, TransientStorage};
 use std::vec::Vec;
+
+/// Configuration for the journal that affects EVM execution behavior.
+///
+/// This struct bundles the spec ID and EIP-7708 configuration flags.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct JournalCfg {
+    /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
+    /// JournalInner to be functional.
+    ///
+    /// If spec is set it assumed that precompile addresses are set as well for this particular spec.
+    ///
+    /// This spec is used for two things:
+    ///
+    /// - [EIP-161]: Prior to this EIP, Ethereum had separate definitions for empty and non-existing accounts.
+    /// - [EIP-6780]: `SELFDESTRUCT` only in same transaction
+    ///
+    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
+    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
+    pub spec: SpecId,
+    /// Whether EIP-7708 (ETH transfers emit logs) is disabled.
+    pub eip7708_disabled: bool,
+    /// Whether EIP-7708 delayed burn logging is disabled.
+    ///
+    /// When enabled, revm tracks all self-destructed addresses and emits logs for
+    /// accounts that still have remaining balance at the end of the transaction.
+    /// This can be disabled for performance reasons as it requires storing and
+    /// iterating over all self-destructed accounts. When disabled, the logging
+    /// can be done outside of revm when applying accounts to database state.
+    pub eip7708_delayed_burn_disabled: bool,
+}
 /// Inner journal state that contains journal and state changes.
 ///
 /// Spec Id is a essential information for the Journal.
@@ -43,21 +75,20 @@ pub struct JournalInner<ENTRY> {
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
     pub transaction_id: usize,
-    /// The spec ID for the EVM. Spec is required for some journal entries and needs to be set for
-    /// JournalInner to be functional.
-    ///
-    /// If spec is set it assumed that precompile addresses are set as well for this particular spec.
-    ///
-    /// This spec is used for two things:
-    ///
-    /// - [EIP-161]: Prior to this EIP, Ethereum had separate definitions for empty and non-existing accounts.
-    /// - [EIP-6780]: `SELFDESTRUCT` only in same transaction
-    ///
-    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
-    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
-    pub spec: SpecId,
+    /// Journal configuration containing spec ID and EIP-7708 flags.
+    pub cfg: JournalCfg,
     /// Warm addresses containing both coinbase and current precompiles.
     pub warm_addresses: WarmAddresses,
+    /// Addresses that were self-destructed for the first time in this transaction.
+    ///
+    /// This is used by [EIP-7708] to emit logs for self-destructed accounts that still
+    /// have balance at the end of the transaction.
+    ///
+    /// The vec is indexed by checkpoint - on revert, entries added after the checkpoint
+    /// are removed.
+    ///
+    /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
+    pub selfdestructed_addresses: Vec<Address>,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -79,14 +110,20 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             journal: Vec::default(),
             transaction_id: 0,
             depth: 0,
-            spec: SpecId::default(),
+            cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
+            selfdestructed_addresses: Vec::new(),
         }
     }
 
-    /// Returns the logs
+    /// Returns the logs.
+    ///
+    /// Before returning, this function emits EIP-7708 logs for any self-destructed
+    /// accounts that still have a non-zero balance.
     #[inline]
     pub fn take_logs(&mut self) -> Vec<Log> {
+        // EIP-7708: Emit logs for self-destructed accounts with remaining balance
+        self.eip7708_emit_selfdestruct_remaining_balance_logs();
         mem::take(&mut self.logs)
     }
 
@@ -107,11 +144,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
-        // Spec, precompiles, BAL and state are not changed. It is always set again execution.
-        let _ = spec;
+        // Cfg and state are not changed. They are always set again before execution.
+        let _ = cfg;
         let _ = state;
         transient_storage.clear();
         *depth = 0;
@@ -125,6 +163,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *transaction_id += 1;
 
         logs.clear();
+        selfdestructed_addresses.clear();
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -137,10 +176,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
-        let is_spurious_dragon_enabled = spec.is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
             entry.revert(state, None, is_spurious_dragon_enabled);
@@ -148,6 +188,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         transient_storage.clear();
         *depth = 0;
         logs.clear();
+        selfdestructed_addresses.clear();
         *transaction_id += 1;
 
         // Clear coinbase address warming for next tx
@@ -169,11 +210,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             depth,
             journal,
             transaction_id,
-            spec,
+            cfg,
             warm_addresses,
+            selfdestructed_addresses,
         } = self;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
+        selfdestructed_addresses.clear();
 
         let mut state = mem::take(state);
 
@@ -181,7 +224,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // layer can always apply post-EIP-161 commit semantics (destroy empty touched
         // accounts). For pre-Spurious Dragon blocks, we prevent destruction by either
         // marking the account as created (materialized) or clearing the touched flag.
-        if !spec.is_enabled_in(SPURIOUS_DRAGON) {
+        if !cfg.spec.is_enabled_in(SPURIOUS_DRAGON) {
             for acc in state.values_mut() {
                 if acc.is_touched()
                     && acc.is_empty()
@@ -211,6 +254,48 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         state
     }
 
+    /// Emit EIP-7708 logs for self-destructed accounts that still have balance.
+    ///
+    /// This should be called before `take_logs()` at the end of transaction execution.
+    /// It checks all accounts that were self-destructed in this transaction and emits
+    /// a `SelfBalanceLog` for any that still have a non-zero balance.
+    ///
+    /// This can happen when an account receives ETH after being self-destructed
+    /// in the same transaction.
+    ///
+    /// Logs are emitted sorted by address in ascending order.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_emit_selfdestruct_remaining_balance_logs(&mut self) {
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM)
+            || self.cfg.eip7708_disabled
+            || self.cfg.eip7708_delayed_burn_disabled
+        {
+            return;
+        }
+
+        // Collect addresses with non-zero balance and sort by address
+        let mut addresses_with_balance: Vec<(Address, U256)> = self
+            .selfdestructed_addresses
+            .iter()
+            .filter_map(|address| {
+                self.state
+                    .get(address)
+                    .filter(|account| !account.info.balance.is_zero())
+                    .map(|account| (*address, account.info.balance))
+            })
+            .collect();
+
+        // Sort by address (ascending)
+        addresses_with_balance.sort_by_key(|(addr, _)| *addr);
+
+        // Emit logs in sorted order
+        for (address, balance) in addresses_with_balance {
+            self.eip7708_selfdestruct_to_self_log(address, balance);
+        }
+    }
+
     /// Return reference to state.
     #[inline]
     pub fn state(&mut self) -> &mut EvmState {
@@ -220,7 +305,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Sets SpecId.
     #[inline]
     pub fn set_spec_id(&mut self, spec: SpecId) {
-        self.spec = spec;
+        self.cfg.spec = spec;
+    }
+
+    /// Sets EIP-7708 configuration flags.
+    #[inline]
+    pub fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+        self.cfg.eip7708_disabled = disabled;
+        self.cfg.eip7708_delayed_burn_disabled = delayed_burn_disabled;
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -277,8 +369,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In case of EIP-7702 code with zero address, the bytecode will be erased.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
-        if let Bytecode::Eip7702(eip7702_bytecode) = &code {
-            if eip7702_bytecode.address().is_zero() {
+        if let Some(eip7702_address) = code.eip7702_address() {
+            if eip7702_address.is_zero() {
                 self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
                 return;
             }
@@ -290,6 +382,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Add journal entry for caller accounting.
     #[inline]
+    #[deprecated]
     pub fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -325,6 +418,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Increments the nonce of the account.
     #[inline]
+    #[deprecated]
     pub fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.journal.push(ENTRY::nonce_bumped(address));
     }
@@ -377,6 +471,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // add journal entry
         self.journal
             .push(ENTRY::balance_transfer(from, to, balance));
+
+        // EIP-7708: emit ETH transfer log
+        self.eip7708_transfer_log(from, to, balance);
 
         None
     }
@@ -450,6 +547,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // saved even empty.
         Self::touch_account(last_journal, target_address, target_acc);
 
+        // If balance is zero, we don't need to add any journal entries or emit any logs.
+        if balance.is_zero() {
+            return Ok(checkpoint);
+        }
+
         // Add balance to created account, as we already have target here.
         let Some(new_balance) = target_acc.info.balance.checked_add(balance) else {
             self.checkpoint_revert(checkpoint);
@@ -464,6 +566,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // add journal entry of transferred balance
         last_journal.push(ENTRY::balance_transfer(caller, target_address, balance));
 
+        // EIP-7708: emit ETH transfer log
+        self.eip7708_transfer_log(caller, target_address, balance);
+
         Ok(checkpoint)
     }
 
@@ -473,6 +578,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
+            selfdestructed_i: self.selfdestructed_addresses.len(),
         };
         self.depth += 1;
         checkpoint
@@ -487,11 +593,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = self.cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
+        // EIP-7708: Remove selfdestructed addresses added after checkpoint
+        self.selfdestructed_addresses
+            .truncate(checkpoint.selfdestructed_i);
 
         // iterate over last N journals sets and revert our global state
         if checkpoint.journal_i < self.journal.len() {
@@ -523,7 +632,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         target: Address,
         skip_cold_load: bool,
     ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<DB::Error>> {
-        let spec = self.spec;
+        let spec = self.cfg.spec;
         let account_load = self.load_account_optional(db, target, false, skip_cold_load)?;
         let is_cold = account_load.is_cold;
         let is_empty = account_load.state_clear_aware_is_empty(spec);
@@ -553,8 +662,25 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
+            // EIP-7708: Track first self-destruction for remaining balance log.
+            // Only track when account is actually destroyed and delayed burn is not disabled.
+            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed
+                && !self.cfg.eip7708_delayed_burn_disabled
+            {
+                self.selfdestructed_addresses.push(address);
+            }
+
             acc.mark_selfdestructed_locally();
             acc.info.balance = U256::ZERO;
+
+            // EIP-7708: emit appropriate log for selfdestruct
+            if target != address {
+                // Transfer log for balance transferred to different address
+                self.eip7708_transfer_log(address, target, balance);
+            } else {
+                // Selfdestruct to self log
+                self.eip7708_selfdestruct_to_self_log(address, balance);
+            }
             Some(ENTRY::account_destroyed(
                 address,
                 target,
@@ -563,6 +689,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             ))
         } else if address != target {
             acc.info.balance = U256::ZERO;
+            // EIP-7708: emit appropriate log for selfdestruct
+            // Transfer log for balance transferred to different address
+            self.eip7708_transfer_log(address, target, balance);
             Some(ENTRY::balance_transfer(address, target, balance))
         } else {
             // State is not changed:
@@ -614,7 +743,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         db: &mut DB,
         address: Address,
     ) -> Result<StateLoad<AccountLoad>, DB::Error> {
-        let spec = self.spec;
+        let spec = self.cfg.spec;
         let is_eip7702_enabled = spec.is_enabled_in(SpecId::PRAGUE);
         let account = self
             .load_account_optional(db, address, is_eip7702_enabled, false)
@@ -630,8 +759,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         );
 
         // load delegate code if account is EIP-7702
-        if let Some(Bytecode::Eip7702(code)) = &account.info.code {
-            let address = code.address();
+        if let Some(address) = account
+            .info
+            .code
+            .as_ref()
+            .and_then(Bytecode::eip7702_address)
+        {
             let delegate_account = self
                 .load_account_optional(db, address, true, false)
                 .map_err(JournalLoadError::unwrap_db_error)?;
@@ -943,6 +1076,68 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
+    }
+
+    /// Creates and pushes an EIP-7708 ETH transfer log.
+    ///
+    /// This emits a LOG3 with the Transfer event signature, matching ERC-20 transfer events.
+    /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_transfer_log(&mut self, from: Address, to: Address, balance: U256) {
+        // Only emit log if EIP-7708 is enabled and balance is non-zero
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
+        {
+            return;
+        }
+
+        // Create LOG3 with Transfer(address,address,uint256) event signature
+        // Topic[0]: Transfer event signature
+        // Topic[1]: from address (zero-padded to 32 bytes)
+        // Topic[2]: to address (zero-padded to 32 bytes)
+        // Data: amount in wei (big-endian uint256)
+        let topics = std::vec![
+            ETH_TRANSFER_LOG_TOPIC,
+            B256::left_padding_from(from.as_slice()),
+            B256::left_padding_from(to.as_slice()),
+        ];
+        let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
+
+        self.logs.push(Log {
+            address: ETH_TRANSFER_LOG_ADDRESS,
+            data: LogData::new(topics, data).expect("3 topics is valid"),
+        });
+    }
+
+    /// Creates and pushes an EIP-7708 selfdestruct-to-self log.
+    ///
+    /// This emits a LOG2 when a contract self-destructs to itself.
+    /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
+    ///
+    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    #[inline]
+    pub fn eip7708_selfdestruct_to_self_log(&mut self, address: Address, balance: U256) {
+        // Only emit log if EIP-7708 is enabled and balance is non-zero
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
+        {
+            return;
+        }
+
+        // Create LOG2 with SelfBalanceLog(address,uint256) event signature
+        // Topic[0]: SelfBalanceLog event signature
+        // Topic[1]: account address (zero-padded to 32 bytes)
+        // Data: amount in wei (big-endian uint256)
+        let topics = std::vec![
+            SELFDESTRUCT_LOG_TOPIC,
+            B256::left_padding_from(address.as_slice()),
+        ];
+        let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
+
+        self.logs.push(Log {
+            address: ETH_TRANSFER_LOG_ADDRESS,
+            data: LogData::new(topics, data).expect("2 topics is valid"),
+        });
     }
 }
 

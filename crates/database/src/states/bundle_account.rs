@@ -2,7 +2,7 @@ use super::{
     reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, StorageSlot,
     StorageWithOriginalValues, TransitionAccount,
 };
-use primitives::{HashMap, StorageKey, StorageValue};
+use primitives::{HashMap, StorageKey, StorageKeyMap, StorageValue};
 use state::AccountInfo;
 
 /// Account information focused on creating of database changesets
@@ -146,13 +146,14 @@ impl BundleAccount {
         let extend_storage =
             |this_storage: &mut StorageWithOriginalValues,
              storage_update: StorageWithOriginalValues| {
+                this_storage.reserve(storage_update.len());
                 for (key, value) in storage_update {
                     this_storage.entry(key).or_insert(value).present_value = value.present_value;
                 }
             };
 
         let previous_storage_from_update =
-            |updated_storage: &StorageWithOriginalValues| -> HashMap<StorageKey, RevertToSlot> {
+            |updated_storage: &StorageWithOriginalValues| -> StorageKeyMap<RevertToSlot> {
                 updated_storage
                     .iter()
                     .filter(|s| s.1.is_changed())
@@ -288,7 +289,7 @@ impl BundleAccount {
                                 let mut storage = core::mem::take(&mut self.storage)
                                     .into_iter()
                                     .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
-                                    .collect::<HashMap<_, _>>();
+                                    .collect::<StorageKeyMap<_>>();
                                 for key in updated_storage.keys() {
                                     // As it is not existing inside Destroyed storage this means
                                     // that previous values must be zero

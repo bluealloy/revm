@@ -1,9 +1,7 @@
-mod analysis;
-mod analyzed;
-mod jump_map;
-mod raw;
+//! Legacy bytecode analysis and jump table.
 
-pub use analysis::analyze_legacy;
-pub use analyzed::LegacyAnalyzedBytecode;
+mod analysis;
+mod jump_map;
+
+pub(crate) use analysis::analyze_legacy;
 pub use jump_map::JumpTable;
-pub use raw::LegacyRawBytecode;

@@ -80,19 +80,20 @@ fn main() -> anyhow::Result<()> {
     let read_result: Result<_, MyError> = MainnetHandler::default().run(&mut evm);
 
     match read_result {
-        Ok(revm::context::result::ExecutionResult::Success {
-            output, gas_used, ..
-        }) => {
-            println!("   ✓ Success! Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Success { output, gas, .. }) => {
+            println!("   ✓ Success! Gas used: {}", gas.used());
             let data = output.data();
             let value = U256::from_be_slice(data);
             println!("   📖 Initial storage value: {value}");
         }
-        Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
+        Ok(revm::context::result::ExecutionResult::Revert { output, gas, .. }) => {
+            println!(
+                "   ❌ Reverted! Gas used: {}, Output: {output:?}",
+                gas.used()
+            );
         }
-        Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.used());
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");
@@ -115,16 +116,19 @@ fn main() -> anyhow::Result<()> {
     let write_result: Result<_, MyError> = MainnetHandler::default().run(&mut evm);
 
     match write_result {
-        Ok(revm::context::result::ExecutionResult::Success { gas_used, .. }) => {
-            println!("   ✓ Success! Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Success { gas, .. }) => {
+            println!("   ✓ Success! Gas used: {}", gas.used());
             println!("   📝 Value 42 written to storage");
             println!("   💰 1 wei transferred from precompile to caller as reward");
         }
-        Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
+        Ok(revm::context::result::ExecutionResult::Revert { output, gas, .. }) => {
+            println!(
+                "   ❌ Reverted! Gas used: {}, Output: {output:?}",
+                gas.used()
+            );
         }
-        Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.used());
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");
@@ -146,10 +150,8 @@ fn main() -> anyhow::Result<()> {
     let verify_result: Result<_, MyError> = MainnetHandler::default().run(&mut evm);
 
     match verify_result {
-        Ok(revm::context::result::ExecutionResult::Success {
-            output, gas_used, ..
-        }) => {
-            println!("   ✓ Success! Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Success { output, gas, .. }) => {
+            println!("   ✓ Success! Gas used: {}", gas.used());
             let data = output.data();
             let value = U256::from_be_slice(data);
             println!("   📖 Final storage value: {value}");
@@ -159,11 +161,14 @@ fn main() -> anyhow::Result<()> {
                 println!("   ⚠️  Unexpected value in storage");
             }
         }
-        Ok(revm::context::result::ExecutionResult::Revert { output, gas_used }) => {
-            println!("   ❌ Reverted! Gas used: {gas_used}, Output: {output:?}");
+        Ok(revm::context::result::ExecutionResult::Revert { output, gas, .. }) => {
+            println!(
+                "   ❌ Reverted! Gas used: {}, Output: {output:?}",
+                gas.used()
+            );
         }
-        Ok(revm::context::result::ExecutionResult::Halt { reason, gas_used }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {gas_used}");
+        Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
+            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.used());
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");

@@ -74,8 +74,6 @@ Revm is licensed under MIT License.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in these crates by you, shall be licensed as above, without any additional terms or conditions.
 
-If `gmp` feature flag is used, GPL code gets compiled, if enabled please make sure to follow this license.
-
 ### Security
 
 For any security questions or findings, please reach out to me directly via email at [dragan0rakita@gmail.com](mailto:dragan0rakita@gmail.com) or contact me on Keybase under the username @draganrakita.

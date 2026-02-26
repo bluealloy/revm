@@ -269,7 +269,7 @@ mod tests {
 
     use super::*;
     use context::{
-        result::{ExecutionResult, Output, SuccessReason},
+        result::{ExecutionResult, Output, ResultGas, SuccessReason},
         Context, Transaction,
     };
     use database::InMemoryDB;
@@ -306,8 +306,7 @@ mod tests {
             output.result,
             ExecutionResult::Success {
                 reason: SuccessReason::Stop,
-                gas_used: 22143,
-                gas_refunded: 0,
+                gas: ResultGas::new(30_000_000, 22143, 0, 0, 0),
                 logs: vec![],
                 output: Output::Call(Bytes::default())
             }

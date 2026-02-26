@@ -44,6 +44,8 @@ pub trait Host {
     fn timestamp(&self) -> U256;
     /// Block beneficiary, calls ContextTr::block().beneficiary()
     fn beneficiary(&self) -> Address;
+    /// Block slot number, calls ContextTr::block().slot_num()
+    fn slot_num(&self) -> U256;
     /// Chain id, calls ContextTr::cfg().chain_id()
     fn chain_id(&self) -> U256;
 
@@ -159,8 +161,7 @@ pub trait Host {
         );
 
         // load delegate code if account is EIP-7702
-        if let Some(Bytecode::Eip7702(code)) = &account.code {
-            let address = code.address();
+        if let Some(address) = account.code.as_ref().and_then(Bytecode::eip7702_address) {
             let delegate_account = self
                 .load_account_info_skip_cold_load(address, true, false)
                 .ok()?;
@@ -253,6 +254,10 @@ impl Host for DummyHost {
 
     fn beneficiary(&self) -> Address {
         Address::ZERO
+    }
+
+    fn slot_num(&self) -> U256 {
+        U256::ZERO
     }
 
     fn chain_id(&self) -> U256 {

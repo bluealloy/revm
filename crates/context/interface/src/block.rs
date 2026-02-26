@@ -68,4 +68,13 @@ pub trait Block {
     fn blob_excess_gas(&self) -> Option<u64> {
         self.blob_excess_gas_and_price().map(|a| a.excess_blob_gas)
     }
+
+    /// Return the slot number of the block. See [EIP-7843].
+    ///
+    /// Defaults to zero if not set.
+    ///
+    /// [EIP-7843]: https://eips.ethereum.org/EIPS/eip-7843
+    fn slot_num(&self) -> u64 {
+        0
+    }
 }

@@ -70,10 +70,10 @@ pub enum SpecId {
     CANCUN,
     /// Prague hard fork
     /// Activated at block 22431084 (Timestamp: 1746612311)
-    #[default]
     PRAGUE,
     /// Osaka hard fork
-    /// Activated at block TBD
+    /// Activated at slot 13164544 (Timestamp: 1764798551)
+    #[default]
     OSAKA,
     /// Amsterdam hard fork
     /// Activated at block TBD

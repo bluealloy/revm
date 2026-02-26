@@ -34,6 +34,9 @@ pub struct Cmd {
     /// It will stop second run of EVM on failure.
     #[arg(short = 'o', long)]
     json_outcome: bool,
+    /// Omit progress output
+    #[arg(long)]
+    omit_progress: bool,
     /// Keep going after a test failure
     #[arg(long, alias = "no-fail-fast")]
     keep_going: bool,
@@ -68,6 +71,7 @@ impl Cmd {
                 self.json,
                 self.json_outcome,
                 self.keep_going,
+                self.omit_progress,
             )?
         }
         Ok(())

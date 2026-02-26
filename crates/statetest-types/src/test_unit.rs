@@ -1,7 +1,7 @@
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use context::{block::BlockEnv, cfg::CfgEnv};
 use database::CacheState;
-use primitives::{hardfork::SpecId, keccak256, Address, Bytes, HashMap, B256};
+use primitives::{hardfork::SpecId, keccak256, AddressMap, Bytes, B256};
 use serde::Deserialize;
 use state::Bytecode;
 use std::collections::BTreeMap;
@@ -27,7 +27,7 @@ pub struct TestUnit {
     /// A mapping of addresses to their account information before the transaction
     /// is executed. This represents the initial state of all accounts involved
     /// in the test, including their balances, nonces, code, and storage.
-    pub pre: HashMap<Address, AccountInfo>,
+    pub pre: AddressMap<AccountInfo>,
 
     /// Post-execution expectations per specification.
     ///
@@ -107,6 +107,12 @@ impl TestUnit {
                 .unwrap_or(u64::MAX),
             difficulty: self.env.current_difficulty,
             prevrandao: self.env.current_random,
+            slot_num: self
+                .env
+                .slot_number
+                .unwrap_or_default()
+                .try_into()
+                .unwrap_or(u64::MAX),
             ..BlockEnv::default()
         };
 
@@ -134,7 +140,7 @@ mod tests {
     use context_interface::block::calc_blob_gasprice;
     use primitives::{
         eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
-        U256,
+        Address, U256,
     };
 
     /// Creates a minimal TestUnit with excess blob gas set for testing blob fee calculation
@@ -154,8 +160,9 @@ mod tests {
                 current_beacon_root: None,
                 current_withdrawals_root: None,
                 current_excess_blob_gas: Some(U256::from(excess_blob_gas)),
+                slot_number: Some(U256::from(1u64)),
             },
-            pre: HashMap::default(),
+            pre: AddressMap::default(),
             post: BTreeMap::default(),
             transaction: TransactionParts {
                 tx_type: None,

@@ -115,9 +115,7 @@ blst = ["dep:blst"]
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
 
-# Use GMP (LGPL) for modexp precompile via gmp-mpfr-sys.
-# If you want to use a system libs and dynamic linking of GMP, include `gmp-mpfr-sys` in your project
-# with a `features = ["use-system-libs"]` enabled.
+# Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["dep:gmp-mpfr-sys"]
 
 [[bench]]

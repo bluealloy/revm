@@ -31,7 +31,7 @@ pub fn jumpi<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
 /// Validates jump target and performs the actual jump.
 #[inline(always)]
 fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
-    let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
+    let target = as_usize_saturated!(target);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter.halt(InstructionResult::InvalidJump);
         return;

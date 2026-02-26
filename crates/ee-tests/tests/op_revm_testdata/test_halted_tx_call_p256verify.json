@@ -1,7 +1,14 @@
 {
   "result": {
     "Halt": {
-      "gas_used": 24449,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 24449,
+        "intrinsic_gas": 21000,
+        "limit": 24449
+      },
+      "logs": [],
       "reason": {
         "Base": {
           "OutOfGas": "Precompile"

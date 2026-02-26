@@ -32,6 +32,6 @@ pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, CANCUN);
     popn_top!([], index, context.interpreter);
-    let i = as_usize_saturated!(index);
+    let i = as_usize_saturated!(*index);
     *index = context.host.blob_hash(i).unwrap_or_default();
 }

@@ -163,13 +163,12 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     }
 
     // load delegate code if account is EIP-7702
-    if let Some(Bytecode::Eip7702(code)) = &account.code {
+    if let Some(address) = account.code.as_ref().and_then(Bytecode::eip7702_address) {
         // EIP-7702 is enabled after berlin hardfork.
         cost += warm_storage_read_cost;
         if cost > remaining_gas {
             return Err(LoadError::ColdLoadSkipped);
         }
-        let address = code.address();
 
         // skip cold load if there is enough gas to cover the cost.
         let skip_cold_load = remaining_gas < cost + additional_cold_cost;

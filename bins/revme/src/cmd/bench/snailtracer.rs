@@ -14,7 +14,10 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
-        .modify_cfg_chained(|c| c.disable_nonce_check = true)
+        .modify_cfg_chained(|c| {
+            c.disable_nonce_check = true;
+            c.tx_gas_limit_cap = Some(u64::MAX);
+        })
         .build_mainnet()
         .with_inspector(NoOpInspector {});
 

@@ -1,6 +1,6 @@
 //! Hash precompiles, it contains SHA-256 and RIPEMD-160 hash precompiles
 //! More details in [`sha256_run`] and [`ripemd160_run`]
-use super::calc_linear_cost_u32;
+use super::calc_linear_cost;
 use crate::{
     crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
 };
@@ -23,7 +23,7 @@ pub const RIPEMD160: Precompile = Precompile::new(
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
 /// - [Address 0x02](https://etherscan.io/address/0000000000000000000000000000000000000002)
 pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    let cost = calc_linear_cost_u32(input.len(), 60, 12);
+    let cost = calc_linear_cost(input.len(), 60, 12);
     if cost > gas_limit {
         Err(PrecompileError::OutOfGas)
     } else {
@@ -39,7 +39,7 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
 /// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003)
 pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
+    let gas_used = calc_linear_cost(input.len(), 600, 120);
     if gas_used > gas_limit {
         Err(PrecompileError::OutOfGas)
     } else {

@@ -307,6 +307,10 @@ impl GasParams {
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
                 eip7702::PER_EMPTY_ACCOUNT_COST;
 
+            // EIP-7702 authorization refund for existing accounts
+            table[GasId::tx_eip7702_auth_refund().as_usize()] =
+                eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST;
+
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
         }
@@ -640,6 +644,16 @@ impl GasParams {
         self.get(GasId::tx_eip7702_per_empty_account_cost())
     }
 
+    /// EIP-7702 authorization refund per existing account.
+    ///
+    /// This is the gas refund given when an EIP-7702 authorization is applied
+    /// to an account that already exists in the trie. By default this is
+    /// `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500).
+    #[inline]
+    pub fn tx_eip7702_auth_refund(&self) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund())
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
     #[inline]
     pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
@@ -678,6 +692,30 @@ impl GasParams {
     /// Used in [GasParams::initial_tx_gas] to calculate the access list storage key cost.
     pub fn tx_access_list_storage_key_cost(&self) -> u64 {
         self.get(GasId::tx_access_list_storage_key_cost())
+    }
+
+    /// Calculate the total gas cost for an access list.
+    ///
+    /// This is a helper method that calculates the combined cost of:
+    /// - `accounts` addresses in the access list
+    /// - `storages` storage keys in the access list
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use revm_context_interface::cfg::gas_params::GasParams;
+    /// use primitives::hardfork::SpecId;
+    ///
+    /// let gas_params = GasParams::new_spec(SpecId::BERLIN);
+    /// // Calculate cost for 2 addresses and 5 storage keys
+    /// let cost = gas_params.tx_access_list_cost(2, 5);
+    /// assert_eq!(cost, 2 * 2400 + 5 * 1900); // 2 * ACCESS_LIST_ADDRESS + 5 * ACCESS_LIST_STORAGE_KEY
+    /// ```
+    #[inline]
+    pub fn tx_access_list_cost(&self, accounts: u64, storages: u64) -> u64 {
+        accounts
+            .saturating_mul(self.tx_access_list_address_cost())
+            .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
@@ -746,26 +784,14 @@ impl GasParams {
 }
 
 #[inline]
-pub(crate) const fn log2floor(value: U256) -> u64 {
-    let mut l: u64 = 256;
-    let mut i = 3;
-    loop {
-        if value.as_limbs()[i] == 0u64 {
-            l -= 64;
-        } else {
-            l -= value.as_limbs()[i].leading_zeros() as u64;
-            if l == 0 {
-                return l;
-            } else {
-                return l - 1;
-            }
+pub(crate) fn log2floor(value: U256) -> u64 {
+    for i in (0..4).rev() {
+        let limb = value.as_limbs()[i];
+        if limb != 0 {
+            return i as u64 * 64 + 63 - limb.leading_zeros() as u64;
         }
-        if i == 0 {
-            break;
-        }
-        i -= 1;
     }
-    l
+    0
 }
 
 /// Gas identifier that maps onto index in gas table.
@@ -855,6 +881,7 @@ impl GasId {
             x if x == Self::tx_initcode_cost().as_u8() => "tx_initcode_cost",
             x if x == Self::sstore_set_refund().as_u8() => "sstore_set_refund",
             x if x == Self::sstore_reset_refund().as_u8() => "sstore_reset_refund",
+            x if x == Self::tx_eip7702_auth_refund().as_u8() => "tx_eip7702_auth_refund",
             _ => "unknown",
         }
     }
@@ -914,6 +941,7 @@ impl GasId {
             "tx_initcode_cost" => Some(Self::tx_initcode_cost()),
             "sstore_set_refund" => Some(Self::sstore_set_refund()),
             "sstore_reset_refund" => Some(Self::sstore_reset_refund()),
+            "tx_eip7702_auth_refund" => Some(Self::tx_eip7702_auth_refund()),
             _ => None,
         }
     }
@@ -1110,12 +1138,47 @@ impl GasId {
     pub const fn sstore_reset_refund() -> GasId {
         Self::new(38)
     }
+
+    /// EIP-7702 authorization refund per existing account.
+    /// This is the refund given when an authorization is applied to an already existing account.
+    /// Calculated as PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST (25000 - 12500 = 12500).
+    pub const fn tx_eip7702_auth_refund() -> GasId {
+        Self::new(39)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[cfg(test)]
+    mod log2floor_tests {
+        use super::*;
+
+        #[test]
+        fn test_log2floor_edge_cases() {
+            // Test zero
+            assert_eq!(log2floor(U256::ZERO), 0);
+
+            // Test powers of 2
+            assert_eq!(log2floor(U256::from(1u64)), 0); // log2(1) = 0
+            assert_eq!(log2floor(U256::from(2u64)), 1); // log2(2) = 1
+            assert_eq!(log2floor(U256::from(4u64)), 2); // log2(4) = 2
+            assert_eq!(log2floor(U256::from(8u64)), 3); // log2(8) = 3
+            assert_eq!(log2floor(U256::from(256u64)), 8); // log2(256) = 8
+
+            // Test non-powers of 2
+            assert_eq!(log2floor(U256::from(3u64)), 1); // log2(3) = 1.58... -> floor = 1
+            assert_eq!(log2floor(U256::from(5u64)), 2); // log2(5) = 2.32... -> floor = 2
+            assert_eq!(log2floor(U256::from(255u64)), 7); // log2(255) = 7.99... -> floor = 7
+
+            // Test large values
+            assert_eq!(log2floor(U256::from(u64::MAX)), 63);
+            assert_eq!(log2floor(U256::from(u64::MAX) + U256::from(1u64)), 64);
+            assert_eq!(log2floor(U256::MAX), 255);
+        }
+    }
 
     #[test]
     fn test_gas_id_name_and_from_str_coverage() {
@@ -1152,12 +1215,51 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 38 known GasIds (based on the indices 1-38 used)
+        // We should have exactly 39 known GasIds (based on the indices 1-39 used)
         assert_eq!(
             unique_names.len(),
-            38,
-            "Expected 38 unique GasIds, found {}",
+            39,
+            "Expected 39 unique GasIds, found {}",
             unique_names.len()
         );
+    }
+
+    #[test]
+    fn test_tx_access_list_cost() {
+        use crate::cfg::gas;
+
+        // Test with Berlin spec (when access list was introduced)
+        let gas_params = GasParams::new_spec(SpecId::BERLIN);
+
+        // Test with 0 accounts and 0 storages
+        assert_eq!(gas_params.tx_access_list_cost(0, 0), 0);
+
+        // Test with 1 account and 0 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(1, 0),
+            gas::ACCESS_LIST_ADDRESS
+        );
+
+        // Test with 0 accounts and 1 storage
+        assert_eq!(
+            gas_params.tx_access_list_cost(0, 1),
+            gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with 2 accounts and 5 storages
+        assert_eq!(
+            gas_params.tx_access_list_cost(2, 5),
+            2 * gas::ACCESS_LIST_ADDRESS + 5 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with large numbers to ensure no overflow
+        assert_eq!(
+            gas_params.tx_access_list_cost(100, 200),
+            100 * gas::ACCESS_LIST_ADDRESS + 200 * gas::ACCESS_LIST_STORAGE_KEY
+        );
+
+        // Test with pre-Berlin spec (should return 0)
+        let gas_params_pre_berlin = GasParams::new_spec(SpecId::ISTANBUL);
+        assert_eq!(gas_params_pre_berlin.tx_access_list_cost(10, 20), 0);
     }
 }

@@ -1,8 +1,13 @@
 {
   "result": {
     "Success": {
-      "gas_refunded": 0,
-      "gas_used": 21000,
+      "gas": {
+        "floor_gas": 0,
+        "gas_refunded": 0,
+        "gas_spent": 21000,
+        "intrinsic_gas": 21000,
+        "limit": 16777216
+      },
       "logs": [],
       "output": {
         "Call": "0x"

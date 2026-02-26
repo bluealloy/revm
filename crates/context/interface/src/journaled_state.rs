@@ -12,7 +12,8 @@ use crate::{
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, Bytes, HashMap, HashSet, Log, StorageKey, StorageValue, B256, U256,
+    hardfork::SpecId, Address, AddressMap, AddressSet, Bytes, HashSet, Log, StorageKey,
+    StorageValue, B256, U256,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
@@ -104,19 +105,30 @@ pub trait JournalTr {
     ) -> Result<StateLoad<SelfDestructResult>, JournalLoadError<<Self::Database as Database>::Error>>;
 
     /// Sets access list inside journal.
-    fn warm_access_list(&mut self, access_list: HashMap<Address, HashSet<StorageKey>>);
+    fn warm_access_list(&mut self, access_list: AddressMap<HashSet<StorageKey>>);
 
     /// Warms the coinbase account.
     fn warm_coinbase_account(&mut self, address: Address);
 
     /// Warms the precompiles.
-    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+    fn warm_precompiles(&mut self, addresses: AddressSet);
 
     /// Returns the addresses of the precompiles.
-    fn precompile_addresses(&self) -> &HashSet<Address>;
+    fn precompile_addresses(&self) -> &AddressSet;
 
     /// Sets the spec id.
     fn set_spec_id(&mut self, spec_id: SpecId);
+
+    /// Sets EIP-7708 configuration flags.
+    ///
+    /// - `disabled`: Whether EIP-7708 (ETH transfers emit logs) is completely disabled.
+    /// - `delayed_burn_disabled`: Whether delayed burn logging is disabled. When enabled,
+    ///   revm tracks all self-destructed addresses and emits logs for accounts that still
+    ///   have remaining balance at the end of the transaction. This can be disabled for
+    ///   performance reasons as it requires storing and iterating over all self-destructed
+    ///   accounts. When disabled, the logging can be done outside of revm when applying
+    ///   accounts to database state.
+    fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool);
 
     /// Touches the account.
     fn touch_account(&mut self, address: Address);
@@ -138,6 +150,7 @@ pub trait JournalTr {
     ) -> Option<TransferError>;
 
     /// Increments the balance of the account.
+    #[deprecated]
     fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -153,6 +166,7 @@ pub trait JournalTr {
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     /// Increments the nonce of the account.
+    #[deprecated]
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
@@ -403,6 +417,8 @@ pub struct JournalCheckpoint {
     pub log_i: usize,
     /// Checkpoint to where on revert we will go back to and revert other journal entries.
     pub journal_i: usize,
+    /// Checkpoint for self-destructed addresses tracking (EIP-7708).
+    pub selfdestructed_i: usize,
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded

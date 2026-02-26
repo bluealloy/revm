@@ -37,6 +37,12 @@ impl CacheState {
         }
     }
 
+    /// Clear the cache state.
+    pub fn clear(&mut self) {
+        self.accounts.clear();
+        self.contracts.clear();
+    }
+
     /// Helper function that returns all accounts.
     ///
     /// Used inside tests to generate merkle tree.

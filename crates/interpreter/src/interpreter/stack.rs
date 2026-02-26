@@ -153,7 +153,6 @@ impl Stack {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
-        //Todo: can you likely instrincts to show the else branch is more likely to be hit
         let len = self.data.len();
         if primitives::hints_util::unlikely(len == 0) {
             Err(InstructionResult::StackUnderflow)

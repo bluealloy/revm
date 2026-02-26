@@ -39,7 +39,7 @@ pub struct Account {
     pub info: AccountInfo,
     /// Original account info used by BAL, changed only on cold load by BAL.
     pub original_info: Box<AccountInfo>,
-    /// Transaction id, used to track when account was toched/loaded into journal.
+    /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
@@ -51,15 +51,17 @@ impl Account {
     /// Creates new account and mark it as non existing.
     pub fn new_not_existing(transaction_id: usize) -> Self {
         static DEFAULT: OnceLock<Account> = OnceLock::new();
-        DEFAULT
+        let mut account = DEFAULT
             .get_or_init(|| Self {
                 info: AccountInfo::default(),
                 storage: HashMap::default(),
-                transaction_id,
+                transaction_id: 0,
                 status: AccountStatus::LoadedAsNotExisting,
                 original_info: Box::new(AccountInfo::default()),
             })
-            .clone()
+            .clone();
+        account.transaction_id = transaction_id;
+        account
     }
 
     /// Make changes to the caller account.
@@ -326,7 +328,7 @@ mod serde_impl {
     struct AccountSerde {
         info: AccountInfo,
         original_info: Option<AccountInfo>,
-        storage: HashMap<StorageKey, EvmStorageSlot>,
+        storage: EvmStorage,
         transaction_id: usize,
         status: AccountStatus,
     }

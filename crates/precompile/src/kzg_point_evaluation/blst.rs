@@ -11,6 +11,7 @@ use ::blst::{
     blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
     blst_scalar_fr_check, blst_scalar_from_bendian,
 };
+use primitives::OnceLock;
 
 /// Verify KZG proof using BLST BLS12-381 implementation.
 ///
@@ -54,7 +55,7 @@ pub fn verify_kzg_proof(
 
     // Compute X_minus_z = [τ]G₂ - [z]G₂
     let z_g2 = p2_scalar_mul(&g2, &z_scalar);
-    let x_minus_z = p2_sub_affine(&tau_g2, &z_g2);
+    let x_minus_z = p2_sub_affine(tau_g2, &z_g2);
 
     // Verify: P - y = Q * (X - z)
     // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
@@ -65,18 +66,22 @@ pub fn verify_kzg_proof(
 
 /// Get the trusted setup G2 point `[τ]₂` from the Ethereum KZG ceremony.
 /// This is g2_monomial_1 from trusted_setup_4096.json
-fn get_trusted_setup_g2() -> blst_p2_affine {
-    // For compressed G2, we need to decompress
-    let mut g2_affine = blst_p2_affine::default();
-    unsafe {
-        // The compressed format has x coordinate and a flag bit for y
-        // We use uncompress which handles this automatically
-        let result = blst::blst_p2_uncompress(&mut g2_affine, TRUSTED_SETUP_TAU_G2_BYTES.as_ptr());
-        if result != blst::BLST_ERROR::BLST_SUCCESS {
-            panic!("Failed to deserialize trusted setup G2 point");
+fn get_trusted_setup_g2() -> &'static blst_p2_affine {
+    static TAU_G2: OnceLock<blst_p2_affine> = OnceLock::new();
+    TAU_G2.get_or_init(|| {
+        // For compressed G2, we need to decompress
+        let mut g2_affine = blst_p2_affine::default();
+        unsafe {
+            // The compressed format has x coordinate and a flag bit for y
+            // We use uncompress which handles this automatically
+            let result =
+                blst::blst_p2_uncompress(&mut g2_affine, TRUSTED_SETUP_TAU_G2_BYTES.as_ptr());
+            if result != blst::BLST_ERROR::BLST_SUCCESS {
+                panic!("Failed to deserialize trusted setup G2 point");
+            }
         }
-    }
-    g2_affine
+        g2_affine
+    })
 }
 
 /// Get G1 generator point

@@ -37,7 +37,10 @@ pub fn run(criterion: &mut Criterion) {
 
     let mut evm = Context::mainnet()
         .with_db(db)
-        .modify_cfg_chained(|c| c.disable_nonce_check = true)
+        .modify_cfg_chained(|c| {
+            c.disable_nonce_check = true;
+            c.tx_gas_limit_cap = Some(u64::MAX);
+        })
         .build_mainnet();
 
     let tx = TxEnv::builder()

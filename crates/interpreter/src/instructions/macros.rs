@@ -156,15 +156,7 @@ macro_rules! push {
 #[collapse_debuginfo(yes)]
 macro_rules! as_u64_saturated {
     ($v:expr) => {
-        match $v.as_limbs() {
-            x => {
-                if (x[1] == 0) & (x[2] == 0) & (x[3] == 0) {
-                    x[0]
-                } else {
-                    u64::MAX
-                }
-            }
-        }
+        u64::try_from($v).unwrap_or(u64::MAX)
     };
 }
 
@@ -173,7 +165,7 @@ macro_rules! as_u64_saturated {
 #[collapse_debuginfo(yes)]
 macro_rules! as_usize_saturated {
     ($v:expr) => {
-        usize::try_from($crate::as_u64_saturated!($v)).unwrap_or(usize::MAX)
+        usize::try_from($v).unwrap_or(usize::MAX)
     };
 }
 
@@ -182,9 +174,7 @@ macro_rules! as_usize_saturated {
 #[collapse_debuginfo(yes)]
 macro_rules! as_isize_saturated {
     ($v:expr) => {
-        // `isize_try_from(u64::MAX)`` will fail and return isize::MAX
-        // This is expected behavior as we are saturating the value.
-        isize::try_from($crate::as_u64_saturated!($v)).unwrap_or(isize::MAX)
+        isize::try_from($v).unwrap_or(isize::MAX)
     };
 }
 
