@@ -95,9 +95,9 @@ pub fn verify_impl(input: &[u8]) -> bool {
     crypto().secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "p256-aws-lc-rs")] {
-        pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "p256-aws-lc-rs")] {
             use aws_lc_rs::{digest, signature::{self, UnparsedPublicKey}};
 
             // Construct a Digest from the raw prehashed message bytes.
@@ -111,9 +111,7 @@ cfg_if::cfg_if! {
             let public_key = UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_FIXED, &pubkey_bytes);
 
             public_key.verify_digest(&digest, &sig).ok()
-        }
-    } else {
-        pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+        } else {
             use p256::{
                 ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
                 EncodedPoint,
