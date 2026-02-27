@@ -62,6 +62,7 @@ ark-bls12-381 = { workspace = true, features = ["curve"] }
 
 # p256verify precompile
 p256 = { workspace = true, features = ["ecdsa"] }
+aws-lc-rs = { workspace = true, optional = true }
 
 # utils
 cfg-if.workspace = true
@@ -117,6 +118,9 @@ bn = ["dep:bn"]
 
 # Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["dep:gmp-mpfr-sys"]
+
+# Use aws-lc-rs as a faster alternative to `p256` for secp256r1 signature verification.
+p256-aws-lc-rs = ["dep:aws-lc-rs"]
 
 [[bench]]
 name = "bench"

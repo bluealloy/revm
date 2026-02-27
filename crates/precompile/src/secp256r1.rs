@@ -10,10 +10,6 @@ use crate::{
     crypto, u64_to_address, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
     PrecompileResult,
 };
-use p256::{
-    ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
-    EncodedPoint,
-};
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
 /// Address of secp256r1 precompile.
@@ -99,15 +95,40 @@ pub fn verify_impl(input: &[u8]) -> bool {
     crypto().secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
-pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
-    // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(&sig).ok()?;
-    // Decode the public key bytes (x,y coordinates) using EncodedPoint
-    let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
-    // Create VerifyingKey from the encoded point
-    let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "p256-aws-lc-rs")] {
+        pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+            use aws_lc_rs::{digest, signature::{self, UnparsedPublicKey}};
 
-    public_key.verify_prehash(&msg, &signature).ok()
+            // Construct a Digest from the raw prehashed message bytes.
+            let digest = digest::Digest::import_less_safe(&msg, &digest::SHA256).ok()?;
+
+            // Build uncompressed public key: 0x04 || x || y
+            let mut pubkey_bytes = [0u8; 65];
+            pubkey_bytes[0] = 0x04;
+            pubkey_bytes[1..].copy_from_slice(&pk);
+
+            let public_key = UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_FIXED, &pubkey_bytes);
+
+            public_key.verify_digest(&digest, &sig).ok()
+        }
+    } else {
+        pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+            use p256::{
+                ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
+                EncodedPoint,
+            };
+
+            // Can fail only if the input is not exact length.
+            let signature = Signature::from_slice(&sig).ok()?;
+            // Decode the public key bytes (x,y coordinates) using EncodedPoint
+            let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
+            // Create VerifyingKey from the encoded point
+            let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
+
+            public_key.verify_prehash(&msg, &signature).ok()
+        }
+    }
 }
 
 #[cfg(test)]
