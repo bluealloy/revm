@@ -67,7 +67,7 @@ impl<R, S> ExecResultAndState<R, S> {
 /// - [`used()`](ResultGas::used) = `max(spent − refunded, floor_gas)` (the value that goes into receipts)
 /// - [`remaining()`](ResultGas::remaining) = `limit − spent`
 /// - [`spent_sub_refunded()`](ResultGas::spent_sub_refunded) = `spent − refunded` (before floor gas check)
-/// - [`final_refunded()`](ResultGas::final_refunded) = `spent − used()` (effective refund after floor gas)
+/// - [`final_refunded()`](ResultGas::final_refunded) = `refunded` when floor gas is inactive, `0` when floor gas kicks in
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultGas {
@@ -216,6 +216,9 @@ impl ResultGas {
     }
 
     /// Returns the gas spent minus the refunded gas.
+    ///
+    /// This does not take into account EIP-7623 floor gas. If you want to get the gas used in
+    /// receipt, use [`used()`](ResultGas::used) instead.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
         self.spent.saturating_sub(self.refunded)
@@ -236,13 +239,17 @@ impl ResultGas {
         self.refunded
     }
 
-    /// Returns the effective refund after EIP-7623 floor gas adjustment: `spent - used()`.
+    /// Returns the effective refund after EIP-7623 floor gas adjustment.
     ///
-    /// When `floor_gas` kicks in, this may be less than [`inner_refunded()`](ResultGas::inner_refunded).
-    /// Always satisfies: `spent == used() + final_refunded()`.
+    /// When floor gas kicks in (`spent - refunded < floor_gas`), the refund is zero
+    /// because the floor gas charge absorbs it entirely. Otherwise returns the raw refund.
     #[inline]
     pub const fn final_refunded(&self) -> u64 {
-        self.spent.saturating_sub(self.used())
+        if self.spent_sub_refunded() < self.floor_gas {
+            0
+        } else {
+            self.refunded
+        }
     }
 }
 
@@ -1146,5 +1153,31 @@ mod tests {
         let gas = ResultGas::new(100, 10, 50, 0, 0);
         assert_eq!(gas.used(), 0);
         assert_eq!(gas.remaining(), 90);
+    }
+
+    #[test]
+    fn test_final_refunded_with_floor_gas() {
+        // No floor gas: final_refunded == refunded
+        let gas = ResultGas::new(100000, 50000, 10000, 0, 0);
+        assert_eq!(gas.used(), 40000);
+        assert_eq!(gas.final_refunded(), 10000);
+
+        // Floor gas active (spent_sub_refunded < floor_gas): final_refunded == 0
+        // spent=50000, refunded=10000, spent_sub_refunded=40000 < floor_gas=45000
+        let gas = ResultGas::new(100000, 50000, 10000, 45000, 0);
+        assert_eq!(gas.used(), 45000);
+        assert_eq!(gas.final_refunded(), 0);
+
+        // Floor gas inactive (spent_sub_refunded >= floor_gas): final_refunded == refunded
+        // spent=50000, refunded=10000, spent_sub_refunded=40000 >= floor_gas=30000
+        let gas = ResultGas::new(100000, 50000, 10000, 30000, 0);
+        assert_eq!(gas.used(), 40000);
+        assert_eq!(gas.final_refunded(), 10000);
+
+        // Edge case: spent_sub_refunded == floor_gas exactly
+        // spent=50000, refunded=10000, spent_sub_refunded=40000 == floor_gas=40000
+        let gas = ResultGas::new(100000, 50000, 10000, 40000, 0);
+        assert_eq!(gas.used(), 40000);
+        assert_eq!(gas.final_refunded(), 10000);
     }
 }
