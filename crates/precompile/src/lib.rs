@@ -52,6 +52,10 @@ cfg_if::cfg_if! {
 #[cfg(feature = "gmp")]
 use aurora_engine_modexp as _;
 
+// silence p256 lint as aws-lc-rs will be used if both are enabled.
+#[cfg(feature = "p256-aws-lc-rs")]
+use p256 as _;
+
 use core::hash::Hash;
 use primitives::{
     hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
