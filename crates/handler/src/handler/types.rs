@@ -31,7 +31,7 @@ where
     PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
     INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
 {
-    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
+    pub fn create_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
         FrameContext {
             precompiles: self.precompiles.clone(),
             instructions: self.instructions.clone(),
@@ -72,7 +72,7 @@ where
         context: &mut Self::Context,
     ) -> <Self::Frame as Frame>::FrameContext {
         self.precompiles.set_spec(context.cfg().spec());
-        self.crete_frame_context()
+        self.create_frame_context()
     }
 }
 

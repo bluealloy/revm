@@ -24,7 +24,7 @@ pub enum OpTransactionError {
     /// are cause for non-inclusion, so a special [OptimismHaltReason][crate::OptimismHaltReason] variant was introduced to handle this
     /// case for failed deposit transactions.
     DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
+    /// Deposit transaction halts bubble up to the global main return handler, wiping state and
     /// only increasing the nonce + persisting the mint value.
     ///
     /// This is a catch-all error for any deposit transaction that is results in a [OptimismHaltReason][crate::OptimismHaltReason] error

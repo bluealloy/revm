@@ -37,8 +37,8 @@ where
     PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
     INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
 {
-    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
-        self.eth.crete_frame_context()
+    pub fn create_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
+        self.eth.create_frame_context()
     }
 }
 
@@ -77,7 +77,7 @@ where
         context: &mut Self::Context,
     ) -> <Self::Frame as Frame>::FrameContext {
         self.eth.precompiles.set_spec(context.cfg().spec());
-        self.crete_frame_context()
+        self.create_frame_context()
     }
 
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
@@ -131,14 +131,14 @@ where
                 caller_account.info.balance += U256::from(mint);
             }
         } else {
+            let spec = context.cfg().spec();
             let enveloped_tx = context
                 .op_tx()
                 .enveloped_tx()
-                .expect("all not deposit tx have enveloped tx")
-                .clone();
+                .expect("all not deposit tx have enveloped tx");
             tx_l1_cost = context
                 .l1_block_info()
-                .calculate_tx_l1_cost(&enveloped_tx, context.cfg().spec());
+                .calculate_tx_l1_cost(enveloped_tx, spec);
         }
 
         // We deduct caller max balance after minting and before deducing the
