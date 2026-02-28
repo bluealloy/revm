@@ -373,7 +373,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
         }
 
         self.db
-            .storage(address, storage_key)
+            .storage_by_account_id(address, account_id, storage_key)
             .map_err(EvmDatabaseError::Database)
     }
 
