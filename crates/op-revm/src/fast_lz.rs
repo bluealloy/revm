@@ -71,15 +71,16 @@ fn literals(r: u32, size: u32) -> u32 {
 }
 
 fn cmp(input: &[u8], p: u32, q: u32, r: u32) -> u32 {
-    let mut l = 0;
-    let mut r = r - q;
-    while l < r {
-        if input[(p + l) as usize] != input[(q + l) as usize] {
-            r = 0;
-        }
-        l += 1;
-    }
-    l
+    let max_len = (r - q) as usize;
+    let p = p as usize;
+    let q = q as usize;
+    input[p..p + max_len]
+        .iter()
+        .zip(&input[q..q + max_len])
+        .position(|(a, b)| a != b)
+        // If mismatch found at position i, original returns i + 1.
+        // If no mismatch, returns max_len.
+        .map_or(max_len as u32, |i| i as u32 + 1)
 }
 
 fn flz_match(l: u32, size: u32) -> u32 {

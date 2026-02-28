@@ -1,5 +1,5 @@
 //! Contains the `[OpSpecId]` type and its implementation.
-use core::str::FromStr;
+use core::{fmt, str::FromStr};
 use revm::primitives::hardfork::{name as eth_name, SpecId, UnknownHardfork};
 
 /// Optimism spec id.
@@ -93,6 +93,12 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::INTEROP => name::INTEROP,
             OpSpecId::OSAKA => eth_name::OSAKA,
         }
+    }
+}
+
+impl fmt::Display for OpSpecId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(<&str>::from(*self))
     }
 }
 
