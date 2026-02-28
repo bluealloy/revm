@@ -71,8 +71,6 @@ pub struct TestInspector {
     pub events: Vec<InspectorEvent>,
     /// Total step count.
     pub step_count: usize,
-    /// Current call depth.
-    pub call_depth: usize,
 }
 
 impl TestInspector {
@@ -145,7 +143,6 @@ where
     }
 
     fn call(&mut self, _ctx: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
-        self.call_depth += 1;
         self.events.push(InspectorEvent::Call {
             inputs: inputs.clone(),
             outcome: None,
@@ -154,7 +151,6 @@ where
     }
 
     fn call_end(&mut self, _ctx: &mut CTX, _inputs: &CallInputs, outcome: &mut CallOutcome) {
-        self.call_depth -= 1;
         if let Some(InspectorEvent::Call {
             outcome: ref mut out,
             ..
