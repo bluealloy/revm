@@ -538,7 +538,7 @@ impl TxEnvBuilder {
 
                     // target is required
                     if !self.kind.is_call() {
-                        return Err(TxEnvBuildError::MissingTargetForEip4844);
+                        return Err(DeriveTxTypeError::MissingTargetForEip4844.into());
                     }
                 }
                 TransactionType::Eip7702 => {
@@ -877,7 +877,9 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(TxEnvBuildError::MissingTargetForEip4844)
+            Err(TxEnvBuildError::DeriveErr(
+                DeriveTxTypeError::MissingTargetForEip4844
+            ))
         ));
     }
 
