@@ -164,7 +164,7 @@ impl AccountStatus {
     /// - And as other account had some changes, extended account
     ///   should be marked as DestroyedChanged.
     ///
-    /// If both account are not destroyed and if this account is in memory:
+    /// If both accounts are not destroyed and if this account is in memory:
     /// - This means that extended account is in memory too.
     ///
     /// Otherwise, if both are destroyed or other is destroyed:
