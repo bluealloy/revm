@@ -752,7 +752,11 @@ fn execute_blockchain_test(
         let mut evm = evm_context.build_mainnet_with_inspector(TracerEip3155::new_stdout());
 
         // Pre block system calls
-        pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root);
+        pre_block::pre_block_transition(&mut evm, spec_id, parent_block_hash, beacon_root)
+            .map_err(|e| TestExecutionError::PreBlockSystemCall {
+                block_idx,
+                error: format!("{e:?}"),
+            })?;
 
         // Track cumulative gas used across all transactions in this block
         let mut cumulative_gas_used: u64 = 0;
@@ -984,7 +988,11 @@ fn execute_blockchain_test(
             &block_env,
             block.withdrawals.as_deref().unwrap_or_default(),
             spec_id,
-        );
+        )
+        .map_err(|e| TestExecutionError::PostBlockSystemCall {
+            block_idx,
+            error: format!("{e:?}"),
+        })?;
 
         // insert present block hash.
         state
@@ -1169,6 +1177,12 @@ pub enum TestExecutionError {
         expected: u64,
         actual: u64,
     },
+
+    #[error("Pre-block system call failed at block {block_idx}: {error}")]
+    PreBlockSystemCall { block_idx: usize, error: String },
+
+    #[error("Post-block system call failed at block {block_idx}: {error}")]
+    PostBlockSystemCall { block_idx: usize, error: String },
 
     #[error("BAL error")]
     BalMismatchError,

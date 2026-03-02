@@ -24,7 +24,7 @@ pub fn post_block_transition<
     block: impl Block,
     withdrawals: &[Withdrawal],
     spec: SpecId,
-) {
+) -> Result<(), EVM::Error> {
     // block reward
     let block_reward = block_reward(spec, 0);
     if block_reward != 0 {
@@ -51,13 +51,15 @@ pub fn post_block_transition<
 
     // EIP-7002: Withdrawal requests system call
     if spec.is_enabled_in(SpecId::PRAGUE) {
-        system_call_eip7002_withdrawal_request(evm);
+        system_call_eip7002_withdrawal_request(evm)?;
     }
 
     // EIP-7251: Consolidation requests system call
     if spec.is_enabled_in(SpecId::PRAGUE) {
-        system_call_eip7251_consolidation_request(evm);
+        system_call_eip7251_consolidation_request(evm)?;
     }
+
+    Ok(())
 }
 
 /// Block reward for a block.
@@ -82,29 +84,25 @@ pub const WITHDRAWAL_REQUEST_ADDRESS: Address =
     address!("0x00000961Ef480Eb55e80D19ad83579A64c007002");
 
 /// EIP-7002: Withdrawal requests system call
-pub(crate) fn system_call_eip7002_withdrawal_request(
-    evm: &mut impl SystemCallCommitEvm<Error: core::fmt::Debug>,
-) {
+pub(crate) fn system_call_eip7002_withdrawal_request<EVM>(evm: &mut EVM) -> Result<(), EVM::Error>
+where
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>,
+{
     // empty data is valid for EIP-7002
-    let _ = match evm.system_call_commit(WITHDRAWAL_REQUEST_ADDRESS, Bytes::new()) {
-        Ok(res) => res,
-        Err(e) => {
-            panic!("System call failed: {e:?}");
-        }
-    };
+    evm.system_call_commit(WITHDRAWAL_REQUEST_ADDRESS, Bytes::new())?;
+    Ok(())
 }
 
 pub const CONSOLIDATION_REQUEST_ADDRESS: Address =
     address!("0x0000BBdDc7CE488642fb579F8B00f3a590007251");
 
 /// EIP-7251: Consolidation requests system call
-pub(crate) fn system_call_eip7251_consolidation_request(
-    evm: &mut impl SystemCallCommitEvm<Error: core::fmt::Debug>,
-) {
-    let _ = match evm.system_call_commit(CONSOLIDATION_REQUEST_ADDRESS, Bytes::new()) {
-        Ok(res) => res,
-        Err(e) => {
-            panic!("System call failed: {e:?}");
-        }
-    };
+pub(crate) fn system_call_eip7251_consolidation_request<EVM>(
+    evm: &mut EVM,
+) -> Result<(), EVM::Error>
+where
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>,
+{
+    evm.system_call_commit(CONSOLIDATION_REQUEST_ADDRESS, Bytes::new())?;
+    Ok(())
 }
