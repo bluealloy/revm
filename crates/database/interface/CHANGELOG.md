@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v9.0.0...revm-database-interface-v9.0.1) - 2026-03-02
+
+### Fixed
+
+- forward storage_by_account_id in WrapDatabaseRef ([#3441](https://github.com/bluealloy/revm/pull/3441))
+- *(bal)* fix populated account if pre-state was none ([#3357](https://github.com/bluealloy/revm/pull/3357))
+
+### Other
+
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v8.0.5...revm-database-interface-v9.0.0) - 2026-01-15
 
 ### Added
