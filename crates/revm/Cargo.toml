@@ -118,5 +118,8 @@ portable = ["precompile/portable"]
 # Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["precompile/gmp"]
 
+# Use aws-lc-rs as a faster alternative to `p256` for secp256r1 signature verification.
+p256-aws-lc-rs = ["precompile/p256-aws-lc-rs"]
+
 # Statetest types for running ethereum tests
 test-types = ["dep:statetest-types"]
