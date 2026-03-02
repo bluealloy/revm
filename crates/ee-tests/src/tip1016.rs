@@ -44,7 +44,7 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_state_gas = true;
+            cfg.enable_tip1016 = true;
             cfg.tx_gas_limit_cap = Some(cap);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
@@ -62,7 +62,7 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_state_gas = false;
+            cfg.enable_tip1016 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(bytecode))
@@ -1119,7 +1119,7 @@ fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_state_gas = true;
+            cfg.enable_tip1016 = true;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),

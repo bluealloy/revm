@@ -21,7 +21,7 @@ use interpreter::{
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, AMSTERDAM, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+    hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
@@ -664,7 +664,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     }
     // EIP-8037: Hash cost for deployed bytecode (keccak256)
     // HASH_COST(L) = 6 × ceil(L / 32)
-    if spec_id.is_enabled_in(AMSTERDAM) {
+    if cfg.is_amsterdam_eip8037_enabled() {
         let hash_cost = cfg
             .gas_params()
             .keccak256_cost(interpreter_result.output.len());

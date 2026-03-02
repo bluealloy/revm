@@ -92,6 +92,12 @@ pub trait Cfg {
     ///
     /// When enabled, storage creation gas is tracked separately from regular gas.
     fn is_state_gas_enabled(&self) -> bool;
+
+    /// Returns whether EIP-8037 (Amsterdam) state creation gas cost increase is enabled.
+    ///
+    /// EIP-8037 builds on TIP-1016 by specifying concrete gas values based on
+    /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
+    fn is_amsterdam_eip8037_enabled(&self) -> bool;
 }
 
 /// What bytecode analysis to perform
