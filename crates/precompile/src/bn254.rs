@@ -12,13 +12,90 @@ pub mod arkworks;
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn254-mcl")] {
         pub(crate) mod mcl;
-        pub(crate) use mcl as crypto_backend;
+        type BackendOps = mcl::MclOps;
     } else if #[cfg(feature = "bn")]{
         pub(crate) mod substrate;
-        pub(crate) use substrate as crypto_backend;
+        type BackendOps = substrate::SubstrateOps;
     } else {
-        pub(crate) use arkworks as crypto_backend;
+        type BackendOps = arkworks::ArkworksOps;
     }
+}
+
+/// Trait abstracting the backend-specific BN254 curve operations.
+///
+/// Each backend (arkworks, substrate, mcl) implements this trait to provide
+/// the primitive operations needed by the BN254 precompiles.
+pub(crate) trait Bn254Ops {
+    /// Backend-specific G1 point type.
+    type G1;
+    /// Backend-specific G2 point type.
+    type G2;
+    /// Backend-specific scalar type.
+    type Scalar;
+
+    /// Deserialize a G1 point from a 64-byte Ethereum-encoded input.
+    fn read_g1(input: &[u8]) -> Result<Self::G1, PrecompileError>;
+    /// Serialize a G1 point into a 64-byte Ethereum encoding.
+    fn encode_g1(point: Self::G1) -> [u8; G1_LEN];
+    /// Deserialize a G2 point from a 128-byte Ethereum-encoded input.
+    fn read_g2(input: &[u8]) -> Result<Self::G2, PrecompileError>;
+    /// Deserialize a scalar from a 32-byte big-endian input.
+    fn read_scalar(input: &[u8]) -> Self::Scalar;
+    /// Check if a G1 point is the point at infinity.
+    fn g1_is_zero(p: &Self::G1) -> bool;
+    /// Check if a G2 point is the point at infinity.
+    fn g2_is_zero(p: &Self::G2) -> bool;
+    /// Add two G1 points.
+    fn g1_add(p1: Self::G1, p2: Self::G1) -> Self::G1;
+    /// Multiply a G1 point by a scalar.
+    fn g1_mul(p: Self::G1, s: Self::Scalar) -> Self::G1;
+    /// Check if the product of pairings equals the identity.
+    ///
+    /// Inputs are pre-filtered (no zero points, non-empty).
+    fn pairing_check(g1: &[Self::G1], g2: &[Self::G2]) -> bool;
+}
+
+/// Performs point addition on two G1 points using the selected backend.
+pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    let p1 = BackendOps::read_g1(p1_bytes)?;
+    let p2 = BackendOps::read_g1(p2_bytes)?;
+    Ok(BackendOps::encode_g1(BackendOps::g1_add(p1, p2)))
+}
+
+/// Performs a G1 scalar multiplication using the selected backend.
+pub(crate) fn g1_point_mul(
+    point_bytes: &[u8],
+    fr_bytes: &[u8],
+) -> Result<[u8; 64], PrecompileError> {
+    let p = BackendOps::read_g1(point_bytes)?;
+    let fr = BackendOps::read_scalar(fr_bytes);
+    Ok(BackendOps::encode_g1(BackendOps::g1_mul(p, fr)))
+}
+
+/// Performs a pairing check on a list of G1 and G2 point pairs using the selected backend.
+///
+/// Returns true if the product of pairings equals the identity element,
+/// or if no non-zero pairs are provided.
+pub(crate) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+    let mut g1_points = Vec::with_capacity(pairs.len());
+    let mut g2_points = Vec::with_capacity(pairs.len());
+
+    for (g1_bytes, g2_bytes) in pairs {
+        let g1 = BackendOps::read_g1(g1_bytes)?;
+        let g2 = BackendOps::read_g2(g2_bytes)?;
+
+        // Skip pairs where either point is at infinity
+        if !BackendOps::g1_is_zero(&g1) && !BackendOps::g2_is_zero(&g2) {
+            g1_points.push(g1);
+            g2_points.push(g2);
+        }
+    }
+
+    if g1_points.is_empty() {
+        return Ok(true);
+    }
+
+    Ok(BackendOps::pairing_check(&g1_points, &g2_points))
 }
 
 /// Bn254 add precompile
