@@ -62,6 +62,7 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_state_gas = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(bytecode))

@@ -3,8 +3,8 @@
     "Success": {
       "gas": {
         "floor_gas": 21000,
-        "gas_refunded": 8642,
-        "gas_spent": 43212,
+        "gas_refunded": 5222,
+        "gas_spent": 26112,
         "intrinsic_gas": 21000,
         "limit": 1000000000,
         "state_gas_spent": 0
@@ -20,8 +20,8 @@
     "Success": {
       "gas": {
         "floor_gas": 21000,
-        "gas_refunded": 19900,
-        "gas_spent": 243212,
+        "gas_refunded": 40368,
+        "gas_spent": 226112,
         "intrinsic_gas": 21000,
         "limit": 1000000000,
         "state_gas_spent": 200000

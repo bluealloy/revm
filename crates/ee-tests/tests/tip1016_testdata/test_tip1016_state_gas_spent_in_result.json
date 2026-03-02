@@ -4,7 +4,7 @@
       "gas": {
         "floor_gas": 21000,
         "gas_refunded": 0,
-        "gas_spent": 43106,
+        "gas_spent": 26006,
         "intrinsic_gas": 21000,
         "limit": 1000000000,
         "state_gas_spent": 0
@@ -21,7 +21,7 @@
       "gas": {
         "floor_gas": 21000,
         "gas_refunded": 0,
-        "gas_spent": 243106,
+        "gas_spent": 226006,
         "intrinsic_gas": 21000,
         "limit": 1000000000,
         "state_gas_spent": 200000

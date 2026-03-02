@@ -21,7 +21,7 @@ use interpreter::{
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
+    hardfork::SpecId::{self, AMSTERDAM, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
@@ -653,6 +653,22 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
             .gas_params()
             .code_deposit_state_gas(interpreter_result.output.len());
         if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
+            if spec_id.is_enabled_in(HOMESTEAD) {
+                journal.checkpoint_revert(checkpoint);
+                interpreter_result.result = InstructionResult::OutOfGas;
+                return;
+            } else {
+                interpreter_result.output = Bytes::new();
+            }
+        }
+    }
+    // EIP-8037: Hash cost for deployed bytecode (keccak256)
+    // HASH_COST(L) = 6 × ceil(L / 32)
+    if spec_id.is_enabled_in(AMSTERDAM) {
+        let hash_cost = cfg
+            .gas_params()
+            .keccak256_cost(interpreter_result.output.len());
+        if !interpreter_result.gas.record_regular_cost(hash_cost) {
             if spec_id.is_enabled_in(HOMESTEAD) {
                 journal.checkpoint_revert(checkpoint);
                 interpreter_result.result = InstructionResult::OutOfGas;

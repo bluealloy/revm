@@ -321,6 +321,43 @@ impl GasParams {
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
         }
 
+        // EIP-8037: State creation gas cost increase
+        if spec.is_enabled_in(SpecId::AMSTERDAM) {
+            // Hardcoded cost_per_state_byte for 100M block gas limit
+            const CPSB: u64 = 1174;
+
+            // Regular gas changes
+            table[GasId::create().as_usize()] = 9000;
+            table[GasId::tx_create_cost().as_usize()] = 9000;
+            table[GasId::code_deposit_cost().as_usize()] = 0;
+            table[GasId::new_account_cost().as_usize()] = 0;
+            table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
+            // GAS_STORAGE_SET regular = GAS_STORAGE_UPDATE - GAS_COLD_SLOAD = 5000 - 2100 = 2900
+            // sstore_set_without_load_cost = 2900 - WARM_STORAGE_READ_COST(100) = 2800
+            table[GasId::sstore_set_without_load_cost().as_usize()] = 2800;
+
+            // State gas values
+            table[GasId::sstore_set_state_gas().as_usize()] = 32 * CPSB;
+            table[GasId::new_account_state_gas().as_usize()] = 112 * CPSB;
+            table[GasId::code_deposit_state_gas().as_usize()] = CPSB;
+            table[GasId::create_state_gas().as_usize()] = 112 * CPSB;
+
+            // SSTORE refund for 0→X→0 restoration: state gas + regular gas
+            table[GasId::sstore_set_refund().as_usize()] = 32 * CPSB + 2800;
+
+            // EIP-7702 parameter updates under EIP-8037
+            // Total per auth charged pessimistically:
+            //   regular: PER_AUTH_BASE_COST_REGULAR (7500)
+            //   state: (PER_EMPTY_ACCOUNT 112 + PER_AUTH_BASE 23) × CPSB
+            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
+                7500 + (112 + 23) * CPSB;
+            // Refund for existing accounts: PER_EMPTY_ACCOUNT state gas (112 × CPSB)
+            table[GasId::tx_eip7702_auth_refund().as_usize()] = 112 * CPSB;
+
+            // State gas per auth for initial_state_gas tracking
+            table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] = (112 + 23) * CPSB;
+        }
+
         Self::new(Arc::new(table))
     }
 
@@ -692,6 +729,14 @@ impl GasParams {
         self.get(GasId::tx_eip7702_auth_refund())
     }
 
+    /// EIP-8037: State gas per EIP-7702 authorization (pessimistic).
+    ///
+    /// Used for `initial_state_gas` tracking. Zero before AMSTERDAM.
+    #[inline]
+    pub fn tx_eip7702_per_auth_state_gas(&self) -> u64 {
+        self.get(GasId::tx_eip7702_per_auth_state_gas())
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
     #[inline]
     pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
@@ -819,12 +864,18 @@ impl GasParams {
             // EIP-3860: Limit and meter initcode
             gas.initial_total_gas += self.tx_initcode_cost(input.len());
 
-            // TIP-1016: State gas for CREATE transactions
+            // EIP-8037: State gas for CREATE transactions
             // These charges happen during CREATE execution and are predictable at validation time:
             // - new_account_state_gas: Creating the contract account
             // - create_state_gas: Contract metadata creation
             // Note: initial_state_gas is tracked separately from initial_gas for visibility
-            gas.initial_state_gas = self.new_account_state_gas() + self.create_state_gas();
+            gas.initial_state_gas += self.new_account_state_gas() + self.create_state_gas();
+        }
+
+        // EIP-8037: State gas for EIP-7702 authorizations
+        if authorization_list_num > 0 {
+            gas.initial_state_gas +=
+                authorization_list_num * self.tx_eip7702_per_auth_state_gas();
         }
 
         // Calculate gas floor for EIP-7623
@@ -949,6 +1000,9 @@ impl GasId {
             x if x == Self::new_account_state_gas().as_u8() => "new_account_state_gas",
             x if x == Self::code_deposit_state_gas().as_u8() => "code_deposit_state_gas",
             x if x == Self::create_state_gas().as_u8() => "create_state_gas",
+            x if x == Self::tx_eip7702_per_auth_state_gas().as_u8() => {
+                "tx_eip7702_per_auth_state_gas"
+            }
             _ => "unknown",
         }
     }
@@ -1013,6 +1067,7 @@ impl GasId {
             "new_account_state_gas" => Some(Self::new_account_state_gas()),
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
+            "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
             _ => None,
         }
     }
@@ -1236,6 +1291,13 @@ impl GasId {
     pub const fn create_state_gas() -> GasId {
         Self::new(43)
     }
+
+    /// EIP-8037: State gas per EIP-7702 authorization (pessimistic).
+    /// Includes both PER_EMPTY_ACCOUNT (112 × cpsb) and PER_AUTH_BASE (23 × cpsb).
+    /// Zero before AMSTERDAM.
+    pub const fn tx_eip7702_per_auth_state_gas() -> GasId {
+        Self::new(44)
+    }
 }
 
 #[cfg(test)]
@@ -1278,11 +1340,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 43 known GasIds (based on the indices 1-43 used)
+        // We should have exactly 44 known GasIds (based on the indices 1-44 used)
         assert_eq!(
             unique_names.len(),
-            43,
-            "Expected 43 unique GasIds, found {}",
+            44,
+            "Expected 44 unique GasIds, found {}",
             unique_names.len()
         );
     }

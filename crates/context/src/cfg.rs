@@ -250,11 +250,17 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    ///
+    /// Automatically enables state gas (EIP-8037) for AMSTERDAM and later.
     pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
         self,
         spec: OSPEC,
     ) -> CfgEnv<OSPEC> {
-        self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()))
+        let enable_state_gas =
+            self.enable_state_gas || spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
+        let mut cfg = self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()));
+        cfg.enable_state_gas = enable_state_gas;
+        cfg
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified spec.
@@ -379,10 +385,16 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     }
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
+    ///
+    /// Automatically enables state gas (EIP-8037) for AMSTERDAM and later.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
         self.set_spec(spec.clone());
-        self.set_gas_params(GasParams::new_spec(spec.into()));
+        self.set_gas_params(GasParams::new_spec(spec.clone().into()));
+        // EIP-8037: Enable state gas for AMSTERDAM and later
+        if spec.into().is_enabled_in(SpecId::AMSTERDAM) {
+            self.enable_state_gas = true;
+        }
     }
 }
 
