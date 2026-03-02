@@ -306,12 +306,12 @@ where
 
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let ctx = evm.ctx();
-        let enveloped = ctx.tx().enveloped_tx().cloned();
-        let spec = ctx.cfg().spec();
-        let l1_block_info = ctx.chain_mut();
+        // Use all_mut() to simultaneously borrow tx (immutable) and chain (mutable),
+        // avoiding an unnecessary clone of the enveloped transaction bytes.
+        let (_, tx, cfg, journal, l1_block_info, _) = evm.ctx().all_mut();
+        let spec = cfg.spec();
 
-        let Some(enveloped_tx) = &enveloped else {
+        let Some(enveloped_tx) = tx.enveloped_tx() else {
             return Err(ERROR::from_string(
                 "[OPTIMISM] Failed to load enveloped transaction.".into(),
             ));
@@ -335,7 +335,7 @@ where
             (BASE_FEE_RECIPIENT, base_fee_amount),
             (OPERATOR_FEE_RECIPIENT, operator_fee_cost),
         ] {
-            ctx.journal_mut().balance_incr(recipient, amount)?;
+            journal.balance_incr(recipient, amount)?;
         }
 
         Ok(())
