@@ -1,5 +1,46 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v104
+date: 03.03.2026
+
+Amsterdam hardfork support (EIP-7708, EIP-7843, EIP-8024), ResultGas struct refactor, flatten Bytecode, logs added to Revert/Halt variants, BAL (Block Access List) support, O(1) block hash cache, various performance improvements and bug fixes.
+
+* `revm-primitives`: 22.0.0 -> 22.1.0 (✓ API compatible changes)
+* `revm-bytecode`: 8.0.0 -> 9.0.0 (⚠ API breaking changes)
+* `revm-state`: 9.0.0 -> 10.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 9.0.0 -> 9.0.1 (✓ API compatible changes)
+* `revm-context-interface`: 14.0.0 -> 15.0.0 (⚠ API breaking changes)
+* `revm-context`: 13.0.0 -> 14.0.0 (⚠ API breaking changes)
+* `revm-database`: 10.0.0 -> 11.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 32.0.0 -> 33.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 32.0.0 -> 32.1.0 (✓ API compatible changes)
+* `revm-handler`: 15.0.0 -> 16.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 15.0.0 -> 16.0.0 (⚠ API breaking changes)
+* `revm`: 34.0.0 -> 35.0.0 (⚠ API breaking changes)
+* `op-revm`: 15.0.0 -> 16.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 14.0.0 -> 15.0.0 (⚠ API breaking changes)
+* `revme`: 11.0.0 -> 12.0.0 (⚠ API breaking changes)
+
+# v103
+date: 15.01.2026
+
+Major release with GasParams moved to Cfg, new gas params for tx initial gas and code deposit, flatten Bytecode, performance improvements and bug fixes.
+
+* `revm-primitives`: 21.0.2 -> 22.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 7.1.1 -> 8.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 8.0.5 -> 9.0.0 (⚠ API breaking changes)
+* `revm-context-interface`: 13.1.0 -> 14.0.0 (⚠ API breaking changes)
+* `revm-context`: 12.1.0 -> 13.0.0 (⚠ API breaking changes)
+* `revm-database`: 9.0.6 -> 10.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 31.1.0 -> 32.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 31.0.0 -> 32.0.0 (⚠ API breaking changes)
+* `revm-handler`: 14.1.0 -> 15.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 14.1.0 -> 15.0.0 (⚠ API breaking changes)
+* `revm`: 33.1.0 -> 34.0.0 (⚠ API breaking changes)
+* `op-revm`: 14.1.0 -> 15.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 13.1.0 -> 14.0.0 (⚠ API breaking changes)
+* `revme`: 10.0.2 -> 11.0.0 (⚠ API breaking changes)
+
 # v102
 date: 14.11.2025
 

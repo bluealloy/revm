@@ -47,6 +47,7 @@ The convenience method `ExecutionResult::gas_used()` still works (delegates to `
 
 ## `ExecutionResult::Revert` and `Halt` now carry `logs` ([#3424](https://github.com/bluealloy/revm/pull/3424))
 
+This is only relevant for revm variant ( Tempo ), ethereum does not contains logs on Halt or Revert.
 Both `Revert` and `Halt` variants gained a `logs: Vec<Log>` field containing logs emitted before the revert/halt:
 
 ```rust
@@ -60,7 +61,6 @@ ExecutionResult::Halt { reason, gas, logs }
 ```
 
 * `logs()` and `into_logs()` now return logs from all variants, not just `Success`.
-* When constructing these variants in tests, include `logs: vec![]`.
 
 ## EIP-161 state clear moved into journal finalize ([#3444](https://github.com/bluealloy/revm/pull/3444))
 
