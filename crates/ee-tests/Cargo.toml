@@ -19,12 +19,6 @@ serde_json = { workspace = true, features = ["preserve_order"] }
 revm = { workspace = true, features = ["serde"] }
 op-revm = { workspace = true, features = ["serde"] }
 
-[dev-dependencies]
-rstest = { workspace = true }
-alloy-sol-types = { workspace = true }
-sha2 = { workspace = true }
-alloy-primitives = { workspace = true }
-
 [features]
 default = []
 optional_balance_check = [
