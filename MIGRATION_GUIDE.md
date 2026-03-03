@@ -1,4 +1,193 @@
 
+# v104 tag (revm v34.1.0)
+
+## Bytecode flattened from enum to struct ([#3375](https://github.com/bluealloy/revm/pull/3375))
+
+`Bytecode` is no longer an enum with `LegacyRaw`, `LegacyAnalyzed`, `Eip7702` variants. It is now an opaque struct wrapping `Arc<BytecodeInner>` (size reduced from 16 to 8 bytes).
+
+* Pattern matching on `Bytecode` variants is no longer possible. Use accessor methods instead:
+  * `bytecode.kind()` returns `BytecodeKind` (`LegacyAnalyzed` or `Eip7702`).
+  * `bytecode.is_legacy()`, `bytecode.is_eip7702()` for type checks.
+  * `bytecode.eip7702_address()` instead of matching `Bytecode::Eip7702(...)`.
+  * `bytecode.legacy_jump_table()` instead of matching `Bytecode::LegacyAnalyzed(...)`.
+* Constructors:
+  * `Bytecode::new_legacy(raw_bytes)` — replaces `Bytecode::LegacyRaw(...)` (analysis happens on creation).
+  * `Bytecode::new_analyzed(bytecode, original_len, jump_table)` — replaces `Bytecode::LegacyAnalyzed(Arc::new(...))`.
+  * `Bytecode::new_eip7702(address)` — replaces `Bytecode::Eip7702(Arc::new(...))`.
+  * `Bytecode::new_raw(bytes)` — auto-detects EIP-7702 delegation.
+* `LegacyAnalyzedBytecode`, `LegacyRawBytecode`, `Eip7702Bytecode` structs are no longer publicly exported.
+* `JumpTable::from_bytes` and `JumpTable::from_bytes_arc` removed (Arc is now internal to Bytecode).
+* The `legacy` module is removed from public API.
+
+## `ExecutionResult`: new `ResultGas` struct replaces `gas_used`/`gas_refunded` ([#3413](https://github.com/bluealloy/revm/pull/3413))
+
+All three `ExecutionResult` variants now use a `gas: ResultGas` field instead of separate `gas_used: u64` / `gas_refunded: u64`:
+
+```rust
+// Before:
+ExecutionResult::Success { reason, gas_used, gas_refunded, logs, output }
+ExecutionResult::Revert { gas_used, output }
+ExecutionResult::Halt { reason, gas_used }
+
+// After:
+ExecutionResult::Success { reason, gas: ResultGas, logs, output }
+ExecutionResult::Revert { gas: ResultGas, logs, output }
+ExecutionResult::Halt { reason, gas: ResultGas, logs }
+```
+
+`ResultGas` provides:
+* `used()` — equivalent to old `gas_used` (accounts for EIP-7623 floor).
+* `remaining()` — `limit - spent`.
+* `inner_refunded()` — raw refund value.
+* `final_refunded()` — 0 when floor gas is active, otherwise equals refunded.
+* `spent_sub_refunded()` — `spent - refunded`.
+* Construct with `ResultGas::new(limit, spent, refunded, floor_gas, intrinsic_gas)`.
+
+The convenience method `ExecutionResult::gas_used()` still works (delegates to `gas().used()`).
+
+## `ExecutionResult::Revert` and `Halt` now carry `logs` ([#3424](https://github.com/bluealloy/revm/pull/3424))
+
+Both `Revert` and `Halt` variants gained a `logs: Vec<Log>` field containing logs emitted before the revert/halt:
+
+```rust
+// Before:
+ExecutionResult::Revert { gas, output }
+ExecutionResult::Halt { reason, gas }
+
+// After:
+ExecutionResult::Revert { gas, logs, output }
+ExecutionResult::Halt { reason, gas, logs }
+```
+
+* `logs()` and `into_logs()` now return logs from all variants, not just `Success`.
+* When constructing these variants in tests, include `logs: vec![]`.
+
+## EIP-161 state clear moved into journal finalize ([#3444](https://github.com/bluealloy/revm/pull/3444))
+
+Pre-EIP-161 normalization is now handled by `JournalInner::finalize()` instead of the database layer.
+
+* `CacheState::has_state_clear` field **removed**.
+* `CacheState::set_state_clear_flag()` **removed**.
+* `State::set_state_clear_flag()` **removed**.
+* `StateBuilder::without_state_clear()` **removed**.
+* `CacheState::new()` now takes **no parameters** (was `new(has_state_clear: bool)`).
+* `CacheAccount::touch_create_pre_eip161()` **removed**.
+* `AccountStatus::on_touched_created_pre_eip161()` **removed**.
+
+```rust
+// Before:
+CacheState::new(true)
+state_builder.without_state_clear()
+
+// After:
+CacheState::new()
+// (no replacement needed — journal handles it)
+```
+
+## `JournalInner.spec` replaced by `JournalInner.cfg` ([#3395](https://github.com/bluealloy/revm/pull/3395))
+
+`JournalInner`'s `spec` field is replaced by a `cfg: JournalCfg` struct that bundles spec with EIP-7708 config:
+* Access spec via `journal.inner.cfg.spec` instead of `journal.inner.spec`.
+* `JournalInner` also gained a `selfdestructed_addresses` field.
+* `JournalCheckpoint` gained a `selfdestructed_i: usize` field.
+
+## `Handler::execution_result` signature changed ([#3413](https://github.com/bluealloy/revm/pull/3413))
+
+```rust
+// Before:
+fn execution_result(&mut self, evm, result) -> Result<ExecutionResult, Error>
+
+// After:
+fn execution_result(&mut self, evm, result, result_gas: ResultGas) -> Result<ExecutionResult, Error>
+```
+
+Also, `post_execution::output()` now takes a `ResultGas` parameter instead of computing gas internally.
+
+## `EthPrecompiles` and `EthInstructions` no longer implement `Default` ([#3434](https://github.com/bluealloy/revm/pull/3434))
+
+```rust
+// Before:
+EthPrecompiles::default()
+EthInstructions::default()
+EthInstructions::new_mainnet()  // deprecated
+
+// After:
+EthPrecompiles::new(spec)
+EthInstructions::new_mainnet_with_spec(spec)
+```
+
+## Fixed-bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+
+`HashMap<Address, _>` / `HashSet<Address>` replaced with `AddressMap<_>` / `AddressSet` throughout the codebase. Similarly `HashMap<B256, _>` → `B256Map<_>` and `HashMap<U256, _>` → `U256Map<_>`.
+
+Affected trait signatures:
+* `DatabaseCommit::commit()`: `HashMap<Address, Account>` → `AddressMap<Account>`.
+* `JournalTr::warm_access_list()`: `HashMap<Address, HashSet<StorageKey>>` → `AddressMap<HashSet<StorageKey>>`.
+* `JournalTr::warm_precompiles()`: `HashSet<Address>` → `AddressSet`.
+* `JournalTr::precompile_addresses()`: returns `&AddressSet`.
+
+Import these types from `revm::primitives` (re-exported from alloy-core).
+
+## `BlockHashCache` replaces `BTreeMap` for block hashes ([#3299](https://github.com/bluealloy/revm/pull/3299))
+
+`State::block_hashes` changed from `BTreeMap<u64, B256>` to `BlockHashCache` (O(1) ring buffer, 256 entries).
+
+```rust
+// Before:
+state.block_hashes.get(&block_num)
+StateBuilder::default().with_block_hashes(btree_map)
+
+// After:
+state.block_hashes.get(block_num)
+StateBuilder::default().with_block_hashes(block_hash_cache)
+```
+
+## `apply_auth_list` gains `refund_per_auth` parameter ([#3366](https://github.com/bluealloy/revm/pull/3366))
+
+```rust
+// Before:
+apply_auth_list(context, auth_list, journal)
+
+// After:
+apply_auth_list(context, auth_list, journal, refund_per_auth)
+```
+
+Use `gas_params.tx_eip7702_auth_refund()` for the default value (12500).
+
+## New EIP features (Amsterdam hardfork)
+
+### EIP-7843: SLOTNUM opcode ([#3340](https://github.com/bluealloy/revm/pull/3340))
+* New opcode `SLOTNUM` (`0x4B`) gated behind `AMSTERDAM`.
+* `BlockEnv` has a new `slot_num: u64` field (default `0`). Include when constructing `BlockEnv` literals.
+* `Host` trait gained `fn slot_num(&self) -> U256`.
+* `Block` trait gained `fn slot_num(&self) -> u64` with default returning `0`.
+
+### EIP-7708: ETH transfers emit logs ([#3334](https://github.com/bluealloy/revm/pull/3334), [#3395](https://github.com/bluealloy/revm/pull/3395))
+* When Amsterdam is active and value is non-zero, ETH transfers (CALL, CREATE, SELFDESTRUCT, tx value) emit EIP-7708 logs.
+* `Cfg` trait gained `is_eip7708_disabled()` and `is_eip7708_delayed_burn_disabled()`.
+* `JournalTr` trait gained `set_eip7708_config()`.
+* Tests that check exact log counts on Amsterdam+ specs need updating.
+
+### EIP-8024: DUPN, SWAPN, EXCHANGE opcodes ([#3223](https://github.com/bluealloy/revm/pull/3223))
+* New opcodes at `0xE6`–`0xE8` gated behind `AMSTERDAM`, each with 1-byte immediates.
+* New `InstructionResult::InvalidImmediateEncoding` variant — update exhaustive matches.
+
+## Deprecated (still functional, warnings emitted)
+
+* `JournalTr::caller_accounting_journal_entry()` and `nonce_bump_journal_entry()` ([#3367](https://github.com/bluealloy/revm/pull/3367)).
+* `EthInstructions::new_mainnet()` — use `new_mainnet_with_spec(spec)` ([#3434](https://github.com/bluealloy/revm/pull/3434)).
+* `ItemOrResult::map_frame` — use `map_item` ([#3320](https://github.com/bluealloy/revm/pull/3320)).
+
+## Other notable changes
+
+* Default hardfork updated to Osaka (Ethereum) and Jovian (Optimism) ([#3326](https://github.com/bluealloy/revm/pull/3326)).
+* `ContextError` handling extracted into `take_error` helper ([#3312](https://github.com/bluealloy/revm/pull/3312)).
+* `BlockHashCache` incorrectly returning zero for block 0 fixed ([#3319](https://github.com/bluealloy/revm/pull/3319)).
+* `ResultGas::final_refunded()` corrected when floor gas is active ([#3450](https://github.com/bluealloy/revm/pull/3450)).
+* EIP-161 state clear fix for empty Loaded/Changed accounts ([#3421](https://github.com/bluealloy/revm/pull/3421)).
+* `CacheState::clear()` and `TransitionState::clear()` added ([#3390](https://github.com/bluealloy/revm/pull/3390)).
+* `calc_linear_cost_u32` renamed to `calc_linear_cost` ([#3318](https://github.com/bluealloy/revm/pull/3318)).
+
 # v103 tag (revm v34.0.0)
 
 * BAL (EIP-7928) support added to Database implementations.
