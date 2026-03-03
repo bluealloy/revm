@@ -288,9 +288,7 @@ fn test_disable_balance_check() {
 // EIP-7708: ETH transfers emit a log
 // ============================================================================
 
-use revm::primitives::eip7708::{
-    BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC,
-};
+use revm::primitives::eip7708::{BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC};
 use revm::primitives::B256;
 
 /// Test EIP-7708 transfer log emission for transaction value transfer

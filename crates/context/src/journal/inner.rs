@@ -1108,10 +1108,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Topic[0]: Burn event signature
         // Topic[1]: account address (zero-padded to 32 bytes)
         // Data: amount in wei (big-endian uint256)
-        let topics = std::vec![
-            BURN_LOG_TOPIC,
-            B256::left_padding_from(address.as_slice()),
-        ];
+        let topics = std::vec![BURN_LOG_TOPIC, B256::left_padding_from(address.as_slice()),];
         let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
 
         self.logs.push(Log {
