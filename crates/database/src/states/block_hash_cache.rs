@@ -58,6 +58,14 @@ impl BlockHashCache {
             .filter_map(|(block_number, hash)| block_number.map(|n| (n, *hash)))
     }
 
+    /// Extends the cache with an iterator of (block_number, block_hash) pairs.
+    #[inline]
+    pub fn extend(&mut self, iter: impl IntoIterator<Item = (u64, B256)>) {
+        for (block_number, block_hash) in iter {
+            self.insert(block_number, block_hash);
+        }
+    }
+
     /// Returns the entry with the lowest block number, if any exists.
     #[inline]
     pub fn lowest(&self) -> Option<(u64, B256)> {
