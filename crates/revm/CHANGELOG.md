@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.1.0](https://github.com/bluealloy/revm/compare/revm-v34.0.0...revm-v34.1.0) - 2026-03-02
+
+### Added
+
+- *(precompile)* add aws-lc-rs as alternative backend for secp256r1 ([#3451](https://github.com/bluealloy/revm/pull/3451))
+
+### Other
+
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+
 ## [34.0.0](https://github.com/bluealloy/revm/compare/revm-v33.1.0...revm-v34.0.0) - 2026-01-15
 
 ### Added

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v15.0.0...revm-handler-v16.0.0) - 2026-03-02
+
+### Added
+
+- *(gas_params)* add configurable EIP-7702 auth refund ([#3366](https://github.com/bluealloy/revm/pull/3366))
+
+### Fixed
+
+- *(handler)* respect is_fee_charge_disabled in calculate_caller_fee ([#3401](https://github.com/bluealloy/revm/pull/3401))
+
+### Other
+
+- *(handler)* remove Default for EthPrecompiles and EthInstructions ([#3434](https://github.com/bluealloy/revm/pull/3434))
+- remove unused alloy-provider dev-dependency ([#3423](https://github.com/bluealloy/revm/pull/3423))
+- [**breaking**] add logs to Revert and Halt variants of ExecutionResult ([#3424](https://github.com/bluealloy/revm/pull/3424))
+- [**breaking**] add ResultGas struct to ExecutionResult ([#3413](https://github.com/bluealloy/revm/pull/3413))
+- [**breaking**] flatten Bytecode ([#3375](https://github.com/bluealloy/revm/pull/3375))
+- remove GPL mention and update gmp feature comments ([#3383](https://github.com/bluealloy/revm/pull/3383))
+- use fixed bytes hashmaps from alloy-core ([#3358](https://github.com/bluealloy/revm/pull/3358))
+- *(handler)* extract duplicate ContextError handling ([#3312](https://github.com/bluealloy/revm/pull/3312))
+- *(revm-handler)* add ItemOrResult::map_item (alias map_frame) ([#3320](https://github.com/bluealloy/revm/pull/3320))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v14.1.0...revm-handler-v15.0.0) - 2026-01-15
 
 ### Added
