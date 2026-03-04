@@ -15,3 +15,5 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          exclude: revm-ee-tests
