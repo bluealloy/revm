@@ -1,0 +1,7 @@
+[workspace]
+semver_check = true
+
+[[package]]
+name = "revm-ee-tests"
+semver_check = false
+release = false
