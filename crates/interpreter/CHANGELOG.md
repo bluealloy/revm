@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v33.0.0...revm-interpreter-v34.0.0) - 2026-03-04
+
+### Other
+
+- [**breaking**] bump revm-context-interface to v16.0.0 (⚠ dependency bump)
+
 ## [33.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v32.0.0...revm-interpreter-v33.0.0) - 2026-03-02
 
 ### Added
