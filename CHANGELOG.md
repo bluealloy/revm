@@ -1,5 +1,22 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v107
+date: 04.03.2026
+
+Bump revm-database-interface major version. All dependent crates bumped accordingly.
+
+* `revm-database-interface`: 9.0.1 -> 10.0.0 (⚠ API breaking changes)
+* `revm-database`: 11.0.0 -> 12.0.0 (⚠ dependency bump)
+* `revm-context-interface`: 15.0.0 -> 16.0.0 (⚠ dependency bump)
+* `revm-context`: 14.0.0 -> 15.0.0 (⚠ dependency bump)
+* `revm-handler`: 16.0.0 -> 17.0.0 (⚠ dependency bump)
+* `revm-inspector`: 16.0.0 -> 17.0.0 (⚠ dependency bump)
+* `revm`: 35.0.0 -> 36.0.0 (⚠ dependency bump)
+* `op-revm`: 16.0.0 -> 17.0.0 (⚠ dependency bump)
+* `revm-statetest-types`: 15.0.0 -> 16.0.0 (⚠ dependency bump)
+* `revm-ee-tests`: 0.1.0 -> 0.2.0 (⚠ dependency bump)
+* `revme`: 12.0.0 -> 13.0.0 (⚠ dependency bump)
+
 # v104
 date: 03.03.2026
 

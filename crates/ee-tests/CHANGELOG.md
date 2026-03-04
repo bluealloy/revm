@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/bluealloy/revm/compare/revm-ee-tests-v0.1.0...revm-ee-tests-v0.2.0) - 2026-03-04
+
+### Other
+
+- bump revm-database-interface to v10.0.0
+
 ## [0.1.0](https://github.com/bluealloy/revm/releases/tag/revm-ee-tests-v0.1.0) - 2025-08-06
 
 ### Added
