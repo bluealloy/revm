@@ -1284,8 +1284,7 @@ fn test_tip1016_call_child_sstore_propagates() {
         .unwrap();
 
     let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
-    let expected_state_gas =
-        STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+    let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
 
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;
@@ -1373,8 +1372,7 @@ fn test_tip1016_nested_call_create_sstore() {
         .unwrap();
 
     let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
-    let expected_state_gas =
-        STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+    let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
 
     assert!(result.is_success());
     let delta = result.gas_used() - baseline_gas;

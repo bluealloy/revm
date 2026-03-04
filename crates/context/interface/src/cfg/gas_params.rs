@@ -349,8 +349,7 @@ impl GasParams {
             // Total per auth charged pessimistically:
             //   regular: PER_AUTH_BASE_COST_REGULAR (7500)
             //   state: (PER_EMPTY_ACCOUNT 112 + PER_AUTH_BASE 23) × CPSB
-            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
-                7500 + (112 + 23) * CPSB;
+            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] = 7500 + (112 + 23) * CPSB;
             // Refund for existing accounts: PER_EMPTY_ACCOUNT state gas (112 × CPSB)
             table[GasId::tx_eip7702_auth_refund().as_usize()] = 112 * CPSB;
 
@@ -874,8 +873,7 @@ impl GasParams {
 
         // EIP-8037: State gas for EIP-7702 authorizations
         if authorization_list_num > 0 {
-            gas.initial_state_gas +=
-                authorization_list_num * self.tx_eip7702_per_auth_state_gas();
+            gas.initial_state_gas += authorization_list_num * self.tx_eip7702_per_auth_state_gas();
         }
 
         // Calculate gas floor for EIP-7623

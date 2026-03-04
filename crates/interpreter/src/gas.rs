@@ -366,27 +366,42 @@ mod tests {
         // Test 1: Cost from reservoir only
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
         assert!(gas.record_state_cost(200));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (300, 1000, 200));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (300, 1000, 200)
+        );
 
         // Test 2: Exhaust reservoir exactly
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
         assert!(gas.record_state_cost(500));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 1000, 500));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (0, 1000, 500)
+        );
 
         // Test 3: Spill to remaining (reservoir < cost)
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 300);
         assert!(gas.record_state_cost(500));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 800, 500));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (0, 800, 500)
+        );
 
         // Test 4: No reservoir (mainnet standard)
         let mut gas = Gas::new(1000);
         assert!(gas.record_state_cost(200));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 800, 200));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (0, 800, 200)
+        );
 
         // Test 5: Zero cost
         let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
         assert!(gas.record_state_cost(0));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (50, 100, 0));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (50, 100, 0)
+        );
 
         // Test 6: Out of gas (cost > remaining + reservoir)
         let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
@@ -406,7 +421,10 @@ mod tests {
         assert!(gas.record_state_cost(200)); // 150 from reservoir, 50 from remaining
         assert_eq!((gas.reservoir(), gas.remaining()), (0, 450));
         assert!(gas.record_state_cost(100)); // 100 from remaining
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 350, 450));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (0, 350, 450)
+        );
     }
 
     /// A.1: Verify state_gas_spent is incremented even after failed record_state_cost.
@@ -435,11 +453,17 @@ mod tests {
         // remaining=0, reservoir=500: state gas draws entirely from reservoir
         let mut gas = Gas::new_with_regular_gas_and_reservoir(0, 500);
         assert!(gas.record_state_cost(200));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (300, 0, 200));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (300, 0, 200)
+        );
 
         // Exhaust reservoir exactly
         assert!(gas.record_state_cost(300));
-        assert_eq!((gas.reservoir(), gas.remaining(), gas.state_gas_spent()), (0, 0, 500));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (0, 0, 500)
+        );
 
         // Now any cost → OOG (both remaining and reservoir are 0)
         assert!(!gas.record_state_cost(1));

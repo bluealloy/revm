@@ -647,35 +647,29 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
             interpreter_result.output = Bytes::new();
         }
     }
+
     // State gas for code deposit (TIP-1016)
     if cfg.is_state_gas_enabled() {
         let state_gas_for_code = cfg
             .gas_params()
             .code_deposit_state_gas(interpreter_result.output.len());
         if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
-            if spec_id.is_enabled_in(HOMESTEAD) {
-                journal.checkpoint_revert(checkpoint);
-                interpreter_result.result = InstructionResult::OutOfGas;
-                return;
-            } else {
-                interpreter_result.output = Bytes::new();
-            }
+            journal.checkpoint_revert(checkpoint);
+            interpreter_result.result = InstructionResult::OutOfGas;
+            return;
         }
     }
     // EIP-8037: Hash cost for deployed bytecode (keccak256)
     // HASH_COST(L) = 6 × ceil(L / 32)
+    // As contract deployment now contains mostly state gas, we need to introduce additional change for keccak256 cost.
     if cfg.is_amsterdam_eip8037_enabled() {
         let hash_cost = cfg
             .gas_params()
             .keccak256_cost(interpreter_result.output.len());
         if !interpreter_result.gas.record_regular_cost(hash_cost) {
-            if spec_id.is_enabled_in(HOMESTEAD) {
-                journal.checkpoint_revert(checkpoint);
-                interpreter_result.result = InstructionResult::OutOfGas;
-                return;
-            } else {
-                interpreter_result.output = Bytes::new();
-            }
+            journal.checkpoint_revert(checkpoint);
+            interpreter_result.result = InstructionResult::OutOfGas;
+            return;
         }
     }
     // If we have enough gas we can commit changes.

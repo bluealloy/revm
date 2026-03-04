@@ -169,44 +169,6 @@ impl CfgEnv {
 }
 
 impl<SPEC> CfgEnv<SPEC> {
-    /// Create new `CfgEnv` with default values and specified spec.
-    pub fn new_with_spec_and_gas_params(spec: SPEC, gas_params: GasParams) -> Self {
-        Self {
-            chain_id: 1,
-            tx_chain_id_check: true,
-            limit_contract_code_size: None,
-            limit_contract_initcode_size: None,
-            spec,
-            disable_nonce_check: false,
-            max_blobs_per_tx: None,
-            tx_gas_limit_cap: None,
-            blob_base_fee_update_fraction: None,
-            gas_params,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: (1 << 32) - 1,
-            #[cfg(feature = "optional_balance_check")]
-            disable_balance_check: false,
-            #[cfg(feature = "optional_block_gas_limit")]
-            disable_block_gas_limit: false,
-            #[cfg(feature = "optional_eip3541")]
-            disable_eip3541: false,
-            #[cfg(feature = "optional_eip3607")]
-            disable_eip3607: false,
-            #[cfg(feature = "optional_eip7623")]
-            disable_eip7623: false,
-            #[cfg(feature = "optional_no_base_fee")]
-            disable_base_fee: false,
-            #[cfg(feature = "optional_priority_fee_check")]
-            disable_priority_fee_check: false,
-            #[cfg(feature = "optional_fee_charge")]
-            disable_fee_charge: false,
-            enable_tip1016: false,
-            enable_amsterdam_eip8037: false,
-            amsterdam_eip7708_disabled: false,
-            amsterdam_eip7708_delayed_burn_disabled: false,
-        }
-    }
-
     /// Returns the spec for the `CfgEnv`.
     #[inline]
     pub fn spec(&self) -> &SPEC {
@@ -370,6 +332,45 @@ impl<SPEC> CfgEnv<SPEC> {
 }
 
 impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
+    /// Create new `CfgEnv` with default values and specified spec.
+    pub fn new_with_spec_and_gas_params(spec: SPEC, gas_params: GasParams) -> Self {
+        let is_amsterdam = spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
+        Self {
+            chain_id: 1,
+            tx_chain_id_check: true,
+            limit_contract_code_size: None,
+            limit_contract_initcode_size: None,
+            spec,
+            disable_nonce_check: false,
+            max_blobs_per_tx: None,
+            tx_gas_limit_cap: None,
+            blob_base_fee_update_fraction: None,
+            gas_params,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: (1 << 32) - 1,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: false,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: false,
+            #[cfg(feature = "optional_eip3541")]
+            disable_eip3541: false,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: false,
+            #[cfg(feature = "optional_eip7623")]
+            disable_eip7623: false,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: false,
+            #[cfg(feature = "optional_priority_fee_check")]
+            disable_priority_fee_check: false,
+            #[cfg(feature = "optional_fee_charge")]
+            disable_fee_charge: false,
+            enable_tip1016: false,
+            enable_amsterdam_eip8037: is_amsterdam,
+            amsterdam_eip7708_disabled: false,
+            amsterdam_eip7708_delayed_burn_disabled: false,
+        }
+    }
+
     /// Returns the blob base fee update fraction from [CfgEnv::blob_base_fee_update_fraction].
     ///
     /// If this field is not set, return the default value for the spec.
@@ -573,7 +574,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 
     fn is_state_gas_enabled(&self) -> bool {
-        self.enable_tip1016
+        self.enable_tip1016 || self.enable_amsterdam_eip8037
     }
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
@@ -581,7 +582,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 }
 
-impl<SPEC: Default + Into<SpecId>> Default for CfgEnv<SPEC> {
+impl<SPEC: Default + Into<SpecId> + Clone> Default for CfgEnv<SPEC> {
     fn default() -> Self {
         Self::new_with_spec_and_gas_params(
             SPEC::default(),
