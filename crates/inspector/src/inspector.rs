@@ -153,9 +153,9 @@ where
     }
 
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
-        self.0
-            .call(context, inputs)
-            .or_else(|| self.1.call(context, inputs))
+        let first = self.0.call(context, inputs);
+        let second = self.1.call(context, inputs);
+        first.or(second)
     }
 
     fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
@@ -164,9 +164,9 @@ where
     }
 
     fn create(&mut self, context: &mut CTX, inputs: &mut CreateInputs) -> Option<CreateOutcome> {
-        self.0
-            .create(context, inputs)
-            .or_else(|| self.1.create(context, inputs))
+        let first = self.0.create(context, inputs);
+        let second = self.1.create(context, inputs);
+        first.or(second)
     }
 
     fn create_end(
