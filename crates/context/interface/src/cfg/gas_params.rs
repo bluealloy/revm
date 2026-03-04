@@ -863,12 +863,9 @@ impl GasParams {
             // EIP-3860: Limit and meter initcode
             gas.initial_total_gas += self.tx_initcode_cost(input.len());
 
-            // EIP-8037: State gas for CREATE transactions
-            // These charges happen during CREATE execution and are predictable at validation time:
-            // - new_account_state_gas: Creating the contract account
-            // - create_state_gas: Contract metadata creation
-            // Note: initial_state_gas is tracked separately from initial_gas for visibility
-            gas.initial_state_gas += self.new_account_state_gas() + self.create_state_gas();
+            // EIP-8037: State gas for CREATE transactions.
+            // create_state_gas covers both account creation and contract metadata.
+            gas.initial_state_gas += self.create_state_gas();
         }
 
         // EIP-8037: State gas for EIP-7702 authorizations
@@ -878,6 +875,10 @@ impl GasParams {
 
         // Calculate gas floor for EIP-7623
         gas.floor_gas = self.tx_floor_cost(tokens_in_calldata);
+
+        // EIP-8037: Include state gas in total initial gas.
+        // State gas is a subset of initial_total_gas, deducted before execution starts.
+        gas.initial_total_gas += gas.initial_state_gas;
 
         gas
     }
@@ -1392,17 +1393,17 @@ mod tests {
 
         // Test CREATE transaction (is_create = true)
         let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0);
-        let expected_state_gas = gas_params.new_account_state_gas() + gas_params.create_state_gas();
+        let expected_state_gas = gas_params.create_state_gas();
 
         assert_eq!(create_gas.initial_state_gas, expected_state_gas);
-        assert_eq!(create_gas.initial_state_gas, 25000 + 32000); // 57,000
+        assert_eq!(create_gas.initial_state_gas, 32000);
 
-        // initial_gas should NOT include state_gas (tracked separately)
+        // initial_total_gas includes both regular and state gas
         let create_cost = gas_params.tx_create_cost();
         let initcode_cost = gas_params.tx_initcode_cost(0);
         assert_eq!(
             create_gas.initial_total_gas,
-            gas_params.tx_base_stipend() + create_cost + initcode_cost
+            gas_params.tx_base_stipend() + create_cost + initcode_cost + expected_state_gas
         );
 
         // Test CALL transaction (is_create = false)

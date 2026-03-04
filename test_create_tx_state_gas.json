@@ -1,0 +1,128 @@
+{
+    "tests/amsterdam/eip8037_state_creation_gas_cost_increase/test_state_gas_create.py::test_create_tx_state_gas[fork_Amsterdam-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x07270e00",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00",
+            "slotNumber": "0x00"
+        },
+        "pre": {
+            "0x1ad9bc24818784172ff393bb6f89f094d4d2ca29": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x01000000"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x00"
+            ],
+            "sender": "0x1ad9bc24818784172ff393bb6f89f094d4d2ca29",
+            "secretKey": "0xd5373e4857dd9acbbcda42f603592bd9d3ef6e184948677074018970f7c292e3",
+            "to": ""
+        },
+        "post": {
+            "Amsterdam": [
+                {
+                    "hash": "0xf1f8f06da8dacd2dbb76408bbc0a0603927a239bdef8a15ff7aef5690e8adc50",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "receipt": {
+                        "transactionHash": "0x4dae9d19894ce7ddeaef926c34a179fb40aaf7a66bacfdd844021e7445b34f6c",
+                        "type": "0x00",
+                        "cumulativeGasUsed": "0x0276d6",
+                        "bloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                        "logs": [],
+                        "status": true,
+                        "rlp": "0xf9010901830276d6b9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0"
+                    },
+                    "txbytes": "0xf84d800a840100000080800026a09b7b3e9200dd0ad95c48eb1dddef43b1ca0e832a46d9415b6d9e9ea07df157eba0728a65fe533607b62cf8f822348389d545d4492de42ac76f3a2d6950348985e5",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "state": {
+                        "0x1ad9bc24818784172ff393bb6f89f094d4d2ca29": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de875ba4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x36bdd8886852759e2046e3bf4c290d5c29c81d82": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x076482",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "config": {
+            "blobSchedule": {
+                "Cancun": {
+                    "target": "0x03",
+                    "max": "0x06",
+                    "baseFeeUpdateFraction": "0x32f0ed"
+                },
+                "Prague": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "Osaka": {
+                    "target": "0x06",
+                    "max": "0x09",
+                    "baseFeeUpdateFraction": "0x4c6964"
+                },
+                "BPO1": {
+                    "target": "0x0a",
+                    "max": "0x0f",
+                    "baseFeeUpdateFraction": "0x7f5a51"
+                },
+                "BPO2": {
+                    "target": "0x0e",
+                    "max": "0x15",
+                    "baseFeeUpdateFraction": "0xb24b3f"
+                },
+                "Amsterdam": {
+                    "target": "0x0e",
+                    "max": "0x15",
+                    "baseFeeUpdateFraction": "0xb24b3f"
+                }
+            },
+            "chainid": "0x01"
+        },
+        "_info": {
+            "hash": "0x093c7edd8e9b28bbcd9b52bbccf856b2d819dd98e20720ec60dbf85fab8b2e47",
+            "fixture-format": "state_test",
+            "comment": "`execution-specs` generated test",
+            "filling-transition-tool": "2.19.0",
+            "description": "Test contract creation transaction charges intrinsic state gas.\n\nA create transaction (to=None) charges 112 * cost_per_state_byte\nas intrinsic state gas for the new account, plus code deposit state\ngas for the deployed bytecode.",
+            "url": "https://github.com/ethereum/execution-specs/blob/tests-bal@v5.2.0/tests/amsterdam/eip8037_state_creation_gas_cost_increase/test_state_gas_create.py#L169",
+            "opcode_count": {},
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-8037.md",
+            "reference-spec-version": "a12902ae1b811c45a81b51bfce671cf7a1fb27f3"
+        }
+    }
+}
