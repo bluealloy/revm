@@ -288,9 +288,7 @@ fn test_disable_balance_check() {
 // EIP-7708: ETH transfers emit a log
 // ============================================================================
 
-use revm::primitives::eip7708::{
-    ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_LOG_TOPIC,
-};
+use revm::primitives::eip7708::{BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC};
 use revm::primitives::B256;
 
 /// Test EIP-7708 transfer log emission for transaction value transfer
@@ -485,18 +483,18 @@ fn test_eip7708_selfdestruct_to_self() {
 
     assert!(result.is_success(), "Transaction should succeed");
 
-    // Find the selfdestruct-to-self log
+    // Find the burn log
     let logs = result.logs();
-    let selfdestruct_to_self_log = logs
+    let burn_log = logs
         .iter()
-        .find(|log| log.data.topics().len() == 2 && log.data.topics()[0] == SELFDESTRUCT_LOG_TOPIC);
+        .find(|log| log.data.topics().len() == 2 && log.data.topics()[0] == BURN_LOG_TOPIC);
 
     assert!(
-        selfdestruct_to_self_log.is_some(),
-        "Expected selfdestruct-to-self log, got logs: {:?}",
+        burn_log.is_some(),
+        "Expected burn log, got logs: {:?}",
         logs
     );
-    let log = selfdestruct_to_self_log.unwrap();
+    let log = burn_log.unwrap();
     assert_eq!(log.address, ETH_TRANSFER_LOG_ADDRESS);
     // The log data should contain the create value
     assert_eq!(log.data.data.as_ref(), &create_value.to_be_bytes::<32>());
