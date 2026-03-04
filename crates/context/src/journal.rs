@@ -270,10 +270,9 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         &mut self,
         address: Address,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, DB::Error> {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, JournalLoadError<DB::Error>> {
         self.inner
             .load_account_mut_optional(&mut self.database, address, skip_cold_load)
-            .map_err(JournalLoadError::unwrap_db_error)
     }
 
     #[inline]

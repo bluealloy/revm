@@ -302,7 +302,7 @@ impl JournalTr for Backend {
         &mut self,
         address: Address,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, Infallible> {
+    ) -> Result<StateLoad<Self::JournaledAccount<'_>>, JournalLoadError<Infallible>> {
         self.journaled_state
             .load_account_mut_skip_cold_load(address, skip_cold_load)
     }
