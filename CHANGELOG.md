@@ -6,6 +6,7 @@ date: 04.03.2026
 Bump revm-database-interface major version. All dependent crates bumped accordingly.
 
 * `revm-database-interface`: 9.0.1 -> 10.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 33.0.0 -> 34.0.0 (⚠ dependency bump)
 * `revm-database`: 11.0.0 -> 12.0.0 (⚠ dependency bump)
 * `revm-context-interface`: 15.0.0 -> 16.0.0 (⚠ dependency bump)
 * `revm-context`: 14.0.0 -> 15.0.0 (⚠ dependency bump)
