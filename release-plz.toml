@@ -1,0 +1,2 @@
+[workspace]
+semver_check = true
