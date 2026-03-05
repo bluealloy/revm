@@ -154,7 +154,7 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
         reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let gas = Gas::new(inputs.gas_limit);
+        let gas = Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -199,7 +199,7 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+        if let Some(mut result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 ctx.journal_mut().checkpoint_commit();
@@ -209,6 +209,9 @@ impl EthFrame<EthInterpreter> {
                 logs = ctx.journal_mut().logs()[checkpoint.log_i..].to_vec();
                 ctx.journal_mut().checkpoint_revert(checkpoint);
             }
+            // Preserve the reservoir on the result gas so it can be reimbursed.
+            // Precompiles don't use reservoir gas, but the first frame carries it.
+            result.gas.set_reservoir(reservoir_remaining_gas);
             return Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result,
                 memory_offset: inputs.return_memory_offset.clone(),
@@ -275,7 +278,10 @@ impl EthFrame<EthInterpreter> {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
                     result: e,
-                    gas: Gas::new(inputs.gas_limit()),
+                    gas: Gas::new_with_regular_gas_and_reservoir(
+                        inputs.gas_limit(),
+                        reservoir_remaining_gas,
+                    ),
                     output: Bytes::new(),
                 },
                 address: None,

@@ -847,14 +847,26 @@ impl GasParams {
         let tokens_in_calldata =
             get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
 
+        // EIP-7702: Compute auth list costs.
+        // Under EIP-8037, tx_eip7702_per_empty_account_cost bundles regular + state gas.
+        // We split them: regular goes in initial_total_gas, state goes in initial_state_gas.
+        let auth_total_cost =
+            authorization_list_num * self.tx_eip7702_per_empty_account_cost();
+        let auth_state_gas =
+            authorization_list_num * self.tx_eip7702_per_auth_state_gas();
+        let auth_regular_cost = auth_total_cost - auth_state_gas;
+
         gas.initial_total_gas += tokens_in_calldata * self.tx_token_cost()
             // before berlin tx_access_list_address_cost will be zero
             + access_list_accounts * self.tx_access_list_address_cost()
             // before berlin tx_access_list_storage_key_cost will be zero
             + access_list_storages * self.tx_access_list_storage_key_cost()
             + self.tx_base_stipend()
-            // EIP-7702: Authorization list
-            + authorization_list_num * self.tx_eip7702_per_empty_account_cost();
+            // EIP-7702: Only the regular portion of auth list cost
+            + auth_regular_cost;
+
+        // EIP-8037: Track auth list state gas separately for reservoir handling.
+        gas.initial_state_gas += auth_state_gas;
 
         if is_create {
             // EIP-2: Homestead Hard-fork Changes
@@ -866,11 +878,6 @@ impl GasParams {
             // EIP-8037: State gas for CREATE transactions.
             // create_state_gas covers both account creation and contract metadata.
             gas.initial_state_gas += self.create_state_gas();
-        }
-
-        // EIP-8037: State gas for EIP-7702 authorizations
-        if authorization_list_num > 0 {
-            gas.initial_state_gas += authorization_list_num * self.tx_eip7702_per_auth_state_gas();
         }
 
         // Calculate gas floor for EIP-7623

@@ -19,12 +19,15 @@ use revm::{
     handler::{
         evm::FrameTr,
         handler::EvmTrError,
+        handler_reservoir_refill,
         post_execution::{self, reimburse_caller},
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
-        handler_reservoir_refill, EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
+        EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
-    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
+    interpreter::{
+        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas, InitialAndFloorGas,
+    },
     primitives::{hardfork::SpecId, U256},
 };
 use std::{boxed::Box, vec::Vec};
@@ -186,6 +189,7 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        _init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
         let tx = ctx.tx();
@@ -245,11 +249,11 @@ where
             }
             // On revert, refill reservoir: state gas that spilled into regular gas
             // gets returned to the reservoir.
-            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
+            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
             gas.set_reservoir(new_reservoir);
         } else {
             // On halt, refill reservoir.
-            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
+            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
             gas.set_reservoir(new_reservoir);
         }
 
@@ -508,8 +512,9 @@ mod tests {
         let mut handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
+        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         handler
-            .last_frame_result(&mut evm, &mut exec_result)
+            .last_frame_result(&mut evm, &mut exec_result, &init_and_floor_gas)
             .unwrap();
         handler.refund(&mut evm, &mut exec_result, 0);
         *exec_result.gas()
