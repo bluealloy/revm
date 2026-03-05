@@ -51,15 +51,15 @@ pub fn reimburse_caller<CTX: ContextTr>(
     let caller = context.tx().caller();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
 
-    // Return balance of not spend gas.
+    // Return balance of not spent gas.
+    // Include reservoir gas (EIP-8037) which is also unused and must be reimbursed.
+    let reimbursable = gas.remaining() + gas.reservoir() + gas.refunded() as u64;
     context
         .journal_mut()
         .load_account_mut(caller)?
         .incr_balance(
-            U256::from(
-                effective_gas_price
-                    .saturating_mul((gas.remaining() + gas.refunded() as u64) as u128),
-            ) + additional_refund,
+            U256::from(effective_gas_price.saturating_mul(reimbursable as u128))
+                + additional_refund,
         );
 
     Ok(())
@@ -83,10 +83,12 @@ pub fn reward_beneficiary<CTX: ContextTr>(
         effective_gas_price
     };
 
-    // reward beneficiary
+    // Reward beneficiary.
+    // Exclude reservoir gas (EIP-8037) from the used gas — reservoir is unused and reimbursed.
+    let effective_used = gas.used().saturating_sub(gas.reservoir());
     journal
         .load_account_mut(block.beneficiary())?
-        .incr_balance(U256::from(coinbase_gas_price * gas.used() as u128));
+        .incr_balance(U256::from(coinbase_gas_price * effective_used as u128));
 
     Ok(())
 }

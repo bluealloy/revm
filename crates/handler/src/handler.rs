@@ -1,6 +1,6 @@
 use crate::{
     evm::FrameTr,
-    execution, handler_reservoir_refill, post_execution,
+    execution, post_execution,
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
@@ -205,15 +205,24 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_total_gas;
+        // Deduct only the regular portion of initial gas from execution gas.
+        // The state portion (initial_state_gas) comes from the reservoir, not
+        // the regular gas budget.
+        let regular_initial_gas =
+            init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
         // Create first frame action
-        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        let mut first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        // Deduct initial state gas from the reservoir.
+        first_frame_input.reservoir_remaining_gas = first_frame_input
+            .reservoir_remaining_gas
+            .saturating_sub(init_and_floor_gas.initial_state_gas);
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, &mut frame_result, init_and_floor_gas)?;
         Ok(frame_result)
     }
 
@@ -382,6 +391,7 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        _init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
@@ -394,19 +404,13 @@ pub trait Handler {
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
-            // Refund both unused gas_left and unused reservoir.
-            // remaining tracks gas_left only; reservoir is separate.
-            // Total unused gas = remaining + reservoir.
-            gas.erase_cost(remaining + reservoir);
+            // Return unused regular gas (remaining). Reservoir is handled separately.
+            gas.erase_cost(remaining);
         }
 
-        // handle reservoir refill in case of revert or halt.
-        if !instruction_result.is_ok() {
-            // Use the saved state_gas_spent (not gas.state_gas_spent() which is zeroed
-            // by Gas::new_spent and only restored later).
-            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
-            gas.set_reservoir(new_reservoir);
-        }
+        // Restore the frame's actual reservoir on all paths so downstream
+        // (reimburse_caller, reward_beneficiary) can account for it.
+        gas.set_reservoir(reservoir);
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);

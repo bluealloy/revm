@@ -21,7 +21,7 @@ use revm::{
         handler::EvmTrError,
         post_execution::{self, reimburse_caller},
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
-        EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
+        handler_reservoir_refill, EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
     interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
@@ -203,9 +203,6 @@ where
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
 
-        // Total unused gas includes both gas_left (remaining) and unused reservoir.
-        let total_remaining = remaining + reservoir;
-
         if instruction_result.is_ok() {
             // On Optimism, deposit transactions report gas usage uniquely to other
             // transactions due to them being pre-paid on L1.
@@ -221,9 +218,9 @@ where
             //     enabled.
             //   - Regular transactions report their gas used as normal.
             if !is_deposit || is_regolith {
-                // For regular transactions prior to Regolith and all transactions after
-                // Regolith, gas is reported as normal.
-                gas.erase_cost(total_remaining);
+                // Return unused regular gas. Reservoir is handled separately below.
+                gas.erase_cost(remaining);
+                gas.set_reservoir(reservoir);
                 gas.record_refund(refunded);
             } else if is_deposit && tx.is_system_transaction() {
                 // System transactions were a special type of deposit transaction in
@@ -244,8 +241,16 @@ where
             //     gas used on failure. Refunds on remaining gas enabled.
             //   - Regular transactions receive a refund on remaining gas as normal.
             if !is_deposit || is_regolith {
-                gas.erase_cost(total_remaining);
+                gas.erase_cost(remaining);
             }
+            // On revert, refill reservoir: state gas that spilled into regular gas
+            // gets returned to the reservoir.
+            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
+            gas.set_reservoir(new_reservoir);
+        } else {
+            // On halt, refill reservoir.
+            let new_reservoir = handler_reservoir_refill(reservoir, state_gas_spent);
+            gas.set_reservoir(new_reservoir);
         }
 
         // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).

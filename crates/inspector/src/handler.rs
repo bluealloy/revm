@@ -82,7 +82,7 @@ where
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, &mut frame_result, init_and_floor_gas)?;
         Ok(frame_result)
     }
 
