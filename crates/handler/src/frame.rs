@@ -452,7 +452,6 @@ impl EthFrame<EthInterpreter> {
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
-                    frame.scheme,
                 );
 
                 ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
@@ -594,7 +593,7 @@ pub fn handle_reservoir_remaining_gas(
 pub fn handler_reservoir_refill(reservoir: u64, spent_state_gas: u64) -> u64 {
     // if we spent more state gas than we have in reservoir, we need to refill it.
     let _state_gas_in_regular = spent_state_gas.saturating_sub(reservoir);
-    
+
     // we are increasing reservoir by the amount of state gas that was in regular gas.
     // TODO(rakita) test fixtures are assuming zero here, when this is fixed uncomment the line below.
     //reservoir + state_gas_in_regular
@@ -608,7 +607,6 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
-    scheme: CreateScheme,
 ) {
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
@@ -671,11 +669,14 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
             interpreter_result.output = Bytes::new();
         }
     }
+
     // EIP-8037: Hash cost for deployed bytecode (keccak256)
     // HASH_COST(L) = 6 × ceil(L / 32)
-    // CREATE2 already charges for hashing the init code when deriving the address,
-    // so this cost is only charged for CREATE.
-    if cfg.is_amsterdam_eip8037_enabled() && matches!(scheme, CreateScheme::Create) {
+    // Both CREATE and CREATE2 must pay this cost: it covers hashing the deployed code
+    // to compute the code_hash stored in the account. CREATE2's existing keccak256 charge
+    // (in create2_cost) is for hashing the init code during address derivation, which is
+    // a different hash.
+    if cfg.is_amsterdam_eip8037_enabled() {
         let hash_cost = cfg
             .gas_params()
             .keccak256_cost(interpreter_result.output.len());
