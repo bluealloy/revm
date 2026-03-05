@@ -344,8 +344,12 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit();
 
+        let scheme = inputs.scheme();
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::Create(CreateFrame {
+                created_address,
+                scheme,
+            }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -448,6 +452,7 @@ impl EthFrame<EthInterpreter> {
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
+                    frame.scheme,
                 );
 
                 ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
@@ -601,6 +606,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
+    scheme: CreateScheme,
 ) {
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
@@ -631,6 +637,8 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
         return;
     }
+
+    // regular gas for code deposit. It is zero in EIP-8037.
     let gas_for_code = cfg
         .gas_params()
         .code_deposit_cost(interpreter_result.output.len());
@@ -661,8 +669,9 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     }
     // EIP-8037: Hash cost for deployed bytecode (keccak256)
     // HASH_COST(L) = 6 × ceil(L / 32)
-    // As contract deployment now contains mostly state gas, we need to introduce additional change for keccak256 cost.
-    if cfg.is_amsterdam_eip8037_enabled() {
+    // CREATE2 already charges for hashing the init code when deriving the address,
+    // so this cost is only charged for CREATE.
+    if cfg.is_amsterdam_eip8037_enabled() && matches!(scheme, CreateScheme::Create) {
         let hash_cost = cfg
             .gas_params()
             .keccak256_cost(interpreter_result.output.len());

@@ -1,4 +1,4 @@
-use context_interface::result::Output;
+use context_interface::{result::Output, CreateScheme};
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
@@ -17,6 +17,8 @@ pub struct CallFrame {
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
+    /// The create scheme used (CREATE, CREATE2, or Custom).
+    pub scheme: CreateScheme,
 }
 
 /// Frame Data
@@ -119,8 +121,11 @@ impl FrameResult {
 
 impl FrameData {
     /// Creates a new create frame data.
-    pub fn new_create(created_address: Address) -> Self {
-        Self::Create(CreateFrame { created_address })
+    pub fn new_create(created_address: Address, scheme: CreateScheme) -> Self {
+        Self::Create(CreateFrame {
+            created_address,
+            scheme,
+        })
     }
 
     /// Creates a new call frame data.
