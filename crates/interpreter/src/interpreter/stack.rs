@@ -1,5 +1,5 @@
 use crate::InstructionResult;
-use core::{fmt, ptr};
+use core::fmt;
 use primitives::U256;
 use std::vec::Vec;
 
