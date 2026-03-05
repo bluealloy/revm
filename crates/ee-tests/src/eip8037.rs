@@ -1,4 +1,4 @@
-//! TIP-1016 State Gas integration tests.
+//! EIP-8037 State Gas integration tests.
 //!
 //! Verifies dual-limit gas accounting where storage creation gas (state gas)
 //! is tracked separately from regular gas.
@@ -16,19 +16,19 @@ use revm::{
 };
 use std::path::PathBuf;
 
-const TIP1016_TESTDATA: &str = "tests/tip1016_testdata";
+const TIP1016_TESTDATA: &str = "tests/eip8037_testdata";
 
-fn tip1016_testdata_config() -> TestdataConfig {
+fn eip8037_testdata_config() -> TestdataConfig {
     TestdataConfig {
         testdata_dir: PathBuf::from(TIP1016_TESTDATA),
     }
 }
 
-fn compare_or_save_tip1016_testdata<T>(filename: &str, output: &T)
+fn compare_or_save_eip8037_testdata<T>(filename: &str, output: &T)
 where
     T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
 {
-    crate::compare_or_save_testdata_with_config(filename, output, tip1016_testdata_config());
+    crate::compare_or_save_testdata_with_config(filename, output, eip8037_testdata_config());
 }
 
 /// State gas costs used across all TIP-1016 tests.
@@ -44,7 +44,6 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_tip1016 = true;
             cfg.tx_gas_limit_cap = Some(cap);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
@@ -62,7 +61,7 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_tip1016 = false;
+            cfg.enable_amsterdam_eip8037 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(bytecode))
@@ -478,7 +477,7 @@ fn call_precompile_bytecode() -> Bytecode {
 
 /// 1.1 SSTORE zero→non-zero charges sstore_set_state_gas.
 #[test]
-fn test_tip1016_sstore_new_slot() {
+fn test_eip8037_sstore_new_slot() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -508,15 +507,15 @@ fn test_tip1016_sstore_new_slot() {
         result.gas().spent() - baseline_result.gas().spent(),
         STATE_GAS_SSTORE_SET
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_sstore_new_slot.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_sstore_new_slot.json",
         &(baseline_result, result),
     );
 }
 
 /// 1.2 Two SSTOREs to same slot: only first charges state gas.
 #[test]
-fn test_tip1016_sstore_overwrite_no_state_gas() {
+fn test_eip8037_sstore_overwrite_no_state_gas() {
     let bytecode = sstore_overwrite_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -542,15 +541,15 @@ fn test_tip1016_sstore_overwrite_no_state_gas() {
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_sstore_overwrite_no_state_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_sstore_overwrite_no_state_gas.json",
         &(baseline_result, result),
     );
 }
 
 /// 1.3 SSTORE zero→zero: no state gas.
 #[test]
-fn test_tip1016_sstore_zero_to_zero_no_state_gas() {
+fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
     let bytecode = sstore_bytecode(0, 0);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -573,15 +572,15 @@ fn test_tip1016_sstore_zero_to_zero_no_state_gas() {
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_sstore_zero_to_zero_no_state_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_sstore_zero_to_zero_no_state_gas.json",
         &(baseline_result, result),
     );
 }
 
 /// 1.4 Three SSTOREs to different new slots: 3× sstore_set_state_gas.
 #[test]
-fn test_tip1016_sstore_multiple_new_slots() {
+fn test_eip8037_sstore_multiple_new_slots() {
     let bytecode = sstore_multi_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -611,8 +610,8 @@ fn test_tip1016_sstore_multiple_new_slots() {
         result.gas().spent() - baseline_result.gas().spent(),
         expected
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_sstore_multiple_new_slots.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_sstore_multiple_new_slots.json",
         &(baseline_result, result),
     );
 }
@@ -621,7 +620,7 @@ fn test_tip1016_sstore_multiple_new_slots() {
 
 /// 2.1 CREATE deploying 0-byte contract: new_account + create state gas.
 #[test]
-fn test_tip1016_create_empty_code() {
+fn test_eip8037_create_empty_code() {
     let init = return_n_bytes_init_code(0);
     let bytecode = create_bytecode(&init);
 
@@ -644,15 +643,15 @@ fn test_tip1016_create_empty_code() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas_used(), baseline_gas + expected);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_empty_code.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_empty_code.json",
         &(baseline_result, result),
     );
 }
 
 /// 2.2 CREATE deploying 10-byte contract: new_account + create + code_deposit(10).
 #[test]
-fn test_tip1016_create_with_code() {
+fn test_eip8037_create_with_code() {
     let init = return_n_bytes_init_code(10);
     let bytecode = create_bytecode(&init);
 
@@ -675,15 +674,15 @@ fn test_tip1016_create_with_code() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas_used(), baseline_gas + expected);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_with_code.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_with_code.json",
         &(baseline_result, result),
     );
 }
 
 /// 2.3 CREATE with init code that does SSTORE + returns 1-byte code: all 4 state gas types.
 #[test]
-fn test_tip1016_create_with_sstore() {
+fn test_eip8037_create_with_sstore() {
     let init = init_code_sstore_and_return();
     let bytecode = create_bytecode(&init);
 
@@ -706,15 +705,15 @@ fn test_tip1016_create_with_sstore() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_with_sstore.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_with_sstore.json",
         &(baseline_result, result),
     );
 }
 
 /// 2.4 CREATE2 deploying 10-byte contract: same state gas as CREATE.
 #[test]
-fn test_tip1016_create2_with_code() {
+fn test_eip8037_create2_with_code() {
     let init = return_n_bytes_init_code(10);
     let bytecode = create2_bytecode(&init);
 
@@ -747,15 +746,15 @@ fn test_tip1016_create2_with_code() {
         result.gas().state_gas_spent(),
         create_result.gas().state_gas_spent()
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create2_with_code.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create2_with_code.json",
         &(baseline_result, result, create_result),
     );
 }
 
 /// 2.5 CREATE deploying code where enough regular gas but insufficient total for code deposit state gas.
 #[test]
-fn test_tip1016_create_code_deposit_state_gas_oog() {
+fn test_eip8037_create_code_deposit_state_gas_oog() {
     let init = return_n_bytes_init_code(100);
     let bytecode = create_bytecode(&init);
 
@@ -800,8 +799,8 @@ fn test_tip1016_create_code_deposit_state_gas_oog() {
     }
     assert_eq!(result.gas_used(), tight_limit);
     assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_code_deposit_state_gas_oog.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_code_deposit_state_gas_oog.json",
         &(baseline_result, baseline_tight_result, result),
     );
 }
@@ -810,7 +809,7 @@ fn test_tip1016_create_code_deposit_state_gas_oog() {
 
 /// 3.1 CALL with value to non-existent account: new_account_state_gas.
 #[test]
-fn test_tip1016_call_new_account() {
+fn test_eip8037_call_new_account() {
     let target = address!("0xd000000000000000000000000000000000000001");
     let bytecode = call_with_value_bytecode(target.into_array(), U256::from(1));
 
@@ -841,15 +840,15 @@ fn test_tip1016_call_new_account() {
         result.gas().remaining(),
         baseline_result.gas().remaining() - STATE_GAS_NEW_ACCOUNT
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_call_new_account.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_call_new_account.json",
         &(baseline_result, result),
     );
 }
 
 /// 3.2 CALL with value to existing account: no state gas.
 #[test]
-fn test_tip1016_call_existing_account() {
+fn test_eip8037_call_existing_account() {
     let bytecode = call_with_value_bytecode(BENCH_CALLER.into_array(), U256::from(1));
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -868,15 +867,15 @@ fn test_tip1016_call_existing_account() {
     assert_eq!(result.gas_used(), baseline_gas);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
     assert_eq!(result.gas().remaining(), baseline_result.gas().remaining());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_call_existing_account.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_call_existing_account.json",
         &(baseline_result, result),
     );
 }
 
 /// 3.3 SELFDESTRUCT sending balance to non-existent account: new_account_state_gas.
 #[test]
-fn test_tip1016_selfdestruct_new_account() {
+fn test_eip8037_selfdestruct_new_account() {
     let beneficiary = address!("0xd000000000000000000000000000000000000002");
     let bytecode = selfdestruct_bytecode(beneficiary.into_array());
 
@@ -903,15 +902,15 @@ fn test_tip1016_selfdestruct_new_account() {
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_selfdestruct_new_account.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_selfdestruct_new_account.json",
         &(baseline_result, result),
     );
 }
 
 /// 3.4 SELFDESTRUCT sending balance to existing account: no state gas.
 #[test]
-fn test_tip1016_selfdestruct_existing_account() {
+fn test_eip8037_selfdestruct_existing_account() {
     let bytecode = selfdestruct_bytecode(BENCH_CALLER.into_array());
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -930,8 +929,8 @@ fn test_tip1016_selfdestruct_existing_account() {
     assert_eq!(result.gas_used(), baseline_gas);
     assert_eq!(result.gas().spent(), baseline_result.gas().spent());
     assert_eq!(result.gas_used(), baseline_gas);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_selfdestruct_existing_account.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_selfdestruct_existing_account.json",
         &(baseline_result, result),
     );
 }
@@ -940,7 +939,7 @@ fn test_tip1016_selfdestruct_existing_account() {
 
 /// 4.1 Tight regular gas cap causes OOG.
 #[test]
-fn test_tip1016_regular_gas_cap_causes_oog() {
+fn test_eip8037_regular_gas_cap_causes_oog() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -975,15 +974,15 @@ fn test_tip1016_regular_gas_cap_causes_oog() {
     assert_eq!(result.gas().spent(), 30_000);
     assert_eq!(result.gas().remaining(), 0);
     assert_eq!(result.gas().limit(), 30_000);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_regular_gas_cap_causes_oog.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_regular_gas_cap_causes_oog.json",
         &(baseline_result, result),
     );
 }
 
 /// 4.2 Adequate regular gas cap: success.
 #[test]
-fn test_tip1016_regular_gas_cap_sufficient() {
+fn test_eip8037_regular_gas_cap_sufficient() {
     let bytecode = sstore_bytecode(0, 1);
 
     let gas_limit = 500_000u64;
@@ -1017,15 +1016,15 @@ fn test_tip1016_regular_gas_cap_sufficient() {
     assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     assert!(result.gas().remaining() > 0);
     assert_eq!(result.gas().limit(), gas_limit);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_regular_gas_cap_sufficient.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_regular_gas_cap_sufficient.json",
         &(baseline_result, result),
     );
 }
 
 /// 4.3 Remaining gas insufficient after state gas deduction.
 #[test]
-fn test_tip1016_state_gas_oog_remaining() {
+fn test_eip8037_state_gas_oog_remaining() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1061,15 +1060,15 @@ fn test_tip1016_state_gas_oog_remaining() {
     assert!(baseline_gas < 50_000);
     assert!(baseline_gas + STATE_GAS_SSTORE_SET > 50_000);
     assert_eq!(result.gas().remaining(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_state_gas_oog_remaining.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_state_gas_oog_remaining.json",
         &(baseline_result, result),
     );
 }
 
 /// 4.4 tx_gas_limit_cap is NOT enforced as a hard cap when state gas reservoir covers it.
 #[test]
-fn test_tip1016_tx_limit_cap_not_enforced_with_state_gas() {
+fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1102,15 +1101,15 @@ fn test_tip1016_tx_limit_cap_not_enforced_with_state_gas() {
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     assert!(result.gas().remaining() > 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_tx_limit_cap_not_enforced_with_state_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_tx_limit_cap_not_enforced_with_state_gas.json",
         &(baseline_result, result),
     );
 }
 
 /// 4.5 Block gas limit is still enforced even with state gas enabled.
 #[test]
-fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
+fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
     use revm::context_interface::result::{EVMError, InvalidTransaction};
 
     let bytecode = sstore_bytecode(0, 1);
@@ -1119,7 +1118,6 @@ fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_tip1016 = true;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
@@ -1181,8 +1179,8 @@ fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(result_fits.is_success());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_block_gas_limit_enforced_with_state_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_block_gas_limit_enforced_with_state_gas.json",
         &result_fits,
     );
 }
@@ -1191,7 +1189,7 @@ fn test_tip1016_block_gas_limit_enforced_with_state_gas() {
 
 /// 5.1 CREATE child's state gas propagates to parent on success.
 #[test]
-fn test_tip1016_create_child_propagates() {
+fn test_eip8037_create_child_propagates() {
     let init = init_code_sstore_and_return();
     let bytecode = create_bytecode(&init);
 
@@ -1218,15 +1216,15 @@ fn test_tip1016_create_child_propagates() {
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_child_propagates.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_child_propagates.json",
         &(baseline_result, result),
     );
 }
 
 /// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
 #[test]
-fn test_tip1016_reverted_create_child() {
+fn test_eip8037_reverted_create_child() {
     let init = init_code_sstore_and_revert();
     let bytecode = create_bytecode(&init);
 
@@ -1253,15 +1251,15 @@ fn test_tip1016_reverted_create_child() {
     // All state gas is either spent (parent) or refunded (child on revert).
     assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reverted_create_child.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reverted_create_child.json",
         &(baseline_result, result),
     );
 }
 
 /// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent propagates on success.
 #[test]
-fn test_tip1016_call_child_sstore_propagates() {
+fn test_eip8037_call_child_sstore_propagates() {
     let child_runtime: Vec<u8> = vec![
         opcode::PUSH1,
         0x01,
@@ -1292,15 +1290,15 @@ fn test_tip1016_call_child_sstore_propagates() {
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert!(result.gas().remaining() > 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_call_child_sstore_propagates.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_call_child_sstore_propagates.json",
         &(baseline_result, result),
     );
 }
 
 /// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas is refunded.
 #[test]
-fn test_tip1016_call_child_sstore_reverts() {
+fn test_eip8037_call_child_sstore_reverts() {
     let child_runtime: Vec<u8> = vec![
         opcode::PUSH1,
         0x01,
@@ -1341,15 +1339,15 @@ fn test_tip1016_call_child_sstore_reverts() {
     // All state gas is either spent (parent CREATE) or refunded (child SSTORE on revert).
     assert_eq!(delta, result.gas().state_gas_spent());
     assert!(result.gas().remaining() > 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_call_child_sstore_reverts.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_call_child_sstore_reverts.json",
         &(baseline_result, result),
     );
 }
 
 /// 5.5 Multi-level nesting: CALL -> CREATE -> SSTORE. State gas propagates through frames.
 #[test]
-fn test_tip1016_nested_call_create_sstore() {
+fn test_eip8037_nested_call_create_sstore() {
     let child_runtime: Vec<u8> = vec![
         opcode::PUSH1,
         0x01,
@@ -1389,8 +1387,8 @@ fn test_tip1016_nested_call_create_sstore() {
     assert!(create_result.is_success());
     let sstore_portion = result.gas().state_gas_spent() - create_result.gas().state_gas_spent();
     assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_nested_call_create_sstore.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_nested_call_create_sstore.json",
         &(baseline_result, result, create_result),
     );
 }
@@ -1399,7 +1397,7 @@ fn test_tip1016_nested_call_create_sstore() {
 
 /// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund does NOT undo state gas.
 #[test]
-fn test_tip1016_sstore_set_then_clear_refund() {
+fn test_eip8037_sstore_set_then_clear_refund() {
     let bytecode = sstore_set_then_clear_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1421,15 +1419,15 @@ fn test_tip1016_sstore_set_then_clear_refund() {
     // Refund does NOT undo state gas — gas_used is higher than baseline.
     assert!(result.gas_used() > baseline_gas);
     assert!(result.gas().spent() > baseline_result.gas().spent());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_sstore_set_then_clear_refund.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_sstore_set_then_clear_refund.json",
         &(baseline_result, result),
     );
 }
 
 /// 6.2 State gas does not reduce regular gas budget.
 #[test]
-fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
+fn test_eip8037_state_gas_does_not_reduce_regular_gas() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1459,15 +1457,15 @@ fn test_tip1016_state_gas_does_not_reduce_regular_gas() {
         baseline_result.gas().intrinsic_gas()
     );
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_state_gas_does_not_reduce_regular_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_state_gas_does_not_reduce_regular_gas.json",
         &(baseline_result, result),
     );
 }
 
 /// 6.3 GAS opcode returns remaining (excludes reservoir).
 #[test]
-fn test_tip1016_gas_opcode_excludes_reservoir() {
+fn test_eip8037_gas_opcode_excludes_reservoir() {
     let bytecode = gas_opcode_return_bytecode();
     let gas_limit: u64 = 100_000;
 
@@ -1511,15 +1509,15 @@ fn test_tip1016_gas_opcode_excludes_reservoir() {
     let expected_reservoir = execution_gas - regular_budget;
     let gas_diff = baseline_gas_value - gas_opcode_value;
     assert_eq!(gas_diff, U256::from(expected_reservoir));
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_gas_opcode_excludes_reservoir.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_gas_opcode_excludes_reservoir.json",
         &(baseline_result, result),
     );
 }
 
 /// 6.4 INVALID opcode after SSTORE: spend_all() zeroes remaining but preserves reservoir.
 #[test]
-fn test_tip1016_spend_all_preserves_reservoir() {
+fn test_eip8037_spend_all_preserves_reservoir() {
     let bytecode = sstore_then_invalid_bytecode();
     let gas_limit: u64 = 500_000;
 
@@ -1556,15 +1554,15 @@ fn test_tip1016_spend_all_preserves_reservoir() {
     assert_eq!(result.gas_used(), gas_limit);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas_used(), baseline_result.gas_used());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_spend_all_preserves_reservoir.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_spend_all_preserves_reservoir.json",
         &(baseline_result, result),
     );
 }
 
 /// 6.5 state_gas_spent field in ResultGas.
 #[test]
-fn test_tip1016_state_gas_spent_in_result() {
+fn test_eip8037_state_gas_spent_in_result() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1587,15 +1585,15 @@ fn test_tip1016_state_gas_spent_in_result() {
     let gas_used_delta = result.gas_used() - baseline_result.gas_used();
     assert_eq!(gas_used_delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().limit(), baseline_result.gas().limit());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_state_gas_spent_in_result.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_state_gas_spent_in_result.json",
         &(baseline_result, result),
     );
 }
 
 /// 6.6 CALL to precompile: precompile gas is regular, not state gas.
 #[test]
-fn test_tip1016_precompile_no_state_gas() {
+fn test_eip8037_precompile_no_state_gas() {
     let bytecode = call_precompile_bytecode();
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1620,8 +1618,8 @@ fn test_tip1016_precompile_no_state_gas() {
         result.gas().intrinsic_gas(),
         baseline_result.gas().intrinsic_gas()
     );
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_precompile_no_state_gas.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_precompile_no_state_gas.json",
         &(baseline_result, result),
     );
 }
@@ -1638,7 +1636,7 @@ fn test_tip1016_precompile_no_state_gas() {
 
 /// 7.1 REVERT with state_gas < reservoir.
 #[test]
-fn test_tip1016_reservoir_refill_revert_state_gas_less() {
+fn test_eip8037_reservoir_refill_revert_state_gas_less() {
     let bytecode = sstore_then_revert_bytecode();
     let gas_limit = 500_000u64;
 
@@ -1672,15 +1670,15 @@ fn test_tip1016_reservoir_refill_revert_state_gas_less() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reservoir_refill_revert_state_gas_less.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reservoir_refill_revert_state_gas_less.json",
         &(baseline_result, result),
     );
 }
 
 /// 7.2 REVERT with state_gas > reservoir (2x SSTORE).
 #[test]
-fn test_tip1016_reservoir_refill_revert_state_gas_more() {
+fn test_eip8037_reservoir_refill_revert_state_gas_more() {
     let bytecode = sstore_multi_then_revert_bytecode();
     let gas_limit = 1_000_000u64;
 
@@ -1715,15 +1713,15 @@ fn test_tip1016_reservoir_refill_revert_state_gas_more() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reservoir_refill_revert_state_gas_more.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reservoir_refill_revert_state_gas_more.json",
         &(baseline_result, result),
     );
 }
 
 /// 7.3 HALT (OOG) with tight gas limit.
 #[test]
-fn test_tip1016_reservoir_refill_halt_state_gas_less() {
+fn test_eip8037_reservoir_refill_halt_state_gas_less() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1761,15 +1759,15 @@ fn test_tip1016_reservoir_refill_halt_state_gas_less() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reservoir_refill_halt_state_gas_less.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reservoir_refill_halt_state_gas_less.json",
         &(baseline_result, result),
     );
 }
 
 /// 7.4 HALT (OOG) with tight cap forcing regular gas exhaustion.
 #[test]
-fn test_tip1016_reservoir_refill_halt_state_gas_more() {
+fn test_eip8037_reservoir_refill_halt_state_gas_more() {
     let bytecode = sstore_multi_bytecode();
     let gas_limit = 100_000u64;
 
@@ -1796,15 +1794,15 @@ fn test_tip1016_reservoir_refill_halt_state_gas_more() {
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reservoir_refill_halt_state_gas_more.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reservoir_refill_halt_state_gas_more.json",
         &result,
     );
 }
 
 /// 7.5 HALT vs REVERT: gas accounting difference.
 #[test]
-fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
+fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
     let bytecode = sstore_then_revert_bytecode();
 
     // HALT path: tight gas limit causes OOG.
@@ -1841,13 +1839,13 @@ fn test_tip1016_reservoir_refill_halt_vs_revert_difference() {
     assert!(result_revert.gas().remaining() > 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_reservoir_refill_halt_vs_revert_difference.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_reservoir_refill_halt_vs_revert_difference.json",
         &(result_halt, result_revert),
     );
 }
 
-// ---- Gap Tests: Categories A-E from tip1016.md ----
+// ---- Gap Tests: Categories A-E from eip8037.md ----
 
 /// Bytecode: CALL(gas, addr, value=0, 0, 0, 0, 0); POP; STOP
 /// CALL without value transfer to given address.
@@ -1939,7 +1937,7 @@ fn create_call_revert_then_sstore_bytecode(child_runtime: &[u8]) -> Bytecode {
 
 /// C.1/E.5: CALL to new empty account WITHOUT value transfer — no state gas.
 #[test]
-fn test_tip1016_call_new_account_no_value() {
+fn test_eip8037_call_new_account_no_value() {
     let target = address!("0xd000000000000000000000000000000000000099");
     let bytecode = call_no_value_bytecode(target.into_array());
 
@@ -1959,8 +1957,8 @@ fn test_tip1016_call_new_account_no_value() {
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas_used(), baseline_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_call_new_account_no_value.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_call_new_account_no_value.json",
         &(baseline_result, result),
     );
 }
@@ -1968,7 +1966,7 @@ fn test_tip1016_call_new_account_no_value() {
 /// E.3: Large code deployment — CREATE deploying 200-byte contract.
 /// Verifies code_deposit_state_gas scales correctly with code size.
 #[test]
-fn test_tip1016_create_large_code() {
+fn test_eip8037_create_large_code() {
     let init = return_n_bytes_init_code(200);
     let bytecode = create_bytecode(&init);
 
@@ -1993,8 +1991,8 @@ fn test_tip1016_create_large_code() {
     let code_deposit_portion = STATE_GAS_CODE_DEPOSIT * 200;
     assert_eq!(code_deposit_portion, 200_000);
     assert_eq!(result.gas_used(), baseline_gas + expected);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_create_large_code.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_create_large_code.json",
         &(baseline_result, result),
     );
 }
@@ -2002,7 +2000,7 @@ fn test_tip1016_create_large_code() {
 /// B.2: Parent CREATEs child, CALLs child (child SSTOREs + REVERTs), then parent SSTOREs.
 /// Verifies child's reverted state gas is refunded while parent's own state gas accumulates.
 #[test]
-fn test_tip1016_parent_sstore_after_child_revert() {
+fn test_eip8037_parent_sstore_after_child_revert() {
     // Child runtime: SSTORE(0,1); REVERT(0,0)
     let child_runtime: Vec<u8> = vec![
         opcode::PUSH1,
@@ -2039,8 +2037,8 @@ fn test_tip1016_parent_sstore_after_child_revert() {
     assert_eq!(delta, expected_state_gas);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    compare_or_save_tip1016_testdata(
-        "test_tip1016_parent_sstore_after_child_revert.json",
+    compare_or_save_eip8037_testdata(
+        "test_eip8037_parent_sstore_after_child_revert.json",
         &(baseline_result, result),
     );
 }

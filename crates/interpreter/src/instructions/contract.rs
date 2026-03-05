@@ -87,7 +87,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    // State gas for account creation + contract metadata (TIP-1016)
+    // State gas for account creation + contract metadata (EIP-8037)
     if context.host.is_state_gas_enabled() {
         state_gas!(
             context.interpreter,

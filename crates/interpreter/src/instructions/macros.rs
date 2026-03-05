@@ -28,7 +28,7 @@ macro_rules! check {
     };
 }
 
-/// Records a state gas cost (TIP-1016) and fails the instruction if it would exceed the available gas.
+/// Records a state gas cost (EIP-8037) and fails the instruction if it would exceed the available gas.
 /// State gas only deducts from `remaining` (not `regular_gas_remaining`).
 #[macro_export]
 #[collapse_debuginfo(yes)]

@@ -636,7 +636,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         return;
     }
 
-    // State gas for code deposit (TIP-1016).
+    // State gas for code deposit (EIP-8037).
     // Charged before size check: state gas represents the cost of touching state
     // and must be consumed even if the code exceeds the size limit.
     if cfg.is_state_gas_enabled() {

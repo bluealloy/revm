@@ -66,7 +66,7 @@ pub trait Host {
     /// Gas params contains the dynamic gas constants for the EVM.
     fn gas_params(&self) -> &GasParams;
 
-    /// Returns whether state gas (TIP-1016) is enabled.
+    /// Returns whether state gas (EIP-8037) is enabled.
     fn is_state_gas_enabled(&self) -> bool;
 
     /* Database */

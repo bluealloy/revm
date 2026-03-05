@@ -130,18 +130,12 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_fee_charge")]
     pub disable_fee_charge: bool,
-    /// Enables state gas (TIP-1016) where storage creation gas is tracked separately.
-    ///
-    /// TIP-1016 introduces dual gas limits: regular gas for execution and state gas
-    /// for storage creation. State gas is tracked via a reservoir model.
-    ///
-    /// By default, it is set to `false`.
-    pub enable_tip1016: bool,
     /// Enables EIP-8037 (Amsterdam) state creation gas cost increase.
     ///
-    /// EIP-8037 builds on TIP-1016 by specifying concrete gas values based on
-    /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
-    /// Enabling this flag implies TIP-1016 state gas is also active.
+    /// EIP-8037 introduces dual gas limits: regular gas for execution and state gas
+    /// for storage creation. State gas is tracked via a reservoir model.
+    /// It specifies concrete gas values based on `cost_per_state_byte` and adds
+    /// a hash cost for deployed bytecode.
     ///
     /// By default, it is set to `false`.
     pub enable_amsterdam_eip8037: bool,
@@ -225,7 +219,7 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables TIP-1016 and EIP-8037 for AMSTERDAM and later.
+    /// Automatically enables EIP-8037 for AMSTERDAM and later.
     pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
         self,
         spec: OSPEC,
@@ -274,7 +268,6 @@ impl<SPEC> CfgEnv<SPEC> {
             disable_priority_fee_check: self.disable_priority_fee_check,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: self.disable_fee_charge,
-            enable_tip1016: self.enable_tip1016,
             enable_amsterdam_eip8037: self.enable_amsterdam_eip8037,
             amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
             amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
@@ -318,12 +311,6 @@ impl<SPEC> CfgEnv<SPEC> {
         self
     }
 
-    /// Sets the enable TIP-1016 state gas flag.
-    pub fn with_enable_tip1016(mut self, enable: bool) -> Self {
-        self.enable_tip1016 = enable;
-        self
-    }
-
     /// Sets the enable EIP-8037 (Amsterdam) state creation gas cost flag.
     pub fn with_enable_amsterdam_eip8037(mut self, enable: bool) -> Self {
         self.enable_amsterdam_eip8037 = enable;
@@ -364,7 +351,6 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             disable_priority_fee_check: false,
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: false,
-            enable_tip1016: false,
             enable_amsterdam_eip8037: is_amsterdam,
             amsterdam_eip7708_disabled: false,
             amsterdam_eip7708_delayed_burn_disabled: false,
@@ -406,7 +392,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables TIP-1016 and EIP-8037 for AMSTERDAM and later.
+    /// Automatically enables EIP-8037 for AMSTERDAM and later.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
         self.set_spec(spec.clone());
@@ -585,7 +571,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 
     fn is_state_gas_enabled(&self) -> bool {
-        self.enable_tip1016 || self.enable_amsterdam_eip8037
+        self.enable_amsterdam_eip8037
     }
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {

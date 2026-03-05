@@ -134,4 +134,4 @@ mod op_revm_tests;
 mod revm_tests;
 
 #[cfg(test)]
-mod tip1016;
+mod eip8037;

@@ -55,7 +55,7 @@ impl<R, S> ExecResultAndState<R, S> {
 /// | [`inner_refunded()`] | `Gas::refunded()` as u64        | Gas refunded (capped per EIP-3529)        |
 /// | [`floor_gas()`]   | `InitialAndFloorGas::floor_gas`    | EIP-7623 floor gas (0 if not applicable)  |
 /// | [`intrinsic_gas()`] | `InitialAndFloorGas::initial_gas`| Initial tx overhead gas (0 for system calls) |
-/// | [`state_gas_spent()`] | `Gas::state_gas_spent`       | State gas consumed during execution (TIP-1016) |
+/// | [`state_gas_spent()`] | `Gas::state_gas_spent`       | State gas consumed during execution (EIP-8037) |
 ///
 /// [`limit()`]: ResultGas::limit
 /// [`spent()`]: ResultGas::spent
@@ -90,7 +90,7 @@ pub struct ResultGas {
     /// Intrinsic gas: the initial transaction overhead (calldata, access list, etc.).
     /// Zero for system calls.
     intrinsic_gas: u64,
-    /// State gas consumed during execution (TIP-1016).
+    /// State gas consumed during execution (EIP-8037).
     /// Tracks gas for storage creation, account creation, and code deposit.
     /// Zero when state gas is not enabled.
     #[cfg_attr(feature = "serde", serde(default))]
@@ -164,7 +164,7 @@ impl ResultGas {
         self.intrinsic_gas
     }
 
-    /// Returns the state gas spent during execution (TIP-1016).
+    /// Returns the state gas spent during execution (EIP-8037).
     #[inline]
     pub const fn state_gas_spent(&self) -> u64 {
         self.state_gas_spent

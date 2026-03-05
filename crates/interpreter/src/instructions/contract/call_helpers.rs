@@ -76,7 +76,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     // deduct dynamic gas.
     gas!(interpreter, gas, None);
 
-    // deduct state gas (TIP-1016) if any.
+    // deduct state gas (EIP-8037) if any.
     state_gas!(interpreter, state_gas_cost, None);
 
     let interpreter = &mut context.interpreter;
@@ -138,7 +138,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 /// Assumption is that warm gas is already deducted.
 ///
 /// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
-/// `state_gas_cost` is non-zero only when creating a new empty account (TIP-1016).
+/// `state_gas_cost` is non-zero only when creating a new empty account (EIP-8037).
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(
     host: &mut H,

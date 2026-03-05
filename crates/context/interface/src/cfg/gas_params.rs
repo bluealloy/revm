@@ -239,7 +239,7 @@ impl GasParams {
         table[GasId::tx_token_cost().as_usize()] = gas::STANDARD_TOKEN_COST;
         table[GasId::tx_base_stipend().as_usize()] = 21000;
 
-        // TIP-1016: State gas constants
+        // EIP-8037: State gas constants
         table[GasId::sstore_set_state_gas().as_usize()] = 20000;
         table[GasId::new_account_state_gas().as_usize()] = 25000;
         table[GasId::code_deposit_state_gas().as_usize()] = 200;

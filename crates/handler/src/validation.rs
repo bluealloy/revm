@@ -211,7 +211,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
-    // TODO(tip1016) should we enforce to `min(tx.gas_limit(), 16M) < block.gas_limit`?
+    // TODO(eip8037) should we enforce to `min(tx.gas_limit(), 16M) < block.gas_limit`?
     // This would enforce that regular gas is constrained.
     if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
     {
