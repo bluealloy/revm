@@ -90,9 +90,7 @@ impl PartialOrd for Bytecode {
 impl Ord for Bytecode {
     #[inline]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        self.kind()
-            .cmp(&other.kind())
-            .then_with(|| self.original_byte_slice().cmp(other.original_byte_slice()))
+        self.original_byte_slice().cmp(other.original_byte_slice())
     }
 }
 
