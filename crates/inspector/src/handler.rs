@@ -109,12 +109,14 @@ where
         // the deficit is charged from the regular gas budget.
         let initial_state_gas = init_and_floor_gas.initial_state_gas;
         if initial_state_gas > 0 {
-            let reservoir = first_frame_input.reservoir_remaining_gas;
+            let reservoir = first_frame_input.frame_input.reservoir();
             if reservoir >= initial_state_gas {
-                first_frame_input.reservoir_remaining_gas = reservoir - initial_state_gas;
+                first_frame_input
+                    .frame_input
+                    .set_reservoir(reservoir - initial_state_gas);
             } else {
                 let deficit = initial_state_gas - reservoir;
-                first_frame_input.reservoir_remaining_gas = 0;
+                first_frame_input.frame_input.set_reservoir(0);
                 first_frame_input.frame_input.reduce_gas_limit(deficit);
             }
         }

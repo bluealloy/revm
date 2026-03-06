@@ -67,7 +67,7 @@ pub trait Host {
     fn gas_params(&self) -> &GasParams;
 
     /// Returns whether state gas (EIP-8037) is enabled.
-    fn is_state_gas_enabled(&self) -> bool;
+    fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
     /* Database */
 
@@ -239,7 +239,7 @@ impl Host for DummyHost {
         &self.gas_params
     }
 
-    fn is_state_gas_enabled(&self) -> bool {
+    fn is_amsterdam_eip8037_enabled(&self) -> bool {
         false
     }
 

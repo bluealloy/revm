@@ -570,10 +570,6 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
         &self.gas_params
     }
 
-    fn is_state_gas_enabled(&self) -> bool {
-        self.enable_amsterdam_eip8037
-    }
-
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         self.enable_amsterdam_eip8037
     }

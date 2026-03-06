@@ -34,9 +34,6 @@ pub struct FrameInit {
     pub memory: SharedMemory,
     /// Data needed as input for Interpreter.
     pub frame_input: FrameInput,
-    /// Remaining gas in the reservoir.
-    /// Child frames inherit this directly without division by 63/64.
-    pub reservoir_remaining_gas: u64,
 }
 
 impl FrameInput {
@@ -51,6 +48,24 @@ impl FrameInput {
             FrameInput::Create(inputs) => {
                 inputs.set_gas_limit(inputs.gas_limit().saturating_sub(amount));
             }
+            FrameInput::Empty => {}
+        }
+    }
+
+    /// Returns the state gas reservoir (EIP-8037).
+    pub fn reservoir(&self) -> u64 {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir,
+            FrameInput::Create(inputs) => inputs.reservoir(),
+            FrameInput::Empty => 0,
+        }
+    }
+
+    /// Sets the state gas reservoir (EIP-8037).
+    pub fn set_reservoir(&mut self, reservoir: u64) {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir = reservoir,
+            FrameInput::Create(inputs) => inputs.set_reservoir(reservoir),
             FrameInput::Empty => {}
         }
     }

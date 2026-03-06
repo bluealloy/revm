@@ -147,7 +147,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     }
 
     // tx gas cap is not enforced if state gas is enabled.
-    if !context.cfg().is_state_gas_enabled() {
+    if !context.cfg().is_amsterdam_eip8037_enabled() {
         // EIP-7825: Transaction Gas Limit Cap
         let cap = context.cfg().tx_gas_limit_cap();
         if tx.gas_limit() > cap {

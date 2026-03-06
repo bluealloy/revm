@@ -239,12 +239,6 @@ impl GasParams {
         table[GasId::tx_token_cost().as_usize()] = gas::STANDARD_TOKEN_COST;
         table[GasId::tx_base_stipend().as_usize()] = 21000;
 
-        // EIP-8037: State gas constants
-        table[GasId::sstore_set_state_gas().as_usize()] = 20000;
-        table[GasId::new_account_state_gas().as_usize()] = 25000;
-        table[GasId::code_deposit_state_gas().as_usize()] = 200;
-        table[GasId::create_state_gas().as_usize()] = 32000;
-
         if spec.is_enabled_in(SpecId::HOMESTEAD) {
             table[GasId::tx_create_cost().as_usize()] = gas::CREATE;
         }
@@ -323,6 +317,7 @@ impl GasParams {
 
         // EIP-8037: State creation gas cost increase
         if spec.is_enabled_in(SpecId::AMSTERDAM) {
+            // TODO(state_gas): check if all new GasId values are correct and set.
             // Hardcoded cost_per_state_byte for 100M block gas limit
             const CPSB: u64 = 1174;
 
@@ -823,6 +818,7 @@ impl GasParams {
     /// Initial gas that is deducted for transaction to be included.
     /// Initial gas contains initial stipend gas, gas for access list and input data.
     ///
+    /// TODO(state_gas): fix this comment to include all EIP-8037 covered cases.
     /// For CREATE transactions, also includes predictable state gas costs:
     /// - `new_account_state_gas`: Creating the contract account
     /// - `create_state_gas`: Contract metadata creation
@@ -850,10 +846,8 @@ impl GasParams {
         // EIP-7702: Compute auth list costs.
         // Under EIP-8037, tx_eip7702_per_empty_account_cost bundles regular + state gas.
         // We split them: regular goes in initial_total_gas, state goes in initial_state_gas.
-        let auth_total_cost =
-            authorization_list_num * self.tx_eip7702_per_empty_account_cost();
-        let auth_state_gas =
-            authorization_list_num * self.tx_eip7702_per_auth_state_gas();
+        let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost();
+        let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas();
         let auth_regular_cost = auth_total_cost - auth_state_gas;
 
         gas.initial_total_gas += tokens_in_calldata * self.tx_token_cost()
@@ -866,6 +860,7 @@ impl GasParams {
             + auth_regular_cost;
 
         // EIP-8037: Track auth list state gas separately for reservoir handling.
+        // TODO(state_gas): why is this not included in initial_total_gas?
         gas.initial_state_gas += auth_state_gas;
 
         if is_create {

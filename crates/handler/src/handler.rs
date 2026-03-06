@@ -246,12 +246,14 @@ pub trait Handler {
         // charged from the regular gas budget (reducing frame gas_limit).
         let initial_state_gas = init_and_floor_gas.initial_state_gas;
         if initial_state_gas > 0 {
-            let reservoir = first_frame_input.reservoir_remaining_gas;
+            let reservoir = first_frame_input.frame_input.reservoir();
             if reservoir >= initial_state_gas {
-                first_frame_input.reservoir_remaining_gas = reservoir - initial_state_gas;
+                first_frame_input
+                    .frame_input
+                    .set_reservoir(reservoir - initial_state_gas);
             } else {
                 let deficit = initial_state_gas - reservoir;
-                first_frame_input.reservoir_remaining_gas = 0;
+                first_frame_input.frame_input.set_reservoir(0);
                 first_frame_input.frame_input.reduce_gas_limit(deficit);
             }
         }
@@ -389,7 +391,7 @@ pub trait Handler {
         // subject to the TX_MAX_GAS_LIMIT cap.
         let regular_gas_cap = if init_and_floor_gas.initial_total_gas == 0 {
             u64::MAX
-        } else if ctx.cfg().is_state_gas_enabled() {
+        } else if ctx.cfg().is_amsterdam_eip8037_enabled() {
             let intrinsic_gas =
                 init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
             ctx.cfg().tx_gas_limit_cap().saturating_sub(intrinsic_gas)
@@ -421,11 +423,13 @@ pub trait Handler {
             None
         };
 
+        let mut frame_input = execution::create_init_frame(tx, bytecode, gas_limit);
+        frame_input.set_reservoir(reservoir_remaining_gas);
+
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
-            reservoir_remaining_gas,
+            frame_input,
         })
     }
 

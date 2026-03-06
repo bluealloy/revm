@@ -482,8 +482,8 @@ impl<
         self.cfg().gas_params()
     }
 
-    fn is_state_gas_enabled(&self) -> bool {
-        self.cfg().is_state_gas_enabled()
+    fn is_amsterdam_eip8037_enabled(&self) -> bool {
+        self.cfg().is_amsterdam_eip8037_enabled()
     }
 
     fn block_number(&self) -> U256 {

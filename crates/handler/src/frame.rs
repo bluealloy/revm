@@ -152,9 +152,10 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
-        let gas = Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
+        let reservoir_remaining_gas = inputs.reservoir;
+        let gas =
+            Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -271,8 +272,8 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-        reservoir_remaining_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
+        let reservoir_remaining_gas = inputs.reservoir();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -350,12 +351,8 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit();
 
-        let scheme = inputs.scheme();
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame {
-                created_address,
-                scheme,
-            }),
+            FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -389,22 +386,13 @@ impl EthFrame<EthInterpreter> {
             depth,
             memory,
             frame_input,
-            reservoir_remaining_gas,
         } = frame_init;
 
         match frame_input {
-            FrameInput::Call(inputs) => Self::make_call_frame(
-                this,
-                ctx,
-                precompiles,
-                depth,
-                memory,
-                inputs,
-                reservoir_remaining_gas,
-            ),
-            FrameInput::Create(inputs) => {
-                Self::make_create_frame(this, ctx, depth, memory, inputs, reservoir_remaining_gas)
+            FrameInput::Call(inputs) => {
+                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
             }
+            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -429,7 +417,6 @@ impl EthFrame<EthInterpreter> {
                     frame_input,
                     depth,
                     memory: self.interpreter.memory.new_child_context(),
-                    reservoir_remaining_gas: self.interpreter.gas.reservoir(),
                 }));
             }
             InterpreterAction::Return(result) => result,
@@ -639,7 +626,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     // State gas for code deposit (EIP-8037).
     // Charged before size check: state gas represents the cost of touching state
     // and must be consumed even if the code exceeds the size limit.
-    if cfg.is_state_gas_enabled() {
+    if cfg.is_amsterdam_eip8037_enabled() {
         let state_gas_for_code = cfg
             .gas_params()
             .code_deposit_state_gas(interpreter_result.output.len());

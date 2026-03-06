@@ -88,15 +88,11 @@ pub trait Cfg {
     /// Returns the gas params for the EVM.
     fn gas_params(&self) -> &GasParams;
 
-    /// Returns whether state gas (EIP-8037) is enabled.
-    ///
-    /// When enabled, storage creation gas is tracked separately from regular gas.
-    fn is_state_gas_enabled(&self) -> bool;
-
     /// Returns whether EIP-8037 (Amsterdam) state creation gas cost increase is enabled.
     ///
-    /// EIP-8037 specifies concrete gas values based on `cost_per_state_byte`
-    /// and adds a hash cost for deployed bytecode.
+    /// When enabled, storage creation gas is tracked separately from regular gas
+    /// via the reservoir model. EIP-8037 specifies concrete gas values based on
+    /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 }
 

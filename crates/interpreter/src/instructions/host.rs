@@ -279,7 +279,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     );
 
     // state gas for new slot creation (EIP-8037)
-    if context.host.is_state_gas_enabled() {
+    if context.host.is_amsterdam_eip8037_enabled() {
         state_gas!(
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)
@@ -394,7 +394,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
 
     // State gas for new account creation (EIP-8037)
-    if context.host.is_state_gas_enabled() && should_charge_topup {
+    if context.host.is_amsterdam_eip8037_enabled() && should_charge_topup {
         state_gas!(
             context.interpreter,
             context.host.gas_params().new_account_state_gas()
