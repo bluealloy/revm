@@ -87,6 +87,14 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
+    // State gas for account creation + contract metadata (EIP-8037)
+    if context.host.is_amsterdam_eip8037_enabled() {
+        state_gas!(
+            context.interpreter,
+            context.host.gas_params().create_state_gas()
+        );
+    }
+
     let mut gas_limit = context.interpreter.gas.remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
@@ -102,17 +110,19 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
+    let mut create_inputs = CreateInputs::new(
+        context.interpreter.input.target_address(),
+        scheme,
+        value,
+        code,
+        gas_limit,
+    );
+    create_inputs.set_reservoir(context.interpreter.gas.reservoir());
     context
         .interpreter
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Create(Box::new(
-            CreateInputs::new(
-                context.interpreter.input.target_address(),
-                scheme,
-                value,
-                code,
-                gas_limit,
-            ),
+            create_inputs,
         ))));
 }
 
@@ -163,6 +173,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 scheme: CallScheme::Call,
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
+                reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
 }
@@ -207,6 +218,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 scheme: CallScheme::CallCode,
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
+                reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
 }
@@ -251,6 +263,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 scheme: CallScheme::DelegateCall,
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
+                reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
 }
@@ -295,6 +308,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 scheme: CallScheme::StaticCall,
                 is_static: true,
                 return_memory_offset,
+                reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
 }

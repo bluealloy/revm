@@ -29,6 +29,7 @@ pub fn create_init_frame(
                 scheme: CallScheme::Call,
                 is_static: false,
                 return_memory_offset: 0..0,
+                reservoir: 0,
             }))
         }
         TxKind::Create => FrameInput::Create(Box::new(CreateInputs::new(

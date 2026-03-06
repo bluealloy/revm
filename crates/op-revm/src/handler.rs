@@ -19,12 +19,15 @@ use revm::{
     handler::{
         evm::FrameTr,
         handler::EvmTrError,
+        handler_reservoir_refill,
         post_execution::{self, reimburse_caller},
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
-    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
+    interpreter::{
+        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas, InitialAndFloorGas,
+    },
     primitives::{hardfork::SpecId, U256},
 };
 use std::{boxed::Box, vec::Vec};
@@ -186,6 +189,7 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        _init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
         let tx = ctx.tx();
@@ -197,6 +201,8 @@ where
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
+        let reservoir = gas.reservoir();
+        let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(tx_gas_limit);
@@ -216,9 +222,9 @@ where
             //     enabled.
             //   - Regular transactions report their gas used as normal.
             if !is_deposit || is_regolith {
-                // For regular transactions prior to Regolith and all transactions after
-                // Regolith, gas is reported as normal.
+                // Return unused regular gas. Reservoir is handled separately below.
                 gas.erase_cost(remaining);
+                gas.set_reservoir(reservoir);
                 gas.record_refund(refunded);
             } else if is_deposit && tx.is_system_transaction() {
                 // System transactions were a special type of deposit transaction in
@@ -241,7 +247,19 @@ where
             if !is_deposit || is_regolith {
                 gas.erase_cost(remaining);
             }
+            // On revert, refill reservoir: state gas that spilled into regular gas
+            // gets returned to the reservoir.
+            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
+            gas.set_reservoir(new_reservoir);
+        } else {
+            // On halt, refill reservoir.
+            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
+            gas.set_reservoir(new_reservoir);
         }
+
+        // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
+        gas.set_state_gas_spent(state_gas_spent);
+
         Ok(())
     }
 
@@ -423,7 +441,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0),
+                gas: ResultGas::new(gas_limit, gas_used, 0, 0, 0, 0),
                 logs: Vec::new(),
             })
         }
@@ -494,8 +512,9 @@ mod tests {
         let mut handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
+        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         handler
-            .last_frame_result(&mut evm, &mut exec_result)
+            .last_frame_result(&mut evm, &mut exec_result, &init_and_floor_gas)
             .unwrap();
         handler.refund(&mut evm, &mut exec_result, 0);
         *exec_result.gas()

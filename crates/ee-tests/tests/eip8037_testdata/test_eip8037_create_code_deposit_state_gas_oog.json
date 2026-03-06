@@ -1,0 +1,52 @@
+[
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 30103,
+        "intrinsic_gas": 21000,
+        "limit": 1000000000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "Stop"
+    }
+  },
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 30103,
+        "intrinsic_gas": 21000,
+        "limit": 30104,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "Stop"
+    }
+  },
+  {
+    "Halt": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 30104,
+        "intrinsic_gas": 21000,
+        "limit": 30104,
+        "state_gas_spent": 330000
+      },
+      "logs": [],
+      "reason": {
+        "OutOfGas": "Basic"
+      }
+    }
+  }
+]

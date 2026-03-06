@@ -36,6 +36,41 @@ pub struct FrameInit {
     pub frame_input: FrameInput,
 }
 
+impl FrameInput {
+    /// Reduces the gas limit of the contained Call or Create inputs by `amount`.
+    /// Used to charge initial state gas from the frame's regular gas budget
+    /// when the reservoir is insufficient.
+    pub fn reduce_gas_limit(&mut self, amount: u64) {
+        match self {
+            FrameInput::Call(inputs) => {
+                inputs.gas_limit = inputs.gas_limit.saturating_sub(amount);
+            }
+            FrameInput::Create(inputs) => {
+                inputs.set_gas_limit(inputs.gas_limit().saturating_sub(amount));
+            }
+            FrameInput::Empty => {}
+        }
+    }
+
+    /// Returns the state gas reservoir (EIP-8037).
+    pub fn reservoir(&self) -> u64 {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir,
+            FrameInput::Create(inputs) => inputs.reservoir(),
+            FrameInput::Empty => 0,
+        }
+    }
+
+    /// Sets the state gas reservoir (EIP-8037).
+    pub fn set_reservoir(&mut self, reservoir: u64) {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir = reservoir,
+            FrameInput::Create(inputs) => inputs.set_reservoir(reservoir),
+            FrameInput::Empty => {}
+        }
+    }
+}
+
 impl AsMut<Self> for FrameInput {
     fn as_mut(&mut self) -> &mut Self {
         self
