@@ -42,6 +42,8 @@ pub enum TestErrorKind {
     StateRootMismatch { got: B256, expected: B256 },
     #[error("unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
+    #[error("{0} tests failed")]
+    TestsFailed(usize),
     #[error("unexpected exception: got {got_exception:?}, expected {expected_exception:?}")]
     UnexpectedException {
         expected_exception: Option<String>,
@@ -638,7 +640,11 @@ pub fn run(
         println!("Encountered {n_errors} errors out of {n_files} total tests");
 
         if n_thread_errors == 0 {
-            std::process::exit(1);
+            return Err(TestError {
+                name: String::new(),
+                path: String::new(),
+                kind: TestErrorKind::TestsFailed(n_errors),
+            });
         }
 
         if n_thread_errors > 1 {
