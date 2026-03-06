@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.1](https://github.com/bluealloy/revm/compare/revm-context-v15.0.0...revm-context-v15.0.1) - 2026-03-06
+
+### Fixed
+
+- expose JournalLoadError from load_account_mut_skip_cold_load ([#3477](https://github.com/bluealloy/revm/pull/3477))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-context-v14.0.0...revm-context-v15.0.0) - 2026-03-04
 
 ### Other
