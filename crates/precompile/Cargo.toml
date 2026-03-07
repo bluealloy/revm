@@ -42,6 +42,9 @@ ripemd.workspace = true
 # Optionally use substrate implementation for eip1962
 bn = { workspace = true, optional = true }
 
+# Optionally use herumi/mcl implementation for bn254 (fastest)
+mcl_rust = { workspace = true, optional = true }
+
 # Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
@@ -75,7 +78,7 @@ ark-std = { workspace = true }
 rstest.workspace = true
 
 [features]
-default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
+default = ["std", "secp256k1", "blst", "c-kzg", "portable", "bn254-mcl"]
 
 std = [
 	"primitives/std",
@@ -115,6 +118,9 @@ blst = ["dep:blst"]
 
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
+
+# Use herumi/mcl as a faster alternative backend for BN254 curve operations.
+bn254-mcl = ["dep:mcl_rust"]
 
 # Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["dep:gmp-mpfr-sys"]
