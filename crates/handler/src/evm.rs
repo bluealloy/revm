@@ -5,7 +5,9 @@ use crate::{
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{
+    interpreter::EthInterpreter, interpreter_action::FrameInit, FrameInput, InterpreterResult,
+};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;
@@ -181,9 +183,25 @@ where
             self.frame_stack.get_next()
         };
 
+        let FrameInit {
+            depth,
+            memory,
+            frame_input,
+        } = frame_input;
         let ctx = &mut self.ctx;
         let precompiles = &mut self.precompiles;
-        let res = Self::Frame::init_with_context(new_frame, ctx, precompiles, frame_input)?;
+
+        let res = match frame_input {
+            FrameInput::Call(inputs) => EthFrame::build_call_frame(depth, memory, inputs)
+                .build::<_, ContextDbError<CTX>>(
+                new_frame,
+                ctx,
+                |ctx, inputs| precompiles.run(ctx, inputs),
+            )?,
+            FrameInput::Create(inputs) => EthFrame::build_create_frame(depth, memory, inputs)
+                .build::<_, ContextDbError<CTX>>(new_frame, ctx)?,
+            FrameInput::Empty => unreachable!(),
+        };
 
         Ok(res.map_item(|token| {
             if is_first_init {
