@@ -3,7 +3,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     InstructionContext,
 };
-use context_interface::{cfg::GasParams, host::LoadError, Host};
+use context_interface::{host::LoadError, Host};
 use core::{cmp::min, ops::Range};
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -15,34 +15,34 @@ use state::Bytecode;
 #[inline]
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
-    gas_params: &GasParams,
+    host: &mut (impl Host + ?Sized),
 ) -> Option<(Range<usize>, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
-    let mut in_range = resize_memory(interpreter, gas_params, in_offset, in_len)?;
+    let mut in_range = resize_memory(interpreter, host, in_offset, in_len)?;
 
     if !in_range.is_empty() {
         let offset = interpreter.memory.local_memory_offset();
         in_range = in_range.start.saturating_add(offset)..in_range.end.saturating_add(offset);
     }
 
-    let ret_range = resize_memory(interpreter, gas_params, out_offset, out_len)?;
+    let ret_range = resize_memory(interpreter, host, out_offset, out_len)?;
     Some((in_range, ret_range))
 }
 
 /// Resize memory and return range of memory.
 /// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
 #[inline]
-pub fn resize_memory(
+pub fn resize_memory<H: Host + ?Sized>(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
-    gas_params: &GasParams,
+    host: &mut H,
     offset: U256,
     len: U256,
 ) -> Option<Range<usize>> {
     let len = as_usize_or_fail_ret!(interpreter, len, None);
     let offset = if len != 0 {
         let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        resize_memory!(interpreter, gas_params, offset, len, None);
+        resize_memory!(interpreter, host, offset, len, None);
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used

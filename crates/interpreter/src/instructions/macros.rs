@@ -80,14 +80,14 @@ macro_rules! berlin_load_account {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! resize_memory {
-    ($interpreter:expr, $gas_params:expr, $offset:expr, $len:expr) => {
-        $crate::resize_memory!($interpreter, $gas_params, $offset, $len, ())
+    ($interpreter:expr, $memory_cost_resolver:expr, $offset:expr, $len:expr) => {
+        $crate::resize_memory!($interpreter, $memory_cost_resolver, $offset, $len, ())
     };
-    ($interpreter:expr, $gas_params:expr, $offset:expr, $len:expr, $ret:expr) => {
+    ($interpreter:expr, $memory_cost_resolver:expr, $offset:expr, $len:expr, $ret:expr) => {
         if let Err(result) = $crate::interpreter::resize_memory(
             &mut $interpreter.gas,
             &mut $interpreter.memory,
-            $gas_params,
+            $memory_cost_resolver,
             $offset,
             $len,
         ) {

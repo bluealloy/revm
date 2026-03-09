@@ -11,7 +11,7 @@ use crate::InstructionContext;
 pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    resize_memory!(context.interpreter, context.host, offset, 32);
     *top =
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
 }
@@ -22,7 +22,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    resize_memory!(context.interpreter, context.host, offset, 32);
     context
         .interpreter
         .memory
@@ -35,7 +35,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
 pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 1);
+    resize_memory!(context.interpreter, context.host, offset, 1);
     context.interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
@@ -71,12 +71,7 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     let dst = as_usize_or_fail!(context.interpreter, dst);
     let src = as_usize_or_fail!(context.interpreter, src);
     // Resize memory
-    resize_memory!(
-        context.interpreter,
-        context.host.gas_params(),
-        max(dst, src),
-        len
-    );
+    resize_memory!(context.interpreter, context.host, max(dst, src), len);
     // Copy memory in place
     context.interpreter.memory.copy(dst, src, len);
 }
