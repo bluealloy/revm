@@ -2210,12 +2210,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hash-db"
-version = "0.15.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d23bd4e7b5eda0d0f3a307e8b381fdc8ba9000f26fbe912250c0a4cc3956364a"
-
-[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3186,15 +3180,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
-name = "plain_hasher"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e19e6491bdde87c2c43d70f4c194bc8a758f2eb732df00f61e43f7362e3b4cc"
-dependencies = [
- "crunchy",
-]
-
-[[package]]
 name = "plotters"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3779,7 +3764,6 @@ version = "16.0.0"
 dependencies = [
  "alloy-eip7928",
  "k256",
- "revm-bytecode",
  "revm-context",
  "revm-context-interface",
  "revm-database",
@@ -3796,18 +3780,16 @@ version = "13.0.0"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
+ "alloy-trie",
  "clap",
  "codspeed-criterion-compat",
  "csv",
- "hash-db",
  "indicatif",
  "k256",
- "plain_hasher",
  "revm",
  "serde",
  "serde_json",
  "thiserror",
- "triehash",
  "walkdir",
 ]
 
@@ -4740,16 +4722,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
  "tracing-core",
-]
-
-[[package]]
-name = "triehash"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1631b201eb031b563d2e85ca18ec8092508e262a3196ce9bd10a67ec87b9f5c"
-dependencies = [
- "hash-db",
- "rlp",
 ]
 
 [[package]]

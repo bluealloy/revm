@@ -66,6 +66,7 @@ alloy-primitives = { version = "1.5.2", default-features = false }
 
 # alloy in examples, revme or feature flagged.
 alloy-rlp = { version = "0.3.12", default-features = false }
+alloy-trie = { version = "0.9", default-features = false }
 alloy-sol-types = { version = "1.5.2", default-features = false }
 alloy-consensus = { version = "1.4.2", default-features = false }
 alloy-eips = { version = "1.4.2", default-features = false }
@@ -120,12 +121,9 @@ either = { version = "1.15.0", default-features = false }
 
 # dev-dependencies
 anyhow = "1.0"
-hash-db = "0.15"
 indicatif = "0.18"
-plain_hasher = "0.2"
 rstest = "0.26.0"
 thiserror = { version = "2.0", default-features = false }
-triehash = "0.8"
 walkdir = "2.5"
 
 [workspace.package]
