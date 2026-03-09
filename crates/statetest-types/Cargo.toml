@@ -20,7 +20,6 @@ workspace = true
 [dependencies]
 # revm crates
 primitives = { workspace = true, features = ["std", "serde"] }
-bytecode = { workspace = true, features = ["std", "serde"] }
 state = { workspace = true, features = ["std", "serde"] }
 context = { workspace = true, features = ["std", "serde"] }
 context-interface = { workspace = true, features = ["std", "serde"] }
