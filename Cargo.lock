@@ -2762,6 +2762,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcl_rust"
+version = "1.0.3"
+source = "git+https://github.com/herumi/mcl-rust#f8c96482a6831a64e4cdd5b201e0d874abc84415"
+dependencies = [
+ "cmake",
+]
+
+[[package]]
 name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3741,6 +3749,7 @@ dependencies = [
  "codspeed-criterion-compat",
  "gmp-mpfr-sys",
  "k256",
+ "mcl_rust",
  "p256",
  "rand 0.9.2",
  "revm-primitives",
