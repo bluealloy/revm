@@ -56,7 +56,7 @@ pub fn swap<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
 ) {
     assert!(N != 0);
     if !context.interpreter.stack.exchange(0, N) {
-        context.interpreter.halt(InstructionResult::StackOverflow);
+        context.interpreter.halt(InstructionResult::StackUnderflow);
     }
 }
 
@@ -86,7 +86,7 @@ pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
         if !context.interpreter.stack.exchange(0, n) {
-            context.interpreter.halt(InstructionResult::StackOverflow);
+            context.interpreter.halt(InstructionResult::StackUnderflow);
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
@@ -104,7 +104,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some((n, m)) = decode_pair(x) {
         if !context.interpreter.stack.exchange(n, m - n) {
-            context.interpreter.halt(InstructionResult::StackOverflow);
+            context.interpreter.halt(InstructionResult::StackUnderflow);
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
