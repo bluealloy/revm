@@ -117,7 +117,7 @@ pub trait InspectorEvmTr:
             }) = &mut output
             {
                 if *was_precompile_called {
-                    let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
+                    let logs = ctx.journal().logs()[logs_i..].to_vec();
                     for log in logs.iter().chain(precompile_call_logs.iter()).cloned() {
                         inspector.log(ctx, log);
                     }
