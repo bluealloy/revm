@@ -27,16 +27,14 @@ criterion.workspace = true
 # alloy
 alloy-rlp = { workspace = true, features = ["arrayvec", "derive"] }
 alloy-sol-types.workspace = true
+alloy-trie = { workspace = true, features = ["ethereum"] }
 
 # misc
-hash-db.workspace = true
 indicatif.workspace = true
-plain_hasher.workspace = true
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
 clap.workspace = true
 thiserror.workspace = true
-triehash.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
 csv = "1.1.6"
