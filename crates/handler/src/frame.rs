@@ -53,6 +53,21 @@ pub struct EthFrame<IW: InterpreterTypes = EthInterpreter> {
     pub is_finished: bool,
 }
 
+/// Parameters required to initialize an execution frame.
+#[derive(Debug)]
+struct FrameInitParams {
+    data: FrameData,
+    input: FrameInput,
+    depth: usize,
+    memory: SharedMemory,
+    bytecode: ExtBytecode,
+    interpreter_input: InputsImpl,
+    is_static: bool,
+    spec: SpecId,
+    gas_limit: u64,
+    checkpoint: JournalCheckpoint,
+}
+
 impl<IT: InterpreterTypes> FrameTr for EthFrame<IT> {
     type FrameResult = FrameResult;
     type FrameInit = FrameInit;
@@ -130,6 +145,33 @@ impl EthFrame<EthInterpreter> {
         *checkpoint_ref = checkpoint;
     }
 
+    /// Validates that the call depth does not exceed the EVM call stack limit.
+    #[inline]
+    fn check_depth(depth: usize) -> Option<InstructionResult> {
+        if depth > CALL_STACK_LIMIT as usize {
+            Some(InstructionResult::CallTooDeep)
+        } else {
+            None
+        }
+    }
+
+    /// Initializes a frame with the provided execution parameters.
+    #[inline]
+    fn init_frame(frame: &mut EthFrame<EthInterpreter>, params: FrameInitParams) {
+        frame.clear(
+            params.data,
+            params.input,
+            params.depth,
+            params.memory,
+            params.bytecode,
+            params.interpreter_input,
+            params.is_static,
+            params.spec,
+            params.gas_limit,
+            params.checkpoint,
+        );
+    }
+
     /// Make call frame
     #[inline]
     pub fn make_call_frame<
@@ -159,8 +201,8 @@ impl EthFrame<EthInterpreter> {
         };
 
         // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_result(InstructionResult::CallTooDeep);
+        if let Some(err) = Self::check_depth(depth) {
+            return return_result(err);
         }
 
         // Create subroutine checkpoint
@@ -229,19 +271,24 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
-            FrameData::Call(CallFrame {
-                return_memory_range: inputs.return_memory_offset.clone(),
-            }),
-            FrameInput::Call(inputs),
-            depth,
-            memory,
-            ExtBytecode::new_with_hash(bytecode, bytecode_hash),
-            interpreter_input,
-            is_static,
-            ctx.cfg().spec().into(),
-            gas_limit,
-            checkpoint,
+        let frame = this.get(EthFrame::invalid);
+
+        Self::init_frame(
+            frame,
+            FrameInitParams {
+                data: FrameData::Call(CallFrame {
+                    return_memory_range: inputs.return_memory_offset.clone(),
+                }),
+                input: FrameInput::Call(inputs),
+                depth,
+                memory,
+                bytecode: ExtBytecode::new_with_hash(bytecode, bytecode_hash),
+                interpreter_input,
+                is_static,
+                spec: ctx.cfg().spec().into(),
+                gas_limit,
+                checkpoint,
+            },
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -271,8 +318,8 @@ impl EthFrame<EthInterpreter> {
         };
 
         // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_error(InstructionResult::CallTooDeep);
+        if let Some(err) = Self::check_depth(depth) {
+            return return_error(err);
         }
 
         // Fetch balance of caller.
@@ -332,17 +379,22 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit();
 
-        this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
-            FrameInput::Create(inputs),
-            depth,
-            memory,
-            bytecode,
-            interpreter_input,
-            false,
-            spec,
-            gas_limit,
-            checkpoint,
+        let frame = this.get(EthFrame::invalid);
+
+        Self::init_frame(
+            frame,
+            FrameInitParams {
+                data: FrameData::Create(CreateFrame { created_address }),
+                input: FrameInput::Create(inputs),
+                depth,
+                memory,
+                bytecode,
+                interpreter_input,
+                is_static: false,
+                spec,
+                gas_limit,
+                checkpoint,
+            },
         );
         Ok(ItemOrResult::Item(this.consume()))
     }
@@ -360,7 +412,6 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
-        // TODO cleanup inner make functions
         let FrameInit {
             depth,
             memory,
