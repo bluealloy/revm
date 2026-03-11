@@ -292,7 +292,7 @@ where
             balance,
             ..
         },
-    ) = context.journal_mut().journal().last()
+    ) = context.journal().journal().last()
     {
         inspector.selfdestruct(*contract, *to, *balance);
     }
