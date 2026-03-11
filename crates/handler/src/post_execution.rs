@@ -6,7 +6,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{hardfork::SpecId, U256};
+use primitives::{hardfork::SpecId, Address, U256};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
@@ -99,6 +99,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
     // FrameResult should be a generic that returns gas and interpreter result.
     result: FrameResult,
     result_gas: ResultGas,
+    address: Option<Address>,
 ) -> ExecutionResult<HALTREASON> {
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
@@ -117,6 +118,7 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
             gas: result_gas,
             logs,
             output: output.into_data(),
+            address,
         },
         SuccessOrHalt::Halt(reason) => {
             // Bubble up precompile errors from context when available

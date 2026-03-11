@@ -14,7 +14,7 @@ use context_interface::{
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use primitives::{TxKind, U256};
 use state::Bytecode;
 
 /// Trait for errors that can occur during EVM execution.
@@ -480,7 +480,13 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result = post_execution::output(evm.ctx(), result, result_gas);
+        // Extract target address for revert context.
+        let address = match evm.ctx().tx().kind() {
+            TxKind::Call(addr) => Some(addr),
+            TxKind::Create => None,
+        };
+
+        let exec_result = post_execution::output(evm.ctx(), result, result_gas, address);
 
         // commit transaction
         evm.ctx().journal_mut().commit_tx();
