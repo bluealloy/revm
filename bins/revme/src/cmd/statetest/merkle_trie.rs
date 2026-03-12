@@ -41,7 +41,10 @@ pub fn state_merkle_trie_root<'a>(
                 acc.storage
                     .iter()
                     .filter(|(_k, &v)| !v.is_zero())
-                    .map(|(k, v)| (B256::from(*k), *v)),
+                    .map(|(k, v)| {
+                        println!("k: {:?}, v: {:?}", k, v);
+                        (B256::from(*k), *v)
+                    }),
             );
             (
                 keccak256(address),
