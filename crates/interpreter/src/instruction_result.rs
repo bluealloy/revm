@@ -360,7 +360,10 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
 
 #[cfg(test)]
 mod tests {
+    use context_interface::result::HaltReason;
+
     use crate::InstructionResult;
+    use crate::SuccessOrHalt;
 
     #[test]
     fn exhaustiveness() {
@@ -423,6 +426,46 @@ mod tests {
             assert!(!result.is_ok());
             assert!(!result.is_revert());
             assert!(result.is_error());
+        }
+    }
+
+    #[test]
+    fn instruction_result_to_success_or_halt_success() {
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::Stop.into();
+        assert!(result.is_success());
+
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::Return.into();
+        assert!(result.is_success());
+
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::SelfDestruct.into();
+        assert!(result.is_success());
+    }
+
+    #[test]
+    fn instruction_result_to_success_or_halt_revert() {
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::Revert.into();
+        assert!(result.is_revert());
+    }
+
+    #[test]
+    fn instruction_result_to_success_or_halt_halt() {
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::OutOfGas.into();
+        assert!(result.is_halt());
+
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::StackOverflow.into();
+        assert!(result.is_halt());
+
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::InvalidJump.into();
+        assert!(result.is_halt());
+    }
+
+    #[test]
+    fn instruction_result_to_success_or_halt_fatal() {
+        let result: SuccessOrHalt<HaltReason> = InstructionResult::FatalExternalError.into();
+
+        match result {
+            SuccessOrHalt::FatalExternalError => {}
+            _ => panic!("expected FatalExternalError"),
         }
     }
 }
