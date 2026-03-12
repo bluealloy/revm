@@ -541,9 +541,10 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     Header(InvalidHeader),
     /// Database error
     Database(DBError),
-    /// Custom error
+    /// Custom error for non-standard EVM failures.
     ///
-    /// Useful for handler registers where custom logic would want to return their own custom error.
+    /// This includes `PrecompileError::Fatal` errors as well as any custom errors
+    /// returned by handler registers.
     Custom(String),
 }
 

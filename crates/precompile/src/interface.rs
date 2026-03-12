@@ -273,9 +273,15 @@ pub enum PrecompileError {
     KzgInvalidInputLength,
     /// secp256k1 ecrecover failed
     Secp256k1RecoverFailed,
-    /// Fatal error with a custom error message
+    /// Unrecoverable error that halts EVM execution.
+    ///
+    /// Unlike other variants which result in a normal precompile revert,
+    /// this error propagates as `EVMError::Custom` and aborts the entire transaction.
     Fatal(String),
-    /// Catch-all variant with a custom error message
+    /// Catch-all variant for precompile errors without a dedicated variant.
+    ///
+    /// This is handled like any other named error variant (e.g. `OutOfGas`, `Blake2WrongLength`)
+    /// and results in a normal precompile revert, not a fatal EVM error.
     Other(Cow<'static, str>),
 }
 
