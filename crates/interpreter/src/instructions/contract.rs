@@ -57,12 +57,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         }
 
         let code_offset = as_usize_or_fail!(context.interpreter, code_offset);
-        resize_memory!(
-            context.interpreter,
-            context.host.gas_params(),
-            code_offset,
-            len
-        );
+        resize_memory!(context.interpreter, context.host, code_offset, len);
 
         code = Bytes::copy_from_slice(
             context
@@ -136,7 +131,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     let Some((input, return_memory_offset)) =
-        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
+        get_memory_input_and_out_ranges(context.interpreter, context.host)
     else {
         return;
     };
@@ -180,7 +175,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let has_transfer = !value.is_zero();
 
     let Some((input, return_memory_offset)) =
-        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
+        get_memory_input_and_out_ranges(context.interpreter, context.host)
     else {
         return;
     };
@@ -224,7 +219,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let Some((input, return_memory_offset)) =
-        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
+        get_memory_input_and_out_ranges(context.interpreter, context.host)
     else {
         return;
     };
@@ -268,7 +263,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let Some((input, return_memory_offset)) =
-        get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())
+        get_memory_input_and_out_ranges(context.interpreter, context.host)
     else {
         return;
     };

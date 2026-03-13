@@ -1,6 +1,6 @@
 use super::MemoryTr;
 use crate::InstructionResult;
-use context_interface::cfg::GasParams;
+use context_interface::{host::MemoryExpansionCostResolver, MemoryExpansionCostInput};
 use core::{
     cell::{Ref, RefCell, RefMut},
     cmp::min,
@@ -562,10 +562,10 @@ pub const fn num_words(len: usize) -> usize {
 
 /// Performs EVM memory resize.
 #[inline]
-pub fn resize_memory<Memory: MemoryTr>(
+pub fn resize_memory<Memory: MemoryTr, CostResolver: MemoryExpansionCostResolver + ?Sized>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
-    gas_table: &GasParams,
+    cost_resolver: &CostResolver,
     offset: usize,
     len: usize,
 ) -> Result<(), InstructionResult> {
@@ -576,7 +576,7 @@ pub fn resize_memory<Memory: MemoryTr>(
 
     let new_num_words = num_words(offset.saturating_add(len));
     if new_num_words > gas.memory().words_num {
-        return resize_memory_cold(gas, memory, gas_table, new_num_words);
+        return resize_memory_cold(gas, memory, cost_resolver, offset, len, new_num_words);
     }
 
     Ok(())
@@ -584,18 +584,27 @@ pub fn resize_memory<Memory: MemoryTr>(
 
 #[cold]
 #[inline(never)]
-fn resize_memory_cold<Memory: MemoryTr>(
+fn resize_memory_cold<Memory: MemoryTr, CostResolver: MemoryExpansionCostResolver + ?Sized>(
     gas: &mut crate::Gas,
     memory: &mut Memory,
-    gas_table: &GasParams,
+    cost_resolver: &CostResolver,
+    offset: usize,
+    len: usize,
     new_num_words: usize,
 ) -> Result<(), InstructionResult> {
-    let cost = gas_table.memory_cost(new_num_words);
-    let cost = unsafe {
-        gas.memory_mut()
-            .set_words_num(new_num_words, cost)
-            .unwrap_unchecked()
-    };
+    let current_words = gas.memory().words_num;
+    let current_cost = gas.memory().expansion_cost;
+    let new_cost = cost_resolver.memory_expansion_cost(MemoryExpansionCostInput {
+        current_words,
+        current_cost,
+        offset,
+        len,
+        new_words: new_num_words,
+    });
+    let cost = gas
+        .memory_mut()
+        .set_words_num(new_num_words, new_cost)
+        .ok_or(InstructionResult::FatalExternalError)?;
 
     if !gas.record_cost(cost) {
         return Err(InstructionResult::MemoryOOG);
@@ -607,6 +616,23 @@ fn resize_memory_cold<Memory: MemoryTr>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use context_interface::cfg::GasParams;
+
+    struct LinearHalfCost;
+
+    impl context_interface::host::MemoryExpansionCostResolver for LinearHalfCost {
+        fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+            (input.new_words as u64) >> 1
+        }
+    }
+
+    struct NonMonotonicCost;
+
+    impl context_interface::host::MemoryExpansionCostResolver for NonMonotonicCost {
+        fn memory_expansion_cost(&self, _input: MemoryExpansionCostInput) -> u64 {
+            0
+        }
+    }
 
     #[test]
     fn test_num_words() {
@@ -688,5 +714,44 @@ mod tests {
         assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.len(), 32);
         assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
+    }
+
+    #[test]
+    fn resize_memory_uses_custom_cost_resolver() {
+        let mut gas = crate::Gas::new(10);
+        let mut memory = SharedMemory::new();
+
+        resize_memory(&mut gas, &mut memory, &LinearHalfCost, 0, 64).unwrap();
+
+        assert_eq!(gas.remaining(), 9);
+        assert_eq!(gas.memory().words_num, 2);
+        assert_eq!(gas.memory().expansion_cost, 1);
+        assert_eq!(memory.len(), 64);
+    }
+
+    #[test]
+    fn resize_memory_preserves_default_gas_params_behavior() {
+        let mut gas = crate::Gas::new(10);
+        let mut memory = SharedMemory::new();
+        let gas_params = GasParams::new_spec(primitives::hardfork::SpecId::default());
+
+        resize_memory(&mut gas, &mut memory, &gas_params, 0, 64).unwrap();
+
+        assert_eq!(gas.remaining(), 4);
+        assert_eq!(gas.memory().words_num, 2);
+        assert_eq!(gas.memory().expansion_cost, 6);
+        assert_eq!(memory.len(), 64);
+    }
+
+    #[test]
+    fn resize_memory_rejects_non_monotonic_cost_resolver() {
+        let mut gas = crate::Gas::new(10);
+        let mut memory = SharedMemory::new();
+        let gas_params = GasParams::new_spec(primitives::hardfork::SpecId::default());
+
+        resize_memory(&mut gas, &mut memory, &gas_params, 0, 64).unwrap();
+        let err = resize_memory(&mut gas, &mut memory, &NonMonotonicCost, 0, 96).unwrap_err();
+
+        assert_eq!(err, InstructionResult::FatalExternalError);
     }
 }

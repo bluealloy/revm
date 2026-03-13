@@ -1,7 +1,7 @@
 //! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
 use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
 use context_interface::{
-    cfg::GasParams,
+    cfg::{GasParams, MemoryExpansionCostInput},
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
@@ -480,6 +480,11 @@ impl<
     #[inline]
     fn gas_params(&self) -> &GasParams {
         self.cfg().gas_params()
+    }
+
+    #[inline]
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+        self.cfg().memory_expansion_cost(input)
     }
 
     fn block_number(&self) -> U256 {
