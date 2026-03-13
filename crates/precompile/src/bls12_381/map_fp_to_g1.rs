@@ -32,6 +32,7 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let padded_result = pad_g1_point(&unpadded_result);
 
     Ok(PrecompileOutput::new(
+        gas_limit,
         MAP_FP_TO_G1_BASE_GAS_FEE,
         padded_result.into(),
     ))

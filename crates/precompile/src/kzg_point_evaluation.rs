@@ -62,7 +62,11 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     crypto().verify_kzg_proof(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
+    Ok(PrecompileOutput::new(
+        gas_limit,
+        GAS_COST,
+        RETURN_VALUE.into(),
+    ))
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
@@ -118,7 +122,7 @@ mod tests {
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
         let output = run(&input, gas).unwrap();
-        assert_eq!(output.gas_used, gas);
+        assert_eq!(gas - output.gas.remaining(), gas);
         assert_eq!(output.bytes[..], expected_output);
     }
 

@@ -61,7 +61,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok(PrecompileOutput::new(gas_used, out.into()))
+    Ok(PrecompileOutput::new(gas_limit, gas_used, out.into()))
 }
 
 /// Blake2 algorithm

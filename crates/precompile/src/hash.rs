@@ -28,7 +28,11 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Err(PrecompileError::OutOfGas)
     } else {
         let output = crypto().sha256(input);
-        Ok(PrecompileOutput::new(cost, output.to_vec().into()))
+        Ok(PrecompileOutput::new(
+            gas_limit,
+            cost,
+            output.to_vec().into(),
+        ))
     }
 }
 
@@ -44,6 +48,10 @@ pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         Err(PrecompileError::OutOfGas)
     } else {
         let output = crypto().ripemd160(input);
-        Ok(PrecompileOutput::new(gas_used, output.to_vec().into()))
+        Ok(PrecompileOutput::new(
+            gas_limit,
+            gas_used,
+            output.to_vec().into(),
+        ))
     }
 }

@@ -597,7 +597,7 @@ fn resize_memory_cold<Memory: MemoryTr>(
             .unwrap_unchecked()
     };
 
-    if !gas.record_cost(cost) {
+    if !gas.record_regular_cost(cost) {
         return Err(InstructionResult::MemoryOOG);
     }
     memory.resize(new_num_words * 32);

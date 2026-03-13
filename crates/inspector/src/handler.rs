@@ -1,7 +1,7 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{
     result::{ExecutionResult, ResultGas},
-    ContextTr, JournalEntry, JournalTr, Transaction,
+    Cfg, ContextTr, JournalEntry, JournalTr, Transaction,
 };
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
@@ -58,11 +58,37 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
+        let mut init_and_floor_gas = self.validate(evm)?;
+        let eip7702_refund = self.pre_execution(evm)?;
+
+        // EIP-8037: Split auth list refund into state gas and regular gas portions.
+        let eip7702_state_refund = {
+            let per_auth_state_gas = evm.ctx().cfg().gas_params().tx_eip7702_per_auth_state_gas();
+            let per_auth_refund = evm.ctx().cfg().gas_params().tx_eip7702_auth_refund();
+            if per_auth_state_gas > 0 && per_auth_refund > 0 && eip7702_refund > 0 {
+                let state_refund_per_auth = core::cmp::min(per_auth_refund, per_auth_state_gas);
+                let num_refunded = eip7702_refund / per_auth_refund;
+                let state_refund = num_refunded * state_refund_per_auth;
+                init_and_floor_gas.initial_state_gas = init_and_floor_gas
+                    .initial_state_gas
+                    .saturating_sub(state_refund);
+                init_and_floor_gas.initial_total_gas = init_and_floor_gas
+                    .initial_total_gas
+                    .saturating_sub(state_refund);
+                state_refund
+            } else {
+                0
+            }
+        };
+        let eip7702_regular_refund = (eip7702_refund - eip7702_state_refund) as i64;
+
         let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
-        let result_gas =
-            self.post_execution(evm, &mut frame_result, init_and_floor_gas, eip7702_refund)?;
+        let result_gas = self.post_execution(
+            evm,
+            &mut frame_result,
+            init_and_floor_gas,
+            eip7702_regular_refund,
+        )?;
         self.execution_result(evm, frame_result, result_gas)
     }
 
@@ -74,15 +100,36 @@ where
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
+        // Deduct regular initial gas from the transaction gas limit.
+        let regular_initial_gas =
+            init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
         // Create first frame action
-        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        let mut first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
+
+        // Deduct initial state gas from the reservoir. When insufficient,
+        // the deficit is charged from the regular gas budget.
+        let initial_state_gas = init_and_floor_gas.initial_state_gas;
+        if initial_state_gas > 0 {
+            let reservoir = first_frame_input.frame_input.reservoir();
+            if reservoir >= initial_state_gas {
+                first_frame_input
+                    .frame_input
+                    .set_reservoir(reservoir - initial_state_gas);
+            } else {
+                let deficit = initial_state_gas - reservoir;
+                first_frame_input.frame_input.set_reservoir(0);
+                first_frame_input.frame_input.reduce_gas_limit(deficit);
+            }
+        }
+
+        let initial_reservoir = first_frame_input.frame_input.reservoir();
 
         // Run execution loop
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, &mut frame_result, initial_reservoir)?;
         Ok(frame_result)
     }
 
@@ -146,8 +193,14 @@ where
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas =
-                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                let result_gas = ResultGas::new(
+                    gas.limit(),
+                    gas.spent(),
+                    gas.refunded() as u64,
+                    0,
+                    0,
+                    gas.state_gas_spent(),
+                );
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,

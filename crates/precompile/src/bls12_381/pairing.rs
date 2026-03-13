@@ -59,6 +59,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(
+        gas_limit,
         required_gas,
         B256::with_last_byte(result).into(),
     ))
