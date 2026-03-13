@@ -8,7 +8,7 @@ use revm::{
     inspector::{inspectors::TracerEip3155, InspectCommitEvm},
     primitives::{hardfork::SpecId, Bytes, B256, U256},
     statetest_types::{SpecName, Test, TestSuite, TestUnit},
-    Context, ExecuteCommitEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use std::{
@@ -458,7 +458,10 @@ fn debug_failed_test(ctx: DebugContext) {
         .with_cfg(ctx.cfg.clone())
         .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
 
-    let exec_result = evm.inspect_tx_commit(ctx.tx);
+    let _ = evm.inspect_tx(ctx.tx);
+
+    // Execute the transaction without tracing
+    let exec_result = evm.transact_commit(ctx.tx);
 
     println!("\nExecution result: {exec_result:#?}");
     println!("\nExpected exception: {:?}", ctx.test.expect_exception);
