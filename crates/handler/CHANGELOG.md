@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v17.0.0...revm-handler-v17.1.0) - 2026-03-13
+
+### Added
+
+- Part of amsterdam devnet3 EIP updates ([#3438](https://github.com/bluealloy/revm/pull/3438))
+
+### Other
+
+- *(handler)* rename misleading `underflow` variable to `success` ([#3486](https://github.com/bluealloy/revm/pull/3486))
+
 ## [17.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v16.0.0...revm-handler-v17.0.0) - 2026-03-04
 
 ### Other
