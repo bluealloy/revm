@@ -12,7 +12,14 @@ use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
-use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
+use std::{
+    borrow::Cow,
+    boxed::Box,
+    hash::{Hash, Hasher},
+    string::String,
+    sync::Arc,
+    vec::Vec,
+};
 
 /// Trait for the halt reason.
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
@@ -531,6 +538,62 @@ impl fmt::Display for Output {
     }
 }
 
+/// Type-erased error type.
+#[derive(Debug, Clone)]
+pub struct AnyError(Arc<dyn core::error::Error + Send + Sync>);
+impl AnyError {
+    /// Creates a new [`AnyError`] from any error type.
+    pub fn new(err: impl core::error::Error + Send + Sync + 'static) -> Self {
+        Self(Arc::new(err))
+    }
+}
+
+impl PartialEq for AnyError {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+impl Eq for AnyError {}
+impl Hash for AnyError {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (Arc::as_ptr(&self.0) as *const ()).hash(state);
+    }
+}
+impl fmt::Display for AnyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+impl core::error::Error for AnyError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        self.0.source()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for AnyError {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[derive(Debug)]
+struct StringError(String);
+impl fmt::Display for StringError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+impl core::error::Error for StringError {}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for AnyError {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(AnyError::new(StringError(s)))
+    }
+}
+
 /// Main EVM error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -545,7 +608,7 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// This includes `PrecompileError::Fatal` errors as well as any custom errors
     /// returned by handler registers.
-    Custom(String),
+    Custom(AnyError),
 }
 
 impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
@@ -554,7 +617,7 @@ impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
     fn from(value: ContextError<DBError>) -> Self {
         match value {
             ContextError::Db(e) => Self::Database(e),
-            ContextError::Custom(e) => Self::Custom(e),
+            ContextError::Custom(e) => Self::Custom(AnyError::new(StringError(e))),
         }
     }
 }
@@ -573,7 +636,7 @@ pub trait FromStringError {
 
 impl<DB, TX> FromStringError for EVMError<DB, TX> {
     fn from_string(value: String) -> Self {
-        Self::Custom(value)
+        Self::Custom(AnyError::new(StringError(value)))
     }
 }
 
@@ -609,7 +672,7 @@ where
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Custom(_) => None,
+            Self::Custom(e) => Some(e.0.as_ref()),
         }
     }
 }
@@ -625,7 +688,7 @@ where
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Custom(e) => f.write_str(e),
+            Self::Custom(e) => write!(f, "{e}"),
         }
     }
 }
