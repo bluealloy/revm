@@ -12,7 +12,7 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
-    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC, SELFDESTRUCT_LOG_TOPIC},
+    eip7708::{BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
@@ -123,7 +123,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn take_logs(&mut self) -> Vec<Log> {
         // EIP-7708: Emit logs for self-destructed accounts with remaining balance
-        self.eip7708_emit_selfdestruct_remaining_balance_logs();
+        self.eip7708_emit_burn_remaining_balance_logs();
         mem::take(&mut self.logs)
     }
 
@@ -258,7 +258,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// This should be called before `take_logs()` at the end of transaction execution.
     /// It checks all accounts that were self-destructed in this transaction and emits
-    /// a `SelfBalanceLog` for any that still have a non-zero balance.
+    /// a `Burn` log for any that still have a non-zero balance.
     ///
     /// This can happen when an account receives ETH after being self-destructed
     /// in the same transaction.
@@ -267,7 +267,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
     #[inline]
-    pub fn eip7708_emit_selfdestruct_remaining_balance_logs(&mut self) {
+    pub fn eip7708_emit_burn_remaining_balance_logs(&mut self) {
         if !self.cfg.spec.is_enabled_in(AMSTERDAM)
             || self.cfg.eip7708_disabled
             || self.cfg.eip7708_delayed_burn_disabled
@@ -292,7 +292,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // Emit logs in sorted order
         for (address, balance) in addresses_with_balance {
-            self.eip7708_selfdestruct_to_self_log(address, balance);
+            self.eip7708_burn_log(address, balance);
         }
     }
 
@@ -678,8 +678,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 // Transfer log for balance transferred to different address
                 self.eip7708_transfer_log(address, target, balance);
             } else {
-                // Selfdestruct to self log
-                self.eip7708_selfdestruct_to_self_log(address, balance);
+                // Burn log for selfdestruct to self
+                self.eip7708_burn_log(address, balance);
             }
             Some(ENTRY::account_destroyed(
                 address,
@@ -1110,28 +1110,26 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         });
     }
 
-    /// Creates and pushes an EIP-7708 selfdestruct-to-self log.
+    /// Creates and pushes an EIP-7708 burn log.
     ///
-    /// This emits a LOG2 when a contract self-destructs to itself.
+    /// This emits a LOG2 when a contract self-destructs to itself or when a
+    /// self-destructed account still has remaining balance at end of transaction.
     /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
     ///
     /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
     #[inline]
-    pub fn eip7708_selfdestruct_to_self_log(&mut self, address: Address, balance: U256) {
+    pub fn eip7708_burn_log(&mut self, address: Address, balance: U256) {
         // Only emit log if EIP-7708 is enabled and balance is non-zero
         if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
         {
             return;
         }
 
-        // Create LOG2 with SelfBalanceLog(address,uint256) event signature
-        // Topic[0]: SelfBalanceLog event signature
+        // Create LOG2 with Burn(address,uint256) event signature
+        // Topic[0]: Burn event signature
         // Topic[1]: account address (zero-padded to 32 bytes)
         // Data: amount in wei (big-endian uint256)
-        let topics = std::vec![
-            SELFDESTRUCT_LOG_TOPIC,
-            B256::left_padding_from(address.as_slice()),
-        ];
+        let topics = std::vec![BURN_LOG_TOPIC, B256::left_padding_from(address.as_slice()),];
         let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
 
         self.logs.push(Log {

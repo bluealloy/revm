@@ -265,7 +265,7 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7907, hardfork::SpecId, Bytes, TxKind, B256};
+    use primitives::{address, eip3860, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -312,10 +312,10 @@ mod tests {
     }
 
     #[test]
-    fn test_eip7907_initcode_size_limit_failure_osaka() {
-        let large_bytecode = vec![opcode::STOP; eip7907::MAX_INITCODE_SIZE + 1];
+    fn test_eip7954_initcode_size_limit_failure_amsterdam() {
+        let large_bytecode = vec![opcode::STOP; eip7954::MAX_INITCODE_SIZE + 1];
         let bytecode: Bytes = large_bytecode.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        let result = deploy_contract(bytecode, Some(SpecId::AMSTERDAM));
         assert!(matches!(
             result,
             Err(EVMError::Transaction(
@@ -325,19 +325,50 @@ mod tests {
     }
 
     #[test]
-    fn test_eip7907_code_size_limit_failure() {
-        // EIP-7907: MAX_CODE_SIZE = 0x40000
-        // use the simplest method to return a contract code size greater than 0x40000
-        // PUSH3 0x40001 (greater than 0x40000) - return size
+    fn test_eip7954_initcode_size_limit_success_amsterdam() {
+        let large_bytecode = vec![opcode::STOP; eip7954::MAX_INITCODE_SIZE];
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode, Some(SpecId::AMSTERDAM));
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip7954_initcode_between_old_and_new_limit() {
+        // Size between old limit (0xC000) and new limit (0x10000):
+        // should fail pre-Amsterdam, succeed at Amsterdam
+        let size = eip3860::MAX_INITCODE_SIZE + 1; // 0xC001
+        let large_bytecode = vec![opcode::STOP; size];
+
+        // Pre-Amsterdam (Prague): should fail
+        let bytecode: Bytes = large_bytecode.clone().into();
+        let result = deploy_contract(bytecode, Some(SpecId::PRAGUE));
+        assert!(matches!(
+            result,
+            Err(EVMError::Transaction(
+                InvalidTransaction::CreateInitCodeSizeLimit
+            ))
+        ));
+
+        // Amsterdam: should succeed
+        let bytecode: Bytes = large_bytecode.into();
+        let result = deploy_contract(bytecode, Some(SpecId::AMSTERDAM));
+        assert!(matches!(result, Ok(ExecutionResult::Success { .. })));
+    }
+
+    #[test]
+    fn test_eip7954_code_size_limit_failure() {
+        // EIP-7954: MAX_CODE_SIZE = 0x8000
+        // use the simplest method to return a contract code size greater than 0x8000
+        // PUSH3 0x8001 (greater than 0x8000) - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x04, 0x00, 0x01, // PUSH3 0x40001 (greater than 0x40000)
+            0x62, 0x00, 0x80, 0x01, // PUSH3 0x8001 (greater than 0x8000)
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];
         let bytecode: Bytes = init_code.into();
-        let result = deploy_contract(bytecode, Some(SpecId::OSAKA));
+        let result = deploy_contract(bytecode, Some(SpecId::AMSTERDAM));
         assert!(
             matches!(
                 result,

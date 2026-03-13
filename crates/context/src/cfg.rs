@@ -2,7 +2,7 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::GasParams;
-use primitives::{eip170, eip3860, eip7825, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, eip7954, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -33,7 +33,7 @@ pub struct CfgEnv<SPEC = SpecId> {
 
     /// Contract code size limit override.
     ///
-    /// If None, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    /// If None, the limit will be determined by the SpecId (EIP-170 or EIP-7954) at runtime.
     /// If Some, this specific limit will be used regardless of SpecId.
     ///
     /// Useful to increase this because of tests.
@@ -42,7 +42,7 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// If None, the limit will check if `limit_contract_code_size` is set.
     /// If it is set, it will double it for a limit.
-    /// If it is not set, the limit will be determined by the SpecId (EIP-170 or EIP-7907) at runtime.
+    /// If it is not set, the limit will be determined by the SpecId (EIP-170 or EIP-7954) at runtime.
     ///
     /// Useful to increase this because of tests.
     pub limit_contract_initcode_size: Option<usize>,
@@ -408,8 +408,13 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 
     fn max_code_size(&self) -> usize {
-        self.limit_contract_code_size
-            .unwrap_or(eip170::MAX_CODE_SIZE)
+        self.limit_contract_code_size.unwrap_or(
+            if self.spec.clone().into().is_enabled_in(SpecId::AMSTERDAM) {
+                eip7954::MAX_CODE_SIZE
+            } else {
+                eip170::MAX_CODE_SIZE
+            },
+        )
     }
 
     fn max_initcode_size(&self) -> usize {
@@ -418,7 +423,13 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
                 self.limit_contract_code_size
                     .map(|size| size.saturating_mul(2))
             })
-            .unwrap_or(eip3860::MAX_INITCODE_SIZE)
+            .unwrap_or(
+                if self.spec.clone().into().is_enabled_in(SpecId::AMSTERDAM) {
+                    eip7954::MAX_INITCODE_SIZE
+                } else {
+                    eip3860::MAX_INITCODE_SIZE
+                },
+            )
     }
 
     fn is_eip3541_disabled(&self) -> bool {

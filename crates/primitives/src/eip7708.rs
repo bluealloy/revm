@@ -19,10 +19,10 @@ pub const ETH_TRANSFER_LOG_ADDRESS: Address =
 pub const ETH_TRANSFER_LOG_TOPIC: B256 =
     b256!("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
-/// The topic hash for selfdestruct events (burn).
+/// The topic hash for burn events.
 ///
 /// This is emitted when a contract self-destructs to itself or when a
 /// self-destructed account still has remaining balance at end of transaction.
-/// `keccak256("Selfdestruct(address,uint256)")`
-pub const SELFDESTRUCT_LOG_TOPIC: B256 =
-    b256!("0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083");
+/// `keccak256("Burn(address,uint256)")`
+pub const BURN_LOG_TOPIC: B256 =
+    b256!("0xcc16f5dbb4873280815c1ee09dbd06736cffcc184412cf7a71a0fdb75d397ca5");
