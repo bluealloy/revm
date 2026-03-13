@@ -118,10 +118,7 @@ fn run_custom_precompile<CTX: ContextTr>(
                 gas: Gas::new(inputs.gas_limit),
                 output: output.bytes,
             };
-            let underflow = interpreter_result.gas.record_cost(output.gas_used);
-            if !underflow {
-                interpreter_result.result = InstructionResult::PrecompileOOG;
-            }
+            *interpreter_result.gas.tracker_mut() = output.gas;
             Ok(interpreter_result)
         }
         Err(e) => {
@@ -162,6 +159,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
 
     // Return the value as output
     Ok(PrecompileOutput::new(
+        gas_limit,
         BASE_GAS,
         value.to_be_bytes_vec().into(),
     ))
@@ -236,5 +234,9 @@ fn handle_write_storage<CTX: ContextTr>(
     context.journal_mut().log(log);
 
     // Return success with empty output
-    Ok(PrecompileOutput::new(BASE_GAS + SSTORE_GAS, Bytes::new()))
+    Ok(PrecompileOutput::new(
+        gas_limit,
+        BASE_GAS + SSTORE_GAS,
+        Bytes::new(),
+    ))
 }

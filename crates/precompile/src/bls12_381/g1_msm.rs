@@ -54,7 +54,11 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);
 
-    Ok(PrecompileOutput::new(required_gas, padded_result.into()))
+    Ok(PrecompileOutput::new(
+        gas_limit,
+        required_gas,
+        padded_result.into(),
+    ))
 }
 
 #[cfg(test)]

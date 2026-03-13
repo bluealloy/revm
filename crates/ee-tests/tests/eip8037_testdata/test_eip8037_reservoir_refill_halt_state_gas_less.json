@@ -1,0 +1,35 @@
+[
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 26006,
+        "intrinsic_gas": 21000,
+        "limit": 100000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "Stop"
+    }
+  },
+  {
+    "Halt": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 25000,
+        "intrinsic_gas": 21000,
+        "limit": 25000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "reason": {
+        "OutOfGas": "Basic"
+      }
+    }
+  }
+]

@@ -37,6 +37,7 @@ pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let padded_result = pad_g2_point(&unpadded_result);
 
     Ok(PrecompileOutput::new(
+        gas_limit,
         G2_ADD_BASE_GAS_FEE,
         padded_result.into(),
     ))

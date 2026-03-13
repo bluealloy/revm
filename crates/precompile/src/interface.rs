@@ -1,5 +1,6 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
+use context_interface::cfg::gas::GasTracker;
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
 use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
@@ -27,10 +28,8 @@ pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 /// Precompile execution output
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PrecompileOutput {
-    /// Gas used by the precompile
-    pub gas_used: u64,
-    /// Gas refunded by the precompile.
-    pub gas_refunded: i64,
+    /// Gas tracker for tracking gas state (refunds, reservoir, state gas).
+    pub gas: GasTracker,
     /// Output bytes
     pub bytes: Bytes,
     /// Whether the precompile reverted
@@ -38,25 +37,26 @@ pub struct PrecompileOutput {
 }
 
 impl PrecompileOutput {
-    /// Returns new precompile output with the given gas used and output bytes.
-    pub fn new(gas_used: u64, bytes: Bytes) -> Self {
+    /// Returns new precompile output with the given gas limit, gas used, and output bytes.
+    pub fn new(gas_limit: u64, gas_used: u64, bytes: Bytes) -> Self {
         Self {
-            gas_used,
-            gas_refunded: 0,
+            gas: GasTracker::new_used_gas(gas_limit, gas_used, 0),
             bytes,
             reverted: false,
         }
     }
 
-    /// Returns new precompile revert with the given gas used and output bytes.
-    pub fn new_reverted(gas_used: u64, bytes: Bytes) -> Self {
+    /// Returns new precompile output with the given gas tracker and output bytes.
+    #[inline]
+    pub fn new_with_gas_tracker(gas: GasTracker, bytes: Bytes) -> Self {
         Self {
-            gas_used,
-            gas_refunded: 0,
+            gas,
             bytes,
-            reverted: true,
+            reverted: false,
         }
     }
+
+    
 
     /// Flips [`Self::reverted`] to `true`.
     pub fn reverted(mut self) -> Self {

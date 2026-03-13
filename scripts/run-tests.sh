@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.3.0"
-DEVNET_VERSION="bal%40v5.1.0"
+DEVNET_VERSION="bal%40v5.4.0"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"

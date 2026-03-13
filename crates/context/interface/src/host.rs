@@ -66,6 +66,9 @@ pub trait Host {
     /// Gas params contains the dynamic gas constants for the EVM.
     fn gas_params(&self) -> &GasParams;
 
+    /// Returns whether state gas (EIP-8037) is enabled.
+    fn is_amsterdam_eip8037_enabled(&self) -> bool;
+
     /* Database */
 
     /// Block hash, calls `ContextTr::journal_mut().db().block_hash(number)`
@@ -234,6 +237,10 @@ impl Host for DummyHost {
 
     fn gas_params(&self) -> &GasParams {
         &self.gas_params
+    }
+
+    fn is_amsterdam_eip8037_enabled(&self) -> bool {
+        false
     }
 
     fn difficulty(&self) -> U256 {

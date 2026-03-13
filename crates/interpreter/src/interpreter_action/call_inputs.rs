@@ -103,6 +103,8 @@ pub struct CallInputs {
     pub scheme: CallScheme,
     /// Whether the call is a static call, or is initiated inside a static call.
     pub is_static: bool,
+    /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
+    pub reservoir: u64,
 }
 
 impl CallInputs {

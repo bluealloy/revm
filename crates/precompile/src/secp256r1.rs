@@ -75,7 +75,7 @@ fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileR
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutput::new(gas_cost, result))
+    Ok(PrecompileOutput::new(gas_limit, gas_cost, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is
@@ -157,7 +157,7 @@ mod test {
         let input = Bytes::from_hex(input).unwrap();
         let target_gas = 3_500u64;
         let outcome = p256_verify(&input, target_gas).unwrap();
-        assert_eq!(outcome.gas_used, 3_450u64);
+        assert_eq!(target_gas - outcome.gas.remaining(), 3_450u64);
         let expected_result = if expect_success {
             B256::with_last_byte(1).into()
         } else {

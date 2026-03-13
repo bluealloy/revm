@@ -458,7 +458,23 @@ fn debug_failed_test(ctx: DebugContext) {
         .with_cfg(ctx.cfg.clone())
         .build_mainnet_with_inspector(TracerEip3155::buffered(stderr()).without_summary());
 
-    let exec_result = evm.inspect_tx_commit(ctx.tx);
+    let _ = evm.inspect_tx_commit(ctx.tx);
+
+    // Re-run without inspector for accurate state output
+    let cache = ctx.cache_state.clone();
+    let mut state = database::State::builder()
+        .with_cached_prestate(cache)
+        .with_bundle_update()
+        .build();
+
+    let mut evm = Context::mainnet()
+        .with_db(&mut state)
+        .with_block(ctx.block)
+        .with_tx(ctx.tx)
+        .with_cfg(ctx.cfg.clone())
+        .build_mainnet();
+
+    let exec_result = evm.transact_commit(ctx.tx);
 
     println!("\nExecution result: {exec_result:#?}");
     println!("\nExpected exception: {:?}", ctx.test.expect_exception);

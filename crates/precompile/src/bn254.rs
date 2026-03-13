@@ -163,7 +163,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let p2_bytes = &input[G1_LEN..];
     let output = crypto().bn254_g1_add(p1_bytes, p2_bytes)?;
 
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_limit, gas_cost, output.into()))
 }
 
 /// Run the Bn254 mul precompile
@@ -178,7 +178,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
     let output = crypto().bn254_g1_mul(point_bytes, scalar_bytes)?;
 
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_limit, gas_cost, output.into()))
 }
 
 /// Run the Bn254 pair precompile
@@ -217,6 +217,7 @@ pub fn run_pair(
 
     let pairing_result = crypto().bn254_pairing_check(&points)?;
     Ok(PrecompileOutput::new(
+        gas_limit,
         gas_used,
         bool_to_bytes32(pairing_result),
     ))

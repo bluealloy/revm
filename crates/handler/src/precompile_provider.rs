@@ -119,9 +119,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
         match exec_result {
             Ok(output) => {
-                result.gas.record_refund(output.gas_refunded);
-                let success = result.gas.record_cost(output.gas_used);
-                assert!(success, "Gas underflow is not possible");
+                *result.gas.tracker_mut() = output.gas;
                 result.result = if output.reverted {
                     InstructionResult::Revert
                 } else {
