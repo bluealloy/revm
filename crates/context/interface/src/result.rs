@@ -298,6 +298,11 @@ pub enum ExecutionResult<HaltReasonTy = HaltReason> {
         logs: Vec<Log>,
         /// Output of the transaction.
         output: Bytes,
+        /// The address of the top-level contract or precompile that reverted.
+        ///
+        /// For `TxKind::Call` transactions, this is the target address.
+        /// For `TxKind::Create`, this is `None`.
+        address: Option<Address>,
     },
     /// Reverted for various reasons and spend all gas
     Halt {
@@ -340,7 +345,17 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
                 logs,
                 output,
             },
-            Self::Revert { gas, logs, output } => ExecutionResult::Revert { gas, logs, output },
+            Self::Revert {
+                gas,
+                logs,
+                output,
+                address,
+            } => ExecutionResult::Revert {
+                gas,
+                logs,
+                output,
+                address,
+            },
             Self::Halt { reason, gas, logs } => ExecutionResult::Halt {
                 reason: op(reason),
                 gas,
@@ -436,8 +451,16 @@ impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> 
                 }
                 write!(f, ", {output}")
             }
-            Self::Revert { gas, logs, output } => {
+            Self::Revert {
+                gas,
+                logs,
+                output,
+                address,
+            } => {
                 write!(f, "Revert: {gas}")?;
+                if let Some(addr) = address {
+                    write!(f, ", address: {addr}")?;
+                }
                 if !logs.is_empty() {
                     write!(
                         f,
@@ -1105,6 +1128,7 @@ mod tests {
             gas: ResultGas::new(100000, 100000, 0, 0, 0),
             logs: vec![],
             output: Bytes::from(vec![1, 2, 3, 4]),
+            address: None,
         };
         assert_eq!(
             result.to_string(),
