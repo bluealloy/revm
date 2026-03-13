@@ -38,6 +38,24 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
         let _ = context;
     }
 
+    /// Called before a specific opcode is about to execute, with the opcode byte provided directly.
+    ///
+    /// This is called after [`Inspector::step`] but before the instruction is actually executed.
+    /// Unlike `step()`, the opcode byte is passed as a parameter for convenience.
+    ///
+    /// Setting `interp.bytecode.set_action` will skip the opcode execution.
+    #[inline]
+    fn before_opcode(
+        &mut self,
+        interp: &mut Interpreter<INTR>,
+        context: &mut CTX,
+        opcode: u8,
+    ) {
+        let _ = interp;
+        let _ = context;
+        let _ = opcode;
+    }
+
     /// Called after `step` when the instruction has been executed.
     ///
     /// Setting `interp.bytecode.set_action` will result in stopping the execution of the interpreter.
@@ -135,6 +153,16 @@ where
     fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.0.step(interp, context);
         self.1.step(interp, context);
+    }
+
+    fn before_opcode(
+        &mut self,
+        interp: &mut Interpreter<INTR>,
+        context: &mut CTX,
+        opcode: u8,
+    ) {
+        self.0.before_opcode(interp, context, opcode);
+        self.1.before_opcode(interp, context, opcode);
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {

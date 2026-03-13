@@ -214,6 +214,13 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
+
+        // Pre-execution hook: fires before the opcode runs, with opcode byte available.
+        inspector.before_opcode(interpreter, context, opcode);
+        if interpreter.bytecode.is_end() {
+            break;
+        }
+
         interpreter.step(instructions, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
