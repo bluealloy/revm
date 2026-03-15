@@ -126,6 +126,17 @@ pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
         table[STATICCALL as usize].static_gas = gas::WARM_STORAGE_READ_COST;
     }
 
+    if spec.is_enabled_in(AMSTERDAM) {
+        // EIP-7904: Compute gas cost increase for Amsterdam.
+        // Reprices operations performing worse than 60 Mgas/s.
+        // https://eips.ethereum.org/EIPS/eip-7904
+        table[DIV as usize].static_gas = 15; // was 5
+        table[SDIV as usize].static_gas = 20; // was 5
+        table[MOD as usize].static_gas = 12; // was 5
+        table[MULMOD as usize].static_gas = 11; // was 8
+        table[KECCAK256 as usize].static_gas = 45; // was gas::KECCAK256 (30)
+    }
+
     table
 }
 
