@@ -315,6 +315,14 @@ impl GasParams {
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
         }
 
+        if spec.is_enabled_in(SpecId::AMSTERDAM) {
+            // EIP-2780: Reduce intrinsic transaction gas from 21,000 to 4,500.
+            // Value transfers to new accounts continue to use the existing
+            // new_account_cost (25,000) charged at the CALL level.
+            // https://eips.ethereum.org/EIPS/eip-2780
+            table[GasId::tx_base_stipend().as_usize()] = 4500;
+        }
+
         Self::new(Arc::new(table))
     }
 
