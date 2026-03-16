@@ -78,7 +78,7 @@ pub struct ResultGas {
     /// Gas consumed before final refund (limit − remaining).
     /// For actual gas used, use [`used()`](ResultGas::used).
     #[cfg_attr(feature = "serde", serde(rename = "gas_spent"))]
-    spent: u64,
+    regular_gas_spent: u64,
     /// Gas refund amount (capped per EIP-3529).
     ///
     /// Note: This is the raw refund before EIP-7623 floor gas adjustment.
@@ -102,7 +102,7 @@ impl ResultGas {
     #[inline]
     pub const fn new(
         limit: u64,
-        spent: u64,
+        regular_gas_spent: u64,
         refunded: u64,
         floor_gas: u64,
         intrinsic_gas: u64,
@@ -110,7 +110,7 @@ impl ResultGas {
     ) -> Self {
         Self {
             limit,
-            spent,
+            regular_gas_spent,
             refunded,
             floor_gas,
             intrinsic_gas,
@@ -122,7 +122,7 @@ impl ResultGas {
     #[inline]
     pub const fn new_with_state_gas(
         limit: u64,
-        spent: u64,
+        regular_gas_spent: u64,
         refunded: u64,
         floor_gas: u64,
         intrinsic_gas: u64,
@@ -130,7 +130,7 @@ impl ResultGas {
     ) -> Self {
         Self {
             limit,
-            spent,
+            regular_gas_spent,
             refunded,
             floor_gas,
             intrinsic_gas,
@@ -148,8 +148,26 @@ impl ResultGas {
     ///
     /// If you want final gas used, use [`used()`](ResultGas::used).
     #[inline]
+    pub const fn regular_gas_spent(&self) -> u64 {
+        self.regular_gas_spent
+    }
+
+    /// Returns the total gas spent.
+    #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "After EIP-8037 gas is split on
+    regular and state gas, this method is no longer valid.
+    Use [`ResultGas::total_gas_spent`] or [`ResultGas::regular_gas_spent`] instead"
+    )]
     pub const fn spent(&self) -> u64 {
-        self.spent
+        self.total_gas_spent()
+    }
+
+    /// Returns the total gas spent.
+    #[inline]
+    pub const fn total_gas_spent(&self) -> u64 {
+        self.regular_gas_spent + self.state_gas_spent
     }
 
     /// Returns the EIP-7623 floor gas.
@@ -179,8 +197,21 @@ impl ResultGas {
 
     /// Sets the `spent` field.
     #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "After EIP-8037 gas is split on
+    regular and state gas, this method is no longer valid.
+    Use [`ResultGas::with_regular_gas_spent`] instead"
+    )]
     pub const fn with_spent(mut self, spent: u64) -> Self {
-        self.spent = spent;
+        self.regular_gas_spent = spent;
+        self
+    }
+
+    /// Sets the `regular_gas_spent` field.
+    #[inline]
+    pub const fn with_regular_gas_spent(mut self, regular_gas_spent: u64) -> Self {
+        self.regular_gas_spent = regular_gas_spent;
         self
     }
 
@@ -220,8 +251,20 @@ impl ResultGas {
 
     /// Sets the `spent` field by mutable reference.
     #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "After EIP-8037 gas is split on
+    regular and state gas, this method is no longer valid.
+    Use [`ResultGas::set_regular_gas_spent`] instead"
+    )]
     pub fn set_spent(&mut self, spent: u64) {
-        self.spent = spent;
+        self.regular_gas_spent = spent;
+    }
+
+    /// Sets the `regular_gas_spent` field by mutable reference.
+    #[inline]
+    pub fn set_regular_gas_spent(&mut self, regular_gas_spent: u64) {
+        self.regular_gas_spent = regular_gas_spent;
     }
 
     /// Sets the `refunded` field by mutable reference.
@@ -269,13 +312,13 @@ impl ResultGas {
     /// receipt, use [`used()`](ResultGas::used) instead.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
-        self.spent.saturating_sub(self.refunded)
+        self.regular_gas_spent.saturating_sub(self.refunded)
     }
 
-    /// Returns the remaining gas: `limit - spent`.
+    /// Returns the remaining gas: `limit - total_gas_spent`.
     #[inline]
     pub const fn remaining(&self) -> u64 {
-        self.limit.saturating_sub(self.spent)
+        self.limit.saturating_sub(self.total_gas_spent())
     }
 
     /// Returns the raw refund from EVM execution, before EIP-7623 floor gas adjustment.
@@ -308,7 +351,7 @@ impl fmt::Display for ResultGas {
             "gas used: {}, limit: {}, spent: {}",
             self.used(),
             self.limit,
-            self.spent
+            self.total_gas_spent()
         )?;
         if self.refunded > 0 {
             write!(f, ", refunded: {}", self.refunded)?;
@@ -1196,7 +1239,7 @@ mod tests {
     fn test_result_gas_used_and_remaining() {
         let gas = ResultGas::new(200, 100, 30, 0, 0, 0);
         assert_eq!(gas.limit(), 200);
-        assert_eq!(gas.spent(), 100);
+        assert_eq!(gas.regular_gas_spent(), 100);
         assert_eq!(gas.inner_refunded(), 30);
         assert_eq!(gas.used(), 70);
         assert_eq!(gas.remaining(), 100);

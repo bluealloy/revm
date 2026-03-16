@@ -200,17 +200,15 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(mut result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 // Preserve the reservoir on the result gas so it can be reimbursed.
                 // Precompiles don't use reservoir gas, but the first frame carries it.
-                result.gas.set_reservoir(reservoir_remaining_gas);
                 ctx.journal_mut().checkpoint_commit();
             } else {
                 // clone logs that precompile created, only possible with custom precompiles.
                 // checkpoint.log_i will be always correct.
-                handler_reservoir_refill(reservoir_remaining_gas, result.gas.state_gas_spent());
                 logs = ctx.journal_mut().logs()[checkpoint.log_i..].to_vec();
                 ctx.journal_mut().checkpoint_revert(checkpoint);
             }
@@ -529,9 +527,7 @@ impl EthFrame<EthInterpreter> {
                 );
 
                 let this_gas = &mut interpreter.gas;
-                // Refund unused gas for: success, revert, and create failures (size limit, etc).
-                // These are cases where execution completed but the result was rejected/limited,
-                // not fatal errors like OOG where gas is consumed.
+                // Refund unused gas for success and revert cases.
                 if instruction_result.is_ok_or_revert() {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
@@ -574,24 +570,8 @@ pub fn handle_reservoir_remaining_gas(
         // On revert or halt: state changes are undone.
         // State gas that spilled from reservoir into regular gas was returned with the
         // regular gas, so refill that portion back into the reservoir.
-        parent_gas.set_reservoir(handler_reservoir_refill(
-            parent_gas.reservoir(),
-            child_gas.state_gas_spent(),
-        ));
+        parent_gas.set_reservoir(parent_gas.reservoir().max(child_gas.state_gas_spent()));
     }
-}
-
-/// Takes reservoir and refills it
-///
-/// This can happen when we spent more state gas than we had in reservoir and
-/// we need to refill it.
-#[inline]
-pub fn handler_reservoir_refill(reservoir: u64, spent_state_gas: u64) -> u64 {
-    // if we spent more state gas than we have in reservoir, we need to refill it.
-    let state_gas_in_regular = spent_state_gas.saturating_sub(reservoir);
-
-    // we are increasing reservoir by the amount of state gas that was in regular gas.
-    reservoir + state_gas_in_regular
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
@@ -670,6 +650,9 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         }
         // State gas for code deposit (EIP-8037).
         // Charged after size check: only code that passes validation incurs state gas cost.
+        //
+        // Note: This should be last operation before checkpoint commit as spending state before this messes
+        // with refilling of state gas.
         let state_gas_for_code = cfg
             .gas_params()
             .code_deposit_state_gas(interpreter_result.output.len());

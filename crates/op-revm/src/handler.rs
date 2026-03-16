@@ -19,15 +19,12 @@ use revm::{
     handler::{
         evm::FrameTr,
         handler::EvmTrError,
-        handler_reservoir_refill,
         post_execution::{self, reimburse_caller},
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EthFrame, EvmTr, FrameResult, Handler, MainnetHandler,
     },
     inspector::{Inspector, InspectorEvmTr, InspectorHandler},
-    interpreter::{
-        interpreter::EthInterpreter, interpreter_action::FrameInit, Gas, InitialAndFloorGas,
-    },
+    interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, Gas},
     primitives::{hardfork::SpecId, U256},
 };
 use std::{boxed::Box, vec::Vec};
@@ -249,12 +246,12 @@ where
             }
             // On revert, refill reservoir: state gas that spilled into regular gas
             // gets returned to the reservoir.
-            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
-            gas.set_reservoir(new_reservoir);
+            // TODO(state-gas) handle state gas.
+            gas.set_reservoir(initial_reservoir.max(state_gas_spent));
         } else {
             // On halt, refill reservoir.
-            let new_reservoir = handler_reservoir_refill(0, state_gas_spent);
-            gas.set_reservoir(new_reservoir);
+            // TODO(state-gas)handle state gas.
+            gas.set_reservoir(initial_reservoir.max(state_gas_spent));
         }
 
         // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
@@ -512,7 +509,6 @@ mod tests {
         let mut handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
-        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         handler
             .last_frame_result(&mut evm, &mut exec_result, 0)
             .unwrap();
