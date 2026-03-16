@@ -129,7 +129,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 };
                 result.output = output.bytes;
             }
-            Err(PrecompileError::Fatal(e)) => return Err(e.to_string()),
+            Err(PrecompileError::Fatal(e)) => return Err(e),
+            Err(PrecompileError::FatalAny(e)) => return Err(e.to_string()),
             Err(e) => {
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
