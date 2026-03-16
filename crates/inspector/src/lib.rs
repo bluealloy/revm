@@ -30,6 +30,13 @@ pub mod inspectors {
     pub use super::gas::GasInspector;
 }
 
+pub use context;
+pub use database_interface;
+pub use handler as evm_handler;
+pub use interpreter;
+pub use primitives;
+pub use state;
+
 pub use count_inspector::CountInspector;
 pub use handler::{inspect_instructions, InspectorHandler};
 pub use inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm};

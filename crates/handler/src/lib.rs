@@ -31,6 +31,15 @@ pub mod system_call;
 /// Transaction and environment validation utilities.
 pub mod validation;
 
+pub use bytecode;
+pub use context;
+pub use context_interface;
+pub use database_interface;
+pub use interpreter;
+pub use precompile;
+pub use primitives;
+pub use state;
+
 // Public exports
 pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};

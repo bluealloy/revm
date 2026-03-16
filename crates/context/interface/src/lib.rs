@@ -14,6 +14,10 @@ pub mod local;
 pub mod result;
 pub mod transaction;
 
+pub use database_interface;
+pub use primitives;
+pub use state;
+
 pub use block::Block;
 pub use cfg::{Cfg, CreateScheme, TransactTo};
 pub use context::{ContextError, ContextSetters, ContextTr};

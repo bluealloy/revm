@@ -23,6 +23,8 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
+pub use primitives;
+
 pub use id::PrecompileId;
 pub use interface::*;
 

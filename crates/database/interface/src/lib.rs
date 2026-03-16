@@ -27,6 +27,9 @@ pub const BENCH_CALLER: Address = EEADDRESS;
 /// BENCH_CALLER_BALANCE balance
 pub const BENCH_CALLER_BALANCE: U256 = TEST_BALANCE;
 
+pub use primitives;
+pub use state;
+
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
 pub mod bal;
