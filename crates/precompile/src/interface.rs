@@ -306,6 +306,11 @@ impl PrecompileError {
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
     }
+
+    /// Returns `true` if the error is `Fatal` or `FatalAny`
+    pub fn is_fatal(&self) -> bool {
+        matches!(self, Self::Fatal(_) | Self::FatalAny(_))
+    }
 }
 
 impl core::error::Error for PrecompileError {}
