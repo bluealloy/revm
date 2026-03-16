@@ -21,6 +21,7 @@ pub mod utils;
 
 /// Re-export of bitvec crate, used to store legacy bytecode jump table.
 pub use bitvec;
+pub use primitives;
 pub use bytecode::{Bytecode, BytecodeKind};
 pub use decode_errors::BytecodeDecodeError;
 pub use iter::BytecodeIterator;
