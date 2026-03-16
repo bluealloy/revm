@@ -1,15 +1,9 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
+use context_interface::result::AnyError;
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
-use std::{
-    borrow::Cow,
-    boxed::Box,
-    hash::{Hash, Hasher},
-    string::String,
-    sync::Arc,
-    vec::Vec,
-};
+use std::{borrow::Cow, boxed::Box, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 
@@ -205,38 +199,6 @@ pub trait Crypto: Send + Sync + Debug {
 
 /// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
 pub type PrecompileFn = fn(&[u8], u64) -> PrecompileResult;
-
-/// Type-erased error type.
-#[derive(Debug, Clone)]
-pub struct AnyError(Arc<dyn core::error::Error + Send + Sync>);
-impl AnyError {
-    /// Creates a new [`AnyError`] from any error type.
-    pub fn new(err: impl core::error::Error + Send + Sync + 'static) -> Self {
-        Self(Arc::new(err))
-    }
-}
-
-impl PartialEq for AnyError {
-    fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
-impl Eq for AnyError {}
-impl Hash for AnyError {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        (Arc::as_ptr(&self.0) as *const ()).hash(state);
-    }
-}
-impl fmt::Display for AnyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
-}
-impl core::error::Error for AnyError {
-    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
-        self.0.source()
-    }
-}
 
 /// Precompile error type.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
