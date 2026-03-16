@@ -586,11 +586,22 @@ impl fmt::Display for StringError {
 }
 impl core::error::Error for StringError {}
 
+impl From<String> for AnyError {
+    fn from(value: String) -> Self {
+        Self::new(StringError(value))
+    }
+}
+impl From<&'static str> for AnyError {
+    fn from(s: &'static str) -> Self {
+        Self::new(StringError(s.into()))
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for AnyError {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Ok(AnyError::new(StringError(s)))
+        Ok(s.into())
     }
 }
 
@@ -617,7 +628,7 @@ impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
     fn from(value: ContextError<DBError>) -> Self {
         match value {
             ContextError::Db(e) => Self::Database(e),
-            ContextError::Custom(e) => Self::Custom(AnyError::new(StringError(e))),
+            ContextError::Custom(e) => Self::Custom(e.into()),
         }
     }
 }
@@ -636,7 +647,7 @@ pub trait FromStringError {
 
 impl<DB, TX> FromStringError for EVMError<DB, TX> {
     fn from_string(value: String) -> Self {
-        Self::Custom(AnyError::new(StringError(value)))
+        Self::Custom(value.into())
     }
 }
 
