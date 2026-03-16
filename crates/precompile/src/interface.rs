@@ -341,6 +341,8 @@ impl PrecompileError {
     }
 }
 
+impl core::error::Error for PrecompileError {}
+
 impl fmt::Display for PrecompileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
