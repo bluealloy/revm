@@ -619,7 +619,12 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     ///
     /// This includes `PrecompileError::Fatal` errors as well as any custom errors
     /// returned by handler registers.
-    Custom(AnyError),
+    Custom(String),
+    /// Custom error for non-standard EVM failures.
+    ///
+    /// This includes `PrecompileError::Fatal` errors as well as any custom errors
+    /// returned by handler registers.
+    CustomAny(AnyError),
 }
 
 impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
@@ -628,7 +633,7 @@ impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
     fn from(value: ContextError<DBError>) -> Self {
         match value {
             ContextError::Db(e) => Self::Database(e),
-            ContextError::Custom(e) => Self::Custom(e.into()),
+            ContextError::Custom(e) => Self::Custom(e),
         }
     }
 }
@@ -647,7 +652,7 @@ pub trait FromStringError {
 
 impl<DB, TX> FromStringError for EVMError<DB, TX> {
     fn from_string(value: String) -> Self {
-        Self::Custom(value.into())
+        Self::Custom(value)
     }
 }
 
@@ -668,6 +673,7 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
             Self::Header(e) => EVMError::Header(e),
             Self::Database(e) => EVMError::Database(op(e)),
             Self::Custom(e) => EVMError::Custom(e),
+            Self::CustomAny(e) => EVMError::CustomAny(e),
         }
     }
 }
@@ -683,7 +689,8 @@ where
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Custom(e) => Some(e.0.as_ref()),
+            Self::Custom(_) => None,
+            Self::CustomAny(e) => Some(e.0.as_ref()),
         }
     }
 }
@@ -699,7 +706,8 @@ where
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Custom(e) => write!(f, "{e}"),
+            Self::Custom(e) => f.write_str(e),
+            Self::CustomAny(e) => write!(f, "{e}"),
         }
     }
 }
