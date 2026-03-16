@@ -3,7 +3,7 @@
 use context_interface::result::AnyError;
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
-use std::{borrow::Cow, boxed::Box, vec::Vec};
+use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
 
 use crate::bls12_381::{G1Point, G1PointScalar, G2Point, G2PointScalar};
 

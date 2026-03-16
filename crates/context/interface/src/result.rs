@@ -12,14 +12,7 @@ use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
-use std::{
-    borrow::Cow,
-    boxed::Box,
-    hash::{Hash, Hasher},
-    string::String,
-    sync::Arc,
-    vec::Vec,
-};
+use std::{borrow::Cow, boxed::Box, string::String, sync::Arc, vec::Vec};
 
 /// Trait for the halt reason.
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
@@ -554,8 +547,8 @@ impl PartialEq for AnyError {
     }
 }
 impl Eq for AnyError {}
-impl Hash for AnyError {
-    fn hash<H: Hasher>(&self, state: &mut H) {
+impl core::hash::Hash for AnyError {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         (Arc::as_ptr(&self.0) as *const ()).hash(state);
     }
 }
@@ -573,7 +566,7 @@ impl core::error::Error for AnyError {
 #[cfg(feature = "serde")]
 impl serde::Serialize for AnyError {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
+        serializer.collect_str(self)
     }
 }
 
