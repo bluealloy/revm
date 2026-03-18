@@ -12,7 +12,7 @@ use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use state::EvmState;
-use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
+use std::{borrow::Cow, boxed::Box, string::String, sync::Arc, vec::Vec};
 
 /// Trait for the halt reason.
 pub trait HaltReasonTr: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
@@ -620,6 +620,73 @@ impl fmt::Display for Output {
     }
 }
 
+/// Type-erased error type.
+#[derive(Debug, Clone)]
+pub struct AnyError(Arc<dyn core::error::Error + Send + Sync>);
+impl AnyError {
+    /// Creates a new [`AnyError`] from any error type.
+    pub fn new(err: impl core::error::Error + Send + Sync + 'static) -> Self {
+        Self(Arc::new(err))
+    }
+}
+
+impl PartialEq for AnyError {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+impl Eq for AnyError {}
+impl core::hash::Hash for AnyError {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        (Arc::as_ptr(&self.0) as *const ()).hash(state);
+    }
+}
+impl fmt::Display for AnyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+impl core::error::Error for AnyError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        self.0.source()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for AnyError {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}
+
+#[derive(Debug)]
+struct StringError(String);
+impl fmt::Display for StringError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+impl core::error::Error for StringError {}
+
+impl From<String> for AnyError {
+    fn from(value: String) -> Self {
+        Self::new(StringError(value))
+    }
+}
+impl From<&'static str> for AnyError {
+    fn from(s: &'static str) -> Self {
+        Self::new(StringError(s.into()))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for AnyError {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(s.into())
+    }
+}
+
 /// Main EVM error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -632,9 +699,14 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     Database(DBError),
     /// Custom error for non-standard EVM failures.
     ///
-    /// This includes `PrecompileError::Fatal` errors as well as any custom errors
-    /// returned by handler registers.
+    /// This includes `PrecompileError::Fatal` and `PrecompileError::FatalAny`
+    /// errors as well as any custom errors returned by handler registers.
     Custom(String),
+    /// Custom error for non-standard EVM failures.
+    ///
+    /// This includes `PrecompileError::Fatal` and `PrecompileError::FatalAny`
+    /// errors as well as any custom errors returned by handler registers.
+    CustomAny(AnyError),
 }
 
 impl<DBError, TransactionValidationErrorT> From<ContextError<DBError>>
@@ -683,6 +755,7 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
             Self::Header(e) => EVMError::Header(e),
             Self::Database(e) => EVMError::Database(op(e)),
             Self::Custom(e) => EVMError::Custom(e),
+            Self::CustomAny(e) => EVMError::CustomAny(e),
         }
     }
 }
@@ -699,6 +772,7 @@ where
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
             Self::Custom(_) => None,
+            Self::CustomAny(e) => Some(e.0.as_ref()),
         }
     }
 }
@@ -715,6 +789,7 @@ where
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
             Self::Custom(e) => f.write_str(e),
+            Self::CustomAny(e) => write!(f, "{e}"),
         }
     }
 }

@@ -16,6 +16,8 @@ pub mod result;
 pub mod spec;
 pub mod transaction;
 
+pub use revm;
+
 pub use api::{
     builder::OpBuilder,
     default_ctx::{DefaultOp, OpContext},

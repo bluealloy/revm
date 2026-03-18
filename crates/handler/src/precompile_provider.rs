@@ -2,7 +2,7 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
-use precompile::{PrecompileError, PrecompileSpecId, Precompiles};
+use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
     boxed::Box,
@@ -127,13 +127,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 };
                 result.output = output.bytes;
             }
-            Err(failure) if matches!(failure.error, PrecompileError::Fatal(_)) => {
-                let PrecompileError::Fatal(e) = failure.error else {
-                    unreachable!()
-                };
-                return Err(e);
-            }
             Err(failure) => {
+                if failure.error.is_fatal() {
+                    return Err(failure.error.to_string());
+                }
                 // If the precompile tracked state gas, propagate it for reservoir refill.
                 if let Some(gas) = failure.gas {
                     *result.gas.tracker_mut() = gas;

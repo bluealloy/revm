@@ -297,7 +297,7 @@ impl Host for DummyHost {
         _target: Address,
         _skip_cold_load: bool,
     ) -> Result<StateLoad<SelfDestructResult>, LoadError> {
-        Err(LoadError::ColdLoadSkipped)
+        Ok(Default::default())
     }
 
     fn log(&mut self, _log: Log) {}
@@ -314,7 +314,7 @@ impl Host for DummyHost {
         _load_code: bool,
         _skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, LoadError> {
-        Err(LoadError::DBError)
+        Ok(Default::default())
     }
 
     fn sstore_skip_cold_load(
@@ -324,7 +324,7 @@ impl Host for DummyHost {
         _value: StorageValue,
         _skip_cold_load: bool,
     ) -> Result<StateLoad<SStoreResult>, LoadError> {
-        Err(LoadError::DBError)
+        Ok(Default::default())
     }
 
     fn sload_skip_cold_load(
@@ -333,6 +333,6 @@ impl Host for DummyHost {
         _key: StorageKey,
         _skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, LoadError> {
-        Err(LoadError::DBError)
+        Ok(Default::default())
     }
 }

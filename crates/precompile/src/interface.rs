@@ -1,6 +1,7 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
 use context_interface::cfg::gas::GasTracker;
+use context_interface::result::AnyError;
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
 use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
@@ -322,6 +323,11 @@ pub enum PrecompileError {
     /// Unlike other variants which result in a normal precompile revert,
     /// this error propagates as `EVMError::Custom` and aborts the entire transaction.
     Fatal(String),
+    /// Unrecoverable error that halts EVM execution.
+    ///
+    /// Unlike other variants which result in a normal precompile revert,
+    /// this error propagates as `EVMError::Custom` and aborts the entire transaction.
+    FatalAny(AnyError),
     /// Catch-all variant for precompile errors without a dedicated variant.
     ///
     /// This is handled like any other named error variant (e.g. `OutOfGas`, `Blake2WrongLength`)
@@ -343,6 +349,11 @@ impl PrecompileError {
     /// Returns `true` if the error is out of gas.
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
+    }
+
+    /// Returns `true` if the error is `Fatal` or `FatalAny`
+    pub fn is_fatal(&self) -> bool {
+        matches!(self, Self::Fatal(_) | Self::FatalAny(_))
     }
 }
 
@@ -386,7 +397,8 @@ impl fmt::Display for PrecompileError {
             Self::KzgG1PointNotInSubgroup => "kzg g1 point not in correct subgroup",
             Self::KzgInvalidInputLength => "kzg invalid input length",
             Self::Secp256k1RecoverFailed => "secp256k1 signature recovery failed",
-            Self::Fatal(s) => s,
+            Self::Fatal(s) => return write!(f, "fatal: {s}"),
+            Self::FatalAny(s) => return write!(f, "fatal: {s}"),
             Self::Other(s) => s,
         };
         f.write_str(s)

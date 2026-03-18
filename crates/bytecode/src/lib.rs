@@ -26,3 +26,4 @@ pub use decode_errors::BytecodeDecodeError;
 pub use iter::BytecodeIterator;
 pub use legacy::JumpTable;
 pub use opcode::OpCode;
+pub use primitives;

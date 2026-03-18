@@ -5,6 +5,12 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+pub use bytecode;
+pub use context_interface;
+pub use database_interface;
+pub use primitives;
+pub use state;
+
 pub use context_interface::*;
 
 pub mod block;

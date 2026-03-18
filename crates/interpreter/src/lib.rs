@@ -25,6 +25,11 @@ pub mod interpreter_action;
 /// Type traits and definitions for interpreter customization.
 pub mod interpreter_types;
 
+pub use bytecode;
+pub use context_interface;
+pub use primitives;
+pub use state;
+
 // Reexport primary types.
 pub use context_interface::{
     cfg::gas::InitialAndFloorGas,
