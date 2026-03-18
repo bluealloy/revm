@@ -105,20 +105,34 @@ impl Gas {
 
     /// Returns the total amount of gas spent.
     #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "After EIP-8037 gas is split on
+    regular and state gas, this method is no longer valid.
+    Use [`Gas::total_gas_spent`] instead"
+    )]
     pub const fn spent(&self) -> u64 {
+        self.limit - self.tracker.remaining()
+    }
+
+    /// Returns the regular gas spent.
+    #[inline]
+    pub const fn total_gas_spent(&self) -> u64 {
         self.limit - self.tracker.remaining()
     }
 
     /// Returns the final amount of gas used by subtracting the refund from spent gas.
     #[inline]
     pub const fn used(&self) -> u64 {
-        self.spent().saturating_sub(self.refunded() as u64)
+        self.total_gas_spent()
+            .saturating_sub(self.refunded() as u64)
     }
 
     /// Returns the total amount of gas spent, minus the refunded gas.
     #[inline]
     pub const fn spent_sub_refunded(&self) -> u64 {
-        self.spent().saturating_sub(self.tracker.refunded() as u64)
+        self.total_gas_spent()
+            .saturating_sub(self.tracker.refunded() as u64)
     }
 
     /// Returns the amount of gas remaining.
@@ -185,8 +199,9 @@ impl Gas {
     #[inline]
     pub fn set_final_refund(&mut self, is_london: bool) {
         let max_refund_quotient = if is_london { 5 } else { 2 };
-        self.tracker
-            .set_refunded((self.refunded() as u64).min(self.spent() / max_refund_quotient) as i64);
+        self.tracker.set_refunded(
+            (self.refunded() as u64).min(self.total_gas_spent() / max_refund_quotient) as i64,
+        );
     }
 
     /// Set a refund value. This overrides the current refund value.
@@ -407,23 +422,22 @@ mod tests {
     }
 
     /// A.1: Verify state_gas_spent is incremented even after failed record_state_cost.
-    /// This documents the current behavior: state_gas_spent is bumped before validation,
-    /// so a failed spill leaves an inflated counter.
+    /// On OOG, state_gas_spent is NOT incremented and reservoir is unchanged.
     #[test]
     fn test_record_state_cost_oog_inflates_state_gas_spent() {
         // remaining=30, reservoir=0, cost=100 → OOG
         let mut gas = Gas::new(30);
         assert!(!gas.record_state_cost(100));
-        // state_gas_spent is incremented before the OOG check
-        assert_eq!(gas.state_gas_spent(), 100);
+        // On OOG, state_gas_spent is NOT incremented (operation failed)
+        assert_eq!(gas.state_gas_spent(), 0);
 
         // With reservoir partially covering: reservoir=20, remaining=30, cost=100
         // spill = 100 - 20 = 80, remaining(30) < 80 → OOG
         let mut gas = Gas::new_with_regular_gas_and_reservoir(30, 20);
         assert!(!gas.record_state_cost(100));
-        assert_eq!(gas.state_gas_spent(), 100);
-        // reservoir is consumed even on failure
-        assert_eq!(gas.reservoir(), 0);
+        // On OOG, state_gas_spent is NOT incremented and reservoir is unchanged
+        assert_eq!(gas.state_gas_spent(), 0);
+        assert_eq!(gas.reservoir(), 20);
     }
 
     /// A.3: State gas with zero regular remaining but non-zero reservoir.

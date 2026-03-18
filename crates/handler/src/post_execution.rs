@@ -10,14 +10,11 @@ use primitives::{hardfork::SpecId, U256};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
-    ResultGas::new(
-        gas.limit(),
-        gas.spent(),
-        gas.refunded() as u64,
-        init_and_floor_gas.floor_gas,
-        init_and_floor_gas.initial_total_gas,
-        gas.state_gas_spent() + init_and_floor_gas.initial_state_gas,
-    )
+    ResultGas::default()
+        .with_total_gas_spent(gas.total_gas_spent())
+        .with_refunded(gas.refunded() as u64)
+        .with_floor_gas(init_and_floor_gas.floor_gas)
+        .with_state_gas_spent(gas.state_gas_spent() + init_and_floor_gas.initial_state_gas)
 }
 
 /// Ensures minimum gas floor is spent according to EIP-7623.

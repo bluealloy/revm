@@ -97,7 +97,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
-            gas: Gas::new(inputs.gas_limit),
+            gas: Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, inputs.reservoir),
             output: Bytes::new(),
         };
 
@@ -129,6 +129,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             }
             Err(PrecompileError::Fatal(e)) => return Err(e),
             Err(e) => {
+                // TODO(state-gas): refill of reservoir is not happening as we dont have info.
+                // This only happens if precompile changes state gas.
                 result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {

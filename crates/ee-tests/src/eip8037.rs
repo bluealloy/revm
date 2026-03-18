@@ -37,6 +37,12 @@ const STATE_GAS_NEW_ACCOUNT: u64 = 250_000;
 const STATE_GAS_CODE_DEPOSIT: u64 = 1000; // per byte
 const STATE_GAS_CREATE: u64 = 330_000;
 
+/// EIP-8037 hash cost for deployed bytecode: 6 × ceil(len / 32).
+/// This is a regular gas cost only charged when EIP-8037 is enabled.
+const fn hash_cost(len: usize) -> u64 {
+    6 * ((len as u64 + 31) / 32)
+}
+
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
 
 /// Builds an EVM with state gas enabled and custom gas params.
@@ -484,7 +490,7 @@ fn test_eip8037_sstore_new_slot() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -493,18 +499,17 @@ fn test_eip8037_sstore_new_slot() {
 
     assert!(baseline_result.is_success(), "Baseline should succeed");
     assert!(result.is_success(), "State gas variant should succeed");
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(
         delta, STATE_GAS_SSTORE_SET,
         "SSTORE new slot should add exactly {STATE_GAS_SSTORE_SET} state gas, got delta {delta}"
     );
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     assert_eq!(
-        result.gas().spent() - baseline_result.gas().spent(),
+        result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent(),
         STATE_GAS_SSTORE_SET
     );
     compare_or_save_eip8037_testdata(
@@ -522,7 +527,7 @@ fn test_eip8037_sstore_overwrite_no_state_gas() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -531,14 +536,13 @@ fn test_eip8037_sstore_overwrite_no_state_gas() {
 
     assert!(baseline_result.is_success());
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(
         delta, STATE_GAS_SSTORE_SET,
         "Only the first SSTORE (0->1) should charge state gas, got delta {delta}"
     );
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(
@@ -556,7 +560,7 @@ fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -565,13 +569,12 @@ fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
 
     assert!(baseline_result.is_success());
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, 0, "SSTORE zero→zero should add no state gas");
     assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas_used(), baseline_gas);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
+    assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
+    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_zero_to_zero_no_state_gas.json",
         &(baseline_result, result),
@@ -587,7 +590,7 @@ fn test_eip8037_sstore_multiple_new_slots() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -597,17 +600,16 @@ fn test_eip8037_sstore_multiple_new_slots() {
     assert!(baseline_result.is_success());
     assert!(result.is_success());
     let expected = 3 * STATE_GAS_SSTORE_SET;
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(
         delta, expected,
         "3 new slots should add {expected} state gas, got delta {delta}"
     );
     assert_eq!(result.gas().state_gas_spent(), expected);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(
-        result.gas().spent() - baseline_result.gas().spent(),
+        result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent(),
         expected
     );
     compare_or_save_eip8037_testdata(
@@ -628,7 +630,7 @@ fn test_eip8037_create_empty_code() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -637,12 +639,11 @@ fn test_eip8037_create_empty_code() {
 
     assert!(result.is_success());
     let expected = STATE_GAS_CREATE;
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected);
     assert_eq!(result.gas().state_gas_spent(), expected);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
-    assert_eq!(result.gas_used(), baseline_gas + expected);
+    assert_eq!(result.tx_gas_used(), baseline_gas + expected);
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_empty_code.json",
         &(baseline_result, result),
@@ -659,7 +660,7 @@ fn test_eip8037_create_with_code() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -667,13 +668,13 @@ fn test_eip8037_create_with_code() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
+    let expected_delta = expected_state_gas + hash_cost(10);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
-    assert_eq!(result.gas_used(), baseline_gas + expected);
+    assert_eq!(result.tx_gas_used(), baseline_gas + expected_delta);
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_with_code.json",
         &(baseline_result, result),
@@ -690,7 +691,7 @@ fn test_eip8037_create_with_sstore() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -698,12 +699,12 @@ fn test_eip8037_create_with_sstore() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
+    let expected_delta = expected_state_gas + hash_cost(1);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert_eq!(result.gas().inner_refunded(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_with_sstore.json",
@@ -721,7 +722,7 @@ fn test_eip8037_create2_with_code() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
     assert!(baseline_result.is_success());
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
@@ -730,12 +731,12 @@ fn test_eip8037_create2_with_code() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 10;
+    let expected_delta = expected_state_gas + hash_cost(10);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     // CREATE2 uses more regular gas than CREATE (hashing) but same state gas
     let create_init = return_n_bytes_init_code(10);
     let mut create_evm = state_gas_evm(create_bytecode(&create_init), u64::MAX);
@@ -764,7 +765,7 @@ fn test_eip8037_create_code_deposit_state_gas_oog() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(baseline_result.is_success());
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     // Baseline succeeds at tight limit.
     let tight_limit = baseline_gas + 1;
@@ -797,7 +798,7 @@ fn test_eip8037_create_code_deposit_state_gas_oog() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), tight_limit);
+    assert_eq!(result.tx_gas_used(), tight_limit);
     assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_code_deposit_state_gas_oog.json",
@@ -817,7 +818,7 @@ fn test_eip8037_call_new_account() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -826,19 +827,11 @@ fn test_eip8037_call_new_account() {
 
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
-        result.gas().spent(),
-        baseline_result.gas().spent() + STATE_GAS_NEW_ACCOUNT
-    );
-    assert_eq!(
-        result.gas().intrinsic_gas(),
-        baseline_result.gas().intrinsic_gas()
-    );
-    assert_eq!(
-        result.gas().remaining(),
-        baseline_result.gas().remaining() - STATE_GAS_NEW_ACCOUNT
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent() + STATE_GAS_NEW_ACCOUNT
     );
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_new_account.json",
@@ -855,7 +848,7 @@ fn test_eip8037_call_existing_account() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -864,9 +857,8 @@ fn test_eip8037_call_existing_account() {
 
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas_used(), baseline_gas);
-    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
-    assert_eq!(result.gas().remaining(), baseline_result.gas().remaining());
+    assert_eq!(result.tx_gas_used(), baseline_gas);
+    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_existing_account.json",
         &(baseline_result, result),
@@ -883,7 +875,7 @@ fn test_eip8037_selfdestruct_new_account() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -892,15 +884,11 @@ fn test_eip8037_selfdestruct_new_account() {
 
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
-        result.gas().spent(),
-        baseline_result.gas().spent() + STATE_GAS_NEW_ACCOUNT
-    );
-    assert_eq!(
-        result.gas().intrinsic_gas(),
-        baseline_result.gas().intrinsic_gas()
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent() + STATE_GAS_NEW_ACCOUNT
     );
     compare_or_save_eip8037_testdata(
         "test_eip8037_selfdestruct_new_account.json",
@@ -917,7 +905,7 @@ fn test_eip8037_selfdestruct_existing_account() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -926,9 +914,9 @@ fn test_eip8037_selfdestruct_existing_account() {
 
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas_used(), baseline_gas);
-    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
-    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(result.tx_gas_used(), baseline_gas);
+    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
+    assert_eq!(result.tx_gas_used(), baseline_gas);
     compare_or_save_eip8037_testdata(
         "test_eip8037_selfdestruct_existing_account.json",
         &(baseline_result, result),
@@ -970,10 +958,8 @@ fn test_eip8037_regular_gas_cap_causes_oog() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), 30_000);
-    assert_eq!(result.gas().spent(), 30_000);
-    assert_eq!(result.gas().remaining(), 0);
-    assert_eq!(result.gas().limit(), 30_000);
+    assert_eq!(result.tx_gas_used(), 30_000);
+    assert_eq!(result.gas().total_gas_spent(), 30_000);
     compare_or_save_eip8037_testdata(
         "test_eip8037_regular_gas_cap_causes_oog.json",
         &(baseline_result, result),
@@ -996,7 +982,7 @@ fn test_eip8037_regular_gas_cap_sufficient() {
                 .build_fill(),
         )
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
     assert!(baseline_result.is_success());
 
     let mut evm = state_gas_evm(bytecode, gas_limit);
@@ -1010,12 +996,10 @@ fn test_eip8037_regular_gas_cap_sufficient() {
         .unwrap();
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
-    assert!(result.gas().remaining() > 0);
-    assert_eq!(result.gas().limit(), gas_limit);
+    assert_eq!(result.tx_gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     compare_or_save_eip8037_testdata(
         "test_eip8037_regular_gas_cap_sufficient.json",
         &(baseline_result, result),
@@ -1037,7 +1021,7 @@ fn test_eip8037_state_gas_oog_remaining() {
         )
         .unwrap();
     assert!(baseline_result.is_success());
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1056,10 +1040,9 @@ fn test_eip8037_state_gas_oog_remaining() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), 50_000);
+    assert_eq!(result.tx_gas_used(), 50_000);
     assert!(baseline_gas < 50_000);
     assert!(baseline_gas + STATE_GAS_SSTORE_SET > 50_000);
-    assert_eq!(result.gas().remaining(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_state_gas_oog_remaining.json",
         &(baseline_result, result),
@@ -1081,7 +1064,7 @@ fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
         )
         .unwrap();
     assert!(baseline_result.is_success());
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     // gas_limit=500k, cap=50k: reservoir covers state gas.
     let mut evm = state_gas_evm(bytecode, 50_000);
@@ -1095,12 +1078,11 @@ fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
         .unwrap();
 
     assert!(result.is_success());
-    assert!(result.gas_used() > 50_000, "gas_used exceeds cap");
+    assert!(result.tx_gas_used() > 50_000, "gas_used exceeds cap");
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
-    assert!(result.gas().remaining() > 0);
+    assert_eq!(result.tx_gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     compare_or_save_eip8037_testdata(
         "test_eip8037_tx_limit_cap_not_enforced_with_state_gas.json",
         &(baseline_result, result),
@@ -1197,25 +1179,21 @@ fn test_eip8037_create_child_propagates() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    let expected = STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_SSTORE_SET + STATE_GAS_CODE_DEPOSIT;
+    let expected_delta = expected_state_gas + hash_cost(1);
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert!(result.gas().remaining() > 0);
-    assert_eq!(
-        result.gas().intrinsic_gas(),
-        baseline_result.gas().intrinsic_gas()
-    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_child_propagates.json",
         &(baseline_result, result),
@@ -1232,7 +1210,7 @@ fn test_eip8037_reverted_create_child() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1243,14 +1221,13 @@ fn test_eip8037_reverted_create_child() {
     let parent_state_gas = STATE_GAS_CREATE;
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
     // state_gas_spent reflects only parent's state gas (child's state gas refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     // All state gas is either spent (parent) or refunded (child on revert).
     assert_eq!(delta, result.gas().state_gas_spent());
-    assert!(result.gas().remaining() > 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_reverted_create_child.json",
         &(baseline_result, result),
@@ -1274,7 +1251,7 @@ fn test_eip8037_call_child_sstore_propagates() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1283,13 +1260,13 @@ fn test_eip8037_call_child_sstore_propagates() {
 
     let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
     let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+    let expected_delta = expected_state_gas + hash_cost(child_runtime.len());
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected_state_gas);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert!(result.gas().remaining() > 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_child_sstore_propagates.json",
         &(baseline_result, result),
@@ -1318,7 +1295,7 @@ fn test_eip8037_call_child_sstore_reverts() {
         .transact(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap()
         .result;
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1332,13 +1309,10 @@ fn test_eip8037_call_child_sstore_reverts() {
     assert!(result.is_success());
     // state_gas_spent reflects only CREATE costs (child SSTORE refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), create_state_gas);
-    // Total delta equals CREATE state gas (child's SSTORE state gas is refunded).
-    let expected_delta = create_state_gas;
-    let delta = result.gas_used() - baseline_gas;
+    // Total delta equals CREATE state gas + hash cost (child's SSTORE state gas is refunded).
+    let expected_delta = create_state_gas + hash_cost(child_runtime.len());
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    // All state gas is either spent (parent CREATE) or refunded (child SSTORE on revert).
-    assert_eq!(delta, result.gas().state_gas_spent());
-    assert!(result.gas().remaining() > 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_child_sstore_reverts.json",
         &(baseline_result, result),
@@ -1362,7 +1336,7 @@ fn test_eip8037_nested_call_create_sstore() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1371,10 +1345,11 @@ fn test_eip8037_nested_call_create_sstore() {
 
     let code_deposit_gas = STATE_GAS_CODE_DEPOSIT * child_runtime.len() as u64;
     let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+    let expected_delta = expected_state_gas + hash_cost(child_runtime.len());
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected_state_gas);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
 
@@ -1404,7 +1379,7 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1414,11 +1389,11 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     assert!(result.is_success());
     // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let spent_delta = result.gas().spent() - baseline_result.gas().spent();
+    let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
     assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
     // Refund does NOT undo state gas — gas_used is higher than baseline.
-    assert!(result.gas_used() > baseline_gas);
-    assert!(result.gas().spent() > baseline_result.gas().spent());
+    assert!(result.tx_gas_used() > baseline_gas);
+    assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_set_then_clear_refund.json",
         &(baseline_result, result),
@@ -1435,7 +1410,7 @@ fn test_eip8037_state_gas_does_not_reduce_regular_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(baseline_result.is_success());
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let tight_cap = baseline_gas + STATE_GAS_SSTORE_SET + 1;
     let mut evm = state_gas_evm(bytecode, tight_cap);
@@ -1449,13 +1424,9 @@ fn test_eip8037_state_gas_does_not_reduce_regular_gas() {
         .unwrap();
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(
-        result.gas().intrinsic_gas(),
-        baseline_result.gas().intrinsic_gas()
-    );
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_state_gas_does_not_reduce_regular_gas.json",
@@ -1499,7 +1470,7 @@ fn test_eip8037_gas_opcode_excludes_reservoir() {
     let output = result.output().unwrap();
     assert_eq!(output.len(), 32);
     let gas_opcode_value = U256::from_be_slice(output.as_ref());
-    let intrinsic = result.gas().intrinsic_gas();
+    let intrinsic = 21_000u64; // Standard intrinsic gas
     let execution_gas = gas_limit - intrinsic;
     assert!(gas_opcode_value < U256::from(execution_gas));
     // GAS opcode with state gas should be less than baseline (reservoir excluded).
@@ -1532,7 +1503,7 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         .unwrap();
 
     assert!(baseline_result.is_halt());
-    assert_eq!(baseline_result.gas_used(), gas_limit);
+    assert_eq!(baseline_result.tx_gas_used(), gas_limit);
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1551,9 +1522,9 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), gas_limit);
+    assert_eq!(result.tx_gas_used(), gas_limit);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas_used(), baseline_result.gas_used());
+    assert_eq!(result.tx_gas_used(), baseline_result.tx_gas_used());
     compare_or_save_eip8037_testdata(
         "test_eip8037_spend_all_preserves_reservoir.json",
         &(baseline_result, result),
@@ -1580,11 +1551,10 @@ fn test_eip8037_state_gas_spent_in_result() {
 
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let spent_delta = result.gas().spent() - baseline_result.gas().spent();
+    let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
     assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
-    let gas_used_delta = result.gas_used() - baseline_result.gas_used();
+    let gas_used_delta = result.tx_gas_used() - baseline_result.tx_gas_used();
     assert_eq!(gas_used_delta, STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas().limit(), baseline_result.gas().limit());
     compare_or_save_eip8037_testdata(
         "test_eip8037_state_gas_spent_in_result.json",
         &(baseline_result, result),
@@ -1600,7 +1570,7 @@ fn test_eip8037_precompile_no_state_gas() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
     assert!(baseline_result.is_success());
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
@@ -1609,15 +1579,11 @@ fn test_eip8037_precompile_no_state_gas() {
         .unwrap();
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, 0);
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().spent(), baseline_result.gas().spent());
-    assert_eq!(
-        result.gas().intrinsic_gas(),
-        baseline_result.gas().intrinsic_gas()
-    );
+    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
     compare_or_save_eip8037_testdata(
         "test_eip8037_precompile_no_state_gas.json",
         &(baseline_result, result),
@@ -1649,7 +1615,7 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
                 .build_fill(),
         )
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1662,13 +1628,12 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
         .unwrap();
 
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert!(result.gas_used() < gas_limit, "REVERT reimburses remaining");
+    assert!(result.tx_gas_used() < gas_limit, "REVERT reimburses remaining");
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(
         "test_eip8037_reservoir_refill_revert_state_gas_less.json",
@@ -1691,7 +1656,7 @@ fn test_eip8037_reservoir_refill_revert_state_gas_more() {
                 .build_fill(),
         )
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1705,13 +1670,12 @@ fn test_eip8037_reservoir_refill_revert_state_gas_more() {
 
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
     let expected_delta = 2 * STATE_GAS_SSTORE_SET;
-    let delta = result.gas_used() - baseline_gas;
+    let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), 2 * STATE_GAS_SSTORE_SET);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert!(result.gas_used() < gas_limit);
+    assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(
         "test_eip8037_reservoir_refill_revert_state_gas_more.json",
@@ -1753,11 +1717,9 @@ fn test_eip8037_reservoir_refill_halt_state_gas_less() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), gas_limit);
-    assert_eq!(result.gas().remaining(), 0);
-    assert_eq!(result.gas().spent(), gas_limit);
+    assert_eq!(result.tx_gas_used(), gas_limit);
+    assert_eq!(result.gas().total_gas_spent(), gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(
         "test_eip8037_reservoir_refill_halt_state_gas_less.json",
@@ -1788,11 +1750,9 @@ fn test_eip8037_reservoir_refill_halt_state_gas_more() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.gas_used(), gas_limit);
-    assert_eq!(result.gas().remaining(), 0);
-    assert_eq!(result.gas().spent(), gas_limit);
+    assert_eq!(result.tx_gas_used(), gas_limit);
+    assert_eq!(result.gas().total_gas_spent(), gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().intrinsic_gas(), 21_000);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(
         "test_eip8037_reservoir_refill_halt_state_gas_more.json",
@@ -1831,12 +1791,10 @@ fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
 
     assert!(result_halt.is_halt());
     assert!(!result_revert.is_success() && !result_revert.is_halt());
-    assert_eq!(result_halt.gas_used(), halt_gas_limit);
-    assert!(result_revert.gas_used() < revert_gas_limit);
-    assert!(result_halt.gas_used() < result_revert.gas_used());
+    assert_eq!(result_halt.tx_gas_used(), halt_gas_limit);
+    assert!(result_revert.tx_gas_used() < revert_gas_limit);
+    assert!(result_halt.tx_gas_used() < result_revert.tx_gas_used());
     assert_eq!(result_revert.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(result_halt.gas().remaining(), 0);
-    assert!(result_revert.gas().remaining() > 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
     compare_or_save_eip8037_testdata(
@@ -1945,7 +1903,7 @@ fn test_eip8037_call_new_account_no_value() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1955,7 +1913,7 @@ fn test_eip8037_call_new_account_no_value() {
     assert!(result.is_success());
     // No value transfer → no new_account_state_gas even for empty account.
     assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas_used(), baseline_gas);
+    assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_new_account_no_value.json",
@@ -1974,7 +1932,7 @@ fn test_eip8037_create_large_code() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1982,15 +1940,16 @@ fn test_eip8037_create_large_code() {
         .unwrap();
 
     assert!(result.is_success());
-    let expected = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 200;
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * 200;
+    let expected_delta = expected_state_gas + hash_cost(200);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     // Verify code deposit portion is significant
     let code_deposit_portion = STATE_GAS_CODE_DEPOSIT * 200;
     assert_eq!(code_deposit_portion, 200_000);
-    assert_eq!(result.gas_used(), baseline_gas + expected);
+    assert_eq!(result.tx_gas_used(), baseline_gas + expected_delta);
     compare_or_save_eip8037_testdata(
         "test_eip8037_create_large_code.json",
         &(baseline_result, result),
@@ -2020,7 +1979,7 @@ fn test_eip8037_parent_sstore_after_child_revert() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.gas_used();
+    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -2031,10 +1990,11 @@ fn test_eip8037_parent_sstore_after_child_revert() {
     // Parent's CREATE state gas + code deposit + parent's own SSTORE.
     // Child's SSTORE state gas (200k) is refunded on revert.
     let expected_state_gas = STATE_GAS_CREATE + code_deposit_gas + STATE_GAS_SSTORE_SET;
+    let expected_delta = expected_state_gas + hash_cost(child_runtime.len());
 
     assert!(result.is_success());
-    let delta = result.gas_used() - baseline_gas;
-    assert_eq!(delta, expected_state_gas);
+    let delta = result.tx_gas_used() - baseline_gas;
+    assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(

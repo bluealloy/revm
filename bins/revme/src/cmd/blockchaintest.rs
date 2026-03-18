@@ -884,7 +884,7 @@ fn execute_blockchain_test(
                                 "block": block_idx,
                                 "tx": tx_idx,
                                 "expected_exception": expected_exception,
-                                "gas_used": result.result.gas_used(),
+                                "gas_used": result.result.gas().tx_gas_used(),
                                 "status": "unexpected_success"
                             });
                             print_json(&output);
@@ -901,9 +901,9 @@ fn execute_blockchain_test(
                     // For pre-Amsterdam, block gas = used() = max(spent - refunded, floor_gas).
                     let gas = result.result.gas();
                     cumulative_gas_used += if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
-                        gas.spent().max(gas.floor_gas())
+                        gas.total_gas_spent().max(gas.floor_gas())
                     } else {
-                        gas.used()
+                        gas.tx_gas_used()
                     };
                     evm.commit(result.state);
                 }

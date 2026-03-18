@@ -475,7 +475,7 @@ fn test_eip7708_selfdestruct_to_self() {
                 .kind(TxKind::Create)
                 .data(SELFDESTRUCT_TO_SELF_INIT_CODE.into())
                 .value(create_value)
-                .gas_limit(100_000)
+                .gas_limit(200_000)
                 .gas_price(0)
                 .build_fill(),
         )
