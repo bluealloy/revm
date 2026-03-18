@@ -464,7 +464,7 @@ mod test {
     use super::*;
 
     fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileResult {
-        PrecompileResult::Err(PrecompileError::OutOfGas)
+        PrecompileResult::Err(PrecompileError::OutOfGas.into())
     }
 
     #[test]
@@ -489,7 +489,7 @@ mod test {
                 .as_ref()
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
+            PrecompileResult::Err(PrecompileError::OutOfGas.into())
         );
 
         assert_eq!(
@@ -497,7 +497,7 @@ mod test {
                 .get(&Address::left_padding_from(&[101]))
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
+            PrecompileResult::Err(PrecompileError::OutOfGas.into())
         );
     }
 
