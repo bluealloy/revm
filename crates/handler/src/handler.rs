@@ -218,24 +218,8 @@ pub trait Handler {
             init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
         let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
         // Create first frame action
-        let mut first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
-
-        // Deduct initial state gas from the reservoir. When the reservoir is
-        // insufficient (e.g. gas_limit < TX_MAX_GAS_LIMIT), the deficit is
-        // charged from the regular gas budget (reducing frame gas_limit).
-        let initial_state_gas = init_and_floor_gas.initial_state_gas;
-        if initial_state_gas > 0 {
-            let reservoir = first_frame_input.frame_input.reservoir();
-            if reservoir >= initial_state_gas {
-                first_frame_input
-                    .frame_input
-                    .set_reservoir(reservoir - initial_state_gas);
-            } else {
-                let deficit = initial_state_gas - reservoir;
-                first_frame_input.frame_input.set_reservoir(0);
-                first_frame_input.frame_input.reduce_gas_limit(deficit);
-            }
-        }
+        // Note: first_frame_input now handles state gas deduction from the reservoir
+        let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
         let initial_reservoir = first_frame_input.frame_input.reservoir();
 
         // Run execution loop
@@ -409,6 +393,21 @@ pub trait Handler {
 
         let mut frame_input = execution::create_init_frame(tx, bytecode, gas_limit);
         frame_input.set_reservoir(reservoir_remaining_gas);
+
+        // Deduct initial state gas from the reservoir. When the reservoir is
+        // insufficient (e.g. gas_limit < TX_MAX_GAS_LIMIT), the deficit is
+        // charged from the regular gas budget (reducing frame gas_limit).
+        let initial_state_gas = init_and_floor_gas.initial_state_gas;
+        if initial_state_gas > 0 {
+            let reservoir = frame_input.reservoir();
+            if reservoir >= initial_state_gas {
+                frame_input.set_reservoir(reservoir - initial_state_gas);
+            } else {
+                let deficit = initial_state_gas - reservoir;
+                frame_input.set_reservoir(0);
+                frame_input.reduce_gas_limit(deficit);
+            }
+        }
 
         Ok(FrameInit {
             depth: 0,
