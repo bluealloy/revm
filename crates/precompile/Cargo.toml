@@ -20,6 +20,7 @@ workspace = true
 [dependencies]
 # revm
 primitives.workspace = true
+context-interface.workspace = true
 
 # modexp precompiles
 aurora-engine-modexp.workspace = true
@@ -79,6 +80,7 @@ default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
 
 std = [
 	"primitives/std",
+	"context-interface/std",
 	"k256/std",
 	"ripemd/std",
 	"sha2/std",
