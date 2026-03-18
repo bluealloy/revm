@@ -155,26 +155,9 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let mut init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)?;
-
-        // EIP-8037: Split auth list refund into state gas and regular gas portions.
-        // The state gas portion directly reduces initial_state_gas (not subject to refund cap).
-        // The regular gas portion goes through the normal refund mechanism.
-        let (eip7702_state_refund, eip7702_regular_refund_raw) = evm
-            .ctx()
-            .cfg()
-            .gas_params()
-            .split_eip7702_refund(eip7702_refund);
-        if eip7702_state_refund > 0 {
-            init_and_floor_gas.initial_state_gas = init_and_floor_gas
-                .initial_state_gas
-                .saturating_sub(eip7702_state_refund);
-            // Also reduce initial_total_gas since state gas is a subset
-            init_and_floor_gas.initial_total_gas = init_and_floor_gas
-                .initial_total_gas
-                .saturating_sub(eip7702_state_refund);
-        }
-        let eip7702_regular_refund = eip7702_regular_refund_raw as i64;
+        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas)?;
+        // Regular refund is returned from pre_execution after state gas split is applied
+        let eip7702_regular_refund = eip7702_refund as i64;
 
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
         let result_gas = self.post_execution(
@@ -208,11 +191,15 @@ pub trait Handler {
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
-    fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+    fn pre_execution(
+        &self,
+        evm: &mut Self::Evm,
+        init_and_floor_gas: &mut InitialAndFloorGas,
+    ) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
 
-        let gas = self.apply_eip7702_auth_list(evm)?;
+        let gas = self.apply_eip7702_auth_list(evm, init_and_floor_gas)?;
         Ok(gas)
     }
 
@@ -338,8 +325,12 @@ pub trait Handler {
     ///
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
-    fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        apply_eip7702_auth_list(evm.ctx_mut())
+    fn apply_eip7702_auth_list(
+        &self,
+        evm: &mut Self::Evm,
+        init_and_floor_gas: &mut InitialAndFloorGas,
+    ) -> Result<u64, Self::Error> {
+        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas)
     }
 
     /// Deducts the maximum possible fee from caller's balance.

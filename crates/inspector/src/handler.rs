@@ -1,7 +1,7 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{
     result::{ExecutionResult, ResultGas},
-    Cfg, ContextTr, JournalEntry, JournalTr, Transaction,
+    ContextTr, JournalEntry, JournalTr, Transaction,
 };
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
@@ -59,28 +59,9 @@ where
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let mut init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)?;
-
-        // EIP-8037: Split auth list refund into state gas and regular gas portions.
-        let eip7702_state_refund = {
-            let per_auth_state_gas = evm.ctx().cfg().gas_params().tx_eip7702_per_auth_state_gas();
-            let per_auth_refund = evm.ctx().cfg().gas_params().tx_eip7702_auth_refund();
-            if per_auth_state_gas > 0 && per_auth_refund > 0 && eip7702_refund > 0 {
-                let state_refund_per_auth = core::cmp::min(per_auth_refund, per_auth_state_gas);
-                let num_refunded = eip7702_refund / per_auth_refund;
-                let state_refund = num_refunded * state_refund_per_auth;
-                init_and_floor_gas.initial_state_gas = init_and_floor_gas
-                    .initial_state_gas
-                    .saturating_sub(state_refund);
-                init_and_floor_gas.initial_total_gas = init_and_floor_gas
-                    .initial_total_gas
-                    .saturating_sub(state_refund);
-                state_refund
-            } else {
-                0
-            }
-        };
-        let eip7702_regular_refund = (eip7702_refund - eip7702_state_refund) as i64;
+        // pre_execution now applies the EIP-7702 state gas refund split to init_and_floor_gas
+        // and returns the regular refund portion
+        let eip7702_regular_refund = self.pre_execution(evm, &mut init_and_floor_gas)? as i64;
 
         let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
         let result_gas = self.post_execution(
