@@ -39,19 +39,19 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// with z and y being padded 32 byte big endian values
 pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_limit < GAS_COST {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(PrecompileError::BlobInvalidInputLength);
+        return Err(PrecompileError::BlobInvalidInputLength.into());
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(PrecompileError::BlobMismatchedVersion);
+        return Err(PrecompileError::BlobMismatchedVersion.into());
     }
 
     // Verify KZG proof with z and y in big endian format

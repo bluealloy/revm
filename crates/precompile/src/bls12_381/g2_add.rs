@@ -17,11 +17,11 @@ pub const PRECOMPILE: Precompile =
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
 pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     if input.len() != G2_ADD_INPUT_LENGTH {
-        return Err(PrecompileError::Bls12381G2AddInputLength);
+        return Err(PrecompileError::Bls12381G2AddInputLength.into());
     }
 
     // Extract coordinates from padded input

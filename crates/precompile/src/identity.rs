@@ -23,7 +23,7 @@ pub const IDENTITY_PER_WORD: u64 = 3;
 pub fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost(input.len(), IDENTITY_BASE, IDENTITY_PER_WORD);
     if gas_used > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
     Ok(PrecompileOutput::new(
         gas_limit,

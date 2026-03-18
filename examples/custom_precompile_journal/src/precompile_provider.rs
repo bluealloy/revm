@@ -104,7 +104,7 @@ fn run_custom_precompile<CTX: ContextTr>(
         // Write storage operation
         handle_write_storage(context, &input_bytes, inputs.gas_limit)
     } else {
-        Err(PrecompileError::Other("Invalid input length".into()))
+        Err(PrecompileError::Other("Invalid input length".into()).into())
     };
 
     match result {
@@ -147,7 +147,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
     const BASE_GAS: u64 = 2_100;
 
     if gas_limit < BASE_GAS {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // Read from storage using the journal
@@ -176,7 +176,7 @@ fn handle_write_storage<CTX: ContextTr>(
     const SSTORE_GAS: u64 = 20_000;
 
     if gas_limit < BASE_GAS + SSTORE_GAS {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // Parse the input as a U256 value
@@ -207,7 +207,7 @@ fn handle_write_storage<CTX: ContextTr>(
     if let Some(error) = transfer_result {
         return Err(PrecompileError::Other(
             format!("Transfer error: {error:?}").into(),
-        ));
+        ).into());
     }
 
     // Create a log to record the storage write operation

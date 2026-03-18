@@ -25,7 +25,7 @@ pub const RIPEMD160: Precompile = Precompile::new(
 pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let cost = calc_linear_cost(input.len(), 60, 12);
     if cost > gas_limit {
-        Err(PrecompileError::OutOfGas)
+        Err(PrecompileError::OutOfGas.into())
     } else {
         let output = crypto().sha256(input);
         Ok(PrecompileOutput::new(
@@ -45,7 +45,7 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost(input.len(), 600, 120);
     if gas_used > gas_limit {
-        Err(PrecompileError::OutOfGas)
+        Err(PrecompileError::OutOfGas.into())
     } else {
         let output = crypto().ripemd160(input);
         Ok(PrecompileOutput::new(

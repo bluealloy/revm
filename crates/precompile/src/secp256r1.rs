@@ -68,7 +68,7 @@ pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
     let result = if verify_impl(input) {
         B256::with_last_byte(1).into()
@@ -173,7 +173,7 @@ mod test {
         let result = p256_verify(&input, target_gas);
 
         assert!(result.is_err());
-        assert_eq!(result.err(), Some(PrecompileError::OutOfGas));
+        assert_eq!(result.err(), Some(PrecompileError::OutOfGas.into()));
     }
 
     #[rstest]

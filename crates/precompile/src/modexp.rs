@@ -183,7 +183,7 @@ where
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // The format of input is:
@@ -210,7 +210,7 @@ where
             || mod_len > eip7823::INPUT_SIZE_LIMIT
             || exp_len > eip7823::INPUT_SIZE_LIMIT)
     {
-        return Err(PrecompileError::ModexpEip7823LimitSize);
+        return Err(PrecompileError::ModexpEip7823LimitSize.into());
     }
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -230,7 +230,7 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     if base_len == 0 && mod_len == 0 {
@@ -318,6 +318,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::PrecompileFailure;
     use primitives::hex;
     use std::vec::Vec;
 
@@ -566,7 +567,7 @@ mod tests {
             base_len: U256,
             exp_len: U256,
             mod_len: U256,
-            expected: Option<PrecompileError>,
+            expected: Option<PrecompileFailure>,
         }
 
         impl TestInput {
@@ -584,31 +585,31 @@ mod tests {
                 base_len: U256::from(1025),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1025),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
             },
             TestInput {
                 base_len: U256::from(0),
                 exp_len: U256::from(0),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::OutOfGas),
+                expected: Some(PrecompileError::OutOfGas.into()),
             },
             TestInput {
                 base_len: U256::from(0),
@@ -813,7 +814,7 @@ mod tests {
 
         let res = osaka_run(&input_fail, 100_000_000);
         assert!(
-            matches!(res, Err(PrecompileError::ModexpEip7823LimitSize)),
+            matches!(res, Err(ref f) if f.error == PrecompileError::ModexpEip7823LimitSize),
             "1025-byte base should be rejected"
         );
     }
@@ -904,7 +905,7 @@ mod tests {
         // Provide insufficient gas
         let res = byzantium_run(&input, 1000);
         assert!(
-            matches!(res, Err(PrecompileError::OutOfGas)),
+            matches!(res, Err(ref f) if f.error == PrecompileError::OutOfGas),
             "Should return OutOfGas error with insufficient gas"
         );
     }

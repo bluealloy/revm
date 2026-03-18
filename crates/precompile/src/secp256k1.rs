@@ -34,7 +34,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     let input = right_pad::<128>(input);
