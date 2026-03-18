@@ -436,10 +436,8 @@ pub trait Handler {
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas and unused reservoir gas.
-            // Reservoir gas that wasn't consumed by state gas charges
-            // should not count toward total_gas_spent.
-            gas.erase_cost(remaining + reservoir);
+            // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
+            gas.erase_cost(remaining);
         }
 
         if instruction_result.is_ok() {
