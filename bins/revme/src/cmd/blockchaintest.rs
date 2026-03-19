@@ -127,17 +127,26 @@ fn run_tests(
         let result = run_test_file(&file_path, json_output, print_env_on_error);
 
         match result {
-            Ok(test_count) => {
-                passed += test_count;
+            Ok(test_counts) => {
+                passed += test_counts.passed;
+                skipped += test_counts.skipped;
                 if json_output {
                     // JSON output handled in run_test_file
                 } else if !omit_progress {
+                    let file_summary = if test_counts.skipped == 0 {
+                        format!("{} tests", test_counts.passed)
+                    } else {
+                        format!(
+                            "{} passed, {} skipped",
+                            test_counts.passed, test_counts.skipped
+                        )
+                    };
                     println!(
-                        "✓ ({}/{}) {} ({} tests)",
+                        "✓ ({}/{}) {} ({})",
                         current_file,
                         total_files,
                         file_path.display(),
-                        test_count
+                        file_summary
                     );
                 }
             }
@@ -206,18 +215,24 @@ fn run_tests(
 }
 
 /// Run tests from a single file
+#[derive(Default)]
+struct TestRunCounts {
+    passed: usize,
+    skipped: usize,
+}
+
 fn run_test_file(
     file_path: &Path,
     json_output: bool,
     print_env_on_error: bool,
-) -> Result<usize, Error> {
+) -> Result<TestRunCounts, Error> {
     let content =
         fs::read_to_string(file_path).map_err(|e| Error::FileRead(file_path.to_path_buf(), e))?;
 
     let blockchain_test: BlockchainTest = serde_json::from_str(&content)
         .map_err(|e| Error::JsonDecode(file_path.to_path_buf(), e))?;
 
-    let mut test_count = 0;
+    let mut counts = TestRunCounts::default();
 
     for (test_name, test_case) in blockchain_test.0 {
         if json_output {
@@ -244,7 +259,21 @@ fn run_test_file(
                     });
                     print_json(&output);
                 }
-                test_count += 1;
+                counts.passed += 1;
+            }
+            Err(TestExecutionError::SkippedFork(reason)) => {
+                if json_output {
+                    let output = json!({
+                        "test": test_name,
+                        "file": file_path.display().to_string(),
+                        "status": "skipped",
+                        "reason": reason
+                    });
+                    print_json(&output);
+                } else {
+                    eprintln!("  Skipping: {test_name} - {reason}");
+                }
+                counts.skipped += 1;
             }
             Err(e) => {
                 if json_output {
@@ -265,7 +294,7 @@ fn run_test_file(
         }
     }
 
-    Ok(test_count)
+    Ok(counts)
 }
 
 /// Debug information captured during test execution
@@ -648,18 +677,12 @@ fn execute_blockchain_test(
     print_env_on_error: bool,
     json_output: bool,
 ) -> Result<(), TestExecutionError> {
-    // Skip all transition forks for now.
-    if matches!(
-        test_case.network,
-        ForkSpec::ByzantiumToConstantinopleAt5
-            | ForkSpec::ParisToShanghaiAtTime15k
-            | ForkSpec::ShanghaiToCancunAtTime15k
-            | ForkSpec::CancunToPragueAtTime15k
-            | ForkSpec::PragueToOsakaAtTime15k
-            | ForkSpec::BPO1ToBPO2AtTime15k
-    ) {
-        eprintln!("⚠️  Skipping transition fork: {:?}", test_case.network);
-        return Ok(());
+    if let Some(reason) = unsupported_fork_reason(test_case.network) {
+        let reason = format!("{:?}: {reason}", test_case.network);
+        if !json_output {
+            eprintln!("⚠️  Skipping unsupported fork: {reason}");
+        }
+        return Err(TestExecutionError::SkippedFork(reason));
     }
 
     // Create database with initial state
@@ -1057,18 +1080,45 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Byzantium
         | ForkSpec::EIP158ToByzantiumAt5
         | ForkSpec::ByzantiumToConstantinopleFixAt5 => SpecId::BYZANTIUM,
-        ForkSpec::Constantinople | ForkSpec::ByzantiumToConstantinopleAt5 => SpecId::PETERSBURG,
+        ForkSpec::Constantinople => SpecId::PETERSBURG,
         ForkSpec::ConstantinopleFix => SpecId::PETERSBURG,
         ForkSpec::Istanbul => SpecId::ISTANBUL,
         ForkSpec::Berlin => SpecId::BERLIN,
         ForkSpec::London | ForkSpec::BerlinToLondonAt5 => SpecId::LONDON,
-        ForkSpec::Paris | ForkSpec::ParisToShanghaiAtTime15k => SpecId::MERGE,
+        ForkSpec::Paris => SpecId::MERGE,
         ForkSpec::Shanghai => SpecId::SHANGHAI,
-        ForkSpec::Cancun | ForkSpec::ShanghaiToCancunAtTime15k => SpecId::CANCUN,
-        ForkSpec::Prague | ForkSpec::CancunToPragueAtTime15k => SpecId::PRAGUE,
-        ForkSpec::Osaka | ForkSpec::PragueToOsakaAtTime15k => SpecId::OSAKA,
+        ForkSpec::Cancun => SpecId::CANCUN,
+        ForkSpec::Prague => SpecId::PRAGUE,
+        ForkSpec::Osaka => SpecId::OSAKA,
         ForkSpec::Amsterdam => SpecId::AMSTERDAM,
-        _ => SpecId::AMSTERDAM, // For any unknown forks, use latest available
+        unsupported @ (ForkSpec::ByzantiumToConstantinopleAt5
+        | ForkSpec::ParisToShanghaiAtTime15k
+        | ForkSpec::ShanghaiToCancunAtTime15k
+        | ForkSpec::CancunToPragueAtTime15k
+        | ForkSpec::PragueToOsakaAtTime15k
+        | ForkSpec::MergeEOF
+        | ForkSpec::MergeMeterInitCode
+        | ForkSpec::MergePush0
+        | ForkSpec::BPO1ToBPO2AtTime15k
+        | ForkSpec::BPO2ToAmsterdamAtTime15k) => {
+            unreachable!("unsupported fork must be skipped before mapping: {unsupported:?}")
+        }
+    }
+}
+
+fn unsupported_fork_reason(fork: ForkSpec) -> Option<&'static str> {
+    match fork {
+        ForkSpec::ByzantiumToConstantinopleAt5
+        | ForkSpec::ParisToShanghaiAtTime15k
+        | ForkSpec::ShanghaiToCancunAtTime15k
+        | ForkSpec::CancunToPragueAtTime15k
+        | ForkSpec::PragueToOsakaAtTime15k
+        | ForkSpec::BPO1ToBPO2AtTime15k
+        | ForkSpec::BPO2ToAmsterdamAtTime15k => Some("transition forks are not supported"),
+        ForkSpec::MergeEOF | ForkSpec::MergeMeterInitCode | ForkSpec::MergePush0 => {
+            Some("composite forks are not mapped to a single SpecId")
+        }
+        _ => None,
     }
 }
 
@@ -1226,4 +1276,24 @@ pub enum Error {
 
     #[error("{failed} tests failed")]
     TestsFailed { failed: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{fork_to_spec_id, unsupported_fork_reason};
+    use revm::primitives::hardfork::SpecId;
+    use revm::statetest_types::blockchain::ForkSpec;
+
+    #[test]
+    fn bpo2_to_amsterdam_is_explicitly_marked_unsupported() {
+        assert_eq!(
+            unsupported_fork_reason(ForkSpec::BPO2ToAmsterdamAtTime15k),
+            Some("transition forks are not supported")
+        );
+    }
+
+    #[test]
+    fn amsterdam_still_maps_explicitly() {
+        assert_eq!(fork_to_spec_id(ForkSpec::Amsterdam), SpecId::AMSTERDAM);
+    }
 }
