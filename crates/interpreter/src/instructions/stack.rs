@@ -44,7 +44,11 @@ pub fn dup<const N: usize, WIRE: InterpreterTypes, H: ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     if !context.interpreter.stack.dup(N) {
-        context.interpreter.halt(InstructionResult::StackOverflow);
+        if context.interpreter.stack.len() < N {
+            context.interpreter.halt(InstructionResult::StackUnderflow);
+        } else {
+            context.interpreter.halt(InstructionResult::StackOverflow);
+        }
     }
 }
 
@@ -68,13 +72,16 @@ pub fn dupn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
         if !context.interpreter.stack.dup(n) {
-            context.interpreter.halt(InstructionResult::StackOverflow);
+            if context.interpreter.stack.len() < n {
+                context.interpreter.halt(InstructionResult::StackUnderflow);
+            } else {
+                context.interpreter.halt(InstructionResult::StackOverflow);
+            }
+            return;
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context
-            .interpreter
-            .halt(InstructionResult::InvalidImmediateEncoding);
+        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
@@ -90,9 +97,7 @@ pub fn swapn<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, 
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context
-            .interpreter
-            .halt(InstructionResult::InvalidImmediateEncoding);
+        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
@@ -108,9 +113,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
         }
         context.interpreter.bytecode.relative_jump(1);
     } else {
-        context
-            .interpreter
-            .halt(InstructionResult::InvalidImmediateEncoding);
+        context.interpreter.halt(InstructionResult::InvalidImmediateEncoding);
     }
 }
 
@@ -216,9 +219,8 @@ mod tests {
 
     #[test]
     fn test_exchange_with_iszero() {
-        let interpreter = run_bytecode(&[
-            PUSH1, 0x00, PUSH1, 0x00, PUSH1, 0x00, EXCHANGE, 0x8E, ISZERO,
-        ]);
+        let interpreter =
+            run_bytecode(&[PUSH1, 0x00, PUSH1, 0x00, PUSH1, 0x00, EXCHANGE, 0x8E, ISZERO]);
         assert_eq!(interpreter.stack.len(), 3);
         assert_eq!(interpreter.stack.data()[2], U256::from(1));
         assert_eq!(interpreter.stack.data()[1], U256::ZERO);
