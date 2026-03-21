@@ -27,6 +27,7 @@ A curated list of excellent Revm-related resources. Feel free to contribute to t
 - [**Foundry:**](https://github.com/foundry-rs/foundry) A portable and modular toolkit for rapid Ethereum application development in Rust.
 - [**Hardhat:**](https://github.com/NomicFoundation/hardhat) A comprehensive development environment for compiling, deploying, testing, and debugging Ethereum software.
 - [**Arbiter:**](https://github.com/harnesslabs/arbiter) smart-contract simulation.
+- [**OpTrace:**](https://github.com/tanghaosuan11/op_trace) A high-performance, GUI-based EVM debugger with a programmable engine for deep-dive trace analysis.
 
 #### Frameworks and Libraries
 - [**revm-inspectors:**](https://github.com/paradigmxyz/revm-inspectors) Hooks for EVM execution.
