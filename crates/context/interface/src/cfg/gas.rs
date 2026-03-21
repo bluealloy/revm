@@ -41,6 +41,18 @@ impl GasTracker {
         Self::new(gas_limit, gas_limit - used_gas, reservoir)
     }
 
+    /// Returns the gas limit.
+    #[inline]
+    pub const fn limit(&self) -> u64 {
+        self.gas_limit
+    }
+
+    /// Sets the gas limit.
+    #[inline]
+    pub fn set_limit(&mut self, val: u64) {
+        self.gas_limit = val;
+    }
+
     /// Returns the remaining gas.
     #[inline]
     pub const fn remaining(&self) -> u64 {

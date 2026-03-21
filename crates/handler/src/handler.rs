@@ -288,12 +288,30 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
-        validation::validate_initial_tx_gas(
+        let gas = match validation::validate_initial_tx_gas(
             ctx.tx(),
             ctx.cfg().spec().into(),
             ctx.cfg().is_eip7623_disabled(),
-        )
-        .map_err(From::from)
+        ) {
+            Ok(gas) => gas,
+            Err(e) => return Err(e.into()),
+        };
+
+        // EIP-8037: When state gas is enabled and gas_limit exceeds TX_MAX_GAS_LIMIT,
+        // the maximum gas_used = TX_MAX_GAS_LIMIT (since reservoir = gas_limit - cap
+        // is excluded from gas_used). Floor gas must not exceed this maximum.
+        if ctx.cfg().is_amsterdam_eip8037_enabled()
+            && ctx.tx().gas_limit() > ctx.cfg().tx_gas_limit_cap()
+            && gas.floor_gas > ctx.cfg().tx_gas_limit_cap()
+        {
+            return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+                gas_floor: gas.floor_gas,
+                gas_limit: ctx.cfg().tx_gas_limit_cap(),
+            }
+            .into());
+        }
+
+        Ok(gas)
     }
 
     /* PRE EXECUTION */
@@ -446,12 +464,10 @@ pub trait Handler {
         // Always track state gas spent regardless of outcome.
         gas.set_state_gas_spent(state_gas_spent);
 
-        // Reservoir handling
-        if instruction_result.is_ok() {
-            gas.set_reservoir(reservoir);
-        } else {
-            gas.set_reservoir(initial_reservoir + state_gas_spent);
-        }
+        // Reservoir handling at the top-level frame.
+        // Use the frame's final reservoir directly — it already reflects
+        // child frame restorations and any state gas consumed/spilled during execution.
+        gas.set_reservoir(reservoir);
 
         Ok(())
     }

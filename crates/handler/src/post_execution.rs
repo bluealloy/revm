@@ -18,11 +18,19 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
 }
 
 /// Ensures minimum gas floor is spent according to EIP-7623.
+///
+/// Per EIP-8037, gas used before refund is `tx.gas - gas_left - state_gas_reservoir`.
+/// The floor applies to this combined total, not just regular gas.
 pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
-    // spend at least a gas_floor amount of gas.
-    if gas.spent_sub_refunded() < init_and_floor_gas.floor_gas {
-        gas.set_spent(init_and_floor_gas.floor_gas);
+    // EIP-8037: tx_gas_used_before_refund = tx.gas - gas_left - reservoir
+    // The floor must apply to this combined value, not just (limit - remaining).
+    let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
+    let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
+    if gas_used_after_refund < init_and_floor_gas.floor_gas {
+        // Set spent so that (limit - remaining - reservoir) = floor_gas
+        // i.e. remaining = limit - floor_gas - reservoir
+        gas.set_spent(init_and_floor_gas.floor_gas + gas.reservoir());
         // clear refund
         gas.set_refund(0);
     }
