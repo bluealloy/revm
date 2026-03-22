@@ -218,11 +218,7 @@ pub trait LocalContextTr {
 
     /// Slice of the shared memory buffer returns None if range is not valid or buffer can't be borrowed.
     fn shared_memory_buffer_slice(&self, range: Range<usize>) -> Option<Ref<'_, [u8]>> {
-        let buffer = self.shared_memory_buffer();
-        buffer.borrow().get(range.clone())?;
-        Some(Ref::map(buffer.borrow(), |b| {
-            b.get(range).unwrap_or_default()
-        }))
+        Ref::filter_map(self.shared_memory_buffer().borrow(), |b| b.get(range)).ok()
     }
 
     /// Clear the local context.
