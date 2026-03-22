@@ -1081,8 +1081,10 @@ fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
     assert!(result.tx_gas_used() > 50_000, "gas_used exceeds cap");
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     let delta = result.tx_gas_used() - baseline_gas;
-    assert_eq!(delta, STATE_GAS_SSTORE_SET + STATE_GAS_NEW_ACCOUNT);
-    assert_eq!(result.tx_gas_used(), baseline_gas + STATE_GAS_SSTORE_SET + STATE_GAS_NEW_ACCOUNT);
+    // EIP-8037: tx_gas_used = tx.gas - gas_left - state_gas_left
+    // Unused reservoir gas (including new account state gas that wasn't consumed)
+    // is not counted as gas used.
+    assert_eq!(delta, STATE_GAS_SSTORE_SET);
     compare_or_save_eip8037_testdata(
         "test_eip8037_tx_limit_cap_not_enforced_with_state_gas.json",
         &(baseline_result, result),
@@ -1217,18 +1219,17 @@ fn test_eip8037_reverted_create_child() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    let expected_delta = STATE_GAS_CREATE + STATE_GAS_SSTORE_SET;
+    // On child revert, state gas is returned to parent's reservoir (matching Python spec).
+    // Only CREATE state gas contributes to the delta (SSTORE state gas is refunded).
+    let expected_delta = STATE_GAS_CREATE;
     let parent_state_gas = STATE_GAS_CREATE;
 
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    // state_gas_spent reflects only parent's state gas (child's SSTORE state gas not refunded on revert).
+    // state_gas_spent reflects only parent's state gas (child's SSTORE state gas refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    // Note: Child's SSTORE state gas is charged but not fully reflected in state_gas_spent.
-    // The delta includes both CREATE and SSTORE state gas.
-    assert!(delta > result.gas().state_gas_spent());
     compare_or_save_eip8037_testdata(
         "test_eip8037_reverted_create_child.json",
         &(baseline_result, result),
@@ -1310,9 +1311,10 @@ fn test_eip8037_call_child_sstore_reverts() {
     assert!(result.is_success());
     // state_gas_spent reflects only CREATE costs (child SSTORE refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), create_state_gas);
-    // Total delta equals CREATE state gas + SSTORE state gas + hash cost.
-    // Note: Child's SSTORE state gas is charged (not refunded) due to gas accounting.
-    let expected_delta = create_state_gas + STATE_GAS_SSTORE_SET + hash_cost(child_runtime.len());
+    // On child revert, state changes are rolled back and state gas is returned
+    // to the parent's reservoir (matching Python spec's incorporate_child_on_error).
+    // So only CREATE state gas and hash cost contribute to the delta.
+    let expected_delta = create_state_gas + hash_cost(child_runtime.len());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
     compare_or_save_eip8037_testdata(
@@ -1752,8 +1754,10 @@ fn test_eip8037_reservoir_refill_halt_state_gas_more() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.tx_gas_used(), gas_limit);
-    assert_eq!(result.gas().total_gas_spent(), gas_limit);
+    // EIP-8037: tx_gas_used = tx.gas - gas_left - state_gas_left
+    // On halt, gas_left=0 but state_gas_left (reservoir) may be non-zero.
+    // Unused reservoir gas is refunded, so tx_gas_used < gas_limit.
+    assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(

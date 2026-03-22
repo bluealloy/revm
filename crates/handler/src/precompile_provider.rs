@@ -119,7 +119,12 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
         match exec_result {
             Ok(output) => {
+                // Preserve the reservoir before replacing the tracker.
+                // Precompile output doesn't track reservoir, but we need to
+                // propagate it back to the parent frame.
+                let reservoir = result.gas.reservoir();
                 *result.gas.tracker_mut() = output.gas;
+                result.gas.set_reservoir(reservoir);
                 result.result = if output.reverted {
                     InstructionResult::Revert
                 } else {

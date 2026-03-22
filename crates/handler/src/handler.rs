@@ -427,6 +427,14 @@ pub trait Handler {
             }
         }
 
+        // EIP-7702 state gas refund for existing authorities goes directly to
+        // the reservoir. In the Python spec, set_delegation adds this refund to
+        // state_gas_reservoir so it stays as state gas (not regular gas).
+        let eip7702_refund = init_and_floor_gas.eip7702_reservoir_refund;
+        if eip7702_refund > 0 {
+            frame_input.set_reservoir(frame_input.reservoir() + eip7702_refund);
+        }
+
         Ok(FrameInit {
             depth: 0,
             memory,

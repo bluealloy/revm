@@ -199,8 +199,10 @@ impl Gas {
     #[inline]
     pub fn set_final_refund(&mut self, is_london: bool) {
         let max_refund_quotient = if is_london { 5 } else { 2 };
+        // EIP-8037: gas_used = total_gas_spent - reservoir (reservoir is unused state gas)
+        let gas_used = self.total_gas_spent().saturating_sub(self.reservoir());
         self.tracker.set_refunded(
-            (self.refunded() as u64).min(self.total_gas_spent() / max_refund_quotient) as i64,
+            (self.refunded() as u64).min(gas_used / max_refund_quotient) as i64,
         );
     }
 

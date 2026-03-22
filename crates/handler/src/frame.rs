@@ -567,10 +567,15 @@ pub fn handle_reservoir_remaining_gas(
         // rather than overwrite to preserve the parent's prior charges.
         parent_gas.set_state_gas_spent(parent_gas.state_gas_spent() + child_gas.state_gas_spent());
     } else {
-        // On revert or halt: state changes are undone.
-        // State gas that spilled from reservoir into regular gas was returned with the
-        // regular gas, so refill that portion back into the reservoir.
-        parent_gas.set_reservoir(parent_gas.reservoir().max(child_gas.state_gas_spent()));
+        // On revert or halt: state changes are undone, so ALL state gas returns
+        // to the parent's reservoir.
+        // - child.state_gas_spent(): state gas the child consumed (state rolled back, so refunded)
+        // - child.reservoir(): state gas the child didn't use (including gas returned from
+        //   deeper failed frames)
+        // This replaces (not adds to) the parent's reservoir because the child started with
+        // the parent's reservoir value (REVM doesn't zero it before the call), so the child's
+        // total already includes the parent's original reservoir.
+        parent_gas.set_reservoir(child_gas.state_gas_spent() + child_gas.reservoir());
     }
 }
 

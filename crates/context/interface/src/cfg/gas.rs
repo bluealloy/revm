@@ -277,6 +277,12 @@ pub struct InitialAndFloorGas {
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
+    /// EIP-7702 state gas refund for existing authorities.
+    /// Added to the reservoir after initial_state_gas is deducted.
+    /// In the Python spec, set_delegation adds this back to state_gas_reservoir
+    /// rather than reducing initial_state_gas, so the refunded gas stays as
+    /// reservoir gas (not regular gas).
+    pub eip7702_reservoir_refund: u64,
 }
 
 impl InitialAndFloorGas {
@@ -287,6 +293,7 @@ impl InitialAndFloorGas {
             initial_total_gas,
             initial_state_gas: 0,
             floor_gas,
+            eip7702_reservoir_refund: 0,
         }
     }
 
@@ -301,6 +308,7 @@ impl InitialAndFloorGas {
             initial_total_gas,
             initial_state_gas,
             floor_gas,
+            eip7702_reservoir_refund: 0,
         }
     }
 }

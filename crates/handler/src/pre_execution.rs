@@ -209,20 +209,17 @@ pub fn apply_eip7702_auth_list<
     let eip7702_refund = apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
 
     // EIP-8037: Split auth list refund into state gas and regular gas portions.
-    // The state gas portion directly reduces initial_state_gas (not subject to refund cap).
+    // The state gas portion is added to the reservoir after initial_state_gas deduction,
+    // matching the Python spec where set_delegation adds state refund directly to
+    // state_gas_reservoir. This ensures refunded state gas stays as reservoir gas
+    // (not regular gas), so it's not consumed on frame halt.
     // The regular gas portion goes through the normal refund mechanism.
     let (eip7702_state_refund, eip7702_regular_refund_raw) = context
         .cfg()
         .gas_params()
         .split_eip7702_refund(eip7702_refund);
     if eip7702_state_refund > 0 {
-        init_and_floor_gas.initial_state_gas = init_and_floor_gas
-            .initial_state_gas
-            .saturating_sub(eip7702_state_refund);
-        // Also reduce initial_total_gas since state gas is a subset
-        init_and_floor_gas.initial_total_gas = init_and_floor_gas
-            .initial_total_gas
-            .saturating_sub(eip7702_state_refund);
+        init_and_floor_gas.eip7702_reservoir_refund = eip7702_state_refund;
     }
 
     Ok(eip7702_regular_refund_raw)

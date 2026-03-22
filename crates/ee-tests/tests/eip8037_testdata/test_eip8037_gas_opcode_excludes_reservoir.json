@@ -19,7 +19,7 @@
       "gas": {
         "floor_gas": 21000,
         "gas_refunded": 0,
-        "gas_spent": 71017,
+        "gas_spent": 21017,
         "state_gas_spent": 0
       },
       "logs": [],
