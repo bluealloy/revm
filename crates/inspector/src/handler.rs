@@ -159,9 +159,14 @@ where
 /// Handles the start of a frame by calling the appropriate inspector method.
 pub fn frame_start<CTX, INTR: InterpreterTypes>(
     context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, INTR>,
+    inspector: &mut impl Inspector<CTX, INTR, FrameInput, FrameResult>,
     frame_input: &mut FrameInput,
 ) -> Option<FrameResult> {
+    // Generic hook before variant dispatch
+    if let Some(result) = inspector.frame_start(context, frame_input) {
+        return Some(result);
+    }
+    // Variant-specific dispatch
     match frame_input {
         FrameInput::Call(i) => {
             if let Some(output) = inspector.call(context, i) {
@@ -181,10 +186,11 @@ pub fn frame_start<CTX, INTR: InterpreterTypes>(
 /// Handles the end of a frame by calling the appropriate inspector method.
 pub fn frame_end<CTX, INTR: InterpreterTypes>(
     context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, INTR>,
+    inspector: &mut impl Inspector<CTX, INTR, FrameInput, FrameResult>,
     frame_input: &FrameInput,
     frame_output: &mut FrameResult,
 ) {
+    // Variant-specific dispatch first
     match frame_output {
         FrameResult::Call(outcome) => {
             let FrameInput::Call(i) = frame_input else {
@@ -199,6 +205,8 @@ pub fn frame_end<CTX, INTR: InterpreterTypes>(
             inspector.create_end(context, i, outcome);
         }
     }
+    // Generic hook after variant dispatch
+    inspector.frame_end(context, frame_input, frame_output);
 }
 
 /// Run Interpreter loop with inspection support.

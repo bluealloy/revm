@@ -1,8 +1,9 @@
 use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
+use handler::FrameResult;
 use interpreter::{
-    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
-    InterpreterTypes,
+    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome, FrameInput,
+    Interpreter, InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;
@@ -14,7 +15,12 @@ use state::EvmState;
 /// Object that is implemented this trait is used in `InspectorHandler` to trace the EVM execution.
 /// And API that allow calling the inspector can be found in [`crate::InspectEvm`] and [`crate::InspectCommitEvm`].
 #[auto_impl(&mut, Box)]
-pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
+pub trait Inspector<
+    CTX,
+    INTR: InterpreterTypes = EthInterpreter,
+    FI = FrameInput,
+    FR = FrameResult,
+> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.bytecode.set_action` is set the execution of the interpreter is skipped.
@@ -62,6 +68,38 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     fn log_full(&mut self, interpreter: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         let _ = interpreter;
         self.log(context, log);
+    }
+
+    /// Called before call/create dispatch. Called with a mutable reference to
+    /// the frame input, allowing mutations of the input before the variant-specific
+    /// hooks (`call`/`create`) are called.
+    ///
+    /// Returning `Some(FrameResult)` will skip execution of the frame entirely,
+    /// and also skips calling `call()`/`create()`. `frame_end` will still be called.
+    #[inline]
+    fn frame_start(
+        &mut self,
+        context: &mut CTX,
+        frame_input: &mut FI,
+    ) -> Option<FR> {
+        let _ = context;
+        let _ = frame_input;
+        None
+    }
+
+    /// Called after `call_end()`/`create_end()` variant-specific hooks complete.
+    ///
+    /// Allows transformation of the final result regardless of frame kind.
+    #[inline]
+    fn frame_end(
+        &mut self,
+        context: &mut CTX,
+        frame_input: &FI,
+        frame_result: &mut FR,
+    ) {
+        let _ = context;
+        let _ = frame_input;
+        let _ = frame_result;
     }
 
     /// Called whenever a call to a contract is about to start.
@@ -122,10 +160,10 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter> {
     }
 }
 
-impl<CTX, INTR: InterpreterTypes, L, R> Inspector<CTX, INTR> for (L, R)
+impl<CTX, INTR: InterpreterTypes, FI, FR, L, R> Inspector<CTX, INTR, FI, FR> for (L, R)
 where
-    L: Inspector<CTX, INTR>,
-    R: Inspector<CTX, INTR>,
+    L: Inspector<CTX, INTR, FI, FR>,
+    R: Inspector<CTX, INTR, FI, FR>,
 {
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.0.initialize_interp(interp, context);
@@ -150,6 +188,26 @@ where
     fn log_full(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: Log) {
         self.0.log_full(interp, context, log.clone());
         self.1.log_full(interp, context, log);
+    }
+
+    fn frame_start(
+        &mut self,
+        context: &mut CTX,
+        frame_input: &mut FI,
+    ) -> Option<FR> {
+        let first = self.0.frame_start(context, frame_input);
+        let second = self.1.frame_start(context, frame_input);
+        first.or(second)
+    }
+
+    fn frame_end(
+        &mut self,
+        context: &mut CTX,
+        frame_input: &FI,
+        frame_result: &mut FR,
+    ) {
+        self.0.frame_end(context, frame_input, frame_result);
+        self.1.frame_end(context, frame_input, frame_result);
     }
 
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
