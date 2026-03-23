@@ -79,16 +79,7 @@ fn run_custom_precompile<CTX: ContextTr>(
     context: &mut CTX,
     inputs: &CallInputs,
 ) -> Result<InterpreterResult, String> {
-    let input_bytes = match &inputs.input {
-        revm::interpreter::CallInput::SharedBuffer(range) => {
-            if let Some(slice) = context.local().shared_memory_buffer_slice(range.clone()) {
-                slice.to_vec()
-            } else {
-                vec![]
-            }
-        }
-        revm::interpreter::CallInput::Bytes(bytes) => bytes.0.to_vec(),
-    };
+    let input_bytes = inputs.input.bytes(context);
 
     // For this example, we'll implement a simple precompile that:
     // - If called with empty data: reads a storage value

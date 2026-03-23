@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
-use interpreter::{CallInput, CallInputs, Gas, InstructionResult, InterpreterResult};
+use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
@@ -101,22 +101,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             output: Bytes::new(),
         };
 
-        let exec_result = {
-            let r;
-            let input_bytes = match &inputs.input {
-                CallInput::SharedBuffer(range) => {
-                    if let Some(slice) = context.local().shared_memory_buffer_slice(range.clone()) {
-                        r = slice;
-                        r.as_ref()
-                    } else {
-                        &[]
-                    }
-                }
-                CallInput::Bytes(bytes) => bytes.0.iter().as_slice(),
-            };
-            precompile.execute(input_bytes, inputs.gas_limit)
-        };
-
+        let exec_result = precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit);
         match exec_result {
             Ok(output) => {
                 result.gas.record_refund(output.gas_refunded);
