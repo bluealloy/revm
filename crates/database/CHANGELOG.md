@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-
-- remove the no-op `StateBuilder::with_background_transition_merge` builder toggle; callers should schedule `State::merge_transitions` explicitly because the old flag never affected `build()` or runtime behavior
-
 ## [12.0.0](https://github.com/bluealloy/revm/compare/revm-database-v11.0.0...revm-database-v12.0.0) - 2026-03-04
 
 ### Other
