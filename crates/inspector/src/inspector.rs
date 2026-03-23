@@ -15,12 +15,8 @@ use state::EvmState;
 /// Object that is implemented this trait is used in `InspectorHandler` to trace the EVM execution.
 /// And API that allow calling the inspector can be found in [`crate::InspectEvm`] and [`crate::InspectCommitEvm`].
 #[auto_impl(&mut, Box)]
-pub trait Inspector<
-    CTX,
-    INTR: InterpreterTypes = EthInterpreter,
-    FI = FrameInput,
-    FR = FrameResult,
-> {
+pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInput, FR = FrameResult>
+{
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.bytecode.set_action` is set the execution of the interpreter is skipped.
@@ -77,11 +73,7 @@ pub trait Inspector<
     /// Returning `Some(FrameResult)` will skip execution of the frame entirely,
     /// and also skips calling `call()`/`create()`. `frame_end` will still be called.
     #[inline]
-    fn frame_start(
-        &mut self,
-        context: &mut CTX,
-        frame_input: &mut FI,
-    ) -> Option<FR> {
+    fn frame_start(&mut self, context: &mut CTX, frame_input: &mut FI) -> Option<FR> {
         let _ = context;
         let _ = frame_input;
         None
@@ -91,12 +83,7 @@ pub trait Inspector<
     ///
     /// Allows transformation of the final result regardless of frame kind.
     #[inline]
-    fn frame_end(
-        &mut self,
-        context: &mut CTX,
-        frame_input: &FI,
-        frame_result: &mut FR,
-    ) {
+    fn frame_end(&mut self, context: &mut CTX, frame_input: &FI, frame_result: &mut FR) {
         let _ = context;
         let _ = frame_input;
         let _ = frame_result;
@@ -190,22 +177,13 @@ where
         self.1.log_full(interp, context, log);
     }
 
-    fn frame_start(
-        &mut self,
-        context: &mut CTX,
-        frame_input: &mut FI,
-    ) -> Option<FR> {
+    fn frame_start(&mut self, context: &mut CTX, frame_input: &mut FI) -> Option<FR> {
         let first = self.0.frame_start(context, frame_input);
         let second = self.1.frame_start(context, frame_input);
         first.or(second)
     }
 
-    fn frame_end(
-        &mut self,
-        context: &mut CTX,
-        frame_input: &FI,
-        frame_result: &mut FR,
-    ) {
+    fn frame_end(&mut self, context: &mut CTX, frame_input: &FI, frame_result: &mut FR) {
         self.0.frame_end(context, frame_input, frame_result);
         self.1.frame_end(context, frame_input, frame_result);
     }
