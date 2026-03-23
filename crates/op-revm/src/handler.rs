@@ -186,7 +186,6 @@ where
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
-        initial_reservoir: u64,
     ) -> Result<(), Self::Error> {
         let ctx = evm.ctx();
         let tx = ctx.tx();
@@ -220,8 +219,7 @@ where
             //   - Regular transactions report their gas used as normal.
             if !is_deposit || is_regolith {
                 // Return unused regular gas and unused reservoir gas.
-                gas.erase_cost(remaining + reservoir);
-                gas.set_reservoir(reservoir);
+                gas.erase_cost(remaining);
                 gas.record_refund(refunded);
             } else if is_deposit && tx.is_system_transaction() {
                 // System transactions were a special type of deposit transaction in
@@ -242,20 +240,14 @@ where
             //     gas used on failure. Refunds on remaining gas enabled.
             //   - Regular transactions receive a refund on remaining gas as normal.
             if !is_deposit || is_regolith {
-                // Return unused regular gas and unused reservoir gas.
-                gas.erase_cost(remaining + reservoir);
+                // Return unused regular gas.
+                gas.erase_cost(remaining);
             }
-            // On revert, refill reservoir: state gas that spilled into regular gas
-            // gets returned to the reservoir.
-            gas.set_reservoir(initial_reservoir + state_gas_spent);
-        } else {
-            // On halt, refill reservoir.
-            // TODO(state-gas)handle state gas.
-            gas.set_reservoir(initial_reservoir.max(state_gas_spent));
         }
 
         // Restore state_gas_spent on all paths (lost by Gas::new_spent overwrite).
         gas.set_state_gas_spent(state_gas_spent);
+        gas.set_reservoir(reservoir);
 
         Ok(())
     }
@@ -438,8 +430,7 @@ where
             // clear the journal
             output = Ok(ExecutionResult::Halt {
                 reason: OpHaltReason::FailedDeposit,
-                gas: ResultGas::default()
-                    .with_total_gas_spent(gas_used),
+                gas: ResultGas::default().with_total_gas_spent(gas_used),
                 logs: Vec::new(),
             })
         }
@@ -511,7 +502,7 @@ mod tests {
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
 
         handler
-            .last_frame_result(&mut evm, &mut exec_result, 0)
+            .last_frame_result(&mut evm, &mut exec_result)
             .unwrap();
         handler.refund(&mut evm, &mut exec_result, 0);
         *exec_result.gas()

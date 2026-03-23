@@ -503,6 +503,16 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     pub fn tx_gas_used(&self) -> u64 {
         self.gas().tx_gas_used()
     }
+
+    /// Returns the gas used.
+    #[inline]
+    #[deprecated(
+        since = "32.0.0",
+        note = "Use `tx_gas_used()` instead, `gas_used` is ambiguous after EIP-8037 state gas split"
+    )]
+    pub fn gas_used(&self) -> u64 {
+        self.tx_gas_used()
+    }
 }
 
 impl<HaltReasonTy: fmt::Display> fmt::Display for ExecutionResult<HaltReasonTy> {

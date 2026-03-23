@@ -220,13 +220,12 @@ pub trait Handler {
         // Create first frame action
         // Note: first_frame_input now handles state gas deduction from the reservoir
         let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
-        let initial_reservoir = first_frame_input.frame_input.reservoir();
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result, initial_reservoir)?;
+        self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
     }
 
@@ -448,7 +447,6 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
-        initial_reservoir: u64,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();

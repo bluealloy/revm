@@ -89,13 +89,12 @@ where
         // Note: first_frame_input already handles initial state gas deduction
         // from the reservoir (or gas_limit deficit).
         let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
-        let initial_reservoir = first_frame_input.frame_input.reservoir();
 
         // Run execution loop
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result, initial_reservoir)?;
+        self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
     }
 

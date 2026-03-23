@@ -94,10 +94,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let Some(precompile) = self.precompiles.get(&inputs.bytecode_address) else {
             return Ok(None);
         };
-
+        let reservoir = inputs.reservoir;
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
-            gas: Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, inputs.reservoir),
+            gas: Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir),
             output: Bytes::new(),
         };
 
@@ -119,11 +119,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
 
         match exec_result {
             Ok(output) => {
+                *result.gas.tracker_mut() = output.gas;
                 // Preserve the reservoir before replacing the tracker.
                 // Precompile output doesn't track reservoir, but we need to
                 // propagate it back to the parent frame.
-                let reservoir = result.gas.reservoir();
-                *result.gas.tracker_mut() = output.gas;
                 result.gas.set_reservoir(reservoir);
                 result.result = if output.reverted {
                     InstructionResult::Revert
