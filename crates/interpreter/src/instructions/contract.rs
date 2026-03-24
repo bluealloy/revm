@@ -24,6 +24,11 @@ use crate::InstructionContext;
 pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
+    // Static call check is before gas charging (unlike execution-specs where it's
+    // inside generic_create). This is safe because CREATE in a static context is
+    // always an error regardless of gas accounting.
+    require_non_staticcall!(context.interpreter);
+
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {
         check!(context.interpreter, PETERSBURG);
@@ -92,12 +97,6 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             context.host.gas_params().create_state_gas()
         );
     }
-
-    // Static call check: must be AFTER gas charging to match the execution-specs,
-    // where the static check is inside generic_create() after all gas has been charged.
-    // This ensures state gas is recorded on the frame, so that on child error the parent
-    // can recover it via handle_reservoir_remaining_gas (EIP-8037 state gas recovery).
-    require_non_staticcall!(context.interpreter);
 
     let mut gas_limit = context.interpreter.gas.remaining();
 
