@@ -470,10 +470,19 @@ pub trait Handler {
         // Always track state gas spent regardless of outcome.
         gas.set_state_gas_spent(state_gas_spent);
 
-        // Reservoir handling at the top-level frame.
-        // Use the frame's final reservoir directly — it already reflects
-        // child frame restorations and any state gas consumed/spilled during execution.
-        gas.set_reservoir(reservoir);
+        // Reservoir handling at the top-level frame:
+        // - On success: use the frame's final reservoir as-is, state gas was consumed.
+        // - On revert/halt: restore state gas spent back to the reservoir,
+        //   because state changes are rolled back so state gas should be refunded.
+        //
+        // Note: eth devnet3 does NOT do this — it ignores state_gas_spent and
+        // unconditionally sets gas.set_reservoir(reservoir) regardless of the
+        // instruction_result kind. This is a bug in the devnet3 spec.
+        if instruction_result.is_ok() {
+            gas.set_reservoir(reservoir);
+        } else {
+            gas.set_reservoir(reservoir + state_gas_spent);
+        }
 
         Ok(())
     }
