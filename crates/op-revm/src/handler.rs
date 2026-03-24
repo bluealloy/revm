@@ -157,9 +157,7 @@ where
 
         if !cfg.is_fee_charge_disabled() {
             let Some(additional_cost) = chain.tx_cost_with_tx(tx, spec) else {
-                return Err(ERROR::from_string(
-                    "[OPTIMISM] Failed to load enveloped transaction.".into(),
-                ));
+                return Err(OpTransactionError::MissingEnvelopedTx.into());
             };
             let Some(new_balance) = balance.checked_sub(additional_cost) else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
@@ -319,9 +317,7 @@ where
         let spec = cfg.spec();
 
         let Some(enveloped_tx) = tx.enveloped_tx() else {
-            return Err(ERROR::from_string(
-                "[OPTIMISM] Failed to load enveloped transaction.".into(),
-            ));
+            return Err(OpTransactionError::MissingEnvelopedTx.into());
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);

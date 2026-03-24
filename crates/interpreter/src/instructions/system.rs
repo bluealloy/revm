@@ -111,28 +111,12 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
-
+        let input = &*input.as_bytes_memory(&context.interpreter.memory);
         // SAFETY: `count` is bounded by the calldata length.
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
-        match context.interpreter.input.input() {
-            CallInput::Bytes(bytes) => {
-                unsafe {
-                    ptr::copy_nonoverlapping(bytes.as_ptr().add(offset), word.as_mut_ptr(), count)
-                };
-            }
-            CallInput::SharedBuffer(range) => {
-                let input_slice = context.interpreter.memory.global_slice(range.clone());
-                unsafe {
-                    ptr::copy_nonoverlapping(
-                        input_slice.as_ptr().add(offset),
-                        word.as_mut_ptr(),
-                        count,
-                    )
-                };
-            }
-        }
+        unsafe { ptr::copy_nonoverlapping(input.as_ptr().add(offset), word.as_mut_ptr(), count) };
     }
     *offset_ptr = word.into();
 }

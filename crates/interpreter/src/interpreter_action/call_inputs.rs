@@ -1,13 +1,17 @@
+use crate::interpreter_types::MemoryTr;
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
 use primitives::{Address, Bytes, B256, U256};
 use state::Bytecode;
+
 /// Input enum for a call.
 ///
 /// As CallInput uses shared memory buffer it can get overridden if not used directly when call happens.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallInput {
+    /// Bytes of the call data.
+    Bytes(Bytes),
     /// The Range points to the SharedMemory buffer. Buffer can be found in [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
     /// And can be accessed with `evm.ctx().local().shared_memory_buffer()`
     ///
@@ -16,12 +20,11 @@ pub enum CallInput {
     /// Use it with caution, CallInput shared buffer can be overridden if context from child call is returned so
     /// recommendation is to fetch buffer at first Inspector call and clone it from [`context_interface::LocalContextTr::shared_memory_buffer_slice`] function.
     SharedBuffer(Range<usize>),
-    /// Bytes of the call data.
-    Bytes(Bytes),
 }
 
 impl CallInput {
     /// Returns the length of the call input.
+    #[inline]
     pub fn len(&self) -> usize {
         match self {
             Self::Bytes(bytes) => bytes.len(),
@@ -30,8 +33,37 @@ impl CallInput {
     }
 
     /// Returns `true` if the call input is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// Returns the bytes of the call input from the given context.
+    #[inline]
+    pub fn as_bytes<'a, CTX: ContextTr>(
+        &'a self,
+        ctx: &'a CTX,
+    ) -> impl core::ops::Deref<Target = [u8]> + 'a {
+        match self {
+            Self::Bytes(bytes) => CallInputRef::Bytes(bytes.as_ref()),
+            Self::SharedBuffer(range) => {
+                CallInputRef::SharedBuffer(ctx.local().shared_memory_buffer_slice(range.clone()))
+            }
+        }
+    }
+
+    /// Returns the bytes of the call input from the given memory.
+    #[inline]
+    pub fn as_bytes_memory<'a, M: MemoryTr>(
+        &'a self,
+        memory: &'a M,
+    ) -> impl core::ops::Deref<Target = [u8]> + 'a {
+        match self {
+            Self::Bytes(bytes) => CallInputRef::Bytes(bytes.as_ref()),
+            Self::SharedBuffer(range) => {
+                CallInputRef::SharedBuffer(Some(memory.global_slice(range.clone())))
+            }
+        }
     }
 
     /// Returns the bytes of the call input.
@@ -43,10 +75,7 @@ impl CallInput {
     ///
     /// If this `CallInput` is a `SharedBuffer`, the slice will be copied
     /// into a fresh `Bytes` buffer, which can pose a performance penalty.
-    pub fn bytes<CTX>(&self, ctx: &CTX) -> Bytes
-    where
-        CTX: ContextTr,
-    {
+    pub fn bytes<CTX: ContextTr>(&self, ctx: &CTX) -> Bytes {
         match self {
             CallInput::Bytes(bytes) => bytes.clone(),
             CallInput::SharedBuffer(range) => ctx
@@ -61,7 +90,24 @@ impl CallInput {
 impl Default for CallInput {
     #[inline]
     fn default() -> Self {
-        CallInput::SharedBuffer(0..0)
+        CallInput::Bytes(Bytes::new())
+    }
+}
+
+enum CallInputRef<'a> {
+    Bytes(&'a [u8]),
+    SharedBuffer(Option<core::cell::Ref<'a, [u8]>>),
+}
+
+impl core::ops::Deref for CallInputRef<'_> {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Bytes(x) => x,
+            Self::SharedBuffer(x) => x.as_deref().unwrap_or_default(),
+        }
     }
 }
 
