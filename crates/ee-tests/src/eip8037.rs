@@ -574,7 +574,10 @@ fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(result.gas().inner_refunded(), 0);
-    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_zero_to_zero_no_state_gas.json",
         &(baseline_result, result),
@@ -858,7 +861,10 @@ fn test_eip8037_call_existing_account() {
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_call_existing_account.json",
         &(baseline_result, result),
@@ -915,7 +921,10 @@ fn test_eip8037_selfdestruct_existing_account() {
     assert!(result.is_success());
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     assert_eq!(result.tx_gas_used(), baseline_gas);
     compare_or_save_eip8037_testdata(
         "test_eip8037_selfdestruct_existing_account.json",
@@ -1587,7 +1596,10 @@ fn test_eip8037_precompile_no_state_gas() {
     assert_eq!(delta, 0);
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().total_gas_spent(), baseline_result.gas().total_gas_spent());
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_precompile_no_state_gas.json",
         &(baseline_result, result),
@@ -1636,7 +1648,10 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert!(result.tx_gas_used() < gas_limit, "REVERT reimburses remaining");
+    assert!(
+        result.tx_gas_used() < gas_limit,
+        "REVERT reimburses remaining"
+    );
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(

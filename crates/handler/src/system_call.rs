@@ -306,8 +306,7 @@ mod tests {
             output.result,
             ExecutionResult::Success {
                 reason: SuccessReason::Stop,
-                gas: ResultGas::default()
-                    .with_total_gas_spent(22143),
+                gas: ResultGas::default().with_total_gas_spent(22143),
                 logs: vec![],
                 output: Output::Call(Bytes::default())
             }

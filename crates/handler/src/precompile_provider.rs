@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
-use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
+use interpreter::{gas::GasTracker, CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
@@ -95,6 +95,21 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             return Ok(None);
         };
         let reservoir = inputs.reservoir;
+
+        let handler_reservoir_refill = |gas: &mut GasTracker, is_success: bool| {
+            // Only if there were some reservoir from parent
+            // and precompile returned as no reservoir was present (reservoir zero and state gas spent zero)
+            // we use parent value for reservoir.
+            if reservoir != 0 && (gas.reservoir() == 0 && gas.state_gas_spent() == 0) {
+                gas.set_reservoir(reservoir);
+            } else if !is_success {
+                // on error/halt we refill the reservoir with the state gas spent and rest of reservoir.
+                // and reseting state gas spen to zero as no state gas was spent on revert/halt.
+                gas.set_reservoir(gas.reservoir() + gas.state_gas_spent());
+                gas.set_state_gas_spent(0);
+            }
+        };
+
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
             gas: Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir),
@@ -105,10 +120,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         match exec_result {
             Ok(output) => {
                 *result.gas.tracker_mut() = output.gas;
-                // Preserve the reservoir before replacing the tracker.
-                // Precompile output doesn't track reservoir, but we need to
-                // propagate it back to the parent frame.
-                result.gas.set_reservoir(reservoir);
+                handler_reservoir_refill(result.gas.tracker_mut(), true);
                 result.result = if output.reverted {
                     InstructionResult::Revert
                 } else {
@@ -120,9 +132,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 if failure.error.is_fatal() {
                     return Err(failure.error.to_string());
                 }
-                // If the precompile tracked state gas, propagate it for reservoir refill.
+                // If the precompile tracked state gas
                 if let Some(gas) = failure.gas {
                     *result.gas.tracker_mut() = gas;
+                    handler_reservoir_refill(result.gas.tracker_mut(), false);
                 }
                 result.result = if failure.is_oog() {
                     InstructionResult::PrecompileOOG

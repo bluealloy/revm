@@ -281,7 +281,8 @@ pub mod bls12_381 {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "G2MSM input length too long for OP Stack input size limitation".into(),
-            ).into());
+            )
+            .into());
         }
         precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
@@ -301,7 +302,8 @@ pub mod bls12_381 {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileError::Other(
                 "Pairing input length too long for OP Stack input size limitation".into(),
-            ).into());
+            )
+            .into());
         }
         precompile::bls12_381::pairing::pairing(input, gas_limit)
     }

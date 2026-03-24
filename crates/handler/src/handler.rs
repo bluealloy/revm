@@ -287,14 +287,11 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
-        let gas = match validation::validate_initial_tx_gas(
+        let gas = validation::validate_initial_tx_gas(
             ctx.tx(),
             ctx.cfg().spec().into(),
             ctx.cfg().is_eip7623_disabled(),
-        ) {
-            Ok(gas) => gas,
-            Err(e) => return Err(e.into()),
-        };
+        )?;
 
         // EIP-8037: When state gas is enabled and gas_limit exceeds TX_MAX_GAS_LIMIT,
         // the maximum gas_used = TX_MAX_GAS_LIMIT (since reservoir = gas_limit - cap

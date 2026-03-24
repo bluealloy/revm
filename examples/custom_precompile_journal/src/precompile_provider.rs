@@ -196,9 +196,7 @@ fn handle_write_storage<CTX: ContextTr>(
         .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}").into()))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(
-            format!("Transfer error: {error:?}").into(),
-        ).into());
+        return Err(PrecompileError::Other(format!("Transfer error: {error:?}").into()).into());
     }
 
     // Create a log to record the storage write operation

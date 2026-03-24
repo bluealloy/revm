@@ -93,7 +93,10 @@ fn main() -> anyhow::Result<()> {
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.tx_gas_used());
+            println!(
+                "   🛑 Halted! Reason: {reason:?}, Gas used: {}",
+                gas.tx_gas_used()
+            );
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");
@@ -128,7 +131,10 @@ fn main() -> anyhow::Result<()> {
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.tx_gas_used());
+            println!(
+                "   🛑 Halted! Reason: {reason:?}, Gas used: {}",
+                gas.tx_gas_used()
+            );
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");
@@ -168,7 +174,10 @@ fn main() -> anyhow::Result<()> {
             );
         }
         Ok(revm::context::result::ExecutionResult::Halt { reason, gas, .. }) => {
-            println!("   🛑 Halted! Reason: {reason:?}, Gas used: {}", gas.tx_gas_used());
+            println!(
+                "   🛑 Halted! Reason: {reason:?}, Gas used: {}",
+                gas.tx_gas_used()
+            );
         }
         Err(e) => {
             println!("   ❌ Error: {e:?}");

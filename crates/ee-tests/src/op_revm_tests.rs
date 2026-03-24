@@ -6,11 +6,22 @@ use op_revm::{
     OpHaltReason, OpSpecId, OpTransaction,
 };
 use revm::{
-    Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm, bytecode::opcode, context::{
-        BlockEnv, CfgEnv, TxEnv, result::{ExecutionResult, OutOfGasError, ResultGas}
-    }, context_interface::result::HaltReason, database::{BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET, BenchmarkDB, EmptyDB, State}, handler::system_call::SYSTEM_ADDRESS, interpreter::{
-        InterpreterTypes, gas::{InitialAndFloorGas, calculate_initial_tx_gas}
-    }, precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address}, primitives::{Address, Bytes, Log, TxKind, U256, address, bytes, eip7825}, state::Bytecode
+    bytecode::opcode,
+    context::{
+        result::{ExecutionResult, OutOfGasError, ResultGas},
+        BlockEnv, CfgEnv, TxEnv,
+    },
+    context_interface::result::HaltReason,
+    database::{BenchmarkDB, EmptyDB, State, BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET},
+    handler::system_call::SYSTEM_ADDRESS,
+    interpreter::{
+        gas::{calculate_initial_tx_gas, InitialAndFloorGas},
+        InterpreterTypes,
+    },
+    precompile::{bls12_381_const, bls12_381_utils, bn254, secp256r1, u64_to_address},
+    primitives::{address, bytes, eip7825, Address, Bytes, Log, TxKind, U256},
+    state::Bytecode,
+    Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
 use std::{path::PathBuf, vec::Vec};
 
@@ -87,8 +98,7 @@ fn test_halted_deposit_tx() {
         output.result,
         ExecutionResult::Halt {
             reason: OpHaltReason::FailedDeposit,
-            gas: ResultGas::default()
-                .with_total_gas_spent(eip7825::TX_GAS_LIMIT_CAP),
+            gas: ResultGas::default().with_total_gas_spent(eip7825::TX_GAS_LIMIT_CAP),
             logs: vec![],
         }
     );

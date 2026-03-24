@@ -206,7 +206,8 @@ pub fn apply_eip7702_auth_list<
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
-    let eip7702_refund = apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
+    let eip7702_refund =
+        apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
 
     // EIP-8037: Split auth list refund into state gas and regular gas portions.
     // The state gas portion is added to the reservoir after initial_state_gas deduction,
