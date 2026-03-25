@@ -1,0 +1,52 @@
+[
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 28603,
+        "state_gas_spent": 0
+      },
+      "logs": [
+        {
+          "address": "0xfffffffffffffffffffffffffffffffffffffffe",
+          "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff",
+            "0x000000000000000000000000d000000000000000000000000000000000000002"
+          ]
+        }
+      ],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "SelfDestruct"
+    }
+  },
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 278603,
+        "state_gas_spent": 250000
+      },
+      "logs": [
+        {
+          "address": "0xfffffffffffffffffffffffffffffffffffffffe",
+          "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff",
+            "0x000000000000000000000000d000000000000000000000000000000000000002"
+          ]
+        }
+      ],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "SelfDestruct"
+    }
+  }
+]

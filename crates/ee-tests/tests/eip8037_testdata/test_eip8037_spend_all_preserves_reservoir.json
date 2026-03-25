@@ -1,0 +1,26 @@
+[
+  {
+    "Halt": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 500000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "reason": "InvalidFEOpcode"
+    }
+  },
+  {
+    "Halt": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 300000,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "reason": "InvalidFEOpcode"
+    }
+  }
+]
