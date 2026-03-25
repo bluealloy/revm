@@ -1500,6 +1500,9 @@ fn test_eip8037_gas_opcode_excludes_reservoir() {
 }
 
 /// 6.4 INVALID opcode after SSTORE: spend_all() zeroes remaining but preserves reservoir.
+///
+/// On HALT, state gas spent is restored to the reservoir (state changes rolled back),
+/// so tx_gas_used is reduced by the state gas amount compared to the baseline.
 #[test]
 fn test_eip8037_spend_all_preserves_reservoir() {
     let bytecode = sstore_then_invalid_bytecode();
@@ -1535,9 +1538,14 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    assert_eq!(result.tx_gas_used(), gas_limit);
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(result.tx_gas_used(), baseline_result.tx_gas_used());
+    // On halt, state gas is refunded via reservoir, so tx_gas_used is reduced.
+    assert_eq!(
+        result.tx_gas_used(),
+        gas_limit - STATE_GAS_SSTORE_SET,
+        "Halt refunds state gas via reservoir"
+    );
+    // state_gas_spent is zeroed on halt (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(
         "test_eip8037_spend_all_preserves_reservoir.json",
         &(baseline_result, result),
@@ -1617,6 +1625,9 @@ fn test_eip8037_precompile_no_state_gas() {
 // On HALT: remaining is NOT reimbursed, refill applied to final gas accounting.
 
 /// 7.1 REVERT with state_gas < reservoir.
+///
+/// On REVERT, state gas is restored to the reservoir (state changes rolled back),
+/// so tx_gas_used matches the baseline (no extra state gas charged).
 #[test]
 fn test_eip8037_reservoir_refill_revert_state_gas_less() {
     let bytecode = sstore_then_revert_bytecode();
@@ -1644,9 +1655,10 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
         .unwrap();
 
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
-    let delta = result.tx_gas_used() - baseline_gas;
-    assert_eq!(delta, STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    // On revert, state gas is refunded via reservoir, so no delta vs baseline.
+    assert_eq!(result.tx_gas_used(), baseline_gas);
+    // state_gas_spent is zeroed on revert (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert!(
         result.tx_gas_used() < gas_limit,
@@ -1661,6 +1673,9 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
 }
 
 /// 7.2 REVERT with state_gas > reservoir (2x SSTORE).
+///
+/// On REVERT, all state gas is restored to the reservoir (state changes rolled back),
+/// so tx_gas_used matches the baseline (no extra state gas charged).
 #[test]
 fn test_eip8037_reservoir_refill_revert_state_gas_more() {
     let bytecode = sstore_multi_then_revert_bytecode();
@@ -1688,10 +1703,10 @@ fn test_eip8037_reservoir_refill_revert_state_gas_more() {
         .unwrap();
 
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
-    let expected_delta = 2 * STATE_GAS_SSTORE_SET;
-    let delta = result.tx_gas_used() - baseline_gas;
-    assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), 2 * STATE_GAS_SSTORE_SET);
+    // On revert, state gas is refunded via reservoir, so no delta vs baseline.
+    assert_eq!(result.tx_gas_used(), baseline_gas);
+    // state_gas_spent is zeroed on revert (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
@@ -1812,10 +1827,13 @@ fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
 
     assert!(result_halt.is_halt());
     assert!(!result_revert.is_success() && !result_revert.is_halt());
+    // On halt with tight gas, tx_gas_used = halt_gas_limit (no state gas to refund
+    // since OOG happened before SSTORE could execute).
     assert_eq!(result_halt.tx_gas_used(), halt_gas_limit);
     assert!(result_revert.tx_gas_used() < revert_gas_limit);
-    assert!(result_halt.tx_gas_used() < result_revert.tx_gas_used());
-    assert_eq!(result_revert.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    // On revert/halt, state_gas_spent is zeroed (state changes rolled back).
+    assert_eq!(result_revert.gas().state_gas_spent(), 0);
+    assert_eq!(result_halt.gas().state_gas_spent(), 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
     compare_or_save_eip8037_testdata(

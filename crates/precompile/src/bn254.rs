@@ -287,7 +287,7 @@ mod tests {
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
 
-        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -347,7 +347,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // Zero multiplication test
         let input = hex::decode(
@@ -450,7 +450,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -506,7 +506,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(ref f) if *f == PrecompileError::Bn254PairLength));
+        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
 
         // Test with point at infinity - should return true (identity element)
         // G1 point at infinity (0,0) followed by a valid G2 point

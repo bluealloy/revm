@@ -99,19 +99,11 @@ fn run_custom_precompile<CTX: ContextTr>(
     };
 
     match result {
-        Ok(output) => {
-            let mut interpreter_result = InterpreterResult {
-                result: if output.reverted {
-                    InstructionResult::Revert
-                } else {
-                    InstructionResult::Return
-                },
-                gas: Gas::new(inputs.gas_limit),
-                output: output.bytes,
-            };
-            *interpreter_result.gas.tracker_mut() = output.gas;
-            Ok(interpreter_result)
-        }
+        Ok(output) => Ok(InterpreterResult {
+            result: InstructionResult::Return,
+            gas: Gas::new(inputs.gas_limit),
+            output: output.bytes,
+        }),
         Err(e) => {
             // If this is a top-level precompile call and error is non-OOG, record the message
             if !e.is_oog() && context.journal().depth() == 1 {
@@ -150,7 +142,6 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
 
     // Return the value as output
     Ok(PrecompileOutput::new(
-        gas_limit,
         BASE_GAS,
         value.to_be_bytes_vec().into(),
     ))
@@ -196,7 +187,9 @@ fn handle_write_storage<CTX: ContextTr>(
         .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}").into()))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(format!("Transfer error: {error:?}").into()).into());
+        return Err(PrecompileError::Other(
+            format!("Transfer error: {error:?}").into(),
+        ));
     }
 
     // Create a log to record the storage write operation
@@ -223,9 +216,5 @@ fn handle_write_storage<CTX: ContextTr>(
     context.journal_mut().log(log);
 
     // Return success with empty output
-    Ok(PrecompileOutput::new(
-        gas_limit,
-        BASE_GAS + SSTORE_GAS,
-        Bytes::new(),
-    ))
+    Ok(PrecompileOutput::new(BASE_GAS + SSTORE_GAS, Bytes::new()))
 }

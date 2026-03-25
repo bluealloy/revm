@@ -32,24 +32,12 @@ pub struct PrecompileOutput {
     pub gas_used: u64,
     /// Output bytes
     pub bytes: Bytes,
-    /// Whether the precompile reverted
-    pub reverted: bool,
 }
 
 impl PrecompileOutput {
     /// Returns new precompile output with the given gas used and output bytes.
     pub fn new(gas_used: u64, bytes: Bytes) -> Self {
-        Self {
-            gas_used,
-            bytes,
-            reverted: false,
-        }
-    }
-
-    /// Flips [`Self::reverted`] to `true`.
-    pub fn reverted(mut self) -> Self {
-        self.reverted = true;
-        self
+        Self { gas_used, bytes }
     }
 }
 

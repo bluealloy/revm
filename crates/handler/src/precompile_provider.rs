@@ -105,15 +105,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         let exec_result = precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit);
         match exec_result {
             Ok(output) => {
-                let success = result.gas.record_regular_cost(output.gas_used);
-                assert!(success, "Gas underflow is not possible");
-                // Precompiles don't track reservoir, so preserve parent's reservoir.
-                result.gas.set_reservoir(reservoir);
-                result.result = if output.reverted {
-                    InstructionResult::Revert
-                } else {
-                    InstructionResult::Return
-                };
+                result.gas.record_regular_cost(output.gas_used);
                 result.output = output.bytes;
             }
             Err(e) => {

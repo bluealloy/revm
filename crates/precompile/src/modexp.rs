@@ -580,31 +580,31 @@ mod tests {
                 base_len: U256::from(1025),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1025),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(0),
                 exp_len: U256::from(0),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileError::ModexpEip7823LimitSize.into()),
+                expected: Some(PrecompileError::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileError::OutOfGas.into()),
+                expected: Some(PrecompileError::OutOfGas),
             },
             TestInput {
                 base_len: U256::from(0),
@@ -803,7 +803,7 @@ mod tests {
 
         let res = osaka_run(&input_fail, 100_000_000);
         assert!(
-            matches!(res, Err(ref f) if *f == PrecompileError::ModexpEip7823LimitSize),
+            matches!(res, Err(PrecompileError::ModexpEip7823LimitSize)),
             "1025-byte base should be rejected"
         );
     }
@@ -894,7 +894,7 @@ mod tests {
         // Provide insufficient gas
         let res = byzantium_run(&input, 1000);
         assert!(
-            matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas),
+            matches!(res, Err(PrecompileError::OutOfGas)),
             "Should return OutOfGas error with insufficient gas"
         );
     }
