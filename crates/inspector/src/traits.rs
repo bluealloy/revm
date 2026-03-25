@@ -5,7 +5,8 @@ use handler::{
     EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
 use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, InterpreterTypes,
+    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, FrameInput,
+    InterpreterTypes,
 };
 
 use crate::{
@@ -26,7 +27,7 @@ pub trait InspectorEvmTr:
 >
 {
     /// The inspector type used for EVM execution inspection.
-    type Inspector: Inspector<Self::Context, EthInterpreter>;
+    type Inspector: Inspector<Self::Context, EthInterpreter, FrameInput, FrameResult>;
 
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
