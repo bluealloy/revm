@@ -112,13 +112,13 @@ impl Gas {
     Use [`Gas::total_gas_spent`] instead"
     )]
     pub const fn spent(&self) -> u64 {
-        self.limit - self.tracker.remaining()
+        self.limit.saturating_sub(self.tracker.remaining())
     }
 
     /// Returns the regular gas spent.
     #[inline]
     pub const fn total_gas_spent(&self) -> u64 {
-        self.limit - self.tracker.remaining()
+        self.limit.saturating_sub(self.tracker.remaining())
     }
 
     /// Returns the final amount of gas used by subtracting the refund from spent gas.
