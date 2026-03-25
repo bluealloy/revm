@@ -13,14 +13,16 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // EIP-8037: tx_gas_used = tx.gas - gas_left - state_gas_left
     // total_gas_spent = limit - remaining = tx.gas - gas_left
     // Subtract reservoir to get the actual gas used (excluding unused state gas).
-    ResultGas::default()
-        .with_total_gas_spent(gas.total_gas_spent().saturating_sub(gas.reservoir()))
+    let res = ResultGas::default()
+        .with_total_gas_spent(gas.total_gas_spent())
         .with_refunded(gas.refunded() as u64)
         .with_floor_gas(init_and_floor_gas.floor_gas)
         .with_state_gas_spent(
             gas.state_gas_spent() + init_and_floor_gas.initial_state_gas
                 - init_and_floor_gas.eip7702_reservoir_refund,
-        )
+        );
+
+    res
 }
 
 /// Ensures minimum gas floor is spent according to EIP-7623.

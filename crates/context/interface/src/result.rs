@@ -269,7 +269,7 @@ impl ResultGas {
     /// Returns the regular gas used by the block.
     #[inline]
     pub const fn block_regular_gas_used(&self) -> u64 {
-        let execution_gas_spent = self.total_gas_spent() - self.state_gas_spent();
+        let execution_gas_spent = self.total_gas_spent().saturating_sub(self.state_gas_spent());
         max(execution_gas_spent, self.floor_gas())
     }
 
