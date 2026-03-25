@@ -154,7 +154,7 @@ pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 /// Run the Bn254 add precompile
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
@@ -163,13 +163,13 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let p2_bytes = &input[G1_LEN..];
     let output = crypto().bn254_g1_add(p1_bytes, p2_bytes)?;
 
-    Ok(PrecompileOutput::new(gas_limit, gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 /// Run the Bn254 mul precompile
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
@@ -178,7 +178,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
     let output = crypto().bn254_g1_mul(point_bytes, scalar_bytes)?;
 
-    Ok(PrecompileOutput::new(gas_limit, gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 /// Run the Bn254 pair precompile
@@ -190,11 +190,11 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if !input.len().is_multiple_of(PAIR_ELEMENT_LEN) {
-        return Err(PrecompileError::Bn254PairLength.into());
+        return Err(PrecompileError::Bn254PairLength);
     }
 
     let elements = input.len() / PAIR_ELEMENT_LEN;
@@ -217,7 +217,6 @@ pub fn run_pair(
 
     let pairing_result = crypto().bn254_pairing_check(&points)?;
     Ok(PrecompileOutput::new(
-        gas_limit,
         gas_used,
         bool_to_bytes32(pairing_result),
     ))
@@ -288,7 +287,7 @@ mod tests {
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
 
-        assert!(matches!(res, Err(ref f) if f.error == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
 
         // No input test
         let input = [0u8; 0];
@@ -315,7 +314,7 @@ mod tests {
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
         assert!(matches!(
             res,
-            Err(ref f) if f.error == PrecompileError::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileError::Bn254AffineGFailedToCreate
         ));
     }
 
@@ -348,7 +347,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(res, Err(ref f) if f.error == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
 
         // Zero multiplication test
         let input = hex::decode(
@@ -392,7 +391,7 @@ mod tests {
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
         assert!(matches!(
             res,
-            Err(ref f) if f.error == PrecompileError::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileError::Bn254AffineGFailedToCreate
         ));
     }
 
@@ -451,7 +450,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(res, Err(ref f) if f.error == PrecompileError::OutOfGas));
+        assert!(matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas));
 
         // No input test
         let input = [0u8; 0];
@@ -488,7 +487,7 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(ref f) if f.error == PrecompileError::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileError::Bn254AffineGFailedToCreate
         ));
 
         // Invalid input length
@@ -507,7 +506,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(ref f) if f.error == PrecompileError::Bn254PairLength));
+        assert!(matches!(res, Err(ref f) if *f == PrecompileError::Bn254PairLength));
 
         // Test with point at infinity - should return true (identity element)
         // G1 point at infinity (0,0) followed by a valid G2 point

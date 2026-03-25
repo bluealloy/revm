@@ -17,11 +17,11 @@ pub const PRECOMPILE: Precompile = Precompile::new(
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
 pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if input.len() != PADDED_FP_LENGTH {
-        return Err(PrecompileError::Bls12381MapFpToG1InputLength.into());
+        return Err(PrecompileError::Bls12381MapFpToG1InputLength);
     }
 
     let input_p0 = remove_fp_padding(input)?;
@@ -32,7 +32,6 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let padded_result = pad_g1_point(&unpadded_result);
 
     Ok(PrecompileOutput::new(
-        gas_limit,
         MAP_FP_TO_G1_BASE_GAS_FEE,
         padded_result.into(),
     ))
@@ -47,6 +46,6 @@ mod test {
     fn sanity_test() {
         let input = Bytes::from(hex!("000000000000000000000000000000006900000000000000636f6e7472616374595a603f343061cd305a03f40239f5ffff31818185c136bc2595f2aa18e08f17"));
         let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE_GAS_FEE);
-        assert_eq!(fail, Err(PrecompileError::NonCanonicalFp.into()));
+        assert_eq!(fail, Err(PrecompileError::NonCanonicalFp));
     }
 }

@@ -15,21 +15,21 @@ pub const FUN: Precompile = Precompile::new(PrecompileId::Blake2F, crate::u64_to
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
-        return Err(PrecompileError::Blake2WrongLength.into());
+        return Err(PrecompileError::Blake2WrongLength);
     }
 
     // Parse number of rounds (4 bytes)
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap());
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // Parse final block flag
     let f = match input[212] {
         0 => false,
         1 => true,
-        _ => return Err(PrecompileError::Blake2WrongFinalIndicatorFlag.into()),
+        _ => return Err(PrecompileError::Blake2WrongFinalIndicatorFlag),
     };
 
     // Parse state vector h (8 × u64)
@@ -61,7 +61,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok(PrecompileOutput::new(gas_limit, gas_used, out.into()))
+    Ok(PrecompileOutput::new(gas_used, out.into()))
 }
 
 /// Blake2 algorithm

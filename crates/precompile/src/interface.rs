@@ -1,6 +1,5 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
-use context_interface::cfg::gas::GasTracker;
 use context_interface::result::AnyError;
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
@@ -23,60 +22,14 @@ pub fn crypto() -> &'static dyn Crypto {
 
 /// A precompile operation result type
 ///
-/// Returns either `Ok((gas_used, return_bytes))` or `Err(failure)`.
-pub type PrecompileResult = Result<PrecompileOutput, PrecompileFailure>;
-
-/// Precompile failure containing the error and optional gas tracker.
-///
-/// The gas tracker is present when the precompile has tracked state gas
-/// (EIP-8037 reservoir model) that needs to be propagated back to the caller
-/// on error/halt so the reservoir can be properly refilled.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct PrecompileFailure {
-    /// The precompile error.
-    pub error: PrecompileError,
-    /// Optional gas tracker with state gas info for reservoir refill.
-    /// `None` for precompiles that don't charge state gas.
-    pub gas: Option<GasTracker>,
-}
-
-impl PrecompileFailure {
-    /// Creates a new failure with the given error and gas tracker.
-    #[inline]
-    pub fn with_gas(error: PrecompileError, gas: GasTracker) -> Self {
-        Self {
-            error,
-            gas: Some(gas),
-        }
-    }
-
-    /// Returns `true` if the error is out of gas.
-    #[inline]
-    pub fn is_oog(&self) -> bool {
-        self.error.is_oog()
-    }
-}
-
-impl From<PrecompileError> for PrecompileFailure {
-    #[inline]
-    fn from(error: PrecompileError) -> Self {
-        Self { error, gas: None }
-    }
-}
-
-impl fmt::Display for PrecompileFailure {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.error, f)
-    }
-}
-
-impl core::error::Error for PrecompileFailure {}
+/// Returns either `Ok(PrecompileOutput)` or `Err(PrecompileError)`.
+pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 
 /// Precompile execution output
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PrecompileOutput {
-    /// Gas tracker for tracking gas state (refunds, reservoir, state gas).
-    pub gas: GasTracker,
+    /// Gas used by the precompile.
+    pub gas_used: u64,
     /// Output bytes
     pub bytes: Bytes,
     /// Whether the precompile reverted
@@ -84,20 +37,10 @@ pub struct PrecompileOutput {
 }
 
 impl PrecompileOutput {
-    /// Returns new precompile output with the given gas limit, gas used, and output bytes.
-    pub fn new(gas_limit: u64, gas_used: u64, bytes: Bytes) -> Self {
+    /// Returns new precompile output with the given gas used and output bytes.
+    pub fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self {
-            gas: GasTracker::new_used_gas(gas_limit, gas_used, 0),
-            bytes,
-            reverted: false,
-        }
-    }
-
-    /// Returns new precompile output with the given gas tracker and output bytes.
-    #[inline]
-    pub fn new_with_gas_tracker(gas: GasTracker, bytes: Bytes) -> Self {
-        Self {
-            gas,
+            gas_used,
             bytes,
             reverted: false,
         }

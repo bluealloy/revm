@@ -183,7 +183,7 @@ where
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // The format of input is:
@@ -210,7 +210,7 @@ where
             || mod_len > eip7823::INPUT_SIZE_LIMIT
             || exp_len > eip7823::INPUT_SIZE_LIMIT)
     {
-        return Err(PrecompileError::ModexpEip7823LimitSize.into());
+        return Err(PrecompileError::ModexpEip7823LimitSize);
     }
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -230,11 +230,11 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     if base_len == 0 && mod_len == 0 {
-        return Ok(PrecompileOutput::new(gas_limit, gas_cost, Bytes::new()));
+        return Ok(PrecompileOutput::new(gas_cost, Bytes::new()));
     }
 
     // Padding is needed if the input does not contain all 3 values.
@@ -248,7 +248,6 @@ where
     let output = crypto().modexp(base, exponent, modulus)?;
     // Ensure the output is exactly modulus length, as required by the spec.
     Ok(PrecompileOutput::new(
-        gas_limit,
         gas_cost,
         left_pad_vec_be(&output, mod_len).into_owned().into(),
     ))
@@ -318,7 +317,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::PrecompileFailure;
     use primitives::hex;
     use std::vec::Vec;
 
@@ -510,8 +508,7 @@ mod tests {
             let res = byzantium_run(&input, gas_limit).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
-                gas_limit - res.gas.remaining(),
-                test_gas,
+                res.gas_used, test_gas,
                 "used gas not matching for test: {}",
                 test.name
             );
@@ -527,8 +524,7 @@ mod tests {
             let res = berlin_run(&input, gas_limit).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
-                gas_limit - res.gas.remaining(),
-                test_gas,
+                res.gas_used, test_gas,
                 "used gas not matching for test: {}",
                 test.name
             );
@@ -544,8 +540,7 @@ mod tests {
             let res = osaka_run(&input, gas_limit).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
-                gas_limit - res.gas.remaining(),
-                test_gas,
+                res.gas_used, test_gas,
                 "used gas not matching for test: {}",
                 test.name
             );
@@ -567,7 +562,7 @@ mod tests {
             base_len: U256,
             exp_len: U256,
             mod_len: U256,
-            expected: Option<PrecompileFailure>,
+            expected: Option<PrecompileError>,
         }
 
         impl TestInput {
@@ -696,16 +691,14 @@ mod tests {
         // Byzantium has min_gas of 0 for empty input
         let res = byzantium_run(&[], gas_limit).unwrap();
         assert_eq!(
-            gas_limit - res.gas.remaining(),
-            0,
+            res.gas_used, 0,
             "Empty input should use 0 gas for Byzantium"
         );
 
         // Berlin has min_gas of 200
         let res = berlin_run(&[], gas_limit).unwrap();
         assert_eq!(
-            gas_limit - res.gas.remaining(),
-            200,
+            res.gas_used, 200,
             "Empty input should use minimum gas 200 for Berlin"
         );
 
@@ -725,11 +718,7 @@ mod tests {
 
         // For Berlin, minimum gas is 200
         let res = berlin_run(&input, gas_limit).unwrap();
-        assert_eq!(
-            gas_limit - res.gas.remaining(),
-            200,
-            "Berlin should use minimum gas of 200"
-        );
+        assert_eq!(res.gas_used, 200, "Berlin should use minimum gas of 200");
     }
 
     #[test]
@@ -770,8 +759,8 @@ mod tests {
         let byzantium_res = byzantium_run(&input, gas_limit).unwrap();
         let berlin_res = berlin_run(&input, gas_limit).unwrap();
 
-        let byzantium_gas_used = gas_limit - byzantium_res.gas.remaining();
-        let berlin_gas_used = gas_limit - berlin_res.gas.remaining();
+        let byzantium_gas_used = byzantium_res.gas_used;
+        let berlin_gas_used = berlin_res.gas_used;
         assert!(
             berlin_gas_used < byzantium_gas_used,
             "Berlin gas {} should be less than Byzantium gas {}",
@@ -814,7 +803,7 @@ mod tests {
 
         let res = osaka_run(&input_fail, 100_000_000);
         assert!(
-            matches!(res, Err(ref f) if f.error == PrecompileError::ModexpEip7823LimitSize),
+            matches!(res, Err(ref f) if *f == PrecompileError::ModexpEip7823LimitSize),
             "1025-byte base should be rejected"
         );
     }
@@ -905,7 +894,7 @@ mod tests {
         // Provide insufficient gas
         let res = byzantium_run(&input, 1000);
         assert!(
-            matches!(res, Err(ref f) if f.error == PrecompileError::OutOfGas),
+            matches!(res, Err(ref f) if *f == PrecompileError::OutOfGas),
             "Should return OutOfGas error with insufficient gas"
         );
     }

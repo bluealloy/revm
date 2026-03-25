@@ -32,13 +32,13 @@ pub const PRECOMPILE: Precompile =
 pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(PAIRING_INPUT_LENGTH) {
-        return Err(PrecompileError::Bls12381PairingInputLength.into());
+        return Err(PrecompileError::Bls12381PairingInputLength);
     }
 
     let k = input_len / PAIRING_INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas);
     }
 
     // Collect pairs of points for the pairing check
@@ -59,7 +59,6 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let result = if result { 1 } else { 0 };
 
     Ok(PrecompileOutput::new(
-        gas_limit,
         required_gas,
         B256::with_last_byte(result).into(),
     ))
