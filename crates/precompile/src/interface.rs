@@ -114,7 +114,7 @@ pub trait Crypto: Send + Sync + Debug {
         recid: u8,
         msg: &[u8; 32],
     ) -> Result<[u8; 32], PrecompileError> {
-        crate::secp256k1::ecrecover_bytes(*sig, recid, *msg)
+        crate::secp256k1::ecrecover_bytes(sig, recid, msg)
             .ok_or(PrecompileError::Secp256k1RecoverFailed)
     }
 
