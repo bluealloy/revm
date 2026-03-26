@@ -126,7 +126,7 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Blake2 compression function.
     #[inline]
-    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
+    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
         crate::blake2::algo::compress(rounds as usize, h, m, t, f);
     }
 

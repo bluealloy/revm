@@ -54,7 +54,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let t_0 = u64::from_le_bytes(input[196..204].try_into().unwrap());
     let t_1 = u64::from_le_bytes(input[204..212].try_into().unwrap());
 
-    crypto().blake2_compress(rounds, &mut h, m, [t_0, t_1], f);
+    crypto().blake2_compress(rounds, &mut h, &m, &[t_0, t_1], f);
 
     let mut out = [0u8; 64];
     for (i, h) in (0..64).step_by(8).zip(h.iter()) {
@@ -124,7 +124,7 @@ pub mod algo {
     /// returns a new state vector.  The number of rounds, "r", is 12 for
     /// BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
     #[allow(clippy::many_single_char_names)]
-    pub fn compress(rounds: usize, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
+    pub fn compress(rounds: usize, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
         #[cfg(all(target_feature = "avx2", feature = "std"))]
         {
             // only if it is compiled with avx2 flag and it is std, we can use avx2.
@@ -133,7 +133,7 @@ pub mod algo {
                 unsafe {
                     super::avx2::compress_block(
                         rounds,
-                        &m,
+                        m,
                         h,
                         ((t[1] as u128) << 64) | (t[0] as u128),
                         if f { !0 } else { 0 },
