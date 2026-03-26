@@ -157,7 +157,7 @@ pub mod algo {
             v[14] = !v[14] // Invert all bits if the last-block-flag is set.
         }
         for i in 0..rounds {
-            round(&mut v, &m, i);
+            round(&mut v, m, i);
         }
 
         for i in 0..8 {
