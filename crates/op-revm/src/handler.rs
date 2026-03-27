@@ -345,7 +345,13 @@ where
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         take_error::<Self::Error, _>(evm.ctx().error())?;
 
-        let exec_result = post_execution::output(evm.ctx(), frame_result, result_gas)
+        // Extract target address for revert context.
+        let address = match evm.ctx().tx().kind() {
+            revm::primitives::TxKind::Call(addr) => Some(addr),
+            revm::primitives::TxKind::Create => None,
+        };
+
+        let exec_result = post_execution::output(evm.ctx(), frame_result, result_gas, address)
             .map_haltreason(OpHaltReason::Base);
 
         if exec_result.is_halt() {
