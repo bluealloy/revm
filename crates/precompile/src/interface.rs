@@ -114,7 +114,7 @@ pub trait Crypto: Send + Sync + Debug {
         recid: u8,
         msg: &[u8; 32],
     ) -> Result<[u8; 32], PrecompileError> {
-        crate::secp256k1::ecrecover_bytes(*sig, recid, *msg)
+        crate::secp256k1::ecrecover_bytes(sig, recid, msg)
             .ok_or(PrecompileError::Secp256k1RecoverFailed)
     }
 
@@ -126,14 +126,14 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Blake2 compression function.
     #[inline]
-    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
+    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
         crate::blake2::algo::compress(rounds as usize, h, m, t, f);
     }
 
     /// secp256r1 (P-256) signature verification.
     #[inline]
     fn secp256r1_verify_signature(&self, msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 64]) -> bool {
-        crate::secp256r1::verify_signature(*msg, *sig, *pk).is_some()
+        crate::secp256r1::verify_signature(msg, sig, pk).is_some()
     }
 
     /// KZG point evaluation.
