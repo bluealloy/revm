@@ -5,7 +5,8 @@ use handler::{
     EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
 use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, InterpreterTypes,
+    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, FrameInput,
+    InterpreterTypes,
 };
 
 use crate::{
@@ -26,7 +27,7 @@ pub trait InspectorEvmTr:
 >
 {
     /// The inspector type used for EVM execution inspection.
-    type Inspector: Inspector<Self::Context, EthInterpreter>;
+    type Inspector: Inspector<Self::Context, EthInterpreter, FrameInput, FrameResult>;
 
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
@@ -118,7 +119,7 @@ pub trait InspectorEvmTr:
             {
                 if *was_precompile_called {
                     let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
-                    for log in logs.iter().chain(precompile_call_logs.iter()).cloned() {
+                    for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
                         inspector.log(ctx, log);
                     }
                 }

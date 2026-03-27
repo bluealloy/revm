@@ -107,8 +107,8 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
             blake2::algo::compress(
                 black_box(12),
                 &mut h_copy,
-                black_box(m),
-                black_box(t),
+                &black_box(m),
+                &black_box(t),
                 black_box(false),
             );
         });
