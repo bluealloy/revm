@@ -6,6 +6,7 @@ pub mod ecrecover;
 pub mod eip1962;
 pub mod eip2537;
 pub mod eip4844;
+pub mod secp256r1;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
@@ -35,6 +36,9 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // Run Blake2 benchmarks
     blake2::add_benches(&mut group);
+
+    // Run secp256r1 benchmarks
+    secp256r1::add_benches(&mut group);
 }
 
 criterion_group! {
