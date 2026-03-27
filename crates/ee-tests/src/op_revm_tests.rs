@@ -1,6 +1,5 @@
 //! Integration tests for the `op-revm` crate.
 
-use crate::TestdataConfig;
 use op_revm::{
     precompiles::bn254_pair::GRANITE_MAX_INPUT_SIZE, DefaultOp, L1BlockInfo, OpBuilder,
     OpHaltReason, OpSpecId, OpTransaction,
@@ -23,23 +22,7 @@ use revm::{
     state::Bytecode,
     Context, ExecuteEvm, InspectEvm, Inspector, Journal, SystemCallEvm,
 };
-use std::{path::PathBuf, vec::Vec};
-
-// Re-export the constant for testdata directory path
-const TESTS_TESTDATA: &str = "tests/op_revm_testdata";
-
-fn op_revm_testdata_config() -> TestdataConfig {
-    TestdataConfig {
-        testdata_dir: PathBuf::from(TESTS_TESTDATA),
-    }
-}
-
-fn compare_or_save_op_testdata<T>(filename: &str, output: &T)
-where
-    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
-{
-    crate::compare_or_save_testdata_with_config(filename, output, op_revm_testdata_config());
-}
+use std::vec::Vec;
 
 #[test]
 fn test_deposit_tx() {
@@ -65,7 +48,7 @@ fn test_deposit_tx() {
             .map(|a| a.info.balance),
         Some(U256::from(100))
     );
-    compare_or_save_op_testdata("test_deposit_tx.json", &output);
+    insta::assert_json_snapshot!("test_deposit_tx", output);
 }
 
 #[test]
@@ -113,7 +96,7 @@ fn test_halted_deposit_tx() {
         Some(U256::from(100) + BENCH_CALLER_BALANCE)
     );
 
-    compare_or_save_op_testdata("test_halted_deposit_tx.json", &output);
+    insta::assert_json_snapshot!("test_halted_deposit_tx", output);
 }
 
 fn p256verify_test_tx(
@@ -147,7 +130,7 @@ fn test_tx_call_p256verify() {
     // assert successful call to P256VERIFY
     assert!(output.result.is_success());
 
-    compare_or_save_op_testdata("test_tx_call_p256verify.json", &output);
+    insta::assert_json_snapshot!("test_tx_call_p256verify", output);
 }
 
 #[test]
@@ -181,7 +164,7 @@ fn test_halted_tx_call_p256verify() {
         }
     ));
 
-    compare_or_save_op_testdata("test_halted_tx_call_p256verify.json", &output);
+    insta::assert_json_snapshot!("test_halted_tx_call_p256verify", output);
 }
 
 fn bn254_pair_test_tx(
@@ -222,7 +205,7 @@ fn test_halted_tx_call_bn254_pair_fjord() {
         }
     ));
 
-    compare_or_save_op_testdata("test_halted_tx_call_bn254_pair_fjord.json", &output);
+    insta::assert_json_snapshot!("test_halted_tx_call_bn254_pair_fjord", output);
 }
 
 #[test]
@@ -241,7 +224,7 @@ fn test_halted_tx_call_bn254_pair_granite() {
         } if msg == "bn254 invalid pair length"
     ));
 
-    compare_or_save_op_testdata("test_halted_tx_call_bn254_pair_granite.json", &output);
+    insta::assert_json_snapshot!("test_halted_tx_call_bn254_pair_granite", output);
 }
 
 #[test]
@@ -275,10 +258,7 @@ fn test_halted_tx_call_bls12_381_g1_add_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g1_add_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g1_add_out_of_gas", output);
 }
 
 #[test]
@@ -311,10 +291,7 @@ fn test_halted_tx_call_bls12_381_g1_add_input_wrong_size() {
         } if msg == "bls12-381 g1 add input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g1_add_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g1_add_input_wrong_size", output);
 }
 
 fn g1_msm_test_tx(
@@ -390,10 +367,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_input_wrong_size() {
         } if msg == "bls12-381 g1 msm input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g1_msm_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g1_msm_input_wrong_size", output);
 }
 
 #[test]
@@ -437,10 +411,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g1_msm_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g1_msm_out_of_gas", output);
 }
 
 #[test]
@@ -459,10 +430,7 @@ fn test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout() {
         } if msg == "bls12-381 fp 64 top bytes of input are not zero"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g1_msm_wrong_input_layout", output);
 }
 
 #[test]
@@ -496,10 +464,7 @@ fn test_halted_tx_call_bls12_381_g2_add_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g2_add_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g2_add_out_of_gas", output);
 }
 
 #[test]
@@ -533,10 +498,7 @@ fn test_halted_tx_call_bls12_381_g2_add_input_wrong_size() {
         } if msg == "bls12-381 g2 add input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g2_add_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g2_add_input_wrong_size", output);
 }
 
 fn g2_msm_test_tx(
@@ -612,10 +574,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_input_wrong_size() {
         } if msg == "bls12-381 g2 msm input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g2_msm_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g2_msm_input_wrong_size", output);
 }
 
 #[test]
@@ -659,10 +618,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g2_msm_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g2_msm_out_of_gas", output);
 }
 
 #[test]
@@ -681,10 +637,7 @@ fn test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout() {
         } if msg == "bls12-381 fp 64 top bytes of input are not zero"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_g2_msm_wrong_input_layout", output);
 }
 
 fn bl12_381_pairing_test_tx(
@@ -755,10 +708,7 @@ fn test_halted_tx_call_bls12_381_pairing_input_wrong_size() {
         } if msg == "bls12-381 pairing input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_pairing_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_pairing_input_wrong_size", output);
 }
 
 #[test]
@@ -799,10 +749,7 @@ fn test_halted_tx_call_bls12_381_pairing_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_pairing_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_pairing_out_of_gas", output);
 }
 
 #[test]
@@ -821,10 +768,7 @@ fn test_tx_call_bls12_381_pairing_wrong_input_layout() {
         } if msg == "bls12-381 fp 64 top bytes of input are not zero"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_pairing_wrong_input_layout.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_pairing_wrong_input_layout", output);
 }
 
 #[test]
@@ -863,10 +807,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_map_fp_to_g1_out_of_gas", output);
 }
 
 #[test]
@@ -905,10 +846,7 @@ fn test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size() {
         } if msg == "bls12-381 map fp to g1 input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_map_fp_to_g1_input_wrong_size", output);
 }
 
 #[test]
@@ -947,10 +885,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas() {
         }
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_map_fp2_to_g2_out_of_gas", output);
 }
 
 #[test]
@@ -988,7 +923,7 @@ fn test_l1block_load_for_pre_regolith() {
     // assert out of gas
     assert!(output.result.is_success());
 
-    compare_or_save_op_testdata("test_l1block_load_for_pre_regolith.json", &output);
+    insta::assert_json_snapshot!("test_l1block_load_for_pre_regolith", output);
 }
 
 #[test]
@@ -1027,10 +962,7 @@ fn test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size() {
         } if msg == "bls12-381 map fp2 to g2 input length error"
     ));
 
-    compare_or_save_op_testdata(
-        "test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size.json",
-        &output,
-    );
+    insta::assert_json_snapshot!("test_halted_tx_call_bls12_381_map_fp2_to_g2_input_wrong_size", output);
 }
 
 #[test]
@@ -1131,7 +1063,7 @@ fn test_log_inspector() {
     let inspector = &evm.0.inspector;
     assert!(!inspector.logs.is_empty());
 
-    compare_or_save_op_testdata("test_log_inspector.json", &output);
+    insta::assert_json_snapshot!("test_log_inspector", output);
 }
 
 #[test]

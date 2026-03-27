@@ -1,6 +1,5 @@
 //! Integration tests for the `revm` crate.
 
-use crate::TestdataConfig;
 use revm::{
     bytecode::opcode,
     context::{CfgEnv, ContextTr, TxEnv},
@@ -9,23 +8,6 @@ use revm::{
     state::{AccountStatus, Bytecode},
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::path::PathBuf;
-
-// Re-export the constant for testdata directory path
-const TESTS_TESTDATA: &str = "tests/revm_testdata";
-
-fn revm_testdata_config() -> TestdataConfig {
-    TestdataConfig {
-        testdata_dir: PathBuf::from(TESTS_TESTDATA),
-    }
-}
-
-fn compare_or_save_revm_testdata<T>(filename: &str, output: &T)
-where
-    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
-{
-    crate::compare_or_save_testdata_with_config(filename, output, revm_testdata_config());
-}
 
 const SELFDESTRUCT_BYTECODE: &[u8] = &[
     opcode::PUSH2,
@@ -72,10 +54,7 @@ fn test_selfdestruct_multi_tx() {
 
     let output = evm.finalize();
 
-    compare_or_save_revm_testdata(
-        "test_selfdestruct_multi_tx.json",
-        &(result1, result2, output),
-    );
+    insta::assert_json_snapshot!("test_selfdestruct_multi_tx", (result1, result2, output));
 }
 
 /// Tests multiple transactions with contract creation.
@@ -183,10 +162,7 @@ fn test_multi_tx_create() {
     );
     let output = evm.finalize();
 
-    compare_or_save_revm_testdata(
-        "test_multi_tx_create.json",
-        &(result1, result2, result3, output),
-    );
+    insta::assert_json_snapshot!("test_multi_tx_create", (result1, result2, result3, output));
 }
 
 /// Creates deployment bytecode for a contract.
@@ -233,7 +209,7 @@ fn test_frame_stack_index() {
         .unwrap();
 
     assert_eq!(evm.frame_stack.index(), None);
-    compare_or_save_revm_testdata("test_frame_stack_index.json", &result1);
+    insta::assert_json_snapshot!("test_frame_stack_index", result1);
 }
 
 #[test]

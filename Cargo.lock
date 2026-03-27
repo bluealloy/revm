@@ -2569,6 +2569,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "insta"
+version = "1.47.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f40e41efb5f592d3a0764f818e2f08e5e21c4f368126f74f37c81bd4af7a0c6"
+dependencies = [
+ "console",
+ "once_cell",
+ "serde",
+ "similar",
+ "tempfile",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3652,10 +3665,10 @@ dependencies = [
 name = "revm-ee-tests"
 version = "0.2.0"
 dependencies = [
+ "insta",
  "op-revm",
  "revm",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -4270,6 +4283,12 @@ dependencies = [
  "digest 0.10.7",
  "rand_core 0.6.4",
 ]
+
+[[package]]
+name = "similar"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "siphasher"

@@ -1,0 +1,8 @@
+---
+source: crates/ee-tests/src/lib.rs
+expression: test_data
+---
+{
+  "value": 42,
+  "message": "test message"
+}
