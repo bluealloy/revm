@@ -15,7 +15,6 @@ use context_interface::{
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
-use state::Bytecode;
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -322,32 +321,10 @@ pub trait Handler {
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
-        let (tx, journal) = ctx.tx_journal_mut();
-        let bytecode = if let Some(&to) = tx.kind().to() {
-            let account = &journal.load_account_with_code(to)?.info;
-
-            if let Some(delegated_address) =
-                account.code.as_ref().and_then(Bytecode::eip7702_address)
-            {
-                let account = &journal.load_account_with_code(delegated_address)?.info;
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
-            } else {
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
-            }
-        } else {
-            None
-        };
-
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(tx, bytecode, gas_limit),
+            frame_input: execution::create_init_frame(ctx, gas_limit)?,
         })
     }
 
