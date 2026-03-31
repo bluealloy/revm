@@ -128,7 +128,7 @@ pub struct CallInputs {
     /// Known bytecode and its hash.
     /// If None, bytecode will be loaded from the account at `bytecode_address`.
     /// If Some((hash, bytecode)), the provided bytecode and hash will be used.
-    pub known_bytecode: Option<(B256, Bytecode)>,
+    pub known_bytecode: (B256, Bytecode),
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.
