@@ -758,17 +758,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account.is_cold,
         );
 
-        // load delegate code if account is EIP-7702
-        if let Some(address) = account
-            .info
-            .code
-            .as_ref()
-            .and_then(Bytecode::eip7702_address)
-        {
-            let delegate_account = self
-                .load_account_optional(db, address, true, false)
-                .map_err(JournalLoadError::unwrap_db_error)?;
-            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+        // load delegate code if account is EIP-7702 and Prague is enabled.
+        if is_eip7702_enabled {
+            if let Some(address) = account
+                .info
+                .code
+                .as_ref()
+                .and_then(Bytecode::eip7702_address)
+            {
+                let delegate_account = self
+                    .load_account_optional(db, address, true, false)
+                    .map_err(JournalLoadError::unwrap_db_error)?;
+                account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
+            }
         }
 
         Ok(account_load)
@@ -1144,8 +1146,8 @@ mod tests {
     use super::*;
     use context_interface::journaled_state::entry::JournalEntry;
     use database_interface::EmptyDB;
-    use primitives::{address, HashSet, U256};
-    use state::AccountInfo;
+    use primitives::{address, hardfork::SpecId, HashSet, U256};
+    use state::{AccountInfo, Bytecode};
 
     #[test]
     fn test_sload_skip_cold_load() {
@@ -1181,5 +1183,59 @@ mod tests {
         let state_load = result.unwrap();
         assert!(!state_load.is_cold); // Should be warm
         assert_eq!(state_load.data, U256::ZERO); // Empty slot
+    }
+
+    #[test]
+    fn load_account_delegated_pre_prague_does_not_follow_delegation() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        journal.set_spec_id(SpecId::CANCUN);
+
+        let target = Address::with_last_byte(0x10);
+        let delegate = Address::with_last_byte(0x20);
+
+        journal.state.insert(
+            target,
+            Account::from(AccountInfo::default().with_code(Bytecode::new_eip7702(delegate))),
+        );
+        journal.state.insert(
+            delegate,
+            Account::from(
+                AccountInfo::default().with_code(Bytecode::new_legacy(vec![0x00].into())),
+            ),
+        );
+
+        let mut db = EmptyDB::new();
+        let load = journal
+            .load_account_delegated(&mut db, target)
+            .expect("delegated load should succeed");
+
+        assert_eq!(load.data.is_delegate_account_cold, None);
+    }
+
+    #[test]
+    fn load_account_delegated_prague_follows_delegation() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        journal.set_spec_id(SpecId::PRAGUE);
+
+        let target = Address::with_last_byte(0x11);
+        let delegate = Address::with_last_byte(0x21);
+
+        journal.state.insert(
+            target,
+            Account::from(AccountInfo::default().with_code(Bytecode::new_eip7702(delegate))),
+        );
+        journal.state.insert(
+            delegate,
+            Account::from(
+                AccountInfo::default().with_code(Bytecode::new_legacy(vec![0x00].into())),
+            ),
+        );
+
+        let mut db = EmptyDB::new();
+        let load = journal
+            .load_account_delegated(&mut db, target)
+            .expect("delegated load should succeed");
+
+        assert!(load.data.is_delegate_account_cold.is_some());
     }
 }
