@@ -17,8 +17,6 @@ pub use context_interface::cfg::gas::*;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Gas {
-    /// The initial gas limit. This is constant throughout execution.
-    limit: u64,
     /// Tracker for gas during execution.
     tracker: GasTracker,
     /// Memoisation of values for memory expansion cost.
@@ -32,7 +30,6 @@ impl Gas {
     #[inline]
     pub const fn new(limit: u64) -> Self {
         Self {
-            limit,
             tracker: GasTracker::new(limit, limit, 0),
             memory: MemoryGas::new(),
         }
@@ -63,7 +60,6 @@ impl Gas {
     #[inline]
     pub const fn new_with_regular_gas_and_reservoir(limit: u64, reservoir: u64) -> Self {
         Self {
-            limit,
             tracker: GasTracker::new(limit, limit, reservoir),
             memory: MemoryGas::new(),
         }
@@ -73,8 +69,7 @@ impl Gas {
     #[inline]
     pub const fn new_spent(limit: u64) -> Self {
         Self {
-            limit,
-            tracker: GasTracker::new(0, 0, 0),
+            tracker: GasTracker::new(limit, 0, 0),
             memory: MemoryGas::new(),
         }
     }
@@ -82,7 +77,7 @@ impl Gas {
     /// Returns the gas limit.
     #[inline]
     pub const fn limit(&self) -> u64 {
-        self.limit
+        self.tracker.limit()
     }
 
     /// Returns the memory gas.
@@ -112,13 +107,17 @@ impl Gas {
     Use [`Gas::total_gas_spent`] instead"
     )]
     pub const fn spent(&self) -> u64 {
-        self.limit.saturating_sub(self.tracker.remaining())
+        self.tracker
+            .limit()
+            .saturating_sub(self.tracker.remaining())
     }
 
     /// Returns the regular gas spent.
     #[inline]
     pub const fn total_gas_spent(&self) -> u64 {
-        self.limit.saturating_sub(self.tracker.remaining())
+        self.tracker
+            .limit()
+            .saturating_sub(self.tracker.remaining())
     }
 
     /// Returns the final amount of gas used by subtracting the refund from spent gas.
@@ -220,7 +219,8 @@ impl Gas {
     /// Set a spent value. This overrides the current spent value.
     #[inline]
     pub fn set_spent(&mut self, spent: u64) {
-        self.tracker.set_remaining(self.limit.saturating_sub(spent));
+        self.tracker
+            .set_remaining(self.tracker.limit().saturating_sub(spent));
     }
 
     /// Records a regular gas cost (EIP-8037 reservoir model).
