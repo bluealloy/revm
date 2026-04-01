@@ -677,6 +677,7 @@ fn execute_blockchain_test(
             code_hash: revm::primitives::keccak256(&account.code),
             code: Some(Bytecode::new_raw(account.code.clone())),
             account_id: None,
+            has_historical_storage: false,
         };
 
         // Store for debug info
@@ -1094,16 +1095,11 @@ fn skip_test(path: &Path) -> bool {
         "CreateTransactionHighNonce.json"
 
         // Test with some storage check.
-        | "RevertInCreateInInit_Paris.json"
         | "RevertInCreateInInit.json"
         | "dynamicAccountOverwriteEmpty.json"
-        | "dynamicAccountOverwriteEmpty_Paris.json"
-        | "RevertInCreateInInitCreate2Paris.json"
         | "create2collisionStorage.json"
         | "RevertInCreateInInitCreate2.json"
-        | "create2collisionStorageParis.json"
         | "InitCollision.json"
-        | "InitCollisionParis.json"
 
         // Malformed value.
         | "ValueOverflow.json"

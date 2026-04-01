@@ -14,7 +14,10 @@ impl PlainAccount {
     /// Creates a new empty account with the given storage.
     pub fn new_empty_with_storage(storage: PlainStorage) -> Self {
         Self {
-            info: AccountInfo::default(),
+            info: AccountInfo {
+                has_historical_storage: !storage.is_empty(),
+                ..AccountInfo::default()
+            },
             storage,
         }
     }

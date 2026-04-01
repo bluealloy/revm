@@ -464,7 +464,11 @@ impl DbAccount {
         if matches!(self.account_state, AccountState::NotExisting) {
             None
         } else {
-            Some(self.info.clone())
+            let mut info = self.info.clone();
+            if !self.account_state.is_storage_cleared() {
+                info.has_historical_storage |= !self.storage.is_empty();
+            }
+            Some(info)
         }
     }
 

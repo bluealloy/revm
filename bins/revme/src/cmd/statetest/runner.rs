@@ -80,16 +80,11 @@ fn skip_test(path: &Path) -> bool {
         | "CreateTransactionHighNonce.json"
 
         // Test with some storage check.
-        | "RevertInCreateInInit_Paris.json"
         | "RevertInCreateInInit.json"
         | "dynamicAccountOverwriteEmpty.json"
-        | "dynamicAccountOverwriteEmpty_Paris.json"
-        | "RevertInCreateInInitCreate2Paris.json"
         | "create2collisionStorage.json"
         | "RevertInCreateInInitCreate2.json"
-        | "create2collisionStorageParis.json"
         | "InitCollision.json"
-        | "InitCollisionParis.json"
         | "test_init_collision_create_opcode.json"
 
         // Malformed value.

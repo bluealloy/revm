@@ -211,6 +211,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                has_historical_storage: false,
             },
         );
 
@@ -223,6 +224,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                has_historical_storage: false,
             },
         );
 
@@ -347,6 +349,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                has_historical_storage: false,
             },
         );
 

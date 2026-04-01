@@ -525,8 +525,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // New account can be created if:
         // Bytecode is not empty.
         // Nonce is not zero
-        // Account is not precompile.
-        if target_acc.info.code_hash != KECCAK_EMPTY || target_acc.info.nonce != 0 {
+        // Account carried historical storage post-EIP-161.
+        let has_historical_storage =
+            spec_id.is_enabled_in(SPURIOUS_DRAGON) && target_acc.info.has_historical_storage;
+        if target_acc.info.code_hash != KECCAK_EMPTY
+            || target_acc.info.nonce != 0
+            || has_historical_storage
+        {
             self.checkpoint_revert(checkpoint);
             return Err(TransferError::CreateCollision);
         }
@@ -1160,6 +1165,7 @@ mod tests {
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
             account_id: None,
+            has_historical_storage: false,
         };
         journal
             .state
@@ -1181,5 +1187,75 @@ mod tests {
         let state_load = result.unwrap();
         assert!(!state_load.is_cold); // Should be warm
         assert_eq!(state_load.data, U256::ZERO); // Empty slot
+    }
+
+    #[test]
+    fn create_collision_for_historical_storage_post_spurious_dragon() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let caller = address!("1000000000000000000000000000000000000000");
+        let target = address!("2000000000000000000000000000000000000000");
+
+        journal.state.insert(
+            caller,
+            Account::from(AccountInfo {
+                balance: U256::from(1000),
+                nonce: 1,
+                code_hash: KECCAK_EMPTY,
+                code: Some(Bytecode::default()),
+                account_id: None,
+                has_historical_storage: false,
+            }),
+        );
+        journal.state.insert(
+            target,
+            Account::from(AccountInfo {
+                balance: U256::from(10),
+                nonce: 0,
+                code_hash: KECCAK_EMPTY,
+                code: Some(Bytecode::default()),
+                account_id: None,
+                has_historical_storage: true,
+            }),
+        );
+
+        let err = journal
+            .create_account_checkpoint(caller, target, U256::ZERO, PRAGUE)
+            .unwrap_err();
+
+        assert_eq!(err, TransferError::CreateCollision);
+    }
+
+    #[test]
+    fn create_allows_prefunded_account_without_historical_storage() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let caller = address!("1000000000000000000000000000000000000000");
+        let target = address!("2000000000000000000000000000000000000000");
+
+        journal.state.insert(
+            caller,
+            Account::from(AccountInfo {
+                balance: U256::from(1000),
+                nonce: 1,
+                code_hash: KECCAK_EMPTY,
+                code: Some(Bytecode::default()),
+                account_id: None,
+                has_historical_storage: false,
+            }),
+        );
+        journal.state.insert(
+            target,
+            Account::from(AccountInfo {
+                balance: U256::from(10),
+                nonce: 0,
+                code_hash: KECCAK_EMPTY,
+                code: Some(Bytecode::default()),
+                account_id: None,
+                has_historical_storage: false,
+            }),
+        );
+
+        assert!(journal
+            .create_account_checkpoint(caller, target, U256::ZERO, PRAGUE)
+            .is_ok());
     }
 }

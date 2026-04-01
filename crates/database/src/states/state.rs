@@ -173,7 +173,7 @@ impl<DB: Database> State<DB> {
                 let account = match info {
                     None => CacheAccount::new_loaded_not_existing(),
                     Some(acc) if acc.is_empty() => {
-                        CacheAccount::new_loaded_empty_eip161(HashMap::default())
+                        CacheAccount::new_loaded_empty_eip161(acc, HashMap::default())
                     }
                     Some(acc) => CacheAccount::new_loaded(acc, HashMap::default()),
                 };

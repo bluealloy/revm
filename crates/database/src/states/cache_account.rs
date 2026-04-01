@@ -23,14 +23,15 @@ impl From<BundleAccount> for CacheAccount {
 
 impl From<&BundleAccount> for CacheAccount {
     fn from(account: &BundleAccount) -> Self {
-        let storage = account
+        let storage: PlainStorage = account
             .storage
             .iter()
             .map(|(k, v)| (*k, v.present_value))
             .collect();
-        let plain_account = account
-            .account_info()
-            .map(|info| PlainAccount { info, storage });
+        let plain_account = account.account_info().map(|mut info| {
+            info.has_historical_storage |= !storage.is_empty();
+            PlainAccount { info, storage }
+        });
         Self {
             account: plain_account,
             status: account.status,
@@ -40,7 +41,8 @@ impl From<&BundleAccount> for CacheAccount {
 
 impl CacheAccount {
     /// Creates new account that is loaded from database.
-    pub fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub fn new_loaded(mut info: AccountInfo, storage: PlainStorage) -> Self {
+        info.has_historical_storage |= !storage.is_empty();
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Loaded,
@@ -48,9 +50,10 @@ impl CacheAccount {
     }
 
     /// Creates new account that is loaded empty from database.
-    pub fn new_loaded_empty_eip161(storage: PlainStorage) -> Self {
+    pub fn new_loaded_empty_eip161(mut info: AccountInfo, storage: PlainStorage) -> Self {
+        info.has_historical_storage |= !storage.is_empty();
         Self {
-            account: Some(PlainAccount::new_empty_with_storage(storage)),
+            account: Some(PlainAccount { info, storage }),
             status: AccountStatus::LoadedEmptyEIP161,
         }
     }

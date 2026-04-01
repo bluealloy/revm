@@ -30,6 +30,13 @@ pub struct AccountInfo {
     ///
     /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
+    /// Whether the account had pre-existing storage before it was loaded into the EVM state.
+    ///
+    /// This is metadata derived from the database/cache layer. It is used to disambiguate
+    /// create-collision checks for empty-code, zero-nonce accounts that still carry historical
+    /// storage in the pre-state.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub has_historical_storage: bool,
 }
 
 impl Default for AccountInfo {
@@ -42,6 +49,7 @@ impl Default for AccountInfo {
                 account_id: None,
                 nonce: 0,
                 code: Some(Bytecode::default()),
+                has_historical_storage: false,
             })
             .clone()
     }
@@ -88,6 +96,7 @@ impl AccountInfo {
             code: Some(code),
             code_hash,
             account_id: None,
+            has_historical_storage: false,
         }
     }
 
@@ -211,6 +220,7 @@ impl AccountInfo {
             code_hash: self.code_hash,
             account_id: self.account_id,
             code: None,
+            has_historical_storage: self.has_historical_storage,
         }
     }
 
@@ -299,6 +309,7 @@ impl AccountInfo {
             code: Some(bytecode),
             code_hash: hash,
             account_id: None,
+            has_historical_storage: false,
         }
     }
 }

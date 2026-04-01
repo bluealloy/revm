@@ -66,7 +66,7 @@ impl CacheState {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
         } else {
-            CacheAccount::new_loaded_empty_eip161(HashMap::default())
+            CacheAccount::new_loaded_empty_eip161(info, HashMap::default())
         };
         self.accounts.insert(address, account);
     }
@@ -81,7 +81,7 @@ impl CacheState {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {
-            CacheAccount::new_loaded_empty_eip161(storage)
+            CacheAccount::new_loaded_empty_eip161(info, storage)
         };
         self.accounts.insert(address, account);
     }
