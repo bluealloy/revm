@@ -24,7 +24,7 @@ use crate::{
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
-use primitives::{hardfork::SpecId, Bytes};
+use primitives::{hardfork::SpecId, Bytes, U256};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
@@ -46,6 +46,8 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub runtime_flag: WIRE::RuntimeFlag,
     /// Extended functionality and customizations.
     pub extend: WIRE::Extend,
+    /// Cached self balance. Set on first SELFBALANCE call, cleared on init.
+    pub selfbalance_cache: Option<Box<U256>>,
 }
 
 impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
@@ -110,6 +112,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             input,
             runtime_flag: RuntimeFlags { is_static, spec_id },
             extend: Default::default(),
+            selfbalance_cache: None,
         }
     }
 
@@ -134,6 +137,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             input: input_ref,
             runtime_flag,
             extend,
+            selfbalance_cache,
         } = self;
         *bytecode_ref = bytecode;
         *gas = Gas::new(gas_limit);
@@ -147,6 +151,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
         *extend = EXT::default();
+        *selfbalance_cache = None;
     }
 
     /// Sets the bytecode that is going to be executed
