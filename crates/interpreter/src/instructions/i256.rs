@@ -146,7 +146,12 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 mod tests {
     use super::*;
     use core::num::Wrapping;
-    use primitives::uint;
+
+    // Signed integer helpers (two's complement, matching EVM semantics).
+    const NEG1: U256 = U256::MAX; // -1 in two's complement
+    const NEG2: U256 = U256::from_limbs([u64::MAX - 1, u64::MAX, u64::MAX, u64::MAX]);
+    const NEG3: U256 = U256::from_limbs([u64::MAX - 2, u64::MAX, u64::MAX, u64::MAX]);
+    const NEG100: U256 = U256::from_limbs([u64::MAX - 99, u64::MAX, u64::MAX, u64::MAX]);
 
     #[test]
     fn div_i256() {
@@ -155,101 +160,103 @@ mod tests {
         assert_eq!(Wrapping(i8::MIN) / Wrapping(-1), Wrapping(i8::MIN));
         assert_eq!(i8::MAX / -1, -i8::MAX);
 
-        uint! {
-            assert_eq!(i256_div(MIN_NEGATIVE_VALUE, -1_U256), MIN_NEGATIVE_VALUE);
-            assert_eq!(i256_div(MIN_NEGATIVE_VALUE, 1_U256), MIN_NEGATIVE_VALUE);
-            assert_eq!(i256_div(MAX_POSITIVE_VALUE, 1_U256), MAX_POSITIVE_VALUE);
-            assert_eq!(i256_div(MAX_POSITIVE_VALUE, -1_U256), -1_U256 * MAX_POSITIVE_VALUE);
-            assert_eq!(i256_div(100_U256, -1_U256), -100_U256);
-            assert_eq!(i256_div(100_U256, 2_U256), 50_U256);
-        }
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, NEG1), MIN_NEGATIVE_VALUE);
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, U256::ONE), MIN_NEGATIVE_VALUE);
+        assert_eq!(i256_div(MAX_POSITIVE_VALUE, U256::ONE), MAX_POSITIVE_VALUE);
+        assert_eq!(
+            i256_div(MAX_POSITIVE_VALUE, NEG1),
+            NEG1 * MAX_POSITIVE_VALUE
+        );
+        assert_eq!(i256_div(U256::from(100u64), NEG1), NEG100);
+        assert_eq!(
+            i256_div(U256::from(100u64), U256::from(2u64)),
+            U256::from(50u64)
+        );
     }
+
     #[test]
     fn test_i256_sign() {
-        uint! {
-            assert_eq!(i256_sign(&0_U256), Sign::Zero);
-            assert_eq!(i256_sign(&1_U256), Sign::Plus);
-            assert_eq!(i256_sign(&-1_U256), Sign::Minus);
-            assert_eq!(i256_sign(&MIN_NEGATIVE_VALUE), Sign::Minus);
-            assert_eq!(i256_sign(&MAX_POSITIVE_VALUE), Sign::Plus);
-        }
+        assert_eq!(i256_sign(&U256::ZERO), Sign::Zero);
+        assert_eq!(i256_sign(&U256::ONE), Sign::Plus);
+        assert_eq!(i256_sign(&NEG1), Sign::Minus);
+        assert_eq!(i256_sign(&MIN_NEGATIVE_VALUE), Sign::Minus);
+        assert_eq!(i256_sign(&MAX_POSITIVE_VALUE), Sign::Plus);
     }
 
     #[test]
     fn test_i256_sign_compl() {
-        uint! {
-            let mut zero = 0_U256;
-            let mut positive = 1_U256;
-            let mut negative = -1_U256;
-            assert_eq!(i256_sign_compl(&mut zero), Sign::Zero);
-            assert_eq!(i256_sign_compl(&mut positive), Sign::Plus);
-            assert_eq!(i256_sign_compl(&mut negative), Sign::Minus);
-        }
+        let mut zero = U256::ZERO;
+        let mut positive = U256::ONE;
+        let mut negative = NEG1;
+        assert_eq!(i256_sign_compl(&mut zero), Sign::Zero);
+        assert_eq!(i256_sign_compl(&mut positive), Sign::Plus);
+        assert_eq!(i256_sign_compl(&mut negative), Sign::Minus);
     }
 
     #[test]
     fn test_two_compl() {
-        uint! {
-            assert_eq!(two_compl(0_U256), 0_U256);
-            assert_eq!(two_compl(1_U256), -1_U256);
-            assert_eq!(two_compl(-1_U256), 1_U256);
-            assert_eq!(two_compl(2_U256), -2_U256);
-            assert_eq!(two_compl(-2_U256), 2_U256);
-
-            // Two's complement of the min value is itself.
-            assert_eq!(two_compl(MIN_NEGATIVE_VALUE), MIN_NEGATIVE_VALUE);
-        }
+        assert_eq!(two_compl(U256::ZERO), U256::ZERO);
+        assert_eq!(two_compl(U256::ONE), NEG1);
+        assert_eq!(two_compl(NEG1), U256::ONE);
+        assert_eq!(two_compl(U256::from(2u64)), NEG2);
+        assert_eq!(two_compl(NEG2), U256::from(2u64));
+        // Two's complement of the min value is itself.
+        assert_eq!(two_compl(MIN_NEGATIVE_VALUE), MIN_NEGATIVE_VALUE);
     }
 
     #[test]
     fn test_two_compl_mut() {
-        uint! {
-            let mut value = 1_U256;
-            two_compl_mut(&mut value);
-            assert_eq!(value, -1_U256);
-        }
+        let mut value = U256::ONE;
+        two_compl_mut(&mut value);
+        assert_eq!(value, NEG1);
     }
 
     #[test]
     fn test_i256_cmp() {
-        uint! {
-            assert_eq!(i256_cmp(&1_U256, &2_U256), Ordering::Less);
-            assert_eq!(i256_cmp(&2_U256, &2_U256), Ordering::Equal);
-            assert_eq!(i256_cmp(&3_U256, &2_U256), Ordering::Greater);
-            assert_eq!(i256_cmp(&-1_U256, &-1_U256), Ordering::Equal);
-            assert_eq!(i256_cmp(&-1_U256, &-2_U256), Ordering::Greater);
-            assert_eq!(i256_cmp(&-1_U256, &0_U256), Ordering::Less);
-            assert_eq!(i256_cmp(&-2_U256, &2_U256), Ordering::Less);
-        }
+        assert_eq!(i256_cmp(&U256::ONE, &U256::from(2u64)), Ordering::Less);
+        assert_eq!(
+            i256_cmp(&U256::from(2u64), &U256::from(2u64)),
+            Ordering::Equal
+        );
+        assert_eq!(
+            i256_cmp(&U256::from(3u64), &U256::from(2u64)),
+            Ordering::Greater
+        );
+        assert_eq!(i256_cmp(&NEG1, &NEG1), Ordering::Equal);
+        assert_eq!(i256_cmp(&NEG1, &NEG2), Ordering::Greater);
+        assert_eq!(i256_cmp(&NEG1, &U256::ZERO), Ordering::Less);
+        assert_eq!(i256_cmp(&NEG2, &U256::from(2u64)), Ordering::Less);
     }
 
     #[test]
     fn test_i256_div() {
-        uint! {
-            assert_eq!(i256_div(1_U256, 0_U256), 0_U256);
-            assert_eq!(i256_div(0_U256, 1_U256), 0_U256);
-            assert_eq!(i256_div(0_U256, -1_U256), 0_U256);
-            assert_eq!(i256_div(MIN_NEGATIVE_VALUE, 1_U256), MIN_NEGATIVE_VALUE);
-            assert_eq!(i256_div(4_U256, 2_U256), 2_U256);
-            assert_eq!(i256_div(MIN_NEGATIVE_VALUE, MIN_NEGATIVE_VALUE), 1_U256);
-            assert_eq!(i256_div(2_U256, -1_U256), -2_U256);
-            assert_eq!(i256_div(-2_U256, -1_U256), 2_U256);
-        }
+        assert_eq!(i256_div(U256::ONE, U256::ZERO), U256::ZERO);
+        assert_eq!(i256_div(U256::ZERO, U256::ONE), U256::ZERO);
+        assert_eq!(i256_div(U256::ZERO, NEG1), U256::ZERO);
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, U256::ONE), MIN_NEGATIVE_VALUE);
+        assert_eq!(
+            i256_div(U256::from(4u64), U256::from(2u64)),
+            U256::from(2u64)
+        );
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, MIN_NEGATIVE_VALUE), U256::ONE);
+        assert_eq!(i256_div(U256::from(2u64), NEG1), NEG2);
+        assert_eq!(i256_div(NEG2, NEG1), U256::from(2u64));
     }
 
     #[test]
     fn test_i256_mod() {
-        uint! {
-            assert_eq!(i256_mod(0_U256, 1_U256), 0_U256);
-            assert_eq!(i256_mod(1_U256, 0_U256), 0_U256);
-            assert_eq!(i256_mod(4_U256, 2_U256), 0_U256);
-            assert_eq!(i256_mod(3_U256, 2_U256), 1_U256);
-            assert_eq!(i256_mod(MIN_NEGATIVE_VALUE, 1_U256), 0_U256);
-            assert_eq!(i256_mod(2_U256, 2_U256), 0_U256);
-            assert_eq!(i256_mod(2_U256, 3_U256), 2_U256);
-            assert_eq!(i256_mod(-2_U256, 3_U256), -2_U256);
-            assert_eq!(i256_mod(2_U256, -3_U256), 2_U256);
-            assert_eq!(i256_mod(-2_U256, -3_U256), -2_U256);
-        }
+        assert_eq!(i256_mod(U256::ZERO, U256::ONE), U256::ZERO);
+        assert_eq!(i256_mod(U256::ONE, U256::ZERO), U256::ZERO);
+        assert_eq!(i256_mod(U256::from(4u64), U256::from(2u64)), U256::ZERO);
+        assert_eq!(i256_mod(U256::from(3u64), U256::from(2u64)), U256::ONE);
+        assert_eq!(i256_mod(MIN_NEGATIVE_VALUE, U256::ONE), U256::ZERO);
+        assert_eq!(i256_mod(U256::from(2u64), U256::from(2u64)), U256::ZERO);
+        assert_eq!(
+            i256_mod(U256::from(2u64), U256::from(3u64)),
+            U256::from(2u64)
+        );
+        assert_eq!(i256_mod(NEG2, U256::from(3u64)), NEG2);
+        assert_eq!(i256_mod(U256::from(2u64), NEG3), U256::from(2u64));
+        assert_eq!(i256_mod(NEG2, NEG3), NEG2);
     }
 }

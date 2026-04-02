@@ -31,7 +31,11 @@ sol! {
 pub fn run(criterion: &mut Criterion) {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
-    let run_call_data = IBURNTPIX::runCall { seed, iterations }.abi_encode();
+    let run_call_data = IBURNTPIX::runCall {
+        seed,
+        iterations: iterations.into(),
+    }
+    .abi_encode();
 
     let db = init_db();
 

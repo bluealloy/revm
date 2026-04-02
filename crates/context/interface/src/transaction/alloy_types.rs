@@ -23,7 +23,7 @@ impl AuthorizationTr for SignedAuthorization {
     }
 
     fn chain_id(&self) -> U256 {
-        self.chain_id
+        U256::from(self.chain_id)
     }
 
     fn nonce(&self) -> u64 {
@@ -41,7 +41,7 @@ impl AuthorizationTr for RecoveredAuthorization {
     }
 
     fn chain_id(&self) -> U256 {
-        self.chain_id
+        U256::from(self.chain_id)
     }
 
     fn nonce(&self) -> u64 {

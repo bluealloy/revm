@@ -24,7 +24,7 @@ pub fn pre_block_transition<
     parent_beacon_block_root: Option<B256>,
 ) -> Result<(), EVM::Error> {
     // skip system calls for block number 0 (Gensis block)
-    if evm.ctx().block().number() == 0 {
+    if evm.ctx().block().number().is_zero() {
         return Ok(());
     }
 

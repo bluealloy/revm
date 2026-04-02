@@ -91,7 +91,7 @@ mod test {
     fn sanity_eip7702_tx() {
         let signer = PrivateKeySigner::random();
         let auth = Authorization {
-            chain_id: U256::ZERO,
+            chain_id: U256::ZERO.into(),
             nonce: 0,
             address: FFADDRESS,
         };

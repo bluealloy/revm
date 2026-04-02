@@ -456,7 +456,6 @@ mod tests {
         },
         DefaultOp, OpBuilder, OpTransaction,
     };
-    use alloy_primitives::uint;
     use revm::{
         context::{BlockEnv, CfgEnv, Context, TxEnv},
         context_interface::result::InvalidTransaction,
@@ -671,9 +670,9 @@ mod tests {
 
     #[test]
     fn test_reload_l1_block_info_isthmus() {
-        const BLOCK_NUM: U256 = uint!(100_U256);
-        const L1_BASE_FEE: U256 = uint!(1_U256);
-        const L1_BLOB_BASE_FEE: U256 = uint!(2_U256);
+        let block_num = U256::from(100_u64);
+        const L1_BASE_FEE: U256 = U256::ONE;
+        let l1_blob_base_fee = U256::from(2_u64);
         const L1_BASE_FEE_SCALAR: u64 = 3;
         const L1_BLOB_BASE_FEE_SCALAR: u64 = 4;
         const L1_FEE_SCALARS: U256 = U256::from_limbs([
@@ -694,7 +693,7 @@ mod tests {
             .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
         l1_block_contract
             .storage
-            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, l1_blob_base_fee);
         l1_block_contract
             .storage
             .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
@@ -712,18 +711,18 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
-                l2_block: Some(BLOCK_NUM + U256::from(1)), // ahead by one block
+                l2_block: Some(block_num + U256::from(1)), // ahead by one block
                 ..Default::default()
             })
             .with_block(BlockEnv {
-                number: BLOCK_NUM,
+                number: block_num,
                 ..Default::default()
             })
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS));
 
         let mut evm = ctx.build_op();
 
-        assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
+        assert_ne!(evm.ctx().chain().l2_block, Some(block_num));
 
         let handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
@@ -734,10 +733,10 @@ mod tests {
         assert_eq!(
             *evm.ctx().chain(),
             L1BlockInfo {
-                l2_block: Some(BLOCK_NUM),
+                l2_block: Some(block_num),
                 l1_base_fee: L1_BASE_FEE,
                 l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
-                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
                 empty_ecotone_scalars: false,
                 l1_fee_overhead: None,
@@ -751,9 +750,9 @@ mod tests {
 
     #[test]
     fn test_parse_da_footprint_gas_scalar_jovian() {
-        const BLOCK_NUM: U256 = uint!(100_U256);
-        const L1_BASE_FEE: U256 = uint!(1_U256);
-        const L1_BLOB_BASE_FEE: U256 = uint!(2_U256);
+        let block_num = U256::from(100_u64);
+        const L1_BASE_FEE: U256 = U256::ONE;
+        let l1_blob_base_fee = U256::from(2_u64);
         const L1_BASE_FEE_SCALAR: u64 = 3;
         const L1_BLOB_BASE_FEE_SCALAR: u64 = 4;
         const L1_FEE_SCALARS: U256 = U256::from_limbs([
@@ -778,7 +777,7 @@ mod tests {
             .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
         l1_block_contract
             .storage
-            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, l1_blob_base_fee);
         l1_block_contract
             .storage
             .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
@@ -797,13 +796,13 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
-                l2_block: Some(BLOCK_NUM + U256::from(1)), // ahead by one block
+                l2_block: Some(block_num + U256::from(1)), // ahead by one block
                 operator_fee_scalar: Some(U256::from(2)),
                 operator_fee_constant: Some(U256::from(50)),
                 ..Default::default()
             })
             .with_block(BlockEnv {
-                number: BLOCK_NUM,
+                number: block_num,
                 ..Default::default()
             })
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::JOVIAN))
@@ -817,7 +816,7 @@ mod tests {
 
         let mut evm = ctx.build_op();
 
-        assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
+        assert_ne!(evm.ctx().chain().l2_block, Some(block_num));
 
         let handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
@@ -828,10 +827,10 @@ mod tests {
         assert_eq!(
             *evm.ctx().chain(),
             L1BlockInfo {
-                l2_block: Some(BLOCK_NUM),
+                l2_block: Some(block_num),
                 l1_base_fee: L1_BASE_FEE,
                 l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
-                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
                 empty_ecotone_scalars: false,
                 l1_fee_overhead: None,
@@ -845,21 +844,21 @@ mod tests {
 
     #[test]
     fn test_reload_l1_block_info_regolith() {
-        const BLOCK_NUM: U256 = uint!(200_U256);
-        const L1_BASE_FEE: U256 = uint!(7_U256);
-        const L1_FEE_OVERHEAD: U256 = uint!(9_U256);
+        let block_num = U256::from(200_u64);
+        let l1_base_fee = U256::from(7_u64);
+        let l1_fee_overhead = U256::from(9_u64);
         const L1_BASE_FEE_SCALAR: u64 = 11;
 
         let mut db = InMemoryDB::default();
         let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
         l1_block_contract
             .storage
-            .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
+            .insert(L1_BASE_FEE_SLOT, l1_base_fee);
         // Pre-ecotone bedrock/regolith slots
         use crate::constants::{L1_OVERHEAD_SLOT, L1_SCALAR_SLOT};
         l1_block_contract
             .storage
-            .insert(L1_OVERHEAD_SLOT, L1_FEE_OVERHEAD);
+            .insert(L1_OVERHEAD_SLOT, l1_fee_overhead);
         l1_block_contract
             .storage
             .insert(L1_SCALAR_SLOT, U256::from(L1_BASE_FEE_SCALAR));
@@ -867,17 +866,17 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
-                l2_block: Some(BLOCK_NUM + U256::from(1)),
+                l2_block: Some(block_num + U256::from(1)),
                 ..Default::default()
             })
             .with_block(BlockEnv {
-                number: BLOCK_NUM,
+                number: block_num,
                 ..Default::default()
             })
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::REGOLITH));
 
         let mut evm = ctx.build_op();
-        assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
+        assert_ne!(evm.ctx().chain().l2_block, Some(block_num));
 
         let handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
@@ -888,9 +887,9 @@ mod tests {
         assert_eq!(
             *evm.ctx().chain(),
             L1BlockInfo {
-                l2_block: Some(BLOCK_NUM),
-                l1_base_fee: L1_BASE_FEE,
-                l1_fee_overhead: Some(L1_FEE_OVERHEAD),
+                l2_block: Some(block_num),
+                l1_base_fee,
+                l1_fee_overhead: Some(l1_fee_overhead),
                 l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
                 tx_l1_cost: Some(U256::ZERO),
                 ..Default::default()
@@ -900,9 +899,9 @@ mod tests {
 
     #[test]
     fn test_reload_l1_block_info_ecotone_pre_isthmus() {
-        const BLOCK_NUM: U256 = uint!(300_U256);
-        const L1_BASE_FEE: U256 = uint!(13_U256);
-        const L1_BLOB_BASE_FEE: U256 = uint!(17_U256);
+        let block_num = U256::from(300_u64);
+        let l1_base_fee = U256::from(13_u64);
+        let l1_blob_base_fee = U256::from(17_u64);
         const L1_BASE_FEE_SCALAR: u64 = 19;
         const L1_BLOB_BASE_FEE_SCALAR: u64 = 23;
         const L1_FEE_SCALARS: U256 = U256::from_limbs([
@@ -916,10 +915,10 @@ mod tests {
         let l1_block_contract = db.load_account(L1_BLOCK_CONTRACT).unwrap();
         l1_block_contract
             .storage
-            .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
+            .insert(L1_BASE_FEE_SLOT, l1_base_fee);
         l1_block_contract
             .storage
-            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, l1_blob_base_fee);
         l1_block_contract
             .storage
             .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
@@ -927,17 +926,17 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_chain(L1BlockInfo {
-                l2_block: Some(BLOCK_NUM + U256::from(1)),
+                l2_block: Some(block_num + U256::from(1)),
                 ..Default::default()
             })
             .with_block(BlockEnv {
-                number: BLOCK_NUM,
+                number: block_num,
                 ..Default::default()
             })
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::ECOTONE));
 
         let mut evm = ctx.build_op();
-        assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
+        assert_ne!(evm.ctx().chain().l2_block, Some(block_num));
 
         let handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
@@ -948,10 +947,10 @@ mod tests {
         assert_eq!(
             *evm.ctx().chain(),
             L1BlockInfo {
-                l2_block: Some(BLOCK_NUM),
-                l1_base_fee: L1_BASE_FEE,
+                l2_block: Some(block_num),
+                l1_base_fee,
                 l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
-                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
                 empty_ecotone_scalars: false,
                 l1_fee_overhead: None,
@@ -963,9 +962,9 @@ mod tests {
 
     #[test]
     fn test_load_l1_block_info_isthmus_none() {
-        const BLOCK_NUM: U256 = uint!(100_U256);
-        const L1_BASE_FEE: U256 = uint!(1_U256);
-        const L1_BLOB_BASE_FEE: U256 = uint!(2_U256);
+        let block_num = U256::from(100_u64);
+        const L1_BASE_FEE: U256 = U256::ONE;
+        let l1_blob_base_fee = U256::from(2_u64);
         const L1_BASE_FEE_SCALAR: u64 = 3;
         const L1_BLOB_BASE_FEE_SCALAR: u64 = 4;
         const L1_FEE_SCALARS: U256 = U256::from_limbs([
@@ -986,7 +985,7 @@ mod tests {
             .insert(L1_BASE_FEE_SLOT, L1_BASE_FEE);
         l1_block_contract
             .storage
-            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, L1_BLOB_BASE_FEE);
+            .insert(ECOTONE_L1_BLOB_BASE_FEE_SLOT, l1_blob_base_fee);
         l1_block_contract
             .storage
             .insert(ECOTONE_L1_FEE_SCALARS_SLOT, L1_FEE_SCALARS);
@@ -1004,14 +1003,14 @@ mod tests {
         let ctx = Context::op()
             .with_db(db)
             .with_block(BlockEnv {
-                number: BLOCK_NUM,
+                number: block_num,
                 ..Default::default()
             })
             .with_cfg(CfgEnv::new_with_spec(OpSpecId::ISTHMUS));
 
         let mut evm = ctx.build_op();
 
-        assert_ne!(evm.ctx().chain().l2_block, Some(BLOCK_NUM));
+        assert_ne!(evm.ctx().chain().l2_block, Some(block_num));
 
         let handler =
             OpHandler::<_, EVMError<_, OpTransactionError>, EthFrame<EthInterpreter>>::new();
@@ -1022,10 +1021,10 @@ mod tests {
         assert_eq!(
             *evm.ctx().chain(),
             L1BlockInfo {
-                l2_block: Some(BLOCK_NUM),
+                l2_block: Some(block_num),
                 l1_base_fee: L1_BASE_FEE,
                 l1_base_fee_scalar: U256::from(L1_BASE_FEE_SCALAR),
-                l1_blob_base_fee: Some(L1_BLOB_BASE_FEE),
+                l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(U256::from(L1_BLOB_BASE_FEE_SCALAR)),
                 empty_ecotone_scalars: false,
                 l1_fee_overhead: None,

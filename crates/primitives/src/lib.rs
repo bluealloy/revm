@@ -28,9 +28,12 @@ pub mod eip7954;
 pub mod hardfork;
 pub mod hints_util;
 mod once_lock;
+/// Switchable U256 backend — see [`uint::U256`].
+pub mod uint;
 
 pub use constants::*;
 pub use once_lock::OnceLock;
+pub use uint::U256;
 
 // Reexport alloy primitives.
 
@@ -38,10 +41,18 @@ pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256,
     map::{
         self, hash_map, hash_set, indexmap, AddressIndexMap, AddressMap, AddressSet, B256Map,
-        HashMap, HashSet, IndexMap, U256Map,
+        HashMap, HashSet, IndexMap,
     },
-    ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
+    ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128,
 };
+
+/// [`HashMap`](alloy_primitives::map::HashMap) keyed by [`U256`] using a fixed-size byte hasher.
+///
+/// This is the analogue of `alloy_primitives::map::U256Map` but keyed by
+/// `revm_primitives::U256` (our switchable-backend wrapper) rather than
+/// `alloy_primitives::U256`.
+pub type U256Map<V> =
+    alloy_primitives::map::HashMap<U256, V, alloy_primitives::map::FbBuildHasher<32>>;
 
 /// Type alias for EVM storage keys (256-bit unsigned integers).
 /// Used to identify storage slots within smart contract storage.

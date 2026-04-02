@@ -28,6 +28,7 @@ state.workspace = true
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
+alloy-primitives = { workspace = true }
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]

@@ -105,5 +105,5 @@ fn transfer(from: Address, to: Address, amount: U256, cache_db: &mut AlloyCacheD
 /// This implements the standard Solidity mapping storage layout where
 /// slot = keccak256(abi.encode(address, slot_number))
 pub fn erc_address_storage(address: Address) -> U256 {
-    keccak256((address, U256::from(4)).abi_encode()).into()
+    keccak256((address, alloy_primitives::U256::from(4_u32)).abi_encode()).into()
 }

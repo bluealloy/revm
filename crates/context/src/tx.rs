@@ -452,7 +452,7 @@ impl TxEnvBuilder {
                         self.authorization_list =
                             vec![Either::Right(RecoveredAuthorization::new_unchecked(
                                 Authorization {
-                                    chain_id: U256::from(self.chain_id.unwrap_or(1)),
+                                    chain_id: U256::from(self.chain_id.unwrap_or(1)).into(),
                                     address: self.caller,
                                     nonce: self.nonce,
                                 },
@@ -794,7 +794,7 @@ mod tests {
         // EIP-7702 EOA code transaction
         let auth = RecoveredAuthorization::new_unchecked(
             Authorization {
-                chain_id: U256::from(1),
+                chain_id: U256::from(1).into(),
                 nonce: 0,
                 address: Address::default(),
             },
@@ -901,7 +901,7 @@ mod tests {
         // EIP-7702 with Create should fail
         let auth = RecoveredAuthorization::new_unchecked(
             Authorization {
-                chain_id: U256::from(1),
+                chain_id: U256::from(1).into(),
                 nonce: 0,
                 address: Address::default(),
             },
@@ -992,7 +992,7 @@ mod tests {
         // EIP-7702 with Create should be converted to Call
         let auth = RecoveredAuthorization::new_unchecked(
             Authorization {
-                chain_id: U256::from(1),
+                chain_id: U256::from(1).into(),
                 nonce: 0,
                 address: Address::default(),
             },
@@ -1069,7 +1069,7 @@ mod tests {
         // Authorization list present, should derive EIP-7702
         let auth = RecoveredAuthorization::new_unchecked(
             Authorization {
-                chain_id: U256::from(1),
+                chain_id: U256::from(1).into(),
                 nonce: 0,
                 address: Address::default(),
             },

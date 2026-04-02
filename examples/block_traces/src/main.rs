@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
             b.beneficiary = block.header.beneficiary;
             b.timestamp = U256::from(block.header.timestamp);
 
-            b.difficulty = block.header.difficulty;
+            b.difficulty = block.header.difficulty.into();
             b.gas_limit = block.header.gas_limit;
             b.basefee = block.header.base_fee_per_gas.unwrap_or_default();
         })
@@ -112,7 +112,7 @@ async fn main() -> anyhow::Result<()> {
             .caller(tx.inner.signer())
             .gas_limit(tx.gas_limit())
             .gas_price(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()))
-            .value(tx.value())
+            .value(tx.value().into())
             .data(tx.input().to_owned())
             .gas_priority_fee(tx.max_priority_fee_per_gas())
             .chain_id(Some(chain_id))

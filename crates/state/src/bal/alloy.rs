@@ -32,7 +32,7 @@ impl From<Vec<AlloyBalanceChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.post_balance))
+                .map(|change| (change.block_access_index, U256::from(change.post_balance)))
                 .collect(),
         }
     }
@@ -54,7 +54,7 @@ impl From<Vec<AlloyStorageChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.new_value))
+                .map(|change| (change.block_access_index, U256::from(change.new_value)))
                 .collect(),
         }
     }

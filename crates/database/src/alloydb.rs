@@ -8,7 +8,7 @@ use alloy_provider::{
 use alloy_transport::TransportError;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{self, Address, StorageKey, StorageValue, B256};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
@@ -98,7 +98,7 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
 
         let (nonce, balance, code) = tokio::join!(nonce, balance, code,);
 
-        let balance = balance?;
+        let balance = primitives::U256::from(balance?);
         let code = Bytecode::new_raw(code?.0.into());
         let code_hash = code.hash_slow();
         let nonce = nonce?;
@@ -129,11 +129,12 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
-        Ok(self
+        let value = self
             .provider
-            .get_storage_at(address, index)
+            .get_storage_at(address, index.into())
             .block_id(self.block_number)
-            .await?)
+            .await?;
+        Ok(StorageValue::from(value))
     }
 }
 

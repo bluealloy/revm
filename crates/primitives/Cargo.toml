@@ -25,7 +25,8 @@ alloy-primitives = { workspace = true, features = [
     "map",
 ] }
 
-# mics
+# misc
+ruint = { version = "1.17", default-features = false }
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.21", default-features = false, features = [
     "alloc",
@@ -36,9 +37,11 @@ once_cell = { version = "1.21", default-features = false, features = [
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [features]
-default = ["std"]
+default = ["std", "uint-alloy"]
 std = ["alloy-primitives/std", "serde?/std", "num_enum/std", "once_cell/std"]
 serde = ["dep:serde", "alloy-primitives/serde"]
+# U256 backend selection — exactly one must be enabled.
+uint-alloy = []
 map-foldhash = ["alloy-primitives/map-foldhash"]
 
 hashbrown = ["alloy-primitives/map-hashbrown"]

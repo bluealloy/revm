@@ -487,7 +487,7 @@ impl<
     }
 
     fn timestamp(&self) -> U256 {
-        U256::from(self.block().timestamp())
+        self.block().timestamp()
     }
 
     fn beneficiary(&self) -> Address {

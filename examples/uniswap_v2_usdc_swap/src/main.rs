@@ -2,6 +2,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_eips::BlockId;
+use alloy_primitives::U256 as AlloyU256;
 use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use anyhow::{anyhow, Result};
@@ -38,7 +39,8 @@ async fn main() -> Result<()> {
 
     // Give our test account some fake WETH and ETH
     let one_ether = U256::from(1_000_000_000_000_000_000u128);
-    let hashed_acc_balance_slot = keccak256((account, weth_balance_slot).abi_encode());
+    let hashed_acc_balance_slot =
+        keccak256((account, Into::<AlloyU256>::into(weth_balance_slot)).abi_encode());
     cache_db
         .insert_account_storage(weth, hashed_acc_balance_slot.into(), one_ether)
         .unwrap();
@@ -112,7 +114,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
         result => return Err(anyhow!("'balanceOf' execution failed: {result:?}")),
     };
 
-    let balance = <U256>::abi_decode(&value)?;
+    let balance = U256::from(<AlloyU256>::abi_decode(&value)?);
 
     Ok(balance)
 }
@@ -129,9 +131,9 @@ async fn get_amount_out(
     }
 
     let encoded = getAmountOutCall {
-        amountIn: amount_in,
-        reserveIn: reserve_in,
-        reserveOut: reserve_out,
+        amountIn: amount_in.into(),
+        reserveIn: reserve_in.into(),
+        reserveOut: reserve_out.into(),
     }
     .abi_encode();
 
@@ -157,7 +159,7 @@ async fn get_amount_out(
         result => return Err(anyhow!("'getAmountOut' execution failed: {result:?}")),
     };
 
-    let amount_out = <U256>::abi_decode(&value)?;
+    let amount_out = U256::from(<AlloyU256>::abi_decode(&value)?);
 
     Ok(amount_out)
 }
@@ -191,7 +193,8 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
         result => return Err(anyhow!("'getReserves' execution failed: {result:?}")),
     };
 
-    let (reserve0, reserve1, _) = <(U256, U256, u32)>::abi_decode(&value)?;
+    let (r0, r1, _) = <(AlloyU256, AlloyU256, u32)>::abi_decode(&value)?;
+    let (reserve0, reserve1) = (U256::from(r0), U256::from(r1));
 
     Ok((reserve0, reserve1))
 }
@@ -212,8 +215,8 @@ fn swap(
     let amount1_out = if is_token0 { U256::from(0) } else { amount_out };
 
     let encoded = swapCall {
-        amount0Out: amount0_out,
-        amount1Out: amount1_out,
+        amount0Out: amount0_out.into(),
+        amount1Out: amount1_out.into(),
         target,
         callback: Bytes::new(),
     }
@@ -251,7 +254,11 @@ fn transfer(
         function transfer(address to, uint amount) external returns (bool);
     }
 
-    let encoded = transferCall { to, amount }.abi_encode();
+    let encoded = transferCall {
+        to,
+        amount: amount.into(),
+    }
+    .abi_encode();
 
     let mut evm = Context::mainnet().with_db(cache_db).build_mainnet();
 

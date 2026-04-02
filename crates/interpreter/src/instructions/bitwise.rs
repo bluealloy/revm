@@ -150,15 +150,17 @@ mod tests {
         InstructionContext, Interpreter,
     };
     use primitives::{hardfork::SpecId, uint, U256};
+    // uint! macro yields alloy_primitives::U256; AU256 alias for brevity.
+    type AU256 = alloy_primitives::U256;
 
     #[test]
     fn test_shift_left() {
         let mut interpreter = Interpreter::default();
 
         struct TestCase {
-            value: U256,
-            shift: U256,
-            expected: U256,
+            value: AU256,
+            shift: AU256,
+            expected: AU256,
         }
 
         uint! {
@@ -222,15 +224,15 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value);
-            push!(interpreter, test.shift);
+            push!(interpreter, U256::from(test.value));
+            push!(interpreter, U256::from(test.shift));
             let context = InstructionContext {
                 host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             shl(context);
             let res = interpreter.stack.pop().unwrap();
-            assert_eq!(res, test.expected);
+            assert_eq!(res, U256::from(test.expected));
         }
     }
 
@@ -239,9 +241,9 @@ mod tests {
         let mut interpreter = Interpreter::default();
 
         struct TestCase {
-            value: U256,
-            shift: U256,
-            expected: U256,
+            value: AU256,
+            shift: AU256,
+            expected: AU256,
         }
 
         uint! {
@@ -305,15 +307,15 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value);
-            push!(interpreter, test.shift);
+            push!(interpreter, U256::from(test.value));
+            push!(interpreter, U256::from(test.shift));
             let context = InstructionContext {
                 host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             shr(context);
             let res = interpreter.stack.pop().unwrap();
-            assert_eq!(res, test.expected);
+            assert_eq!(res, U256::from(test.expected));
         }
     }
 
@@ -322,9 +324,9 @@ mod tests {
         let mut interpreter = Interpreter::default();
 
         struct TestCase {
-            value: U256,
-            shift: U256,
-            expected: U256,
+            value: AU256,
+            shift: AU256,
+            expected: AU256,
         }
 
         uint! {
@@ -413,15 +415,15 @@ mod tests {
             }
 
         for test in test_cases {
-            push!(interpreter, test.value);
-            push!(interpreter, test.shift);
+            push!(interpreter, U256::from(test.value));
+            push!(interpreter, U256::from(test.shift));
             let context = InstructionContext {
                 host: &mut DummyHost::default(),
                 interpreter: &mut interpreter,
             };
             sar(context);
             let res = interpreter.stack.pop().unwrap();
-            assert_eq!(res, test.expected);
+            assert_eq!(res, U256::from(test.expected));
         }
     }
 
@@ -440,8 +442,8 @@ mod tests {
             .map(|i| {
                 let byte_pos = 31 - i;
 
-                let shift_amount = U256::from(byte_pos * 8);
-                let byte_value = (input_value >> shift_amount) & U256::from(0xFF);
+                let shift_amount = byte_pos * 8;
+                let byte_value = (input_value >> shift_amount) & U256::from(0xFF_u64);
                 TestCase {
                     input: input_value,
                     index: i,
@@ -470,8 +472,8 @@ mod tests {
         let mut host = DummyHost::new(SpecId::OSAKA);
 
         struct TestCase {
-            value: U256,
-            expected: U256,
+            value: AU256,
+            expected: AU256,
         }
 
         uint! {
@@ -506,7 +508,7 @@ mod tests {
         }
 
         for test in test_cases {
-            push!(interpreter, test.value);
+            push!(interpreter, U256::from(test.value));
             let context = InstructionContext {
                 host: &mut host,
                 interpreter: &mut interpreter,
@@ -514,9 +516,12 @@ mod tests {
             clz(context);
             let res = interpreter.stack.pop().unwrap();
             assert_eq!(
-                res, test.expected,
+                res,
+                U256::from(test.expected),
                 "CLZ for value {:#x} failed. Expected: {}, Got: {}",
-                test.value, test.expected, res
+                test.value,
+                test.expected,
+                res
             );
         }
     }

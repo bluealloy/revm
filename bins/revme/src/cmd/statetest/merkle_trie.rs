@@ -41,13 +41,13 @@ pub fn state_merkle_trie_root<'a>(
                 acc.storage
                     .iter()
                     .filter(|(_k, &v)| !v.is_zero())
-                    .map(|(k, v)| (B256::from(*k), *v)),
+                    .map(|(k, v)| (B256::from(*k), (*v).into())),
             );
             (
                 keccak256(address),
                 TrieAccount {
                     nonce: acc.info.nonce,
-                    balance: acc.info.balance,
+                    balance: acc.info.balance.into(),
                     storage_root,
                     code_hash: acc.info.code_hash,
                 },

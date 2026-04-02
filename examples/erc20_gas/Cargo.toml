@@ -25,5 +25,6 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 # alloy
 alloy-sol-types = { workspace = true, features = ["std"] }
+alloy-primitives = { workspace = true }
 alloy-provider = { workspace = true, default-features = true }
 anyhow.workspace = true
