@@ -52,6 +52,20 @@ impl CallInput {
         }
     }
 
+    /// Returns the bytes of the call input from the given local context.
+    #[inline]
+    pub fn as_bytes_local<'a, L: LocalContextTr>(
+        &'a self,
+        local: &'a L,
+    ) -> impl core::ops::Deref<Target = [u8]> + 'a {
+        match self {
+            Self::Bytes(bytes) => CallInputRef::Bytes(bytes.as_ref()),
+            Self::SharedBuffer(range) => {
+                CallInputRef::SharedBuffer(local.shared_memory_buffer_slice(range.clone()))
+            }
+        }
+    }
+
     /// Returns the bytes of the call input from the given memory.
     #[inline]
     pub fn as_bytes_memory<'a, M: MemoryTr>(
@@ -80,6 +94,22 @@ impl CallInput {
             CallInput::Bytes(bytes) => bytes.clone(),
             CallInput::SharedBuffer(range) => ctx
                 .local()
+                .shared_memory_buffer_slice(range.clone())
+                .map(|b| Bytes::from(b.to_vec()))
+                .unwrap_or_default(),
+        }
+    }
+
+    /// Returns the bytes of the call input from the given local context.
+    ///
+    /// # Allocation
+    ///
+    /// If the call input is a `SharedBuffer`, this function will allocate a new `Bytes` object.
+    #[inline]
+    pub fn bytes_local<L: LocalContextTr>(&self, local: &L) -> Bytes {
+        match self {
+            CallInput::Bytes(bytes) => bytes.clone(),
+            CallInput::SharedBuffer(range) => local
                 .shared_memory_buffer_slice(range.clone())
                 .map(|b| Bytes::from(b.to_vec()))
                 .unwrap_or_default(),
@@ -291,5 +321,97 @@ impl CallValue {
     #[inline]
     pub const fn is_apparent(&self) -> bool {
         matches!(self, Self::Apparent(_))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::cell::{Ref, RefCell};
+    use std::rc::Rc;
+
+    struct TestLocalContext {
+        buffer: Rc<RefCell<Vec<u8>>>,
+    }
+
+    impl TestLocalContext {
+        fn new(data: Vec<u8>) -> Self {
+            Self {
+                buffer: Rc::new(RefCell::new(data)),
+            }
+        }
+    }
+
+    impl LocalContextTr for TestLocalContext {
+        fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+            &self.buffer
+        }
+
+        fn clear(&mut self) {
+            self.buffer.borrow_mut().clear();
+        }
+
+        fn set_precompile_error_context(&mut self, _output: String) {}
+
+        fn take_precompile_error_context(&mut self) -> Option<String> {
+            None
+        }
+    }
+
+    #[test]
+    fn as_bytes_local_with_bytes_variant() {
+        let input = CallInput::Bytes(Bytes::from_static(b"hello"));
+        let local = TestLocalContext::new(vec![]);
+        let result = input.as_bytes_local(&local);
+        assert_eq!(&*result, b"hello");
+    }
+
+    #[test]
+    fn as_bytes_local_with_shared_buffer() {
+        let input = CallInput::SharedBuffer(1..4);
+        let local = TestLocalContext::new(vec![0, 1, 2, 3, 4]);
+        let result = input.as_bytes_local(&local);
+        assert_eq!(&*result, &[1, 2, 3]);
+    }
+
+    #[test]
+    fn as_bytes_local_with_out_of_range_buffer() {
+        let input = CallInput::SharedBuffer(10..20);
+        let local = TestLocalContext::new(vec![0, 1, 2]);
+        let result = input.as_bytes_local(&local);
+        // Out of range returns empty via unwrap_or_default on the Option<Ref>
+        assert_eq!(&*result, &[] as &[u8]);
+    }
+
+    #[test]
+    fn bytes_local_with_bytes_variant() {
+        let input = CallInput::Bytes(Bytes::from_static(b"world"));
+        let local = TestLocalContext::new(vec![]);
+        let result = input.bytes_local(&local);
+        assert_eq!(result, Bytes::from_static(b"world"));
+    }
+
+    #[test]
+    fn bytes_local_with_shared_buffer() {
+        let input = CallInput::SharedBuffer(0..3);
+        let local = TestLocalContext::new(vec![10, 20, 30, 40]);
+        let result = input.bytes_local(&local);
+        assert_eq!(result, Bytes::from(vec![10, 20, 30]));
+    }
+
+    #[test]
+    fn bytes_local_with_out_of_range_buffer() {
+        let input = CallInput::SharedBuffer(5..10);
+        let local = TestLocalContext::new(vec![0]);
+        let result = input.bytes_local(&local);
+        assert_eq!(result, Bytes::new());
+    }
+
+    #[test]
+    fn bytes_local_with_empty_range() {
+        let input = CallInput::SharedBuffer(2..2);
+        let local = TestLocalContext::new(vec![0, 1, 2, 3]);
+        let result = input.bytes_local(&local);
+        assert_eq!(result, Bytes::new());
     }
 }
