@@ -44,12 +44,7 @@ impl CallInput {
         &'a self,
         ctx: &'a CTX,
     ) -> impl core::ops::Deref<Target = [u8]> + 'a {
-        match self {
-            Self::Bytes(bytes) => CallInputRef::Bytes(bytes.as_ref()),
-            Self::SharedBuffer(range) => {
-                CallInputRef::SharedBuffer(ctx.local().shared_memory_buffer_slice(range.clone()))
-            }
-        }
+        self.as_bytes_local(ctx.local())
     }
 
     /// Returns the bytes of the call input from the given local context.
@@ -90,14 +85,7 @@ impl CallInput {
     /// If this `CallInput` is a `SharedBuffer`, the slice will be copied
     /// into a fresh `Bytes` buffer, which can pose a performance penalty.
     pub fn bytes<CTX: ContextTr>(&self, ctx: &CTX) -> Bytes {
-        match self {
-            CallInput::Bytes(bytes) => bytes.clone(),
-            CallInput::SharedBuffer(range) => ctx
-                .local()
-                .shared_memory_buffer_slice(range.clone())
-                .map(|b| Bytes::from(b.to_vec()))
-                .unwrap_or_default(),
-        }
+        self.bytes_local(ctx.local())
     }
 
     /// Returns the bytes of the call input from the given local context.
