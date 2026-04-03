@@ -263,6 +263,14 @@ impl Gas {
         self.tracker.record_state_cost(cost)
     }
 
+    /// Refunds state gas back to the reservoir.
+    ///
+    /// Used when a state change is undone (e.g. storage slot cleared back to zero).
+    #[inline]
+    pub fn refund_state_cost(&mut self, amount: u64) {
+        self.tracker.refund_state_cost(amount)
+    }
+
     /// Deducts from `remaining` only (used for child frame gas forwarding).
     /// Does not affect reservoir or regular gas budget.
     /// Used for forwarding gas to child frames.

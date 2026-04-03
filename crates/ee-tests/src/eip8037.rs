@@ -1383,7 +1383,7 @@ fn test_eip8037_nested_call_create_sstore() {
 
 // ---- Category 6: Interactions ----
 
-/// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund does NOT undo state gas.
+/// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund undoes state gas via reservoir refill.
 #[test]
 fn test_eip8037_sstore_set_then_clear_refund() {
     let bytecode = sstore_set_then_clear_bytecode();
@@ -1400,13 +1400,16 @@ fn test_eip8037_sstore_set_then_clear_refund() {
         .unwrap();
 
     assert!(result.is_success());
-    // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    // State gas is refunded when slot is cleared back to zero.
+    assert_eq!(result.gas().state_gas_spent(), 0);
     let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
-    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
-    // Refund does NOT undo state gas — gas_used is higher than baseline.
-    assert!(result.tx_gas_used() > baseline_gas);
-    assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
+    assert_eq!(spent_delta, 0);
+    // Reservoir refill means gas_used matches baseline.
+    assert_eq!(result.tx_gas_used(), baseline_gas);
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_set_then_clear_refund.json",
         &(baseline_result, result),

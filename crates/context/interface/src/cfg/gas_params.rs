@@ -687,6 +687,18 @@ impl GasParams {
         }
     }
 
+    /// State gas refund for SSTORE: refunds when a slot created in this tx is cleared back to zero.
+    ///
+    /// Triggers when original == 0, present != 0, new == 0 (slot was created then cleared).
+    #[inline]
+    pub fn sstore_state_gas_refund(&self, vals: &SStoreResult) -> u64 {
+        if vals.is_original_zero() && !vals.is_present_zero() && vals.is_new_zero() {
+            self.get(GasId::sstore_set_state_gas())
+        } else {
+            0
+        }
+    }
+
     /// State gas for new account creation.
     #[inline]
     pub fn new_account_state_gas(&self) -> u64 {

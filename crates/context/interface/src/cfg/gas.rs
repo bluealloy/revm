@@ -145,6 +145,16 @@ impl GasTracker {
         self.refunded += refund;
     }
 
+    /// Refunds state gas back to the reservoir.
+    ///
+    /// Used when a state change is undone (e.g. storage slot cleared back to zero),
+    /// returning the previously charged state gas to the reservoir.
+    #[inline]
+    pub fn refund_state_cost(&mut self, amount: u64) {
+        self.reservoir += amount;
+        self.state_gas_spent = self.state_gas_spent.saturating_sub(amount);
+    }
+
     /// Erases a gas cost from remaining (returns gas from child frame).
     #[inline]
     pub fn erase_cost(&mut self, returned: u64) {

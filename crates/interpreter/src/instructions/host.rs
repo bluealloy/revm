@@ -284,6 +284,15 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)
         );
+
+        // refund state gas when a slot created in this tx is cleared back to zero
+        let state_refund = context
+            .host
+            .gas_params()
+            .sstore_state_gas_refund(&state_load.data);
+        if state_refund > 0 {
+            context.interpreter.gas.refund_state_cost(state_refund);
+        }
     }
 
     // refund
