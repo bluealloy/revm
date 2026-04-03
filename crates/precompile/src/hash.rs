@@ -2,7 +2,8 @@
 //! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost;
 use crate::{
-    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, Precompile, PrecompileEthResult, PrecompileHaltReason, PrecompileId,
+    PrecompileOutputEth,
 };
 
 /// SHA-256 precompile
@@ -22,13 +23,13 @@ pub const RIPEMD160: Precompile = Precompile::new(
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
 /// - [Address 0x02](https://etherscan.io/address/0000000000000000000000000000000000000002)
-pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let cost = calc_linear_cost(input.len(), 60, 12);
     if cost > gas_limit {
-        Err(PrecompileError::OutOfGas)
+        Err(PrecompileHaltReason::OutOfGas)
     } else {
         let output = crypto().sha256(input);
-        Ok(PrecompileOutput::new(cost, output.to_vec().into()))
+        Ok(PrecompileOutputEth::new(cost, output.to_vec().into()))
     }
 }
 
@@ -38,12 +39,12 @@ pub fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
 /// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003)
-pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let gas_used = calc_linear_cost(input.len(), 600, 120);
     if gas_used > gas_limit {
-        Err(PrecompileError::OutOfGas)
+        Err(PrecompileHaltReason::OutOfGas)
     } else {
         let output = crypto().ripemd160(input);
-        Ok(PrecompileOutput::new(gas_used, output.to_vec().into()))
+        Ok(PrecompileOutputEth::new(gas_used, output.to_vec().into()))
     }
 }

@@ -2,7 +2,7 @@
 use super::utils::{pad_g2_point, remove_g2_padding};
 use crate::{
     bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH},
-    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
@@ -15,13 +15,13 @@ pub const PRECOMPILE: Precompile =
 /// Output is an encoding of addition operation result - single G2 point (`256`
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
-pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHaltReason::OutOfGas);
     }
 
     if input.len() != G2_ADD_INPUT_LENGTH {
-        return Err(PrecompileError::Bls12381G2AddInputLength);
+        return Err(PrecompileHaltReason::Bls12381G2AddInputLength);
     }
 
     // Extract coordinates from padded input
@@ -36,7 +36,7 @@ pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);
 
-    Ok(PrecompileOutput::new(
+    Ok(PrecompileOutputEth::new(
         G2_ADD_BASE_GAS_FEE,
         padded_result.into(),
     ))

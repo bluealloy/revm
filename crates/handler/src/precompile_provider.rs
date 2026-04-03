@@ -108,11 +108,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 result.gas.record_regular_cost(output.gas_used);
                 result.output = output.bytes;
             }
-            Err(e) => {
-                if e.is_fatal() {
-                    return Err(e.to_string());
-                }
-                result.result = if e.is_oog() {
+            Err(halt_reason) => {
+                result.result = if halt_reason.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
@@ -120,10 +117,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                 // If this is a top-level precompile call (depth == 1), persist the error message
                 // into the local context so it can be returned as output in the final result.
                 // Only do this for non-OOG errors (OOG is a distinct halt reason without output).
-                if !e.is_oog() && context.journal().depth() == 1 {
+                if !halt_reason.is_oog() && context.journal().depth() == 1 {
                     context
                         .local_mut()
-                        .set_precompile_error_context(e.to_string());
+                        .set_precompile_error_context(halt_reason.to_string());
                 }
             }
         }

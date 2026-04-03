@@ -711,12 +711,12 @@ pub enum EVMError<DBError, TransactionError = InvalidTransaction> {
     Database(DBError),
     /// Custom error for non-standard EVM failures.
     ///
-    /// This includes `PrecompileError::Fatal` and `PrecompileError::FatalAny`
+    /// This includes fatal precompile errors (`PrecompileError::Fatal` and `PrecompileError::FatalAny`)
     /// errors as well as any custom errors returned by handler registers.
     Custom(String),
     /// Custom error for non-standard EVM failures.
     ///
-    /// This includes `PrecompileError::Fatal` and `PrecompileError::FatalAny`
+    /// This includes fatal precompile errors (`PrecompileError::Fatal` and `PrecompileError::FatalAny`)
     /// errors as well as any custom errors returned by handler registers.
     CustomAny(AnyError),
 }

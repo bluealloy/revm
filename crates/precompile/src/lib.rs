@@ -383,7 +383,7 @@ impl Precompile {
 
     /// Executes the precompile.
     #[inline]
-    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         (self.fn_)(input, gas_limit)
     }
 }
@@ -465,8 +465,8 @@ pub const fn u64_to_address(x: u64) -> Address {
 mod test {
     use super::*;
 
-    fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileResult {
-        PrecompileResult::Err(PrecompileError::OutOfGas)
+    fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileEthResult {
+        Err(PrecompileHaltReason::OutOfGas)
     }
 
     #[test]
@@ -491,7 +491,7 @@ mod test {
                 .as_ref()
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
+            Err(PrecompileHaltReason::OutOfGas)
         );
 
         assert_eq!(
@@ -499,7 +499,7 @@ mod test {
                 .get(&Address::left_padding_from(&[101]))
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
+            Err(PrecompileHaltReason::OutOfGas)
         );
     }
 

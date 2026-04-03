@@ -17,8 +17,8 @@ pub mod bitcoin_secp256k1;
 pub mod k256;
 
 use crate::{
-    crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
-    PrecompileResult,
+    crypto, utilities::right_pad, Precompile, PrecompileHaltReason, PrecompileId,
+    PrecompileOutputEth, PrecompileEthResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -30,18 +30,18 @@ pub const ECRECOVER: Precompile = Precompile::new(
 );
 
 /// `ecrecover` precompile function. Read more about input and output format in [this module docs](self).
-pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHaltReason::OutOfGas);
     }
 
     let input = right_pad::<128>(input);
 
     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
-        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
+        return Ok(PrecompileOutputEth::new(ECRECOVER_BASE, Bytes::new()));
     }
 
     let msg = <&B256>::try_from(&input[0..32]).unwrap();
@@ -50,7 +50,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
     let res = crypto().secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
-    Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
+    Ok(PrecompileOutputEth::new(ECRECOVER_BASE, out))
 }
 
 pub(crate) fn ecrecover_bytes(sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]> {

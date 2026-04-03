@@ -2,7 +2,7 @@
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
     bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH},
-    PrecompileError,
+    PrecompileHaltReason,
 };
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{
@@ -25,7 +25,7 @@ use std::vec::Vec;
 ///
 /// Panics if the input is not exactly 48 bytes long.
 #[inline]
-fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
+fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileHaltReason> {
     assert_eq!(input_be.len(), FP_LENGTH, "input must be {FP_LENGTH} bytes");
 
     let mut input_le = [0u8; FP_LENGTH];
@@ -34,7 +34,7 @@ fn read_fp(input_be: &[u8]) -> Result<Fq, PrecompileError> {
     // Reverse in-place to convert from big-endian to little-endian.
     input_le.reverse();
 
-    Fq::deserialize_uncompressed(&input_le[..]).map_err(|_| PrecompileError::NonCanonicalFp)
+    Fq::deserialize_uncompressed(&input_le[..]).map_err(|_| PrecompileHaltReason::NonCanonicalFp)
 }
 
 /// Encodes an `Fp` field element into a big-endian byte array.
@@ -58,7 +58,7 @@ fn encode_fp(fp: &Fq) -> [u8; FP_LENGTH] {
 ///
 /// Panics if either input is not exactly 48 bytes long.
 #[inline]
-fn read_fp2(input_1: &[u8; FP_LENGTH], input_2: &[u8; FP_LENGTH]) -> Result<Fq2, PrecompileError> {
+fn read_fp2(input_1: &[u8; FP_LENGTH], input_2: &[u8; FP_LENGTH]) -> Result<Fq2, PrecompileHaltReason> {
     let fp_1 = read_fp(input_1)?;
     let fp_2 = read_fp(input_2)?;
 
@@ -72,14 +72,14 @@ fn read_fp2(input_1: &[u8; FP_LENGTH], input_2: &[u8; FP_LENGTH]) -> Result<Fq2,
 /// Note: The point at infinity which is represented as (0,0) is
 /// handled specifically.
 #[inline]
-fn new_g1_point_no_subgroup_check(px: Fq, py: Fq) -> Result<G1Affine, PrecompileError> {
+fn new_g1_point_no_subgroup_check(px: Fq, py: Fq) -> Result<G1Affine, PrecompileHaltReason> {
     if px.is_zero() && py.is_zero() {
         Ok(G1Affine::zero())
     } else {
         // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G1Affine::new_unchecked(px, py);
         if !point.is_on_curve() {
-            return Err(PrecompileError::Bls12381G1NotOnCurve);
+            return Err(PrecompileHaltReason::Bls12381G1NotOnCurve);
         }
         Ok(point)
     }
@@ -94,14 +94,14 @@ fn new_g1_point_no_subgroup_check(px: Fq, py: Fq) -> Result<G1Affine, Precompile
 /// Note: The point at infinity which is represented as (0,0) is
 /// handled specifically.
 #[inline]
-fn new_g2_point_no_subgroup_check(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileError> {
+fn new_g2_point_no_subgroup_check(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileHaltReason> {
     let point = if x.is_zero() && y.is_zero() {
         G2Affine::zero()
     } else {
         // We cannot use `G2Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G2Affine::new_unchecked(x, y);
         if !point.is_on_curve() {
-            return Err(PrecompileError::Bls12381G2NotOnCurve);
+            return Err(PrecompileHaltReason::Bls12381G2NotOnCurve);
         }
         point
     };
@@ -119,10 +119,10 @@ fn new_g2_point_no_subgroup_check(x: Fq2, y: Fq2) -> Result<G2Affine, Precompile
 ///
 /// Panics if the inputs are not exactly 48 bytes long.
 #[inline]
-fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, PrecompileError> {
+fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, PrecompileHaltReason> {
     let point = read_g1_no_subgroup_check(x, y)?;
     if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(PrecompileError::Bls12381G1NotInSubgroup);
+        return Err(PrecompileHaltReason::Bls12381G1NotInSubgroup);
     }
     Ok(point)
 }
@@ -137,7 +137,7 @@ fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, Precomp
 fn read_g1_no_subgroup_check(
     x: &[u8; FP_LENGTH],
     y: &[u8; FP_LENGTH],
-) -> Result<G1Affine, PrecompileError> {
+) -> Result<G1Affine, PrecompileHaltReason> {
     let px = read_fp(x)?;
     let py = read_fp(y)?;
     new_g1_point_no_subgroup_check(px, py)
@@ -176,10 +176,10 @@ fn read_g2(
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
     a_y_1: &[u8; FP_LENGTH],
-) -> Result<G2Affine, PrecompileError> {
+) -> Result<G2Affine, PrecompileHaltReason> {
     let point = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
     if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(PrecompileError::Bls12381G2NotInSubgroup);
+        return Err(PrecompileHaltReason::Bls12381G2NotInSubgroup);
     }
     Ok(point)
 }
@@ -196,7 +196,7 @@ fn read_g2_no_subgroup_check(
     a_x_1: &[u8; FP_LENGTH],
     a_y_0: &[u8; FP_LENGTH],
     a_y_1: &[u8; FP_LENGTH],
-) -> Result<G2Affine, PrecompileError> {
+) -> Result<G2Affine, PrecompileHaltReason> {
     let x = read_fp2(a_x_0, a_x_1)?;
     let y = read_fp2(a_y_0, a_y_1)?;
     new_g2_point_no_subgroup_check(x, y)
@@ -233,9 +233,9 @@ fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
 /// Note: We do not check that the scalar is a canonical Fr element, because the EIP specifies:
 /// * The corresponding integer is not required to be less than or equal than main subgroup order.
 #[inline]
-fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileError> {
+fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileHaltReason> {
     if input.len() != SCALAR_LENGTH {
-        return Err(PrecompileError::Bls12381ScalarInputLength);
+        return Err(PrecompileHaltReason::Bls12381ScalarInputLength);
     }
 
     Ok(Fr::from_be_bytes_mod_order(input))
@@ -349,7 +349,7 @@ pub(crate) fn pairing_check(pairs: &[(G1Affine, G2Affine)]) -> bool {
 
 /// pairing_check_bytes performs a pairing check on a list of G1 and G2 point pairs taking byte inputs.
 #[inline]
-pub(crate) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileError> {
+pub(crate) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, PrecompileHaltReason> {
     super::pairing_common::pairing_check_bytes_generic(pairs, read_g1, read_g2, pairing_check)
 }
 
@@ -360,7 +360,7 @@ pub(crate) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, Precomp
 pub(crate) fn p1_add_affine_bytes(
     a: G1Point,
     b: G1Point,
-) -> Result<[u8; G1_LENGTH], PrecompileError> {
+) -> Result<[u8; G1_LENGTH], PrecompileHaltReason> {
     let (a_x, a_y) = a;
     let (b_x, b_y) = b;
     // Parse first point
@@ -381,7 +381,7 @@ pub(crate) fn p1_add_affine_bytes(
 pub(crate) fn p2_add_affine_bytes(
     a: G2Point,
     b: G2Point,
-) -> Result<[u8; G2_LENGTH], PrecompileError> {
+) -> Result<[u8; G2_LENGTH], PrecompileHaltReason> {
     let (a_x_0, a_x_1, a_y_0, a_y_1) = a;
     let (b_x_0, b_x_1, b_y_0, b_y_1) = b;
     // Parse first point
@@ -401,7 +401,7 @@ pub(crate) fn p2_add_affine_bytes(
 #[inline]
 pub(crate) fn map_fp_to_g1_bytes(
     fp_bytes: &[u8; FP_LENGTH],
-) -> Result<[u8; G1_LENGTH], PrecompileError> {
+) -> Result<[u8; G1_LENGTH], PrecompileHaltReason> {
     let fp = read_fp(fp_bytes)?;
     let result = map_fp_to_g1(&fp);
     Ok(encode_g1_point(&result))
@@ -412,7 +412,7 @@ pub(crate) fn map_fp_to_g1_bytes(
 pub(crate) fn map_fp2_to_g2_bytes(
     fp2_x: &[u8; FP_LENGTH],
     fp2_y: &[u8; FP_LENGTH],
-) -> Result<[u8; G2_LENGTH], PrecompileError> {
+) -> Result<[u8; G2_LENGTH], PrecompileHaltReason> {
     let fp2 = read_fp2(fp2_x, fp2_y)?;
     let result = map_fp2_to_g2(&fp2);
     Ok(encode_g2_point(&result))
@@ -421,8 +421,8 @@ pub(crate) fn map_fp2_to_g2_bytes(
 /// Performs multi-scalar multiplication (MSM) for G1 points taking byte inputs.
 #[inline]
 pub(crate) fn p1_msm_bytes(
-    point_scalar_pairs: impl Iterator<Item = Result<(G1Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
-) -> Result<[u8; G1_LENGTH], PrecompileError> {
+    point_scalar_pairs: impl Iterator<Item = Result<(G1Point, [u8; SCALAR_LENGTH]), PrecompileHaltReason>>,
+) -> Result<[u8; G1_LENGTH], PrecompileHaltReason> {
     let (lower, _) = point_scalar_pairs.size_hint();
     let mut g1_points = Vec::with_capacity(lower);
     let mut scalars = Vec::with_capacity(lower);
@@ -459,8 +459,8 @@ pub(crate) fn p1_msm_bytes(
 /// Performs multi-scalar multiplication (MSM) for G2 points taking byte inputs.
 #[inline]
 pub(crate) fn p2_msm_bytes(
-    point_scalar_pairs: impl Iterator<Item = Result<(G2Point, [u8; SCALAR_LENGTH]), PrecompileError>>,
-) -> Result<[u8; G2_LENGTH], PrecompileError> {
+    point_scalar_pairs: impl Iterator<Item = Result<(G2Point, [u8; SCALAR_LENGTH]), PrecompileHaltReason>>,
+) -> Result<[u8; G2_LENGTH], PrecompileHaltReason> {
     let (lower, _) = point_scalar_pairs.size_hint();
     let mut g2_points = Vec::with_capacity(lower);
     let mut scalars = Vec::with_capacity(lower);

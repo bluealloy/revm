@@ -6,8 +6,8 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, secp256r1, Precompile, PrecompileError, PrecompileId, PrecompileResult,
-        Precompiles,
+        self, bn254, secp256r1, Precompile, PrecompileEthResult, PrecompileHaltReason,
+        PrecompileId, Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };
@@ -175,9 +175,9 @@ pub mod bn254_pair {
     );
 
     /// Run the bn254 pair precompile with Optimism input limit.
-    pub fn run_pair_granite(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair_granite(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Bn254PairLength.into());
+            return Err(PrecompileHaltReason::Bn254PairLength);
         }
         bn254::run_pair(
             input,
@@ -197,9 +197,9 @@ pub mod bn254_pair {
     );
 
     /// Run the bn254 pair precompile with Optimism input limit.
-    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > JOVIAN_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Bn254PairLength.into());
+            return Err(PrecompileHaltReason::Bn254PairLength);
         }
         bn254::run_pair(
             input,
@@ -257,9 +257,9 @@ pub mod bls12_381 {
         Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, run_pair_jovian);
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_g1_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "G1MSM input length too long for OP Stack input size limitation after the Isthmus Hardfork".into(),
             ));
         }
@@ -267,53 +267,51 @@ pub mod bls12_381 {
     }
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_g1_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > JOVIAN_G1_MSM_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "G1MSM input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
-            ).into());
+            ));
         }
         precompile::bls12_381::g1_msm::g1_msm(input, gas_limit)
     }
 
     /// Run the g2 msm precompile with Optimism input limit.
-    pub fn run_g2_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_g2_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "G2MSM input length too long for OP Stack input size limitation".into(),
-            )
-            .into());
+            ));
         }
         precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
 
     /// Run the g2 msm precompile with Optimism input limit after the Jovian Hardfork.
-    pub fn run_g2_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_g2_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > JOVIAN_G2_MSM_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "G2MSM input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
-            ).into());
+            ));
         }
         precompile::bls12_381::g2_msm::g2_msm(input, gas_limit)
     }
 
     /// Run the pairing precompile with Optimism input limit.
-    pub fn run_pair_isthmus(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "Pairing input length too long for OP Stack input size limitation".into(),
-            )
-            .into());
+            ));
         }
         precompile::bls12_381::pairing::pairing(input, gas_limit)
     }
 
     /// Run the pairing precompile with Optimism input limit after the Jovian Hardfork.
-    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         if input.len() > JOVIAN_PAIRING_MAX_INPUT_SIZE {
-            return Err(PrecompileError::Other(
+            return Err(PrecompileHaltReason::Other(
                 "Pairing input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
-            ).into());
+            ));
         }
         precompile::bls12_381::pairing::pairing(input, gas_limit)
     }
@@ -330,7 +328,7 @@ mod tests {
 
     use super::*;
     use revm::{
-        precompile::{bls12_381_const, PrecompileError},
+        precompile::{bls12_381_const, PrecompileHaltReason},
         primitives::{hex, Bytes},
     };
     use std::vec;
@@ -370,17 +368,17 @@ mod tests {
         .unwrap();
 
         let res = bn254_pair::run_pair_granite(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
+        assert!(matches!(res, Err(PrecompileHaltReason::Bn254PairLength)));
 
         // Valid input length shorter than 112687
         let input = vec![1u8; 586 * bn254::PAIR_ELEMENT_LEN];
         let res = bn254_pair::run_pair_granite(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileError::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileHaltReason::OutOfGas)));
 
         // Input length longer than 112687
         let input = vec![1u8; 587 * bn254::PAIR_ELEMENT_LEN];
         let res = bn254_pair::run_pair_granite(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
+        assert!(matches!(res, Err(PrecompileHaltReason::Bn254PairLength)));
     }
 
     #[test]
@@ -399,7 +397,7 @@ mod tests {
     fn test_accelerated_bn254_pairing_bad_input_len_jovian() {
         let input = [0u8; bn254_pair::JOVIAN_MAX_INPUT_SIZE + 1];
         let res = bn254_pair::run_pair_jovian(&input, u64::MAX);
-        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
+        assert!(matches!(res, Err(PrecompileHaltReason::Bn254PairLength)));
     }
 
     #[test]
@@ -415,7 +413,7 @@ mod tests {
         let input = vec![0u8; bad_input_len];
 
         let res = bn254_pair_precompile.execute(&input, u64::MAX);
-        assert!(matches!(res, Err(PrecompileError::Bn254PairLength)));
+        assert!(matches!(res, Err(PrecompileHaltReason::Bn254PairLength)));
 
         let bls12_381_g1_msm_precompile = precompiles
             .precompiles()
@@ -426,7 +424,7 @@ mod tests {
         let input = vec![0u8; bad_input_len];
         let res = bls12_381_g1_msm_precompile.execute(&input, u64::MAX);
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
 
         let bls12_381_g2_msm_precompile = precompiles
@@ -438,7 +436,7 @@ mod tests {
         let input = vec![0u8; bad_input_len];
         let res = bls12_381_g2_msm_precompile.execute(&input, u64::MAX);
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
 
         let bls12_381_pairing_precompile = precompiles
@@ -450,7 +448,7 @@ mod tests {
         let input = vec![0u8; bad_input_len];
         let res = bls12_381_pairing_precompile.execute(&input, u64::MAX);
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
 
@@ -512,7 +510,7 @@ mod tests {
         let res = run_g1_msm_isthmus(&input, 260_000);
 
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
 
@@ -524,7 +522,7 @@ mod tests {
         let res = run_g1_msm_jovian(&input, u64::MAX);
 
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
     #[test]
@@ -535,7 +533,7 @@ mod tests {
         let res = run_g2_msm_isthmus(&input, 260_000);
 
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
     #[test]
@@ -547,7 +545,7 @@ mod tests {
 
         assert!(matches!(
             res,
-            Err(PrecompileError::Other(msg)) if msg.contains("input length too long")));
+            Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long")));
     }
     #[test]
     fn test_pair_isthmus_max_size() {
@@ -557,7 +555,7 @@ mod tests {
         let res = bls12_381::run_pair_isthmus(&input, 260_000);
 
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
     #[test]
@@ -568,7 +566,7 @@ mod tests {
         let res = bls12_381::run_pair_jovian(&input, u64::MAX);
 
         assert!(
-            matches!(res, Err(PrecompileError::Other(msg)) if msg.contains("input length too long"))
+            matches!(res, Err(PrecompileHaltReason::Other(msg)) if msg.contains("input length too long"))
         );
     }
 }

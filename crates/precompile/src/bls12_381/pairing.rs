@@ -8,7 +8,7 @@ use crate::{
         PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
         PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
     },
-    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 use primitives::B256;
 use std::vec::Vec;
@@ -29,16 +29,16 @@ pub const PRECOMPILE: Precompile =
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(PAIRING_INPUT_LENGTH) {
-        return Err(PrecompileError::Bls12381PairingInputLength);
+        return Err(PrecompileHaltReason::Bls12381PairingInputLength);
     }
 
     let k = input_len / PAIRING_INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHaltReason::OutOfGas);
     }
 
     // Collect pairs of points for the pairing check
@@ -58,7 +58,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let result = crypto().bls12_381_pairing_check(&pairs)?;
     let result = if result { 1 } else { 0 };
 
-    Ok(PrecompileOutput::new(
+    Ok(PrecompileOutputEth::new(
         required_gas,
         B256::with_last_byte(result).into(),
     ))

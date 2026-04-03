@@ -1,7 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{
-    crypto, Address, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, Address, Precompile, PrecompileEthResult, PrecompileHaltReason, PrecompileId,
+    PrecompileOutputEth,
 };
 pub mod arkworks;
 
@@ -37,21 +38,21 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     if gas_limit < GAS_COST {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHaltReason::OutOfGas);
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(PrecompileError::BlobInvalidInputLength);
+        return Err(PrecompileHaltReason::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(PrecompileError::BlobMismatchedVersion);
+        return Err(PrecompileHaltReason::BlobMismatchedVersion);
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -62,7 +63,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     crypto().verify_kzg_proof(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
+    Ok(PrecompileOutputEth::new(GAS_COST, RETURN_VALUE.into()))
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
