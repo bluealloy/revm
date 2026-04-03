@@ -1,7 +1,6 @@
 //! KZG point evaluation precompile using Arkworks BLS12-381 implementation.
 use crate::{
-    bls12_381::arkworks::pairing_check, bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES,
-    PrecompileHalt,
+    bls12_381::arkworks::pairing_check, bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES, PrecompileHalt,
 };
 use ark_bls12_381::{Fr, G1Affine, G2Affine};
 use ark_ec::{AffineRepr, CurveGroup};

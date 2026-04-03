@@ -1,8 +1,7 @@
 //! Blake2 precompile. More details in [`run`]
 
 use crate::{
-    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth,
-    PrecompileEthResult,
+    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 
 const F_ROUND: u64 = 1;

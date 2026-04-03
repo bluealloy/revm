@@ -6,8 +6,8 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, secp256r1, Precompile, PrecompileEthResult, PrecompileHalt,
-        PrecompileId, Precompiles,
+        self, bn254, secp256r1, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+        Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };

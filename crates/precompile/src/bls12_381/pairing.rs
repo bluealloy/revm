@@ -8,7 +8,7 @@ use crate::{
         PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
         PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
     },
-    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 use primitives::B256;
 use std::vec::Vec;

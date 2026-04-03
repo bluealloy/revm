@@ -17,8 +17,8 @@ pub mod bitcoin_secp256k1;
 pub mod k256;
 
 use crate::{
-    crypto, utilities::right_pad, Precompile, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth, PrecompileEthResult,
+    crypto, utilities::right_pad, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutputEth,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 

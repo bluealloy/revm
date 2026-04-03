@@ -7,8 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    crypto, u64_to_address, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth,
-    PrecompileEthResult,
+    crypto, u64_to_address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutputEth,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 

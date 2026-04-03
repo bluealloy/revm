@@ -4,7 +4,7 @@ use crate::{
     bls12_381_const::{
         MAP_FP2_TO_G2_ADDRESS, MAP_FP2_TO_G2_BASE_GAS_FEE, PADDED_FP2_LENGTH, PADDED_FP_LENGTH,
     },
-    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP2_TO_G2 precompile.

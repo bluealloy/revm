@@ -2,7 +2,7 @@
 use crate::{
     crypto,
     utilities::{bool_to_bytes32, right_pad},
-    Address, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 use std::vec::Vec;
 

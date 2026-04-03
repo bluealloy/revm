@@ -190,20 +190,13 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// BN254 elliptic curve scalar multiplication.
     #[inline]
-    fn bn254_g1_mul(
-        &self,
-        point: &[u8],
-        scalar: &[u8],
-    ) -> Result<[u8; 64], PrecompileHalt> {
+    fn bn254_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
         crate::bn254::crypto_backend::g1_point_mul(point, scalar)
     }
 
     /// BN254 pairing check.
     #[inline]
-    fn bn254_pairing_check(
-        &self,
-        pairs: &[(&[u8], &[u8])],
-    ) -> Result<bool, PrecompileHalt> {
+    fn bn254_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileHalt> {
         crate::bn254::crypto_backend::pairing_check(pairs)
     }
 
@@ -221,25 +214,13 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// Modular exponentiation.
     #[inline]
-    fn modexp(
-        &self,
-        base: &[u8],
-        exp: &[u8],
-        modulus: &[u8],
-    ) -> Result<Vec<u8>, PrecompileHalt> {
+    fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileHalt> {
         Ok(crate::modexp::modexp(base, exp, modulus))
     }
 
     /// Blake2 compression function.
     #[inline]
-    fn blake2_compress(
-        &self,
-        rounds: u32,
-        h: &mut [u64; 8],
-        m: &[u64; 16],
-        t: &[u64; 2],
-        f: bool,
-    ) {
+    fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
         crate::blake2::algo::compress(rounds as usize, h, m, t, f);
     }
 
@@ -266,11 +247,7 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// BLS12-381 G1 addition (returns 96-byte unpadded G1 point)
-    fn bls12_381_g1_add(
-        &self,
-        a: G1Point,
-        b: G1Point,
-    ) -> Result<[u8; 96], PrecompileHalt> {
+    fn bls12_381_g1_add(&self, a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p1_add_affine_bytes(a, b)
     }
 
@@ -283,11 +260,7 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// BLS12-381 G2 addition (returns 192-byte unpadded G2 point)
-    fn bls12_381_g2_add(
-        &self,
-        a: G2Point,
-        b: G2Point,
-    ) -> Result<[u8; 192], PrecompileHalt> {
+    fn bls12_381_g2_add(&self, a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p2_add_affine_bytes(a, b)
     }
 
@@ -308,18 +281,12 @@ pub trait Crypto: Send + Sync + Debug {
     }
 
     /// BLS12-381 map field element to G1.
-    fn bls12_381_fp_to_g1(
-        &self,
-        fp: &[u8; 48],
-    ) -> Result<[u8; 96], PrecompileHalt> {
+    fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileHalt> {
         crate::bls12_381::crypto_backend::map_fp_to_g1_bytes(fp)
     }
 
     /// BLS12-381 map field element to G2.
-    fn bls12_381_fp2_to_g2(
-        &self,
-        fp2: ([u8; 48], [u8; 48]),
-    ) -> Result<[u8; 192], PrecompileHalt> {
+    fn bls12_381_fp2_to_g2(&self, fp2: ([u8; 48], [u8; 48])) -> Result<[u8; 192], PrecompileHalt> {
         crate::bls12_381::crypto_backend::map_fp2_to_g2_bytes(&fp2.0, &fp2.1)
     }
 }

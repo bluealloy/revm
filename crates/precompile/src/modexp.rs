@@ -3,7 +3,7 @@
 use crate::{
     crypto,
     utilities::{left_pad, left_pad_vec_be, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
@@ -198,8 +198,7 @@ where
     let mod_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 64).into_owned());
 
     // Cast base and modulus to usize, it does not make sense to handle larger values
-    let base_len =
-        usize::try_from(base_len).map_err(|_| PrecompileHalt::ModexpEip7823LimitSize)?;
+    let base_len = usize::try_from(base_len).map_err(|_| PrecompileHalt::ModexpEip7823LimitSize)?;
     let mod_len = usize::try_from(mod_len).map_err(|_| PrecompileHalt::ModexpEip7823LimitSize)?;
     // cast exp len to the max size, it will fail later in gas calculation if it is too large.
     let exp_len = usize::try_from(exp_len).unwrap_or(usize::MAX);

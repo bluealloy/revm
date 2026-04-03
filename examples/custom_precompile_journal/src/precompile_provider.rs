@@ -216,5 +216,8 @@ fn handle_write_storage<CTX: ContextTr>(
     context.journal_mut().log(log);
 
     // Return success with empty output
-    Ok(PrecompileOutputEth::new(BASE_GAS + SSTORE_GAS, Bytes::new()))
+    Ok(PrecompileOutputEth::new(
+        BASE_GAS + SSTORE_GAS,
+        Bytes::new(),
+    ))
 }
