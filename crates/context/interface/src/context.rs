@@ -273,6 +273,12 @@ pub struct SelfDestructResult {
     pub target_exists: bool,
     /// Whether the account was previously destroyed.
     pub previously_destroyed: bool,
+    /// Whether the account was created locally (in this transaction).
+    /// Used for EIP-8037 state gas refund on selfdestruct.
+    pub is_created_locally: bool,
+    /// Code length of the selfdestructed account.
+    /// Used for EIP-8037 code deposit state gas refund.
+    pub code_len: usize,
 }
 
 /// Trait for setting the transaction and block in the context.

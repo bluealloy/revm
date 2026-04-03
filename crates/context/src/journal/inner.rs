@@ -649,6 +649,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
+        let is_created_locally = acc.is_created_locally();
+        let code_len = acc.info.code.as_ref().map_or(0, |c| c.len());
 
         let destroyed_status = if !acc.is_selfdestructed() {
             SelfdestructionRevertStatus::GloballySelfdestroyed
@@ -711,6 +713,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 target_exists: !is_empty,
                 previously_destroyed: destroyed_status
                     == SelfdestructionRevertStatus::RepeatedSelfdestruction,
+                is_created_locally,
+                code_len,
             },
             is_cold,
         })

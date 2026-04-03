@@ -699,6 +699,16 @@ impl GasParams {
         }
     }
 
+    /// State gas refund for SELFDESTRUCT of a locally created contract.
+    ///
+    /// Refunds `create_state_gas + code_deposit_state_gas * code_len` when a contract
+    /// created in this transaction is destroyed (0→x→0 pattern for accounts).
+    #[inline]
+    pub fn selfdestruct_state_gas_refund(&self, code_len: usize) -> u64 {
+        self.get(GasId::create_state_gas())
+            .saturating_add(self.code_deposit_state_gas(code_len))
+    }
+
     /// State gas for new account creation.
     #[inline]
     pub fn new_account_state_gas(&self) -> u64 {

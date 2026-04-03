@@ -410,6 +410,17 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         );
     }
 
+    // Refund state gas for locally created contract being destroyed (EIP-8037, 0→x→0 for accounts)
+    if context.host.is_amsterdam_eip8037_enabled() && res.is_created_locally {
+        let refund = context
+            .host
+            .gas_params()
+            .selfdestruct_state_gas_refund(res.code_len);
+        if refund > 0 {
+            context.interpreter.gas.refund_state_cost(refund);
+        }
+    }
+
     if !res.previously_destroyed {
         context
             .interpreter
