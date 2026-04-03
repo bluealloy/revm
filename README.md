@@ -58,7 +58,7 @@ Some quick links can be found here. Some point to code documentation or the book
 * [Release procedure and changelogs explanation](https://bluealloy.github.io/revm/release_procedure.html)
 * [How to use revme](https://github.com/bluealloy/revm/tree/main/bins/revme) (Revm binary with few commands)
 * [How to run Ethereum tests](https://bluealloy.github.io/revm/revme.html#running-eth-tests)
-* If there is more need for explanations please open a PR request.
+* If more explanation is needed, please open a PR.
 
 ## Supported Rust Versions (MSRV)
 
@@ -67,7 +67,7 @@ Revm always aims to stay up-to-date with the latest stable Rust release.
 The Minimum Supported Rust Version (MSRV) may be updated at any time, so we can take advantage of new features and improvements in Rust.
 
 ### Community:
-For questions please open a github issue or join the public [telegram group](https://t.me/+Ig4WDWOzikA3MzA0)
+For questions please open a GitHub issue or join the public [telegram group](https://t.me/+Ig4WDWOzikA3MzA0)
 
 ### License
 Revm is licensed under MIT License.
