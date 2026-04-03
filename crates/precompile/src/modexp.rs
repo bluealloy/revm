@@ -3,7 +3,7 @@
 use crate::{
     crypto,
     utilities::{left_pad, left_pad_vec_be, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
@@ -183,7 +183,7 @@ where
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // The format of input is:
@@ -199,8 +199,8 @@ where
 
     // Cast base and modulus to usize, it does not make sense to handle larger values
     let base_len =
-        usize::try_from(base_len).map_err(|_| PrecompileHaltReason::ModexpEip7823LimitSize)?;
-    let mod_len = usize::try_from(mod_len).map_err(|_| PrecompileHaltReason::ModexpEip7823LimitSize)?;
+        usize::try_from(base_len).map_err(|_| PrecompileHalt::ModexpEip7823LimitSize)?;
+    let mod_len = usize::try_from(mod_len).map_err(|_| PrecompileHalt::ModexpEip7823LimitSize)?;
     // cast exp len to the max size, it will fail later in gas calculation if it is too large.
     let exp_len = usize::try_from(exp_len).unwrap_or(usize::MAX);
 
@@ -210,7 +210,7 @@ where
             || mod_len > eip7823::INPUT_SIZE_LIMIT
             || exp_len > eip7823::INPUT_SIZE_LIMIT)
     {
-        return Err(PrecompileHaltReason::ModexpEip7823LimitSize);
+        return Err(PrecompileHalt::ModexpEip7823LimitSize);
     }
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -230,7 +230,7 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     if base_len == 0 && mod_len == 0 {
@@ -562,7 +562,7 @@ mod tests {
             base_len: U256,
             exp_len: U256,
             mod_len: U256,
-            expected: Option<PrecompileHaltReason>,
+            expected: Option<PrecompileHalt>,
         }
 
         impl TestInput {
@@ -580,31 +580,31 @@ mod tests {
                 base_len: U256::from(1025),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileHaltReason::ModexpEip7823LimitSize),
+                expected: Some(PrecompileHalt::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1025),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileHaltReason::ModexpEip7823LimitSize),
+                expected: Some(PrecompileHalt::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileHaltReason::ModexpEip7823LimitSize),
+                expected: Some(PrecompileHalt::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(0),
                 exp_len: U256::from(0),
                 mod_len: U256::from(1025),
-                expected: Some(PrecompileHaltReason::ModexpEip7823LimitSize),
+                expected: Some(PrecompileHalt::ModexpEip7823LimitSize),
             },
             TestInput {
                 base_len: U256::from(1024),
                 exp_len: U256::from(1024),
                 mod_len: U256::from(1024),
-                expected: Some(PrecompileHaltReason::OutOfGas),
+                expected: Some(PrecompileHalt::OutOfGas),
             },
             TestInput {
                 base_len: U256::from(0),
@@ -803,7 +803,7 @@ mod tests {
 
         let res = osaka_run(&input_fail, 100_000_000);
         assert!(
-            matches!(res, Err(PrecompileHaltReason::ModexpEip7823LimitSize)),
+            matches!(res, Err(PrecompileHalt::ModexpEip7823LimitSize)),
             "1025-byte base should be rejected"
         );
     }
@@ -894,7 +894,7 @@ mod tests {
         // Provide insufficient gas
         let res = byzantium_run(&input, 1000);
         assert!(
-            matches!(res, Err(PrecompileHaltReason::OutOfGas)),
+            matches!(res, Err(PrecompileHalt::OutOfGas)),
             "Should return OutOfGas error with insufficient gas"
         );
     }

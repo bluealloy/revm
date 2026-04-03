@@ -1,6 +1,6 @@
 //! Identity precompile returns
 use super::calc_linear_cost;
-use crate::{Precompile, PrecompileEthResult, PrecompileHaltReason, PrecompileId, PrecompileOutputEth};
+use crate::{Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth};
 use primitives::Bytes;
 
 /// Address of the identity precompile.
@@ -23,7 +23,7 @@ pub const IDENTITY_PER_WORD: u64 = 3;
 pub fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let gas_used = calc_linear_cost(input.len(), IDENTITY_BASE, IDENTITY_PER_WORD);
     if gas_used > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
     Ok(PrecompileOutputEth::new(
         gas_used,

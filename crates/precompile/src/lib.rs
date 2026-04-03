@@ -336,16 +336,16 @@ pub struct Precompile {
     /// Precompile address.
     address: Address,
     /// Precompile implementation.
-    fn_: PrecompileFn,
+    fn_: PrecompileEthFn,
 }
 
-impl From<(PrecompileId, Address, PrecompileFn)> for Precompile {
-    fn from((id, address, fn_): (PrecompileId, Address, PrecompileFn)) -> Self {
+impl From<(PrecompileId, Address, PrecompileEthFn)> for Precompile {
+    fn from((id, address, fn_): (PrecompileId, Address, PrecompileEthFn)) -> Self {
         Precompile { id, address, fn_ }
     }
 }
 
-impl From<Precompile> for (PrecompileId, Address, PrecompileFn) {
+impl From<Precompile> for (PrecompileId, Address, PrecompileEthFn) {
     fn from(value: Precompile) -> Self {
         (value.id, value.address, value.fn_)
     }
@@ -353,7 +353,7 @@ impl From<Precompile> for (PrecompileId, Address, PrecompileFn) {
 
 impl Precompile {
     /// Create new precompile.
-    pub const fn new(id: PrecompileId, address: Address, fn_: PrecompileFn) -> Self {
+    pub const fn new(id: PrecompileId, address: Address, fn_: PrecompileEthFn) -> Self {
         Self { id, address, fn_ }
     }
 
@@ -371,20 +371,20 @@ impl Precompile {
 
     /// Returns reference to precompile implementation.
     #[inline]
-    pub fn precompile(&self) -> &PrecompileFn {
+    pub fn precompile(&self) -> &PrecompileEthFn {
         &self.fn_
     }
 
     /// Consumes the type and returns the precompile implementation.
     #[inline]
-    pub fn into_precompile(self) -> PrecompileFn {
+    pub fn into_precompile(self) -> PrecompileEthFn {
         self.fn_
     }
 
-    /// Executes the precompile.
+    /// Executes the precompile, returning a [`PrecompileOutput`].
     #[inline]
-    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileEthResult {
-        (self.fn_)(input, gas_limit)
+    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileOutput {
+        (self.fn_)(input, gas_limit).into()
     }
 }
 
@@ -466,7 +466,7 @@ mod test {
     use super::*;
 
     fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileEthResult {
-        Err(PrecompileHaltReason::OutOfGas)
+        Err(PrecompileHalt::OutOfGas)
     }
 
     #[test]
@@ -491,7 +491,7 @@ mod test {
                 .as_ref()
                 .unwrap()
                 .execute(&[], u64::MAX),
-            Err(PrecompileHaltReason::OutOfGas)
+            PrecompileOutput::halt(PrecompileHalt::OutOfGas)
         );
 
         assert_eq!(
@@ -499,7 +499,7 @@ mod test {
                 .get(&Address::left_padding_from(&[101]))
                 .unwrap()
                 .execute(&[], u64::MAX),
-            Err(PrecompileHaltReason::OutOfGas)
+            PrecompileOutput::halt(PrecompileHalt::OutOfGas)
         );
     }
 

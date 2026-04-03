@@ -2,7 +2,7 @@
 use super::utils::{pad_g2_point, remove_g2_padding};
 use crate::{
     bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH},
-    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
@@ -17,11 +17,11 @@ pub const PRECOMPILE: Precompile =
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
 pub fn g2_add(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     if G2_ADD_BASE_GAS_FEE > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     if input.len() != G2_ADD_INPUT_LENGTH {
-        return Err(PrecompileHaltReason::Bls12381G2AddInputLength);
+        return Err(PrecompileHalt::Bls12381G2AddInputLength);
     }
 
     // Extract coordinates from padded input

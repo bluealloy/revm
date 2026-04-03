@@ -2,7 +2,7 @@
 use crate::{
     crypto,
     utilities::{bool_to_bytes32, right_pad},
-    Address, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    Address, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 use std::vec::Vec;
 
@@ -154,7 +154,7 @@ pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 /// Run the Bn254 add precompile
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
@@ -169,7 +169,7 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResu
 /// Run the Bn254 mul precompile
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
@@ -190,11 +190,11 @@ pub fn run_pair(
 ) -> PrecompileEthResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     if !input.len().is_multiple_of(PAIR_ELEMENT_LEN) {
-        return Err(PrecompileHaltReason::Bn254PairLength);
+        return Err(PrecompileHalt::Bn254PairLength);
     }
 
     let elements = input.len() / PAIR_ELEMENT_LEN;
@@ -230,7 +230,7 @@ mod tests {
             mul::BYZANTIUM_MUL_GAS_COST,
             pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT},
         },
-        PrecompileHaltReason,
+        PrecompileHalt,
     };
     use primitives::hex;
 
@@ -287,7 +287,7 @@ mod tests {
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
 
-        assert!(matches!(res, Err(PrecompileHaltReason::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileHalt::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -314,7 +314,7 @@ mod tests {
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
         assert!(matches!(
             res,
-            Err(ref f) if *f == PrecompileHaltReason::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileHalt::Bn254AffineGFailedToCreate
         ));
     }
 
@@ -347,7 +347,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(res, Err(PrecompileHaltReason::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileHalt::OutOfGas)));
 
         // Zero multiplication test
         let input = hex::decode(
@@ -391,7 +391,7 @@ mod tests {
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
         assert!(matches!(
             res,
-            Err(ref f) if *f == PrecompileHaltReason::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileHalt::Bn254AffineGFailedToCreate
         ));
     }
 
@@ -450,7 +450,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(res, Err(PrecompileHaltReason::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileHalt::OutOfGas)));
 
         // No input test
         let input = [0u8; 0];
@@ -487,7 +487,7 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(ref f) if *f == PrecompileHaltReason::Bn254AffineGFailedToCreate
+            Err(ref f) if *f == PrecompileHalt::Bn254AffineGFailedToCreate
         ));
 
         // Invalid input length
@@ -506,7 +506,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(PrecompileHaltReason::Bn254PairLength)));
+        assert!(matches!(res, Err(PrecompileHalt::Bn254PairLength)));
 
         // Test with point at infinity - should return true (identity element)
         // G1 point at infinity (0,0) followed by a valid G2 point

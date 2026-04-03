@@ -8,7 +8,7 @@ use crate::{
         PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
         PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
     },
-    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 use primitives::B256;
 use std::vec::Vec;
@@ -32,13 +32,13 @@ pub const PRECOMPILE: Precompile =
 pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(PAIRING_INPUT_LENGTH) {
-        return Err(PrecompileHaltReason::Bls12381PairingInputLength);
+        return Err(PrecompileHalt::Bls12381PairingInputLength);
     }
 
     let k = input_len / PAIRING_INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // Collect pairs of points for the pairing check

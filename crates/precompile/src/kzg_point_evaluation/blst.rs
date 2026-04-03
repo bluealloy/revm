@@ -5,7 +5,7 @@ use crate::{
         p2_from_affine, p2_scalar_mul, p2_to_affine, pairing_check,
     },
     bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES,
-    PrecompileHaltReason,
+    PrecompileHalt,
 };
 use ::blst::{
     blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
@@ -95,29 +95,29 @@ fn get_g2_generator() -> blst_p2_affine {
 }
 
 /// Parse a G1 point from compressed format (48 bytes)
-fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<blst_p1_affine, PrecompileHaltReason> {
+fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<blst_p1_affine, PrecompileHalt> {
     let mut point = blst_p1_affine::default();
     unsafe {
         let result = blst::blst_p1_uncompress(&mut point, bytes.as_ptr());
         if result != blst::BLST_ERROR::BLST_SUCCESS {
-            return Err(PrecompileHaltReason::KzgInvalidG1Point);
+            return Err(PrecompileHalt::KzgInvalidG1Point);
         }
 
         // Verify the point is on curve
         if !blst_p1_affine_on_curve(&point) {
-            return Err(PrecompileHaltReason::KzgG1PointNotOnCurve);
+            return Err(PrecompileHalt::KzgG1PointNotOnCurve);
         }
 
         // Verify the point is in the correct subgroup
         if !blst_p1_affine_in_g1(&point) {
-            return Err(PrecompileHaltReason::KzgG1PointNotInSubgroup);
+            return Err(PrecompileHalt::KzgG1PointNotInSubgroup);
         }
     }
     Ok(point)
 }
 
 /// Read a scalar field element from bytes and verify it's canonical
-fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileHaltReason> {
+fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileHalt> {
     let mut scalar = blst_scalar::default();
 
     // Read scalar from big endian bytes
@@ -126,7 +126,7 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileHalt
     }
 
     if unsafe { !blst_scalar_fr_check(&scalar) } {
-        return Err(PrecompileHaltReason::NonCanonicalFp);
+        return Err(PrecompileHalt::NonCanonicalFp);
     }
 
     Ok(scalar)

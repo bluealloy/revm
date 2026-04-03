@@ -6,7 +6,7 @@ use crate::{
         PADDED_G2_LENGTH, SCALAR_LENGTH,
     },
     bls12_381_utils::msm_required_gas,
-    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
+    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth, PrecompileEthResult,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
@@ -24,13 +24,13 @@ pub const PRECOMPILE: Precompile =
 pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(G2_MSM_INPUT_LENGTH) {
-        return Err(PrecompileHaltReason::Bls12381G2MsmInputLength);
+        return Err(PrecompileHalt::Bls12381G2MsmInputLength);
     }
 
     let k = input_len / G2_MSM_INPUT_LENGTH;
     let required_gas = msm_required_gas(k, &DISCOUNT_TABLE_G2_MSM, G2_MSM_BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     let mut valid_pairs_iter = (0..k).map(|i| {

@@ -1,6 +1,6 @@
 //! BN128 precompile using Arkworks BLS12-381 implementation.
 use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
-use crate::PrecompileHaltReason;
+use crate::PrecompileHalt;
 use std::vec::Vec;
 
 use ark_bn254::{Bn254, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine};
@@ -18,7 +18,7 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 ///
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
-fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHaltReason> {
+fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHalt> {
     assert_eq!(input_be.len(), FQ_LEN, "input must be {FQ_LEN} bytes");
 
     let mut input_le = [0u8; FQ_LEN];
@@ -28,7 +28,7 @@ fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHaltReason> {
     input_le.reverse();
 
     Fq::deserialize_uncompressed(&input_le[..])
-        .map_err(|_| PrecompileHaltReason::Bn254FieldPointNotAMember)
+        .map_err(|_| PrecompileHalt::Bn254FieldPointNotAMember)
 }
 /// Reads a Fq2 (quadratic extension field element) from the input slice.
 ///
@@ -41,7 +41,7 @@ fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHaltReason> {
 ///
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
-fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileHaltReason> {
+fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileHalt> {
     let y = read_fq(&input[..FQ_LEN])?;
     let x = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
 
@@ -58,14 +58,14 @@ fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileHaltReason> {
 /// In particular, when we convert from `AffineG1` to `G1`, the point
 /// will be (0,0,1) instead of (0,1,0)
 #[inline]
-fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileHaltReason> {
+fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileHalt> {
     if px.is_zero() && py.is_zero() {
         Ok(G1Affine::zero())
     } else {
         // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G1Affine::new_unchecked(px, py);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
-            return Err(PrecompileHaltReason::Bn254AffineGFailedToCreate);
+            return Err(PrecompileHalt::Bn254AffineGFailedToCreate);
         }
         Ok(point)
     }
@@ -83,14 +83,14 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1Affine, PrecompileHaltReason> {
 /// In particular, when we convert from `AffineG2` to `G2`, the point
 /// will be (0,0,1) instead of (0,1,0)
 #[inline]
-fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileHaltReason> {
+fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileHalt> {
     let point = if x.is_zero() && y.is_zero() {
         G2Affine::zero()
     } else {
         // We cannot use `G1Affine::new` because that triggers an assert if the point is not on the curve.
         let point = G2Affine::new_unchecked(x, y);
         if !point.is_on_curve() || !point.is_in_correct_subgroup_assuming_on_curve() {
-            return Err(PrecompileHaltReason::Bn254AffineGFailedToCreate);
+            return Err(PrecompileHalt::Bn254AffineGFailedToCreate);
         }
         point
     };
@@ -107,7 +107,7 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileHaltReason> {
 ///
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
-pub(super) fn read_g1_point(input: &[u8]) -> Result<G1Affine, PrecompileHaltReason> {
+pub(super) fn read_g1_point(input: &[u8]) -> Result<G1Affine, PrecompileHalt> {
     let px = read_fq(&input[0..FQ_LEN])?;
     let py = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
     new_g1_point(px, py)
@@ -155,7 +155,7 @@ pub(super) fn encode_g1_point(point: G1Affine) -> [u8; G1_LEN] {
 ///
 /// Panics if the input is not at least 128 bytes long.
 #[inline]
-pub(super) fn read_g2_point(input: &[u8]) -> Result<G2Affine, PrecompileHaltReason> {
+pub(super) fn read_g2_point(input: &[u8]) -> Result<G2Affine, PrecompileHalt> {
     let ba = read_fq2(&input[0..FQ2_LEN])?;
     let bb = read_fq2(&input[FQ2_LEN..2 * FQ2_LEN])?;
     new_g2_point(ba, bb)
@@ -181,7 +181,7 @@ pub(super) fn read_scalar(input: &[u8]) -> Fr {
 
 /// Performs point addition on two G1 points.
 #[inline]
-pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileHaltReason> {
+pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
     let p1 = read_g1_point(p1_bytes)?;
     let p2 = read_g1_point(p2_bytes)?;
 
@@ -198,7 +198,7 @@ pub(crate) fn g1_point_add(p1_bytes: &[u8], p2_bytes: &[u8]) -> Result<[u8; 64],
 pub(crate) fn g1_point_mul(
     point_bytes: &[u8],
     fr_bytes: &[u8],
-) -> Result<[u8; 64], PrecompileHaltReason> {
+) -> Result<[u8; 64], PrecompileHalt> {
     let p = read_g1_point(point_bytes)?;
     let fr = read_scalar(fr_bytes);
 
@@ -216,7 +216,7 @@ pub(crate) fn g1_point_mul(
 /// Note: If the input is empty, this function returns true.
 /// This is different to EIP2537 which disallows the empty input.
 #[inline]
-pub(crate) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileHaltReason> {
+pub(crate) fn pairing_check(pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileHalt> {
     let mut g1_points = Vec::with_capacity(pairs.len());
     let mut g2_points = Vec::with_capacity(pairs.len());
 

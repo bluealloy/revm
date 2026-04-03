@@ -2,7 +2,7 @@ use auto_impl::auto_impl;
 use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
-use precompile::{PrecompileSpecId, Precompiles};
+use precompile::{PrecompileSpecId, PrecompileStatus, Precompiles};
 use primitives::{hardfork::SpecId, Address, Bytes};
 use std::{
     boxed::Box,
@@ -102,13 +102,18 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             output: Bytes::new(),
         };
 
-        let exec_result = precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit);
-        match exec_result {
-            Ok(output) => {
+        let output = precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit);
+        match output.status {
+            PrecompileStatus::Success => {
                 result.gas.record_regular_cost(output.gas_used);
                 result.output = output.bytes;
             }
-            Err(halt_reason) => {
+            PrecompileStatus::Revert => {
+                result.result = InstructionResult::Revert;
+                result.gas.record_regular_cost(output.gas_used);
+                result.output = output.bytes;
+            }
+            PrecompileStatus::Halt(halt_reason) => {
                 result.result = if halt_reason.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {

@@ -3,25 +3,25 @@ use crate::{
     bls12_381_const::{
         FP_LENGTH, FP_PAD_BY, G1_LENGTH, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
     },
-    PrecompileHaltReason,
+    PrecompileHalt,
 };
 
 /// Removes zeros with which the precompile inputs are left padded to 64 bytes.
-pub(super) fn remove_fp_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], PrecompileHaltReason> {
+pub(super) fn remove_fp_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], PrecompileHalt> {
     if input.len() != PADDED_FP_LENGTH {
-        return Err(PrecompileHaltReason::Bls12381FpPaddingLength);
+        return Err(PrecompileHalt::Bls12381FpPaddingLength);
     }
     let (padding, unpadded) = input.split_at(FP_PAD_BY);
     if !padding.iter().all(|&x| x == 0) {
-        return Err(PrecompileHaltReason::Bls12381FpPaddingInvalid);
+        return Err(PrecompileHalt::Bls12381FpPaddingInvalid);
     }
     Ok(unpadded.try_into().unwrap())
 }
 /// remove_g1_padding removes the padding applied to the Fp elements that constitute the
 /// encoded G1 element.
-pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 2], PrecompileHaltReason> {
+pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 2], PrecompileHalt> {
     if input.len() != PADDED_G1_LENGTH {
-        return Err(PrecompileHaltReason::Bls12381G1PaddingLength);
+        return Err(PrecompileHalt::Bls12381G1PaddingLength);
     }
 
     let x = remove_fp_padding(&input[..PADDED_FP_LENGTH])?;
@@ -31,9 +31,9 @@ pub(super) fn remove_g1_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 2], P
 
 /// remove_g2_padding removes the padding applied to the Fp elements that constitute the
 /// encoded G2 element.
-pub(super) fn remove_g2_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 4], PrecompileHaltReason> {
+pub(super) fn remove_g2_padding(input: &[u8]) -> Result<[&[u8; FP_LENGTH]; 4], PrecompileHalt> {
     if input.len() != PADDED_G2_LENGTH {
-        return Err(PrecompileHaltReason::Bls12381G2PaddingLength);
+        return Err(PrecompileHalt::Bls12381G2PaddingLength);
     }
 
     let mut input_fps = [&[0; FP_LENGTH]; 4];

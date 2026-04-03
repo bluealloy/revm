@@ -17,7 +17,7 @@ pub mod bitcoin_secp256k1;
 pub mod k256;
 
 use crate::{
-    crypto, utilities::right_pad, Precompile, PrecompileHaltReason, PrecompileId,
+    crypto, utilities::right_pad, Precompile, PrecompileHalt, PrecompileId,
     PrecompileOutputEth, PrecompileEthResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
@@ -34,7 +34,7 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     let input = right_pad::<128>(input);

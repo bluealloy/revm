@@ -1,7 +1,7 @@
 //! Blake2 precompile. More details in [`run`]
 
 use crate::{
-    crypto, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth,
+    crypto, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth,
     PrecompileEthResult,
 };
 
@@ -16,21 +16,21 @@ pub const FUN: Precompile = Precompile::new(PrecompileId::Blake2F, crate::u64_to
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 pub fn run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     if input.len() != INPUT_LENGTH {
-        return Err(PrecompileHaltReason::Blake2WrongLength);
+        return Err(PrecompileHalt::Blake2WrongLength);
     }
 
     // Parse number of rounds (4 bytes)
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap());
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // Parse final block flag
     let f = match input[212] {
         0 => false,
         1 => true,
-        _ => return Err(PrecompileHaltReason::Blake2WrongFinalIndicatorFlag),
+        _ => return Err(PrecompileHalt::Blake2WrongFinalIndicatorFlag),
     };
 
     // Parse state vector h (8 × u64)

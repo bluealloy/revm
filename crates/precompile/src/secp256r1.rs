@@ -7,7 +7,7 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    crypto, u64_to_address, Precompile, PrecompileHaltReason, PrecompileId, PrecompileOutputEth,
+    crypto, u64_to_address, Precompile, PrecompileHalt, PrecompileId, PrecompileOutputEth,
     PrecompileEthResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
@@ -68,7 +68,7 @@ pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
 
 fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileEthResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileHaltReason::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
     let result = if verify_impl(input) {
         B256::with_last_byte(1).into()
@@ -132,7 +132,7 @@ pub(crate) fn verify_signature(msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 64]) ->
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::PrecompileHaltReason;
+    use crate::PrecompileHalt;
     use primitives::hex::FromHex;
     use rstest::rstest;
 
@@ -173,7 +173,7 @@ mod test {
         let result = p256_verify(&input, target_gas);
 
         assert!(result.is_err());
-        assert_eq!(result.err(), Some(PrecompileHaltReason::OutOfGas));
+        assert_eq!(result.err(), Some(PrecompileHalt::OutOfGas));
     }
 
     #[rstest]
