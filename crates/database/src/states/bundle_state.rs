@@ -779,14 +779,12 @@ impl BundleState {
         if reverts_to_take > self.reverts.len() {
             return self.take_all_reverts();
         }
-        let (detach, this) = self.reverts.split_at(reverts_to_take);
-        let detached_reverts = Reverts::new(detach.to_vec());
+        let this = self.reverts.split_off(reverts_to_take);
         self.reverts_size = this
             .iter()
             .flatten()
             .fold(0, |acc, (_, revert)| acc + revert.size_hint());
-        self.reverts = Reverts::new(this.to_vec());
-        detached_reverts
+        mem::replace(&mut self.reverts, Reverts::new(this))
     }
 
     /// Returns and clears all reverts from [BundleState].
