@@ -38,6 +38,7 @@ thiserror.workspace = true
 walkdir.workspace = true
 k256 = { workspace = true, features = ["ecdsa"] }
 csv = "1.1.6"
+regex = "1"
 
 [features]
 default = ["map-foldhash"]

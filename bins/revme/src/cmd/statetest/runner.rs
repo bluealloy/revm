@@ -10,6 +10,7 @@ use revm::{
     statetest_types::{SpecName, Test, TestSuite, TestUnit},
     Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
+use regex::Regex;
 use serde_json::json;
 use std::{
     convert::Infallible,
@@ -60,6 +61,8 @@ pub enum TestErrorKind {
     InvalidPath,
     #[error("no JSON test files found in path")]
     NoJsonFiles,
+    #[error("invalid regex: {0}")]
+    RegexError(String),
 }
 
 /// Check if a test should be skipped based on its filename
@@ -287,6 +290,7 @@ pub fn execute_test_suite(
     elapsed: &Arc<Mutex<Duration>>,
     trace: bool,
     print_json_outcome: bool,
+    run_filter: Option<&Regex>,
 ) -> Result<(), TestError> {
     if skip_test(path) {
         return Ok(());
@@ -301,6 +305,11 @@ pub fn execute_test_suite(
     })?;
 
     for (name, unit) in suite.0 {
+        if let Some(filter) = run_filter {
+            if !filter.is_match(&name) {
+                continue;
+            }
+        }
         // Prepare initial state
         let cache_state = unit.state();
 
@@ -480,16 +489,23 @@ fn debug_failed_test(ctx: DebugContext) {
     );
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct TestRunnerConfig {
     single_thread: bool,
     trace: bool,
     print_outcome: bool,
     keep_going: bool,
+    run_filter: Option<Regex>,
 }
 
 impl TestRunnerConfig {
-    fn new(single_thread: bool, trace: bool, print_outcome: bool, keep_going: bool) -> Self {
+    fn new(
+        single_thread: bool,
+        trace: bool,
+        print_outcome: bool,
+        keep_going: bool,
+        run_filter: Option<Regex>,
+    ) -> Self {
         // Trace implies print_outcome
         let print_outcome = print_outcome || trace;
         // print_outcome or trace implies single_thread
@@ -500,6 +516,7 @@ impl TestRunnerConfig {
             trace,
             print_outcome,
             keep_going,
+            run_filter,
         }
     }
 }
@@ -557,6 +574,7 @@ fn run_test_worker(state: TestRunnerState, config: TestRunnerConfig) -> Result<(
             &state.elapsed,
             config.trace,
             config.print_outcome,
+            config.run_filter.as_ref(),
         );
 
         state.console_bar.inc(1);
@@ -594,8 +612,9 @@ pub fn run(
     print_outcome: bool,
     keep_going: bool,
     omit_progress: bool,
+    run_filter: Option<Regex>,
 ) -> Result<(), TestError> {
-    let config = TestRunnerConfig::new(single_thread, trace, print_outcome, keep_going);
+    let config = TestRunnerConfig::new(single_thread, trace, print_outcome, keep_going, run_filter);
     let n_files = test_files.len();
     let state = TestRunnerState::new(test_files, omit_progress);
     let num_threads = determine_thread_count(config.single_thread, n_files);
@@ -604,6 +623,7 @@ pub fn run(
     let mut handles = Vec::with_capacity(num_threads);
     for i in 0..num_threads {
         let state = state.clone();
+        let config = config.clone();
 
         let thread = std::thread::Builder::new()
             .name(format!("runner-{i}"))

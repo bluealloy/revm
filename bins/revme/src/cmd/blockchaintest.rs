@@ -3,6 +3,7 @@ pub mod pre_block;
 
 use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
+use regex::Regex;
 
 use revm::statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
@@ -55,11 +56,21 @@ pub struct Cmd {
     /// Output results in JSON format
     #[arg(long)]
     json: bool,
+    /// Only run tests whose name matches this regex
+    #[arg(long)]
+    run: Option<String>,
 }
 
 impl Cmd {
     /// Runs `blockchaintest` command.
     pub fn run(&self) -> Result<(), Error> {
+        let run_filter = self
+            .run
+            .as_deref()
+            .map(Regex::new)
+            .transpose()
+            .map_err(|e| Error::RegexError(e.to_string()))?;
+
         for path in &self.paths {
             if !path.exists() {
                 return Err(Error::PathNotFound(path.clone()));
@@ -80,6 +91,7 @@ impl Cmd {
                 self.keep_going,
                 self.print_env_on_error,
                 self.json,
+                run_filter.as_ref(),
             )?;
         }
         Ok(())
@@ -93,6 +105,7 @@ fn run_tests(
     keep_going: bool,
     print_env_on_error: bool,
     json_output: bool,
+    run_filter: Option<&Regex>,
 ) -> Result<(), Error> {
     let mut passed = 0;
     let mut failed = 0;
@@ -124,7 +137,7 @@ fn run_tests(
             continue;
         }
 
-        let result = run_test_file(&file_path, json_output, print_env_on_error);
+        let result = run_test_file(&file_path, json_output, print_env_on_error, run_filter);
 
         match result {
             Ok(test_count) => {
@@ -210,6 +223,7 @@ fn run_test_file(
     file_path: &Path,
     json_output: bool,
     print_env_on_error: bool,
+    run_filter: Option<&Regex>,
 ) -> Result<usize, Error> {
     let content =
         fs::read_to_string(file_path).map_err(|e| Error::FileRead(file_path.to_path_buf(), e))?;
@@ -220,6 +234,11 @@ fn run_test_file(
     let mut test_count = 0;
 
     for (test_name, test_case) in blockchain_test.0 {
+        if let Some(filter) = run_filter {
+            if !filter.is_match(&test_name) {
+                continue;
+            }
+        }
         if json_output {
             // Output test start in JSON format
             let output = json!({
@@ -1226,4 +1245,7 @@ pub enum Error {
 
     #[error("{failed} tests failed")]
     TestsFailed { failed: usize },
+
+    #[error("Invalid regex: {0}")]
+    RegexError(String),
 }

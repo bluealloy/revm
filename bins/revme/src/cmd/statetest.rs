@@ -6,6 +6,7 @@ pub use runner::{TestError as Error, TestErrorKind};
 
 use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
+use regex::Regex;
 use runner::{run, TestError};
 use std::path::PathBuf;
 
@@ -40,11 +41,25 @@ pub struct Cmd {
     /// Keep going after a test failure
     #[arg(long, alias = "no-fail-fast")]
     keep_going: bool,
+    /// Only run tests whose name matches this regex
+    #[arg(long)]
+    run: Option<String>,
 }
 
 impl Cmd {
     /// Runs `statetest` command.
     pub fn run(&self) -> Result<(), TestError> {
+        let run_filter = self
+            .run
+            .as_deref()
+            .map(Regex::new)
+            .transpose()
+            .map_err(|e| TestError {
+                name: "Regex compilation".to_string(),
+                path: String::new(),
+                kind: TestErrorKind::RegexError(e.to_string()),
+            })?;
+
         for path in &self.paths {
             if !path.exists() {
                 return Err(TestError {
@@ -72,6 +87,7 @@ impl Cmd {
                 self.json_outcome,
                 self.keep_going,
                 self.omit_progress,
+                run_filter.clone(),
             )?
         }
         Ok(())
