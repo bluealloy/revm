@@ -3787,6 +3787,7 @@ dependencies = [
  "csv",
  "indicatif",
  "k256",
+ "regex",
  "revm",
  "serde",
  "serde_json",

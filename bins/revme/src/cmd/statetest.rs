@@ -35,6 +35,11 @@ pub struct Cmd {
     /// It will stop second run of EVM on failure.
     #[arg(short = 'o', long)]
     json_outcome: bool,
+    /// Output results as a JSON array with standard schema to stdout
+    ///
+    /// Fields: name, pass, fork, stateRoot, error
+    #[arg(long)]
+    json_array: bool,
     /// Omit progress output
     #[arg(long)]
     omit_progress: bool,
@@ -69,7 +74,9 @@ impl Cmd {
                 });
             }
 
-            println!("\nRunning tests in {}...", path.display());
+            if !self.json_array {
+                println!("\nRunning tests in {}...", path.display());
+            }
             let test_files = find_all_json_tests(path);
 
             if test_files.is_empty() {
@@ -85,6 +92,7 @@ impl Cmd {
                 self.single_thread,
                 self.json,
                 self.json_outcome,
+                self.json_array,
                 self.keep_going,
                 self.omit_progress,
                 run_filter.clone(),

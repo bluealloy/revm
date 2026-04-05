@@ -118,6 +118,7 @@ struct TestExecutionContext<'a> {
     elapsed: &'a Arc<Mutex<Duration>>,
     trace: bool,
     print_json_outcome: bool,
+    json_array_results: Option<&'a Arc<Mutex<Vec<serde_json::Value>>>>,
 }
 
 struct DebugContext<'a> {
@@ -219,8 +220,25 @@ fn check_evm_execution(
     db: &mut database::State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
+    json_array_results: Option<&Arc<Mutex<Vec<serde_json::Value>>>>,
 ) -> Result<(), TestErrorKind> {
     let validation = compute_test_roots(exec_result, db);
+
+    let collect_json_array = |error: Option<&TestErrorKind>| {
+        if let Some(results) = json_array_results {
+            let fork_name: &'static str = spec.into();
+            let state_root = format!("{}", validation.state_root);
+            let error_str = error.map(|e| e.to_string()).unwrap_or_default();
+            let entry = json!({
+                "name": test_name,
+                "pass": error.is_none(),
+                "fork": fork_name,
+                "stateRoot": state_root,
+                "error": error_str,
+            });
+            results.lock().unwrap().push(entry);
+        }
+    };
 
     let print_json = |error: Option<&TestErrorKind>| {
         if print_json_outcome {
@@ -238,11 +256,13 @@ fn check_evm_execution(
 
     // Check if exception handling is correct
     let exception_expected = validate_exception(test, exec_result).inspect_err(|e| {
+        collect_json_array(Some(e));
         print_json(Some(e));
     })?;
 
     // If exception was expected and occurred, we're done
     if exception_expected {
+        collect_json_array(None);
         print_json(None);
         return Ok(());
     }
@@ -250,6 +270,7 @@ fn check_evm_execution(
     // Validate output if execution succeeded
     if let Ok(result) = exec_result {
         validate_output(expected_output, result).inspect_err(|e| {
+            collect_json_array(Some(e));
             print_json(Some(e));
         })?;
     }
@@ -260,6 +281,7 @@ fn check_evm_execution(
             got: validation.logs_root,
             expected: test.logs,
         };
+        collect_json_array(Some(&error));
         print_json(Some(&error));
         return Err(error);
     }
@@ -270,10 +292,12 @@ fn check_evm_execution(
             got: validation.state_root,
             expected: test.hash,
         };
+        collect_json_array(Some(&error));
         print_json(Some(&error));
         return Err(error);
     }
 
+    collect_json_array(None);
     print_json(None);
     Ok(())
 }
@@ -290,6 +314,7 @@ pub fn execute_test_suite(
     elapsed: &Arc<Mutex<Duration>>,
     trace: bool,
     print_json_outcome: bool,
+    json_array_results: Option<&Arc<Mutex<Vec<serde_json::Value>>>>,
     run_filter: Option<&Regex>,
 ) -> Result<(), TestError> {
     if skip_test(path) {
@@ -369,6 +394,7 @@ pub fn execute_test_suite(
                     elapsed,
                     trace,
                     print_json_outcome,
+                    json_array_results,
                 });
 
                 if let Err(e) = result {
@@ -447,6 +473,7 @@ fn execute_single_test(ctx: TestExecutionContext) -> Result<(), TestErrorKind> {
         db,
         *ctx.cfg.spec(),
         ctx.print_json_outcome,
+        ctx.json_array_results,
     )
 }
 
@@ -495,6 +522,7 @@ struct TestRunnerConfig {
     trace: bool,
     print_outcome: bool,
     keep_going: bool,
+    json_array: bool,
     run_filter: Option<Regex>,
 }
 
@@ -503,6 +531,7 @@ impl TestRunnerConfig {
         single_thread: bool,
         trace: bool,
         print_outcome: bool,
+        json_array: bool,
         keep_going: bool,
         run_filter: Option<Regex>,
     ) -> Self {
@@ -516,6 +545,7 @@ impl TestRunnerConfig {
             trace,
             print_outcome,
             keep_going,
+            json_array,
             run_filter,
         }
     }
@@ -528,12 +558,13 @@ struct TestRunnerState {
     queue: Arc<Mutex<(usize, Vec<PathBuf>)>>,
     elapsed: Arc<Mutex<Duration>>,
     errors: Arc<Mutex<Vec<TestError>>>,
+    json_array_results: Option<Arc<Mutex<Vec<serde_json::Value>>>>,
 }
 
 impl TestRunnerState {
-    fn new(test_files: Vec<PathBuf>, omit_progress: bool) -> Self {
+    fn new(test_files: Vec<PathBuf>, omit_progress: bool, json_array: bool) -> Self {
         let n_files = test_files.len();
-        let draw_target = if omit_progress {
+        let draw_target = if omit_progress || json_array {
             ProgressDrawTarget::hidden()
         } else {
             ProgressDrawTarget::stdout()
@@ -547,6 +578,11 @@ impl TestRunnerState {
             queue: Arc::new(Mutex::new((0usize, test_files))),
             elapsed: Arc::new(Mutex::new(Duration::ZERO)),
             errors: Arc::new(Mutex::new(Vec::new())),
+            json_array_results: if json_array {
+                Some(Arc::new(Mutex::new(Vec::new())))
+            } else {
+                None
+            },
         }
     }
 
@@ -574,6 +610,7 @@ fn run_test_worker(state: TestRunnerState, config: TestRunnerConfig) -> Result<(
             &state.elapsed,
             config.trace,
             config.print_outcome,
+            state.json_array_results.as_ref(),
             config.run_filter.as_ref(),
         );
 
@@ -610,13 +647,15 @@ pub fn run(
     single_thread: bool,
     trace: bool,
     print_outcome: bool,
+    json_array: bool,
     keep_going: bool,
     omit_progress: bool,
     run_filter: Option<Regex>,
 ) -> Result<(), TestError> {
-    let config = TestRunnerConfig::new(single_thread, trace, print_outcome, keep_going, run_filter);
+    let keep_going = keep_going || json_array;
+    let config = TestRunnerConfig::new(single_thread, trace, print_outcome, json_array, keep_going, run_filter);
     let n_files = test_files.len();
-    let state = TestRunnerState::new(test_files, omit_progress);
+    let state = TestRunnerState::new(test_files, omit_progress, json_array);
     let num_threads = determine_thread_count(config.single_thread, n_files);
 
     // Spawn worker threads
@@ -648,6 +687,13 @@ pub fn run(
     }
 
     state.console_bar.finish();
+
+    // Output JSON array if requested
+    if let Some(results) = &state.json_array_results {
+        let results = results.lock().unwrap();
+        println!("{}", serde_json::to_string(&*results).unwrap_or_else(|_| "[]".to_string()));
+        return Ok(());
+    }
 
     // Print summary
     println!(
