@@ -6,8 +6,8 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, call_eth_precompile, secp256r1, Precompile, PrecompileEthResult,
-        PrecompileHalt, PrecompileId, PrecompileOutput, Precompiles,
+        self, bn254, eth_precompile_fn, secp256r1, Precompile, PrecompileEthResult,
+        PrecompileHalt, PrecompileId, Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };
@@ -187,9 +187,7 @@ pub mod bn254_pair {
         )
     }
 
-    fn granite_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_pair_granite, input, gas_limit, reservoir)
-    }
+    eth_precompile_fn!(granite_precompile, run_pair_granite);
 
     /// Max input size for the bn254 pair precompile.
     pub const JOVIAN_MAX_INPUT_SIZE: usize = 81_984;
@@ -213,9 +211,7 @@ pub mod bn254_pair {
         )
     }
 
-    fn jovian_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_pair_jovian, input, gas_limit, reservoir)
-    }
+    eth_precompile_fn!(jovian_precompile, run_pair_jovian);
 }
 
 /// Bls12_381 precompile.
@@ -264,29 +260,12 @@ pub mod bls12_381 {
     pub const JOVIAN_PAIRING: Precompile =
         Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, jovian_pairing_precompile);
 
-    fn isthmus_g1_msm_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_g1_msm_isthmus, input, gas_limit, reservoir)
-    }
-
-    fn isthmus_g2_msm_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_g2_msm_isthmus, input, gas_limit, reservoir)
-    }
-
-    fn isthmus_pairing_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_pair_isthmus, input, gas_limit, reservoir)
-    }
-
-    fn jovian_g1_msm_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_g1_msm_jovian, input, gas_limit, reservoir)
-    }
-
-    fn jovian_g2_msm_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_g2_msm_jovian, input, gas_limit, reservoir)
-    }
-
-    fn jovian_pairing_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(run_pair_jovian, input, gas_limit, reservoir)
-    }
+    eth_precompile_fn!(isthmus_g1_msm_precompile, run_g1_msm_isthmus);
+    eth_precompile_fn!(isthmus_g2_msm_precompile, run_g2_msm_isthmus);
+    eth_precompile_fn!(isthmus_pairing_precompile, run_pair_isthmus);
+    eth_precompile_fn!(jovian_g1_msm_precompile, run_g1_msm_jovian);
+    eth_precompile_fn!(jovian_g2_msm_precompile, run_g2_msm_jovian);
+    eth_precompile_fn!(jovian_pairing_precompile, run_pair_jovian);
 
     /// Run the g1 msm precompile with Optimism input limit.
     pub fn run_g1_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
