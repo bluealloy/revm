@@ -11,8 +11,11 @@ const INPUT_LENGTH: usize = 213;
 eth_precompile_fn!(blake2_precompile, run);
 
 /// Blake2 precompile
-pub const FUN: Precompile =
-    Precompile::new(PrecompileId::Blake2F, crate::u64_to_address(9), blake2_precompile);
+pub const FUN: Precompile = Precompile::new(
+    PrecompileId::Blake2F,
+    crate::u64_to_address(9),
+    blake2_precompile,
+);
 
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:

@@ -21,12 +21,18 @@ pub const BYZANTIUM: Precompile = Precompile::new(
 );
 
 /// `modexp` precompile with BERLIN gas rules.
-pub const BERLIN: Precompile =
-    Precompile::new(PrecompileId::ModExp, crate::u64_to_address(5), berlin_precompile);
+pub const BERLIN: Precompile = Precompile::new(
+    PrecompileId::ModExp,
+    crate::u64_to_address(5),
+    berlin_precompile,
+);
 
 /// `modexp` precompile with OSAKA gas rules.
-pub const OSAKA: Precompile =
-    Precompile::new(PrecompileId::ModExp, crate::u64_to_address(5), osaka_precompile);
+pub const OSAKA: Precompile = Precompile::new(
+    PrecompileId::ModExp,
+    crate::u64_to_address(5),
+    osaka_precompile,
+);
 
 #[cfg(feature = "gmp")]
 /// GMP-based modular exponentiation implementation

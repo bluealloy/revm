@@ -10,8 +10,11 @@ eth_precompile_fn!(sha256_precompile, sha256_run);
 eth_precompile_fn!(ripemd160_precompile, ripemd160_run);
 
 /// SHA-256 precompile
-pub const SHA256: Precompile =
-    Precompile::new(PrecompileId::Sha256, crate::u64_to_address(2), sha256_precompile);
+pub const SHA256: Precompile = Precompile::new(
+    PrecompileId::Sha256,
+    crate::u64_to_address(2),
+    sha256_precompile,
+);
 
 /// RIPEMD-160 precompile
 pub const RIPEMD160: Precompile = Precompile::new(

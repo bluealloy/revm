@@ -17,8 +17,11 @@ use std::vec::Vec;
 eth_precompile_fn!(pairing_precompile, pairing);
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
-pub const PRECOMPILE: Precompile =
-    Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, pairing_precompile);
+pub const PRECOMPILE: Precompile = Precompile::new(
+    PrecompileId::Bls12Pairing,
+    PAIRING_ADDRESS,
+    pairing_precompile,
+);
 
 /// Pairing call expects 384*k (k being a positive integer) bytes as an inputs
 /// that is interpreted as byte concatenation of k slices. Each slice has the

@@ -29,8 +29,7 @@ pub mod add {
     pub const ISTANBUL_ADD_GAS_COST: u64 = 150;
 
     /// Bn254 add precompile with ISTANBUL gas rules
-    pub const ISTANBUL: Precompile =
-        Precompile::new(PrecompileId::Bn254Add, ADDRESS, istanbul_add);
+    pub const ISTANBUL: Precompile = Precompile::new(PrecompileId::Bn254Add, ADDRESS, istanbul_add);
 
     /// Bn254 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
@@ -54,8 +53,7 @@ pub mod mul {
     pub const ISTANBUL_MUL_GAS_COST: u64 = 6_000;
 
     /// Bn254 mul precompile with ISTANBUL gas rules
-    pub const ISTANBUL: Precompile =
-        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, istanbul_mul);
+    pub const ISTANBUL: Precompile = Precompile::new(PrecompileId::Bn254Mul, ADDRESS, istanbul_mul);
 
     /// Bn254 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;

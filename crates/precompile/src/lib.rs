@@ -490,13 +490,19 @@ mod test {
             .as_ref()
             .unwrap()
             .execute(&[], u64::MAX, 0);
-        assert!(matches!(output.status, PrecompileStatus::Halt(PrecompileHalt::OutOfGas)));
+        assert!(matches!(
+            output.status,
+            PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
+        ));
 
         let output = precompiles
             .get(&Address::left_padding_from(&[101]))
             .unwrap()
             .execute(&[], u64::MAX, 0);
-        assert!(matches!(output.status, PrecompileStatus::Halt(PrecompileHalt::OutOfGas)));
+        assert!(matches!(
+            output.status,
+            PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
+        ));
     }
 
     #[test]

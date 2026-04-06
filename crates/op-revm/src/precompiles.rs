@@ -6,8 +6,8 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, eth_precompile_fn, secp256r1, Precompile, PrecompileEthResult,
-        PrecompileHalt, PrecompileId, Precompiles,
+        self, bn254, eth_precompile_fn, secp256r1, Precompile, PrecompileEthResult, PrecompileHalt,
+        PrecompileId, Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
 };
@@ -238,11 +238,17 @@ pub mod bls12_381 {
     pub const JOVIAN_PAIRING_MAX_INPUT_SIZE: usize = 156_672;
 
     /// G1 msm precompile.
-    pub const ISTHMUS_G1_MSM: Precompile =
-        Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, isthmus_g1_msm_precompile);
+    pub const ISTHMUS_G1_MSM: Precompile = Precompile::new(
+        PrecompileId::Bls12G1Msm,
+        G1_MSM_ADDRESS,
+        isthmus_g1_msm_precompile,
+    );
     /// G2 msm precompile.
-    pub const ISTHMUS_G2_MSM: Precompile =
-        Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, isthmus_g2_msm_precompile);
+    pub const ISTHMUS_G2_MSM: Precompile = Precompile::new(
+        PrecompileId::Bls12G2Msm,
+        G2_MSM_ADDRESS,
+        isthmus_g2_msm_precompile,
+    );
     /// Pairing precompile.
     pub const ISTHMUS_PAIRING: Precompile = Precompile::new(
         PrecompileId::Bls12Pairing,
@@ -251,14 +257,23 @@ pub mod bls12_381 {
     );
 
     /// G1 msm precompile after the Jovian Hardfork.
-    pub const JOVIAN_G1_MSM: Precompile =
-        Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, jovian_g1_msm_precompile);
+    pub const JOVIAN_G1_MSM: Precompile = Precompile::new(
+        PrecompileId::Bls12G1Msm,
+        G1_MSM_ADDRESS,
+        jovian_g1_msm_precompile,
+    );
     /// G2 msm precompile after the Jovian Hardfork.
-    pub const JOVIAN_G2_MSM: Precompile =
-        Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, jovian_g2_msm_precompile);
+    pub const JOVIAN_G2_MSM: Precompile = Precompile::new(
+        PrecompileId::Bls12G2Msm,
+        G2_MSM_ADDRESS,
+        jovian_g2_msm_precompile,
+    );
     /// Pairing precompile after the Jovian Hardfork.
-    pub const JOVIAN_PAIRING: Precompile =
-        Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, jovian_pairing_precompile);
+    pub const JOVIAN_PAIRING: Precompile = Precompile::new(
+        PrecompileId::Bls12Pairing,
+        PAIRING_ADDRESS,
+        jovian_pairing_precompile,
+    );
 
     eth_precompile_fn!(isthmus_g1_msm_precompile, run_g1_msm_isthmus);
     eth_precompile_fn!(isthmus_g2_msm_precompile, run_g2_msm_isthmus);
