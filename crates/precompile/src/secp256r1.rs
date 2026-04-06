@@ -7,8 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    call_eth_precompile, crypto, u64_to_address, Precompile, PrecompileEthResult, PrecompileHalt,
-    PrecompileId, PrecompileOutput, PrecompileOutputEth,
+    crypto, eth_precompile_fn, u64_to_address, Precompile, PrecompileEthResult, PrecompileHalt,
+    PrecompileId, PrecompileOutputEth,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -26,6 +26,9 @@ pub fn precompiles() -> impl Iterator<Item = Precompile> {
     [P256VERIFY].into_iter()
 }
 
+eth_precompile_fn!(p256verify_precompile, p256_verify);
+eth_precompile_fn!(p256verify_osaka_precompile, p256_verify_osaka);
+
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: Precompile = Precompile::new(
     PrecompileId::P256Verify,
@@ -39,14 +42,6 @@ pub const P256VERIFY_OSAKA: Precompile = Precompile::new(
     u64_to_address(P256VERIFY_ADDRESS),
     p256verify_osaka_precompile,
 );
-
-fn p256verify_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(p256_verify, input, gas_limit, reservoir)
-}
-
-fn p256verify_osaka_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(p256_verify_osaka, input, gas_limit, reservoir)
-}
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the

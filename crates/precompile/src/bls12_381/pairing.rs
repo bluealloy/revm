@@ -8,19 +8,17 @@ use crate::{
         PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
         PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
     },
-    call_eth_precompile, crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutput, PrecompileOutputEth,
+    crypto, eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutputEth,
 };
 use primitives::B256;
 use std::vec::Vec;
 
+eth_precompile_fn!(pairing_precompile, pairing);
+
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: Precompile =
     Precompile::new(PrecompileId::Bls12Pairing, PAIRING_ADDRESS, pairing_precompile);
-
-fn pairing_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(pairing, input, gas_limit, reservoir)
-}
 
 /// Pairing call expects 384*k (k being a positive integer) bytes as an inputs
 /// that is interpreted as byte concatenation of k slices. Each slice has the

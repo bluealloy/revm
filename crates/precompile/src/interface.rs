@@ -290,6 +290,27 @@ pub type PrecompileEthFn = fn(&[u8], u64) -> PrecompileEthResult;
 /// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
 pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
 
+/// Macro that generates a thin wrapper function converting a [`PrecompileEthFn`] into a [`PrecompileFn`].
+///
+/// Usage:
+/// ```ignore
+/// eth_precompile_fn!(my_precompile, my_eth_fn);
+/// ```
+/// Expands to:
+/// ```ignore
+/// fn my_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+///     call_eth_precompile(my_eth_fn, input, gas_limit, reservoir)
+/// }
+/// ```
+#[macro_export]
+macro_rules! eth_precompile_fn {
+    ($name:ident, $eth_fn:expr) => {
+        fn $name(input: &[u8], gas_limit: u64, reservoir: u64) -> $crate::PrecompileOutput {
+            $crate::call_eth_precompile($eth_fn, input, gas_limit, reservoir)
+        }
+    };
+}
+
 /// Calls a [`PrecompileEthFn`] and wraps the result into a [`PrecompileOutput`].
 ///
 /// Use this in wrapper functions to adapt an eth precompile to the [`PrecompileFn`] signature:

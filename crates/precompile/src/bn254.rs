@@ -1,9 +1,8 @@
 //! BN254 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
-    call_eth_precompile, crypto,
+    crypto, eth_precompile_fn,
     utilities::{bool_to_bytes32, right_pad},
-    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutput,
-    PrecompileOutputEth,
+    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 use std::vec::Vec;
 
@@ -40,13 +39,8 @@ pub mod add {
     pub const BYZANTIUM: Precompile =
         Precompile::new(PrecompileId::Bn254Add, ADDRESS, byzantium_add);
 
-    fn istanbul_add(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(|i, g| run_add(i, ISTANBUL_ADD_GAS_COST, g), input, gas_limit, reservoir)
-    }
-
-    fn byzantium_add(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(|i, g| run_add(i, BYZANTIUM_ADD_GAS_COST, g), input, gas_limit, reservoir)
-    }
+    eth_precompile_fn!(istanbul_add, |i, g| run_add(i, ISTANBUL_ADD_GAS_COST, g));
+    eth_precompile_fn!(byzantium_add, |i, g| run_add(i, BYZANTIUM_ADD_GAS_COST, g));
 }
 
 /// Bn254 mul precompile
@@ -70,13 +64,8 @@ pub mod mul {
     pub const BYZANTIUM: Precompile =
         Precompile::new(PrecompileId::Bn254Mul, ADDRESS, byzantium_mul);
 
-    fn istanbul_mul(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(|i, g| run_mul(i, ISTANBUL_MUL_GAS_COST, g), input, gas_limit, reservoir)
-    }
-
-    fn byzantium_mul(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(|i, g| run_mul(i, BYZANTIUM_MUL_GAS_COST, g), input, gas_limit, reservoir)
-    }
+    eth_precompile_fn!(istanbul_mul, |i, g| run_mul(i, ISTANBUL_MUL_GAS_COST, g));
+    eth_precompile_fn!(byzantium_mul, |i, g| run_mul(i, BYZANTIUM_MUL_GAS_COST, g));
 }
 
 /// Bn254 pair precompile
@@ -106,23 +95,18 @@ pub mod pair {
     pub const BYZANTIUM: Precompile =
         Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, byzantium_pair);
 
-    fn istanbul_pair(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(
-            |i, g| run_pair(i, ISTANBUL_PAIR_PER_POINT, ISTANBUL_PAIR_BASE, g),
-            input,
-            gas_limit,
-            reservoir,
-        )
-    }
-
-    fn byzantium_pair(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        call_eth_precompile(
-            |i, g| run_pair(i, BYZANTIUM_PAIR_PER_POINT, BYZANTIUM_PAIR_BASE, g),
-            input,
-            gas_limit,
-            reservoir,
-        )
-    }
+    eth_precompile_fn!(istanbul_pair, |i, g| run_pair(
+        i,
+        ISTANBUL_PAIR_PER_POINT,
+        ISTANBUL_PAIR_BASE,
+        g
+    ));
+    eth_precompile_fn!(byzantium_pair, |i, g| run_pair(
+        i,
+        BYZANTIUM_PAIR_PER_POINT,
+        BYZANTIUM_PAIR_BASE,
+        g
+    ));
 }
 
 /// FQ_LEN specifies the number of bytes needed to represent an

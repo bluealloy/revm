@@ -1,14 +1,17 @@
 //! Modexp precompile added in [`EIP-198`](https://eips.ethereum.org/EIPS/eip-198)
 //! and reprices in berlin hardfork with [`EIP-2565`](https://eips.ethereum.org/EIPS/eip-2565).
 use crate::{
-    call_eth_precompile, crypto,
+    crypto, eth_precompile_fn,
     utilities::{left_pad, left_pad_vec_be, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutput,
-    PrecompileOutputEth,
+    Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
 use std::vec::Vec;
+
+eth_precompile_fn!(byzantium_precompile, byzantium_run);
+eth_precompile_fn!(berlin_precompile, berlin_run);
+eth_precompile_fn!(osaka_precompile, osaka_run);
 
 /// `modexp` precompile with BYZANTIUM gas rules.
 pub const BYZANTIUM: Precompile = Precompile::new(
@@ -24,18 +27,6 @@ pub const BERLIN: Precompile =
 /// `modexp` precompile with OSAKA gas rules.
 pub const OSAKA: Precompile =
     Precompile::new(PrecompileId::ModExp, crate::u64_to_address(5), osaka_precompile);
-
-fn byzantium_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(byzantium_run, input, gas_limit, reservoir)
-}
-
-fn berlin_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(berlin_run, input, gas_limit, reservoir)
-}
-
-fn osaka_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-    call_eth_precompile(osaka_run, input, gas_limit, reservoir)
-}
 
 #[cfg(feature = "gmp")]
 /// GMP-based modular exponentiation implementation
