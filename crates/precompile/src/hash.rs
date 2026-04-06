@@ -2,19 +2,28 @@
 //! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost;
 use crate::{
-    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    call_eth_precompile, crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutput, PrecompileOutputEth,
 };
 
 /// SHA-256 precompile
 pub const SHA256: Precompile =
-    Precompile::new(PrecompileId::Sha256, crate::u64_to_address(2), sha256_run);
+    Precompile::new(PrecompileId::Sha256, crate::u64_to_address(2), sha256_precompile);
 
 /// RIPEMD-160 precompile
 pub const RIPEMD160: Precompile = Precompile::new(
     PrecompileId::Ripemd160,
     crate::u64_to_address(3),
-    ripemd160_run,
+    ripemd160_precompile,
 );
+
+fn sha256_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(sha256_run, input, gas_limit, reservoir)
+}
+
+fn ripemd160_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(ripemd160_run, input, gas_limit, reservoir)
+}
 
 /// Computes the SHA-256 hash of the input data
 ///

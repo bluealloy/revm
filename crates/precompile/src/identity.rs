@@ -1,14 +1,21 @@
 //! Identity precompile returns
 use super::calc_linear_cost;
-use crate::{Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth};
+use crate::{
+    call_eth_precompile, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutput, PrecompileOutputEth,
+};
 use primitives::Bytes;
 
 /// Address of the identity precompile.
 pub const FUN: Precompile = Precompile::new(
     PrecompileId::Identity,
     crate::u64_to_address(4),
-    identity_run,
+    identity_precompile,
 );
+
+fn identity_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(identity_run, input, gas_limit, reservoir)
+}
 
 /// The base cost of the operation
 pub const IDENTITY_BASE: u64 = 15;

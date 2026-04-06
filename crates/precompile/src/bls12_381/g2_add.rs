@@ -2,12 +2,17 @@
 use super::utils::{pad_g2_point, remove_g2_padding};
 use crate::{
     bls12_381_const::{G2_ADD_ADDRESS, G2_ADD_BASE_GAS_FEE, G2_ADD_INPUT_LENGTH, PADDED_G2_LENGTH},
-    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    call_eth_precompile, crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutput, PrecompileOutputEth,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
 pub const PRECOMPILE: Precompile =
-    Precompile::new(PrecompileId::Bls12G2Add, G2_ADD_ADDRESS, g2_add);
+    Precompile::new(PrecompileId::Bls12G2Add, G2_ADD_ADDRESS, g2_add_precompile);
+
+fn g2_add_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(g2_add, input, gas_limit, reservoir)
+}
 
 /// G2 addition call expects `512` bytes as an input that is interpreted as byte
 /// concatenation of two G2 points (`256` bytes each).
