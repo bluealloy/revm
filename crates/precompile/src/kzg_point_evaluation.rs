@@ -1,8 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{
-    crypto, Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    call_eth_precompile, crypto, Address, Precompile, PrecompileEthResult, PrecompileHalt,
+    PrecompileId, PrecompileOutput, PrecompileOutputEth,
 };
 pub mod arkworks;
 
@@ -13,7 +13,11 @@ use primitives::hex_literal::hex;
 
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: Precompile =
-    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, run);
+    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, kzg_precompile);
+
+fn kzg_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(run, input, gas_limit, reservoir)
+}
 
 /// Address of the KZG point evaluation precompile.
 pub const ADDRESS: Address = crate::u64_to_address(0x0A);

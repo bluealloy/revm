@@ -1,8 +1,9 @@
 //! BN254 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
-    crypto,
+    call_eth_precompile, crypto,
     utilities::{bool_to_bytes32, right_pad},
-    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutput,
+    PrecompileOutputEth,
 };
 use std::vec::Vec;
 
@@ -30,18 +31,22 @@ pub mod add {
 
     /// Bn254 add precompile with ISTANBUL gas rules
     pub const ISTANBUL: Precompile =
-        Precompile::new(PrecompileId::Bn254Add, ADDRESS, |input, gas_limit| {
-            run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
-        });
+        Precompile::new(PrecompileId::Bn254Add, ADDRESS, istanbul_add);
 
     /// Bn254 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
 
     /// Bn254 add precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: Precompile =
-        Precompile::new(PrecompileId::Bn254Add, ADDRESS, |input, gas_limit| {
-            run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
-        });
+        Precompile::new(PrecompileId::Bn254Add, ADDRESS, byzantium_add);
+
+    fn istanbul_add(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(|i, g| run_add(i, ISTANBUL_ADD_GAS_COST, g), input, gas_limit, reservoir)
+    }
+
+    fn byzantium_add(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(|i, g| run_add(i, BYZANTIUM_ADD_GAS_COST, g), input, gas_limit, reservoir)
+    }
 }
 
 /// Bn254 mul precompile
@@ -56,18 +61,22 @@ pub mod mul {
 
     /// Bn254 mul precompile with ISTANBUL gas rules
     pub const ISTANBUL: Precompile =
-        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, |input, gas_limit| {
-            run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
-        });
+        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, istanbul_mul);
 
     /// Bn254 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;
 
     /// Bn254 mul precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: Precompile =
-        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, |input, gas_limit| {
-            run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
-        });
+        Precompile::new(PrecompileId::Bn254Mul, ADDRESS, byzantium_mul);
+
+    fn istanbul_mul(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(|i, g| run_mul(i, ISTANBUL_MUL_GAS_COST, g), input, gas_limit, reservoir)
+    }
+
+    fn byzantium_mul(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(|i, g| run_mul(i, BYZANTIUM_MUL_GAS_COST, g), input, gas_limit, reservoir)
+    }
 }
 
 /// Bn254 pair precompile
@@ -85,14 +94,7 @@ pub mod pair {
 
     /// Bn254 pair precompile with ISTANBUL gas rules
     pub const ISTANBUL: Precompile =
-        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, |input, gas_limit| {
-            run_pair(
-                input,
-                ISTANBUL_PAIR_PER_POINT,
-                ISTANBUL_PAIR_BASE,
-                gas_limit,
-            )
-        });
+        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, istanbul_pair);
 
     /// Bn254 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
@@ -102,14 +104,25 @@ pub mod pair {
 
     /// Bn254 pair precompile with BYZANTIUM gas rules
     pub const BYZANTIUM: Precompile =
-        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, |input, gas_limit| {
-            run_pair(
-                input,
-                BYZANTIUM_PAIR_PER_POINT,
-                BYZANTIUM_PAIR_BASE,
-                gas_limit,
-            )
-        });
+        Precompile::new(PrecompileId::Bn254Pairing, ADDRESS, byzantium_pair);
+
+    fn istanbul_pair(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(
+            |i, g| run_pair(i, ISTANBUL_PAIR_PER_POINT, ISTANBUL_PAIR_BASE, g),
+            input,
+            gas_limit,
+            reservoir,
+        )
+    }
+
+    fn byzantium_pair(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+        call_eth_precompile(
+            |i, g| run_pair(i, BYZANTIUM_PAIR_PER_POINT, BYZANTIUM_PAIR_BASE, g),
+            input,
+            gas_limit,
+            reservoir,
+        )
+    }
 }
 
 /// FQ_LEN specifies the number of bytes needed to represent an

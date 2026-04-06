@@ -9,12 +9,17 @@ use crate::{
         PADDED_G1_LENGTH, SCALAR_LENGTH,
     },
     bls12_381_utils::msm_required_gas,
-    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    call_eth_precompile, crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutput, PrecompileOutputEth,
 };
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: Precompile =
-    Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, g1_msm);
+    Precompile::new(PrecompileId::Bls12G1Msm, G1_MSM_ADDRESS, g1_msm_precompile);
+
+fn g1_msm_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(g1_msm, input, gas_limit, reservoir)
+}
 
 /// Implements EIP-2537 G1MSM precompile.
 /// G1 multi-scalar-multiplication call expects `160*k` bytes as an input that is interpreted

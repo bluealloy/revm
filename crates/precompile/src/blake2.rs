@@ -1,14 +1,20 @@
 //! Blake2 precompile. More details in [`run`]
 
 use crate::{
-    crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    call_eth_precompile, crypto, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
+    PrecompileOutput, PrecompileOutputEth,
 };
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
 /// Blake2 precompile
-pub const FUN: Precompile = Precompile::new(PrecompileId::Blake2F, crate::u64_to_address(9), run);
+pub const FUN: Precompile =
+    Precompile::new(PrecompileId::Blake2F, crate::u64_to_address(9), blake2_precompile);
+
+fn blake2_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    call_eth_precompile(run, input, gas_limit, reservoir)
+}
 
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:

@@ -290,6 +290,27 @@ pub type PrecompileEthFn = fn(&[u8], u64) -> PrecompileEthResult;
 /// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
 pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
 
+/// Calls a [`PrecompileEthFn`] and wraps the result into a [`PrecompileOutput`].
+///
+/// Use this in wrapper functions to adapt an eth precompile to the [`PrecompileFn`] signature:
+/// ```ignore
+/// fn my_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+///     call_eth_precompile(my_eth_fn, input, gas_limit, reservoir)
+/// }
+/// ```
+#[inline]
+pub fn call_eth_precompile(
+    f: PrecompileEthFn,
+    input: &[u8],
+    gas_limit: u64,
+    reservoir: u64,
+) -> PrecompileOutput {
+    match f(input, gas_limit) {
+        Ok(output) => PrecompileOutput::new(output.gas_used, output.bytes, reservoir),
+        Err(halt) => PrecompileOutput::halt(halt, reservoir),
+    }
+}
+
 /// Non-fatal halt reasons for precompiles.
 ///
 /// These represent conditions that halt precompile execution but do not abort

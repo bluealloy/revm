@@ -135,8 +135,9 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             return Ok(None);
         };
 
-        let output = PrecompileOutput::from_eth_result(
-            precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit),
+        let output = precompile.execute(
+            &inputs.input.as_bytes(context),
+            inputs.gas_limit,
             inputs.reservoir,
         );
 
