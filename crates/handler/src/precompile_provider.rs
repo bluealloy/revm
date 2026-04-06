@@ -135,7 +135,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             return Ok(None);
         };
 
-        let output = precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit);
+        let output = PrecompileOutput::from_eth_result(
+            precompile.execute(&inputs.input.as_bytes(context), inputs.gas_limit),
+            inputs.reservoir,
+        );
 
         // If this is a top-level precompile call (depth == 1), persist the error message
         // into the local context so it can be returned as output in the final result.

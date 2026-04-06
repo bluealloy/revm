@@ -80,35 +80,42 @@ pub struct PrecompileOutput {
 }
 
 impl PrecompileOutput {
+    /// Returns a new precompile output from an Ethereum precompile result.
+    pub fn from_eth_result(result: PrecompileEthResult, reservoir: u64) -> Self {
+        match result {
+            Ok(output) => Self::new(output.gas_used, output.bytes, reservoir),
+            Err(halt) => Self::halt(halt, reservoir),
+        }
+    }
     /// Returns a new successful precompile output.
-    pub fn new(gas_used: u64, bytes: Bytes) -> Self {
+    pub fn new(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Success,
             gas_used,
             state_gas_used: 0,
-            reservoir: 0,
+            reservoir,
             bytes,
         }
     }
 
     /// Returns a new halted precompile output with the given halt reason.
-    pub fn halt(reason: PrecompileHalt) -> Self {
+    pub fn halt(reason: PrecompileHalt, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Halt(reason),
             gas_used: 0,
             state_gas_used: 0,
-            reservoir: 0,
+            reservoir,
             bytes: Bytes::new(),
         }
     }
 
     /// Returns a new reverted precompile output.
-    pub fn revert(gas_used: u64, bytes: Bytes) -> Self {
+    pub fn revert(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Revert,
             gas_used,
             state_gas_used: 0,
-            reservoir: 0,
+            reservoir,
             bytes,
         }
     }
@@ -139,23 +146,6 @@ impl PrecompileOutput {
         match &self.status {
             PrecompileStatus::Halt(reason) => Some(reason),
             _ => None,
-        }
-    }
-
-    /// Consumes the output and returns the halt reason if the precompile halted.
-    pub fn into_halt_reason(self) -> Option<PrecompileHalt> {
-        match self.status {
-            PrecompileStatus::Halt(reason) => Some(reason),
-            _ => None,
-        }
-    }
-}
-
-impl From<PrecompileEthResult> for PrecompileOutput {
-    fn from(result: PrecompileEthResult) -> Self {
-        match result {
-            Ok(output) => Self::new(output.gas_used, output.bytes),
-            Err(halt) => Self::halt(halt),
         }
     }
 }
@@ -297,8 +287,8 @@ pub trait Crypto: Send + Sync + Debug {
 /// Use [`PrecompileFn`] for the higher-level type that returns [`PrecompileOutput`].
 pub type PrecompileEthFn = fn(&[u8], u64) -> PrecompileEthResult;
 
-/// Precompile function type. Takes input and gas limit, returns a [`PrecompileOutput`].
-pub type PrecompileFn = fn(&[u8], u64) -> PrecompileOutput;
+/// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
+pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
 
 /// Non-fatal halt reasons for precompiles.
 ///

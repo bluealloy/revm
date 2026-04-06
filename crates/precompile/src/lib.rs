@@ -383,8 +383,8 @@ impl Precompile {
 
     /// Executes the precompile, returning a [`PrecompileOutput`].
     #[inline]
-    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileOutput {
-        (self.fn_)(input, gas_limit).into()
+    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+        (self.fn_)(input, gas_limit)
     }
 }
 
@@ -491,7 +491,7 @@ mod test {
                 .as_ref()
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileOutput::halt(PrecompileHalt::OutOfGas)
+            Err(PrecompileHalt::OutOfGas)
         );
 
         assert_eq!(
@@ -499,7 +499,7 @@ mod test {
                 .get(&Address::left_padding_from(&[101]))
                 .unwrap()
                 .execute(&[], u64::MAX),
-            PrecompileOutput::halt(PrecompileHalt::OutOfGas)
+            Err(PrecompileHalt::OutOfGas)
         );
     }
 

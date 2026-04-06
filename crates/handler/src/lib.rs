@@ -49,5 +49,7 @@ pub use handler::{EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;
-pub use precompile_provider::{EthPrecompiles, PrecompileProvider};
+pub use precompile_provider::{
+    precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider,
+};
 pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};
