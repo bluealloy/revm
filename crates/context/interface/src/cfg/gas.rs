@@ -129,13 +129,18 @@ impl InitialAndFloorGas {
     }
 }
 
-/// Initial gas that is deducted for transaction to be included.
-/// Initial gas contains initial stipend gas, gas for access list and input data.
+/// Computes the transaction's upfront gas requirements.
 ///
-/// # Returns
+/// This returns both:
+/// - `initial_gas`: the intrinsic gas charged before execution. It includes
+///   the base transaction stipend, calldata cost, access-list cost, EIP-7702
+///   authorization list cost, and, for contract-creation transactions,
+///   the additional create and initcode cost.
+/// - `floor_gas`: the EIP-7623 gas floor used to determine the minimum
+///   valid gas limit for data-heavy transactions.
 ///
-/// - Intrinsic gas
-/// - Number of tokens in calldata
+/// The transaction must provide enough gas to cover both the
+/// intrinsic cost and the EIP-7623 floor (`max(initial_gas, floor_gas)`).
 pub fn calculate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
@@ -153,13 +158,18 @@ pub fn calculate_initial_tx_gas(
     )
 }
 
-/// Initial gas that is deducted for transaction to be included.
-/// Initial gas contains initial stipend gas, gas for access list and input data.
+/// Computes the transaction's upfront gas requirements.
 ///
-/// # Returns
+/// This returns both:
+/// - `initial_gas`: the intrinsic gas charged before execution. It includes
+///   the base transaction stipend, calldata cost, access-list cost, EIP-7702
+///   authorization list cost, and, for contract-creation transactions,
+///   the additional create and initcode cost.
+/// - `floor_gas`: the EIP-7623 gas floor used to determine the minimum
+///   valid gas limit for data-heavy transactions.
 ///
-/// - Intrinsic gas
-/// - Number of tokens in calldata
+/// The transaction must provide enough gas to cover both the
+/// intrinsic cost and the EIP-7623 floor (`max(initial_gas, floor_gas)`).
 pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
     let mut accounts = 0;
     let mut storages = 0;

@@ -738,13 +738,18 @@ impl GasParams {
             .saturating_mul(num_words(len) as u64)
     }
 
-    /// Initial gas that is deducted for transaction to be included.
-    /// Initial gas contains initial stipend gas, gas for access list and input data.
+    /// Computes the transaction's upfront gas requirements.
     ///
-    /// # Returns
+    /// This returns both:
+    /// - `initial_gas`: the intrinsic gas charged before execution. It includes
+    ///   the base transaction stipend, calldata cost, access-list cost, EIP-7702
+    ///   authorization list cost, and, for contract-creation transactions,
+    ///   the additional create and initcode cost.
+    /// - `floor_gas`: the EIP-7623 gas floor used to determine the minimum
+    ///   valid gas limit for data-heavy transactions.
     ///
-    /// - Intrinsic gas
-    /// - Number of tokens in calldata
+    /// The transaction must provide enough gas to cover both the
+    /// intrinsic cost and the EIP-7623 floor (`max(initial_gas, floor_gas)`).
     pub fn initial_tx_gas(
         &self,
         input: &[u8],
