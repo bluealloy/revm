@@ -7,8 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    crypto, eth_precompile_fn, u64_to_address, Precompile, PrecompileEthResult, PrecompileHalt,
-    PrecompileId, PrecompileOutputEth,
+    crypto, eth_precompile_fn, u64_to_address, EthPrecompileOutput, EthPrecompileResult,
+    Precompile, PrecompileHalt, PrecompileId,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -52,7 +52,7 @@ pub const P256VERIFY_OSAKA: Precompile = Precompile::new(
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn p256_verify(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
 }
 
@@ -65,11 +65,11 @@ pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
 }
 
-fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileEthResult {
+fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> EthPrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
@@ -78,7 +78,7 @@ fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileE
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutputEth::new(gas_cost, result))
+    Ok(EthPrecompileOutput::new(gas_cost, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is

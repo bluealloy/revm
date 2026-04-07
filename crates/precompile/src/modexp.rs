@@ -3,7 +3,7 @@
 use crate::{
     crypto, eth_precompile_fn,
     utilities::{left_pad, left_pad_vec_be, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
 };
 use core::cmp::{max, min};
 use primitives::{eip7823, Bytes, U256};
@@ -143,7 +143,7 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn byzantium_run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     run_inner::<_, false>(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
@@ -151,7 +151,7 @@ pub fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-2565>
 /// Gas cost of berlin is modified from byzantium.
-pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn berlin_run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     run_inner::<_, false>(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
@@ -159,7 +159,7 @@ pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
 
 /// See: <https://eips.ethereum.org/EIPS/eip-7823>
 /// Gas cost of berlin is modified from byzantium.
-pub fn osaka_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn osaka_run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     run_inner::<_, true>(input, gas_limit, 500, |a, b, c, d| {
         osaka_gas_calc(a, b, c, d)
     })
@@ -187,7 +187,7 @@ pub fn run_inner<F, const OSAKA: bool>(
     gas_limit: u64,
     min_gas: u64,
     calc_gas: F,
-) -> PrecompileEthResult
+) -> EthPrecompileResult
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
 {
@@ -243,7 +243,7 @@ where
     }
 
     if base_len == 0 && mod_len == 0 {
-        return Ok(PrecompileOutputEth::new(gas_cost, Bytes::new()));
+        return Ok(EthPrecompileOutput::new(gas_cost, Bytes::new()));
     }
 
     // Padding is needed if the input does not contain all 3 values.
@@ -256,7 +256,7 @@ where
     // Call the modexp.
     let output = crypto().modexp(base, exponent, modulus)?;
     // Ensure the output is exactly modulus length, as required by the spec.
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         gas_cost,
         left_pad_vec_be(&output, mod_len).into_owned().into(),
     ))

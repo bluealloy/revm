@@ -1,8 +1,8 @@
 //! Identity precompile returns
 use super::calc_linear_cost;
 use crate::{
-    eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt,
+    PrecompileId,
 };
 use primitives::Bytes;
 
@@ -25,12 +25,12 @@ pub const IDENTITY_PER_WORD: u64 = 3;
 /// See: <https://ethereum.github.io/yellowpaper/paper.pdf>
 ///
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000004>
-pub fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn identity_run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     let gas_used = calc_linear_cost(input.len(), IDENTITY_BASE, IDENTITY_PER_WORD);
     if gas_used > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         gas_used,
         Bytes::copy_from_slice(input),
     ))

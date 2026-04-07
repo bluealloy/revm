@@ -5,7 +5,7 @@ use revm::{
     context_interface::{ContextTr, JournalTr, LocalContextTr, Transaction},
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult},
-    precompile::{PrecompileEthResult, PrecompileHalt, PrecompileOutputEth},
+    precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt},
     primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
 use std::{boxed::Box, string::String};
@@ -125,7 +125,7 @@ fn run_custom_precompile<CTX: ContextTr>(
 }
 
 /// Handles reading from storage
-fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> PrecompileEthResult {
+fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> EthPrecompileResult {
     // Base gas cost for reading storage
     const BASE_GAS: u64 = 2_100;
 
@@ -141,7 +141,7 @@ fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> Pre
         .data;
 
     // Return the value as output
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         BASE_GAS,
         value.to_be_bytes_vec().into(),
     ))
@@ -152,7 +152,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context: &mut CTX,
     input: &[u8],
     gas_limit: u64,
-) -> PrecompileEthResult {
+) -> EthPrecompileResult {
     // Base gas cost for the operation
     const BASE_GAS: u64 = 21_000;
     const SSTORE_GAS: u64 = 20_000;
@@ -216,7 +216,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context.journal_mut().log(log);
 
     // Return success with empty output
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         BASE_GAS + SSTORE_GAS,
         Bytes::new(),
     ))

@@ -2,8 +2,8 @@
 use super::utils::{pad_g1_point, remove_g1_padding};
 use crate::{
     bls12_381_const::{G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH},
-    crypto, eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
 
 eth_precompile_fn!(g1_add_precompile, g1_add);
@@ -17,7 +17,7 @@ pub const PRECOMPILE: Precompile =
 /// Output is an encoding of addition operation result - single G1 point (`128`
 /// bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
-pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn g1_add(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     if G1_ADD_BASE_GAS_FEE > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
@@ -38,7 +38,7 @@ pub fn g1_add(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);
 
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         G1_ADD_BASE_GAS_FEE,
         padded_result.into(),
     ))

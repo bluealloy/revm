@@ -8,8 +8,8 @@ use crate::{
         PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
         PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
     },
-    crypto, eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
 use primitives::B256;
 use std::vec::Vec;
@@ -35,7 +35,7 @@ pub const PRECOMPILE: Precompile = Precompile::new(
 /// target field and 0x00 otherwise.
 ///
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn pairing(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(PAIRING_INPUT_LENGTH) {
         return Err(PrecompileHalt::Bls12381PairingInputLength);
@@ -64,7 +64,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     let result = crypto().bls12_381_pairing_check(&pairs)?;
     let result = if result { 1 } else { 0 };
 
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         required_gas,
         B256::with_last_byte(result).into(),
     ))

@@ -22,8 +22,8 @@ pub fn crypto() -> &'static dyn Crypto {
 
 /// A precompile operation result type for individual Ethereum precompile functions.
 ///
-/// Returns either `Ok(PrecompileOutputEth)` or `Err(PrecompileHalt)`.
-pub type PrecompileEthResult = Result<PrecompileOutputEth, PrecompileHalt>;
+/// Returns either `Ok(EthPrecompileOutput)` or `Err(PrecompileHalt)`.
+pub type EthPrecompileResult = Result<EthPrecompileOutput, PrecompileHalt>;
 
 /// A precompile operation result type for the precompile provider.
 ///
@@ -36,14 +36,14 @@ pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 /// Contains only the gas used and output bytes. For the richer output type
 /// with state gas accounting and halt support, see [`PrecompileOutput`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct PrecompileOutputEth {
+pub struct EthPrecompileOutput {
     /// Gas used by the precompile.
     pub gas_used: u64,
     /// Output bytes
     pub bytes: Bytes,
 }
 
-impl PrecompileOutputEth {
+impl EthPrecompileOutput {
     /// Returns new precompile output with the given gas used and output bytes.
     pub fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self { gas_used, bytes }
@@ -81,7 +81,7 @@ pub struct PrecompileOutput {
 
 impl PrecompileOutput {
     /// Returns a new precompile output from an Ethereum precompile result.
-    pub fn from_eth_result(result: PrecompileEthResult, reservoir: u64) -> Self {
+    pub fn from_eth_result(result: EthPrecompileResult, reservoir: u64) -> Self {
         match result {
             Ok(output) => Self::new(output.gas_used, output.bytes, reservoir),
             Err(halt) => Self::halt(halt, reservoir),
@@ -285,7 +285,7 @@ pub trait Crypto: Send + Sync + Debug {
 ///
 /// This is the function signature used by individual Ethereum precompile implementations.
 /// Use [`PrecompileFn`] for the higher-level type that returns [`PrecompileOutput`].
-pub type PrecompileEthFn = fn(&[u8], u64) -> PrecompileEthResult;
+pub type PrecompileEthFn = fn(&[u8], u64) -> EthPrecompileResult;
 
 /// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
 pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;

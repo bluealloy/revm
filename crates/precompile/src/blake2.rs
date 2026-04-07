@@ -1,8 +1,8 @@
 //! Blake2 precompile. More details in [`run`]
 
 use crate::{
-    crypto, eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
 
 const F_ROUND: u64 = 1;
@@ -20,7 +20,7 @@ pub const FUN: Precompile = Precompile::new(
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-pub fn run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileHalt::Blake2WrongLength);
     }
@@ -68,7 +68,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok(PrecompileOutputEth::new(gas_used, out.into()))
+    Ok(EthPrecompileOutput::new(gas_used, out.into()))
 }
 
 /// Blake2 algorithm

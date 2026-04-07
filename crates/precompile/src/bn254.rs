@@ -2,7 +2,7 @@
 use crate::{
     crypto, eth_precompile_fn,
     utilities::{bool_to_bytes32, right_pad},
-    Address, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId, PrecompileOutputEth,
+    Address, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
 };
 use std::vec::Vec;
 
@@ -147,7 +147,7 @@ pub const MUL_INPUT_LEN: usize = G1_LEN + SCALAR_LEN;
 pub const PAIR_ELEMENT_LEN: usize = G1_LEN + G2_LEN;
 
 /// Run the Bn254 add precompile
-pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResult {
+pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> EthPrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
@@ -158,11 +158,11 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResu
     let p2_bytes = &input[G1_LEN..];
     let output = crypto().bn254_g1_add(p1_bytes, p2_bytes)?;
 
-    Ok(PrecompileOutputEth::new(gas_cost, output.into()))
+    Ok(EthPrecompileOutput::new(gas_cost, output.into()))
 }
 
 /// Run the Bn254 mul precompile
-pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResult {
+pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> EthPrecompileResult {
     if gas_cost > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
@@ -173,7 +173,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileEthResu
     let scalar_bytes = &input[G1_LEN..G1_LEN + SCALAR_LEN];
     let output = crypto().bn254_g1_mul(point_bytes, scalar_bytes)?;
 
-    Ok(PrecompileOutputEth::new(gas_cost, output.into()))
+    Ok(EthPrecompileOutput::new(gas_cost, output.into()))
 }
 
 /// Run the Bn254 pair precompile
@@ -182,7 +182,7 @@ pub fn run_pair(
     pair_per_point_cost: u64,
     pair_base_cost: u64,
     gas_limit: u64,
-) -> PrecompileEthResult {
+) -> EthPrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
@@ -211,7 +211,7 @@ pub fn run_pair(
     }
 
     let pairing_result = crypto().bn254_pairing_check(&points)?;
-    Ok(PrecompileOutputEth::new(
+    Ok(EthPrecompileOutput::new(
         gas_used,
         bool_to_bytes32(pairing_result),
     ))

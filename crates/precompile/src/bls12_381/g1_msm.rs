@@ -9,8 +9,8 @@ use crate::{
         PADDED_G1_LENGTH, SCALAR_LENGTH,
     },
     bls12_381_utils::msm_required_gas,
-    crypto, eth_precompile_fn, Precompile, PrecompileEthResult, PrecompileHalt, PrecompileId,
-    PrecompileOutputEth,
+    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
 
 eth_precompile_fn!(g1_msm_precompile, g1_msm);
@@ -27,7 +27,7 @@ pub const PRECOMPILE: Precompile =
 /// Output is an encoding of multi-scalar-multiplication operation result - single G1
 /// point (`128` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
-pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+pub fn g1_msm(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(G1_MSM_INPUT_LENGTH) {
         return Err(PrecompileHalt::Bls12381G1MsmInputLength);
@@ -57,7 +57,7 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
     // Pad the result for EVM compatibility
     let padded_result = pad_g1_point(&unpadded_result);
 
-    Ok(PrecompileOutputEth::new(required_gas, padded_result.into()))
+    Ok(EthPrecompileOutput::new(required_gas, padded_result.into()))
 }
 
 #[cfg(test)]

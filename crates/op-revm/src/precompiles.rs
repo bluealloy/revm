@@ -6,7 +6,7 @@ use revm::{
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{
-        self, bn254, eth_precompile_fn, secp256r1, Precompile, PrecompileEthResult, PrecompileHalt,
+        self, bn254, eth_precompile_fn, secp256r1, EthPrecompileResult, Precompile, PrecompileHalt,
         PrecompileId, Precompiles,
     },
     primitives::{hardfork::SpecId, Address, OnceLock},
@@ -175,7 +175,7 @@ pub mod bn254_pair {
     );
 
     /// Run the bn254 pair precompile with Optimism input limit.
-    pub fn run_pair_granite(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_pair_granite(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Bn254PairLength);
         }
@@ -199,7 +199,7 @@ pub mod bn254_pair {
     );
 
     /// Run the bn254 pair precompile with Optimism input limit.
-    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > JOVIAN_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Bn254PairLength);
         }
@@ -283,7 +283,7 @@ pub mod bls12_381 {
     eth_precompile_fn!(jovian_pairing_precompile, run_pair_jovian);
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_g1_msm_isthmus(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > ISTHMUS_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "G1MSM input length too long for OP Stack input size limitation after the Isthmus Hardfork".into(),
@@ -293,7 +293,7 @@ pub mod bls12_381 {
     }
 
     /// Run the g1 msm precompile with Optimism input limit.
-    pub fn run_g1_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_g1_msm_jovian(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > JOVIAN_G1_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "G1MSM input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
@@ -303,7 +303,7 @@ pub mod bls12_381 {
     }
 
     /// Run the g2 msm precompile with Optimism input limit.
-    pub fn run_g2_msm_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_g2_msm_isthmus(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > ISTHMUS_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "G2MSM input length too long for OP Stack input size limitation".into(),
@@ -313,7 +313,7 @@ pub mod bls12_381 {
     }
 
     /// Run the g2 msm precompile with Optimism input limit after the Jovian Hardfork.
-    pub fn run_g2_msm_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_g2_msm_jovian(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > JOVIAN_G2_MSM_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "G2MSM input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
@@ -323,7 +323,7 @@ pub mod bls12_381 {
     }
 
     /// Run the pairing precompile with Optimism input limit.
-    pub fn run_pair_isthmus(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_pair_isthmus(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > ISTHMUS_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "Pairing input length too long for OP Stack input size limitation".into(),
@@ -333,7 +333,7 @@ pub mod bls12_381 {
     }
 
     /// Run the pairing precompile with Optimism input limit after the Jovian Hardfork.
-    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> PrecompileEthResult {
+    pub fn run_pair_jovian(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         if input.len() > JOVIAN_PAIRING_MAX_INPUT_SIZE {
             return Err(PrecompileHalt::Other(
                 "Pairing input length too long for OP Stack input size limitation after the Jovian Hardfork".into(),
