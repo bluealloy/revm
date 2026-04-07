@@ -315,41 +315,6 @@ impl MemoryGas {
         core::mem::swap(&mut self.expansion_cost, &mut expansion_cost);
         self.expansion_cost.checked_sub(expansion_cost)
     }
-
-    /// Records a new memory length and calculates additional cost if memory is expanded.
-    /// Returns the additional gas cost required, or None if no expansion is needed.
-    #[inline]
-    pub fn record_new_len(
-        &mut self,
-        new_num: usize,
-        linear_cost: u64,
-        quadratic_cost: u64,
-    ) -> Option<u64> {
-        if new_num <= self.words_num {
-            return None;
-        }
-        self.words_num = new_num;
-        let mut cost = memory_gas(new_num, linear_cost, quadratic_cost);
-        core::mem::swap(&mut self.expansion_cost, &mut cost);
-        // Safe to subtract because we know that new_len > length
-        // Notice the swap above.
-        Some(self.expansion_cost - cost)
-    }
-}
-
-/// Standalone wrapper for [`Gas::record_cost`] to inspect assembly via `cargo asm`.
-#[inline(never)]
-pub fn record_cost_asm(gas: &mut Gas, cost: u64) -> bool {
-    gas.record_regular_cost(cost)
-}
-
-/// Memory expansion cost calculation for a given number of words.
-#[inline]
-pub const fn memory_gas(num_words: usize, linear_cost: u64, quadratic_cost: u64) -> u64 {
-    let num_words = num_words as u64;
-    linear_cost
-        .saturating_mul(num_words)
-        .saturating_add(num_words.saturating_mul(num_words) / quadratic_cost)
 }
 
 #[cfg(test)]

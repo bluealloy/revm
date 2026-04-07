@@ -16,7 +16,6 @@ use context_interface::{
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
-use state::Bytecode;
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -381,29 +380,7 @@ pub trait Handler {
         gas_limit = core::cmp::min(gas_limit, regular_gas_cap);
         let reservoir_remaining_gas = execution_gas - gas_limit;
 
-        let (tx, journal) = ctx.tx_journal_mut();
-        let bytecode = if let Some(&to) = tx.kind().to() {
-            let account = &journal.load_account_with_code(to)?.info;
-
-            if let Some(delegated_address) =
-                account.code.as_ref().and_then(Bytecode::eip7702_address)
-            {
-                let account = &journal.load_account_with_code(delegated_address)?.info;
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
-            } else {
-                Some((
-                    account.code.clone().unwrap_or_default(),
-                    account.code_hash(),
-                ))
-            }
-        } else {
-            None
-        };
-
-        let mut frame_input = execution::create_init_frame(tx, bytecode, gas_limit);
+        let mut frame_input = execution::create_init_frame(ctx, gas_limit)?;
         frame_input.set_reservoir(reservoir_remaining_gas);
 
         // Deduct initial state gas from the reservoir. When the reservoir is
