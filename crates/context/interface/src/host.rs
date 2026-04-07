@@ -1,7 +1,7 @@
 //! Host interface for external blockchain state access.
 
 use crate::{
-    cfg::GasParams,
+    cfg::{GasParams, MemoryExpansionCostInput},
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{AccountInfoLoad, AccountLoad},
 };
@@ -65,6 +65,14 @@ pub trait Host {
 
     /// Gas params contains the dynamic gas constants for the EVM.
     fn gas_params(&self) -> &GasParams;
+
+    /// Returns the cumulative memory cost after expanding to the requested size.
+    ///
+    /// This defaults to the standard memory pricing derived from [`GasParams`].
+    #[inline]
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+        self.gas_params().memory_cost(input.new_words)
+    }
 
     /* Database */
 
@@ -201,6 +209,26 @@ pub trait Host {
                     }
                 })
             })
+    }
+}
+
+/// Resolves the cumulative cost of a memory expansion request.
+pub trait MemoryExpansionCostResolver {
+    /// Returns the cumulative memory cost after expanding to the requested size.
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64;
+}
+
+impl MemoryExpansionCostResolver for GasParams {
+    #[inline]
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+        self.memory_cost(input.new_words)
+    }
+}
+
+impl<T: Host + ?Sized> MemoryExpansionCostResolver for T {
+    #[inline]
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+        Host::memory_expansion_cost(self, input)
     }
 }
 

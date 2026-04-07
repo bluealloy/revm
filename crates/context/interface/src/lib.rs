@@ -19,11 +19,11 @@ pub use primitives;
 pub use state;
 
 pub use block::Block;
-pub use cfg::{Cfg, CreateScheme, TransactTo};
+pub use cfg::{Cfg, CreateScheme, MemoryExpansionCostInput, TransactTo};
 pub use context::{ContextError, ContextSetters, ContextTr};
 pub use database_interface::{erased_error::ErasedError, DBErrorMarker, Database};
 pub use either;
-pub use host::{DummyHost, Host};
+pub use host::{DummyHost, Host, MemoryExpansionCostResolver};
 pub use journaled_state::JournalTr;
 pub use local::{FrameStack, FrameToken, LocalContextTr, OutFrame};
 pub use transaction::{Transaction, TransactionType};

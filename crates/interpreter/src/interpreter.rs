@@ -9,7 +9,7 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
-use context_interface::cfg::GasParams;
+use context_interface::host::MemoryExpansionCostResolver;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -183,8 +183,14 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Performs EVM memory resize.
     #[inline]
     #[must_use]
-    pub fn resize_memory(&mut self, gas_params: &GasParams, offset: usize, len: usize) -> bool {
-        if let Err(result) = resize_memory(&mut self.gas, &mut self.memory, gas_params, offset, len)
+    pub fn resize_memory<CostResolver: MemoryExpansionCostResolver + ?Sized>(
+        &mut self,
+        cost_resolver: &CostResolver,
+        offset: usize,
+        len: usize,
+    ) -> bool {
+        if let Err(result) =
+            resize_memory(&mut self.gas, &mut self.memory, cost_resolver, offset, len)
         {
             self.halt(result);
             return false;

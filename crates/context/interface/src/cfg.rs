@@ -9,6 +9,25 @@ use auto_impl::auto_impl;
 use core::{fmt::Debug, hash::Hash};
 use primitives::{hardfork::SpecId, Address, TxKind, U256};
 
+/// Input provided to custom memory expansion cost implementations.
+///
+/// The returned cost is expected to be the cumulative memory cost after expanding
+/// to `new_words`, not the incremental delta for the current resize request.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct MemoryExpansionCostInput {
+    /// Memory size before the resize, in 32-byte words.
+    pub current_words: usize,
+    /// Cumulative memory cost before the resize.
+    pub current_cost: u64,
+    /// Requested memory offset in bytes.
+    pub offset: usize,
+    /// Requested memory length in bytes.
+    pub len: usize,
+    /// Memory size after the resize, in 32-byte words.
+    pub new_words: usize,
+}
+
 /// Configuration for the EVM.
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
@@ -84,6 +103,16 @@ pub trait Cfg {
 
     /// Returns the limit in bytes for the memory buffer.
     fn memory_limit(&self) -> u64;
+
+    /// Returns the cumulative memory cost after expanding to `input.new_words`.
+    ///
+    /// The returned value must be monotonic with respect to `input.new_words`. Returning a
+    /// value lower than `input.current_cost` for an expansion request is treated as a fatal
+    /// configuration error by the interpreter.
+    #[inline]
+    fn memory_expansion_cost(&self, input: MemoryExpansionCostInput) -> u64 {
+        self.gas_params().memory_cost(input.new_words)
+    }
 
     /// Returns the gas params for the EVM.
     fn gas_params(&self) -> &GasParams;
