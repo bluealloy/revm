@@ -82,32 +82,42 @@ impl Clone for EthPrecompiles {
 pub fn precompile_output_to_interpreter_result(
     output: PrecompileOutput,
     gas_limit: u64,
-    reservoir: u64,
 ) -> InterpreterResult {
-    let mut result = InterpreterResult {
-        result: InstructionResult::Return,
-        gas: Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir),
-        output: Bytes::new(),
+    // set output bytes
+    let bytes = if output.status.is_success_or_revert() {
+        output.bytes
+    } else {
+        Bytes::new()
     };
 
-    match output.status {
-        PrecompileStatus::Success => {
-            result.gas.record_regular_cost(output.gas_used);
-            result.output = output.bytes;
-        }
-        PrecompileStatus::Revert => {
-            result.result = InstructionResult::Revert;
-            result.gas.record_regular_cost(output.gas_used);
-            result.output = output.bytes;
-        }
+    let mut result = InterpreterResult {
+        result: InstructionResult::Return,
+        gas: Gas::new_with_regular_gas_and_reservoir(gas_limit, output.reservoir),
+        output: bytes,
+    };
+
+    // set state gas, reservoir is already set in the Gas constructor
+    result.gas.set_state_gas_spent(output.state_gas_used);
+
+    // spend used gas.
+    if output.status.is_success_or_revert() {
+        result.gas.record_regular_cost(output.gas_used);
+    } else {
+        result.gas.spend_all();
+    }
+
+    // set result
+    result.result = match output.status {
+        PrecompileStatus::Success => InstructionResult::Return,
+        PrecompileStatus::Revert => InstructionResult::Revert,
         PrecompileStatus::Halt(halt_reason) => {
-            result.result = if halt_reason.is_oog() {
+            if halt_reason.is_oog() {
                 InstructionResult::PrecompileOOG
             } else {
                 InstructionResult::PrecompileError
-            };
+            }
         }
-    }
+    };
 
     result
 }
@@ -152,8 +162,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             }
         }
 
-        let result =
-            precompile_output_to_interpreter_result(output, inputs.gas_limit, inputs.reservoir);
+        let result = precompile_output_to_interpreter_result(output, inputs.gas_limit);
         Ok(Some(result))
     }
 

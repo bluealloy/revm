@@ -61,6 +61,47 @@ pub enum PrecompileStatus {
     Halt(PrecompileHalt),
 }
 
+impl PrecompileStatus {
+    /// Returns `true` if the precompile execution was successful or reverted.
+    #[inline]
+    pub fn is_success_or_revert(&self) -> bool {
+        matches!(self, PrecompileStatus::Success | PrecompileStatus::Revert)
+    }
+
+    /// Returns `true` if the precompile execution was reverted or halted.
+    #[inline]
+    pub fn is_revert_or_halt(&self) -> bool {
+        matches!(self, PrecompileStatus::Revert | PrecompileStatus::Halt(_))
+    }
+
+    /// Returns the halt reason if the precompile halted, `None` otherwise.
+    #[inline]
+    pub fn halt_reason(&self) -> Option<&PrecompileHalt> {
+        match &self {
+            PrecompileStatus::Halt(reason) => Some(reason),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if the precompile execution was successful.
+    #[inline]
+    pub fn is_success(&self) -> bool {
+        matches!(self, PrecompileStatus::Success)
+    }
+
+    /// Returns `true` if the precompile reverted.
+    #[inline]
+    pub fn is_revert(&self) -> bool {
+        matches!(self, PrecompileStatus::Revert)
+    }
+
+    /// Returns `true` if the precompile halted.
+    #[inline]
+    pub fn is_halt(&self) -> bool {
+        matches!(self, PrecompileStatus::Halt(_))
+    }
+}
+
 /// Rich precompile execution output with gas accounting and status support.
 ///
 /// This is the output type used at the precompile provider level. It can express
@@ -142,11 +183,9 @@ impl PrecompileOutput {
     }
 
     /// Returns the halt reason if the precompile halted, `None` otherwise.
+    #[inline]
     pub fn halt_reason(&self) -> Option<&PrecompileHalt> {
-        match &self.status {
-            PrecompileStatus::Halt(reason) => Some(reason),
-            _ => None,
-        }
+        self.status.halt_reason()
     }
 }
 

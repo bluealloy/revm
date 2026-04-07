@@ -317,7 +317,7 @@ impl CallValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::cell::{Ref, RefCell};
+    use core::cell::RefCell;
     use std::rc::Rc;
 
     struct TestLocalContext {
