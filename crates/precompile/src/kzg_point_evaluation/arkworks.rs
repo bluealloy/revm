@@ -1,7 +1,6 @@
 //! KZG point evaluation precompile using Arkworks BLS12-381 implementation.
 use crate::{
-    bls12_381::arkworks::pairing_check, bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES,
-    PrecompileError,
+    bls12_381::arkworks::pairing_check, bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES, PrecompileHalt,
 };
 use ark_bls12_381::{Fr, G1Affine, G2Affine};
 use ark_ec::{AffineRepr, CurveGroup};
@@ -75,19 +74,19 @@ fn get_trusted_setup_g2() -> &'static G2Affine {
 }
 
 /// Parse a G1 point from compressed format (48 bytes)
-fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<G1Affine, PrecompileError> {
-    G1Affine::deserialize_compressed(&bytes[..]).map_err(|_| PrecompileError::KzgInvalidG1Point)
+fn parse_g1_compressed(bytes: &[u8; 48]) -> Result<G1Affine, PrecompileHalt> {
+    G1Affine::deserialize_compressed(&bytes[..]).map_err(|_| PrecompileHalt::KzgInvalidG1Point)
 }
 
 /// Read a scalar field element from bytes and verify it's canonical
-fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<Fr, PrecompileError> {
+fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<Fr, PrecompileHalt> {
     let fr = Fr::from_be_bytes_mod_order(bytes);
 
     // Check if the field element is canonical by serializing back and comparing
     let bytes_roundtrip = fr.into_bigint().to_bytes_be();
 
     if bytes_roundtrip.as_slice() != bytes {
-        return Err(PrecompileError::NonCanonicalFp);
+        return Err(PrecompileHalt::NonCanonicalFp);
     }
 
     Ok(fr)

@@ -5,7 +5,7 @@ use revm::{
     context_interface::{ContextTr, JournalTr, LocalContextTr, Transaction},
     handler::{EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult},
-    precompile::{PrecompileError, PrecompileOutput, PrecompileResult},
+    precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt},
     primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
 use std::{boxed::Box, string::String};
@@ -95,7 +95,7 @@ fn run_custom_precompile<CTX: ContextTr>(
         // Write storage operation
         handle_write_storage(context, &input_bytes, inputs.gas_limit)
     } else {
-        Err(PrecompileError::Other("Invalid input length".into()).into())
+        Err(PrecompileHalt::Other("Invalid input length".into()))
     };
 
     match result {
@@ -125,23 +125,23 @@ fn run_custom_precompile<CTX: ContextTr>(
 }
 
 /// Handles reading from storage
-fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> PrecompileResult {
+fn handle_read_storage<CTX: ContextTr>(context: &mut CTX, gas_limit: u64) -> EthPrecompileResult {
     // Base gas cost for reading storage
     const BASE_GAS: u64 = 2_100;
 
     if gas_limit < BASE_GAS {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // Read from storage using the journal
     let value = context
         .journal_mut()
         .sload(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY)
-        .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}").into()))?
+        .map_err(|e| PrecompileHalt::Other(format!("Storage read failed: {e:?}").into()))?
         .data;
 
     // Return the value as output
-    Ok(PrecompileOutput::new(
+    Ok(EthPrecompileOutput::new(
         BASE_GAS,
         value.to_be_bytes_vec().into(),
     ))
@@ -152,13 +152,13 @@ fn handle_write_storage<CTX: ContextTr>(
     context: &mut CTX,
     input: &[u8],
     gas_limit: u64,
-) -> PrecompileResult {
+) -> EthPrecompileResult {
     // Base gas cost for the operation
     const BASE_GAS: u64 = 21_000;
     const SSTORE_GAS: u64 = 20_000;
 
     if gas_limit < BASE_GAS + SSTORE_GAS {
-        return Err(PrecompileError::OutOfGas.into());
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // Parse the input as a U256 value
@@ -168,7 +168,7 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .sstore(CUSTOM_PRECOMPILE_ADDRESS, STORAGE_KEY, value)
-        .map_err(|e| PrecompileError::Other(format!("Storage write failed: {e:?}").into()))?;
+        .map_err(|e| PrecompileHalt::Other(format!("Storage write failed: {e:?}").into()))?;
 
     // Get the caller address
     let caller = context.tx().caller();
@@ -178,16 +178,16 @@ fn handle_write_storage<CTX: ContextTr>(
     context
         .journal_mut()
         .balance_incr(CUSTOM_PRECOMPILE_ADDRESS, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Balance increment failed: {e:?}").into()))?;
+        .map_err(|e| PrecompileHalt::Other(format!("Balance increment failed: {e:?}").into()))?;
 
     // Then transfer to caller
     let transfer_result = context
         .journal_mut()
         .transfer(CUSTOM_PRECOMPILE_ADDRESS, caller, U256::from(1))
-        .map_err(|e| PrecompileError::Other(format!("Transfer failed: {e:?}").into()))?;
+        .map_err(|e| PrecompileHalt::Other(format!("Transfer failed: {e:?}").into()))?;
 
     if let Some(error) = transfer_result {
-        return Err(PrecompileError::Other(
+        return Err(PrecompileHalt::Other(
             format!("Transfer error: {error:?}").into(),
         ));
     }
@@ -216,5 +216,8 @@ fn handle_write_storage<CTX: ContextTr>(
     context.journal_mut().log(log);
 
     // Return success with empty output
-    Ok(PrecompileOutput::new(BASE_GAS + SSTORE_GAS, Bytes::new()))
+    Ok(EthPrecompileOutput::new(
+        BASE_GAS + SSTORE_GAS,
+        Bytes::new(),
+    ))
 }

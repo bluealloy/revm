@@ -20,24 +20,133 @@ pub fn crypto() -> &'static dyn Crypto {
     CRYPTO.get_or_init(|| Box::new(DefaultCrypto)).as_ref()
 }
 
-/// A precompile operation result type
+/// A precompile operation result type for individual Ethereum precompile functions.
+///
+/// Returns either `Ok(EthPrecompileOutput)` or `Err(PrecompileHalt)`.
+pub type EthPrecompileResult = Result<EthPrecompileOutput, PrecompileHalt>;
+
+/// A precompile operation result type for the precompile provider.
 ///
 /// Returns either `Ok(PrecompileOutput)` or `Err(PrecompileError)`.
+/// `PrecompileError` only represents fatal errors that abort EVM execution.
 pub type PrecompileResult = Result<PrecompileOutput, PrecompileError>;
 
-/// Precompile execution output
+/// Simple precompile execution output used by individual Ethereum precompile functions.
+///
+/// Contains only the gas used and output bytes. For the richer output type
+/// with state gas accounting and halt support, see [`PrecompileOutput`].
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct PrecompileOutput {
+pub struct EthPrecompileOutput {
     /// Gas used by the precompile.
     pub gas_used: u64,
     /// Output bytes
     pub bytes: Bytes,
 }
 
-impl PrecompileOutput {
+impl EthPrecompileOutput {
     /// Returns new precompile output with the given gas used and output bytes.
     pub fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self { gas_used, bytes }
+    }
+}
+
+/// Status of a precompile execution.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PrecompileStatus {
+    /// Precompile executed successfully.
+    Success,
+    /// Precompile reverted (non-fatal, returns remaining gas).
+    Revert,
+    /// Precompile halted with a specific reason.
+    Halt(PrecompileHalt),
+}
+
+/// Rich precompile execution output with gas accounting and status support.
+///
+/// This is the output type used at the precompile provider level. It can express
+/// successful execution, reverts, and halts (non-fatal errors like out-of-gas).
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PrecompileOutput {
+    /// Status of the precompile execution.
+    pub status: PrecompileStatus,
+    /// Regular gas used by the precompile.
+    pub gas_used: u64,
+    /// State gas used by the precompile.
+    pub state_gas_used: u64,
+    /// Reservoir gas for EIP-8037.
+    pub reservoir: u64,
+    /// Output bytes.
+    pub bytes: Bytes,
+}
+
+impl PrecompileOutput {
+    /// Returns a new precompile output from an Ethereum precompile result.
+    pub fn from_eth_result(result: EthPrecompileResult, reservoir: u64) -> Self {
+        match result {
+            Ok(output) => Self::new(output.gas_used, output.bytes, reservoir),
+            Err(halt) => Self::halt(halt, reservoir),
+        }
+    }
+    /// Returns a new successful precompile output.
+    pub fn new(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
+        Self {
+            status: PrecompileStatus::Success,
+            gas_used,
+            state_gas_used: 0,
+            reservoir,
+            bytes,
+        }
+    }
+
+    /// Returns a new halted precompile output with the given halt reason.
+    pub fn halt(reason: PrecompileHalt, reservoir: u64) -> Self {
+        Self {
+            status: PrecompileStatus::Halt(reason),
+            gas_used: 0,
+            state_gas_used: 0,
+            reservoir,
+            bytes: Bytes::new(),
+        }
+    }
+
+    /// Returns a new reverted precompile output.
+    pub fn revert(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
+        Self {
+            status: PrecompileStatus::Revert,
+            gas_used,
+            state_gas_used: 0,
+            reservoir,
+            bytes,
+        }
+    }
+
+    /// Returns `true` if the precompile execution was successful.
+    pub fn is_success(&self) -> bool {
+        matches!(self.status, PrecompileStatus::Success)
+    }
+
+    /// Returns `true` if the precompile execution was successful.
+    #[deprecated(note = "use `is_success` instead")]
+    pub fn is_ok(&self) -> bool {
+        self.is_success()
+    }
+
+    /// Returns `true` if the precompile reverted.
+    pub fn is_revert(&self) -> bool {
+        matches!(self.status, PrecompileStatus::Revert)
+    }
+
+    /// Returns `true` if the precompile halted.
+    pub fn is_halt(&self) -> bool {
+        matches!(self.status, PrecompileStatus::Halt(_))
+    }
+
+    /// Returns the halt reason if the precompile halted, `None` otherwise.
+    pub fn halt_reason(&self) -> Option<&PrecompileHalt> {
+        match &self.status {
+            PrecompileStatus::Halt(reason) => Some(reason),
+            _ => None,
+        }
     }
 }
 
@@ -65,19 +174,19 @@ pub trait Crypto: Send + Sync + Debug {
 
     /// BN254 elliptic curve addition.
     #[inline]
-    fn bn254_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    fn bn254_g1_add(&self, p1: &[u8], p2: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
         crate::bn254::crypto_backend::g1_point_add(p1, p2)
     }
 
     /// BN254 elliptic curve scalar multiplication.
     #[inline]
-    fn bn254_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileError> {
+    fn bn254_g1_mul(&self, point: &[u8], scalar: &[u8]) -> Result<[u8; 64], PrecompileHalt> {
         crate::bn254::crypto_backend::g1_point_mul(point, scalar)
     }
 
     /// BN254 pairing check.
     #[inline]
-    fn bn254_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileError> {
+    fn bn254_pairing_check(&self, pairs: &[(&[u8], &[u8])]) -> Result<bool, PrecompileHalt> {
         crate::bn254::crypto_backend::pairing_check(pairs)
     }
 
@@ -88,14 +197,14 @@ pub trait Crypto: Send + Sync + Debug {
         sig: &[u8; 64],
         recid: u8,
         msg: &[u8; 32],
-    ) -> Result<[u8; 32], PrecompileError> {
+    ) -> Result<[u8; 32], PrecompileHalt> {
         crate::secp256k1::ecrecover_bytes(sig, recid, msg)
-            .ok_or(PrecompileError::Secp256k1RecoverFailed)
+            .ok_or(PrecompileHalt::Secp256k1RecoverFailed)
     }
 
     /// Modular exponentiation.
     #[inline]
-    fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileError> {
+    fn modexp(&self, base: &[u8], exp: &[u8], modulus: &[u8]) -> Result<Vec<u8>, PrecompileHalt> {
         Ok(crate::modexp::modexp(base, exp, modulus))
     }
 
@@ -119,37 +228,37 @@ pub trait Crypto: Send + Sync + Debug {
         y: &[u8; 32],
         commitment: &[u8; 48],
         proof: &[u8; 48],
-    ) -> Result<(), PrecompileError> {
+    ) -> Result<(), PrecompileHalt> {
         if !crate::kzg_point_evaluation::verify_kzg_proof(commitment, z, y, proof) {
-            return Err(PrecompileError::BlobVerifyKzgProofFailed);
+            return Err(PrecompileHalt::BlobVerifyKzgProofFailed);
         }
 
         Ok(())
     }
 
     /// BLS12-381 G1 addition (returns 96-byte unpadded G1 point)
-    fn bls12_381_g1_add(&self, a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileError> {
+    fn bls12_381_g1_add(&self, a: G1Point, b: G1Point) -> Result<[u8; 96], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p1_add_affine_bytes(a, b)
     }
 
     /// BLS12-381 G1 multi-scalar multiplication (returns 96-byte unpadded G1 point)
     fn bls12_381_g1_msm(
         &self,
-        pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileError>>,
-    ) -> Result<[u8; 96], PrecompileError> {
+        pairs: &mut dyn Iterator<Item = Result<G1PointScalar, PrecompileHalt>>,
+    ) -> Result<[u8; 96], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p1_msm_bytes(pairs)
     }
 
     /// BLS12-381 G2 addition (returns 192-byte unpadded G2 point)
-    fn bls12_381_g2_add(&self, a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileError> {
+    fn bls12_381_g2_add(&self, a: G2Point, b: G2Point) -> Result<[u8; 192], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p2_add_affine_bytes(a, b)
     }
 
     /// BLS12-381 G2 multi-scalar multiplication (returns 192-byte unpadded G2 point)
     fn bls12_381_g2_msm(
         &self,
-        pairs: &mut dyn Iterator<Item = Result<G2PointScalar, PrecompileError>>,
-    ) -> Result<[u8; 192], PrecompileError> {
+        pairs: &mut dyn Iterator<Item = Result<G2PointScalar, PrecompileHalt>>,
+    ) -> Result<[u8; 192], PrecompileHalt> {
         crate::bls12_381::crypto_backend::p2_msm_bytes(pairs)
     }
 
@@ -157,27 +266,79 @@ pub trait Crypto: Send + Sync + Debug {
     fn bls12_381_pairing_check(
         &self,
         pairs: &[(G1Point, G2Point)],
-    ) -> Result<bool, PrecompileError> {
+    ) -> Result<bool, PrecompileHalt> {
         crate::bls12_381::crypto_backend::pairing_check_bytes(pairs)
     }
 
     /// BLS12-381 map field element to G1.
-    fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileError> {
+    fn bls12_381_fp_to_g1(&self, fp: &[u8; 48]) -> Result<[u8; 96], PrecompileHalt> {
         crate::bls12_381::crypto_backend::map_fp_to_g1_bytes(fp)
     }
 
     /// BLS12-381 map field element to G2.
-    fn bls12_381_fp2_to_g2(&self, fp2: ([u8; 48], [u8; 48])) -> Result<[u8; 192], PrecompileError> {
+    fn bls12_381_fp2_to_g2(&self, fp2: ([u8; 48], [u8; 48])) -> Result<[u8; 192], PrecompileHalt> {
         crate::bls12_381::crypto_backend::map_fp2_to_g2_bytes(&fp2.0, &fp2.1)
     }
 }
 
-/// Precompile function type. Takes input, gas limit, and crypto implementation and returns precompile result.
-pub type PrecompileFn = fn(&[u8], u64) -> PrecompileResult;
+/// Eth precompile function type. Takes input and gas limit, returns an Eth precompile result.
+///
+/// This is the function signature used by individual Ethereum precompile implementations.
+/// Use [`PrecompileFn`] for the higher-level type that returns [`PrecompileOutput`].
+pub type PrecompileEthFn = fn(&[u8], u64) -> EthPrecompileResult;
 
-/// Precompile error type.
+/// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
+pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
+
+/// Macro that generates a thin wrapper function converting a [`PrecompileEthFn`] into a [`PrecompileFn`].
+///
+/// Usage:
+/// ```ignore
+/// eth_precompile_fn!(my_precompile, my_eth_fn);
+/// ```
+/// Expands to:
+/// ```ignore
+/// fn my_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+///     call_eth_precompile(my_eth_fn, input, gas_limit, reservoir)
+/// }
+/// ```
+#[macro_export]
+macro_rules! eth_precompile_fn {
+    ($name:ident, $eth_fn:expr) => {
+        fn $name(input: &[u8], gas_limit: u64, reservoir: u64) -> $crate::PrecompileOutput {
+            $crate::call_eth_precompile($eth_fn, input, gas_limit, reservoir)
+        }
+    };
+}
+
+/// Calls a [`PrecompileEthFn`] and wraps the result into a [`PrecompileOutput`].
+///
+/// Use this in wrapper functions to adapt an eth precompile to the [`PrecompileFn`] signature:
+/// ```ignore
+/// fn my_precompile(input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+///     call_eth_precompile(my_eth_fn, input, gas_limit, reservoir)
+/// }
+/// ```
+#[inline]
+pub fn call_eth_precompile(
+    f: PrecompileEthFn,
+    input: &[u8],
+    gas_limit: u64,
+    reservoir: u64,
+) -> PrecompileOutput {
+    match f(input, gas_limit) {
+        Ok(output) => PrecompileOutput::new(output.gas_used, output.bytes, reservoir),
+        Err(halt) => PrecompileOutput::halt(halt, reservoir),
+    }
+}
+
+/// Non-fatal halt reasons for precompiles.
+///
+/// These represent conditions that halt precompile execution but do not abort
+/// the entire EVM transaction. They are expressed through [`PrecompileStatus::Halt`]
+/// at the provider level.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum PrecompileError {
+pub enum PrecompileHalt {
     /// out of gas is the main error. Others are here just for completeness
     OutOfGas,
     /// Blake2 errors
@@ -249,48 +410,30 @@ pub enum PrecompileError {
     KzgInvalidInputLength,
     /// secp256k1 ecrecover failed
     Secp256k1RecoverFailed,
-    /// Unrecoverable error that halts EVM execution.
-    ///
-    /// Unlike other variants which result in a normal precompile revert,
-    /// this error propagates as `EVMError::Custom` and aborts the entire transaction.
-    Fatal(String),
-    /// Unrecoverable error that halts EVM execution.
-    ///
-    /// Unlike other variants which result in a normal precompile revert,
-    /// this error propagates as `EVMError::Custom` and aborts the entire transaction.
-    FatalAny(AnyError),
-    /// Catch-all variant for precompile errors without a dedicated variant.
-    ///
-    /// This is handled like any other named error variant (e.g. `OutOfGas`, `Blake2WrongLength`)
-    /// and results in a normal precompile revert, not a fatal EVM error.
+    /// Catch-all variant for precompile halt reasons without a dedicated variant.
     Other(Cow<'static, str>),
 }
 
-impl PrecompileError {
-    /// Returns another error with the given message.
+impl PrecompileHalt {
+    /// Returns another halt reason with the given message.
     pub fn other(err: impl Into<String>) -> Self {
         Self::Other(Cow::Owned(err.into()))
     }
 
-    /// Returns another error with the given static string.
+    /// Returns another halt reason with the given static string.
     pub const fn other_static(err: &'static str) -> Self {
         Self::Other(Cow::Borrowed(err))
     }
 
-    /// Returns `true` if the error is out of gas.
+    /// Returns `true` if the halt reason is out of gas.
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
     }
-
-    /// Returns `true` if the error is `Fatal` or `FatalAny`
-    pub fn is_fatal(&self) -> bool {
-        matches!(self, Self::Fatal(_) | Self::FatalAny(_))
-    }
 }
 
-impl core::error::Error for PrecompileError {}
+impl core::error::Error for PrecompileHalt {}
 
-impl fmt::Display for PrecompileError {
+impl fmt::Display for PrecompileHalt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             Self::OutOfGas => "out of gas",
@@ -328,11 +471,42 @@ impl fmt::Display for PrecompileError {
             Self::KzgG1PointNotInSubgroup => "kzg g1 point not in correct subgroup",
             Self::KzgInvalidInputLength => "kzg invalid input length",
             Self::Secp256k1RecoverFailed => "secp256k1 signature recovery failed",
-            Self::Fatal(s) => return write!(f, "fatal: {s}"),
-            Self::FatalAny(s) => return write!(f, "fatal: {s}"),
             Self::Other(s) => s,
         };
         f.write_str(s)
+    }
+}
+
+/// Fatal precompile error type.
+///
+/// These errors represent unrecoverable conditions that abort the entire EVM
+/// transaction. They propagate as `EVMError::Custom`.
+///
+/// For non-fatal halt reasons (like out-of-gas or invalid input), see
+/// [`PrecompileHalt`] which is expressed through [`PrecompileStatus::Halt`].
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PrecompileError {
+    /// Unrecoverable error that halts EVM execution.
+    Fatal(String),
+    /// Unrecoverable error that halts EVM execution.
+    FatalAny(AnyError),
+}
+
+impl PrecompileError {
+    /// Returns `true` if the error is `Fatal` or `FatalAny`.
+    pub fn is_fatal(&self) -> bool {
+        true
+    }
+}
+
+impl core::error::Error for PrecompileError {}
+
+impl fmt::Display for PrecompileError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Fatal(s) => write!(f, "fatal: {s}"),
+            Self::FatalAny(s) => write!(f, "fatal: {s}"),
+        }
     }
 }
 
