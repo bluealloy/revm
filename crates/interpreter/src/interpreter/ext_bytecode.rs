@@ -1,6 +1,6 @@
 use super::{Immediates, Jumps, LegacyBytecode};
 use crate::{interpreter_types::LoopControl, InterpreterAction};
-use bytecode::{utils::read_u16, Bytecode};
+use bytecode::Bytecode;
 use core::ops::Deref;
 use primitives::B256;
 
@@ -8,10 +8,14 @@ use primitives::B256;
 mod serde;
 
 /// Extended bytecode structure that wraps base bytecode with additional execution metadata.
+///
+/// Internally tracks position as a `usize` program counter rather than a raw pointer,
+/// ensuring all jump and read operations go through checked arithmetic before accessing
+/// the backing byte buffer.
 #[derive(Debug)]
 pub struct ExtBytecode {
-    /// The current instruction pointer.
-    instruction_pointer: *const u8,
+    /// Current program counter (byte offset into `base.bytes_slice()`).
+    pc: usize,
     /// Whether the execution should continue.
     continue_execution: bool,
     /// Bytecode Keccak-256 hash.
@@ -58,10 +62,9 @@ impl ExtBytecode {
     /// Creates new `ExtBytecode` with the given hash.
     #[inline]
     pub fn new_with_optional_hash(base: Bytecode, hash: Option<B256>) -> Self {
-        let instruction_pointer = base.bytecode_ptr();
         Self {
+            pc: 0,
             base,
-            instruction_pointer,
             bytecode_hash: hash,
             action: None,
             continue_execution: true,
@@ -130,63 +133,72 @@ impl LoopControl for ExtBytecode {
 impl Jumps for ExtBytecode {
     #[inline]
     fn relative_jump(&mut self, offset: isize) {
-        self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
+        let new_pc = (self.pc as isize)
+            .checked_add(offset)
+            .expect("relative_jump overflow");
+        assert!(
+            new_pc >= 0 && (new_pc as usize) <= self.base.bytes_slice().len(),
+            "relative_jump out of bounds: pc {} + offset {} = {}, bytecode len {}",
+            self.pc,
+            offset,
+            new_pc,
+            self.base.bytes_slice().len(),
+        );
+        self.pc = new_pc as usize;
     }
 
     #[inline]
     fn absolute_jump(&mut self, offset: usize) {
-        self.instruction_pointer = unsafe { self.base.bytes_ref().as_ptr().add(offset) };
+        assert!(
+            offset <= self.base.bytes_slice().len(),
+            "absolute_jump out of bounds: offset {}, bytecode len {}",
+            offset,
+            self.base.bytes_slice().len(),
+        );
+        self.pc = offset;
     }
 
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
-        let jt = self.base.legacy_jump_table();
-        // SAFETY: Only called by legacy bytecode. Panics in debug mode.
-        unsafe { jt.unwrap_unchecked() }.is_valid(offset)
+        match self.base.legacy_jump_table() {
+            Some(jt) => jt.is_valid(offset),
+            None => false,
+        }
     }
 
     #[inline]
     fn opcode(&self) -> u8 {
-        // SAFETY: `instruction_pointer` always points to bytecode.
-        unsafe { *self.instruction_pointer }
+        self.base.bytes_slice()[self.pc]
     }
 
     #[inline]
     fn pc(&self) -> usize {
-        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
-        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
-        unsafe {
-            self.instruction_pointer
-                .offset_from_unsigned(self.base.bytes_ref().as_ptr())
-        }
+        self.pc
     }
 }
 
 impl Immediates for ExtBytecode {
     #[inline]
     fn read_u16(&self) -> u16 {
-        unsafe { read_u16(self.instruction_pointer) }
+        let bytes = self.base.bytes_slice();
+        u16::from_be_bytes([bytes[self.pc], bytes[self.pc + 1]])
     }
 
     #[inline]
     fn read_u8(&self) -> u8 {
-        unsafe { *self.instruction_pointer }
+        self.base.bytes_slice()[self.pc]
     }
 
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
-        unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
+        &self.base.bytes_slice()[self.pc..self.pc + len]
     }
 
     #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
-        unsafe {
-            read_u16(
-                self.instruction_pointer
-                    // Offset for max_index that is one byte
-                    .offset(offset),
-            )
-        }
+        let pos = (self.pc as isize + offset) as usize;
+        let bytes = self.base.bytes_slice();
+        u16::from_be_bytes([bytes[pos], bytes[pos + 1]])
     }
 }
 
@@ -211,5 +223,92 @@ mod tests {
         let hash = bytecode.hash_slow();
         let ext_bytecode = ExtBytecode::new_with_hash(bytecode.clone(), hash);
         assert_eq!(ext_bytecode.bytecode_hash, Some(hash));
+    }
+
+    #[test]
+    fn test_valid_relative_jump() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x00, 0x01][..]));
+        let mut ext = ExtBytecode::new(bytecode);
+        assert_eq!(ext.pc(), 0);
+        ext.relative_jump(1);
+        assert_eq!(ext.pc(), 1);
+    }
+
+    #[test]
+    fn test_valid_absolute_jump() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x00, 0x01][..]));
+        let mut ext = ExtBytecode::new(bytecode);
+        ext.absolute_jump(1);
+        assert_eq!(ext.pc(), 1);
+    }
+
+    #[test]
+    fn test_opcode_reads_correct_byte() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x01, 0x00][..]));
+        let mut ext = ExtBytecode::new(bytecode);
+        assert_eq!(ext.opcode(), 0x60);
+        ext.relative_jump(1);
+        assert_eq!(ext.opcode(), 0x01);
+    }
+
+    #[test]
+    fn test_read_u8_and_read_u16() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0xAB, 0xCD, 0x00][..]));
+        let ext = ExtBytecode::new(bytecode);
+        assert_eq!(ext.read_u8(), 0xAB);
+        assert_eq!(ext.read_u16(), 0xABCD);
+    }
+
+    #[test]
+    fn test_read_slice() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x01, 0x02, 0x03, 0x00][..]));
+        let ext = ExtBytecode::new(bytecode);
+        assert_eq!(ext.read_slice(3), &[0x01, 0x02, 0x03]);
+    }
+
+    // Regression test for the original PoC from #3487.
+    // Before the fix, this triggered undefined behavior via ptr::offset.
+    // Now it panics with a bounds check.
+    #[test]
+    #[should_panic(expected = "relative_jump out of bounds")]
+    fn test_relative_jump_negative_oob_panics() {
+        let bytecode = Bytecode::new_raw(Bytes::from(vec![0x00, 0x01]));
+        let mut ext = ExtBytecode::new(bytecode);
+        ext.relative_jump(-1);
+    }
+
+    #[test]
+    #[should_panic(expected = "relative_jump")]
+    fn test_relative_jump_large_positive_oob_panics() {
+        let bytecode = Bytecode::new_raw(Bytes::from(vec![0x00, 0x01]));
+        let mut ext = ExtBytecode::new(bytecode);
+        ext.relative_jump(isize::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "absolute_jump out of bounds")]
+    fn test_absolute_jump_oob_panics() {
+        let bytecode = Bytecode::new_raw(Bytes::from(vec![0x00, 0x01]));
+        let mut ext = ExtBytecode::new(bytecode);
+        ext.absolute_jump(usize::MAX);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_read_u16_oob_panics() {
+        let bytecode = Bytecode::new_raw(Bytes::from(vec![0x00]));
+        let mut ext = ExtBytecode::new(bytecode);
+        // Jump to the last valid byte; reading u16 requires 2 bytes.
+        let last = ext.base.bytes_slice().len() - 1;
+        ext.absolute_jump(last);
+        let _ = ext.read_u16();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_read_slice_oob_panics() {
+        let bytecode = Bytecode::new_raw(Bytes::from(vec![0x00, 0x01]));
+        let ext = ExtBytecode::new(bytecode);
+        let _ = ext.read_slice(usize::MAX);
     }
 }

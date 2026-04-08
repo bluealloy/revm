@@ -1,5 +1,4 @@
 use super::ExtBytecode;
-use crate::interpreter::Jumps;
 use primitives::B256;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{borrow::Cow, format};
@@ -18,7 +17,7 @@ impl Serialize for ExtBytecode {
     {
         ExtBytecodeSerde {
             base: Cow::Borrowed(&self.base),
-            program_counter: self.pc(),
+            program_counter: self.pc,
             bytecode_hash: self.bytecode_hash,
         }
         .serialize(serializer)
@@ -37,12 +36,12 @@ impl<'de> Deserialize<'de> for ExtBytecode {
         } = ExtBytecodeSerde::deserialize(deserializer)?;
         let mut bytecode = Self::new_with_optional_hash(base.into_owned(), bytecode_hash);
         let len = bytecode.base.bytecode().len();
-        if program_counter >= len {
+        if program_counter > len {
             return Err(serde::de::Error::custom(format!(
                 "program counter ({program_counter}) exceeds bytecode length ({len})"
             )));
         }
-        bytecode.absolute_jump(program_counter);
+        bytecode.pc = program_counter;
         Ok(bytecode)
     }
 }
