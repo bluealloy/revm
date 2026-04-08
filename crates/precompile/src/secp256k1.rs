@@ -14,11 +14,14 @@
 //! [32 bytes for recovered address]
 #[cfg(feature = "secp256k1")]
 pub mod bitcoin_secp256k1;
+pub mod crypto;
 pub mod k256;
 
+pub(crate) use crypto::ecrecover_bytes;
+
 use crate::{
-    crypto, utilities::right_pad, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
-    PrecompileResult,
+    crypto as crypto_provider, utilities::right_pad, Precompile, PrecompileError, PrecompileId,
+    PrecompileOutput, PrecompileResult,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -48,23 +51,8 @@ pub fn ec_recover_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let res = crypto().secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
+    let res = crypto_provider().secp256k1_ecrecover(&sig.0, recid, &msg.0).ok();
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
 }
 
-pub(crate) fn ecrecover_bytes(sig: &[u8; 64], recid: u8, msg: &[u8; 32]) -> Option<[u8; 32]> {
-    match ecrecover(sig.into(), recid, msg.into()) {
-        Ok(address) => Some(address.0),
-        Err(_) => None,
-    }
-}
-
-// Select the correct implementation based on the enabled features.
-cfg_if::cfg_if! {
-    if #[cfg(feature = "secp256k1")] {
-        pub use bitcoin_secp256k1::ecrecover;
-    } else {
-        pub use k256::ecrecover;
-    }
-}
