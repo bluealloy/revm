@@ -40,7 +40,7 @@ const STATE_GAS_CREATE: u64 = 330_000;
 /// EIP-8037 hash cost for deployed bytecode: 6 × ceil(len / 32).
 /// This is a regular gas cost only charged when EIP-8037 is enabled.
 const fn hash_cost(len: usize) -> u64 {
-    6 * ((len as u64 + 31) / 32)
+    6 * (len as u64).div_ceil(32)
 }
 
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
