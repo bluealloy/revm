@@ -291,13 +291,15 @@ pub trait Handler {
         )?;
 
         // EIP-8037: When state gas is enabled and gas_limit exceeds TX_MAX_GAS_LIMIT,
-        // the maximum gas_used = TX_MAX_GAS_LIMIT (since reservoir = gas_limit - cap
-        // is excluded from gas_used). Floor gas must not exceed this maximum.
+        // the regular gas portion is capped at TX_MAX_GAS_LIMIT. Validate that
+        // max(intrinsic_regular_gas, floor_gas) fits within the cap.
+        // State gas is excluded as it uses its own reservoir.
         if ctx.cfg().is_amsterdam_eip8037_enabled()
             && ctx.tx().gas_limit() > ctx.cfg().tx_gas_limit_cap()
         {
             let cap = ctx.cfg().tx_gas_limit_cap();
-            let effective_min = gas.initial_total_gas.max(gas.floor_gas);
+            let initial_regular_gas = gas.initial_total_gas - gas.initial_state_gas;
+            let effective_min = initial_regular_gas.max(gas.floor_gas);
             if effective_min > cap {
                 return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
                     gas_floor: effective_min,

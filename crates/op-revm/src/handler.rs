@@ -321,16 +321,18 @@ where
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, spec);
+        // Exclude reservoir gas (EIP-8037) from used gas — reservoir is unused and reimbursed.
+        let effective_used = frame_result.gas().used().saturating_sub(frame_result.gas().reservoir());
         let operator_fee_cost = if spec.is_enabled_in(OpSpecId::ISTHMUS) {
             l1_block_info.operator_fee_charge(
                 enveloped_tx,
-                U256::from(frame_result.gas().used()),
+                U256::from(effective_used),
                 spec,
             )
         } else {
             U256::ZERO
         };
-        let base_fee_amount = U256::from(basefee.saturating_mul(frame_result.gas().used() as u128));
+        let base_fee_amount = U256::from(basefee.saturating_mul(effective_used as u128));
 
         // Send fees to their respective recipients
         for (recipient, amount) in [
