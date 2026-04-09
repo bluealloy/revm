@@ -295,13 +295,16 @@ pub trait Handler {
         // is excluded from gas_used). Floor gas must not exceed this maximum.
         if ctx.cfg().is_amsterdam_eip8037_enabled()
             && ctx.tx().gas_limit() > ctx.cfg().tx_gas_limit_cap()
-            && gas.floor_gas > ctx.cfg().tx_gas_limit_cap()
         {
-            return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
-                gas_floor: gas.floor_gas,
-                gas_limit: ctx.cfg().tx_gas_limit_cap(),
+            let cap = ctx.cfg().tx_gas_limit_cap();
+            let effective_min = gas.initial_total_gas.max(gas.floor_gas);
+            if effective_min > cap {
+                return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+                    gas_floor: effective_min,
+                    gas_limit: cap,
+                }
+                .into());
             }
-            .into());
         }
 
         Ok(gas)
