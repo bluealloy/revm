@@ -393,7 +393,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Automatically enables EIP-8037 for AMSTERDAM and later.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
-        self.set_spec(spec.clone());
+        self.spec = spec.clone();
         self.set_gas_params(GasParams::new_spec(spec.clone().into()));
         // EIP-8037: Enable EIP-8037 for AMSTERDAM and later
         if spec.into().is_enabled_in(SpecId::AMSTERDAM) {

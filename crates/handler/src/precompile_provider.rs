@@ -83,6 +83,7 @@ pub fn precompile_output_to_interpreter_result(
     output: PrecompileOutput,
     gas_limit: u64,
 ) -> InterpreterResult {
+
     // set output bytes
     let bytes = if output.status.is_success_or_revert() {
         output.bytes
@@ -101,7 +102,7 @@ pub fn precompile_output_to_interpreter_result(
 
     // spend used gas.
     if output.status.is_success_or_revert() {
-        result.gas.record_regular_cost(output.gas_used);
+        let _ = result.gas.record_regular_cost(output.gas_used);
     } else {
         result.gas.spend_all();
     }

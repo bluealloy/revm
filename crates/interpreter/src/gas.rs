@@ -259,6 +259,7 @@ impl Gas {
     ///
     /// Returns `false` if total remaining gas is insufficient.
     #[inline]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_state_cost(&mut self, cost: u64) -> bool {
         self.tracker.record_state_cost(cost)
     }
@@ -267,6 +268,7 @@ impl Gas {
     /// Does not affect reservoir or regular gas budget.
     /// Used for forwarding gas to child frames.
     #[inline]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_regular_cost(&mut self, cost: u64) -> bool {
         self.tracker.record_regular_cost(cost)
     }

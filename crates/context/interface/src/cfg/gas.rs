@@ -105,7 +105,7 @@ impl GasTracker {
     ///
     /// Deducts from `remaining`. Returns `false` if insufficient gas.
     #[inline]
-    #[must_use]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_regular_cost(&mut self, cost: u64) -> bool {
         if let Some(new_remaining) = self.remaining.checked_sub(cost) {
             self.remaining = new_remaining;
@@ -122,6 +122,7 @@ impl GasTracker {
     ///
     /// Returns `false` if total remaining gas is insufficient.
     #[inline]
+    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
     pub fn record_state_cost(&mut self, cost: u64) -> bool {
         if self.reservoir >= cost {
             self.state_gas_spent = self.state_gas_spent.saturating_add(cost);
