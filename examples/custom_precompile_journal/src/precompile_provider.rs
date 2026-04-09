@@ -3,9 +3,9 @@
 use revm::{
     context::Cfg,
     context_interface::{ContextTr, JournalTr, LocalContextTr, Transaction},
-    handler::{EthPrecompiles, PrecompileProvider},
-    interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult},
-    precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt},
+    handler::{precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider},
+    interpreter::{CallInputs, InterpreterResult},
+    precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
     primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
 };
 use std::{boxed::Box, string::String};
@@ -98,30 +98,23 @@ fn run_custom_precompile<CTX: ContextTr>(
         Err(PrecompileHalt::Other("Invalid input length".into()))
     };
 
-    match result {
-        Ok(output) => Ok(InterpreterResult {
-            result: InstructionResult::Return,
-            gas: Gas::new(inputs.gas_limit),
-            output: output.bytes,
-        }),
-        Err(e) => {
-            // If this is a top-level precompile call and error is non-OOG, record the message
-            if !e.is_oog() && context.journal().depth() == 1 {
-                context
-                    .local_mut()
-                    .set_precompile_error_context(e.to_string());
-            }
-            Ok(InterpreterResult {
-                result: if e.is_oog() {
-                    InstructionResult::PrecompileOOG
-                } else {
-                    InstructionResult::PrecompileError
-                },
-                gas: Gas::new(inputs.gas_limit),
-                output: Bytes::new(),
-            })
+    // Convert EthPrecompileResult to PrecompileOutput, preserving the reservoir,
+    // then to InterpreterResult which properly records gas_used.
+    let output = PrecompileOutput::from_eth_result(result, inputs.reservoir);
+
+    // If this is a top-level precompile call and error is non-OOG, record the message
+    if let Some(halt_reason) = output.halt_reason() {
+        if !halt_reason.is_oog() && context.journal().depth() == 1 {
+            context
+                .local_mut()
+                .set_precompile_error_context(halt_reason.to_string());
         }
     }
+
+    Ok(precompile_output_to_interpreter_result(
+        output,
+        inputs.gas_limit,
+    ))
 }
 
 /// Handles reading from storage
