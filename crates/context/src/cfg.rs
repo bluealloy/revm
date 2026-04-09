@@ -211,6 +211,7 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv`.
     #[inline]
+    #[deprecated(note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead")]
     pub fn set_spec(&mut self, spec: SPEC) {
         self.spec = spec;
     }
@@ -235,10 +236,7 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv`.
     #[inline]
-    #[deprecated(
-        since = "0.1.0",
-        note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead"
-    )]
+    #[deprecated(note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead")]
     pub fn with_spec(mut self, spec: SPEC) -> Self {
         self.spec = spec;
         self
@@ -369,7 +367,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
-        self.set_spec(spec.clone());
+        self.spec = spec.clone();
         self.set_gas_params(GasParams::new_spec(spec.into()));
     }
 }
