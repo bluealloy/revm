@@ -381,9 +381,12 @@ impl Precompile {
         &self.address
     }
 
-    /// Executes the precompile, returning a [`PrecompileOutput`].
+    /// Executes the precompile.
+    ///
+    /// Returns `Ok(PrecompileOutput)` on success or non-fatal halt,
+    /// or `Err(PrecompileError)` for fatal/unrecoverable errors.
     #[inline]
-    pub fn execute(&self, input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileOutput {
+    pub fn execute(&self, input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileResult {
         (self.fn_)(input, gas_limit, reservoir)
     }
 }
@@ -465,8 +468,8 @@ pub const fn u64_to_address(x: u64) -> Address {
 mod test {
     use super::*;
 
-    fn temp_precompile(_input: &[u8], _gas_limit: u64, reservoir: u64) -> PrecompileOutput {
-        PrecompileOutput::halt(PrecompileHalt::OutOfGas, reservoir)
+    fn temp_precompile(_input: &[u8], _gas_limit: u64, reservoir: u64) -> PrecompileResult {
+        Ok(PrecompileOutput::halt(PrecompileHalt::OutOfGas, reservoir))
     }
 
     #[test]
@@ -489,7 +492,8 @@ mod test {
         let output = precompiles.optimized_access[100]
             .as_ref()
             .unwrap()
-            .execute(&[], u64::MAX, 0);
+            .execute(&[], u64::MAX, 0)
+            .unwrap();
         assert!(matches!(
             output.status,
             PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
@@ -498,7 +502,8 @@ mod test {
         let output = precompiles
             .get(&Address::left_padding_from(&[101]))
             .unwrap()
-            .execute(&[], u64::MAX, 0);
+            .execute(&[], u64::MAX, 0)
+            .unwrap();
         assert!(matches!(
             output.status,
             PrecompileStatus::Halt(PrecompileHalt::OutOfGas)

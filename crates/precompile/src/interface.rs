@@ -326,8 +326,11 @@ pub trait Crypto: Send + Sync + Debug {
 /// Use [`PrecompileFn`] for the higher-level type that returns [`PrecompileOutput`].
 pub type PrecompileEthFn = fn(&[u8], u64) -> EthPrecompileResult;
 
-/// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileOutput`].
-pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
+/// Precompile function type. Takes input, gas limit and reservoir, returns a [`PrecompileResult`].
+///
+/// Returns `Ok(PrecompileOutput)` for successful execution or non-fatal halts,
+/// or `Err(PrecompileError)` for fatal/unrecoverable errors that should abort EVM execution.
+pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileResult;
 
 /// Macro that generates a thin wrapper function converting a [`PrecompileEthFn`] into a [`PrecompileFn`].
 ///
@@ -344,8 +347,8 @@ pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileOutput;
 #[macro_export]
 macro_rules! eth_precompile_fn {
     ($name:ident, $eth_fn:expr) => {
-        fn $name(input: &[u8], gas_limit: u64, reservoir: u64) -> $crate::PrecompileOutput {
-            $crate::call_eth_precompile($eth_fn, input, gas_limit, reservoir)
+        fn $name(input: &[u8], gas_limit: u64, reservoir: u64) -> $crate::PrecompileResult {
+            Ok($crate::call_eth_precompile($eth_fn, input, gas_limit, reservoir))
         }
     };
 }

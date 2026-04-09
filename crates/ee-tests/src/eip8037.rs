@@ -1995,7 +1995,7 @@ fn test_eip8037_create_large_code() {
     );
 }
 
-/// B.2: Parent CREATEs child, CALLs child (child SSTOREs + REVERTs), then parent SSTOREs.
+/// B.2: Parent CREATEs child, CALLs child (child SSTORE + REVERT), then parent SSTORE.
 /// Verifies child's reverted state gas is refunded while parent's own state gas accumulates.
 #[test]
 fn test_eip8037_parent_sstore_after_child_revert() {
