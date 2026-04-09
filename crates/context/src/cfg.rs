@@ -211,7 +211,7 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv`.
     #[inline]
-    #[deprecated(note = "Use [`CfgEnv::with_spec_and_mainnet_gas_params`] instead")]
+    #[deprecated(note = "Use [`CfgEnv::set_spec_and_mainnet_gas_params`] instead")]
     pub fn set_spec(&mut self, spec: SPEC) {
         self.spec = spec;
     }
