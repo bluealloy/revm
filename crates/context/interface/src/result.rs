@@ -48,27 +48,24 @@ impl<R, S> ExecResultAndState<R, S> {
 ///
 /// ## Stored values
 ///
-/// | Getter            | Source                             | Description                               |
-/// |-------------------|------------------------------------|-------------------------------------------|
-/// | [`limit()`]       | `Gas::limit()`                     | Transaction gas limit                     |
-/// | [`spent()`]       | `Gas::spent()` = limit − remaining | Total gas consumed before refund          |
-/// | [`inner_refunded()`] | `Gas::refunded()` as u64        | Gas refunded (capped per EIP-3529)        |
-/// | [`floor_gas()`]   | `InitialAndFloorGas::floor_gas`    | EIP-7623 floor gas (0 if not applicable)  |
-/// | [`intrinsic_gas()`] | `InitialAndFloorGas::initial_gas`| Initial tx overhead gas (0 for system calls) |
-/// | [`state_gas_spent()`] | `Gas::state_gas_spent`       | State gas consumed during execution (EIP-8037) |
+/// | Getter                 | Source                             | Description                                    |
+/// |------------------------|------------------------------------|------------------------------------------------|
+/// | [`total_gas_spent()`]  | `Gas::spent()` = limit − remaining | Total gas consumed before refund               |
+/// | [`inner_refunded()`]   | `Gas::refunded()` as u64           | Gas refunded (capped per EIP-3529)             |
+/// | [`floor_gas()`]        | `InitialAndFloorGas::floor_gas`    | EIP-7623 floor gas (0 if not applicable)       |
+/// | [`state_gas_spent()`]  | `Gas::state_gas_spent`             | State gas consumed during execution (EIP-8037) |
 ///
-/// [`limit()`]: ResultGas::limit
-/// [`spent()`]: ResultGas::spent
+/// [`total_gas_spent()`]: ResultGas::total_gas_spent
 /// [`inner_refunded()`]: ResultGas::inner_refunded
 /// [`floor_gas()`]: ResultGas::floor_gas
-/// [`intrinsic_gas()`]: ResultGas::intrinsic_gas
 /// [`state_gas_spent()`]: ResultGas::state_gas_spent
 ///
 /// ## Derived values
 ///
-/// - [`used()`](ResultGas::used) = `max(spent − refunded, floor_gas)` (the value that goes into receipts)
-/// - [`remaining()`](ResultGas::remaining) = `limit − spent`
-/// - [`spent_sub_refunded()`](ResultGas::spent_sub_refunded) = `spent − refunded` (before floor gas check)
+/// - [`tx_gas_used()`](ResultGas::tx_gas_used) = `max(total_gas_spent − refunded, floor_gas)` (the value that goes into receipts)
+/// - [`block_regular_gas_used()`](ResultGas::block_regular_gas_used) = `max(total_gas_spent − state_gas_spent, floor_gas)`
+/// - [`block_state_gas_used()`](ResultGas::block_state_gas_used) = `state_gas_spent`
+/// - [`spent_sub_refunded()`](ResultGas::spent_sub_refunded) = `total_gas_spent − refunded` (before floor gas check)
 /// - [`final_refunded()`](ResultGas::final_refunded) = `refunded` when floor gas is inactive, `0` when floor gas kicks in
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
