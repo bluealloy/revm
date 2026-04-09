@@ -7,6 +7,8 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
+    state_gas_spent: u64,
+    reservoir: u64,
 }
 
 impl Default for GasInspector {
@@ -28,11 +30,25 @@ impl GasInspector {
         self.last_gas_cost
     }
 
+    /// Returns the state gas spent.
+    #[inline]
+    pub fn state_gas_spent(&self) -> u64 {
+        self.state_gas_spent
+    }
+
+    /// Returns the reservoir gas.
+    #[inline]
+    pub fn reservoir(&self) -> u64 {
+        self.reservoir
+    }
+
     /// Create a new gas inspector.
     pub fn new() -> Self {
         Self {
             gas_remaining: 0,
             last_gas_cost: 0,
+            state_gas_spent: 0,
+            reservoir: 0,
         }
     }
 
@@ -40,12 +56,16 @@ impl GasInspector {
     #[inline]
     pub fn initialize_interp(&mut self, gas: &Gas) {
         self.gas_remaining = gas.limit();
+        self.state_gas_spent = gas.state_gas_spent();
+        self.reservoir = gas.reservoir();
     }
 
     /// Sets the remaining gas.
     #[inline]
     pub fn step(&mut self, gas: &Gas) {
         self.gas_remaining = gas.remaining();
+        self.state_gas_spent = gas.state_gas_spent();
+        self.reservoir = gas.reservoir();
     }
 
     /// calculate last gas cost and remaining gas.
@@ -54,6 +74,8 @@ impl GasInspector {
         let remaining = gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
+        self.state_gas_spent = gas.state_gas_spent();
+        self.reservoir = gas.reservoir();
     }
 
     /// Spend all gas if call failed.
@@ -63,6 +85,8 @@ impl GasInspector {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
+        self.state_gas_spent = outcome.result.gas.state_gas_spent();
+        self.reservoir = outcome.result.gas.reservoir();
     }
 
     /// Spend all gas if create failed.
@@ -72,6 +96,8 @@ impl GasInspector {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
+        self.state_gas_spent = outcome.result.gas.state_gas_spent();
+        self.reservoir = outcome.result.gas.reservoir();
     }
 }
 
