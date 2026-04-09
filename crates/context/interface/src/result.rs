@@ -162,7 +162,7 @@ impl ResultGas {
         since = "32.0.0",
         note = "After EIP-8037 gas is split on
     regular and state gas, this method is no longer valid.
-    Use [`ResultGas::total_gas_spent`] or [`ResultGas::regular_gas_spent`] instead"
+    Use [`ResultGas::total_gas_spent`] instead"
     )]
     pub const fn spent(&self) -> u64 {
         self.total_gas_spent()
@@ -170,7 +170,7 @@ impl ResultGas {
 
     /****** Simple setters *****/
 
-    /// Sets the `regular_gas_spent` field by mutable reference.
+    /// Sets the `total_gas_spent` field by mutable reference.
     #[inline]
     pub fn set_total_gas_spent(&mut self, total_gas_spent: u64) {
         self.total_gas_spent = total_gas_spent;
@@ -208,7 +208,7 @@ impl ResultGas {
 
     /****** Builder with_* methods *****/
 
-    /// Sets the `regular_gas_spent` field.
+    /// Sets the `total_gas_spent` field.
     #[inline]
     pub const fn with_total_gas_spent(mut self, total_gas_spent: u64) -> Self {
         self.total_gas_spent = total_gas_spent;
@@ -242,7 +242,7 @@ impl ResultGas {
         since = "32.0.0",
         note = "After EIP-8037 gas is split on
     regular and state gas, this method is no longer valid.
-    Use [`ResultGas::with_regular_gas_spent`] instead"
+    Use [`ResultGas::with_total_gas_spent`] instead"
     )]
     pub const fn with_spent(mut self, spent: u64) -> Self {
         self.total_gas_spent = spent;
@@ -258,7 +258,7 @@ impl ResultGas {
     pub const fn tx_gas_used(&self) -> u64 {
         // consiste of regular and state gas.
         let total_gas_spent = self.total_gas_spent();
-        // from total gas substract the refunded gas. Refunded is capped by 20% of total gas spent.
+        // from total gas subtract the refunded gas. Refunded is capped by 20% of total gas spent.
         let tx_gas_refunded = total_gas_spent.saturating_sub(self.inner_refunded());
         max(tx_gas_refunded, self.floor_gas())
     }
@@ -287,7 +287,7 @@ impl ResultGas {
     #[inline]
     #[deprecated(
         since = "32.0.0",
-        note = "Used is not descriptive enought, use [`ResultGas::tx_gas_used`] instead"
+        note = "Used is not descriptive enough, use [`ResultGas::tx_gas_used`] instead"
     )]
     pub const fn used(&self) -> u64 {
         // EIP-7623: Increase calldata cost
