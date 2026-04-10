@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v32.1.0...revm-precompile-v33.0.0) - 2026-04-10
+
+### Added
+
+- add EIP-8037 / TIP-1016 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406))
+- add crate-level re-exports for all revm-* dependencies ([#3507](https://github.com/bluealloy/revm/pull/3507))
+
+### Other
+
+- move EIP-8037 gas cap validation into validate_initial_tx_gas ([#3552](https://github.com/bluealloy/revm/pull/3552))
+- *(precompile)* take large array args by reference ([#3524](https://github.com/bluealloy/revm/pull/3524))
+- add secp256r1 (P256) precompile benchmark ([#3525](https://github.com/bluealloy/revm/pull/3525))
+- use AnyError for PrecompileError::Fatal and EVMError::Custom ([#3502](https://github.com/bluealloy/revm/pull/3502))
+- clarify PrecompileError::Fatal vs Other and EVMError::Custom ([#3496](https://github.com/bluealloy/revm/pull/3496))
+
 ## [32.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v32.0.0...revm-precompile-v32.1.0) - 2026-03-02
 
 ### Added

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v34.0.0...revm-interpreter-v35.0.0) - 2026-04-10
+
+### Added
+
+- add EIP-8037 / TIP-1016 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406))
+- Add local context accessors to CallInput ([#3537](https://github.com/bluealloy/revm/pull/3537))
+- add CallInput::as_bytes ([#3515](https://github.com/bluealloy/revm/pull/3515))
+- add crate-level re-exports for all revm-* dependencies ([#3507](https://github.com/bluealloy/revm/pull/3507))
+- Part of amsterdam devnet3 EIP updates ([#3438](https://github.com/bluealloy/revm/pull/3438))
+
+### Fixed
+
+- Remove unused gas-related functions ([#3534](https://github.com/bluealloy/revm/pull/3534))
+- *(interpreter)* swap/swapn/exchange report StackOverflow on underflow ([#3483](https://github.com/bluealloy/revm/pull/3483))
+
+### Other
+
+- deprecate set_spec and clean up deprecation attrs ([#3550](https://github.com/bluealloy/revm/pull/3550))
+- remove option for known bytecode ([#3532](https://github.com/bluealloy/revm/pull/3532))
+- simplify stack dup ([#3478](https://github.com/bluealloy/revm/pull/3478))
+
 ## [34.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v33.0.0...revm-interpreter-v34.0.0) - 2026-03-04
 
 ### Other
