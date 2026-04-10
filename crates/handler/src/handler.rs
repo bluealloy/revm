@@ -1,6 +1,7 @@
 use crate::{
     evm::FrameTr,
-    execution, post_execution,
+    execution,
+    post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
@@ -131,8 +132,7 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas =
-                    ResultGas::new(gas.limit(), gas.spent(), gas.refunded() as u64, 0, 0);
+                let result_gas = build_result_gas(gas, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -151,11 +151,18 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm)? as i64;
+        let mut init_and_floor_gas = self.validate(evm)?;
+        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas)?;
+        // Regular refund is returned from pre_execution after state gas split is applied
+        let eip7702_regular_refund = eip7702_refund as i64;
+
         let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
-        let result_gas =
-            self.post_execution(evm, &mut exec_result, init_and_floor_gas, eip7702_refund)?;
+        let result_gas = self.post_execution(
+            evm,
+            &mut exec_result,
+            init_and_floor_gas,
+            eip7702_regular_refund,
+        )?;
 
         // Prepare the output
         self.execution_result(evm, exec_result, result_gas)
@@ -181,11 +188,15 @@ pub trait Handler {
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
     #[inline]
-    fn pre_execution(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
+    fn pre_execution(
+        &self,
+        evm: &mut Self::Evm,
+        init_and_floor_gas: &mut InitialAndFloorGas,
+    ) -> Result<u64, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm)?;
         self.load_accounts(evm)?;
 
-        let gas = self.apply_eip7702_auth_list(evm)?;
+        let gas = self.apply_eip7702_auth_list(evm, init_and_floor_gas)?;
         Ok(gas)
     }
 
@@ -198,9 +209,14 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_gas;
+        // Deduct regular initial gas from the transaction gas limit.
+        // State gas is handled separately via the reservoir.
+        let regular_initial_gas =
+            init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
         // Create first frame action
-        let first_frame_input = self.first_frame_input(evm, gas_limit)?;
+        // Note: first_frame_input now handles state gas deduction from the reservoir
+        let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
@@ -268,12 +284,32 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
-        validation::validate_initial_tx_gas(
+        let gas = validation::validate_initial_tx_gas(
             ctx.tx(),
             ctx.cfg().spec().into(),
             ctx.cfg().is_eip7623_disabled(),
-        )
-        .map_err(From::from)
+        )?;
+
+        // EIP-8037: When state gas is enabled and gas_limit exceeds TX_MAX_GAS_LIMIT,
+        // the regular gas portion is capped at TX_MAX_GAS_LIMIT. Validate that
+        // max(intrinsic_regular_gas, floor_gas) fits within the cap.
+        // State gas is excluded as it uses its own reservoir.
+        if ctx.cfg().is_amsterdam_eip8037_enabled()
+            && ctx.tx().gas_limit() > ctx.cfg().tx_gas_limit_cap()
+        {
+            let cap = ctx.cfg().tx_gas_limit_cap();
+            let initial_regular_gas = gas.initial_total_gas - gas.initial_state_gas;
+            let effective_min = initial_regular_gas.max(gas.floor_gas);
+            if effective_min > cap {
+                return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+                    gas_floor: effective_min,
+                    gas_limit: cap,
+                }
+                .into());
+            }
+        }
+
+        Ok(gas)
     }
 
     /* PRE EXECUTION */
@@ -289,8 +325,12 @@ pub trait Handler {
     ///
     /// Returns the gas refund amount specified by EIP-7702.
     #[inline]
-    fn apply_eip7702_auth_list(&self, evm: &mut Self::Evm) -> Result<u64, Self::Error> {
-        apply_eip7702_auth_list(evm.ctx_mut())
+    fn apply_eip7702_auth_list(
+        &self,
+        evm: &mut Self::Evm,
+        init_and_floor_gas: &mut InitialAndFloorGas,
+    ) -> Result<u64, Self::Error> {
+        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas)
     }
 
     /// Deducts the maximum possible fee from caller's balance.
@@ -315,16 +355,66 @@ pub trait Handler {
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
-        gas_limit: u64,
+        mut gas_limit: u64,
+        init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
+        // For the first frame, determine the reservoir and cap gas_limit to the regular gas budget.
+        //
+        // EIP-8037 reservoir model:
+        //   execution_gas = tx.gas_limit - intrinsic_gas  (= gas_limit parameter)
+        //   regular_gas_budget = min(execution_gas, TX_MAX_GAS_LIMIT - intrinsic_gas)
+        //   reservoir = execution_gas - regular_gas_budget
+        //
+        // On mainnet (state gas disabled), reservoir = 0 and gas_limit is unchanged.
+        let execution_gas = gas_limit;
+        // System calls pass init_and_floor_gas with all zeros and should not be
+        // subject to the TX_MAX_GAS_LIMIT cap.
+        let regular_gas_cap = if init_and_floor_gas.initial_total_gas == 0 {
+            u64::MAX
+        } else if ctx.cfg().is_amsterdam_eip8037_enabled() {
+            let intrinsic_gas =
+                init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
+            ctx.cfg().tx_gas_limit_cap().saturating_sub(intrinsic_gas)
+        } else {
+            ctx.cfg().tx_gas_limit_cap()
+        };
+        gas_limit = core::cmp::min(gas_limit, regular_gas_cap);
+        let reservoir_remaining_gas = execution_gas - gas_limit;
+
+        let mut frame_input = execution::create_init_frame(ctx, gas_limit)?;
+        frame_input.set_reservoir(reservoir_remaining_gas);
+
+        // Deduct initial state gas from the reservoir. When the reservoir is
+        // insufficient (e.g. gas_limit < TX_MAX_GAS_LIMIT), the deficit is
+        // charged from the regular gas budget (reducing frame gas_limit).
+        let initial_state_gas = init_and_floor_gas.initial_state_gas;
+        if initial_state_gas > 0 {
+            let reservoir = frame_input.reservoir();
+            if reservoir >= initial_state_gas {
+                frame_input.set_reservoir(reservoir - initial_state_gas);
+            } else {
+                let deficit = initial_state_gas - reservoir;
+                frame_input.set_reservoir(0);
+                frame_input.reduce_gas_limit(deficit);
+            }
+        }
+
+        // EIP-7702 state gas refund for existing authorities goes directly to
+        // the reservoir. In the Python spec, set_delegation adds this refund to
+        // state_gas_reservoir so it stays as state gas (not regular gas).
+        let eip7702_refund = init_and_floor_gas.eip7702_reservoir_refund;
+        if eip7702_refund > 0 {
+            frame_input.set_reservoir(frame_input.reservoir() + eip7702_refund);
+        }
+
         Ok(FrameInit {
             depth: 0,
             memory,
-            frame_input: execution::create_init_frame(ctx, gas_limit)?,
+            frame_input,
         })
     }
 
@@ -339,17 +429,38 @@ pub trait Handler {
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
+        let reservoir = gas.reservoir();
+        let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
+            // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
             gas.erase_cost(remaining);
         }
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
         }
+
+        // Reservoir handling at the top-level frame:
+        // - On success: use the frame's final reservoir as-is, state gas was consumed.
+        // - On revert/halt: restore state gas spent back to the reservoir,
+        //   because state changes are rolled back so state gas should be refunded.
+        //
+        // Note: eth devnet3 does NOT do this — it ignores state_gas_spent and
+        // unconditionally sets gas.set_reservoir(reservoir) regardless of the
+        // instruction_result kind. This is a bug in the devnet3 spec.
+        if instruction_result.is_ok() {
+            gas.set_state_gas_spent(state_gas_spent);
+            gas.set_reservoir(reservoir);
+        } else {
+            // State changes rolled back, so no execution state gas was consumed.
+            gas.set_state_gas_spent(0);
+            gas.set_reservoir(reservoir + state_gas_spent);
+        }
+
         Ok(())
     }
 

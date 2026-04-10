@@ -11,6 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
+use interpreter::InitialAndFloorGas;
 use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
@@ -195,6 +196,7 @@ pub fn apply_eip7702_auth_list<
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
+    init_and_floor_gas: &mut InitialAndFloorGas,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
     let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund();
@@ -204,7 +206,24 @@ pub fn apply_eip7702_auth_list<
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
-    apply_auth_list(chain_id, refund_per_auth, tx.authorization_list(), journal)
+    let eip7702_refund =
+        apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
+
+    // EIP-8037: Split auth list refund into state gas and regular gas portions.
+    // The state gas portion is added to the reservoir after initial_state_gas deduction,
+    // matching the Python spec where set_delegation adds state refund directly to
+    // state_gas_reservoir. This ensures refunded state gas stays as reservoir gas
+    // (not regular gas), so it's not consumed on frame halt.
+    // The regular gas portion goes through the normal refund mechanism.
+    let (eip7702_state_refund, eip7702_regular_refund_raw) = context
+        .cfg()
+        .gas_params()
+        .split_eip7702_refund(eip7702_refund);
+    if eip7702_state_refund > 0 {
+        init_and_floor_gas.eip7702_reservoir_refund = eip7702_state_refund;
+    }
+
+    Ok(eip7702_regular_refund_raw)
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.

@@ -20,6 +20,8 @@ pub struct TracerEip3155 {
     pc: u64,
     opcode: u8,
     gas: u64,
+    reservoir: u64,
+    state_gas: u64,
     refunded: i64,
     mem_size: usize,
     include_memory: bool,
@@ -35,6 +37,8 @@ impl std::fmt::Debug for TracerEip3155 {
             .field("pc", &self.pc)
             .field("opcode", &self.opcode)
             .field("gas", &self.gas)
+            .field("reservoir", &self.reservoir)
+            .field("state_gas", &self.state_gas)
             .field("refunded", &self.refunded)
             .field("mem_size", &self.mem_size)
             .field("include_memory", &self.include_memory)
@@ -61,6 +65,12 @@ struct Output<'a> {
     /// Gas left before executing this operation
     #[serde(serialize_with = "serde_hex_u64")]
     gas: u64,
+    /// State gas reservoir (EIP-8037)
+    #[serde(serialize_with = "serde_hex_u64")]
+    reservoir: u64,
+    /// State gas spent (EIP-8037)
+    #[serde(serialize_with = "serde_hex_u64")]
+    state_gas: u64,
     /// Gas cost of this operation
     #[serde(serialize_with = "serde_hex_u64")]
     gas_cost: u64,
@@ -138,6 +148,8 @@ impl TracerEip3155 {
             pc: 0,
             opcode: 0,
             gas: 0,
+            reservoir: 0,
+            state_gas: 0,
             refunded: 0,
             mem_size: 0,
         }
@@ -170,6 +182,8 @@ impl TracerEip3155 {
             pc,
             opcode,
             gas,
+            reservoir,
+            state_gas,
             refunded,
             mem_size,
             ..
@@ -179,6 +193,8 @@ impl TracerEip3155 {
         *pc = 0;
         *opcode = 0;
         *gas = 0;
+        *reservoir = 0;
+        *state_gas = 0;
         *refunded = 0;
         *mem_size = 0;
     }
@@ -239,6 +255,8 @@ where
         self.opcode = interp.bytecode.opcode();
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
+        self.reservoir = interp.gas.reservoir();
+        self.state_gas = interp.gas.state_gas_spent();
         self.refunded = interp.gas.refunded();
     }
 
@@ -248,6 +266,8 @@ where
             pc: self.pc,
             op: self.opcode,
             gas: self.gas,
+            reservoir: self.reservoir,
+            state_gas: self.state_gas,
             gas_cost: self.gas_inspector.last_gas_cost(),
             stack: &self.stack,
             depth: context.journal_mut().depth() as u64,

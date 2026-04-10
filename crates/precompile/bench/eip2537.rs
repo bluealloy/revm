@@ -149,10 +149,8 @@ pub fn add_g1_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let test_vectors = g1_add_test_vectors(1, &mut rng);
     let input = Bytes::from(test_vectors[0].clone());
 
-    let precompile = *PRECOMPILE.precompile();
-
     group.bench_function("g1_add", |b| {
-        b.iter(|| precompile(&input, u64::MAX).unwrap());
+        b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
     });
 }
 
@@ -164,18 +162,14 @@ pub fn add_g2_add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     let test_vectors = g2_add_test_vectors(1, &mut rng);
     let input = Bytes::from(test_vectors[0].clone());
 
-    let precompile = *PRECOMPILE.precompile();
-
     group.bench_function("g2_add", |b| {
-        b.iter(|| precompile(&input, u64::MAX).unwrap());
+        b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
     });
 }
 
 /// Add benches for the BLS12-381 G1 msm precompile
 pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g1_msm::PRECOMPILE;
-
-    let precompile = *PRECOMPILE.precompile();
 
     let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
 
@@ -185,7 +179,7 @@ pub fn add_g1_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("g1_msm (size {size})"), |b| {
-            b.iter(|| precompile(&input, u64::MAX).unwrap());
+            b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
         });
     }
 }
@@ -220,8 +214,6 @@ fn g2_msm_test_vectors(msm_size: usize, rng: &mut StdRng) -> PrecompileInput {
 pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::g2_msm::PRECOMPILE;
 
-    let precompile = *PRECOMPILE.precompile();
-
     let sizes_to_bench = [MAX_MSM_SIZE, MAX_MSM_SIZE / 2, 2, 1];
 
     for size in sizes_to_bench {
@@ -230,7 +222,7 @@ pub fn add_g2_msm_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("g2_msm (size {size})"), |b| {
-            b.iter(|| precompile(&input, u64::MAX).unwrap());
+            b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
         });
     }
 }
@@ -253,8 +245,6 @@ fn pairing_test_vectors(num_pairs: usize, rng: &mut StdRng) -> PrecompileInput {
 pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
     use revm_precompile::bls12_381::pairing::PRECOMPILE;
 
-    let precompile = *PRECOMPILE.precompile();
-
     let sizes_to_bench = [MAX_PAIRING_PAIRS, MAX_PAIRING_PAIRS / 2, 2, 1];
 
     for pairs in sizes_to_bench {
@@ -263,7 +253,7 @@ pub fn add_pairing_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {
         let input = Bytes::from(test_vector);
 
         group.bench_function(format!("pairing ({pairs} pairs)"), |b| {
-            b.iter(|| precompile(&input, u64::MAX).unwrap());
+            b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
         });
     }
 }
@@ -281,10 +271,8 @@ pub fn add_map_fp_to_g1_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M
     let test_vector = map_fp_to_g1_test_vectors(&mut rng);
     let input = Bytes::from(test_vector);
 
-    let precompile = *PRECOMPILE.precompile();
-
     group.bench_function("map_fp_to_g1", |b| {
-        b.iter(|| precompile(&input, u64::MAX).unwrap());
+        b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
     });
 }
 
@@ -308,9 +296,7 @@ pub fn add_map_fp2_to_g2_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, 
     let test_vector = map_fp2_to_g2_test_vectors(&mut rng);
     let input = Bytes::from(test_vector);
 
-    let precompile = *PRECOMPILE.precompile();
-
     group.bench_function("map_fp2_to_g2", |b| {
-        b.iter(|| precompile(&input, u64::MAX).unwrap());
+        b.iter(|| PRECOMPILE.execute(&input, u64::MAX, 0));
     });
 }

@@ -45,6 +45,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 scheme: CallScheme::Call,
                 is_static: false,
                 return_memory_offset: 0..0,
+                reservoir: 0,
             })))
         }
         TxKind::Create => Ok(FrameInput::Create(Box::new(CreateInputs::new(

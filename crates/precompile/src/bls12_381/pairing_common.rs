@@ -4,7 +4,7 @@
 //! identical across backends. Backend-specific parsing and pairing computation are injected
 //! as function parameters.
 
-use crate::PrecompileError;
+use crate::PrecompileHalt;
 use std::vec::Vec;
 
 /// Shared implementation of `pairing_check_bytes`.
@@ -14,10 +14,10 @@ pub(super) fn pairing_check_bytes_generic<G1, G2, ReadG1, ReadG2, PairingCheck>(
     read_g1: ReadG1,
     read_g2: ReadG2,
     pairing_check: PairingCheck,
-) -> Result<bool, PrecompileError>
+) -> Result<bool, PrecompileHalt>
 where
-    ReadG1: Fn(&[u8; 48], &[u8; 48]) -> Result<G1, PrecompileError>,
-    ReadG2: Fn(&[u8; 48], &[u8; 48], &[u8; 48], &[u8; 48]) -> Result<G2, PrecompileError>,
+    ReadG1: Fn(&[u8; 48], &[u8; 48]) -> Result<G1, PrecompileHalt>,
+    ReadG2: Fn(&[u8; 48], &[u8; 48], &[u8; 48], &[u8; 48]) -> Result<G2, PrecompileHalt>,
     PairingCheck: FnOnce(&[(G1, G2)]) -> bool,
 {
     if pairs.is_empty() {

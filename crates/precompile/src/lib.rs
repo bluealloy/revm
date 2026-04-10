@@ -28,6 +28,8 @@ pub use primitives;
 pub use id::PrecompileId;
 pub use interface::*;
 
+use core::fmt::{self, Debug};
+
 // silence arkworks lint as bn impl will be used as default if both are enabled.
 cfg_if::cfg_if! {
     if #[cfg(feature = "bn")]{
@@ -328,15 +330,25 @@ impl Precompiles {
     }
 }
 
-/// Precompile.
-#[derive(Clone, Debug)]
+/// Precompile wrapper for simple eth function that provides complex interface on execution.
+#[derive(Clone)]
 pub struct Precompile {
     /// Unique identifier.
     id: PrecompileId,
     /// Precompile address.
     address: Address,
-    /// Precompile implementation.
+    /// Precompile function.
     fn_: PrecompileFn,
+}
+
+impl Debug for Precompile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Precompile {{ id: {:?}, address: {:?} }}",
+            self.id, self.address
+        )
+    }
 }
 
 impl From<(PrecompileId, Address, PrecompileFn)> for Precompile {
@@ -345,9 +357,9 @@ impl From<(PrecompileId, Address, PrecompileFn)> for Precompile {
     }
 }
 
-impl From<Precompile> for (PrecompileId, Address, PrecompileFn) {
+impl From<Precompile> for (PrecompileId, Address) {
     fn from(value: Precompile) -> Self {
-        (value.id, value.address, value.fn_)
+        (value.id, value.address)
     }
 }
 
@@ -369,22 +381,13 @@ impl Precompile {
         &self.address
     }
 
-    /// Returns reference to precompile implementation.
-    #[inline]
-    pub fn precompile(&self) -> &PrecompileFn {
-        &self.fn_
-    }
-
-    /// Consumes the type and returns the precompile implementation.
-    #[inline]
-    pub fn into_precompile(self) -> PrecompileFn {
-        self.fn_
-    }
-
     /// Executes the precompile.
+    ///
+    /// Returns `Ok(PrecompileOutput)` on success or non-fatal halt,
+    /// or `Err(PrecompileError)` for fatal/unrecoverable errors.
     #[inline]
-    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileResult {
-        (self.fn_)(input, gas_limit)
+    pub fn execute(&self, input: &[u8], gas_limit: u64, reservoir: u64) -> PrecompileResult {
+        (self.fn_)(input, gas_limit, reservoir)
     }
 }
 
@@ -465,8 +468,8 @@ pub const fn u64_to_address(x: u64) -> Address {
 mod test {
     use super::*;
 
-    fn temp_precompile(_input: &[u8], _gas_limit: u64) -> PrecompileResult {
-        PrecompileResult::Err(PrecompileError::OutOfGas)
+    fn temp_precompile(_input: &[u8], _gas_limit: u64, reservoir: u64) -> PrecompileResult {
+        Ok(PrecompileOutput::halt(PrecompileHalt::OutOfGas, reservoir))
     }
 
     #[test]
@@ -486,21 +489,25 @@ mod test {
             temp_precompile,
         )]);
 
-        assert_eq!(
-            precompiles.optimized_access[100]
-                .as_ref()
-                .unwrap()
-                .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
-        );
+        let output = precompiles.optimized_access[100]
+            .as_ref()
+            .unwrap()
+            .execute(&[], u64::MAX, 0)
+            .unwrap();
+        assert!(matches!(
+            output.status,
+            PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
+        ));
 
-        assert_eq!(
-            precompiles
-                .get(&Address::left_padding_from(&[101]))
-                .unwrap()
-                .execute(&[], u64::MAX),
-            PrecompileResult::Err(PrecompileError::OutOfGas)
-        );
+        let output = precompiles
+            .get(&Address::left_padding_from(&[101]))
+            .unwrap()
+            .execute(&[], u64::MAX, 0)
+            .unwrap();
+        assert!(matches!(
+            output.status,
+            PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
+        ));
     }
 
     #[test]

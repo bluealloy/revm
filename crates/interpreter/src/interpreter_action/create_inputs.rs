@@ -16,6 +16,8 @@ pub struct CreateInputs {
     init_code: Bytes,
     /// The gas limit of the call
     gas_limit: u64,
+    /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
+    reservoir: u64,
     /// Cached created address. This is computed lazily and cached to avoid
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -37,6 +39,7 @@ impl CreateInputs {
             value,
             init_code,
             gas_limit,
+            reservoir: 0,
             cached_address: OnceCell::new(),
         }
     }
@@ -105,5 +108,15 @@ impl CreateInputs {
     /// Set gas limit
     pub fn set_gas_limit(&mut self, gas_limit: u64) {
         self.gas_limit = gas_limit;
+    }
+
+    /// Returns the state gas reservoir (EIP-8037).
+    pub fn reservoir(&self) -> u64 {
+        self.reservoir
+    }
+
+    /// Set the state gas reservoir (EIP-8037).
+    pub fn set_reservoir(&mut self, reservoir: u64) {
+        self.reservoir = reservoir;
     }
 }

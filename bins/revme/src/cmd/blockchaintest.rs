@@ -657,6 +657,7 @@ fn execute_blockchain_test(
             | ForkSpec::CancunToPragueAtTime15k
             | ForkSpec::PragueToOsakaAtTime15k
             | ForkSpec::BPO1ToBPO2AtTime15k
+            | ForkSpec::BPO2ToAmsterdamAtTime15k
     ) {
         eprintln!("⚠️  Skipping transition fork: {:?}", test_case.network);
         return Ok(());
@@ -760,8 +761,11 @@ fn execute_blockchain_test(
                 error: format!("{e:?}"),
             })?;
 
-        // Track cumulative gas used across all transactions in this block
-        let mut cumulative_gas_used: u64 = 0;
+        // Track cumulative gas used across all transactions in this block.
+        // EIP-8037: Split gas accounting into regular (execution) and state gas.
+        let mut cumulative_tx_gas_used: u64 = 0;
+        let mut block_regular_gas_used: u64 = 0;
+        let mut block_state_gas_used: u64 = 0;
         let mut block_completed = true;
 
         // Execute each transaction in the block
@@ -884,7 +888,7 @@ fn execute_blockchain_test(
                                 "block": block_idx,
                                 "tx": tx_idx,
                                 "expected_exception": expected_exception,
-                                "gas_used": result.result.gas_used(),
+                                "gas_used": result.result.gas().tx_gas_used(),
                                 "status": "unexpected_success"
                             });
                             print_json(&output);
@@ -896,15 +900,11 @@ fn execute_blockchain_test(
                         block_completed = false;
                         break; // Skip to next block
                     }
-                    // EIP-7778: Block gas accounting without refunds.
-                    // For Amsterdam+, block gas = max(spent, floor_gas).
-                    // For pre-Amsterdam, block gas = used() = max(spent - refunded, floor_gas).
+                    // EIP-8037: Split gas accounting.
                     let gas = result.result.gas();
-                    cumulative_gas_used += if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
-                        gas.spent().max(gas.floor_gas())
-                    } else {
-                        gas.used()
-                    };
+                    cumulative_tx_gas_used += gas.tx_gas_used();
+                    block_regular_gas_used += gas.block_regular_gas_used();
+                    block_state_gas_used += gas.block_state_gas_used();
                     evm.commit(result.state);
                 }
                 Err(e) => {
@@ -962,20 +962,27 @@ fn execute_blockchain_test(
             }
         }
 
-        // Validate block gas used against header
+        // Validate block gas used against header.
+        // EIP-8037 (Amsterdam+): block gas_used = max(regular_gas, state_gas).
+        // Pre-Amsterdam: block gas_used = cumulative tx_gas_used (includes refunds).
         if block_completed && !should_fail {
             if let Some(block_header) = block.block_header.as_ref() {
                 let expected_gas_used = block_header.gas_used.to::<u64>();
-                if cumulative_gas_used != expected_gas_used {
+                let actual_block_gas_used = if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
+                    block_regular_gas_used.max(block_state_gas_used)
+                } else {
+                    cumulative_tx_gas_used
+                };
+                if actual_block_gas_used != expected_gas_used {
                     if print_env_on_error {
                         eprintln!(
-                            "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {cumulative_gas_used}"
+                            "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {actual_block_gas_used} (regular: {block_regular_gas_used}, state: {block_state_gas_used}, tx: {cumulative_tx_gas_used})"
                         );
                     }
                     return Err(TestExecutionError::BlockGasUsedMismatch {
                         block_idx,
                         expected: expected_gas_used,
-                        actual: cumulative_gas_used,
+                        actual: actual_block_gas_used,
                     });
                 }
             }
