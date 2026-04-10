@@ -234,6 +234,8 @@ pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
+    is_amsterdam_eip8037_enabled: bool,
+    tx_gas_limit_cap: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
     let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
 
@@ -257,6 +259,19 @@ pub fn validate_initial_tx_gas(
             gas_limit: tx.gas_limit(),
         });
     };
+
+    // EIP-8037: Regular gas is capped at TX_MAX_GAS_LIMIT.
+    // Validate that both intrinsic regular gas and floor gas fit within the cap.
+    // State gas is excluded — it uses its own reservoir.
+    if is_amsterdam_eip8037_enabled && tx.gas_limit() > tx_gas_limit_cap {
+        let min_regular_gas = gas.initial_regular_gas().max(gas.floor_gas);
+        if min_regular_gas > tx_gas_limit_cap {
+            return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+                gas_floor: min_regular_gas,
+                gas_limit: tx_gas_limit_cap,
+            });
+        }
+    }
 
     Ok(gas)
 }
