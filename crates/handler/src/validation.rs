@@ -227,7 +227,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     }
 
     // Check that the transaction's nonce is not at the maximum value.
-    // Incrementing the nonce would overflow.
+    // Incrementing the nonce would overflow. Can't happen in the real world.
     if tx.nonce() == u64::MAX {
         return Err(InvalidTransaction::NonceOverflowInTransaction);
     }
