@@ -1,6 +1,27 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
-# v107
+# v106
+date 10.04.2026
+
+Eth devnet3. EIP-8037 State gas support
+
+* `revm-primitives`: 22.1.0 -> 23.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 9.0.0 -> 10.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 10.0.0 -> 11.0.0 (✓ API compatible changes)
+* `revm-context-interface`: 16.0.0 -> 17.0.0 (⚠ API breaking changes)
+* `revm-context`: 15.0.0 -> 16.0.0 (⚠ API breaking changes)
+* `revm-database`: 12.0.0 -> 13.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 34.0.0 -> 35.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 32.1.0 -> 33.0.0 (⚠ API breaking changes)
+* `revm-handler`: 17.0.0 -> 18.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 17.0.0 -> 18.0.0 (✓ API compatible changes)
+* `revm-statetest-types`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
+* `revme`: 13.0.0 -> 14.0.0 (⚠ API breaking changes)
+* `op-revm`: 17.0.0 -> 18.0.0 (✓ API compatible changes)
+* `revm-state`: 10.0.0 -> 11.0.0
+* `revm`: 36.0.0 -> 37.0.0
+
+# v105
 date: 04.03.2026
 
 Bump revm-database-interface major version. All dependent crates bumped accordingly.
