@@ -312,6 +312,15 @@ impl InitialAndFloorGas {
             eip7702_reservoir_refund: 0,
         }
     }
+
+    /// Regular (non-state) portion of the initial intrinsic gas.
+    ///
+    /// Under EIP-8037, this is the part constrained by `TX_MAX_GAS_LIMIT`;
+    /// state gas uses its own reservoir and is not subject to that cap.
+    #[inline]
+    pub const fn initial_regular_gas(&self) -> u64 {
+        self.initial_total_gas - self.initial_state_gas
+    }
 }
 
 /// Initial gas that is deducted for transaction to be included.

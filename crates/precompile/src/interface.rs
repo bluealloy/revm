@@ -348,7 +348,9 @@ pub type PrecompileFn = fn(&[u8], u64, u64) -> PrecompileResult;
 macro_rules! eth_precompile_fn {
     ($name:ident, $eth_fn:expr) => {
         fn $name(input: &[u8], gas_limit: u64, reservoir: u64) -> $crate::PrecompileResult {
-            Ok($crate::call_eth_precompile($eth_fn, input, gas_limit, reservoir))
+            Ok($crate::call_eth_precompile(
+                $eth_fn, input, gas_limit, reservoir,
+            ))
         }
     };
 }
