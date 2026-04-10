@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/revme-v13.0.0...revme-v14.0.0) - 2026-04-10
+
+### Added
+
+- add EIP-8037 / TIP-1016 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406))
+- *(revme)* list all failed tests at the end with --keep-going ([#3491](https://github.com/bluealloy/revm/pull/3491))
+
+### Fixed
+
+- *(revme)* use transact state for debug "State after" output ([#3498](https://github.com/bluealloy/revm/pull/3498))
+- *(revme)* guard unconditional println in blockchaintest for --json mode ([#3500](https://github.com/bluealloy/revm/pull/3500))
+
+### Other
+
+- *(revme)* use alloy-trie instead of triehash ([#3488](https://github.com/bluealloy/revm/pull/3488))
+
 ## [13.0.0](https://github.com/bluealloy/revm/compare/revme-v12.0.0...revme-v13.0.0) - 2026-03-04
 
 ### Other

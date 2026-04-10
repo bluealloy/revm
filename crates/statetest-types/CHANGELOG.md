@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.1](https://github.com/bluealloy/revm/compare/revm-statetest-types-v16.0.0...revm-statetest-types-v16.0.1) - 2026-04-10
+
+### Other
+
+- remove unused bytecode dependency from revm-statetest-types ([#3485](https://github.com/bluealloy/revm/pull/3485))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-statetest-types-v15.0.0...revm-statetest-types-v16.0.0) - 2026-03-04
 
 ### Other
