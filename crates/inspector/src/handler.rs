@@ -82,9 +82,8 @@ where
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
         // Deduct regular initial gas from the transaction gas limit.
-        let regular_initial_gas =
-            init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
-        let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
+        // State gas is handled separately via the reservoir.
+        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_regular_gas();
         // Create first frame action.
         // Note: first_frame_input already handles initial state gas deduction
         // from the reservoir (or gas_limit deficit).

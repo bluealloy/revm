@@ -211,9 +211,7 @@ pub trait Handler {
     ) -> Result<FrameResult, Self::Error> {
         // Deduct regular initial gas from the transaction gas limit.
         // State gas is handled separately via the reservoir.
-        let regular_initial_gas =
-            init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
-        let gas_limit = evm.ctx().tx().gas_limit() - regular_initial_gas;
+        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_regular_gas();
         // Create first frame action
         // Note: first_frame_input now handles state gas deduction from the reservoir
         let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
@@ -288,26 +286,9 @@ pub trait Handler {
             ctx.tx(),
             ctx.cfg().spec().into(),
             ctx.cfg().is_eip7623_disabled(),
+            ctx.cfg().is_amsterdam_eip8037_enabled(),
+            ctx.cfg().tx_gas_limit_cap(),
         )?;
-
-        // EIP-8037: When state gas is enabled and gas_limit exceeds TX_MAX_GAS_LIMIT,
-        // the regular gas portion is capped at TX_MAX_GAS_LIMIT. Validate that
-        // max(intrinsic_regular_gas, floor_gas) fits within the cap.
-        // State gas is excluded as it uses its own reservoir.
-        if ctx.cfg().is_amsterdam_eip8037_enabled()
-            && ctx.tx().gas_limit() > ctx.cfg().tx_gas_limit_cap()
-        {
-            let cap = ctx.cfg().tx_gas_limit_cap();
-            let initial_regular_gas = gas.initial_total_gas - gas.initial_state_gas;
-            let effective_min = initial_regular_gas.max(gas.floor_gas);
-            if effective_min > cap {
-                return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
-                    gas_floor: effective_min,
-                    gas_limit: cap,
-                }
-                .into());
-            }
-        }
 
         Ok(gas)
     }
@@ -376,9 +357,9 @@ pub trait Handler {
         let regular_gas_cap = if init_and_floor_gas.initial_total_gas == 0 {
             u64::MAX
         } else if ctx.cfg().is_amsterdam_eip8037_enabled() {
-            let intrinsic_gas =
-                init_and_floor_gas.initial_total_gas - init_and_floor_gas.initial_state_gas;
-            ctx.cfg().tx_gas_limit_cap().saturating_sub(intrinsic_gas)
+            ctx.cfg()
+                .tx_gas_limit_cap()
+                .saturating_sub(init_and_floor_gas.initial_regular_gas())
         } else {
             ctx.cfg().tx_gas_limit_cap()
         };
