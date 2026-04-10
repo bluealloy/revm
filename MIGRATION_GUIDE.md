@@ -1,5 +1,5 @@
 
-# v106 tag
+# v106 tag (revm v37.0.0)
 
 * EIP-8037 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406)). Gas is now split into regular gas and state gas tracked via a reservoir. State gas draws from the reservoir first and spills into regular gas when exhausted. This affects gas accounting across the entire stack.
   * `Gas::spent()` and `record_cost()` deprecated. Use `total_gas_spent()`, `record_regular_cost()`, `record_state_cost()`.
