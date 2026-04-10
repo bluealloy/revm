@@ -1,4 +1,34 @@
 
+# v106 tag
+
+* EIP-8037 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406)). Gas is now split into regular gas and state gas tracked via a reservoir. State gas draws from the reservoir first and spills into regular gas when exhausted. This affects gas accounting across the entire stack.
+  * `Gas::spent()` and `record_cost()` deprecated. Use `total_gas_spent()`, `record_regular_cost()`, `record_state_cost()`.
+  * New `Gas::new_with_regular_gas_and_reservoir(limit, reservoir)` constructor for creating child frame gas with reservoir.
+  * `ResultGas::new()` deprecated (takes 3 params now). Use `ResultGas::new_with_state_gas(total_gas_spent, refunded, floor_gas, state_gas_spent)`.
+  * `ResultGas::spent()`/`used()` deprecated. Use `total_gas_spent()`/`tx_gas_used()`. New accessors: `state_gas_spent()`, `block_regular_gas_used()`, `block_state_gas_used()`.
+  * `ExecutionResult::gas_used()` deprecated, use `gas().tx_gas_used()`.
+  * `InitialAndFloorGas::initial_gas` field renamed to `initial_total_gas`. New fields added: `initial_state_gas` (state gas portion) and `eip7702_reservoir_refund` (refund for existing EIP-7702 authorities).
+  * `CallInputs` gained `reservoir: u64` field for propagating state gas from parent to child frames.
+  * `Interpreter::clear` takes 7 params (was 6), `EthFrame::clear` takes 11 (was 10) — both gained reservoir parameter.
+  * `Host` and `Cfg` traits gained required method `is_amsterdam_eip8037_enabled() -> bool`. Must be implemented on any custom types.
+  * `Handler::pre_execution` and `apply_eip7702_auth_list` gained `&mut InitialAndFloorGas` param to write back state gas and refund info.
+  * `Handler::first_frame_input` gained `&InitialAndFloorGas` param to compute the reservoir for the first frame.
+  * `validate_initial_tx_gas` takes 5 params (was 3) — added `is_amsterdam_eip8037_enabled` and `tx_gas_limit_cap`.
+  * `create_init_frame` takes 2 params (was 3), gained `CTX: ContextTr` generic. Reservoir is set by `first_frame_input` after creation.
+* `PrecompileError` restructured ([#3496](https://github.com/bluealloy/revm/pull/3496), [#3502](https://github.com/bluealloy/revm/pull/3502)). All specific error variants removed (`OutOfGas`, `Blake2*`, `Bn254*`, `Bls12381*`, `Kzg*`, `Secp256k1*`, `Other`, etc.). `PrecompileError` is now only for fatal/unrecoverable errors with two variants: `Fatal(String)` and `FatalAny(AnyError)`. Non-fatal failures (OOG, invalid input) are now expressed via `PrecompileStatus::Halt` in `PrecompileOutput`.
+  * `PrecompileError::other()`, `other_static()`, `is_oog()` removed.
+* `PrecompileOutput` fields changed: `gas_refunded` and `reverted` removed, new fields `status: PrecompileStatus`, `state_gas_used`, `reservoir`.
+  * `PrecompileOutput::new(gas_used, bytes, reservoir)` — added reservoir param.
+  * `PrecompileOutput::new_reverted()`/`reverted()` removed, use `PrecompileOutput::revert()` instead.
+  * `PrecompileFn` signature changed from `fn(&[u8], u64)` to `fn(&[u8], u64, u64)` — added reservoir param.
+  * `Precompile::execute()` also gained `reservoir: u64` param.
+* `EVMError::CustomAny(AnyError)` variant added ([#3502](https://github.com/bluealloy/revm/pull/3502)). Update exhaustive matches. `EVMError` also lost `UnwindSafe`/`RefUnwindSafe` auto traits.
+* `SELFDESTRUCT_LOG_TOPIC` constant removed from `revm-primitives` ([#3438](https://github.com/bluealloy/revm/pull/3438)).
+* `StateBuilder::with_background_transition_merge` removed (was a no-op) ([#3510](https://github.com/bluealloy/revm/pull/3510)). Simply remove any calls.
+* `CfgEnv::set_spec` deprecated ([#3550](https://github.com/bluealloy/revm/pull/3550)). Use the `spec` field directly.
+* `MemoryGas::record_new_len` and `memory_gas` function removed ([#3534](https://github.com/bluealloy/revm/pull/3534)).
+* Inspector `frame_start` and `frame_end` methods added with default impls ([#3518](https://github.com/bluealloy/revm/pull/3518)). Hooks into frame lifecycle; no action needed unless you want to use them.
+
 # v104 tag (revm v34.1.0)
 
 ## Bytecode flattened from enum to struct ([#3375](https://github.com/bluealloy/revm/pull/3375))
