@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: true
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
@@ -25,7 +25,7 @@ jobs:
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
-        run: cargo codspeed build --profile profiling --workspace --exclude '*example*' --exclude op-revm
+        run: cargo codspeed build --profile profiling --workspace --exclude '*example*' --exclude op-revm --features revm/tail_call
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@v3
         with:
