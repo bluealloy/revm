@@ -67,22 +67,6 @@ macro_rules! berlin_load_account {
     }};
 }
 
-/// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
-/// is exceeded.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! resize_memory {
-    ($interpreter:expr, $gas_params:expr, $offset:expr, $len:expr) => {
-        $crate::interpreter::resize_memory(
-            &mut $interpreter.gas,
-            &mut $interpreter.memory,
-            $gas_params,
-            $offset,
-            $len,
-        )?;
-    };
-}
-
 /// Pops n values from the stack. Fails the instruction if n values can't be popped.
 #[macro_export]
 #[collapse_debuginfo(yes)]
@@ -108,6 +92,12 @@ macro_rules! _count {
 #[collapse_debuginfo(yes)]
 macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
+        /*
+        let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
+            return Err($crate::InstructionResult::StackUnderflow);
+        };
+        */
+
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
         if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
             return Err($crate::InstructionResult::StackUnderflow);
@@ -121,7 +111,7 @@ macro_rules! popn_top {
 #[collapse_debuginfo(yes)]
 macro_rules! push {
     ($interpreter:expr, $x:expr) => {
-        if !($interpreter.stack.push($x)) {
+        if !$interpreter.stack.push($x) {
             return Err($crate::InstructionResult::StackOverflow);
         }
     };

@@ -1,3 +1,4 @@
+use crate::interpreter::resize_memory;
 use crate::interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr};
 use crate::{InstructionContext, InstructionExecResult};
 use context_interface::Host;
@@ -12,7 +13,13 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionExecResult {
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    resize_memory(
+        &mut context.interpreter.gas,
+        &mut context.interpreter.memory,
+        context.host.gas_params(),
+        offset,
+        32,
+    )?;
     *top =
         U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap();
     Ok(())
@@ -26,7 +33,9 @@ pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionExecResult {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), offset, 32)?;
     context
         .interpreter
         .memory
@@ -42,7 +51,9 @@ pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionExecResult {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 1);
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), offset, 1)?;
     context.interpreter.memory.set(offset, &[value.byte(0)]);
     Ok(())
 }
@@ -84,12 +95,9 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let dst = as_usize_or_fail!(context.interpreter, dst);
     let src = as_usize_or_fail!(context.interpreter, src);
     // Resize memory
-    resize_memory!(
-        context.interpreter,
-        context.host.gas_params(),
-        max(dst, src),
-        len
-    );
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), max(dst, src), len)?;
     // Copy memory in place
     context.interpreter.memory.copy(dst, src, len);
     Ok(())

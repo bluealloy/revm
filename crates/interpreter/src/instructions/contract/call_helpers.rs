@@ -42,10 +42,10 @@ pub fn resize_memory(
     let len = as_usize_or_fail!(interpreter, len);
     let offset = if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        resize_memory!(interpreter, gas_params, offset, len);
+        interpreter.resize_memory(gas_params, offset, len)?;
         offset
     } else {
-        usize::MAX //unrealistic value so we are sure it is not used
+        usize::MAX // unrealistic value so we are sure it is not used
     };
     Ok(offset..offset + len)
 }

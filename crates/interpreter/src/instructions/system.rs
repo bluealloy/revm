@@ -1,5 +1,5 @@
 use crate::{
-    interpreter::Interpreter,
+    interpreter::{resize_memory, Interpreter},
     interpreter_types::{
         InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
@@ -27,7 +27,13 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(context.interpreter, offset);
-        resize_memory!(context.interpreter, context.host.gas_params(), from, len);
+        resize_memory(
+            &mut context.interpreter.gas,
+            &mut context.interpreter.memory,
+            context.host.gas_params(),
+            from,
+            len,
+        )?;
         primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
     };
     *top = hash.into();
@@ -273,7 +279,7 @@ pub fn copy_cost_and_memory_resize(
         return Ok(None);
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    resize_memory!(interpreter, gas_params, memory_offset, len);
+    interpreter.resize_memory(gas_params, memory_offset, len)?;
 
     Ok(Some(memory_offset))
 }
