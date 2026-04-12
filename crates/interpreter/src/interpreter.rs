@@ -324,8 +324,15 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
+        #[cfg(feature = "tail_call")]
+        {
+            crate::instructions::tail_dispatch::run_tail_call(self, instruction_table, host);
+        }
+        #[cfg(not(feature = "tail_call"))]
+        {
+            while self.bytecode.is_not_end() {
+                self.step(instruction_table, host);
+            }
         }
         self.take_next_action()
     }

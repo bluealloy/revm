@@ -91,6 +91,7 @@ dev = [
 	"optional_eip7623",
 	"optional_no_base_fee",
 ]
+tail_call = ["handler/tail_call"]
 memory_limit = ["context/memory_limit", "interpreter/memory_limit"]
 optional_balance_check = ["context/optional_balance_check"]
 optional_block_gas_limit = ["context/optional_block_gas_limit"]

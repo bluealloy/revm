@@ -26,6 +26,7 @@ state.workspace = true
 
 # optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
+paste = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc"] }
@@ -51,3 +52,6 @@ serde = [
 arbitrary = ["std", "primitives/arbitrary"]
 # TODO : Should be set from Context or from crate that consumes this PR.
 memory_limit = []
+# Enable tail-call dispatch using nightly `become` + `extern "rust-preserve-none"`.
+# Requires nightly Rust.
+tail_call = ["dep:paste"]

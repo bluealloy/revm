@@ -3742,6 +3742,7 @@ dependencies = [
 name = "revm-interpreter"
 version = "35.0.0"
 dependencies = [
+ "paste",
  "revm-bytecode",
  "revm-context-interface",
  "revm-primitives",

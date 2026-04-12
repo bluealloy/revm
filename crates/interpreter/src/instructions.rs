@@ -27,6 +27,10 @@ pub mod tx_info;
 /// Utility functions and helpers for instruction implementation.
 pub mod utility;
 
+/// Tail-call dispatch using nightly `become` + `extern "rust-preserve-none"`.
+#[cfg(feature = "tail_call")]
+pub mod tail_dispatch;
+
 pub use context_interface::cfg::gas::{self, *};
 
 use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};

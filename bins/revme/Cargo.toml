@@ -45,6 +45,7 @@ default = ["map-foldhash"]
 gmp = ["revm/gmp"]
 p256-aws-lc-rs = ["revm/p256-aws-lc-rs"]
 map-foldhash = ["revm/map-foldhash"]
+tail_call = ["revm/tail_call"]
 
 [[bench]]
 name = "evm"

@@ -66,5 +66,7 @@ serde = [
 	"derive-where/serde",
 ]
 
+tail_call = ["interpreter/tail_call"]
+
 # Deprecated, please use `serde` feature instead.
 serde-json = ["serde"]
