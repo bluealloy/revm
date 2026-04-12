@@ -268,12 +268,12 @@ pub fn copy_cost_and_memory_resize(
     len: usize,
 ) -> Result<Option<usize>, InstructionResult> {
     // Safe to cast usize to u64
-    gas!(interpreter, gas_params.copy_cost(len), None);
+    gas!(interpreter, gas_params.copy_cost(len));
     if len == 0 {
         return Ok(None);
     }
-    let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
-    resize_memory!(interpreter, gas_params, memory_offset, len, None);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+    resize_memory!(interpreter, gas_params, memory_offset, len);
 
     Ok(Some(memory_offset))
 }

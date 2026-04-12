@@ -36,11 +36,6 @@ macro_rules! state_gas {
             return Err($crate::InstructionResult::OutOfGas);
         }
     }};
-    ($interpreter:expr, $gas:expr, $ret:expr) => {{
-        if !$interpreter.gas.record_state_cost($gas) {
-            return Err($crate::InstructionResult::OutOfGas);
-        }
-    }};
 }
 
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
@@ -52,21 +47,13 @@ macro_rules! gas {
             return Err($crate::InstructionResult::OutOfGas);
         }
     };
-    ($interpreter:expr, $gas:expr, $ret:expr) => {
-        if !$interpreter.gas.record_regular_cost($gas) {
-            return Err($crate::InstructionResult::OutOfGas);
-        }
-    };
 }
 
 /// Loads account and account berlin gas cost accounting.
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! berlin_load_account {
-    ($context:expr, $address:expr, $load_code:expr) => {
-        $crate::berlin_load_account!($context, $address, $load_code, ())
-    };
-    ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
+    ($context:expr, $address:expr, $load_code:expr) => {{
         let cold_load_gas = $context.host.gas_params().cold_account_additional_cost();
         let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
         let account =
@@ -86,9 +73,6 @@ macro_rules! berlin_load_account {
 #[collapse_debuginfo(yes)]
 macro_rules! resize_memory {
     ($interpreter:expr, $gas_params:expr, $offset:expr, $len:expr) => {
-        $crate::resize_memory!($interpreter, $gas_params, $offset, $len, ())
-    };
-    ($interpreter:expr, $gas_params:expr, $offset:expr, $len:expr, $ret:expr) => {
         $crate::interpreter::resize_memory(
             &mut $interpreter.gas,
             &mut $interpreter.memory,
@@ -103,7 +87,7 @@ macro_rules! resize_memory {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn {
-    ([ $($x:ident),* ],$interpreter:expr $(,$ret:expr)? ) => {
+    ([ $($x:ident),* ],$interpreter:expr) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
             return Err($crate::InstructionResult::StackUnderflow);
         };
@@ -123,14 +107,7 @@ macro_rules! _count {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! popn_top {
-    ([ $($x:ident),* ], $top:ident, $interpreter:expr $(,$ret:expr)? ) => {
-        /*
-        let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
-            $interpreter.halt($crate::InstructionResult::StackUnderflow);
-            return $($ret)?;
-        };
-        */
-
+    ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
         if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
             return Err($crate::InstructionResult::StackUnderflow);
@@ -143,7 +120,7 @@ macro_rules! popn_top {
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! push {
-    ($interpreter:expr, $x:expr $(,$ret:item)?) => {
+    ($interpreter:expr, $x:expr) => {
         if !($interpreter.stack.push($x)) {
             return Err($crate::InstructionResult::StackOverflow);
         }
@@ -168,46 +145,15 @@ macro_rules! as_usize_saturated {
     };
 }
 
-/// Converts a `U256` value to a `isize`, saturating to `isize::MAX` if the value is too large.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! as_isize_saturated {
-    ($v:expr) => {
-        isize::try_from($v).unwrap_or(isize::MAX)
-    };
-}
-
 /// Converts a `U256` value to a `usize`, failing the instruction if the value is too large.
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! as_usize_or_fail {
     ($interpreter:expr, $v:expr) => {
-        $crate::as_usize_or_fail_ret!($interpreter, $v, ())
-    };
-    ($interpreter:expr, $v:expr, $reason:expr) => {
-        $crate::as_usize_or_fail_ret!($interpreter, $v, $reason, ())
-    };
-}
-
-/// Converts a `U256` value to a `usize` and returns `ret`,
-/// failing the instruction if the value is too large.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! as_usize_or_fail_ret {
-    ($interpreter:expr, $v:expr, $ret:expr) => {
-        $crate::as_usize_or_fail_ret!(
-            $interpreter,
-            $v,
-            $crate::InstructionResult::InvalidOperandOOG,
-            $ret
-        )
-    };
-
-    ($interpreter:expr, $v:expr, $reason:expr, $ret:expr) => {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
-                    return Err($reason);
+                    return Err($crate::InstructionResult::InvalidOperandOOG);
                 }
                 x[0] as usize
             }
