@@ -69,23 +69,14 @@ macro_rules! berlin_load_account {
     ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
         let cold_load_gas = $context.host.gas_params().cold_account_additional_cost();
         let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
-        match $context
-            .host
-            .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)
-        {
-            Ok(account) => {
-                if account.is_cold {
-                    $crate::gas!($context.interpreter, cold_load_gas);
-                }
-                account
-            }
-            Err(LoadError::ColdLoadSkipped) => {
-                return Err($crate::InstructionResult::OutOfGas);
-            }
-            Err(LoadError::DBError) => {
-                return Err($crate::InstructionResult::FatalExternalError);
-            }
+        let account =
+            $context
+                .host
+                .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)?;
+        if account.is_cold {
+            $crate::gas!($context.interpreter, cold_load_gas);
         }
+        account
     }};
 }
 

@@ -3,7 +3,6 @@ use crate::{
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
     Host, InstructionExecResult, InstructionResult,
 };
-use context_interface::host::LoadError;
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -25,12 +24,9 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
         let account = berlin_load_account!(context, address, false);
         *top = account.balance;
     } else {
-        let Ok(account) = context
+        let account = context
             .host
-            .load_account_info_skip_cold_load(address, false, false)
-        else {
-            return Err(InstructionResult::FatalExternalError);
-        };
+            .load_account_info_skip_cold_load(address, false, false)?;
         *top = account.balance;
     };
     Ok(())
@@ -42,12 +38,10 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionExecResult {
     check!(context.interpreter, ISTANBUL);
 
-    let Some(balance) = context
+    let balance = context
         .host
         .balance(context.interpreter.input.target_address())
-    else {
-        return Err(InstructionResult::FatalExternalError);
-    };
+        .ok_or(InstructionResult::FatalExternalError)?;
     push!(context.interpreter, balance.data);
     Ok(())
 }
@@ -67,12 +61,9 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
         // safe to unwrap because we are loading code
         *top = U256::from(account.code.as_ref().unwrap().len());
     } else {
-        let Ok(account) = context
+        let account = context
             .host
-            .load_account_info_skip_cold_load(address, true, false)
-        else {
-            return Err(InstructionResult::FatalExternalError);
-        };
+            .load_account_info_skip_cold_load(address, true, false)?;
         // safe to unwrap because we are loading code
         *top = U256::from(account.code.as_ref().unwrap().len());
     }
@@ -91,13 +82,9 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let account = if spec_id.is_enabled_in(BERLIN) {
         berlin_load_account!(context, address, false)
     } else {
-        let Ok(account) = context
+        context
             .host
-            .load_account_info_skip_cold_load(address, false, false)
-        else {
-            return Err(InstructionResult::FatalExternalError);
-        };
-        account
+            .load_account_info_skip_cold_load(address, false, false)?
     };
     // if account is empty, code hash is zero
     let code_hash = if account.is_empty() {
@@ -147,10 +134,11 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         let account = berlin_load_account!(context, address, true);
         account.code.as_ref().unwrap().original_bytes()
     } else {
-        let Some(code) = context.host.load_account_code(address) else {
-            return Err(InstructionResult::FatalExternalError);
-        };
-        code.data
+        context
+            .host
+            .load_account_code(address)
+            .ok_or(InstructionResult::FatalExternalError)?
+            .data
     };
 
     let code_offset_usize = min(as_usize_saturated!(code_offset), code.len());
@@ -189,9 +177,10 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
-        let Some(hash) = context.host.block_hash(as_u64_saturated!(requested_number)) else {
-            return Err(InstructionResult::FatalExternalError);
-        };
+        let hash = context
+            .host
+            .block_hash(as_u64_saturated!(requested_number))
+            .ok_or(InstructionResult::FatalExternalError)?;
         U256::from_be_bytes(hash.0)
     } else {
         U256::ZERO
@@ -220,9 +209,10 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
         }
         *index = storage.data;
     } else {
-        let Some(storage) = context.host.sload(target, *index) else {
-            return Err(InstructionResult::FatalExternalError);
-        };
+        let storage = context
+            .host
+            .sload(target, *index)
+            .ok_or(InstructionResult::FatalExternalError)?;
         *index = storage.data;
     };
     Ok(())
@@ -256,19 +246,14 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let state_load = if spec_id.is_enabled_in(BERLIN) {
         let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
-        let res = context
+        context
             .host
-            .sstore_skip_cold_load(target, index, value, skip_cold);
-        match res {
-            Ok(load) => load,
-            Err(LoadError::ColdLoadSkipped) => return Err(InstructionResult::OutOfGas),
-            Err(LoadError::DBError) => return Err(InstructionResult::FatalExternalError),
-        }
+            .sstore_skip_cold_load(target, index, value, skip_cold)?
     } else {
-        let Some(load) = context.host.sstore(target, index, value) else {
-            return Err(InstructionResult::FatalExternalError);
-        };
-        load
+        context
+            .host
+            .sstore(target, index, value)
+            .ok_or(InstructionResult::FatalExternalError)?
     };
 
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
@@ -380,15 +365,11 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let cold_load_gas = context.host.gas_params().selfdestruct_cold_cost();
 
     let skip_cold_load = context.interpreter.gas.remaining() < cold_load_gas;
-    let res = match context.host.selfdestruct(
+    let res = context.host.selfdestruct(
         context.interpreter.input.target_address(),
         target,
         skip_cold_load,
-    ) {
-        Ok(res) => res,
-        Err(LoadError::ColdLoadSkipped) => return Err(InstructionResult::OutOfGas),
-        Err(LoadError::DBError) => return Err(InstructionResult::FatalExternalError),
-    };
+    )?;
 
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec.is_enabled_in(SpecId::SPURIOUS_DRAGON) {

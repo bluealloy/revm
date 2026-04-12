@@ -113,18 +113,14 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 ) -> Result<(u64, u64, Bytecode, B256), InstructionResult> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
-    match load_account_delegated(
+    Ok(load_account_delegated(
         context.host,
         context.interpreter.runtime_flag.spec_id(),
         remaining_gas,
         to,
         transfers_value,
         create_empty_account,
-    ) {
-        Ok(out) => Ok(out),
-        Err(LoadError::ColdLoadSkipped) => Err(InstructionResult::OutOfGas),
-        Err(LoadError::DBError) => Err(InstructionResult::FatalExternalError),
-    }
+    )?)
 }
 
 /// Loads accounts and its delegate account.
