@@ -244,7 +244,7 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
-        interpreter.step(instructions, context);
+        let done = interpreter.step(instructions, context).is_break();
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
@@ -252,7 +252,7 @@ where
 
         inspector.step_end(interpreter, context);
 
-        if interpreter.bytecode.is_end() {
+        if done || interpreter.bytecode.is_end() {
             break;
         }
     }

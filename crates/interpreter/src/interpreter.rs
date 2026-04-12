@@ -9,6 +9,8 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
+use std::ops::ControlFlow;
+
 use context_interface::cfg::GasParams;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
@@ -183,14 +185,13 @@ impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
 impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Performs EVM memory resize.
     #[inline]
-    #[must_use]
-    pub fn resize_memory(&mut self, gas_params: &GasParams, offset: usize, len: usize) -> bool {
-        if let Err(result) = resize_memory(&mut self.gas, &mut self.memory, gas_params, offset, len)
-        {
-            self.halt(result);
-            return false;
-        }
-        true
+    pub fn resize_memory(
+        &mut self,
+        gas_params: &GasParams,
+        offset: usize,
+        len: usize,
+    ) -> Result<(), InstructionResult> {
+        resize_memory(&mut self.gas, &mut self.memory, gas_params, offset, len)
     }
 
     /// Takes the next action from the control and returns it.
@@ -208,6 +209,9 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     #[cold]
     #[inline(never)]
     pub fn halt(&mut self, result: InstructionResult) {
+        if result == InstructionResult::OutOfGas {
+            self.gas.spend_all();
+        }
         self.bytecode
             .set_action(InterpreterAction::new_halt(result, self.gas));
     }
@@ -286,7 +290,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
-    ) {
+    ) -> ControlFlow<()> {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
@@ -298,13 +302,18 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
 
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
-            return self.halt_oog();
+            self.halt_oog();
+            return ControlFlow::Break(());
         }
         let context = InstructionContext {
             interpreter: self,
             host,
         };
-        instruction.execute(context);
+        if let Err(result) = instruction.execute(context) {
+            self.halt(result);
+            return ControlFlow::Break(());
+        }
+        ControlFlow::Continue(())
     }
 
     /// Executes the instruction at the current instruction pointer.
@@ -313,8 +322,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// This uses dummy Host.
     #[inline]
-    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        self.step(instruction_table, &mut DummyHost::default());
+    pub fn step_dummy(
+        &mut self,
+        instruction_table: &InstructionTable<IW, DummyHost>,
+    ) -> ControlFlow<()> {
+        self.step(instruction_table, &mut DummyHost::default())
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -324,9 +336,8 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
-        }
+        while self.step(instruction_table, host).is_continue() {}
+        debug_assert!(self.bytecode.is_end());
         self.take_next_action()
     }
 }

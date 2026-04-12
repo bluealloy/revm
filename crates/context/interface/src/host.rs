@@ -13,10 +13,10 @@ use state::Bytecode;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum LoadError {
-    /// Database error.
-    DBError,
     /// Cold load skipped.
     ColdLoadSkipped,
+    /// Database error.
+    DBError,
 }
 
 /// Host trait with all methods that are needed by the Interpreter.

@@ -1,7 +1,7 @@
 use crate::{
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    InstructionContext,
+    InstructionContext, InstructionResult,
 };
 use context_interface::{cfg::GasParams, host::LoadError, Host};
 use core::{cmp::min, ops::Range};
@@ -16,8 +16,8 @@ use state::Bytecode;
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     gas_params: &GasParams,
-) -> Option<(Range<usize>, Range<usize>)> {
-    popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
+) -> Result<(Range<usize>, Range<usize>), InstructionResult> {
+    popn!([in_offset, in_len, out_offset, out_len], interpreter);
 
     let mut in_range = resize_memory(interpreter, gas_params, in_offset, in_len)?;
 
@@ -27,7 +27,7 @@ pub fn get_memory_input_and_out_ranges(
     }
 
     let ret_range = resize_memory(interpreter, gas_params, out_offset, out_len)?;
-    Some((in_range, ret_range))
+    Ok((in_range, ret_range))
 }
 
 /// Resize memory and return range of memory.
@@ -38,16 +38,16 @@ pub fn resize_memory(
     gas_params: &GasParams,
     offset: U256,
     len: U256,
-) -> Option<Range<usize>> {
-    let len = as_usize_or_fail_ret!(interpreter, len, None);
+) -> Result<Range<usize>, InstructionResult> {
+    let len = as_usize_or_fail!(interpreter, len);
     let offset = if len != 0 {
-        let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        resize_memory!(interpreter, gas_params, offset, len, None);
+        let offset = as_usize_or_fail!(interpreter, offset);
+        resize_memory!(interpreter, gas_params, offset, len);
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
     };
-    Some(offset..offset + len)
+    Ok(offset..offset + len)
 }
 
 /// Calculates gas cost and limit for call instructions.
@@ -58,13 +58,12 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     transfers_value: bool,
     create_empty_account: bool,
     stack_gas_limit: u64,
-) -> Option<(u64, Bytecode, B256)> {
+) -> Result<(u64, Bytecode, B256), InstructionResult> {
     // Transfer value cost
     if transfers_value {
         gas!(
             context.interpreter,
-            context.host.gas_params().transfer_value_cost(),
-            None
+            context.host.gas_params().transfer_value_cost()
         );
     }
 
@@ -74,10 +73,10 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     let interpreter = &mut context.interpreter;
 
     // deduct dynamic gas.
-    gas!(interpreter, gas, None);
+    gas!(interpreter, gas);
 
     // deduct state gas (EIP-8037) if any.
-    state_gas!(interpreter, state_gas_cost, None);
+    state_gas!(interpreter, state_gas_cost);
 
     let interpreter = &mut context.interpreter;
     let host = &mut context.host;
@@ -92,14 +91,14 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     } else {
         stack_gas_limit
     };
-    gas!(interpreter, gas_limit, None);
+    gas!(interpreter, gas_limit);
 
     // Add call stipend if there is value to be transferred.
     if transfers_value {
         gas_limit = gas_limit.saturating_add(host.gas_params().call_stipend());
     }
 
-    Some((gas_limit, bytecode, code_hash))
+    Ok((gas_limit, bytecode, code_hash))
 }
 
 /// Loads accounts and its delegate account.
@@ -111,7 +110,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Option<(u64, u64, Bytecode, B256)> {
+) -> Result<(u64, u64, Bytecode, B256), InstructionResult> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
     match load_account_delegated(
@@ -122,15 +121,10 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
         transfers_value,
         create_empty_account,
     ) {
-        Ok(out) => return Some(out),
-        Err(LoadError::ColdLoadSkipped) => {
-            context.interpreter.halt_oog();
-        }
-        Err(LoadError::DBError) => {
-            context.interpreter.halt_fatal();
-        }
+        Ok(out) => Ok(out),
+        Err(LoadError::ColdLoadSkipped) => Err(InstructionResult::OutOfGas),
+        Err(LoadError::DBError) => Err(InstructionResult::FatalExternalError),
     }
-    None
 }
 
 /// Loads accounts and its delegate account.

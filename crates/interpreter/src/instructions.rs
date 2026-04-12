@@ -29,20 +29,23 @@ pub mod utility;
 
 pub use context_interface::cfg::gas::{self, *};
 
-use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
+use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext, InstructionExecResult};
 use primitives::hardfork::SpecId;
 
 /// EVM opcode function signature.
 #[derive(Debug)]
 pub struct Instruction<W: InterpreterTypes, H: ?Sized> {
-    fn_: fn(InstructionContext<'_, H, W>),
+    fn_: fn(InstructionContext<'_, H, W>) -> InstructionExecResult,
     static_gas: u64,
 }
 
 impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
     /// Creates a new instruction with the given function and static gas cost.
     #[inline]
-    pub const fn new(fn_: fn(InstructionContext<'_, H, W>), static_gas: u64) -> Self {
+    pub const fn new(
+        fn_: fn(InstructionContext<'_, H, W>) -> InstructionExecResult,
+        static_gas: u64,
+    ) -> Self {
         Self { fn_, static_gas }
     }
 
@@ -57,7 +60,7 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
 
     /// Executes the instruction with the given context.
     #[inline(always)]
-    pub fn execute(self, ctx: InstructionContext<'_, H, W>) {
+    pub fn execute(self, ctx: InstructionContext<'_, H, W>) -> InstructionExecResult {
         (self.fn_)(ctx)
     }
 

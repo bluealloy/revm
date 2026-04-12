@@ -46,6 +46,7 @@ pub fn main() {
             |ctx: InstructionContext<'_, _, EthInterpreter>| {
                 let offset = ctx.interpreter.bytecode.read_i16();
                 ctx.interpreter.bytecode.relative_jump(offset as isize);
+                Ok(())
             },
             0,
         ),

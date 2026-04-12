@@ -1,7 +1,7 @@
 use crate::{
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    Host, InstructionResult,
+    Host, InstructionExecResult, InstructionResult,
 };
 use context_interface::host::LoadError;
 use core::cmp::min;
@@ -15,7 +15,9 @@ use crate::InstructionContext;
 /// Implements the BALANCE instruction.
 ///
 /// Gets the balance of the given account.
-pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
@@ -27,25 +29,27 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
             .host
             .load_account_info_skip_cold_load(address, false, false)
         else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         *top = account.balance;
     };
+    Ok(())
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
 pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     check!(context.interpreter, ISTANBUL);
 
     let Some(balance) = context
         .host
         .balance(context.interpreter.input.target_address())
     else {
-        return context.interpreter.halt_fatal();
+        return Err(InstructionResult::FatalExternalError);
     };
     push!(context.interpreter, balance.data);
+    Ok(())
 }
 
 /// Implements the EXTCODESIZE instruction.
@@ -53,7 +57,7 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Gets the size of an account's code.
 pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
 
@@ -67,17 +71,18 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .host
             .load_account_info_skip_cold_load(address, true, false)
         else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         // safe to unwrap because we are loading code
         *top = U256::from(account.code.as_ref().unwrap().len());
     }
+    Ok(())
 }
 
 /// EIP-1052: EXTCODEHASH opcode
 pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
@@ -90,7 +95,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .host
             .load_account_info_skip_cold_load(address, false, false)
         else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         account
     };
@@ -101,6 +106,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
         account.code_hash
     };
     *top = code_hash.into_u256();
+    Ok(())
 }
 
 /// Implements the EXTCODECOPY instruction.
@@ -108,7 +114,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Copies a portion of an account's code to memory.
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     popn!(
         [address, memory_offset, code_offset, len_u256],
         context.interpreter
@@ -142,7 +148,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         account.code.as_ref().unwrap().original_bytes()
     } else {
         let Some(code) = context.host.load_account_code(address) else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         code.data
     };
@@ -155,6 +161,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .interpreter
         .memory
         .set_data(memory_offset_usize, code_offset_usize, len, &code);
+    Ok(())
 }
 
 /// Implements the BLOCKHASH instruction.
@@ -162,7 +169,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Gets the hash of one of the 256 most recent complete blocks.
 pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     popn_top!([], number, context.interpreter);
 
     let requested_number = *number;
@@ -170,7 +177,7 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let Some(diff) = block_number.checked_sub(requested_number) else {
         *number = U256::ZERO;
-        return;
+        return Ok(());
     };
 
     let diff = as_u64_saturated!(diff);
@@ -178,23 +185,26 @@ pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     // blockhash should push zero if number is same as current block number.
     if diff == 0 {
         *number = U256::ZERO;
-        return;
+        return Ok(());
     }
 
     *number = if diff <= BLOCK_HASH_HISTORY {
         let Some(hash) = context.host.block_hash(as_u64_saturated!(requested_number)) else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         U256::from_be_bytes(hash.0)
     } else {
         U256::ZERO
-    }
+    };
+    Ok(())
 }
 
 /// Implements the SLOAD instruction.
 ///
 /// Loads a word from storage.
-pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     popn_top!([], index, context.interpreter);
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let target = context.interpreter.input.target_address();
@@ -202,30 +212,28 @@ pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     if spec_id.is_enabled_in(BERLIN) {
         let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
         let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
-        let res = context.host.sload_skip_cold_load(target, *index, skip_cold);
-        match res {
-            Ok(storage) => {
-                if storage.is_cold {
-                    gas!(context.interpreter, additional_cold_cost);
-                }
-
-                *index = storage.data;
-            }
-            Err(LoadError::ColdLoadSkipped) => context.interpreter.halt_oog(),
-            Err(LoadError::DBError) => context.interpreter.halt_fatal(),
+        let storage = context
+            .host
+            .sload_skip_cold_load(target, *index, skip_cold)?;
+        if storage.is_cold {
+            gas!(context.interpreter, additional_cold_cost);
         }
+        *index = storage.data;
     } else {
         let Some(storage) = context.host.sload(target, *index) else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         *index = storage.data;
     };
+    Ok(())
 }
 
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
-pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
@@ -237,10 +245,7 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     if spec_id.is_enabled_in(ISTANBUL)
         && context.interpreter.gas.remaining() <= context.host.gas_params().call_stipend()
     {
-        context
-            .interpreter
-            .halt(InstructionResult::ReentrancySentryOOG);
-        return;
+        return Err(InstructionResult::ReentrancySentryOOG);
     }
 
     gas!(
@@ -256,12 +261,12 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             .sstore_skip_cold_load(target, index, value, skip_cold);
         match res {
             Ok(load) => load,
-            Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
-            Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
+            Err(LoadError::ColdLoadSkipped) => return Err(InstructionResult::OutOfGas),
+            Err(LoadError::DBError) => return Err(InstructionResult::FatalExternalError),
         }
     } else {
         let Some(load) = context.host.sstore(target, index, value) else {
-            return context.interpreter.halt_fatal();
+            return Err(InstructionResult::FatalExternalError);
         };
         load
     };
@@ -293,11 +298,14 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             .gas_params()
             .sstore_refund(is_istanbul, &state_load.data),
     );
+    Ok(())
 }
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     check!(context.interpreter, CANCUN);
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
@@ -305,17 +313,21 @@ pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
     context
         .host
         .tstore(context.interpreter.input.target_address(), index, value);
+    Ok(())
 }
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     check!(context.interpreter, CANCUN);
     popn_top!([], index, context.interpreter);
 
     *index = context
         .host
         .tload(context.interpreter.input.target_address(), *index);
+    Ok(())
 }
 
 /// Implements the LOG0-LOG4 instructions.
@@ -323,7 +335,7 @@ pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
 /// Appends log record with N topics.
 pub fn log<const N: usize, H: Host + ?Sized>(
     context: InstructionContext<'_, H, impl InterpreterTypes>,
-) {
+) -> InstructionExecResult {
     require_non_staticcall!(context.interpreter);
 
     popn!([offset, len], context.interpreter);
@@ -341,8 +353,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
     };
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
-        context.interpreter.halt_underflow();
-        return;
+        return Err(InstructionResult::StackUnderflow);
     };
 
     let log = Log {
@@ -352,6 +363,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     };
 
     context.host.log(log);
+    Ok(())
 }
 
 /// Implements the SELFDESTRUCT instruction.
@@ -359,7 +371,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
 /// Halt execution and register account for later deletion.
 pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     require_non_staticcall!(context.interpreter);
     popn!([target], context.interpreter);
     let target = target.into_address();
@@ -374,8 +386,8 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
         skip_cold_load,
     ) {
         Ok(res) => res,
-        Err(LoadError::ColdLoadSkipped) => return context.interpreter.halt_oog(),
-        Err(LoadError::DBError) => return context.interpreter.halt_fatal(),
+        Err(LoadError::ColdLoadSkipped) => return Err(InstructionResult::OutOfGas),
+        Err(LoadError::DBError) => return Err(InstructionResult::FatalExternalError),
     };
 
     // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -408,5 +420,5 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .record_refund(context.host.gas_params().selfdestruct_refund());
     }
 
-    context.interpreter.halt(InstructionResult::SelfDestruct);
+    Err(InstructionResult::SelfDestruct)
 }

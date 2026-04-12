@@ -1,8 +1,15 @@
 use context_interface::{
+    host::LoadError,
     journaled_state::TransferError,
     result::{HaltReason, OutOfGasError, SuccessReason},
 };
 use core::fmt::Debug;
+
+/// Result type returned by instruction implementations.
+///
+/// `Ok(())` means the instruction completed normally and execution should continue.
+/// `Err(result)` means execution should halt with the given [`InstructionResult`].
+pub type InstructionExecResult = Result<(), InstructionResult>;
 
 /// Result of executing an EVM instruction.
 ///
@@ -135,6 +142,15 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
             HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
+        }
+    }
+}
+
+impl From<LoadError> for InstructionResult {
+    fn from(error: LoadError) -> Self {
+        match error {
+            LoadError::ColdLoadSkipped => Self::OutOfGas,
+            LoadError::DBError => Self::FatalExternalError,
         }
     }
 }

@@ -1,15 +1,18 @@
 use crate::{
     interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
-    Host,
+    Host, InstructionExecResult,
 };
 use primitives::hardfork::SpecId::*;
 
 use crate::InstructionContext;
 
 /// EIP-1344: ChainID opcode
-pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     check!(context.interpreter, ISTANBUL);
     push!(context.interpreter, context.host.chain_id());
+    Ok(())
 }
 
 /// Implements the COINBASE instruction.
@@ -17,11 +20,12 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCon
 /// Pushes the current block's beneficiary address onto the stack.
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     push!(
         context.interpreter,
         context.host.beneficiary().into_word().into()
     );
+    Ok(())
 }
 
 /// Implements the TIMESTAMP instruction.
@@ -29,8 +33,9 @@ pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Pushes the current block's timestamp onto the stack.
 pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     push!(context.interpreter, context.host.timestamp());
+    Ok(())
 }
 
 /// Implements the NUMBER instruction.
@@ -38,8 +43,9 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Pushes the current block number onto the stack.
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     push!(context.interpreter, context.host.block_number());
+    Ok(())
 }
 
 /// Implements the DIFFICULTY/PREVRANDAO instruction.
@@ -47,7 +53,7 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Pushes the block difficulty (pre-merge) or prevrandao (post-merge) onto the stack.
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     if context
         .interpreter
         .runtime_flag
@@ -59,6 +65,7 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         push!(context.interpreter, context.host.difficulty());
     }
+    Ok(())
 }
 
 /// Implements the GASLIMIT instruction.
@@ -66,28 +73,34 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Pushes the current block's gas limit onto the stack.
 pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     push!(context.interpreter, context.host.gas_limit());
+    Ok(())
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    context: InstructionContext<'_, H, WIRE>,
+) -> InstructionExecResult {
     check!(context.interpreter, LONDON);
     push!(context.interpreter, context.host.basefee());
+    Ok(())
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
 pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     check!(context.interpreter, CANCUN);
     push!(context.interpreter, context.host.blob_gasprice());
+    Ok(())
 }
 
 /// EIP-7843: SLOTNUM opcode
 pub fn slot_num<WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
-) {
+) -> InstructionExecResult {
     check!(context.interpreter, AMSTERDAM);
     push!(context.interpreter, context.host.slot_num());
+    Ok(())
 }
