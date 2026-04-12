@@ -121,7 +121,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         .set_action(InterpreterAction::NewFrame(FrameInput::Create(Box::new(
             create_inputs,
         ))));
-    Ok(())
+    Err(InstructionResult::Suspend)
 }
 
 /// Implements the CALL instruction.
@@ -165,7 +165,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
-    Ok(())
+    Err(InstructionResult::Suspend)
 }
 
 /// Implements the CALLCODE instruction.
@@ -205,7 +205,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
-    Ok(())
+    Err(InstructionResult::Suspend)
 }
 
 /// Implements the DELEGATECALL instruction.
@@ -245,7 +245,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
-    Ok(())
+    Err(InstructionResult::Suspend)
 }
 
 /// Implements the STATICCALL instruction.
@@ -285,5 +285,5 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
                 reservoir: context.interpreter.gas.reservoir(),
             },
         ))));
-    Ok(())
+    Err(InstructionResult::Suspend)
 }

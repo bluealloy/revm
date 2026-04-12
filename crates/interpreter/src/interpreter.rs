@@ -310,9 +310,16 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             host,
         };
         if let Err(result) = instruction.execute(context) {
-            self.halt(result);
+            if self.bytecode.action().is_none() {
+                self.halt(result);
+            }
             return ControlFlow::Break(());
         }
+        debug_assert!(
+            self.bytecode.is_not_end(),
+            "should've broken above: {:#?}",
+            self.bytecode.action(),
+        );
         ControlFlow::Continue(())
     }
 

@@ -71,10 +71,10 @@ pub fn pc<WIRE: InterpreterTypes, H: ?Sized>(
     Ok(())
 }
 
-#[inline]
 /// Internal helper function for return operations.
 ///
 /// Handles memory data retrieval and sets the return action.
+#[inline]
 fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     gas_params: &GasParams,
@@ -97,7 +97,7 @@ fn return_inner(
             output,
             interpreter.gas,
         ));
-    Ok(())
+    Err(instruction_result)
 }
 
 /// Implements the RETURN instruction.
@@ -110,8 +110,7 @@ pub fn ret<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter,
         context.host.gas_params(),
         InstructionResult::Return,
-    )?;
-    Ok(())
+    )
 }
 
 /// EIP-140: REVERT instruction
@@ -123,8 +122,7 @@ pub fn revert<WIRE: InterpreterTypes, H: Host + ?Sized>(
         context.interpreter,
         context.host.gas_params(),
         InstructionResult::Revert,
-    )?;
-    Ok(())
+    )
 }
 
 /// Stop opcode. This opcode halts the execution.
