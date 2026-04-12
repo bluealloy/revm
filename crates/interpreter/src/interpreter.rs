@@ -9,9 +9,9 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
-use std::ops::ControlFlow;
-
 use context_interface::cfg::GasParams;
+use core::ops::ControlFlow;
+
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
