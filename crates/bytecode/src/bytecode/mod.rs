@@ -206,7 +206,7 @@ impl Bytecode {
     /// # Safety
     ///
     /// `bytecode` must satisfy the same padding invariants produced by
-    /// [`analyze_legacy`]. In particular, execution must never cause the
+    /// `analyze_legacy`. In particular, execution must never cause the
     /// interpreter to read past the backing allocation when decoding opcode
     /// immediates (`PUSH1`–`PUSH32` via `read_slice`, and `DUPN`/`SWAPN`/
     /// `EXCHANGE` via `read_u8`).
