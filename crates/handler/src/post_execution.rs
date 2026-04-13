@@ -61,6 +61,11 @@ pub fn reimburse_caller<CTX: ContextTr>(
     gas: &Gas,
     additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
+    // If fee charge was disabled (e.g. eth_call simulations), no gas was
+    // deducted from the caller upfront so there is nothing to reimburse.
+    if context.cfg().is_fee_charge_disabled() {
+        return Ok(());
+    }
     let basefee = context.block().basefee() as u128;
     let caller = context.tx().caller();
     let effective_gas_price = context.tx().effective_gas_price(basefee);
@@ -85,6 +90,11 @@ pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
 ) -> Result<(), <CTX::Db as Database>::Error> {
+    // If fee charge was disabled (e.g. eth_call simulations), the caller was
+    // never charged for gas so there are no fees to transfer to the beneficiary.
+    if context.cfg().is_fee_charge_disabled() {
+        return Ok(());
+    }
     let (block, tx, cfg, journal, _, _) = context.all_mut();
     let basefee = block.basefee() as u128;
     let effective_gas_price = tx.effective_gas_price(basefee);
