@@ -3,7 +3,6 @@
 /// Extended bytecode functionality.
 pub mod ext_bytecode;
 mod input;
-mod loop_control;
 mod return_data;
 mod runtime_flags;
 mod shared_memory;
