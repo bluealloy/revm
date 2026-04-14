@@ -223,6 +223,19 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         ));
     }
 
+    /// Halt the interpreter due to a [`LoadError`].
+    ///
+    /// [`LoadError::ColdLoadSkipped`] results in an out-of-gas error,
+    /// [`LoadError::DBError`] results in a fatal error.
+    #[cold]
+    #[inline(never)]
+    pub fn halt_load_error(&mut self, err: context_interface::host::LoadError) {
+        match err {
+            context_interface::host::LoadError::ColdLoadSkipped => self.halt_oog(),
+            context_interface::host::LoadError::DBError => self.halt_fatal(),
+        }
+    }
+
     /// Halt the interpreter with an out-of-gas error.
     #[cold]
     #[inline(never)]

@@ -1,9 +1,9 @@
 use crate::{
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    Host, InstructionResult,
+    Gas, Host, InstructionResult,
 };
-use context_interface::host::LoadError;
+use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -12,25 +12,35 @@ use primitives::{
 
 use crate::InstructionContext;
 
+/// Loads an account, handling cold load gas accounting.
+///
+/// Pre-Berlin, `cold_account_additional_cost` is 0, so the cold load logic is a no-op.
+fn load_account<'a, H: Host + ?Sized>(
+    gas: &mut Gas,
+    host: &'a mut H,
+    address: primitives::Address,
+    load_code: bool,
+) -> Result<AccountInfoLoad<'a>, LoadError> {
+    let cold_load_gas = host.gas_params().cold_account_additional_cost();
+    let skip_cold_load = gas.remaining() < cold_load_gas;
+    let account = host.load_account_info_skip_cold_load(address, load_code, skip_cold_load)?;
+    if account.is_cold && !gas.record_regular_cost(cold_load_gas) {
+        return Err(LoadError::ColdLoadSkipped);
+    }
+    Ok(account)
+}
+
 /// Implements the BALANCE instruction.
 ///
 /// Gets the balance of the given account.
 pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, false);
-        *top = account.balance;
-    } else {
-        let Ok(account) = context
-            .host
-            .load_account_info_skip_cold_load(address, false, false)
-        else {
-            return context.interpreter.halt_fatal();
-        };
-        *top = account.balance;
+    let account = match load_account(&mut context.interpreter.gas, context.host, address, false) {
+        Ok(account) => account,
+        Err(e) => return context.interpreter.halt_load_error(e),
     };
+    *top = account.balance;
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
@@ -56,22 +66,12 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true);
-        // safe to unwrap because we are loading code
-        *top = U256::from(account.code.as_ref().unwrap().len());
-    } else {
-        let Ok(account) = context
-            .host
-            .load_account_info_skip_cold_load(address, true, false)
-        else {
-            return context.interpreter.halt_fatal();
-        };
-        // safe to unwrap because we are loading code
-        *top = U256::from(account.code.as_ref().unwrap().len());
-    }
+    let account = match load_account(&mut context.interpreter.gas, context.host, address, true) {
+        Ok(account) => account,
+        Err(e) => return context.interpreter.halt_load_error(e),
+    };
+    // safe to unwrap because we are loading code
+    *top = U256::from(account.code.as_ref().unwrap().len());
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -81,18 +81,9 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    let account = if spec_id.is_enabled_in(BERLIN) {
-        berlin_load_account!(context, address, false)
-    } else {
-        let Ok(account) = context
-            .host
-            .load_account_info_skip_cold_load(address, false, false)
-        else {
-            return context.interpreter.halt_fatal();
-        };
-        account
+    let account = match load_account(&mut context.interpreter.gas, context.host, address, false) {
+        Ok(account) => account,
+        Err(e) => return context.interpreter.halt_load_error(e),
     };
     // if account is empty, code hash is zero
     let code_hash = if account.is_empty() {
@@ -115,8 +106,6 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
     let address = address.into_address();
 
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas!(
         context.interpreter,
@@ -137,15 +126,11 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         );
     }
 
-    let code = if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true);
-        account.code.as_ref().unwrap().original_bytes()
-    } else {
-        let Some(code) = context.host.load_account_code(address) else {
-            return context.interpreter.halt_fatal();
-        };
-        code.data
+    let account = match load_account(&mut context.interpreter.gas, context.host, address, true) {
+        Ok(account) => account,
+        Err(e) => return context.interpreter.halt_load_error(e),
     };
+    let code = account.code.as_ref().unwrap().original_bytes();
 
     let code_offset_usize = min(as_usize_saturated!(code_offset), code.len());
 
