@@ -96,8 +96,14 @@ where
 
     /// Inserts a new instruction into the instruction table.
     #[inline]
-    pub fn insert_instruction(&mut self, opcode: u8, instruction: Instruction<WIRE, HOST>) {
+    pub fn insert_instruction(
+        &mut self,
+        opcode: u8,
+        instruction: Instruction<WIRE, HOST>,
+        gas: u16,
+    ) {
         self.inner.instruction_table[opcode as usize] = instruction;
+        self.inner.gas_table[opcode as usize] = gas;
     }
 
     /// Inserts a new gas cost into the gas table.

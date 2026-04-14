@@ -46,6 +46,7 @@ pub fn main() {
             let offset = ctx.interpreter.bytecode.read_i16();
             ctx.interpreter.bytecode.relative_jump(offset as isize);
         }),
+        0,
     );
 
     // Create a new EVM instance.
