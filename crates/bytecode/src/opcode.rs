@@ -758,10 +758,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "opcode not found")]
     fn test_new_unchecked_invalid() {
-        let op = unsafe { OpCode::new_unchecked(0x0C) };
-        op.info();
+        let op = OpCode::new_or_unknown(0x0C);
+        assert_eq!(op.info().name(), "UNKNOWN");
     }
 
     #[test]
@@ -771,7 +770,7 @@ mod tests {
         assert!(op1.is_valid());
         assert!(op2.is_valid());
 
-        let op3 = unsafe { OpCode::new_unchecked(0x0C) };
+        let op3 = OpCode::new_or_unknown(0x0C);
         assert!(!op3.is_valid());
     }
 
