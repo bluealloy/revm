@@ -21,7 +21,7 @@ use crate::InstructionContext;
 /// Implements the CREATE/CREATE2 instruction.
 ///
 /// Creates a new contract with provided bytecode.
-pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
+pub fn create<const IS_CREATE2: bool, WIRE: InterpreterTypes, H: Host + ?Sized>(
     context: InstructionContext<'_, H, WIRE>,
 ) {
     // Static call check is before gas charging (unlike execution-specs where it's
