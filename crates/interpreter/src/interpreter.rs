@@ -8,7 +8,6 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
-use context_interface::cfg::GasParams;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -19,10 +18,11 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, GasTable,
-    Host, InstructionResult, InstructionTable, InterpreterAction,
+    instruction_context::InstructionContext, interpreter_types::*, Gas, GasTable, Host,
+    InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
+use context_interface::cfg::GasParams;
 use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
@@ -277,6 +277,24 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         ));
     }
 
+    #[inline(always)]
+    fn pre_step(&mut self, gas_table: &GasTable) -> Option<u8> {
+        let opcode = self.bytecode.opcode();
+
+        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+        // it will do noop and just stop execution of this contract
+        self.bytecode.relative_jump(1);
+
+        let static_gas = unsafe { *gas_table.get_unchecked(opcode as usize) };
+        if self.gas.record_cost_unsafe(static_gas as u64) {
+            self.halt_oog();
+            return None;
+        }
+
+        Some(opcode)
+    }
+
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
@@ -287,40 +305,15 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         gas_table: &GasTable,
         host: &mut H,
     ) {
-        // Get current opcode.
-        let opcode = self.bytecode.opcode();
-
-        // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        self.bytecode.relative_jump(1);
+        let Some(opcode) = self.pre_step(gas_table) else {
+            return;
+        };
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
-        let static_gas = unsafe { *gas_table.get_unchecked(opcode as usize) };
-
-        if self.gas.record_cost_unsafe(static_gas as u64) {
-            return self.halt_oog();
-        }
-
-        let context = InstructionContext {
+        instruction.execute(InstructionContext {
             interpreter: self,
             host,
-        };
-        instruction.execute(context);
-    }
-
-    /// Executes the instruction at the current instruction pointer.
-    ///
-    /// Internally it will increment instruction pointer by one.
-    ///
-    /// This uses dummy Host.
-    #[inline]
-    pub fn step_dummy(
-        &mut self,
-        instruction_table: &InstructionTable<IW, DummyHost>,
-        gas_table: &GasTable,
-    ) {
-        self.step(instruction_table, gas_table, &mut DummyHost::default());
+        });
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -331,8 +324,43 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         gas_table: &GasTable,
         host: &mut H,
     ) -> InterpreterAction {
+        // while self.bytecode.is_not_end() {
+        //     self.step(instruction_table, gas_table, host);
+        // }
+        // self.take_next_action()
+
+        // TODO: custom opcodes ?
+        let _ = instruction_table;
+
+        self.run_match(gas_table, host)
+    }
+
+    /// Executes the interpreter using a match dispatch loop instead of an instruction table.
+    ///
+    /// This avoids function pointer indirection by inlining all instruction implementations
+    /// directly into a match statement, which can be more amenable to compiler optimizations.
+    #[inline]
+    fn run_match<H: Host + ?Sized>(&mut self, gt: &GasTable, host: &mut H) -> InterpreterAction {
+        use crate::instructions::*;
+
         while self.bytecode.is_not_end() {
-            self.step(instruction_table, gas_table, host);
+            let Some(opcode) = self.pre_step(gt) else {
+                break;
+            };
+
+            let context = InstructionContext {
+                interpreter: self,
+                host,
+            };
+            macro_rules! make_match {
+                ([] $(($op:ident, $fn:expr),)*) => {
+                    match opcode {
+                        $(bytecode::opcode::$op => $fn(context),)*
+                        _ => control::unknown(context),
+                    }
+                };
+            }
+            bytecode::for_each_opcode!([] make_match);
         }
         self.take_next_action()
     }
