@@ -5,7 +5,7 @@ use context::{
 };
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
-    instructions::InstructionTable,
+    instructions::{GasTable, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
@@ -232,6 +232,7 @@ pub fn inspect_instructions<CTX, IT>(
     interpreter: &mut Interpreter<IT>,
     mut inspector: impl Inspector<CTX, IT>,
     instructions: &InstructionTable<IT, CTX>,
+    gas_table: &GasTable,
 ) -> InterpreterAction
 where
     CTX: ContextTr<Journal: JournalExt> + Host,
@@ -244,7 +245,7 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
-        interpreter.step(instructions, context);
+        interpreter.step(instructions, gas_table, context);
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
