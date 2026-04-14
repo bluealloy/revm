@@ -1,7 +1,7 @@
 use crate::{
     interpreter::Interpreter,
-    interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    InstructionContext, InstructionResult,
+    interpreter_types::{InterpreterTypes as IT, MemoryTr, RuntimeFlag, StackTr},
+    InstructionContext as Icx, InstructionResult,
 };
 use context_interface::{cfg::GasParams, host::LoadError, Host};
 use core::{cmp::min, ops::Range};
@@ -14,7 +14,7 @@ use state::Bytecode;
 /// Gets memory input and output ranges for call instructions.
 #[inline]
 pub fn get_memory_input_and_out_ranges(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+    interpreter: &mut Interpreter<impl IT>,
     gas_params: &GasParams,
 ) -> Result<(Range<usize>, Range<usize>), InstructionResult> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter);
@@ -34,7 +34,7 @@ pub fn get_memory_input_and_out_ranges(
 /// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
 #[inline]
 pub fn resize_memory(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+    interpreter: &mut Interpreter<impl IT>,
     gas_params: &GasParams,
     offset: U256,
     len: U256,
@@ -53,7 +53,7 @@ pub fn resize_memory(
 /// Calculates gas cost and limit for call instructions.
 #[inline(never)]
 pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+    context: &mut Icx<'_, H, impl IT>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
@@ -106,7 +106,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 /// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
 #[inline]
 pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
-    context: &mut InstructionContext<'_, H, impl InterpreterTypes>,
+    context: &mut Icx<'_, H, impl IT>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,

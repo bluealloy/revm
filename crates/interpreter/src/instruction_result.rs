@@ -9,7 +9,7 @@ use core::fmt::Debug;
 ///
 /// `Ok(())` means the instruction completed normally and execution should continue.
 /// `Err(result)` means execution should halt with the given [`InstructionResult`].
-pub type InstructionExecResult = Result<(), InstructionResult>;
+pub type InstructionExecResult<T = (), E = InstructionResult> = Result<T, E>;
 
 /// Result of executing an EVM instruction.
 ///

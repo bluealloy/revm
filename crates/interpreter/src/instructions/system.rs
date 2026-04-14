@@ -1,22 +1,21 @@
 use crate::{
     interpreter::{resize_memory, Interpreter},
     interpreter_types::{
-        InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
+        InputsTr, InterpreterTypes as IT, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag,
+        StackTr,
     },
-    CallInput, InstructionExecResult, InstructionResult,
+    CallInput, InstructionExecResult as Result, InstructionResult,
 };
 use context_interface::{cfg::GasParams, Host};
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-use crate::InstructionContext;
+use crate::InstructionContext as Icx;
 
 /// Implements the KECCAK256 instruction.
 ///
 /// Computes Keccak-256 hash of memory data.
-pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn keccak256<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn_top!([offset], top, context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, top);
     gas!(
@@ -43,9 +42,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the ADDRESS instruction.
 ///
 /// Pushes the current contract's address onto the stack.
-pub fn address<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn address<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     push!(
         context.interpreter,
         context
@@ -61,9 +58,7 @@ pub fn address<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CALLER instruction.
 ///
 /// Pushes the caller's address onto the stack.
-pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn caller<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     push!(
         context.interpreter,
         context
@@ -79,9 +74,7 @@ pub fn caller<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CODESIZE instruction.
 ///
 /// Pushes the size of running contract's bytecode onto the stack.
-pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn codesize<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     push!(
         context.interpreter,
         U256::from(context.interpreter.bytecode.bytecode_len())
@@ -92,9 +85,7 @@ pub fn codesize<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CODECOPY instruction.
 ///
 /// Copies running contract's bytecode to memory.
-pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn codecopy<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn!([memory_offset, code_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = copy_cost_and_memory_resize(
@@ -121,9 +112,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Implements the CALLDATALOAD instruction.
 ///
 /// Loads 32 bytes of input data from the specified offset.
-pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn calldataload<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn_top!([], offset_ptr, context.interpreter);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(*offset_ptr);
@@ -145,9 +134,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CALLDATASIZE instruction.
 ///
 /// Pushes the size of input data onto the stack.
-pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn calldatasize<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     push!(
         context.interpreter,
         U256::from(context.interpreter.input.input().len())
@@ -158,9 +145,7 @@ pub fn calldatasize<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CALLVALUE instruction.
 ///
 /// Pushes the value sent with the current call onto the stack.
-pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn callvalue<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     push!(context.interpreter, context.interpreter.input.call_value());
     Ok(())
 }
@@ -168,9 +153,7 @@ pub fn callvalue<WIRE: InterpreterTypes, H: ?Sized>(
 /// Implements the CALLDATACOPY instruction.
 ///
 /// Copies input data to memory.
-pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn calldatacopy<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn!([memory_offset, data_offset, len], context.interpreter);
     let len = as_usize_or_fail!(context.interpreter, len);
     let Some(memory_offset) = copy_cost_and_memory_resize(
@@ -204,9 +187,7 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn returndatasize<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     check!(context.interpreter, BYZANTIUM);
     push!(
         context.interpreter,
@@ -216,9 +197,7 @@ pub fn returndatasize<WIRE: InterpreterTypes, H: ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn returndatacopy<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     check!(context.interpreter, BYZANTIUM);
     popn!([memory_offset, offset, len], context.interpreter);
 
@@ -256,9 +235,7 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 /// Pushes the amount of remaining gas onto the stack.
 /// Returns `gas_left` only (excluding the state gas reservoir) per EIP-8037.
 /// On mainnet (no state gas), this is equivalent to returning `remaining`.
-pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(
-    context: InstructionContext<'_, H, WIRE>,
-) -> InstructionExecResult {
+pub fn gas<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     let gas = &context.interpreter.gas;
     push!(context.interpreter, U256::from(gas.remaining()));
     Ok(())
@@ -268,7 +245,7 @@ pub fn gas<WIRE: InterpreterTypes, H: ?Sized>(
 ///
 /// Handles memory expansion and gas calculation for data copy operations.
 pub fn copy_cost_and_memory_resize(
-    interpreter: &mut Interpreter<impl InterpreterTypes>,
+    interpreter: &mut Interpreter<impl IT>,
     gas_params: &GasParams,
     memory_offset: U256,
     len: usize,
