@@ -62,38 +62,6 @@ macro_rules! gas {
     };
 }
 
-/// Loads account and account berlin gas cost accounting.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! berlin_load_account {
-    ($context:expr, $address:expr, $load_code:expr) => {
-        $crate::berlin_load_account!($context, $address, $load_code, ())
-    };
-    ($context:expr, $address:expr, $load_code:expr, $ret:expr) => {{
-        let cold_load_gas = $context.host.gas_params().cold_account_additional_cost();
-        let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
-        match $context
-            .host
-            .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)
-        {
-            Ok(account) => {
-                if account.is_cold {
-                    $crate::gas!($context.interpreter, cold_load_gas, $ret);
-                }
-                account
-            }
-            Err(LoadError::ColdLoadSkipped) => {
-                $context.interpreter.halt_oog();
-                return $ret;
-            }
-            Err(LoadError::DBError) => {
-                $context.interpreter.halt_fatal();
-                return $ret;
-            }
-        }
-    }};
-}
-
 /// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]

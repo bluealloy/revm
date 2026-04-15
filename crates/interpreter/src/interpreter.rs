@@ -8,7 +8,6 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
-use context_interface::cfg::GasParams;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -23,6 +22,7 @@ use crate::{
     InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
+use context_interface::{cfg::GasParams, host::LoadError};
 use primitives::{hardfork::SpecId, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
@@ -221,6 +221,16 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
             InstructionResult::FatalExternalError,
             self.gas,
         ));
+    }
+
+    /// Halt the interpreter due to a [`LoadError`].
+    #[cold]
+    #[inline(never)]
+    pub fn halt_load_error(&mut self, err: LoadError) {
+        match err {
+            LoadError::ColdLoadSkipped => self.halt_oog(),
+            LoadError::DBError => self.halt_fatal(),
+        }
     }
 
     /// Halt the interpreter with an out-of-gas error.
