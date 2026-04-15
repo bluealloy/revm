@@ -1,8 +1,9 @@
 use crate::{
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes as IT, MemoryTr, RuntimeFlag, StackTr},
-    Host, InstructionExecResult as Result, InstructionResult,
+    Gas, Host, InstructionExecResult as Result, InstructionResult,
 };
+use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -11,22 +12,32 @@ use primitives::{
 
 use crate::InstructionContext as Icx;
 
+/// Loads an account, handling cold load gas accounting.
+///
+/// Pre-Berlin, `cold_account_additional_cost` is 0, so the cold load logic is a no-op.
+fn load_account<'a, H: Host + ?Sized>(
+    gas: &mut Gas,
+    host: &'a mut H,
+    address: primitives::Address,
+    load_code: bool,
+) -> core::result::Result<AccountInfoLoad<'a>, LoadError> {
+    let cold_load_gas = host.gas_params().cold_account_additional_cost();
+    let skip_cold_load = gas.remaining() < cold_load_gas;
+    let account = host.load_account_info_skip_cold_load(address, load_code, skip_cold_load)?;
+    if account.is_cold && !gas.record_regular_cost(cold_load_gas) {
+        return Err(LoadError::ColdLoadSkipped);
+    }
+    Ok(account)
+}
+
 /// Implements the BALANCE instruction.
 ///
 /// Gets the balance of the given account.
 pub fn balance<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, false);
-        *top = account.balance;
-    } else {
-        let account = context
-            .host
-            .load_account_info_skip_cold_load(address, false, false)?;
-        *top = account.balance;
-    };
+    let account = load_account(&mut context.interpreter.gas, context.host, address, false)?;
+    *top = account.balance;
     Ok(())
 }
 
@@ -48,19 +59,9 @@ pub fn selfbalance<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Res
 pub fn extcodesize<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true);
-        // safe to unwrap because we are loading code
-        *top = U256::from(account.code.as_ref().unwrap().len());
-    } else {
-        let account = context
-            .host
-            .load_account_info_skip_cold_load(address, true, false)?;
-        // safe to unwrap because we are loading code
-        *top = U256::from(account.code.as_ref().unwrap().len());
-    }
+    let account = load_account(&mut context.interpreter.gas, context.host, address, true)?;
+    // safe to unwrap because we are loading code
+    *top = U256::from(account.code.as_ref().unwrap().len());
     Ok(())
 }
 
@@ -69,15 +70,7 @@ pub fn extcodehash<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Res
     check!(context.interpreter, CONSTANTINOPLE);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
-
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-    let account = if spec_id.is_enabled_in(BERLIN) {
-        berlin_load_account!(context, address, false)
-    } else {
-        context
-            .host
-            .load_account_info_skip_cold_load(address, false, false)?
-    };
+    let account = load_account(&mut context.interpreter.gas, context.host, address, false)?;
     // if account is empty, code hash is zero
     let code_hash = if account.is_empty() {
         B256::ZERO
@@ -98,8 +91,6 @@ pub fn extcodecopy<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Res
     );
     let address = address.into_address();
 
-    let spec_id = context.interpreter.runtime_flag.spec_id();
-
     let len = as_usize_or_fail!(context.interpreter, len_u256);
     gas!(
         context.interpreter,
@@ -117,16 +108,8 @@ pub fn extcodecopy<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Res
             .resize_memory(context.host.gas_params(), memory_offset_usize, len)?;
     }
 
-    let code = if spec_id.is_enabled_in(BERLIN) {
-        let account = berlin_load_account!(context, address, true);
-        account.code.as_ref().unwrap().original_bytes()
-    } else {
-        context
-            .host
-            .load_account_code(address)
-            .ok_or(InstructionResult::FatalExternalError)?
-            .data
-    };
+    let account = load_account(&mut context.interpreter.gas, context.host, address, true)?;
+    let code = account.code.as_ref().unwrap().original_bytes();
 
     let code_offset_usize = min(as_usize_saturated!(code_offset), code.len());
 
@@ -212,7 +195,7 @@ pub fn sstore<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
     let spec_id = context.interpreter.runtime_flag.spec_id();
 
     // EIP-2200: Structured Definitions for Net Gas Metering
-    // If gasleft is less than or equal to gas stipend, fail the current call frame with ‘out of gas’ exception.
+    // If gasleft is less than or equal to gas stipend, fail the current call frame with 'out of gas' exception.
     if spec_id.is_enabled_in(ISTANBUL)
         && context.interpreter.gas.remaining() <= context.host.gas_params().call_stipend()
     {

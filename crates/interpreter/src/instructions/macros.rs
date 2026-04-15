@@ -49,24 +49,6 @@ macro_rules! gas {
     };
 }
 
-/// Loads account and account berlin gas cost accounting.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! berlin_load_account {
-    ($context:expr, $address:expr, $load_code:expr) => {{
-        let cold_load_gas = $context.host.gas_params().cold_account_additional_cost();
-        let skip_cold_load = $context.interpreter.gas.remaining() < cold_load_gas;
-        let account =
-            $context
-                .host
-                .load_account_info_skip_cold_load($address, $load_code, skip_cold_load)?;
-        if account.is_cold {
-            $crate::gas!($context.interpreter, cold_load_gas);
-        }
-        account
-    }};
-}
-
 /// Pops n values from the stack. Fails the instruction if n values can't be popped.
 #[macro_export]
 #[collapse_debuginfo(yes)]

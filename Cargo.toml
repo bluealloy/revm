@@ -17,7 +17,6 @@ members = [
     "crates/handler",
 
     # variants
-    "crates/op-revm",
     "crates/inspector",
 
     # utility
@@ -55,7 +54,6 @@ statetest-types = { path = "crates/statetest-types", package = "revm-statetest-t
 context = { path = "crates/context", package = "revm-context", version = "16.0.0", default-features = false }
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "17.0.0", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "18.0.0", default-features = false }
-op-revm = { path = "crates/op-revm", package = "op-revm", version = "18.0.0", default-features = false }
 ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.2.0", default-features = false }
 
 # alloy
@@ -68,12 +66,12 @@ alloy-primitives = { version = "1.5.2", default-features = false }
 alloy-rlp = { version = "0.3.12", default-features = false }
 alloy-trie = { version = "0.9", default-features = false }
 alloy-sol-types = { version = "1.5.2", default-features = false }
-alloy-consensus = { version = "1.4.2", default-features = false }
-alloy-eips = { version = "1.4.2", default-features = false }
-alloy-provider = { version = "1.4.2", default-features = false }
-alloy-signer = { version = "1.4.2", default-features = false }
-alloy-signer-local = { version = "1.4.2", default-features = false }
-alloy-transport = { version = "1.4.2", default-features = false }
+alloy-consensus = { version = "2.0.0", default-features = false }
+alloy-eips = { version = "2.0.0", default-features = false }
+alloy-provider = { version = "2.0.0", default-features = false }
+alloy-signer = { version = "2.0.0", default-features = false }
+alloy-signer-local = { version = "2.0.0", default-features = false }
+alloy-transport = { version = "2.0.0", default-features = false }
 
 # precompiles
 ark-bls12-381 = { version = "0.5", default-features = false }

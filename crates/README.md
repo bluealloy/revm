@@ -11,5 +11,4 @@ Crates version and their description:
 * ![revm-context](https://img.shields.io/crates/v/revm-context?label=revm-context) default implementation for traits from context interface. 
 * ![revm-handler](https://img.shields.io/crates/v/revm-handler?label=revm-handler) Contains logic around validation, pre and post execution and handling of call frames.  
 * ![revm-inspector](https://img.shields.io/crates/v/revm-inspector?label=revm-inspector) Adds support for inspector and implements EIP-3155 tracer.
-* ![op-revm](https://img.shields.io/crates/v/op-revm?label=op-revm) Uses revm to create Optimism EVM.
 * ![revm-statetest-types](https://img.shields.io/crates/v/revm-statetest-types?label=revm-statetest-types) helpful structs for state test usage.
