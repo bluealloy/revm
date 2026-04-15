@@ -23,7 +23,7 @@ use crate::{
 };
 use bytecode::Bytecode;
 use context_interface::{cfg::GasParams, host::LoadError};
-use primitives::{hardfork::SpecId, Bytes};
+use primitives::{hardfork::SpecId, hints_util::cold_path, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
@@ -309,6 +309,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         let instruction = instruction_table[opcode as usize];
 
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
+            cold_path();
             return Err(InstructionResult::OutOfGas);
         }
 
@@ -327,6 +328,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ) -> InterpreterAction {
         let e = loop {
             if let Err(e) = self.step(instruction_table, host) {
+                cold_path();
                 break e;
             }
         };

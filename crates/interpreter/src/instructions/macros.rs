@@ -6,6 +6,7 @@
 macro_rules! require_non_staticcall {
     ($interpreter:expr) => {
         if $interpreter.runtime_flag.is_static() {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StateChangeDuringStaticCall);
         }
     };
@@ -21,6 +22,7 @@ macro_rules! check {
             .spec_id()
             .is_enabled_in(primitives::hardfork::SpecId::$min)
         {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::NotActivated);
         }
     };
@@ -33,6 +35,7 @@ macro_rules! check {
 macro_rules! state_gas {
     ($interpreter:expr, $gas:expr) => {{
         if !$interpreter.gas.record_state_cost($gas) {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::OutOfGas);
         }
     }};
@@ -44,6 +47,7 @@ macro_rules! state_gas {
 macro_rules! gas {
     ($interpreter:expr, $gas:expr) => {
         if !$interpreter.gas.record_regular_cost($gas) {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::OutOfGas);
         }
     };
@@ -55,6 +59,7 @@ macro_rules! gas {
 macro_rules! popn {
     ([ $($x:ident),* ],$interpreter:expr) => {
         let Some([$( $x ),*]) = $interpreter.stack.popn() else {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StackUnderflow);
         };
     };
@@ -76,12 +81,14 @@ macro_rules! popn_top {
     ([ $($x:ident),* ], $top:ident, $interpreter:expr) => {
         /*
         let Some(([$( $x ),*], $top)) = $interpreter.stack.popn_top() else {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StackUnderflow);
         };
         */
 
         // Workaround for https://github.com/rust-lang/rust/issues/144329.
         if $interpreter.stack.len() < (1 + $crate::_count!($($x)*)) {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StackUnderflow);
         }
         let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
@@ -94,6 +101,7 @@ macro_rules! popn_top {
 macro_rules! push {
     ($interpreter:expr, $x:expr) => {
         if !$interpreter.stack.push($x) {
+            $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StackOverflow);
         }
     };
@@ -125,6 +133,7 @@ macro_rules! as_usize_or_fail {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
+                    $crate::primitives::hints_util::cold_path();
                     return Err($crate::InstructionResult::InvalidOperandOOG);
                 }
                 x[0] as usize
