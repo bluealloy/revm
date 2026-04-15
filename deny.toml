@@ -1,0 +1,50 @@
+[advisories]
+version = 2
+yanked = "warn"
+ignore = [
+    # https://rustsec.org/advisories/RUSTSEC-2024-0436 paste is unmaintained
+    "RUSTSEC-2024-0436",
+    # https://rustsec.org/advisories/RUSTSEC-2026-0097 rand 0.9.2 unsound (no fix available yet)
+    "RUSTSEC-2026-0097",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+highlight = "all"
+
+[licenses]
+confidence-threshold = 0.9
+
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "ISC",
+    "Unicode-3.0",
+    "Unlicense",
+    "MPL-2.0",
+    "Zlib",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "LGPL-3.0-or-later",
+]
+
+exceptions = [
+    # ring
+    { allow = ["LicenseRef-ring"], name = "ring" },
+]
+
+[[licenses.clarify]]
+name = "ring"
+expression = "LicenseRef-ring"
+license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-git = []

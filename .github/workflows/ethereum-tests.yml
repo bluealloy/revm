@@ -10,6 +10,8 @@ on:
   pull_request:
     branches: [main, "release/**"]
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,17 +22,19 @@ jobs:
         target: [i686-unknown-linux-gnu, x86_64-unknown-linux-gnu]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           cache-on-failure: true
 
       - name: Install cross
-        run: cargo install cross
+        run: cargo install cross --locked
 
       - name: Run tests
         run: |
