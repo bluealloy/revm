@@ -17,7 +17,6 @@ members = [
     "crates/handler",
 
     # variants
-    "crates/op-revm",
     "crates/inspector",
 
     # utility
@@ -55,7 +54,6 @@ statetest-types = { path = "crates/statetest-types", package = "revm-statetest-t
 context = { path = "crates/context", package = "revm-context", version = "16.0.0", default-features = false }
 context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "17.0.0", default-features = false }
 handler = { path = "crates/handler", package = "revm-handler", version = "18.0.0", default-features = false }
-op-revm = { path = "crates/op-revm", package = "op-revm", version = "18.0.0", default-features = false }
 ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.2.0", default-features = false }
 
 # alloy

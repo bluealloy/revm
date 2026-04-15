@@ -52,7 +52,6 @@ jobs:
           targets: ${{ matrix.target }}
       - run: |
           cargo check --target ${{ matrix.target }} --no-default-features --features=${{ matrix.features }}
-          cargo check --target ${{ matrix.target }} -p op-revm --no-default-features --features=${{ matrix.features }}
           cargo check --target ${{ matrix.target }} -p revm-database --no-default-features
 
   check:
