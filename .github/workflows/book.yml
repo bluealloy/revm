@@ -32,7 +32,7 @@ jobs:
       - name: Install mdbook-template
         run: |
           mkdir mdbook-template
-          curl -sSL https://github.com/sgoudham/mdbook-template/releases/latest/download/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
+          curl -sSL https://github.com/sgoudham/mdbook-template/releases/download/v1.1.1/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Run tests
@@ -53,7 +53,7 @@ jobs:
       - name: Install mdbook-linkcheck
         run: |
           mkdir mdbook-linkcheck
-          curl -sSL -o mdbook-linkcheck.zip https://github.com/Michael-F-Bryan/mdbook-linkcheck/releases/latest/download/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip
+          curl -sSL -o mdbook-linkcheck.zip https://github.com/Michael-F-Bryan/mdbook-linkcheck/releases/download/v0.7.7/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip
           unzip mdbook-linkcheck.zip -d ./mdbook-linkcheck
           chmod +x `pwd`/mdbook-linkcheck/mdbook-linkcheck
           echo `pwd`/mdbook-linkcheck >> $GITHUB_PATH
@@ -84,7 +84,7 @@ jobs:
       - name: Install mdbook-template
         run: |
           mkdir mdbook-template
-          curl -sSL https://github.com/sgoudham/mdbook-template/releases/latest/download/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
+          curl -sSL https://github.com/sgoudham/mdbook-template/releases/download/v1.1.1/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
           echo `pwd`/mdbook-template >> $GITHUB_PATH
 
       - name: Build book
