@@ -112,6 +112,8 @@ pub struct PrecompileOutput {
     pub status: PrecompileStatus,
     /// Regular gas used by the precompile.
     pub gas_used: u64,
+    /// Gas refunded by the precompile.
+    pub gas_refunded: i64,
     /// State gas used by the precompile.
     pub state_gas_used: u64,
     /// Reservoir gas for EIP-8037.
@@ -133,6 +135,7 @@ impl PrecompileOutput {
         Self {
             status: PrecompileStatus::Success,
             gas_used,
+            gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
             bytes,
@@ -144,6 +147,7 @@ impl PrecompileOutput {
         Self {
             status: PrecompileStatus::Halt(reason),
             gas_used: 0,
+            gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
             bytes: Bytes::new(),
@@ -155,6 +159,7 @@ impl PrecompileOutput {
         Self {
             status: PrecompileStatus::Revert,
             gas_used,
+            gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
             bytes,
