@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.1](https://github.com/bluealloy/revm/compare/revm-context-v16.0.0...revm-context-v16.0.1) - 2026-04-15
+
+### Other
+
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [16.0.0](https://github.com/bluealloy/revm/compare/revm-context-v15.0.0...revm-context-v16.0.0) - 2026-04-10
 
 ### Added
