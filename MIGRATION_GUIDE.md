@@ -42,7 +42,7 @@
   * `bytecode.legacy_jump_table()` instead of matching `Bytecode::LegacyAnalyzed(...)`.
 * Constructors:
   * `Bytecode::new_legacy(raw_bytes)` — replaces `Bytecode::LegacyRaw(...)` (analysis happens on creation).
-  * `unsafe { Bytecode::new_analyzed(bytecode, original_len, jump_table) }` — replaces `Bytecode::LegacyAnalyzed(Arc::new(...))`. Marked `unsafe` because the caller must ensure bytecode padding is sufficient (see doc comment).
+  * `Bytecode::new_analyzed(bytecode, original_len, jump_table)` — replaces `Bytecode::LegacyAnalyzed(Arc::new(...))`.
   * `Bytecode::new_eip7702(address)` — replaces `Bytecode::Eip7702(Arc::new(...))`.
   * `Bytecode::new_raw(bytes)` — auto-detects EIP-7702 delegation.
 * `LegacyAnalyzedBytecode`, `LegacyRawBytecode`, `Eip7702Bytecode` structs are no longer publicly exported.
