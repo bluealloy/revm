@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [18.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v18.0.0...revm-handler-v18.0.1) - 2026-04-15
+
+### Fixed
+
+- *(handler)* skip reimburse_caller and reward_beneficiary when fee charge is disabled ([#3559](https://github.com/bluealloy/revm/pull/3559))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v17.0.0...revm-handler-v18.0.0) - 2026-04-10
 
 ### Added

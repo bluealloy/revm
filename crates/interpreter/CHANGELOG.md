@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v35.0.0...revm-interpreter-v35.0.1) - 2026-04-15
+
+### Fixed
+
+- *(bytecode)* mark `Bytecode::new_analyzed` as unsafe ([#3557](https://github.com/bluealloy/revm/pull/3557))
+
+### Other
+
+- *(interpreter)* remove unused loop_control module ([#3555](https://github.com/bluealloy/revm/pull/3555))
+
 ## [35.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v34.0.0...revm-interpreter-v35.0.0) - 2026-04-10
 
 ### Added

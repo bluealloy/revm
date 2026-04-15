@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v10.0.0...revm-bytecode-v11.0.0) - 2026-04-15
+
+### Fixed
+
+- *(bytecode)* mark `Bytecode::new_analyzed` as unsafe ([#3557](https://github.com/bluealloy/revm/pull/3557))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v9.0.0...revm-bytecode-v10.0.0) - 2026-04-10
 
 ### Added
