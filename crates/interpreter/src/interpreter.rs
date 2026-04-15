@@ -8,7 +8,6 @@ mod runtime_flags;
 mod shared_memory;
 mod stack;
 
-use core::ops::ControlFlow;
 // re-exports
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -19,8 +18,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    InstructionExecResult, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use context_interface::{cfg::GasParams, host::LoadError};
@@ -298,7 +297,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
-    ) -> ControlFlow<()> {
+    ) -> InstructionExecResult {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
 
@@ -307,41 +306,16 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
-        let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
+        let instruction = instruction_table[opcode as usize];
 
         if self.gas.record_cost_unsafe(instruction.static_gas()) {
-            self.halt_oog();
-            return ControlFlow::Break(());
+            return Err(InstructionResult::OutOfGas);
         }
-        let context = InstructionContext {
+
+        instruction.execute(InstructionContext {
             interpreter: self,
             host,
-        };
-        if let Err(result) = instruction.execute(context) {
-            if self.bytecode.action().is_none() {
-                self.halt(result);
-            }
-            return ControlFlow::Break(());
-        }
-        debug_assert!(
-            self.bytecode.is_not_end(),
-            "should've broken above: {:#?}",
-            self.bytecode.action(),
-        );
-        ControlFlow::Continue(())
-    }
-
-    /// Executes the instruction at the current instruction pointer.
-    ///
-    /// Internally it will increment instruction pointer by one.
-    ///
-    /// This uses dummy Host.
-    #[inline]
-    pub fn step_dummy(
-        &mut self,
-        instruction_table: &InstructionTable<IW, DummyHost>,
-    ) -> ControlFlow<()> {
-        self.step(instruction_table, &mut DummyHost::default())
+        })
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -351,7 +325,14 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         instruction_table: &InstructionTable<IW, H>,
         host: &mut H,
     ) -> InterpreterAction {
-        while self.step(instruction_table, host).is_continue() {}
+        let e = loop {
+            if let Err(e) = self.step(instruction_table, host) {
+                break e;
+            }
+        };
+        if self.bytecode.action().is_none() {
+            self.halt(e);
+        }
         debug_assert!(self.bytecode.is_end());
         self.take_next_action()
     }
