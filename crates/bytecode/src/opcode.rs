@@ -37,52 +37,46 @@ impl OpCode {
         }
     }
 
+    /// Instantiates a new opcode from a u8.
+    #[inline]
+    pub const fn new_or_unknown(opcode: u8) -> Self {
+        Self(opcode)
+    }
+
     /// Returns true if the opcode is a jump destination.
     #[inline]
     pub const fn is_jumpdest(&self) -> bool {
-        self.0 == JUMPDEST
+        Self::is_jumpdest_by_op(self.0)
     }
 
     /// Takes a u8 and returns true if it is a jump destination.
     #[inline]
     pub const fn is_jumpdest_by_op(opcode: u8) -> bool {
-        if let Some(opcode) = Self::new(opcode) {
-            opcode.is_jumpdest()
-        } else {
-            false
-        }
+        opcode == JUMPDEST
     }
 
     /// Returns true if the opcode is a legacy jump instruction.
     #[inline]
     pub const fn is_jump(self) -> bool {
-        self.0 == JUMP
+        Self::is_jump_by_op(self.0)
     }
 
     /// Takes a u8 and returns true if it is a jump instruction.
     #[inline]
     pub const fn is_jump_by_op(opcode: u8) -> bool {
-        if let Some(opcode) = Self::new(opcode) {
-            opcode.is_jump()
-        } else {
-            false
-        }
+        opcode == JUMP
     }
 
-    /// Returns true if the opcode is a `PUSH` instruction.
+    /// Returns true if the opcode is a `PUSH1..=PUSH32` instruction.
     #[inline]
     pub const fn is_push(self) -> bool {
-        self.0 >= PUSH1 && self.0 <= PUSH32
+        Self::is_push_by_op(self.0)
     }
 
-    /// Takes a u8 and returns true if it is a push instruction.
+    /// Returns true if the opcode is a `PUSH1..=PUSH32` instruction.
     #[inline]
-    pub fn is_push_by_op(opcode: u8) -> bool {
-        if let Some(opcode) = Self::new(opcode) {
-            opcode.is_push()
-        } else {
-            false
-        }
+    pub const fn is_push_by_op(opcode: u8) -> bool {
+        opcode >= PUSH1 && opcode <= PUSH32
     }
 
     /// Instantiates a new opcode from a u8 without checking if it is valid.
@@ -92,6 +86,8 @@ impl OpCode {
     /// All code using `Opcode` values assume that they are valid opcodes, so providing an invalid
     /// opcode may cause undefined behavior.
     #[inline]
+    #[deprecated = "use new_or_unknown instead"]
+    #[doc(hidden)]
     pub unsafe fn new_unchecked(opcode: u8) -> Self {
         Self(opcode)
     }
@@ -135,11 +131,7 @@ impl OpCode {
     /// Check [OpCodeInfo] for more information.
     #[inline]
     pub const fn info_by_op(opcode: u8) -> Option<OpCodeInfo> {
-        if let Some(opcode) = Self::new(opcode) {
-            Some(opcode.info())
-        } else {
-            None
-        }
+        OPCODE_INFO[opcode as usize]
     }
 
     /// Returns the opcode as a usize.
@@ -151,10 +143,10 @@ impl OpCode {
     /// Returns the opcode information.
     #[inline]
     pub const fn info(&self) -> OpCodeInfo {
-        if let Some(t) = OPCODE_INFO[self.0 as usize] {
-            t
+        if let Some(info) = OPCODE_INFO[self.0 as usize] {
+            info
         } else {
-            panic!("opcode not found")
+            OpCodeInfo::unknown()
         }
     }
 
@@ -264,6 +256,10 @@ impl OpCodeInfo {
             terminating: false,
             immediate_size: 0,
         }
+    }
+
+    const fn unknown() -> Self {
+        terminating(Self::new("UNKNOWN"))
     }
 
     /// Returns the opcode name.
@@ -762,10 +758,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "opcode not found")]
     fn test_new_unchecked_invalid() {
-        let op = unsafe { OpCode::new_unchecked(0x0C) };
-        op.info();
+        let op = OpCode::new_or_unknown(0x0C);
+        assert_eq!(op.info().name(), "UNKNOWN");
     }
 
     #[test]
@@ -775,7 +770,7 @@ mod tests {
         assert!(op1.is_valid());
         assert!(op2.is_valid());
 
-        let op3 = unsafe { OpCode::new_unchecked(0x0C) };
+        let op3 = OpCode::new_or_unknown(0x0C);
         assert!(!op3.is_valid());
     }
 
