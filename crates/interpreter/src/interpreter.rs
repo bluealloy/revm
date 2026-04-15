@@ -340,21 +340,15 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     }
 }
 
-/* used for cargo asm
-pub fn asm_step(
-    interpreter: &mut Interpreter<EthInterpreter>,
-    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
-    host: &mut DummyHost,
-) {
-    interpreter.step(instruction_table, host);
-}
-
+/*
+#[doc(hidden)]
+#[unsafe(no_mangle)]
 pub fn asm_run(
     interpreter: &mut Interpreter<EthInterpreter>,
-    instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
-    host: &mut DummyHost,
+    host: &mut context_interface::DummyHost,
 ) {
-    interpreter.run_plain(instruction_table, host);
+    let table = crate::instruction_table();
+    interpreter.run_plain(&table, host);
 }
 */
 
