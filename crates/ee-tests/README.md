@@ -1,6 +1,6 @@
 # revm-ee-tests
 
-Shared test utilities and integration tests for **revm** and **op-revm**.
+Shared test utilities and integration tests for **revm**.
 
 ## Running Tests
 
@@ -18,11 +18,9 @@ cargo test -p revm-ee-tests tip1016
 crates/ee-tests/
 ├── src/
 │   ├── lib.rs              # Snapshot comparison utilities (TestdataConfig, compare_or_save_testdata)
-│   ├── revm_tests.rs       # Integration tests for mainnet revm
-│   └── op_revm_tests.rs    # Integration tests for op-revm (Optimism)
+│   └── revm_tests.rs       # Integration tests for mainnet revm
 ├── tests/
-│   ├── revm_testdata/      # Golden JSON snapshots for revm tests
-│   └── op_revm_testdata/   # Golden JSON snapshots for op-revm tests
+│   └── revm_testdata/      # Golden JSON snapshots for revm tests
 ├── tip1016.md              # TIP-1016 State Gas test plan
 └── Cargo.toml
 ```

@@ -128,9 +128,6 @@ mod tests {
 }
 
 #[cfg(test)]
-mod op_revm_tests;
-
-#[cfg(test)]
 mod revm_tests;
 
 #[cfg(test)]
