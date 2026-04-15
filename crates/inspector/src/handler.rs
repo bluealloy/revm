@@ -10,6 +10,7 @@ use interpreter::{
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
 };
+use primitives::hints_util::cold_path;
 use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -240,6 +241,7 @@ where
     let r = loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
+            cold_path();
             break Ok(());
         }
 
@@ -252,7 +254,8 @@ where
 
         inspector.step_end(interpreter, context);
 
-        if r.is_err() || interpreter.bytecode.is_end() {
+        if r.is_err() | interpreter.bytecode.is_end() {
+            cold_path();
             break r;
         }
     };
