@@ -3,7 +3,8 @@ use core::{
     cell::{Ref, RefCell},
     ops::Range,
 };
-use std::{rc::Rc, string::String, vec::Vec};
+use primitives::U256;
+use std::{boxed::Box, rc::Rc, string::String, vec::Vec};
 
 /// Non-empty, item-pooling Vec.
 #[derive(Debug, Clone)]
@@ -234,6 +235,9 @@ pub trait LocalContextTr {
     ///
     /// Returns `Some(String)` if a precompile error message was recorded.
     fn take_precompile_error_context(&mut self) -> Option<String>;
+
+    /// Cached prevrandao value. Set on first PREVRANDAO call, cleared on clear.
+    fn prevrandao(&mut self) -> &mut Option<Box<U256>>;
 }
 
 #[cfg(test)]

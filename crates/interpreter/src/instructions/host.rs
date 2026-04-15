@@ -39,12 +39,18 @@ pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(context.interpreter, ISTANBUL);
 
+    if let Some(cached) = &context.interpreter.selfbalance_cache {
+        push!(context.interpreter, **cached);
+        return;
+    }
+
     let Some(balance) = context
         .host
         .balance(context.interpreter.input.target_address())
     else {
         return context.interpreter.halt_fatal();
     };
+    context.interpreter.selfbalance_cache = Some(Box::new(balance.data));
     push!(context.interpreter, balance.data);
 }
 

@@ -473,8 +473,15 @@ impl<
         self.block().difficulty()
     }
 
-    fn prevrandao(&self) -> Option<U256> {
-        self.block().prevrandao().map(|r| r.into())
+    fn prevrandao(&mut self) -> Option<U256> {
+        if let Some(cached) = self.local.prevrandao() {
+            return Some(**cached);
+        }
+        let val = self.block().prevrandao().map(|r| r.into());
+        if let Some(v) = val {
+            *self.local.prevrandao() = Some(Box::new(v));
+        }
+        val
     }
 
     #[inline]

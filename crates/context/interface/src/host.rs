@@ -36,8 +36,9 @@ pub trait Host {
     fn gas_limit(&self) -> U256;
     /// Block difficulty, calls ContextTr::block().difficulty()
     fn difficulty(&self) -> U256;
-    /// Block prevrandao, calls ContextTr::block().prevrandao()
-    fn prevrandao(&self) -> Option<U256>;
+    /// Block prevrandao, calls ContextTr::block().prevrandao().
+    /// Caches the result in local context on first call.
+    fn prevrandao(&mut self) -> Option<U256>;
     /// Block number, calls ContextTr::block().number()
     fn block_number(&self) -> U256;
     /// Block timestamp, calls ContextTr::block().timestamp()
@@ -247,7 +248,7 @@ impl Host for DummyHost {
         U256::ZERO
     }
 
-    fn prevrandao(&self) -> Option<U256> {
+    fn prevrandao(&mut self) -> Option<U256> {
         None
     }
 
