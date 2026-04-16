@@ -40,7 +40,7 @@ pub fn state_merkle_trie_root<'a>(
             let storage_root = storage_root_unhashed(
                 acc.storage
                     .iter()
-                    .filter(|(_k, &v)| !v.is_zero())
+                    .filter(|(_k, v)| !v.is_zero())
                     .map(|(k, v)| (B256::from(*k), *v)),
             );
             (

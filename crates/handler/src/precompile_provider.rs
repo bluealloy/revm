@@ -157,13 +157,12 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         // If this is a top-level precompile call (depth == 1), persist the error message
         // into the local context so it can be returned as output in the final result.
         // Only do this for non-OOG halt errors.
-        if let Some(halt_reason) = output.halt_reason() {
-            if !halt_reason.is_oog() && context.journal().depth() == 1 {
+        if let Some(halt_reason) = output.halt_reason()
+            && !halt_reason.is_oog() && context.journal().depth() == 1 {
                 context
                     .local_mut()
                     .set_precompile_error_context(halt_reason.to_string());
             }
-        }
 
         let result = precompile_output_to_interpreter_result(output, inputs.gas_limit);
         Ok(Some(result))

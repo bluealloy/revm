@@ -49,8 +49,8 @@ pub fn load_accounts<
     // Load access list
     let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
-    if tx.tx_type() != TransactionType::Legacy {
-        if let Some(access_list) = tx.access_list() {
+    if tx.tx_type() != TransactionType::Legacy
+        && let Some(access_list) = tx.access_list() {
             let mut map: AddressMap<HashSet<StorageKey>> = AddressMap::default();
             for item in access_list {
                 map.entry(*item.address())
@@ -59,7 +59,6 @@ pub fn load_accounts<
             }
             journal.warm_access_list(map);
         }
-    }
 
     Ok(())
 }

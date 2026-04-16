@@ -965,8 +965,8 @@ fn execute_blockchain_test(
         // Validate block gas used against header.
         // EIP-8037 (Amsterdam+): block gas_used = max(regular_gas, state_gas).
         // Pre-Amsterdam: block gas_used = cumulative tx_gas_used (includes refunds).
-        if block_completed && !should_fail {
-            if let Some(block_header) = block.block_header.as_ref() {
+        if block_completed && !should_fail
+            && let Some(block_header) = block.block_header.as_ref() {
                 let expected_gas_used = block_header.gas_used.to::<u64>();
                 let actual_block_gas_used = if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
                     block_regular_gas_used.max(block_state_gas_used)
@@ -986,7 +986,6 @@ fn execute_blockchain_test(
                     });
                 }
             }
-        }
 
         // bump bal index
         evm.db_mut().bump_bal_index();
@@ -1008,9 +1007,9 @@ fn execute_blockchain_test(
             .block_hashes
             .insert(block_env.number.to::<u64>(), block_hash.unwrap_or_default());
 
-        if let Some(bal) = state.bal_state.bal_builder.take() {
-            if let Some(state_bal) = bal_test {
-                if &bal != state_bal.as_ref() {
+        if let Some(bal) = state.bal_state.bal_builder.take()
+            && let Some(state_bal) = bal_test
+                && &bal != state_bal.as_ref() {
                     println!("Bal mismatch");
                     println!("Test bal");
                     state_bal.pretty_print();
@@ -1018,8 +1017,6 @@ fn execute_blockchain_test(
                     bal.pretty_print();
                     return Err(TestExecutionError::BalMismatchError);
                 }
-            }
-        }
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {

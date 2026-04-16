@@ -103,13 +103,12 @@ fn run_custom_precompile<CTX: ContextTr>(
     let output = PrecompileOutput::from_eth_result(result, inputs.reservoir);
 
     // If this is a top-level precompile call and error is non-OOG, record the message
-    if let Some(halt_reason) = output.halt_reason() {
-        if !halt_reason.is_oog() && context.journal().depth() == 1 {
+    if let Some(halt_reason) = output.halt_reason()
+        && !halt_reason.is_oog() && context.journal().depth() == 1 {
             context
                 .local_mut()
                 .set_precompile_error_context(halt_reason.to_string());
         }
-    }
 
     Ok(precompile_output_to_interpreter_result(
         output,

@@ -260,11 +260,10 @@ where
     let next_action = interpreter.take_next_action();
 
     // Handle selfdestruct.
-    if let InterpreterAction::Return(result) = &next_action {
-        if result.result == InstructionResult::SelfDestruct {
+    if let InterpreterAction::Return(result) = &next_action
+        && result.result == InstructionResult::SelfDestruct {
             inspect_selfdestruct(context, &mut inspector);
         }
-    }
 
     next_action
 }

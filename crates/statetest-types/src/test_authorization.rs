@@ -22,11 +22,10 @@ impl<'de> Deserialize<'de> for TestAuthorization {
     {
         // This is a hack to remove duplicate yParity and v fields which can be used by the test files for cross client compat
         let mut value: serde_json::Value = Deserialize::deserialize(deserializer)?;
-        if let Some(val) = value.as_object_mut() {
-            if val.contains_key("v") && val.contains_key("yParity") {
+        if let Some(val) = value.as_object_mut()
+            && val.contains_key("v") && val.contains_key("yParity") {
                 val.remove("v");
             }
-        }
         let inner: SignedAuthorization = serde_json::from_value(value).map_err(D::Error::custom)?;
         Ok(Self { inner })
     }

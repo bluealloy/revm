@@ -369,12 +369,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// In case of EIP-7702 code with zero address, the bytecode will be erased.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
-        if let Some(eip7702_address) = code.eip7702_address() {
-            if eip7702_address.is_zero() {
+        if let Some(eip7702_address) = code.eip7702_address()
+            && eip7702_address.is_zero() {
                 self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
                 return;
             }
-        }
 
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash)

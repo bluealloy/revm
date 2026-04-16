@@ -194,14 +194,13 @@ fn validate_output(
     expected_output: Option<&Bytes>,
     actual_result: &ExecutionResult<HaltReason>,
 ) -> Result<(), TestErrorKind> {
-    if let Some((expected, actual)) = expected_output.zip(actual_result.output()) {
-        if expected != actual {
+    if let Some((expected, actual)) = expected_output.zip(actual_result.output())
+        && expected != actual {
             return Err(TestErrorKind::UnexpectedOutput {
                 expected_output: Some(expected.clone()),
                 got_output: actual_result.output().cloned(),
             });
         }
-    }
     Ok(())
 }
 

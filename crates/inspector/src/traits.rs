@@ -116,14 +116,12 @@ pub trait InspectorEvmTr:
                 precompile_call_logs,
                 ..
             }) = &mut output
-            {
-                if *was_precompile_called {
+                && *was_precompile_called {
                     let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
                     for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
                         inspector.log(ctx, log);
                     }
                 }
-            }
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }

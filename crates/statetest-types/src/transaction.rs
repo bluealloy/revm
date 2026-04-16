@@ -63,11 +63,10 @@ impl TransactionParts {
         let mut tx_type = TransactionType::Legacy;
 
         // If it has access list it is EIP-2930 tx
-        if let Some(access_list) = self.access_lists.get(access_list_index) {
-            if access_list.is_some() {
+        if let Some(access_list) = self.access_lists.get(access_list_index)
+            && access_list.is_some() {
                 tx_type = TransactionType::Eip2930;
             }
-        }
 
         // If there is max_fee it is EIP-1559 tx
         if self.max_fee_per_gas.is_some() {

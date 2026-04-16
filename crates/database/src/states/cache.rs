@@ -140,11 +140,10 @@ impl CacheState {
                 output.push_str(&format!("    nonce: {}\n", plain_account.info.nonce));
                 output.push_str(&format!("    code_hash: {code_hash}\n"));
 
-                if let Some(code) = &plain_account.info.code {
-                    if !code.is_empty() {
+                if let Some(code) = &plain_account.info.code
+                    && !code.is_empty() {
                         contracts.insert(code_hash, code.clone());
                     }
-                }
 
                 if !plain_account.storage.is_empty() {
                     output.push_str(&format!(

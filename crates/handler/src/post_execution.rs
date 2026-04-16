@@ -150,15 +150,14 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
             if matches!(
                 instruction_result.result,
                 interpreter::InstructionResult::PrecompileError
-            ) {
-                if let Some(message) = context.local_mut().take_precompile_error_context() {
+            )
+                && let Some(message) = context.local_mut().take_precompile_error_context() {
                     return ExecutionResult::Halt {
                         reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
                         gas: result_gas,
                         logs,
                     };
                 }
-            }
             ExecutionResult::Halt {
                 reason,
                 gas: result_gas,

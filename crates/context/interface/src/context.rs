@@ -93,8 +93,8 @@ pub trait ContextTr: Host {
     }
     /// Get the database mutably
     fn db_mut(&mut self) -> &mut Self::Db {
-        let db = self.journal_mut().db_mut();
-        db
+        
+        (self.journal_mut().db_mut()) as _
     }
     /// Get the database reference
     fn db_ref(&self) -> &Self::Db {

@@ -256,11 +256,10 @@ impl PartialOrd for AccountRevert {
 impl Ord for AccountRevert {
     fn cmp(&self, other: &Self) -> Ordering {
         // First compare accounts
-        if let Some(ord) = self.account.partial_cmp(&other.account) {
-            if ord != Ordering::Equal {
+        if let Some(ord) = self.account.partial_cmp(&other.account)
+            && ord != Ordering::Equal {
                 return ord;
             }
-        }
 
         // Convert HashMaps to sorted vectors for comparison
         let mut self_storage: Vec<_> = self.storage.iter().collect();

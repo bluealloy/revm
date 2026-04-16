@@ -30,11 +30,10 @@ pub fn validate_legacy_gas_price(
     base_fee: Option<u128>,
 ) -> Result<(), InvalidTransaction> {
     // Gas price must be at least the basefee.
-    if let Some(base_fee) = base_fee {
-        if gas_price < base_fee {
+    if let Some(base_fee) = base_fee
+        && gas_price < base_fee {
             return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
-    }
     Ok(())
 }
 
@@ -105,14 +104,13 @@ pub fn validate_eip4844_tx(
 
     // Ensure the total blob gas spent is at most equal to the limit
     // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-    if let Some(max_blobs) = max_blobs {
-        if blobs.len() > max_blobs as usize {
+    if let Some(max_blobs) = max_blobs
+        && blobs.len() > max_blobs as usize {
             return Err(InvalidTransaction::TooManyBlobs {
                 have: blobs.len(),
                 max: max_blobs as usize,
             });
         }
-    }
     Ok(())
 }
 

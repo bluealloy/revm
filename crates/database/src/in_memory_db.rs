@@ -116,8 +116,8 @@ impl<ExtDB> CacheDB<ExtDB> {
     ///
     /// Note: This will not insert into the underlying external database.
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
-        if let Some(code) = &account.code {
-            if !code.is_empty() {
+        if let Some(code) = &account.code
+            && !code.is_empty() {
                 if account.code_hash == KECCAK_EMPTY {
                     account.code_hash = code.hash_slow();
                 }
@@ -126,7 +126,6 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .entry(account.code_hash)
                     .or_insert_with(|| code.clone());
             }
-        }
         if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
@@ -214,11 +213,10 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
                 output.push_str(&format!("    nonce: {}\n", info.nonce));
                 output.push_str(&format!("    code_hash: {}\n", info.code_hash));
 
-                if let Some(code) = info.code {
-                    if !code.is_empty() {
+                if let Some(code) = info.code
+                    && !code.is_empty() {
                         output.push_str(&format!("    code: {} bytes\n", code.len()));
                     }
-                }
             } else {
                 output.push_str("    account: None (not existing)\n");
             }

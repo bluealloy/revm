@@ -70,12 +70,11 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     /// No checks for original value is done. This is useful when we know that value is different.
     #[inline]
     pub fn force_update(&mut self, index: BalIndex, value: T) {
-        if let Some(last) = self.writes.last_mut() {
-            if index == last.0 {
+        if let Some(last) = self.writes.last_mut()
+            && index == last.0 {
                 last.1 = value;
                 return;
             }
-        }
         self.writes.push((index, value));
     }
 
@@ -102,15 +101,14 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         F: Fn(&T) -> &K,
     {
         // if index is different, we push the new value.
-        if let Some(last) = self.writes.last_mut() {
-            if last.0 != index {
+        if let Some(last) = self.writes.last_mut()
+            && last.0 != index {
                 // we push the new value only if it is changed.
                 if f(&last.1) != f(&value) {
                     self.writes.push((index, value));
                 }
                 return;
             }
-        }
 
         // extract previous (Can be original_subvalue or previous value) and last value.
         let (previous, last) = match self.writes.as_mut_slice() {
