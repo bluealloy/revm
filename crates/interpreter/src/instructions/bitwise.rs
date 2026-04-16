@@ -1,7 +1,7 @@
 use super::i256::i256_cmp;
 use crate::{
-    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     InstructionContext,
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
 };
 use core::cmp::Ordering;
 use primitives::U256;
@@ -145,11 +145,11 @@ pub fn sar<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H,
 #[cfg(test)]
 mod tests {
     use crate::{
+        InstructionContext, Interpreter,
         host::DummyHost,
         instructions::bitwise::{byte, clz, sar, shl, shr},
-        InstructionContext, Interpreter,
     };
-    use primitives::{hardfork::SpecId, uint, U256};
+    use primitives::{U256, hardfork::SpecId, uint};
 
     #[test]
     fn test_shift_left() {

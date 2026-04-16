@@ -1,15 +1,15 @@
 use crate::{
-    frame::EthFrame, instructions::InstructionProvider, Handler, MainnetHandler, PrecompileProvider,
+    Handler, MainnetHandler, PrecompileProvider, frame::EthFrame, instructions::InstructionProvider,
 };
 use context::{
+    Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
     result::{
         EVMError, ExecResultAndState, ExecutionResult, HaltReason, InvalidTransaction,
         ResultAndState, ResultVecAndState, TransactionIndexedError,
     },
-    Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
 use database_interface::DatabaseCommit;
-use interpreter::{interpreter::EthInterpreter, InterpreterResult};
+use interpreter::{InterpreterResult, interpreter::EthInterpreter};
 use state::EvmState;
 use std::vec::Vec;
 

@@ -1,5 +1,5 @@
 use context_interface::transaction::SignedAuthorization;
-use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error};
 
 /// Struct for test authorization
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -23,9 +23,11 @@ impl<'de> Deserialize<'de> for TestAuthorization {
         // This is a hack to remove duplicate yParity and v fields which can be used by the test files for cross client compat
         let mut value: serde_json::Value = Deserialize::deserialize(deserializer)?;
         if let Some(val) = value.as_object_mut()
-            && val.contains_key("v") && val.contains_key("yParity") {
-                val.remove("v");
-            }
+            && val.contains_key("v")
+            && val.contains_key("yParity")
+        {
+            val.remove("v");
+        }
         let inner: SignedAuthorization = serde_json::from_value(value).map_err(D::Error::custom)?;
         Ok(Self { inner })
     }

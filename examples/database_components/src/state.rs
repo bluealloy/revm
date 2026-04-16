@@ -3,7 +3,7 @@
 use auto_impl::auto_impl;
 use core::ops::Deref;
 use revm::{
-    primitives::{Address, StorageKey, StorageValue, B256},
+    primitives::{Address, B256, StorageKey, StorageValue},
     state::{AccountInfo, Bytecode},
 };
 use std::sync::Arc;
@@ -24,7 +24,7 @@ pub trait State {
 
     /// Gets storage value of address at index.
     fn storage(&mut self, address: Address, index: StorageKey)
-        -> Result<StorageValue, Self::Error>;
+    -> Result<StorageValue, Self::Error>;
 }
 
 /// Trait for immutable access to state data including accounts, code, and storage.

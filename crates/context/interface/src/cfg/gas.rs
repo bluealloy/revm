@@ -1,6 +1,6 @@
 //! Gas constants and functions for gas calculation.
 
-use crate::{cfg::GasParams, transaction::AccessListItemTr as _, Transaction, TransactionType};
+use crate::{Transaction, TransactionType, cfg::GasParams, transaction::AccessListItemTr as _};
 use primitives::hardfork::SpecId;
 
 /// Tracker for gas during execution.

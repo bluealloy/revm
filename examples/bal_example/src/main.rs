@@ -9,12 +9,12 @@
 use std::sync::Arc;
 
 use revm::{
+    ExecuteCommitEvm, MainBuilder, MainContext,
     bytecode::opcode,
     context::{Context, ContextTr, TxEnv},
     context_interface::result::ExecutionResult,
     database::State,
-    primitives::{address, keccak256, Bytes, TxKind, U256},
-    ExecuteCommitEvm, MainBuilder, MainContext,
+    primitives::{Bytes, TxKind, U256, address, keccak256},
 };
 
 fn main() -> anyhow::Result<()> {

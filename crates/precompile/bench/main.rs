@@ -8,7 +8,7 @@ pub mod eip2537;
 pub mod eip4844;
 pub mod secp256r1;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {

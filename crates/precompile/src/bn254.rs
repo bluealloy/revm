@@ -1,8 +1,8 @@
 //! BN254 precompiles added in [`EIP-1962`](https://eips.ethereum.org/EIPS/eip-1962)
 use crate::{
+    Address, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
     crypto, eth_precompile_fn,
     utilities::{bool_to_bytes32, right_pad},
-    Address, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
 };
 use std::vec::Vec;
 
@@ -220,12 +220,12 @@ pub fn run_pair(
 #[cfg(test)]
 mod tests {
     use crate::{
+        PrecompileHalt,
         bn254::{
             add::BYZANTIUM_ADD_GAS_COST,
             mul::BYZANTIUM_MUL_GAS_COST,
             pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT},
         },
-        PrecompileHalt,
     };
     use primitives::hex;
 

@@ -1,8 +1,8 @@
 use crate::states::block_hash_cache::BlockHashCache;
 
-use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
+use super::{BundleState, State, TransitionState, cache::CacheState, state::DBBox};
 use database_interface::{
-    bal::BalState, DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef,
+    DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef, bal::BalState,
 };
 use state::bal::Bal;
 use std::sync::Arc;

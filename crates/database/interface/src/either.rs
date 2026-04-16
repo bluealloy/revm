@@ -2,7 +2,7 @@
 
 use crate::{Database, DatabaseCommit, DatabaseRef};
 use either::Either;
-use primitives::{Address, AddressMap, StorageKey, StorageValue, B256};
+use primitives::{Address, AddressMap, B256, StorageKey, StorageValue};
 use state::{Account, AccountInfo, Bytecode};
 
 impl<L, R> Database for Either<L, R>

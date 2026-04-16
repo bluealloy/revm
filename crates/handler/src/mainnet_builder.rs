@@ -1,4 +1,4 @@
-use crate::{frame::EthFrame, instructions::EthInstructions, EthPrecompiles};
+use crate::{EthPrecompiles, frame::EthFrame, instructions::EthInstructions};
 use context::{BlockEnv, Cfg, CfgEnv, Context, Evm, FrameStack, Journal, TxEnv};
 use context_interface::{Block, Database, JournalTr, Transaction};
 use database_interface::EmptyDB;
@@ -22,7 +22,7 @@ pub trait MainBuilder: Sized {
 
     /// Builds a mainnet EVM instance with the provided inspector.
     fn build_mainnet_with_inspector<INSP>(self, inspector: INSP)
-        -> MainnetEvm<Self::Context, INSP>;
+    -> MainnetEvm<Self::Context, INSP>;
 }
 
 impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> MainBuilder for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
@@ -79,13 +79,13 @@ mod test {
     use alloy_signer::{Either, SignerSync};
     use alloy_signer_local::PrivateKeySigner;
     use bytecode::{
-        opcode::{PUSH1, SSTORE},
         Bytecode,
+        opcode::{PUSH1, SSTORE},
     };
     use context::{Context, TxEnv};
     use context_interface::transaction::Authorization;
     use database::{BenchmarkDB, EEADDRESS, FFADDRESS};
-    use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
+    use primitives::{StorageKey, StorageValue, TxKind, U256, hardfork::SpecId};
 
     #[test]
     fn sanity_eip7702_tx() {

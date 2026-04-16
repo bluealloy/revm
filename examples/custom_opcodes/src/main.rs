@@ -2,20 +2,20 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use revm::{
+    Context, InspectEvm, MainContext,
     bytecode::opcode,
     context::{Evm, TxEnv},
-    database::{BenchmarkDB, BENCH_TARGET},
-    handler::{instructions::EthInstructions, EthPrecompiles},
+    database::{BENCH_TARGET, BenchmarkDB},
+    handler::{EthPrecompiles, instructions::EthInstructions},
     inspector::inspectors::TracerEip3155,
     interpreter::{
+        Instruction, InstructionContext,
         interpreter::EthInterpreter,
         interpreter_types::{Immediates, Jumps},
-        Instruction, InstructionContext,
     },
-    primitives::hardfork::SpecId,
     primitives::TxKind,
+    primitives::hardfork::SpecId,
     state::Bytecode,
-    Context, InspectEvm, MainContext,
 };
 
 /// Opcode hex value

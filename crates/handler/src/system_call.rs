@@ -20,13 +20,13 @@
 //!
 //! See the book section on [External State Transitions](../../book/src/external_state_transitions.md) for more details.
 use crate::{
-    frame::EthFrame, instructions::InstructionProvider, ExecuteCommitEvm, ExecuteEvm, Handler,
-    MainnetHandler, PrecompileProvider,
+    ExecuteCommitEvm, ExecuteEvm, Handler, MainnetHandler, PrecompileProvider, frame::EthFrame,
+    instructions::InstructionProvider,
 };
-use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
+use context::{ContextSetters, ContextTr, Evm, JournalTr, TxEnv, result::ExecResultAndState};
 use database_interface::DatabaseCommit;
-use interpreter::{interpreter::EthInterpreter, InterpreterResult};
-use primitives::{address, Address, Bytes, TxKind};
+use interpreter::{InterpreterResult, interpreter::EthInterpreter};
+use primitives::{Address, Bytes, TxKind, address};
 use state::EvmState;
 
 /// The system address used for system calls.
@@ -269,15 +269,17 @@ mod tests {
 
     use super::*;
     use context::{
-        result::{ExecutionResult, Output, ResultGas, SuccessReason},
         Context, Transaction,
+        result::{ExecutionResult, Output, ResultGas, SuccessReason},
     };
     use database::InMemoryDB;
-    use primitives::{b256, bytes, StorageKey, U256};
+    use primitives::{StorageKey, U256, b256, bytes};
     use state::{AccountInfo, Bytecode};
 
     const HISTORY_STORAGE_ADDRESS: Address = address!("0x0000F90827F1C53a10cb7A02335B175320002935");
-    static HISTORY_STORAGE_CODE: Bytes = bytes!("0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500");
+    static HISTORY_STORAGE_CODE: Bytes = bytes!(
+        "0x3373fffffffffffffffffffffffffffffffffffffffe14604657602036036042575f35600143038111604257611fff81430311604257611fff9006545f5260205ff35b5f5ffd5b5f35611fff60014303065500"
+    );
 
     #[test]
     fn test_system_call() {

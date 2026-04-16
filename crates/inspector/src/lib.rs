@@ -38,7 +38,7 @@ pub use primitives;
 pub use state;
 
 pub use count_inspector::CountInspector;
-pub use handler::{inspect_instructions, InspectorHandler};
+pub use handler::{InspectorHandler, inspect_instructions};
 pub use inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm};
 pub use inspector::*;
 pub use noop::NoOpInspector;
@@ -50,10 +50,10 @@ mod tests {
     use super::*;
     use ::handler::{MainBuilder, MainContext};
     use context::{BlockEnv, CfgEnv, Context, Journal, TxEnv};
-    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-    use interpreter::{interpreter::EthInterpreter, InstructionResult, InterpreterTypes};
+    use database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB};
+    use interpreter::{InstructionResult, InterpreterTypes, interpreter::EthInterpreter};
     use primitives::TxKind;
-    use state::{bytecode::opcode, Bytecode};
+    use state::{Bytecode, bytecode::opcode};
 
     struct HaltInspector;
     impl<CTX, INTR: InterpreterTypes> Inspector<CTX, INTR> for HaltInspector {

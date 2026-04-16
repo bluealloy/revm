@@ -17,10 +17,10 @@ pub mod bitcoin_secp256k1;
 pub mod k256;
 
 use crate::{
-    crypto, eth_precompile_fn, utilities::right_pad, EthPrecompileOutput, EthPrecompileResult,
-    Precompile, PrecompileHalt, PrecompileId,
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId, crypto,
+    eth_precompile_fn, utilities::right_pad,
 };
-use primitives::{alloy_primitives::B512, Bytes, B256};
+use primitives::{B256, Bytes, alloy_primitives::B512};
 
 eth_precompile_fn!(ecrecover_precompile, ec_recover_run);
 

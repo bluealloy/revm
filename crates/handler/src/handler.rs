@@ -1,20 +1,21 @@
 use crate::{
+    EvmTr, FrameResult, ItemOrResult,
     evm::FrameTr,
     execution,
     post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list},
-    validation, EvmTr, FrameResult, ItemOrResult,
+    validation,
 };
 use context::{
-    result::{ExecutionResult, FromStringError},
     LocalContextTr,
+    result::{ExecutionResult, FromStringError},
 };
 use context_interface::{
-    context::{take_error, ContextError},
-    result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
+    context::{ContextError, take_error},
+    result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
 };
-use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
+use interpreter::{Gas, InitialAndFloorGas, SharedMemory, interpreter_action::FrameInit};
 use primitives::U256;
 
 /// Trait for errors that can occur during EVM execution.
@@ -31,13 +32,13 @@ pub trait EvmTrError<EVM: EvmTr>:
 }
 
 impl<
-        EVM: EvmTr,
-        T: From<InvalidTransaction>
-            + From<InvalidHeader>
-            + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
-            + From<ContextError<<<EVM::Context as ContextTr>::Db as Database>::Error>>
-            + FromStringError,
-    > EvmTrError<EVM> for T
+    EVM: EvmTr,
+    T: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<<<EVM::Context as ContextTr>::Db as Database>::Error>
+        + From<ContextError<<<EVM::Context as ContextTr>::Db as Database>::Error>>
+        + FromStringError,
+> EvmTrError<EVM> for T
 {
 }
 
@@ -70,9 +71,9 @@ impl<
 pub trait Handler {
     /// The EVM type containing Context, Instruction, and Precompiles implementations.
     type Evm: EvmTr<
-        Context: ContextTr<Journal: JournalTr, Local: LocalContextTr>,
-        Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
-    >;
+            Context: ContextTr<Journal: JournalTr, Local: LocalContextTr>,
+            Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
+        >;
     /// The error type returned by this handler.
     type Error: EvmTrError<Self::Evm>;
     /// The halt reason type included in the output

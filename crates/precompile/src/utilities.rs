@@ -1,5 +1,5 @@
 //! Utility function that precompiles use, padding and converting between types.
-use primitives::{b256, Bytes, B256};
+use primitives::{B256, Bytes, b256};
 use std::borrow::Cow;
 
 /// Right-pads the given slice at `offset` with zeroes until `LEN`.
@@ -107,11 +107,7 @@ pub const fn bool_to_b256(value: bool) -> &'static B256 {
         &b256!("0x0000000000000000000000000000000000000000000000000000000000000001");
     const FALSE: &B256 =
         &b256!("0x0000000000000000000000000000000000000000000000000000000000000000");
-    if value {
-        TRUE
-    } else {
-        FALSE
-    }
+    if value { TRUE } else { FALSE }
 }
 
 #[cfg(test)]

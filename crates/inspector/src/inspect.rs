@@ -1,5 +1,5 @@
 use context::result::ExecResultAndState;
-use handler::{system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallEvm};
+use handler::{ExecuteCommitEvm, ExecuteEvm, SystemCallEvm, system_call::SYSTEM_ADDRESS};
 use primitives::{Address, Bytes};
 
 /// InspectEvm is a API that allows inspecting the EVM.

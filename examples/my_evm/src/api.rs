@@ -1,18 +1,18 @@
 use crate::{evm::MyEvm, handler::MyHandler};
 use revm::{
+    DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
     context::{
-        result::{ExecResultAndState, HaltReason, InvalidTransaction},
         ContextSetters,
+        result::{ExecResultAndState, HaltReason, InvalidTransaction},
     },
     context_interface::{
-        result::{EVMError, ExecutionResult},
         ContextTr, Database, JournalTr,
+        result::{EVMError, ExecutionResult},
     },
     handler::{EvmTr, Handler},
     inspector::{InspectCommitEvm, InspectEvm, Inspector, InspectorHandler, JournalExt},
     interpreter::interpreter::EthInterpreter,
     state::EvmState,
-    DatabaseCommit, ExecuteCommitEvm, ExecuteEvm,
 };
 
 /// Type alias for the error type of the OpEvm.

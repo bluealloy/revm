@@ -1,9 +1,9 @@
 use crate::{
+    InstructionResult, InterpreterAction,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr},
-    InstructionResult, InterpreterAction,
 };
-use context_interface::{cfg::GasParams, Host};
+use context_interface::{Host, cfg::GasParams};
 use primitives::{Bytes, U256};
 
 use crate::InstructionContext;

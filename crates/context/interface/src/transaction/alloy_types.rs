@@ -1,5 +1,5 @@
 use super::{AccessListItemTr, AuthorizationTr};
-use either::{for_both, Either};
+use either::{Either, for_both};
 use primitives::{Address, B256, U256};
 
 pub use alloy_eip2930::{AccessList, AccessListItem};

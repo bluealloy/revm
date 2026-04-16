@@ -1,14 +1,14 @@
 use crate::{
-    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm},
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
+    inspect::{InspectCommitEvm, InspectEvm, InspectSystemCallEvm},
 };
 use context::{ContextSetters, ContextTr, Evm, FrameStack, JournalTr};
 use database_interface::DatabaseCommit;
 use handler::{
-    instructions::InstructionProvider, system_call::SystemCallTx, EthFrame, EvmTr, EvmTrError,
-    Handler, MainnetHandler, PrecompileProvider,
+    EthFrame, EvmTr, EvmTrError, Handler, MainnetHandler, PrecompileProvider,
+    instructions::InstructionProvider, system_call::SystemCallTx,
 };
-use interpreter::{interpreter::EthInterpreter, InterpreterResult};
+use interpreter::{InterpreterResult, interpreter::EthInterpreter};
 use primitives::{Address, Bytes};
 use state::EvmState;
 
@@ -16,10 +16,10 @@ use state::EvmState;
 impl<EVM, ERROR> InspectorHandler for MainnetHandler<EVM, ERROR, EthFrame<EthInterpreter>>
 where
     EVM: InspectorEvmTr<
-        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
-        Frame = EthFrame<EthInterpreter>,
-        Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
-    >,
+            Context: ContextTr<Journal: JournalTr<State = EvmState>>,
+            Frame = EthFrame<EthInterpreter>,
+            Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
+        >,
     ERROR: EvmTrError<EVM>,
 {
     type IT = EthInterpreter;

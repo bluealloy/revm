@@ -1,7 +1,7 @@
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use context::{block::BlockEnv, cfg::CfgEnv};
 use database::CacheState;
-use primitives::{hardfork::SpecId, keccak256, AddressMap, Bytes, B256};
+use primitives::{AddressMap, B256, Bytes, hardfork::SpecId, keccak256};
 use serde::Deserialize;
 use state::Bytecode;
 use std::collections::BTreeMap;
@@ -139,8 +139,8 @@ mod tests {
     use super::*;
     use context_interface::block::calc_blob_gasprice;
     use primitives::{
-        eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
         Address, U256,
+        eip4844::{BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE},
     };
 
     /// Creates a minimal TestUnit with excess blob gas set for testing blob fee calculation

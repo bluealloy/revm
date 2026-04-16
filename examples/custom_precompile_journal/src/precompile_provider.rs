@@ -3,10 +3,10 @@
 use revm::{
     context::Cfg,
     context_interface::{ContextTr, JournalTr, LocalContextTr, Transaction},
-    handler::{precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider},
+    handler::{EthPrecompiles, PrecompileProvider, precompile_output_to_interpreter_result},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
-    primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
+    primitives::{Address, B256, Bytes, Log, U256, address, hardfork::SpecId},
 };
 use std::{boxed::Box, string::String};
 
@@ -104,11 +104,13 @@ fn run_custom_precompile<CTX: ContextTr>(
 
     // If this is a top-level precompile call and error is non-OOG, record the message
     if let Some(halt_reason) = output.halt_reason()
-        && !halt_reason.is_oog() && context.journal().depth() == 1 {
-            context
-                .local_mut()
-                .set_precompile_error_context(halt_reason.to_string());
-        }
+        && !halt_reason.is_oog()
+        && context.journal().depth() == 1
+    {
+        context
+            .local_mut()
+            .set_precompile_error_context(halt_reason.to_string());
+    }
 
     Ok(precompile_output_to_interpreter_result(
         output,

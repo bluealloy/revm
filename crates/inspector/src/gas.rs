@@ -106,14 +106,14 @@ mod tests {
     use super::*;
     use crate::{InspectEvm, Inspector};
     use context::{CfgEnv, Context, TxEnv};
-    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB};
     use handler::{MainBuilder, MainContext};
     use interpreter::{
-        interpreter_types::{Jumps, ReturnData},
         CallInputs, CreateInputs, Interpreter, InterpreterResult, InterpreterTypes,
+        interpreter_types::{Jumps, ReturnData},
     };
-    use primitives::{hardfork::SpecId, Address, Bytes, TxKind};
-    use state::bytecode::{opcode, Bytecode};
+    use primitives::{Address, Bytes, TxKind, hardfork::SpecId};
+    use state::bytecode::{Bytecode, opcode};
 
     #[derive(Default, Debug)]
     struct StackInspector {

@@ -1,9 +1,9 @@
 //! BLS12-381 map fp to g1 precompile. More details in [`map_fp_to_g1`]
 use super::utils::{pad_g1_point, remove_fp_padding};
 use crate::{
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
     bls12_381_const::{MAP_FP_TO_G1_ADDRESS, MAP_FP_TO_G1_BASE_GAS_FEE, PADDED_FP_LENGTH},
-    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
-    PrecompileHalt, PrecompileId,
+    crypto, eth_precompile_fn,
 };
 
 eth_precompile_fn!(map_fp_to_g1_precompile, map_fp_to_g1);
@@ -43,11 +43,13 @@ pub fn map_fp_to_g1(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
 #[cfg(test)]
 mod test {
     use super::*;
-    use primitives::{hex, Bytes};
+    use primitives::{Bytes, hex};
 
     #[test]
     fn sanity_test() {
-        let input = Bytes::from(hex!("000000000000000000000000000000006900000000000000636f6e7472616374595a603f343061cd305a03f40239f5ffff31818185c136bc2595f2aa18e08f17"));
+        let input = Bytes::from(hex!(
+            "000000000000000000000000000000006900000000000000636f6e7472616374595a603f343061cd305a03f40239f5ffff31818185c136bc2595f2aa18e08f17"
+        ));
         let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE_GAS_FEE);
         assert_eq!(fail, Err(PrecompileHalt::NonCanonicalFp));
     }

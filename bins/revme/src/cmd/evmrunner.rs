@@ -1,11 +1,11 @@
 use clap::Parser;
 use revm::{
+    Context, Database, ExecuteEvm, MainBuilder, MainContext,
     bytecode::{Bytecode, BytecodeDecodeError},
     context::TxEnv,
-    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    inspector::{inspectors::TracerEip3155, InspectEvm},
-    primitives::{hex, TxKind},
-    Context, Database, ExecuteEvm, MainBuilder, MainContext,
+    database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB},
+    inspector::{InspectEvm, inspectors::TracerEip3155},
+    primitives::{TxKind, hex},
 };
 use std::{borrow::Cow, fs, io::Error as IoError, path::PathBuf, time::Instant};
 

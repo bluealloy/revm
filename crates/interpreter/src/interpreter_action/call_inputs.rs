@@ -1,7 +1,7 @@
 use crate::interpreter_types::MemoryTr;
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
-use primitives::{Address, Bytes, B256, U256};
+use primitives::{Address, B256, Bytes, U256};
 use state::Bytecode;
 
 /// Input enum for a call.

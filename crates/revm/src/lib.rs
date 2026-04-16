@@ -33,8 +33,8 @@ pub use statetest_types;
 // Export items.
 
 pub use context::{
-    journal::{Journal, JournalEntry},
     Context,
+    journal::{Journal, JournalEntry},
 };
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
 pub use handler::{

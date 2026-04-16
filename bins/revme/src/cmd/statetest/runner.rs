@@ -1,14 +1,14 @@
-use crate::cmd::statetest::merkle_trie::{compute_test_roots, TestValidationResult};
+use crate::cmd::statetest::merkle_trie::{TestValidationResult, compute_test_roots};
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
+    Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     database::{self, bal::EvmDatabaseError},
     database_interface::EmptyDB,
-    inspector::{inspectors::TracerEip3155, InspectCommitEvm},
-    primitives::{hardfork::SpecId, Bytes, B256, U256},
+    inspector::{InspectCommitEvm, inspectors::TracerEip3155},
+    primitives::{B256, Bytes, U256, hardfork::SpecId},
     statetest_types::{SpecName, Test, TestSuite, TestUnit},
-    Context, ExecuteCommitEvm, InspectEvm, MainBuilder, MainContext,
 };
 use serde_json::json;
 use std::{
@@ -17,8 +17,8 @@ use std::{
     io::stderr,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc, Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     time::{Duration, Instant},
 };
@@ -195,12 +195,13 @@ fn validate_output(
     actual_result: &ExecutionResult<HaltReason>,
 ) -> Result<(), TestErrorKind> {
     if let Some((expected, actual)) = expected_output.zip(actual_result.output())
-        && expected != actual {
-            return Err(TestErrorKind::UnexpectedOutput {
-                expected_output: Some(expected.clone()),
-                got_output: actual_result.output().cloned(),
-            });
-        }
+        && expected != actual
+    {
+        return Err(TestErrorKind::UnexpectedOutput {
+            expected_output: Some(expected.clone()),
+            got_output: actual_result.output().cloned(),
+        });
+    }
     Ok(())
 }
 

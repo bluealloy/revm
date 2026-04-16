@@ -1,11 +1,11 @@
 use context_interface::{
+    Block, Cfg, ContextTr,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
-    Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
-use primitives::{eip4844, hardfork::SpecId, B256};
+use interpreter::{InitialAndFloorGas, instructions::calculate_initial_tx_gas_for_tx};
+use primitives::{B256, eip4844, hardfork::SpecId};
 
 /// Validates the execution environment including block and transaction parameters.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
@@ -31,9 +31,10 @@ pub fn validate_legacy_gas_price(
 ) -> Result<(), InvalidTransaction> {
     // Gas price must be at least the basefee.
     if let Some(base_fee) = base_fee
-        && gas_price < base_fee {
-            return Err(InvalidTransaction::GasPriceLessThanBasefee);
-        }
+        && gas_price < base_fee
+    {
+        return Err(InvalidTransaction::GasPriceLessThanBasefee);
+    }
     Ok(())
 }
 
@@ -105,12 +106,13 @@ pub fn validate_eip4844_tx(
     // Ensure the total blob gas spent is at most equal to the limit
     // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
     if let Some(max_blobs) = max_blobs
-        && blobs.len() > max_blobs as usize {
-            return Err(InvalidTransaction::TooManyBlobs {
-                have: blobs.len(),
-                max: max_blobs as usize,
-            });
-        }
+        && blobs.len() > max_blobs as usize
+    {
+        return Err(InvalidTransaction::TooManyBlobs {
+            have: blobs.len(),
+            max: max_blobs as usize,
+        });
+    }
     Ok(())
 }
 
@@ -282,14 +284,14 @@ pub fn validate_initial_tx_gas(
 
 #[cfg(test)]
 mod tests {
-    use crate::{api::ExecuteEvm, ExecuteCommitEvm, MainBuilder, MainContext};
+    use crate::{ExecuteCommitEvm, MainBuilder, MainContext, api::ExecuteEvm};
     use bytecode::opcode;
     use context::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
         Context, ContextTr, TxEnv,
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
+    use primitives::{B256, Bytes, TxKind, address, eip3860, eip7954, hardfork::SpecId};
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -654,7 +656,7 @@ mod tests {
 
     #[test]
     fn test_transact_many_success() {
-        use primitives::{address, U256};
+        use primitives::{U256, address};
 
         let ctx = Context::mainnet().with_db(CacheDB::<EmptyDB>::default());
         let mut evm = ctx.build_mainnet();

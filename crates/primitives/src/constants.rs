@@ -2,7 +2,7 @@
 //!
 //! Here you can find constants that dont belong to any EIP and are there for the genesis.
 
-use alloy_primitives::{b256, Address, B256};
+use alloy_primitives::{Address, B256, b256};
 
 /// Number of block hashes that EVM can access in the past (pre-Prague)
 pub const BLOCK_HASH_HISTORY: u64 = 256;

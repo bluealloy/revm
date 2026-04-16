@@ -1,5 +1,5 @@
 use super::{
-    plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
+    CacheAccount, PlainAccount, plain_account::PlainStorage, transition_account::TransitionAccount,
 };
 use bytecode::Bytecode;
 use primitives::{Address, AddressMap, B256Map, HashMap};
@@ -141,9 +141,10 @@ impl CacheState {
                 output.push_str(&format!("    code_hash: {code_hash}\n"));
 
                 if let Some(code) = &plain_account.info.code
-                    && !code.is_empty() {
-                        contracts.insert(code_hash, code.clone());
-                    }
+                    && !code.is_empty()
+                {
+                    contracts.insert(code_hash, code.clone());
+                }
 
                 if !plain_account.storage.is_empty() {
                     output.push_str(&format!(

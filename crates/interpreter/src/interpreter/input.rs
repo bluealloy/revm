@@ -1,4 +1,4 @@
-use crate::{interpreter_types::InputsTr, CallInput};
+use crate::{CallInput, interpreter_types::InputsTr};
 use primitives::{Address, U256};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

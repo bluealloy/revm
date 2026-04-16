@@ -1,9 +1,9 @@
 use revm::{
+    Database, DatabaseCommit, SystemCallCommitEvm,
     context::{Block, ContextTr, JournalTr},
     handler::EvmTr,
-    primitives::{address, hardfork::SpecId, Address, Bytes, ONE_ETHER, ONE_GWEI, U256},
+    primitives::{Address, Bytes, ONE_ETHER, ONE_GWEI, U256, address, hardfork::SpecId},
     statetest_types::blockchain::Withdrawal,
-    Database, DatabaseCommit, SystemCallCommitEvm,
 };
 
 /// Post block transition that includes:

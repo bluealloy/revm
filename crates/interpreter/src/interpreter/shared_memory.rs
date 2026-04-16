@@ -7,7 +7,7 @@ use core::{
     fmt,
     ops::Range,
 };
-use primitives::{hex, B256, U256};
+use primitives::{B256, U256, hex};
 use std::{rc::Rc, vec::Vec};
 
 trait RefcellExt<T> {

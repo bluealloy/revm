@@ -1,8 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{
-    crypto, eth_precompile_fn, Address, EthPrecompileOutput, EthPrecompileResult, Precompile,
-    PrecompileHalt, PrecompileId,
+    Address, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
+    crypto, eth_precompile_fn,
 };
 pub mod arkworks;
 
@@ -118,7 +118,9 @@ mod tests {
 
         let input = [versioned_hash, z, y, commitment, proof].concat();
 
-        let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+        let expected_output = hex!(
+            "000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+        );
         let gas = 50000;
         let output = run(&input, gas).unwrap();
         assert_eq!(output.gas_used, gas);
@@ -127,10 +129,14 @@ mod tests {
 
     #[test]
     fn test_invalid_input() {
-        let commitment = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let commitment = hex!(
+            "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        );
         let z = hex!("0000000000000000000000000000000000000000000000000000000000000000");
         let y = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
-        let proof = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let proof = hex!(
+            "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        );
 
         let t = verify_kzg_proof(&commitment, &z, &y, &proof);
         assert!(!t);
@@ -138,10 +144,14 @@ mod tests {
 
     #[test]
     fn test_valid_input() {
-        let commitment = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let commitment = hex!(
+            "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        );
         let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000");
         let y = hex!("0000000000000000000000000000000000000000000000000000000000000000");
-        let proof = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        let proof = hex!(
+            "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        );
 
         let t = verify_kzg_proof(&commitment, &z, &y, &proof);
         assert!(t);

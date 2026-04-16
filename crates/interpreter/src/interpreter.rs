@@ -13,17 +13,17 @@ pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
-pub use shared_memory::{num_words, resize_memory, SharedMemory};
-pub use stack::{Stack, STACK_LIMIT};
+pub use shared_memory::{SharedMemory, num_words, resize_memory};
+pub use stack::{STACK_LIMIT, Stack};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    Gas, Host, InstructionResult, InstructionTable, InterpreterAction, host::DummyHost,
+    instruction_context::InstructionContext, interpreter_types::*,
 };
 use bytecode::Bytecode;
 use context_interface::{cfg::GasParams, host::LoadError};
-use primitives::{hardfork::SpecId, Bytes};
+use primitives::{Bytes, hardfork::SpecId};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
 #[derive(Debug, Clone)]
@@ -197,7 +197,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn take_next_action(&mut self) -> InterpreterAction {
         self.bytecode.reset_action();
         // Return next action if it is some.
-        
+
         core::mem::take(self.bytecode.action()).expect("Interpreter to set action")
     }
 

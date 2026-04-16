@@ -1,6 +1,6 @@
 use super::{EvmTrError, Handler};
-use crate::{evm::FrameTr, EvmTr, FrameResult};
-use context_interface::{result::HaltReason, ContextTr, JournalTr};
+use crate::{EvmTr, FrameResult, evm::FrameTr};
+use context_interface::{ContextTr, JournalTr, result::HaltReason};
 use interpreter::interpreter_action::FrameInit;
 use state::EvmState;
 

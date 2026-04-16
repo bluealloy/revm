@@ -1,7 +1,7 @@
 use super::i256::{i256_div, i256_mod};
 use crate::{
-    interpreter_types::{InterpreterTypes, StackTr},
     InstructionContext,
+    interpreter_types::{InterpreterTypes, StackTr},
 };
 use context_interface::Host;
 use primitives::U256;

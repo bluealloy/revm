@@ -1,5 +1,5 @@
 use super::TransitionAccount;
-use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
+use primitives::{Address, AddressMap, HashMap, hash_map::Entry};
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]

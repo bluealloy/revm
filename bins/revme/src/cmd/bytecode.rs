@@ -1,5 +1,5 @@
 use clap::Parser;
-use revm::primitives::{hex, Bytes};
+use revm::primitives::{Bytes, hex};
 
 /// `bytecode` subcommand - simplified to handle legacy bytecode only.
 #[derive(Parser, Debug)]

@@ -2,8 +2,8 @@ use auto_impl::auto_impl;
 use context::{Database, Journal, JournalEntry};
 use handler::FrameResult;
 use interpreter::{
-    interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome, FrameInput,
-    Interpreter, InterpreterTypes,
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, FrameInput, Interpreter,
+    InterpreterTypes, interpreter::EthInterpreter,
 };
 use primitives::{Address, Log, U256};
 use state::EvmState;

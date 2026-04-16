@@ -1,6 +1,6 @@
 use super::RevertToSlot;
 use bytecode::Bytecode;
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{Address, B256, StorageKey, StorageValue};
 use state::AccountInfo;
 use std::vec::Vec;
 

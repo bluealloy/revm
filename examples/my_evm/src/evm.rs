@@ -1,13 +1,13 @@
 use revm::{
+    Database, Inspector,
     context::{ContextError, ContextSetters, ContextTr, Evm, FrameStack},
     handler::{
-        evm::FrameTr, instructions::EthInstructions, EthFrame, EthPrecompiles, EvmTr,
-        FrameInitOrResult, ItemOrResult,
+        EthFrame, EthPrecompiles, EvmTr, FrameInitOrResult, ItemOrResult, evm::FrameTr,
+        instructions::EthInstructions,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
     primitives::hardfork::SpecId,
-    Database, Inspector,
 };
 
 /// MyEvm variant of the EVM.

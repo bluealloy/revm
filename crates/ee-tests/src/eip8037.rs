@@ -5,14 +5,14 @@
 
 use crate::TestdataConfig;
 use revm::{
+    Context, ExecuteEvm, MainBuilder, MainContext,
     bytecode::opcode,
     context::TxEnv,
     context_interface::{cfg::GasId, result::HaltReason},
-    database::{BenchmarkDB, BENCH_CALLER},
+    database::{BENCH_CALLER, BenchmarkDB},
     handler::{MainnetContext, MainnetEvm},
-    primitives::{address, hardfork::SpecId, U256},
+    primitives::{U256, address, hardfork::SpecId},
     state::Bytecode,
-    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::path::PathBuf;
 

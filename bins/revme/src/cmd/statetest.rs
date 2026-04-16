@@ -6,7 +6,7 @@ pub use runner::{TestError as Error, TestErrorKind};
 
 use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
-use runner::{run, TestError};
+use runner::{TestError, run};
 use std::path::PathBuf;
 
 /// `statetest` subcommand

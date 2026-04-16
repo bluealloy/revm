@@ -6,14 +6,14 @@ pub use call_helpers::{
 };
 
 use crate::{
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host, InstructionResult,
+    InterpreterAction,
     instructions::utility::IntoAddress,
     interpreter_action::FrameInput,
     interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host, InstructionResult,
-    InterpreterAction,
 };
 use context_interface::CreateScheme;
-use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
+use primitives::{Address, B256, Bytes, U256, hardfork::SpecId};
 use std::boxed::Box;
 
 use crate::InstructionContext;

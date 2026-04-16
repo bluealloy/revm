@@ -1,7 +1,7 @@
 //! Async database interface.
 use crate::{DBErrorMarker, Database, DatabaseRef};
 use core::future::Future;
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{Address, B256, StorageKey, StorageValue};
 use state::{AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
 

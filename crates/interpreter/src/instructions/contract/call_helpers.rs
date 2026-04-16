@@ -1,13 +1,13 @@
 use crate::{
+    InstructionContext,
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    InstructionContext,
 };
-use context_interface::{cfg::GasParams, host::LoadError, Host};
+use context_interface::{Host, cfg::GasParams, host::LoadError};
 use core::{cmp::min, ops::Range};
 use primitives::{
-    hardfork::SpecId::{self, *},
     Address, B256, U256,
+    hardfork::SpecId::{self, *},
 };
 use state::Bytecode;
 

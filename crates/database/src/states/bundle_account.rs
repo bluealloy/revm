@@ -1,6 +1,6 @@
 use super::{
-    reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, StorageSlot,
-    StorageWithOriginalValues, TransitionAccount,
+    AccountRevert, AccountStatus, RevertToSlot, StorageSlot, StorageWithOriginalValues,
+    TransitionAccount, reverts::AccountInfoRevert,
 };
 use primitives::{HashMap, StorageKey, StorageKeyMap, StorageValue};
 use state::AccountInfo;
@@ -235,14 +235,21 @@ impl BundleAccount {
                 // Clear this storage and move it to the Revert.
                 let this_storage = core::mem::take(&mut self.storage);
                 let ret = match self.status {
-                    AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
-                        Some(AccountRevert::new_selfdestructed(self.status, info_revert, this_storage))
-                    }
+                    AccountStatus::InMemoryChange
+                    | AccountStatus::Changed
+                    | AccountStatus::Loaded
+                    | AccountStatus::LoadedEmptyEIP161 => Some(AccountRevert::new_selfdestructed(
+                        self.status,
+                        info_revert,
+                        this_storage,
+                    )),
                     AccountStatus::LoadedNotExisting => {
                         // Do nothing as we have LoadedNotExisting -> Destroyed (It is noop)
                         None
                     }
-                    _ => unreachable!("Invalid transition to Destroyed account from: {self:?} to {updated_info:?} {updated_status:?}"),
+                    _ => unreachable!(
+                        "Invalid transition to Destroyed account from: {self:?} to {updated_info:?} {updated_status:?}"
+                    ),
                 };
 
                 if ret.is_some() {

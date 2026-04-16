@@ -2,10 +2,10 @@
 mod tests {
     use crate::{InspectEvm, InspectSystemCallEvm, InspectorEvent, TestInspector};
     use context::{Context, TxEnv};
-    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB};
     use handler::{MainBuilder, MainContext};
-    use primitives::{address, Address, Bytes, TxKind, U256};
-    use state::{bytecode::opcode, AccountInfo, Bytecode};
+    use primitives::{Address, Bytes, TxKind, U256, address};
+    use state::{AccountInfo, Bytecode, bytecode::opcode};
 
     #[test]
     fn test_push_opcodes_and_stack_operations() {
@@ -136,7 +136,7 @@ mod tests {
             .find(|e| e.opcode_name == "JUMPI")
             .unwrap();
         assert!(jumpi_event.before.stack_len >= 2); // Has condition and destination
-                                                    // JUMPI should have jumped since condition is 1 (true)
+        // JUMPI should have jumped since condition is 1 (true)
         assert_eq!(jumpi_event.after.as_ref().unwrap().pc, 0x0F);
     }
 

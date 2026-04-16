@@ -1,8 +1,8 @@
 //! BAL builder module
 
 use crate::{
-    bal::{writes::BalWrites, BalError, BalIndex},
     Account, AccountInfo, EvmStorage,
+    bal::{BalError, BalIndex, writes::BalWrites},
 };
 use alloy_eip7928::{
     AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
@@ -11,9 +11,9 @@ use alloy_eip7928::{
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, B256, StorageKey, StorageValue, U256};
 use std::{
-    collections::{btree_map::Entry, BTreeMap},
+    collections::{BTreeMap, btree_map::Entry},
     vec::Vec,
 };
 

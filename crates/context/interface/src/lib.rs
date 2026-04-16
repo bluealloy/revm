@@ -21,7 +21,7 @@ pub use state;
 pub use block::Block;
 pub use cfg::{Cfg, CreateScheme, TransactTo};
 pub use context::{ContextError, ContextSetters, ContextTr};
-pub use database_interface::{erased_error::ErasedError, DBErrorMarker, Database};
+pub use database_interface::{DBErrorMarker, Database, erased_error::ErasedError};
 pub use either;
 pub use host::{DummyHost, Host};
 pub use journaled_state::JournalTr;

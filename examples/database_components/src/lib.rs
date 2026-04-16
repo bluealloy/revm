@@ -10,7 +10,7 @@ pub use state::{State, StateRef};
 
 use revm::{
     database_interface::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef},
-    primitives::{Address, AddressMap, StorageKey, StorageValue, B256},
+    primitives::{Address, AddressMap, B256, StorageKey, StorageValue},
     state::{Account, AccountInfo, Bytecode},
 };
 
@@ -41,16 +41,16 @@ pub enum DatabaseComponentError<
 }
 
 impl<
-        SE: core::error::Error + Send + Sync + 'static,
-        BHE: core::error::Error + Send + Sync + 'static,
-    > DBErrorMarker for DatabaseComponentError<SE, BHE>
+    SE: core::error::Error + Send + Sync + 'static,
+    BHE: core::error::Error + Send + Sync + 'static,
+> DBErrorMarker for DatabaseComponentError<SE, BHE>
 {
 }
 
 unsafe impl<
-        SE: core::error::Error + Send + Sync + 'static,
-        BHE: core::error::Error + Send + Sync + 'static,
-    > Send for DatabaseComponentError<SE, BHE>
+    SE: core::error::Error + Send + Sync + 'static,
+    BHE: core::error::Error + Send + Sync + 'static,
+> Send for DatabaseComponentError<SE, BHE>
 {
 }
 

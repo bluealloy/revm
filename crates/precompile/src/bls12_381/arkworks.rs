@@ -1,14 +1,14 @@
 //! BLS12-381 precompile using Arkworks BLS12-381 implementation.
 use super::{G1Point, G2Point, PairingPair};
 use crate::{
-    bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH},
     PrecompileHalt,
+    bls12_381_const::{FP_LENGTH, G1_LENGTH, G2_LENGTH, SCALAR_LENGTH},
 };
 use ark_bls12_381::{Bls12_381, Fq, Fq2, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{
+    AffineRepr, CurveGroup, VariableBaseMSM,
     hashing::{curve_maps::wb::WBMap, map_to_curve_hasher::MapToCurve},
     pairing::Pairing,
-    AffineRepr, CurveGroup, VariableBaseMSM,
 };
 use ark_ff::{One, PrimeField, Zero};
 

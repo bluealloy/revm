@@ -1,9 +1,9 @@
 //! BLS12-381 G1 add precompile. More details in [`g1_add`]
 use super::utils::{pad_g1_point, remove_g1_padding};
 use crate::{
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
     bls12_381_const::{G1_ADD_ADDRESS, G1_ADD_BASE_GAS_FEE, G1_ADD_INPUT_LENGTH, PADDED_G1_LENGTH},
-    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
-    PrecompileHalt, PrecompileId,
+    crypto, eth_precompile_fn,
 };
 
 eth_precompile_fn!(g1_add_precompile, g1_add);

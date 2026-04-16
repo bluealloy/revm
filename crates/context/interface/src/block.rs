@@ -3,7 +3,7 @@
 //! [`Block`] trait is used to retrieve block information required for execution.
 pub mod blob;
 
-pub use blob::{calc_blob_gasprice, BlobExcessGasAndPrice};
+pub use blob::{BlobExcessGasAndPrice, calc_blob_gasprice};
 
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};

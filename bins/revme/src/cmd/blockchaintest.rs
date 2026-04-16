@@ -8,15 +8,15 @@ use revm::statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
 };
 use revm::{
+    Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
     bytecode::Bytecode,
-    context::{cfg::CfgEnv, ContextTr},
+    context::{ContextTr, cfg::CfgEnv},
     context_interface::{block::BlobExcessGasAndPrice, result::HaltReason},
-    database::{states::bundle_state::BundleRetention, EmptyDB, State},
+    database::{EmptyDB, State, states::bundle_state::BundleRetention},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
-    primitives::{hardfork::SpecId, hex, Address, AddressMap, U256Map, U256},
-    state::{bal::Bal, AccountInfo},
-    Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
+    primitives::{Address, AddressMap, U256, U256Map, hardfork::SpecId, hex},
+    state::{AccountInfo, bal::Bal},
 };
 use serde_json::json;
 use std::{
@@ -965,27 +965,29 @@ fn execute_blockchain_test(
         // Validate block gas used against header.
         // EIP-8037 (Amsterdam+): block gas_used = max(regular_gas, state_gas).
         // Pre-Amsterdam: block gas_used = cumulative tx_gas_used (includes refunds).
-        if block_completed && !should_fail
-            && let Some(block_header) = block.block_header.as_ref() {
-                let expected_gas_used = block_header.gas_used.to::<u64>();
-                let actual_block_gas_used = if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
-                    block_regular_gas_used.max(block_state_gas_used)
-                } else {
-                    cumulative_tx_gas_used
-                };
-                if actual_block_gas_used != expected_gas_used {
-                    if print_env_on_error {
-                        eprintln!(
-                            "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {actual_block_gas_used} (regular: {block_regular_gas_used}, state: {block_state_gas_used}, tx: {cumulative_tx_gas_used})"
-                        );
-                    }
-                    return Err(TestExecutionError::BlockGasUsedMismatch {
-                        block_idx,
-                        expected: expected_gas_used,
-                        actual: actual_block_gas_used,
-                    });
+        if block_completed
+            && !should_fail
+            && let Some(block_header) = block.block_header.as_ref()
+        {
+            let expected_gas_used = block_header.gas_used.to::<u64>();
+            let actual_block_gas_used = if spec_id.is_enabled_in(SpecId::AMSTERDAM) {
+                block_regular_gas_used.max(block_state_gas_used)
+            } else {
+                cumulative_tx_gas_used
+            };
+            if actual_block_gas_used != expected_gas_used {
+                if print_env_on_error {
+                    eprintln!(
+                        "Block gas used mismatch at block {block_idx}: expected {expected_gas_used}, got {actual_block_gas_used} (regular: {block_regular_gas_used}, state: {block_state_gas_used}, tx: {cumulative_tx_gas_used})"
+                    );
                 }
+                return Err(TestExecutionError::BlockGasUsedMismatch {
+                    block_idx,
+                    expected: expected_gas_used,
+                    actual: actual_block_gas_used,
+                });
             }
+        }
 
         // bump bal index
         evm.db_mut().bump_bal_index();
@@ -1009,14 +1011,15 @@ fn execute_blockchain_test(
 
         if let Some(bal) = state.bal_state.bal_builder.take()
             && let Some(state_bal) = bal_test
-                && &bal != state_bal.as_ref() {
-                    println!("Bal mismatch");
-                    println!("Test bal");
-                    state_bal.pretty_print();
-                    println!("Bal:");
-                    bal.pretty_print();
-                    return Err(TestExecutionError::BalMismatchError);
-                }
+            && &bal != state_bal.as_ref()
+        {
+            println!("Bal mismatch");
+            println!("Test bal");
+            state_bal.pretty_print();
+            println!("Bal:");
+            bal.pretty_print();
+            return Err(TestExecutionError::BalMismatchError);
+        }
 
         parent_block_hash = block_hash;
         if let Some(excess_blob_gas) = this_excess_blob_gas {

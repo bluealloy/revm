@@ -1,9 +1,9 @@
 //! BLS12-381 utilities for padding and unpadding of input.
 use crate::{
+    PrecompileHalt,
     bls12_381_const::{
         FP_LENGTH, FP_PAD_BY, G1_LENGTH, PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH,
     },
-    PrecompileHalt,
 };
 
 /// Removes zeros with which the precompile inputs are left padded to 64 bytes.

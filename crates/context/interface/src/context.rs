@@ -2,7 +2,7 @@
 //! Context trait and related types.
 pub use crate::journaled_state::StateLoad;
 use crate::{
-    result::FromStringError, Block, Cfg, Database, Host, JournalTr, LocalContextTr, Transaction,
+    Block, Cfg, Database, Host, JournalTr, LocalContextTr, Transaction, result::FromStringError,
 };
 use auto_impl::auto_impl;
 use primitives::StorageValue;
@@ -93,7 +93,6 @@ pub trait ContextTr: Host {
     }
     /// Get the database mutably
     fn db_mut(&mut self) -> &mut Self::Db {
-        
         (self.journal_mut().db_mut()) as _
     }
     /// Get the database reference

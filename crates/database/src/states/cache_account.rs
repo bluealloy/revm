@@ -1,6 +1,6 @@
 use super::{
-    plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
-    StorageWithOriginalValues, TransitionAccount,
+    AccountStatus, BundleAccount, PlainAccount, StorageWithOriginalValues, TransitionAccount,
+    plain_account::PlainStorage,
 };
 use primitives::{HashMap, StorageKey, StorageValue, U256};
 use state::AccountInfo;

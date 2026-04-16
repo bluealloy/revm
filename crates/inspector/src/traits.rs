@@ -1,17 +1,18 @@
 use context::{ContextTr, FrameStack, JournalTr};
 use handler::{
+    EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
     evm::{ContextDbError, FrameInitResult, FrameTr},
     instructions::InstructionProvider,
-    EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
 use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, FrameInput,
-    InterpreterTypes,
+    CallOutcome, FrameInput, InterpreterTypes, interpreter::EthInterpreter,
+    interpreter_action::FrameInit,
 };
 
 use crate::{
+    Inspector, JournalExt,
     handler::{frame_end, frame_start},
-    inspect_instructions, Inspector, JournalExt,
+    inspect_instructions,
 };
 
 /// Inspector EVM trait. Extends the [`EvmTr`] trait with inspector related methods.
@@ -21,10 +22,13 @@ use crate::{
 /// It is used inside [`crate::InspectorHandler`] to extend evm with support for inspection.
 pub trait InspectorEvmTr:
     EvmTr<
-    Frame: InspectorFrame<IT = EthInterpreter>,
-    Instructions: InstructionProvider<InterpreterTypes = EthInterpreter, Context = Self::Context>,
-    Context: ContextTr<Journal: JournalExt>,
->
+        Frame: InspectorFrame<IT = EthInterpreter>,
+        Instructions: InstructionProvider<
+            InterpreterTypes = EthInterpreter,
+            Context = Self::Context,
+        >,
+        Context: ContextTr<Journal: JournalExt>,
+    >
 {
     /// The inspector type used for EVM execution inspection.
     type Inspector: Inspector<Self::Context, EthInterpreter, FrameInput, FrameResult>;
@@ -116,12 +120,13 @@ pub trait InspectorEvmTr:
                 precompile_call_logs,
                 ..
             }) = &mut output
-                && *was_precompile_called {
-                    let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
-                    for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
-                        inspector.log(ctx, log);
-                    }
+                && *was_precompile_called
+            {
+                let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
+                for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
+                    inspector.log(ctx, log);
                 }
+            }
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
         }

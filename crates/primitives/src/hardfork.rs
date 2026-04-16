@@ -2,10 +2,10 @@
 // enumn has missing docs. Should be replaced in the future https://github.com/bluealloy/revm/issues/2402
 #![allow(missing_docs)]
 
+pub use SpecId::*;
 use core::str::FromStr;
 pub use num_enum::TryFromPrimitive;
 pub use std::string::{String, ToString};
-pub use SpecId::*;
 
 /// Specification IDs and their activation block
 ///

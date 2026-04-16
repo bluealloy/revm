@@ -29,7 +29,7 @@ pub mod utility;
 
 pub use context_interface::cfg::gas::{self, *};
 
-use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
+use crate::{Host, InstructionContext, interpreter_types::InterpreterTypes};
 use primitives::hardfork::SpecId;
 
 /// EVM opcode function signature.
@@ -89,8 +89,8 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host>() -> [Instructio
 pub fn instruction_table_gas_changes_spec<WIRE: InterpreterTypes, H: Host>(
     spec: SpecId,
 ) -> [Instruction<WIRE, H>; 256] {
-    use bytecode::opcode::*;
     use SpecId::*;
+    use bytecode::opcode::*;
     let mut table = instruction_table();
 
     if spec.is_enabled_in(TANGERINE) {

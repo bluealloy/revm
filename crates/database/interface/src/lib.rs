@@ -8,7 +8,7 @@ extern crate alloc as std;
 use core::convert::Infallible;
 
 use auto_impl::auto_impl;
-use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, AddressMap, B256, StorageKey, StorageValue, U256, address};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 
@@ -65,7 +65,7 @@ pub trait Database {
 
     /// Gets storage value of address at index.
     fn storage(&mut self, address: Address, index: StorageKey)
-        -> Result<StorageValue, Self::Error>;
+    -> Result<StorageValue, Self::Error>;
 
     /// Gets storage value of account by its id. By default call [`Database::storage`] method.
     ///
@@ -148,7 +148,7 @@ pub trait DatabaseRef {
 
     /// Gets storage value of address at index.
     fn storage_ref(&self, address: Address, index: StorageKey)
-        -> Result<StorageValue, Self::Error>;
+    -> Result<StorageValue, Self::Error>;
 
     /// Gets storage value of account by its id.
     ///

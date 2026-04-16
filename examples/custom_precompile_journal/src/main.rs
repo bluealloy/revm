@@ -7,17 +7,17 @@
 //! 4. Integrating the custom precompile into a custom EVM implementation
 
 use example_custom_precompile_journal::{
-    precompile_provider::CUSTOM_PRECOMPILE_ADDRESS, CustomEvm,
+    CustomEvm, precompile_provider::CUSTOM_PRECOMPILE_ADDRESS,
 };
 use revm::{
-    context::{result::InvalidTransaction, Context, ContextSetters, ContextTr, TxEnv},
+    Database, MainContext,
+    context::{Context, ContextSetters, ContextTr, TxEnv, result::InvalidTransaction},
     context_interface::result::EVMError,
     database::InMemoryDB,
     handler::{Handler, MainnetHandler},
     inspector::NoOpInspector,
-    primitives::{address, TxKind, U256},
+    primitives::{TxKind, U256, address},
     state::AccountInfo,
-    Database, MainContext,
 };
 
 // Type alias for the error type

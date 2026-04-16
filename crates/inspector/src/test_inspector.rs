@@ -5,8 +5,8 @@ extern crate alloc;
 use crate::Inspector;
 use alloc::{format, string::String, vec::Vec};
 use interpreter::{
-    interpreter_types::{Jumps, MemoryTr, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterTypes,
+    interpreter_types::{Jumps, MemoryTr, StackTr},
 };
 use primitives::{Address, Log, U256};
 
@@ -155,10 +155,7 @@ where
 
     fn call_end(&mut self, _ctx: &mut CTX, _inputs: &CallInputs, outcome: &mut CallOutcome) {
         self.call_depth -= 1;
-        if let Some(InspectorEvent::Call {
-            outcome: out,
-            ..
-        }) = self
+        if let Some(InspectorEvent::Call { outcome: out, .. }) = self
             .events
             .iter_mut()
             .rev()
@@ -177,10 +174,7 @@ where
     }
 
     fn create_end(&mut self, _ctx: &mut CTX, _inputs: &CreateInputs, outcome: &mut CreateOutcome) {
-        if let Some(InspectorEvent::Create {
-            outcome: out,
-            ..
-        }) = self
+        if let Some(InspectorEvent::Create { outcome: out, .. }) = self
             .events
             .iter_mut()
             .rev()

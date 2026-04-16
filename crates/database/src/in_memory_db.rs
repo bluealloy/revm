@@ -1,11 +1,11 @@
 use core::convert::Infallible;
 use database_interface::{
-    Database, DatabaseCommit, DatabaseRef, EmptyDB, BENCH_CALLER, BENCH_CALLER_BALANCE,
-    BENCH_TARGET, BENCH_TARGET_BALANCE,
+    BENCH_CALLER, BENCH_CALLER_BALANCE, BENCH_TARGET, BENCH_TARGET_BALANCE, Database,
+    DatabaseCommit, DatabaseRef, EmptyDB,
 };
 use primitives::{
-    hash_map::Entry, Address, AddressMap, B256Map, HashMap, Log, StorageKey, StorageKeyMap,
-    StorageValue, U256Map, B256, KECCAK_EMPTY, U256,
+    Address, AddressMap, B256, B256Map, HashMap, KECCAK_EMPTY, Log, StorageKey, StorageKeyMap,
+    StorageValue, U256, U256Map, hash_map::Entry,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
@@ -117,15 +117,16 @@ impl<ExtDB> CacheDB<ExtDB> {
     /// Note: This will not insert into the underlying external database.
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         if let Some(code) = &account.code
-            && !code.is_empty() {
-                if account.code_hash == KECCAK_EMPTY {
-                    account.code_hash = code.hash_slow();
-                }
-                self.cache
-                    .contracts
-                    .entry(account.code_hash)
-                    .or_insert_with(|| code.clone());
+            && !code.is_empty()
+        {
+            if account.code_hash == KECCAK_EMPTY {
+                account.code_hash = code.hash_slow();
             }
+            self.cache
+                .contracts
+                .entry(account.code_hash)
+                .or_insert_with(|| code.clone());
+        }
         if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
@@ -214,9 +215,10 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
                 output.push_str(&format!("    code_hash: {}\n", info.code_hash));
 
                 if let Some(code) = info.code
-                    && !code.is_empty() {
-                        output.push_str(&format!("    code: {} bytes\n", code.len()));
-                    }
+                    && !code.is_empty()
+                {
+                    output.push_str(&format!("    code: {} bytes\n", code.len()));
+                }
             } else {
                 output.push_str("    account: None (not existing)\n");
             }
@@ -644,7 +646,7 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_pretty_print_cachedb() {
-        use primitives::{Bytes, Log, LogData, B256, U256};
+        use primitives::{B256, Bytes, Log, LogData, U256};
 
         let account = Address::with_last_byte(55);
         let mut cachedb = CacheDB::new(EmptyDB::default());

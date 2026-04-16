@@ -1,14 +1,14 @@
 use super::{
-    changes::{PlainStorageChangeset, StateChangeset},
-    reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, StorageSlot,
     TransitionState,
+    changes::{PlainStorageChangeset, StateChangeset},
+    reverts::{AccountInfoRevert, Reverts},
 };
 use bytecode::Bytecode;
 use core::{mem, ops::RangeInclusive};
 use primitives::{
-    hash_map::Entry, Address, AddressMap, AddressSet, B256Map, HashMap, StorageKey, StorageKeyMap,
-    StorageValue, B256, KECCAK_EMPTY,
+    Address, AddressMap, AddressSet, B256, B256Map, HashMap, KECCAK_EMPTY, StorageKey,
+    StorageKeyMap, StorageValue, hash_map::Entry,
 };
 use state::AccountInfo;
 use std::{
@@ -1318,18 +1318,22 @@ mod tests {
         builder
             .get_revert_account_mut()
             .insert((0, account1()), Some(None));
-        assert!(builder
-            .get_revert_account_mut()
-            .contains_key(&(0, account1())));
+        assert!(
+            builder
+                .get_revert_account_mut()
+                .contains_key(&(0, account1()))
+        );
 
         // Test get_revert_storage_mut
         assert!(builder.get_revert_storage_mut().is_empty());
         builder
             .get_revert_storage_mut()
             .insert((0, account1()), vec![(slot1(), StorageValue::from(0))]);
-        assert!(builder
-            .get_revert_storage_mut()
-            .contains_key(&(0, account1())));
+        assert!(
+            builder
+                .get_revert_storage_mut()
+                .contains_key(&(0, account1()))
+        );
 
         // Test get_contracts_mut
         assert!(builder.get_contracts_mut().is_empty());

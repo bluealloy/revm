@@ -1,11 +1,11 @@
 use crate::{
+    CallInput, InstructionResult,
     interpreter::Interpreter,
     interpreter_types::{
         InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
-    CallInput, InstructionResult,
 };
-use context_interface::{cfg::GasParams, Host};
+use context_interface::{Host, cfg::GasParams};
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 

@@ -1,6 +1,6 @@
 use super::{
-    changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
-    StorageWithOriginalValues,
+    AccountStatus, BundleAccount, PlainStateReverts, StorageWithOriginalValues,
+    changes::PlainStorageRevert,
 };
 use core::{
     cmp::Ordering,
@@ -257,9 +257,10 @@ impl Ord for AccountRevert {
     fn cmp(&self, other: &Self) -> Ordering {
         // First compare accounts
         if let Some(ord) = self.account.partial_cmp(&other.account)
-            && ord != Ordering::Equal {
-                return ord;
-            }
+            && ord != Ordering::Equal
+        {
+            return ord;
+        }
 
         // Convert HashMaps to sorted vectors for comparison
         let mut self_storage: Vec<_> = self.storage.iter().collect();

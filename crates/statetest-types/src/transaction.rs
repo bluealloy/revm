@@ -1,7 +1,7 @@
-use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
+use crate::{TestAuthorization, deserializer::deserialize_maybe_empty};
 use context::TransactionType;
 use context_interface::transaction::AccessList;
-use primitives::{Address, Bytes, B256, U256};
+use primitives::{Address, B256, Bytes, U256};
 use serde::{Deserialize, Serialize};
 
 /// Transaction parts.
@@ -64,9 +64,10 @@ impl TransactionParts {
 
         // If it has access list it is EIP-2930 tx
         if let Some(access_list) = self.access_lists.get(access_list_index)
-            && access_list.is_some() {
-                tx_type = TransactionType::Eip2930;
-            }
+            && access_list.is_some()
+        {
+            tx_type = TransactionType::Eip2930;
+        }
 
         // If there is max_fee it is EIP-1559 tx
         if self.max_fee_per_gas.is_some() {

@@ -3,7 +3,7 @@
 //! This EIP specifies that all ETH transfers (transactions, CALL, SELFDESTRUCT) emit a log,
 //! making ETH transfers trackable like ERC-20 tokens.
 
-use alloy_primitives::{address, b256, Address, B256};
+use alloy_primitives::{Address, B256, address, b256};
 
 /// The system address used as the log emitter for ETH transfer events.
 ///

@@ -1,4 +1,4 @@
-use primitives::{alloy_primitives::B256, BLOCK_HASH_HISTORY};
+use primitives::{BLOCK_HASH_HISTORY, alloy_primitives::B256};
 use std::boxed::Box;
 
 const BLOCK_HASH_HISTORY_USIZE: usize = BLOCK_HASH_HISTORY as usize;

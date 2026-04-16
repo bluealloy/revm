@@ -1,12 +1,12 @@
 use crate::FrameResult;
 use context::journaled_state::account::JournaledAccountTr;
 use context_interface::{
+    Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
     journaled_state::JournalTr,
     result::{ExecutionResult, HaltReason, HaltReasonTr, ResultGas},
-    Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{hardfork::SpecId, U256};
+use primitives::{U256, hardfork::SpecId};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
@@ -150,14 +150,14 @@ pub fn output<CTX: ContextTr<Journal: JournalTr>, HALTREASON: HaltReasonTr>(
             if matches!(
                 instruction_result.result,
                 interpreter::InstructionResult::PrecompileError
-            )
-                && let Some(message) = context.local_mut().take_precompile_error_context() {
-                    return ExecutionResult::Halt {
-                        reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
-                        gas: result_gas,
-                        logs,
-                    };
-                }
+            ) && let Some(message) = context.local_mut().take_precompile_error_context()
+            {
+                return ExecutionResult::Halt {
+                    reason: HALTREASON::from(HaltReason::PrecompileErrorWithContext(message)),
+                    gas: result_gas,
+                    logs,
+                };
+            }
             ExecutionResult::Halt {
                 reason,
                 gas: result_gas,

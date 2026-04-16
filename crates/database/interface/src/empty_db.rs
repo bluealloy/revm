@@ -1,7 +1,7 @@
 //! Empty database implementation.
 use crate::{DBErrorMarker, Database, DatabaseRef};
 use core::{convert::Infallible, fmt, marker::PhantomData};
-use primitives::{keccak256, Address, StorageKey, StorageValue, B256};
+use primitives::{Address, B256, StorageKey, StorageValue, keccak256};
 use state::{AccountInfo, Bytecode};
 use std::string::ToString;
 

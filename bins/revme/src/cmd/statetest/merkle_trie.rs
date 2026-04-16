@@ -1,10 +1,10 @@
 use std::convert::Infallible;
 
-use alloy_trie::{root::storage_root_unhashed, HashBuilder, Nibbles, TrieAccount};
+use alloy_trie::{HashBuilder, Nibbles, TrieAccount, root::storage_root_unhashed};
 use revm::{
     context::result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-    database::{bal::EvmDatabaseError, EmptyDB, PlainAccount, State},
-    primitives::{keccak256, Address, Log, B256},
+    database::{EmptyDB, PlainAccount, State, bal::EvmDatabaseError},
+    primitives::{Address, B256, Log, keccak256},
 };
 
 pub struct TestValidationResult {

@@ -10,13 +10,13 @@
 #![cfg(miri)]
 
 use bytecode::bitvec::{bitvec, order::Lsb0};
-use bytecode::{opcode, Bytecode, JumpTable};
-use primitives::{hardfork::SpecId, Bytes};
+use bytecode::{Bytecode, JumpTable, opcode};
+use primitives::{Bytes, hardfork::SpecId};
 use revm_interpreter::{
+    Interpreter,
     host::DummyHost,
     instructions::instruction_table,
     interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
-    Interpreter,
 };
 
 /// Demonstrates that `Bytecode::new_analyzed` with insufficient padding causes

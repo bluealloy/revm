@@ -62,8 +62,8 @@ use p256 as _;
 
 use core::hash::Hash;
 use primitives::{
-    hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
-    SHORT_ADDRESS_CAP,
+    Address, AddressMap, AddressSet, HashMap, OnceLock, SHORT_ADDRESS_CAP, hardfork::SpecId,
+    short_address,
 };
 use std::vec::Vec;
 

@@ -2,8 +2,8 @@
 //! More details in [`sha256_run`] and [`ripemd160_run`]
 use super::calc_linear_cost;
 use crate::{
-    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
-    PrecompileHalt, PrecompileId,
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId, crypto,
+    eth_precompile_fn,
 };
 
 eth_precompile_fn!(sha256_precompile, sha256_run);

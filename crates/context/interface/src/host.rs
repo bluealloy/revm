@@ -6,7 +6,7 @@ use crate::{
     journaled_state::{AccountInfoLoad, AccountLoad},
 };
 use auto_impl::auto_impl;
-use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, B256, Bytes, Log, StorageKey, StorageValue, U256, hardfork::SpecId};
 use state::Bytecode;
 
 /// Error that can happen when loading account info.

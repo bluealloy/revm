@@ -1,11 +1,11 @@
 use crate::{
-    instructions::InstructionProvider, item_or_result::FrameInitOrResult, EthFrame, FrameResult,
-    ItemOrResult, PrecompileProvider,
+    EthFrame, FrameResult, ItemOrResult, PrecompileProvider, instructions::InstructionProvider,
+    item_or_result::FrameInitOrResult,
 };
 use auto_impl::auto_impl;
 use context::{ContextTr, Database, Evm, FrameStack};
 use context_interface::context::ContextError;
-use interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit, InterpreterResult};
+use interpreter::{InterpreterResult, interpreter::EthInterpreter, interpreter_action::FrameInit};
 
 /// Type alias for database error within a context
 pub type ContextDbError<CTX> = ContextError<ContextTrDbError<CTX>>;

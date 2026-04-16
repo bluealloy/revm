@@ -4,19 +4,19 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
+        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
         account::{JournaledAccount, JournaledAccountTr},
         entry::{JournalEntryTr, SelfdestructionRevertStatus},
-        AccountLoad, JournalCheckpoint, JournalLoadError, TransferError,
     },
 };
 use core::mem;
 use database_interface::Database;
 use primitives::{
+    Address, B256, Bytes, HashMap, KECCAK_EMPTY, Log, LogData, StorageKey, StorageValue, U256,
     eip7708::{BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
-    Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, TransientStorage};
 use std::vec::Vec;
@@ -370,10 +370,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         if let Some(eip7702_address) = code.eip7702_address()
-            && eip7702_address.is_zero() {
-                self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
-                return;
-            }
+            && eip7702_address.is_zero()
+        {
+            self.set_code_with_hash(address, Bytecode::default(), KECCAK_EMPTY);
+            return;
+        }
 
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash)
@@ -1143,7 +1144,7 @@ mod tests {
     use super::*;
     use context_interface::journaled_state::entry::JournalEntry;
     use database_interface::EmptyDB;
-    use primitives::{address, HashSet, U256};
+    use primitives::{HashSet, U256, address};
     use state::AccountInfo;
 
     #[test]

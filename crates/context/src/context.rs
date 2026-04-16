@@ -1,16 +1,16 @@
 //! This module contains [`Context`] struct and implements [`ContextTr`] trait for it.
-use crate::{block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv, LocalContext};
+use crate::{LocalContext, block::BlockEnv, cfg::CfgEnv, journal::Journal, tx::TxEnv};
 use context_interface::{
+    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
     cfg::GasParams,
     context::{ContextError, ContextSetters, SStoreResult, SelfDestructResult, StateLoad},
     host::LoadError,
     journaled_state::AccountInfoLoad,
-    Block, Cfg, ContextTr, Host, JournalTr, LocalContextTr, Transaction, TransactionType,
 };
 use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use derive_where::derive_where;
 use primitives::{
-    hardfork::SpecId, hints_util::cold_path, Address, Log, StorageKey, StorageValue, B256, U256,
+    Address, B256, Log, StorageKey, StorageValue, U256, hardfork::SpecId, hints_util::cold_path,
 };
 
 /// EVM context contains data that EVM needs for execution.
@@ -41,14 +41,14 @@ pub struct Context<
 }
 
 impl<
-        BLOCK: Block,
-        TX: Transaction,
-        DB: Database,
-        CFG: Cfg,
-        JOURNAL: JournalTr<Database = DB>,
-        CHAIN,
-        LOCAL: LocalContextTr,
-    > ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
+    BLOCK: Block,
+    TX: Transaction,
+    DB: Database,
+    CFG: Cfg,
+    JOURNAL: JournalTr<Database = DB>,
+    CHAIN,
+    LOCAL: LocalContextTr,
+> ContextTr for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
     type Block = BLOCK;
     type Tx = TX;
@@ -109,14 +109,14 @@ impl<
 }
 
 impl<
-        BLOCK: Block,
-        TX: Transaction,
-        DB: Database,
-        CFG: Cfg,
-        JOURNAL: JournalTr<Database = DB>,
-        CHAIN,
-        LOCAL: LocalContextTr,
-    > ContextSetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
+    BLOCK: Block,
+    TX: Transaction,
+    DB: Database,
+    CFG: Cfg,
+    JOURNAL: JournalTr<Database = DB>,
+    CHAIN,
+    LOCAL: LocalContextTr,
+> ContextSetters for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
     fn set_tx(&mut self, tx: Self::Tx) {
         self.tx = tx;
@@ -128,14 +128,14 @@ impl<
 }
 
 impl<
-        BLOCK: Block + Default,
-        TX: Transaction + Default,
-        DB: Database,
-        JOURNAL: JournalTr<Database = DB>,
-        CHAIN: Default,
-        LOCAL: LocalContextTr + Default,
-        SPEC: Default + Into<SpecId> + Clone,
-    > Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
+    BLOCK: Block + Default,
+    TX: Transaction + Default,
+    DB: Database,
+    JOURNAL: JournalTr<Database = DB>,
+    CHAIN: Default,
+    LOCAL: LocalContextTr + Default,
+    SPEC: Default + Into<SpecId> + Clone,
+> Context<BLOCK, TX, CfgEnv<SPEC>, DB, JOURNAL, CHAIN, LOCAL>
 {
     /// Creates a new context with a new database type.
     ///
@@ -446,14 +446,14 @@ where
 }
 
 impl<
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: JournalTr<Database = DB>,
-        CHAIN,
-        LOCAL: LocalContextTr,
-    > Host for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg,
+    DB: Database,
+    JOURNAL: JournalTr<Database = DB>,
+    CHAIN,
+    LOCAL: LocalContextTr,
+> Host for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
     /* Block */
 

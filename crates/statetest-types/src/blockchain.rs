@@ -3,11 +3,11 @@
 //! This module contains structures for deserializing blockchain test JSON files
 //! from the Ethereum test suite.
 
-use crate::{deserialize_maybe_empty, AccountInfo, TestAuthorization};
+use crate::{AccountInfo, TestAuthorization, deserialize_maybe_empty};
 use alloy_eip7928::BlockAccessList;
-use context::{transaction::AccessList, BlockEnv, TxEnv};
+use context::{BlockEnv, TxEnv, transaction::AccessList};
 use context_interface::block::BlobExcessGasAndPrice;
-use primitives::{Address, Bytes, FixedBytes, TxKind, B256, U256};
+use primitives::{Address, B256, Bytes, FixedBytes, TxKind, U256};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 

@@ -17,7 +17,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use primitives::{hardfork::SpecId, HashMap, OnceLock, StorageKey, StorageValue, U256};
+use primitives::{HashMap, OnceLock, StorageKey, StorageValue, U256, hardfork::SpecId};
 use std::boxed::Box;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
@@ -521,7 +521,7 @@ impl EvmStorageSlot {
 mod tests {
     use super::*;
     use crate::EvmStorageSlot;
-    use primitives::{StorageKey, KECCAK_EMPTY, U256};
+    use primitives::{KECCAK_EMPTY, StorageKey, U256};
 
     #[test]
     fn account_is_empty_balance() {

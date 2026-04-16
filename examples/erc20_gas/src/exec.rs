@@ -1,15 +1,15 @@
 use crate::handler::Erc20MainnetHandler;
 use revm::{
     context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         ContextTr, JournalTr,
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
     },
     database_interface::DatabaseCommit,
     handler::{
-        instructions::InstructionProvider, ContextTrDbError, EthFrame, EvmTr, Handler,
-        PrecompileProvider,
+        ContextTrDbError, EthFrame, EvmTr, Handler, PrecompileProvider,
+        instructions::InstructionProvider,
     },
-    interpreter::{interpreter::EthInterpreter, InterpreterResult},
+    interpreter::{InterpreterResult, interpreter::EthInterpreter},
     state::EvmState,
 };
 
@@ -23,14 +23,14 @@ pub fn transact_erc20evm<EVM>(
 ) -> Result<(ExecutionResult<HaltReason>, EvmState), Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
-        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionProvider<
-            Context = EVM::Context,
-            InterpreterTypes = EthInterpreter,
+            Context: ContextTr<Journal: JournalTr<State = EvmState>>,
+            Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
+            Instructions: InstructionProvider<
+                Context = EVM::Context,
+                InterpreterTypes = EthInterpreter,
+            >,
+            Frame = EthFrame<EthInterpreter>,
         >,
-        Frame = EthFrame<EthInterpreter>,
-    >,
 {
     Erc20MainnetHandler::new().run(evm).map(|r| {
         let state = evm.ctx().journal_mut().finalize();
@@ -46,14 +46,14 @@ pub fn transact_erc20evm_commit<EVM>(
 ) -> Result<ExecutionResult<HaltReason>, Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
-        Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
-        Instructions: InstructionProvider<
-            Context = EVM::Context,
-            InterpreterTypes = EthInterpreter,
+            Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
+            Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
+            Instructions: InstructionProvider<
+                Context = EVM::Context,
+                InterpreterTypes = EthInterpreter,
+            >,
+            Frame = EthFrame<EthInterpreter>,
         >,
-        Frame = EthFrame<EthInterpreter>,
-    >,
 {
     transact_erc20evm(evm).map(|(result, state)| {
         evm.ctx().db_mut().commit(state);

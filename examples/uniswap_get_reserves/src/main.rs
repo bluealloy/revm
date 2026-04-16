@@ -3,14 +3,14 @@
 
 use alloy_eips::BlockId;
 use alloy_provider::ProviderBuilder;
-use alloy_sol_types::{sol, SolCall};
+use alloy_sol_types::{SolCall, sol};
 use revm::{
+    Context, ExecuteEvm, MainBuilder, MainContext,
     context::TxEnv,
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::{DatabaseRef, EmptyDB, WrapDatabaseAsync},
-    primitives::{address, StorageKey, TxKind, U256},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    primitives::{StorageKey, TxKind, U256, address},
 };
 
 #[tokio::main]

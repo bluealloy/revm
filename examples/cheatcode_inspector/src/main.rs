@@ -7,29 +7,29 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use revm::{
+    Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
     context::{
-        journaled_state::{account::JournaledAccount, AccountInfoLoad, JournalLoadError},
-        result::InvalidTransaction,
         BlockEnv, Cfg, CfgEnv, ContextTr, Evm, LocalContext, TxEnv,
+        journaled_state::{AccountInfoLoad, JournalLoadError, account::JournaledAccount},
+        result::InvalidTransaction,
     },
     context_interface::{
+        Block, JournalTr, Transaction,
         journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
         result::EVMError,
-        Block, JournalTr, Transaction,
     },
     database::InMemoryDB,
-    handler::{instructions::EthInstructions, EthPrecompiles},
-    inspector::{inspectors::TracerEip3155, JournalExt},
+    handler::{EthPrecompiles, instructions::EthInstructions},
+    inspector::{JournalExt, inspectors::TracerEip3155},
     interpreter::{
-        interpreter::EthInterpreter, CallInputs, CallOutcome, SStoreResult, SelfDestructResult,
-        StateLoad,
+        CallInputs, CallOutcome, SStoreResult, SelfDestructResult, StateLoad,
+        interpreter::EthInterpreter,
     },
     primitives::{
-        hardfork::SpecId, Address, AddressMap, AddressSet, HashSet, Log, StorageKey, StorageValue,
-        B256, U256,
+        Address, AddressMap, AddressSet, B256, HashSet, Log, StorageKey, StorageValue, U256,
+        hardfork::SpecId,
     },
     state::{Account, Bytecode, EvmState},
-    Context, Database, DatabaseCommit, InspectEvm, Inspector, Journal, JournalEntry,
 };
 use std::{convert::Infallible, fmt::Debug};
 

@@ -2,13 +2,13 @@
 
 pub use alloy_eips::BlockId;
 use alloy_provider::{
-    network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
+    network::{BlockResponse, primitives::HeaderResponse},
 };
 use alloy_transport::TransportError;
 use core::error::Error;
-use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
-use primitives::{Address, StorageKey, StorageValue, B256};
+use database_interface::{DBErrorMarker, async_db::DatabaseAsyncRef};
+use primitives::{Address, B256, StorageKey, StorageValue};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 

@@ -1,6 +1,6 @@
 use crate::{
-    interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
     InstructionResult,
+    interpreter_types::{Immediates, InterpreterTypes, Jumps, RuntimeFlag, StackTr},
 };
 use primitives::U256;
 
@@ -139,15 +139,15 @@ fn decode_pair(x: usize) -> Option<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use crate::{
+        Interpreter,
         host::DummyHost,
         instructions::instruction_table,
         interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
         interpreter_types::LoopControl,
-        Interpreter,
     };
-    use bytecode::opcode::*;
     use bytecode::Bytecode;
-    use primitives::{hardfork::SpecId, Bytes, U256};
+    use bytecode::opcode::*;
+    use primitives::{Bytes, U256, hardfork::SpecId};
 
     fn run_bytecode(code: &[u8]) -> Interpreter {
         let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(code));

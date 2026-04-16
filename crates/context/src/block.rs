@@ -1,6 +1,6 @@
 //! This module contains [`BlockEnv`] and it implements [`Block`] trait.
 use context_interface::block::{BlobExcessGasAndPrice, Block};
-use primitives::{eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE, Address, B256, U256};
+use primitives::{Address, B256, U256, eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE};
 
 /// The block environment
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

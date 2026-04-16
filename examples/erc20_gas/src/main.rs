@@ -4,17 +4,17 @@
 
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
-use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
+use alloy_provider::{DynProvider, Provider, ProviderBuilder, network::Ethereum};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
 use exec::transact_erc20evm_commit;
 use revm::{
+    Context, Database, MainBuilder, MainContext,
     context::{CfgEnv, TxEnv},
     database::{AlloyDB, BlockId, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, hardfork::SpecId, keccak256, Address, StorageValue, TxKind, U256},
+    primitives::{Address, StorageValue, TxKind, U256, address, hardfork::SpecId, keccak256},
     state::AccountInfo,
-    Context, Database, MainBuilder, MainContext,
 };
 
 /// Execution utilities for ERC20 gas payment transactions

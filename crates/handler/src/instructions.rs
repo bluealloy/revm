@@ -1,7 +1,7 @@
 use auto_impl::auto_impl;
 use interpreter::{
-    instructions::{instruction_table_gas_changes_spec, InstructionTable},
     Host, Instruction, InterpreterTypes,
+    instructions::{InstructionTable, instruction_table_gas_changes_spec},
 };
 use primitives::hardfork::SpecId;
 use std::boxed::Box;

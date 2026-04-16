@@ -2,17 +2,17 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_eips::BlockId;
-use alloy_provider::{network::Ethereum, DynProvider, Provider, ProviderBuilder};
-use alloy_sol_types::{sol, SolCall, SolValue};
-use anyhow::{anyhow, Result};
+use alloy_provider::{DynProvider, Provider, ProviderBuilder, network::Ethereum};
+use alloy_sol_types::{SolCall, SolValue, sol};
+use anyhow::{Result, anyhow};
 use revm::{
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
     context::TxEnv,
     context_interface::result::{ExecutionResult, Output},
     database::{AlloyDB, CacheDB},
     database_interface::WrapDatabaseAsync,
-    primitives::{address, keccak256, Address, Bytes, StorageKey, TxKind, U256},
+    primitives::{Address, Bytes, StorageKey, TxKind, U256, address, keccak256},
     state::AccountInfo,
-    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 use std::ops::Div;
 

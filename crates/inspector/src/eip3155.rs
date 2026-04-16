@@ -1,11 +1,11 @@
-use crate::{inspectors::GasInspector, Inspector};
+use crate::{Inspector, inspectors::GasInspector};
 use context::{Cfg, ContextTr, JournalTr, Transaction};
 use interpreter::{
-    interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     InterpreterTypes, Stack,
+    interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
 };
-use primitives::{hex, HashMap, B256, U256};
+use primitives::{B256, HashMap, U256, hex};
 use serde::Serialize;
 use state::bytecode::opcode::OpCode;
 use std::io::Write;

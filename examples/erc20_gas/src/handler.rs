@@ -1,16 +1,16 @@
 use revm::{
-    context::{journaled_state::account::JournaledAccountTr, Cfg},
-    context_interface::{result::HaltReason, Block, ContextTr, JournalTr, Transaction},
+    context::{Cfg, journaled_state::account::JournaledAccountTr},
+    context_interface::{Block, ContextTr, JournalTr, Transaction, result::HaltReason},
     handler::{
-        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
+        pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
     },
-    interpreter::{interpreter_action::FrameInit, InitialAndFloorGas},
-    primitives::{hardfork::SpecId, U256},
+    interpreter::{InitialAndFloorGas, interpreter_action::FrameInit},
+    primitives::{U256, hardfork::SpecId},
     state::EvmState,
 };
 
-use crate::{erc_address_storage, TOKEN};
+use crate::{TOKEN, erc_address_storage};
 
 /// Custom handler that implements ERC20 token gas payment.
 /// Instead of paying gas in ETH, transactions pay gas using ERC20 tokens.

@@ -1,8 +1,8 @@
 //! Benchmarks for the ecrecover precompile
-use criterion::{measurement::Measurement, BenchmarkGroup};
-use primitives::{hex, keccak256, Bytes};
+use criterion::{BenchmarkGroup, measurement::Measurement};
+use primitives::{Bytes, hex, keccak256};
 use revm_precompile::secp256k1::ec_recover_run;
-use secp256k1::{Message, SecretKey, SECP256K1};
+use secp256k1::{Message, SECP256K1, SecretKey};
 
 /// Add benches for the ecrecover precompile
 pub fn add_benches<M: Measurement>(group: &mut BenchmarkGroup<'_, M>) {

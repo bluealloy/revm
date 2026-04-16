@@ -1,6 +1,6 @@
 //! Benchmarks for the secp256r1 (P256) precompile
-use criterion::{measurement::Measurement, BenchmarkGroup};
-use p256::ecdsa::{signature::hazmat::PrehashSigner, SigningKey};
+use criterion::{BenchmarkGroup, measurement::Measurement};
+use p256::ecdsa::{SigningKey, signature::hazmat::PrehashSigner};
 use primitives::Bytes;
 use revm_precompile::secp256r1::p256_verify;
 

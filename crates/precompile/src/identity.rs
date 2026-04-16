@@ -1,8 +1,8 @@
 //! Identity precompile returns
 use super::calc_linear_cost;
 use crate::{
-    eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt,
-    PrecompileId,
+    EthPrecompileOutput, EthPrecompileResult, Precompile, PrecompileHalt, PrecompileId,
+    eth_precompile_fn,
 };
 use primitives::Bytes;
 

@@ -4,16 +4,16 @@ pub mod account;
 pub mod entry;
 
 use crate::{
+    ErasedError,
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
     journaled_state::account::JournaledAccountTr,
-    ErasedError,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, AddressMap, AddressSet, Bytes, HashSet, Log, StorageKey,
-    StorageValue, B256, U256,
+    Address, AddressMap, AddressSet, B256, Bytes, HashSet, Log, StorageKey, StorageValue, U256,
+    hardfork::SpecId,
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};

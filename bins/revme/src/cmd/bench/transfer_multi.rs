@@ -1,11 +1,11 @@
 use criterion::Criterion;
 use revm::{
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
     context::TxEnv,
-    database::{InMemoryDB, BENCH_CALLER, BENCH_TARGET},
+    database::{BENCH_CALLER, BENCH_TARGET, InMemoryDB},
     interpreter::instructions::utility::IntoAddress,
     primitives::{TxKind, U256},
     state::AccountInfo,
-    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 
 pub fn run(criterion: &mut Criterion) {

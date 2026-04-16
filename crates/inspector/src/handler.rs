@@ -1,14 +1,14 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{
-    result::{ExecutionResult, ResultGas},
     ContextTr, JournalEntry, JournalTr, Transaction,
+    result::{ExecutionResult, ResultGas},
 };
-use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
+use handler::{EvmTr, FrameResult, Handler, ItemOrResult, evm::FrameTr};
 use interpreter::{
-    instructions::InstructionTable,
-    interpreter_types::{Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
+    instructions::InstructionTable,
+    interpreter_types::{Jumps, LoopControl},
 };
 use state::bytecode::opcode;
 
@@ -261,9 +261,10 @@ where
 
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action
-        && result.result == InstructionResult::SelfDestruct {
-            inspect_selfdestruct(context, &mut inspector);
-        }
+        && result.result == InstructionResult::SelfDestruct
+    {
+        inspect_selfdestruct(context, &mut inspector);
+    }
 
     next_action
 }

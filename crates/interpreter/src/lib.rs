@@ -32,16 +32,17 @@ pub use state;
 
 // Reexport primary types.
 pub use context_interface::{
+    CreateScheme, Host,
     cfg::gas::InitialAndFloorGas,
     context::{SStoreResult, SelfDestructResult, StateLoad},
-    host, CreateScheme, Host,
+    host,
 };
 pub use gas::Gas;
 pub use instruction_context::InstructionContext;
 pub use instruction_result::*;
-pub use instructions::{instruction_table, Instruction, InstructionTable};
+pub use instructions::{Instruction, InstructionTable, instruction_table};
 pub use interpreter::{
-    num_words, InputsImpl, Interpreter, InterpreterResult, SharedMemory, Stack, STACK_LIMIT,
+    InputsImpl, Interpreter, InterpreterResult, STACK_LIMIT, SharedMemory, Stack, num_words,
 };
 pub use interpreter_action::{
     CallInput, CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome,

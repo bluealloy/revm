@@ -1,6 +1,6 @@
 use super::{Immediates, Jumps, LegacyBytecode};
-use crate::{interpreter_types::LoopControl, InterpreterAction};
-use bytecode::{utils::read_u16, Bytecode};
+use crate::{InterpreterAction, interpreter_types::LoopControl};
+use bytecode::{Bytecode, utils::read_u16};
 use core::ops::Deref;
 use primitives::B256;
 

@@ -2,15 +2,15 @@
 
 use crate::precompile_provider::CustomPrecompileProvider;
 use revm::{
+    Database, Inspector,
     context::{ContextError, ContextSetters, ContextTr, Evm, FrameStack},
     handler::{
-        evm::FrameTr, instructions::EthInstructions, EthFrame, EvmTr, FrameInitOrResult,
-        ItemOrResult,
+        EthFrame, EvmTr, FrameInitOrResult, ItemOrResult, evm::FrameTr,
+        instructions::EthInstructions,
     },
     inspector::{InspectorEvmTr, JournalExt},
     interpreter::interpreter::EthInterpreter,
     primitives::hardfork::SpecId,
-    Database, Inspector,
 };
 
 /// Custom EVM variant with journal-accessing precompiles.
@@ -155,15 +155,15 @@ where
 mod tests {
     use crate::{custom_evm::CustomEvm, precompile_provider::CUSTOM_PRECOMPILE_ADDRESS};
     use revm::{
+        MainContext,
         context::{Context, ContextSetters, TxEnv},
-        context_interface::{result::EVMError, ContextTr},
+        context_interface::{ContextTr, result::EVMError},
         database::InMemoryDB,
         handler::{Handler, MainnetHandler},
         inspector::{Inspector, JournalExt},
         interpreter::interpreter::EthInterpreter,
-        primitives::{address, Log, TxKind, U256},
+        primitives::{Log, TxKind, U256, address},
         state::AccountInfo,
-        MainContext,
     };
     use std::vec::Vec;
 

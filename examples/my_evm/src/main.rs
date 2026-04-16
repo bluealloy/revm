@@ -4,11 +4,11 @@
 
 use example_my_evm::{evm::MyEvm, handler::MyHandler};
 use revm::{
+    Context, MainContext,
     context::TxEnv,
     database::InMemoryDB,
     handler::{ExecuteCommitEvm, ExecuteEvm, Handler},
     inspector::InspectorHandler,
-    Context, MainContext,
 };
 
 /// Example demonstrating various ways to use a custom EVM implementation.

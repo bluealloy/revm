@@ -35,12 +35,13 @@ pub use once_lock::OnceLock;
 // Reexport alloy primitives.
 
 pub use alloy_primitives::{
-    self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256,
+    self, Address, B256, Bytes, FixedBytes, I128, I256, Log, LogData, TxKind, U128, U256, address,
+    b256, bytes, fixed_bytes, hex, hex_literal, keccak256,
     map::{
-        self, hash_map, hash_set, indexmap, AddressIndexMap, AddressMap, AddressSet, B256Map,
-        HashMap, HashSet, IndexMap, U256Map,
+        self, AddressIndexMap, AddressMap, AddressSet, B256Map, HashMap, HashSet, IndexMap,
+        U256Map, hash_map, hash_set, indexmap,
     },
-    ruint, uint, Address, Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
+    ruint, uint,
 };
 
 /// Type alias for EVM storage keys (256-bit unsigned integers).

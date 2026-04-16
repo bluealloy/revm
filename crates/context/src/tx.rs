@@ -9,7 +9,7 @@ use context_interface::{
 };
 use core::fmt::Debug;
 use database_interface::{BENCH_CALLER, BENCH_TARGET};
-use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
+use primitives::{Address, B256, Bytes, TxKind, U256, eip7825};
 use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,

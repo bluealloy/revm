@@ -1,14 +1,13 @@
 //! Gas table for dynamic gas constants.
 
 use crate::{
-    cfg::gas::{self, get_tokens_in_calldata, InitialAndFloorGas},
+    cfg::gas::{self, InitialAndFloorGas, get_tokens_in_calldata},
     context::SStoreResult,
 };
 use core::hash::{Hash, Hasher};
 use primitives::{
-    eip7702,
+    OnceLock, U256, eip7702,
     hardfork::SpecId::{self},
-    OnceLock, U256,
 };
 use std::sync::Arc;
 

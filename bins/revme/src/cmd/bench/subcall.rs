@@ -1,11 +1,11 @@
 use criterion::Criterion;
 use revm::{
+    Context, ExecuteEvm, MainBuilder, MainContext,
     bytecode::opcode,
     context::TxEnv,
-    database::{InMemoryDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{address, Address, TxKind, U256},
+    database::{BENCH_CALLER, BENCH_TARGET, InMemoryDB},
+    primitives::{Address, TxKind, U256, address},
     state::{AccountInfo, Bytecode},
-    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 const SUBCALL_TARGET_A: Address = address!("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");

@@ -1,9 +1,9 @@
 //! Benchmarks for the BLS12-381 precompiles
 use ark_bls12_381::{Fq, Fr, G1Affine, G2Affine};
 use ark_ec::AffineRepr;
-use ark_std::rand::{rngs::StdRng, SeedableRng};
+use ark_std::rand::{SeedableRng, rngs::StdRng};
 use arkworks_general::{encode_base_field, encode_field_32_bytes, random_field, random_points};
-use criterion::{measurement::Measurement, BenchmarkGroup};
+use criterion::{BenchmarkGroup, measurement::Measurement};
 use primitives::Bytes;
 use revm_precompile::bls12_381_const::{PADDED_FP_LENGTH, PADDED_G1_LENGTH, PADDED_G2_LENGTH};
 

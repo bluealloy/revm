@@ -1,6 +1,6 @@
 use crate::{
-    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
     Host,
+    interpreter_types::{InterpreterTypes, RuntimeFlag, StackTr},
 };
 use primitives::hardfork::SpecId::*;
 

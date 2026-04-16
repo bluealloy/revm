@@ -1,6 +1,6 @@
-use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
+use super::{FQ_LEN, FQ2_LEN, G1_LEN, SCALAR_LEN};
 use crate::PrecompileHalt;
-use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
+use bn::{AffineG1, AffineG2, Fq, Fq2, G1, G2, Group, Gt};
 use std::vec::Vec;
 
 /// Reads a single `Fq` field element from the input slice.

@@ -12,15 +12,15 @@ use bytecode::Bytecode;
 use context_interface::{
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
-        account::JournaledAccount, AccountInfoLoad, AccountLoad, JournalCheckpoint,
-        JournalLoadError, JournalTr, TransferError,
+        AccountInfoLoad, AccountLoad, JournalCheckpoint, JournalLoadError, JournalTr,
+        TransferError, account::JournaledAccount,
     },
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{
-    hardfork::SpecId, Address, AddressMap, AddressSet, HashSet, Log, StorageKey, StorageValue,
-    B256, U256,
+    Address, AddressMap, AddressSet, B256, HashSet, Log, StorageKey, StorageValue, U256,
+    hardfork::SpecId,
 };
 use state::{Account, EvmState};
 use std::vec::Vec;

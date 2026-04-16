@@ -1,11 +1,11 @@
 use criterion::Criterion;
 use revm::{
+    Context, ExecuteEvm, MainBuilder, MainContext,
     bytecode::Bytecode,
     context::{ContextTr, TxEnv},
     context_interface::JournalTr,
-    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE},
+    database::{BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE, BenchmarkDB},
     primitives::{TxKind, U256},
-    Context, ExecuteEvm, MainBuilder, MainContext,
 };
 
 pub fn run(criterion: &mut Criterion) {

@@ -8,12 +8,13 @@
 mod serde_impl;
 
 use crate::{
-    eip7702::{Eip7702DecodeError, EIP7702_MAGIC_BYTES, EIP7702_VERSION},
+    BytecodeDecodeError, JumpTable,
+    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_VERSION, Eip7702DecodeError},
     legacy::analyze_legacy,
-    opcode, BytecodeDecodeError, JumpTable,
+    opcode,
 };
 use primitives::{
-    alloy_primitives::Sealable, keccak256, Address, Bytes, OnceLock, B256, KECCAK_EMPTY,
+    Address, B256, Bytes, KECCAK_EMPTY, OnceLock, alloy_primitives::Sealable, keccak256,
 };
 use std::sync::Arc;
 

@@ -3,7 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{OnceLock, B256, KECCAK_EMPTY, U256};
+use primitives::{B256, KECCAK_EMPTY, OnceLock, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///

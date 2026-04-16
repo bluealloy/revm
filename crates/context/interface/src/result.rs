@@ -325,21 +325,13 @@ impl ResultGas {
 /// Const function that returns the maximum of two u64 values.
 #[inline(always)]
 pub const fn max(a: u64, b: u64) -> u64 {
-    if a > b {
-        a
-    } else {
-        b
-    }
+    if a > b { a } else { b }
 }
 
 /// Const function that returns the minimum of two u64 values.
 #[inline(always)]
 pub const fn min(a: u64, b: u64) -> u64 {
-    if a < b {
-        a
-    } else {
-        b
-    }
+    if a < b { a } else { b }
 }
 
 impl fmt::Display for ResultGas {

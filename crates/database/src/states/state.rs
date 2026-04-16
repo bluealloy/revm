@@ -1,18 +1,18 @@
 use crate::states::block_hash_cache::BlockHashCache;
 
 use super::{
-    bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
-    CacheAccount, StateBuilder, TransitionAccount, TransitionState,
+    BundleState, CacheAccount, StateBuilder, TransitionAccount, TransitionState,
+    bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage,
 };
 use bytecode::Bytecode;
 use database_interface::{
-    bal::{BalState, EvmDatabaseError},
     Database, DatabaseCommit, DatabaseRef, EmptyDB,
+    bal::{BalState, EvmDatabaseError},
 };
-use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
+use primitives::{Address, AddressMap, B256, HashMap, StorageKey, StorageValue, hash_map};
 use state::{
-    bal::{alloy::AlloyBal, Bal},
     Account, AccountInfo,
+    bal::{Bal, alloy::AlloyBal},
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -293,15 +293,15 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        
         match self.cache.contracts.entry(code_hash) {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle
-                    && let Some(code) = self.bundle_state.contracts.get(&code_hash) {
-                        entry.insert(code.clone());
-                        return Ok(code.clone());
-                    }
+                    && let Some(code) = self.bundle_state.contracts.get(&code_hash)
+                {
+                    entry.insert(code.clone());
+                    return Ok(code.clone());
+                }
                 // If not found in bundle ask database
                 let code = self
                     .database
@@ -404,10 +404,12 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         };
 
         // If bundle state is used, check if account is in bundle state
-        if self.use_preloaded_bundle && loaded_account.is_none()
-            && let Some(account) = self.bundle_state.account(&address) {
-                loaded_account = Some(account.account_info());
-            }
+        if self.use_preloaded_bundle
+            && loaded_account.is_none()
+            && let Some(account) = self.bundle_state.account(&address)
+        {
+            loaded_account = Some(account.account_info());
+        }
 
         // If not found, load it from database
         if loaded_account.is_none() {
@@ -435,9 +437,10 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         }
         // If bundle state is used, check if code is in bundle state
         if self.use_preloaded_bundle
-            && let Some(code) = self.bundle_state.contracts.get(&code_hash) {
-                return Ok(code.clone());
-            }
+            && let Some(code) = self.bundle_state.contracts.get(&code_hash)
+        {
+            return Ok(code.clone());
+        }
         // If not found, load it from database
         self.database
             .code_by_hash_ref(code_hash)
@@ -456,17 +459,18 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
         // Check if account is in cache, the account is not guaranteed to be loaded
         if let Some(account) = self.cache.accounts.get(&address)
-            && let Some(plain_account) = &account.account {
-                // If storage is known, we can return it
-                if let Some(storage_value) = plain_account.storage.get(&index) {
-                    return Ok(*storage_value);
-                }
-                // If account was destroyed or account is newly built
-                // we return zero and don't ask database.
-                if account.status.is_storage_known() {
-                    return Ok(StorageValue::ZERO);
-                }
+            && let Some(plain_account) = &account.account
+        {
+            // If storage is known, we can return it
+            if let Some(storage_value) = plain_account.storage.get(&index) {
+                return Ok(*storage_value);
             }
+            // If account was destroyed or account is newly built
+            // we return zero and don't ask database.
+            if account.status.is_storage_known() {
+                return Ok(StorageValue::ZERO);
+            }
+        }
 
         // If not found, load it from database
         self.database
@@ -489,10 +493,10 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 mod tests {
     use super::*;
     use crate::{
-        states::{reverts::AccountInfoRevert, StorageSlot},
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
+        states::{StorageSlot, reverts::AccountInfoRevert},
     };
-    use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
+    use primitives::{BLOCK_HASH_HISTORY, U256, keccak256};
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();

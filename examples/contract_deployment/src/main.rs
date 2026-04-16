@@ -3,13 +3,13 @@
 
 use anyhow::{anyhow, bail};
 use revm::{
+    ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
     bytecode::opcode,
     context::{Context, TxEnv},
     context_interface::result::{ExecutionResult, Output},
     database::CacheDB,
     database_interface::EmptyDB,
-    primitives::{hex, Bytes, StorageValue, TxKind},
-    ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
+    primitives::{Bytes, StorageValue, TxKind, hex},
 };
 
 /// Load number parameter and set to storage with slot 0

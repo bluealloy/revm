@@ -1,6 +1,6 @@
 use super::{AccountRevert, AccountStatus, BundleAccount, StorageWithOriginalValues};
 use bytecode::Bytecode;
-use primitives::{hash_map, B256, U256};
+use primitives::{B256, U256, hash_map};
 use state::AccountInfo;
 
 /// Account Created when EVM state is merged to cache state.

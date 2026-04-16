@@ -5,18 +5,18 @@
 
 use alloy_consensus::Transaction;
 use alloy_eips::{BlockId, BlockNumberOrTag};
-use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
+use alloy_provider::{Provider, ProviderBuilder, network::primitives::BlockTransactions};
 use indicatif::ProgressBar;
 use revm::{
+    Context, MainBuilder, MainContext,
     context::TxEnv,
     database::{AlloyDB, CacheDB, StateBuilder},
     database_interface::WrapDatabaseAsync,
-    inspector::{inspectors::TracerEip3155, InspectEvm},
+    inspector::{InspectEvm, inspectors::TracerEip3155},
     primitives::{TxKind, U256},
-    Context, MainBuilder, MainContext,
 };
 use std::{
-    fs::{create_dir_all, OpenOptions},
+    fs::{OpenOptions, create_dir_all},
     io::{BufWriter, Write},
     sync::{Arc, Mutex},
     time::Instant,

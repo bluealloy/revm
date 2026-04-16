@@ -1,6 +1,6 @@
 use super::Transaction;
 use either::Either;
-use primitives::{Address, Bytes, TxKind, B256, U256};
+use primitives::{Address, B256, Bytes, TxKind, U256};
 
 impl<L, R> Transaction for Either<L, R>
 where

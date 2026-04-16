@@ -7,7 +7,7 @@ pub use gas_params::{GasId, GasParams};
 
 use auto_impl::auto_impl;
 use core::{fmt::Debug, hash::Hash};
-use primitives::{hardfork::SpecId, Address, TxKind, U256};
+use primitives::{Address, TxKind, U256, hardfork::SpecId};
 
 /// Configuration for the EVM.
 #[auto_impl(&, &mut, Box, Arc)]

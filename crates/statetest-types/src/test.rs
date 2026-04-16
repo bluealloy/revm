@@ -1,9 +1,9 @@
 use context::tx::TxEnv;
-use primitives::{AddressMap, Bytes, TxKind, B256};
+use primitives::{AddressMap, B256, Bytes, TxKind};
 use serde::Deserialize;
 
 use crate::{
-    error::TestError, transaction::TxPartIndices, utils::recover_address, AccountInfo, TestUnit,
+    AccountInfo, TestUnit, error::TestError, transaction::TxPartIndices, utils::recover_address,
 };
 
 /// State test indexed state result deserialization.

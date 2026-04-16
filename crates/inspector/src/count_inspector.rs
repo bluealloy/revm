@@ -1,6 +1,6 @@
 //! CountInspector - Inspector that counts all opcodes that were called.
 use crate::inspector::Inspector;
-use interpreter::{interpreter_types::Jumps, InterpreterTypes};
+use interpreter::{InterpreterTypes, interpreter_types::Jumps};
 use primitives::Log;
 
 /// Inspector that counts all opcodes that were called during execution.
@@ -211,7 +211,7 @@ mod tests {
     use database::BenchmarkDB;
     use handler::{MainBuilder, MainContext};
     use primitives::{Bytes, TxKind};
-    use state::bytecode::{opcode, Bytecode};
+    use state::bytecode::{Bytecode, opcode};
 
     #[test]
     fn test_count_inspector() {

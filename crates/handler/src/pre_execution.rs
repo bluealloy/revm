@@ -5,14 +5,14 @@
 use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
 use context_interface::{
-    journaled_state::{account::JournaledAccountTr, JournalTr},
+    Block, Cfg, ContextTr, Database,
+    journaled_state::{JournalTr, account::JournaledAccountTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
-    Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
 use interpreter::InitialAndFloorGas;
-use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
+use primitives::{AddressMap, HashSet, StorageKey, U256, hardfork::SpecId};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -50,15 +50,16 @@ pub fn load_accounts<
     let (tx, journal) = context.tx_journal_mut();
     // legacy is only tx type that does not have access list.
     if tx.tx_type() != TransactionType::Legacy
-        && let Some(access_list) = tx.access_list() {
-            let mut map: AddressMap<HashSet<StorageKey>> = AddressMap::default();
-            for item in access_list {
-                map.entry(*item.address())
-                    .or_default()
-                    .extend(item.storage_slots().map(|key| U256::from_be_bytes(key.0)));
-            }
-            journal.warm_access_list(map);
+        && let Some(access_list) = tx.access_list()
+    {
+        let mut map: AddressMap<HashSet<StorageKey>> = AddressMap::default();
+        for item in access_list {
+            map.entry(*item.address())
+                .or_default()
+                .extend(item.storage_slots().map(|key| U256::from_be_bytes(key.0)));
         }
+        journal.warm_access_list(map);
+    }
 
     Ok(())
 }

@@ -5,7 +5,7 @@
 use bitvec::{bitvec, vec::BitVec};
 use context_interface::journaled_state::JournalLoadError;
 use primitives::{
-    short_address, Address, AddressMap, AddressSet, HashSet, StorageKey, SHORT_ADDRESS_CAP,
+    Address, AddressMap, AddressSet, HashSet, SHORT_ADDRESS_CAP, StorageKey, short_address,
 };
 
 /// Stores addresses that are warm loaded. Contains precompiles and coinbase address.
@@ -180,7 +180,7 @@ impl WarmAddresses {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::{address, Address};
+    use primitives::{Address, address};
 
     #[test]
     fn test_initialization() {

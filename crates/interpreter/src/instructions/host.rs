@@ -1,13 +1,13 @@
 use crate::{
+    Gas, Host, InstructionResult,
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes, MemoryTr, RuntimeFlag, StackTr},
-    Gas, Host, InstructionResult,
 };
 use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
 use core::cmp::min;
 use primitives::{
+    B256, BLOCK_HASH_HISTORY, Bytes, Log, LogData, U256,
     hardfork::SpecId::{self, *},
-    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
 };
 
 use crate::InstructionContext;

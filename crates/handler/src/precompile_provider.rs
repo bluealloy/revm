@@ -3,7 +3,7 @@ use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileOutput, PrecompileSpecId, PrecompileStatus, Precompiles};
-use primitives::{hardfork::SpecId, Address, Bytes};
+use primitives::{Address, Bytes, hardfork::SpecId};
 use std::{
     boxed::Box,
     string::{String, ToString},
@@ -158,11 +158,13 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         // into the local context so it can be returned as output in the final result.
         // Only do this for non-OOG halt errors.
         if let Some(halt_reason) = output.halt_reason()
-            && !halt_reason.is_oog() && context.journal().depth() == 1 {
-                context
-                    .local_mut()
-                    .set_precompile_error_context(halt_reason.to_string());
-            }
+            && !halt_reason.is_oog()
+            && context.journal().depth() == 1
+        {
+            context
+                .local_mut()
+                .set_precompile_error_context(halt_reason.to_string());
+        }
 
         let result = precompile_output_to_interpreter_result(output, inputs.gas_limit);
         Ok(Some(result))

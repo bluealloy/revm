@@ -1,10 +1,10 @@
 use criterion::Criterion;
 use revm::{
+    Context, ExecuteEvm, MainBuilder, MainContext,
     bytecode::Bytecode,
     context::TxEnv,
-    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{bytes, hex, Bytes, TxKind},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB},
+    primitives::{Bytes, TxKind, bytes, hex},
 };
 
 const BYTES: &str = include_str!("analysis.hex");

@@ -4,17 +4,17 @@
 //! Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 
 use crate::{
-    context::{SStoreResult, StateLoad},
-    journaled_state::{entry::JournalEntry, JournalLoadErasedError, JournalLoadError},
     ErasedError,
+    context::{SStoreResult, StateLoad},
+    journaled_state::{JournalLoadErasedError, JournalLoadError, entry::JournalEntry},
 };
 
 use super::entry::JournalEntryTr;
 use auto_impl::auto_impl;
 use database_interface::Database;
 use primitives::{
-    hash_map::Entry, Address, AddressMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
-    U256,
+    Address, AddressMap, B256, HashSet, KECCAK_EMPTY, StorageKey, StorageValue, U256,
+    hash_map::Entry,
 };
 use state::{Account, Bytecode, EvmStorageSlot};
 use std::vec::Vec;

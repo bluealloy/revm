@@ -1,7 +1,7 @@
 //! EIP-7702 bytecode constants and error types.
 
 use core::fmt;
-use primitives::{b256, hex, B256};
+use primitives::{B256, b256, hex};
 
 /// Hash of EF01 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const EIP7702_MAGIC_HASH: B256 =

@@ -1,4 +1,4 @@
-use crate::{opcode, Bytecode, OpCode};
+use crate::{Bytecode, OpCode, opcode};
 
 /// Iterator over opcodes in a bytecode, skipping immediates.
 ///

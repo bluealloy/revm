@@ -4,10 +4,10 @@ use core::{
     fmt::Display,
     ops::{Deref, DerefMut},
 };
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{Address, B256, StorageKey, StorageValue};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError},
     Account, AccountInfo, Bytecode, EvmState,
+    bal::{Bal, BalError, alloy::AlloyBal},
 };
 use std::sync::Arc;
 
