@@ -193,7 +193,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &mut InitialAndFloorGas,
     ) -> Result<u64, Self::Error> {
-        self.validate_against_state_and_deduct_caller(evm)?;
+        self.validate_against_state_and_deduct_caller(evm, init_and_floor_gas)?;
         self.load_accounts(evm)?;
 
         let gas = self.apply_eip7702_auth_list(evm, init_and_floor_gas)?;
@@ -325,6 +325,7 @@ pub trait Handler {
     fn validate_against_state_and_deduct_caller(
         &self,
         evm: &mut Self::Evm,
+        _init_and_floor_gas: &mut InitialAndFloorGas,
     ) -> Result<(), Self::Error> {
         pre_execution::validate_against_state_and_deduct_caller(evm.ctx())
     }
