@@ -32,6 +32,7 @@ impl CreateInputs {
         value: U256,
         init_code: Bytes,
         gas_limit: u64,
+        reservoir: u64,
     ) -> Self {
         Self {
             caller,
@@ -39,7 +40,7 @@ impl CreateInputs {
             value,
             init_code,
             gas_limit,
-            reservoir: 0,
+            reservoir,
             cached_address: OnceCell::new(),
         }
     }

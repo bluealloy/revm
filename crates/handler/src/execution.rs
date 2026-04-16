@@ -12,6 +12,7 @@ use std::boxed::Box;
 pub fn create_init_frame<CTX: ContextTr>(
     ctx: &mut CTX,
     gas_limit: u64,
+    reservoir: u64,
 ) -> Result<FrameInput, <<CTX::Journal as JournalTr>::Database as Database>::Error> {
     let (tx, journal) = ctx.tx_journal_mut();
     let input = tx.input().clone();
@@ -45,7 +46,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 scheme: CallScheme::Call,
                 is_static: false,
                 return_memory_offset: 0..0,
-                reservoir: 0,
+                reservoir,
             })))
         }
         TxKind::Create => Ok(FrameInput::Create(Box::new(CreateInputs::new(
@@ -54,6 +55,7 @@ pub fn create_init_frame<CTX: ContextTr>(
             tx.value(),
             input,
             gas_limit,
+            reservoir,
         )))),
     }
 }
