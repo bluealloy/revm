@@ -5,7 +5,7 @@ use revm::{
         pre_execution::{calculate_caller_fee, validate_account_nonce_and_code_with_components},
         EvmTr, EvmTrError, FrameResult, FrameTr, Handler,
     },
-    interpreter::interpreter_action::FrameInit,
+    interpreter::{interpreter_action::FrameInit, InitialAndFloorGas},
     primitives::{hardfork::SpecId, U256},
     state::EvmState,
 };
@@ -45,7 +45,11 @@ where
     type Error = ERROR;
     type HaltReason = HaltReason;
 
-    fn validate_against_state_and_deduct_caller(&self, evm: &mut Self::Evm) -> Result<(), ERROR> {
+    fn validate_against_state_and_deduct_caller(
+        &self,
+        evm: &mut Self::Evm,
+        _init_and_floor_gas: &mut InitialAndFloorGas,
+    ) -> Result<(), ERROR> {
         let (block, tx, cfg, journal, _, _) = evm.ctx_mut().all_mut();
 
         // load TOKEN contract
