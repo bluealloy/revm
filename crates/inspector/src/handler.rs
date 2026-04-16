@@ -238,15 +238,20 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    let r = loop {
+    loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
             cold_path();
-            break Ok(());
+            break;
         }
 
         let opcode = interpreter.bytecode.opcode();
-        let r = interpreter.step(instructions, context);
+        if let Err(e) = interpreter.step(instructions, context) {
+            cold_path();
+            if interpreter.bytecode.action().is_none() {
+                interpreter.halt(e);
+            }
+        }
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
@@ -254,14 +259,9 @@ where
 
         inspector.step_end(interpreter, context);
 
-        if r.is_err() | interpreter.bytecode.is_end() {
+        if interpreter.bytecode.is_end() {
             cold_path();
-            break r;
-        }
-    };
-    if let Err(e) = r {
-        if interpreter.bytecode.action().is_none() {
-            interpreter.halt(e);
+            break;
         }
     }
 
