@@ -325,15 +325,15 @@ impl InitialAndFloorGas {
     /// Computes the regular gas budget and reservoir for the initial call frame.
     ///
     /// EIP-8037 reservoir model:
-    ///   execution_gas = tx_gas_limit - intrinsic_regular_gas
-    ///   regular_gas_budget = min(execution_gas, tx_gas_limit_cap - intrinsic_regular_gas)
+    ///   execution_gas = tx.gas_limit - intrinsic_gas  (= gas_limit parameter)
+    ///   regular_gas_budget = min(execution_gas, TX_MAX_GAS_LIMIT - intrinsic_gas)
     ///   reservoir = execution_gas - regular_gas_budget
     ///
     /// Initial state gas is then deducted from the reservoir (spilling into the
     /// regular budget when the reservoir is insufficient), and the EIP-7702
     /// refund for existing authorities is added back to the reservoir.
     ///
-    /// On mainnet (state gas disabled), reservoir is 0 and gas_limit is unchanged.
+    /// On mainnet (state gas disabled), reservoir = 0 and gas_limit is unchanged.
     ///
     /// Returns `(gas_limit, reservoir)`.
     pub fn initial_gas_and_reservoir(
