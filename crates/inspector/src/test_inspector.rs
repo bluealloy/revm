@@ -156,7 +156,7 @@ where
     fn call_end(&mut self, _ctx: &mut CTX, _inputs: &CallInputs, outcome: &mut CallOutcome) {
         self.call_depth -= 1;
         if let Some(InspectorEvent::Call {
-            outcome: ref mut out,
+            outcome: out,
             ..
         }) = self
             .events
@@ -178,7 +178,7 @@ where
 
     fn create_end(&mut self, _ctx: &mut CTX, _inputs: &CreateInputs, outcome: &mut CreateOutcome) {
         if let Some(InspectorEvent::Create {
-            outcome: ref mut out,
+            outcome: out,
             ..
         }) = self
             .events
