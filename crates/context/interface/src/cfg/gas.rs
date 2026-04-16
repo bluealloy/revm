@@ -321,6 +321,61 @@ impl InitialAndFloorGas {
     pub const fn initial_regular_gas(&self) -> u64 {
         self.initial_total_gas - self.initial_state_gas
     }
+
+    /// Computes the regular gas budget and reservoir for the initial call frame.
+    ///
+    /// EIP-8037 reservoir model:
+    ///   execution_gas = tx_gas_limit - intrinsic_regular_gas
+    ///   regular_gas_budget = min(execution_gas, tx_gas_limit_cap - intrinsic_regular_gas)
+    ///   reservoir = execution_gas - regular_gas_budget
+    ///
+    /// Initial state gas is then deducted from the reservoir (spilling into the
+    /// regular budget when the reservoir is insufficient), and the EIP-7702
+    /// refund for existing authorities is added back to the reservoir.
+    ///
+    /// On mainnet (state gas disabled), reservoir is 0 and gas_limit is unchanged.
+    ///
+    /// Returns `(gas_limit, reservoir)`.
+    pub fn initial_gas_and_reservoir(
+        &self,
+        tx_gas_limit: u64,
+        tx_gas_limit_cap: u64,
+        is_eip8037: bool,
+    ) -> (u64, u64) {
+        let execution_gas = tx_gas_limit - self.initial_regular_gas();
+
+        // System calls pass InitialAndFloorGas with all zeros and should not be
+        // subject to the TX_MAX_GAS_LIMIT cap.
+        let regular_gas_cap = if self.initial_total_gas == 0 {
+            u64::MAX
+        } else if is_eip8037 {
+            tx_gas_limit_cap.saturating_sub(self.initial_regular_gas())
+        } else {
+            tx_gas_limit_cap
+        };
+
+        let mut gas_limit = core::cmp::min(execution_gas, regular_gas_cap);
+        let mut reservoir = execution_gas - gas_limit;
+
+        // Deduct initial state gas from the reservoir. When the reservoir is
+        // insufficient, the deficit is charged from the regular gas budget.
+        if self.initial_state_gas > 0 {
+            if reservoir >= self.initial_state_gas {
+                reservoir -= self.initial_state_gas;
+            } else {
+                gas_limit -= self.initial_state_gas - reservoir;
+                reservoir = 0;
+            }
+        }
+
+        // EIP-7702 state gas refund for existing authorities goes directly to
+        // the reservoir.
+        if self.eip7702_reservoir_refund > 0 {
+            reservoir += self.eip7702_reservoir_refund;
+        }
+
+        (gas_limit, reservoir)
+    }
 }
 
 /// Initial gas that is deducted for transaction to be included.
