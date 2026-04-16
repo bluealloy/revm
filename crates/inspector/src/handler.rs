@@ -1,6 +1,6 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{
-    ContextTr, JournalEntry, JournalTr, Transaction,
+    Cfg, ContextTr, JournalEntry, JournalTr, Transaction,
     result::{ExecutionResult, ResultGas},
 };
 use handler::{EvmTr, FrameResult, Handler, ItemOrResult, evm::FrameTr};
@@ -81,13 +81,13 @@ where
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        // Deduct regular initial gas from the transaction gas limit.
-        // State gas is handled separately via the reservoir.
-        let gas_limit = evm.ctx().tx().gas_limit() - init_and_floor_gas.initial_regular_gas();
-        // Create first frame action.
-        // Note: first_frame_input already handles initial state gas deduction
-        // from the reservoir (or gas_limit deficit).
-        let first_frame_input = self.first_frame_input(evm, gas_limit, init_and_floor_gas)?;
+        // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
+        let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
+            evm.ctx().tx().gas_limit(),
+            evm.ctx().cfg().tx_gas_limit_cap(),
+            evm.ctx().cfg().is_amsterdam_eip8037_enabled(),
+        );
+        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
 
         // Run execution loop
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;

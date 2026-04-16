@@ -2,7 +2,7 @@
 
 use crate::TestdataConfig;
 use revm::{
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
     bytecode::opcode,
     context::{CfgEnv, ContextTr, TxEnv},
     database::{BENCH_CALLER, BENCH_TARGET, BenchmarkDB},
@@ -685,4 +685,131 @@ fn test_eip7708_create_with_value() {
     let log = create_log.unwrap();
     assert_eq!(log.address, ETH_TRANSFER_LOG_ADDRESS);
     assert_eq!(log.data.data.as_ref(), &create_value.to_be_bytes::<32>());
+}
+
+/// Test that demonstrates using the full EVM API with a custom opcode.
+///
+/// Deploys a contract with a custom opcode (0x0C) that doubles the top stack value,
+/// then calls the contract and verifies the result via SSTORE + state inspection.
+#[test]
+fn test_custom_opcode_transaction() {
+    use revm::{
+        context::Evm,
+        database::InMemoryDB,
+        handler::{EthPrecompiles, instructions::EthInstructions},
+        interpreter::{Instruction, InstructionContext, interpreter::EthInterpreter},
+        state::AccountInfo,
+    };
+
+    // Custom opcode 0x0C: pops top value, pushes it doubled.
+    const DOUBLE: u8 = 0x0C;
+
+    // Runtime bytecode:
+    //   PUSH1 0x07      ; push value 7
+    //   DOUBLE (0x0C)   ; custom opcode: doubles top -> 14
+    //   PUSH0           ; storage slot 0
+    //   SSTORE          ; store result at slot 0
+    //   STOP
+    let runtime_bytecode: Bytes = [
+        opcode::PUSH1,
+        0x07,
+        DOUBLE,
+        opcode::PUSH0,
+        opcode::SSTORE,
+        opcode::STOP,
+    ]
+    .into();
+
+    let deploy_bytecode = deployment_contract(&runtime_bytecode);
+
+    let caller = address!("0x1000000000000000000000000000000000000001");
+
+    // Setup in-memory database with funded caller
+    let mut db = InMemoryDB::default();
+    db.insert_account_info(
+        caller,
+        AccountInfo {
+            balance: U256::from(1_000_000_000_000_000_000u128),
+            ..Default::default()
+        },
+    );
+
+    // Build EVM with custom instruction set
+    let ctx = Context::mainnet()
+        .with_cfg(CfgEnv::new_with_spec(SpecId::CANCUN))
+        .with_db(db);
+
+    let mut instructions = EthInstructions::new_mainnet_with_spec(SpecId::CANCUN);
+    instructions.insert_instruction(
+        DOUBLE,
+        Instruction::new(
+            |ctx: InstructionContext<'_, _, EthInterpreter>| {
+                let Ok(val) = ctx.interpreter.stack.pop() else {
+                    ctx.interpreter.halt_underflow();
+                    return;
+                };
+                if !ctx.interpreter.stack.push(val.wrapping_mul(U256::from(2))) {
+                    ctx.interpreter
+                        .halt(revm::interpreter::InstructionResult::StackOverflow);
+                }
+            },
+            3, // static gas cost (same as ADD)
+        ),
+    );
+
+    let mut evm = Evm::new(ctx, instructions, EthPrecompiles::new(SpecId::CANCUN));
+
+    // Step 1: Deploy the contract (commit state so nonce and contract persist)
+    let deploy_result = evm
+        .transact_commit(
+            TxEnv::builder()
+                .caller(caller)
+                .kind(TxKind::Create)
+                .data(deploy_bytecode)
+                .gas_limit(1_000_000)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
+
+    assert!(
+        deploy_result.is_success(),
+        "deploy should succeed: {deploy_result:?}"
+    );
+    let contract_address = deploy_result
+        .created_address()
+        .expect("contract should be created");
+
+    // Step 2: Call the deployed contract (triggers PUSH1 7 -> DOUBLE -> SSTORE)
+    let call_result = evm
+        .transact(
+            TxEnv::builder()
+                .caller(caller)
+                .kind(TxKind::Call(contract_address))
+                .gas_limit(1_000_000)
+                .nonce(1)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
+
+    assert!(
+        call_result.result.is_success(),
+        "call should succeed: {call_result:?}"
+    );
+
+    // Verify: storage slot 0 should contain 14 (7 * 2)
+    let contract_state = call_result
+        .state
+        .get(&contract_address)
+        .expect("contract should be in state");
+    let slot0 = contract_state
+        .storage
+        .get::<U256>(&U256::ZERO)
+        .expect("slot 0 should be written");
+    assert_eq!(
+        slot0.present_value(),
+        U256::from(14),
+        "DOUBLE(7) should store 14 in slot 0"
+    );
 }

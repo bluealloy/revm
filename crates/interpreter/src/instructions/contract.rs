@@ -113,14 +113,14 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
-    let mut create_inputs = CreateInputs::new(
+    let create_inputs = CreateInputs::new(
         context.interpreter.input.target_address(),
         scheme,
         value,
         code,
         gas_limit,
+        context.interpreter.gas.reservoir(),
     );
-    create_inputs.set_reservoir(context.interpreter.gas.reservoir());
     context
         .interpreter
         .bytecode
