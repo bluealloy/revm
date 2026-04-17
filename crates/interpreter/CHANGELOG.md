@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v35.0.0...revm-interpreter-v35.0.1) - 2026-04-17
+
+### Other
+
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+
 ## [35.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v34.0.0...revm-interpreter-v35.0.0) - 2026-04-10
 
 ### Added
