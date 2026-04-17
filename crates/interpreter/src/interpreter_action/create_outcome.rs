@@ -39,8 +39,8 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A new [`CreateOutcome`] instance with no address.
-    pub fn new_oog(gas_limit: u64) -> Self {
-        Self::new(InterpreterResult::new_oog(gas_limit), None)
+    pub fn new_oog(gas_limit: u64, reservoir: u64) -> Self {
+        Self::new(InterpreterResult::new_oog(gas_limit, reservoir), None)
     }
 
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].

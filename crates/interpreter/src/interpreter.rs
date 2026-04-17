@@ -381,11 +381,11 @@ impl InterpreterResult {
     }
 
     /// Returns a new `InterpreterResult` for an out-of-gas error with the given gas limit.
-    pub fn new_oog(gas_limit: u64) -> Self {
+    pub fn new_oog(gas_limit: u64, reservoir: u64) -> Self {
         Self {
             result: InstructionResult::OutOfGas,
             output: Bytes::default(),
-            gas: Gas::new_spent(gas_limit),
+            gas: Gas::new_spent_with_reservoir(gas_limit, reservoir),
         }
     }
 
