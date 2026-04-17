@@ -186,7 +186,6 @@ pub trait StackTr {
     ///
     /// # Note
     /// Error is internally set in interpreter.
-    #[must_use]
     fn push_slice(&mut self, slice: &[u8]) -> bool;
 
     /// Pushes B256 value to the stack.
