@@ -6,7 +6,7 @@ use crate::{
     InstructionExecResult as Result, InstructionResult, InterpreterAction,
 };
 use context_interface::{cfg::GasParams, Host};
-use primitives::{Bytes, U256};
+use primitives::{hints_util::cold_path, Bytes, U256};
 
 use crate::InstructionContext as Icx;
 
@@ -39,6 +39,7 @@ fn jump_inner<WIRE: IT>(
 ) -> Result<(), InstructionResult> {
     let target = as_usize_saturated!(target);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
+        cold_path();
         return Err(InstructionResult::InvalidJump);
     }
     // SAFETY: `is_valid_jump` ensures that `dest` is in bounds.
