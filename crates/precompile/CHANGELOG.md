@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v33.0.0...revm-precompile-v34.0.0) - 2026-04-17
+
+### Fixed
+
+- re-add PrecompileOutput::gas_refunded ([#3574](https://github.com/bluealloy/revm/pull/3574))
+
 ## [33.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v32.1.0...revm-precompile-v33.0.0) - 2026-04-10
 
 ### Added
