@@ -70,8 +70,8 @@ macro_rules! popn {
 #[collapse_debuginfo(yes)]
 macro_rules! _count {
     (@count) => { 0 };
-    (@count $head:tt $($tail:tt)*) => { 1 + _count!(@count $($tail)*) };
-    ($($arg:tt)*) => { _count!(@count $($arg)*) };
+    (@count $head:tt $($tail:tt)*) => { 1 + $crate::_count!(@count $($tail)*) };
+    ($($arg:tt)*) => { $crate::_count!(@count $($arg)*) };
 }
 
 /// Pops n values from the stack and returns the top value. Fails the instruction if n values can't be popped.
@@ -91,7 +91,7 @@ macro_rules! popn_top {
             $crate::primitives::hints_util::cold_path();
             return Err($crate::InstructionResult::StackUnderflow);
         }
-        let ([$( $x ),*], $top) = unsafe { $interpreter.stack.popn_top().unwrap_unchecked() };
+        let ([$( $x ),*], $top) = unsafe { $crate::interpreter_types::StackTr::popn_top(&mut $interpreter.stack).unwrap_unchecked() };
     };
 }
 
