@@ -67,9 +67,9 @@ impl Gas {
 
     /// Creates a new `Gas` struct with the given gas limit, but without any gas remaining.
     #[inline]
-    pub const fn new_spent(limit: u64) -> Self {
+    pub const fn new_spent_with_reservoir(limit: u64, reservoir: u64) -> Self {
         Self {
-            tracker: GasTracker::new(limit, 0, 0),
+            tracker: GasTracker::new(limit, 0, reservoir),
             memory: MemoryGas::new(),
         }
     }

@@ -372,7 +372,7 @@ pub trait Handler {
         let state_gas_spent = gas.state_gas_spent();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        *gas = Gas::new_spent(evm.ctx().tx().gas_limit());
+        *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
         if instruction_result.is_ok_or_revert() {
             // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
@@ -393,7 +393,6 @@ pub trait Handler {
         // instruction_result kind. This is a bug in the devnet3 spec.
         if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
-            gas.set_reservoir(reservoir);
         } else {
             // State changes rolled back, so no execution state gas was consumed.
             gas.set_state_gas_spent(0);

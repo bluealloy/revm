@@ -44,14 +44,18 @@ pub enum FrameResult {
 impl FrameResult {
     /// Creates a new call frame result for an out-of-gas error.
     #[inline]
-    pub fn new_call_oog(gas_limit: u64, memory_offset: core::ops::Range<usize>) -> Self {
-        Self::Call(CallOutcome::new_oog(gas_limit, memory_offset))
+    pub fn new_call_oog(
+        gas_limit: u64,
+        memory_offset: core::ops::Range<usize>,
+        reservoir: u64,
+    ) -> Self {
+        Self::Call(CallOutcome::new_oog(gas_limit, memory_offset, reservoir))
     }
 
     /// Creates a new create frame result for an out-of-gas error.
     #[inline]
-    pub fn new_create_oog(gas_limit: u64) -> Self {
-        Self::Create(CreateOutcome::new_oog(gas_limit))
+    pub fn new_create_oog(gas_limit: u64, reservoir: u64) -> Self {
+        Self::Create(CreateOutcome::new_oog(gas_limit, reservoir))
     }
 
     /// Casts frame result to interpreter result.
