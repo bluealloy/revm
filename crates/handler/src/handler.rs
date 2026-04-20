@@ -395,8 +395,12 @@ pub trait Handler {
             gas.set_state_gas_spent(state_gas_spent);
         } else {
             // State changes rolled back, so no execution state gas was consumed.
+            // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
+            // frame refilled more than it charged; clamp to zero for reservoir
+            // recovery since the combined value cannot go below zero.
             gas.set_state_gas_spent(0);
-            gas.set_reservoir(reservoir + state_gas_spent);
+            let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
+            gas.set_reservoir(combined);
         }
 
         Ok(())

@@ -3,7 +3,7 @@
     "Success": {
       "gas": {
         "floor_gas": 21000,
-        "gas_refunded": 5222,
+        "gas_refunded": 2800,
         "gas_spent": 26112,
         "state_gas_spent": 0
       },
@@ -18,9 +18,9 @@
     "Success": {
       "gas": {
         "floor_gas": 21000,
-        "gas_refunded": 40368,
-        "gas_spent": 226112,
-        "state_gas_spent": 200000
+        "gas_refunded": 2800,
+        "gas_spent": 26112,
+        "state_gas_spent": 0
       },
       "logs": [],
       "output": {

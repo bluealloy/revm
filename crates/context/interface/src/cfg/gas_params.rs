@@ -336,8 +336,11 @@ impl GasParams {
             table[GasId::code_deposit_state_gas().as_usize()] = CPSB;
             table[GasId::create_state_gas().as_usize()] = 112 * CPSB;
 
-            // SSTORE refund for 0→X→0 restoration: state gas + regular gas
-            table[GasId::sstore_set_refund().as_usize()] = 32 * CPSB + 2800;
+            // SSTORE refund for 0→X→0 restoration: regular gas only.
+            // Under EIP-8037, the state gas portion (32 * CPSB) is restored
+            // directly to the reservoir via `GasParams::sstore_state_gas_refill`
+            // rather than routed through the capped refund counter.
+            table[GasId::sstore_set_refund().as_usize()] = 2800;
 
             // EIP-7702 parameter updates under EIP-8037
             // Total per auth charged pessimistically:
@@ -681,6 +684,21 @@ impl GasParams {
             && vals.is_original_eq_present()
             && vals.is_original_zero()
         {
+            self.get(GasId::sstore_set_state_gas())
+        } else {
+            0
+        }
+    }
+
+    /// State gas to refill the reservoir on 0→x→0 storage restoration (EIP-8037).
+    ///
+    /// When a storage slot is restored to its original zero value within the
+    /// same transaction, the state gas originally charged for the 0→x
+    /// transition is returned directly to the reservoir (not via the capped
+    /// refund counter). Returns 0 in any other case.
+    #[inline]
+    pub fn sstore_state_gas_refill(&self, vals: &SStoreResult) -> u64 {
+        if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
             self.get(GasId::sstore_set_state_gas())
         } else {
             0

@@ -256,7 +256,10 @@ where
         self.mem_size = interp.memory.size();
         self.gas = interp.gas.remaining();
         self.reservoir = interp.gas.reservoir();
-        self.state_gas = interp.gas.state_gas_spent();
+        // Clamp to 0: EIP-8037 allows state_gas_spent to briefly go negative
+        // within a child frame (0→x→0 restoration); the tracer exposes it as a
+        // u64 counter.
+        self.state_gas = interp.gas.state_gas_spent().max(0) as u64;
         self.refunded = interp.gas.refunded();
     }
 

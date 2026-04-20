@@ -1383,7 +1383,13 @@ fn test_eip8037_nested_call_create_sstore() {
 
 // ---- Category 6: Interactions ----
 
-/// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund does NOT undo state gas.
+/// 6.1 SSTORE 0→1 (state gas), then 1→0 restoration.
+///
+/// EIP-8037 issue #2: 0→x→0 storage restoration directly refills the reservoir
+/// with the state gas originally charged for the 0→x transition, rather than
+/// routing it through the capped refund counter. The state gas net-out means
+/// `state_gas_spent == 0` after the full set+clear cycle, and no net state
+/// gas shows up in `total_gas_spent`.
 #[test]
 fn test_eip8037_sstore_set_then_clear_refund() {
     let bytecode = sstore_set_then_clear_bytecode();
@@ -1392,7 +1398,6 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1400,13 +1405,13 @@ fn test_eip8037_sstore_set_then_clear_refund() {
         .unwrap();
 
     assert!(result.is_success());
-    // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
-    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
-    // Refund does NOT undo state gas — gas_used is higher than baseline.
-    assert!(result.tx_gas_used() > baseline_gas);
-    assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
+    // State gas originally charged for 0→1 is refilled by the 1→0 restoration.
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    // Total gas spent matches baseline — reservoir ends where it started.
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_set_then_clear_refund.json",
         &(baseline_result, result),

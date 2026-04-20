@@ -553,7 +553,15 @@ pub fn handle_reservoir_remaining_gas(
         // Parent may have already charged state gas (e.g., new_account + create) before
         // creating the child frame. Child starts with state_gas_spent=0, so we must add
         // rather than overwrite to preserve the parent's prior charges.
-        parent_gas.set_state_gas_spent(parent_gas.state_gas_spent() + child_gas.state_gas_spent());
+        //
+        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
+        // child did more 0→x→0 restorations than 0→x creations; the negative
+        // contribution is the parent's matching charge flowing back out.
+        parent_gas.set_state_gas_spent(
+            parent_gas
+                .state_gas_spent()
+                .saturating_add(child_gas.state_gas_spent()),
+        );
     } else {
         // On revert or halt: state changes are undone, so ALL state gas returns
         // to the parent's reservoir.
@@ -563,7 +571,17 @@ pub fn handle_reservoir_remaining_gas(
         // This replaces (not adds to) the parent's reservoir because the child started with
         // the parent's reservoir value (REVM doesn't zero it before the call), so the child's
         // total already includes the parent's original reservoir.
-        parent_gas.set_reservoir(child_gas.state_gas_spent() + child_gas.reservoir());
+        //
+        // `child.state_gas_spent()` can be negative when the child refilled the
+        // reservoir past what it itself charged (0→x→0 restoration on a slot
+        // the parent had set). The net `state_gas_spent + reservoir` cannot
+        // legitimately go below zero — the parent had already consumed the
+        // extra reservoir via its own 0→x charge, so the child's reservoir is
+        // correspondingly higher — but we saturate defensively.
+        let combined = (child_gas.state_gas_spent())
+            .saturating_add_unsigned(child_gas.reservoir())
+            .max(0) as u64;
+        parent_gas.set_reservoir(combined);
     }
 }
 
