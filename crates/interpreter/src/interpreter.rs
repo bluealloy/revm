@@ -18,8 +18,8 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
-    InstructionResult, InstructionTable, InterpreterAction,
+    host::DummyHost, instruction_context::InstructionContext, interpreter_types::*, Gas, GasTable,
+    Host, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
 use context_interface::{cfg::GasParams, host::LoadError};
@@ -294,6 +294,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn step<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) {
         // Get current opcode.
@@ -305,10 +306,12 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
 
         let instruction = unsafe { instruction_table.get_unchecked(opcode as usize) };
+        let static_gas = unsafe { *gas_table.get_unchecked(opcode as usize) };
 
-        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+        if self.gas.record_cost_unsafe(static_gas as u64) {
             return self.halt_oog();
         }
+
         let context = InstructionContext {
             interpreter: self,
             host,
@@ -322,8 +325,12 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     ///
     /// This uses dummy Host.
     #[inline]
-    pub fn step_dummy(&mut self, instruction_table: &InstructionTable<IW, DummyHost>) {
-        self.step(instruction_table, &mut DummyHost::default());
+    pub fn step_dummy(
+        &mut self,
+        instruction_table: &InstructionTable<IW, DummyHost>,
+        gas_table: &GasTable,
+    ) {
+        self.step(instruction_table, gas_table, &mut DummyHost::default());
     }
 
     /// Executes the interpreter until it returns or stops.
@@ -331,10 +338,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) -> InterpreterAction {
         while self.bytecode.is_not_end() {
-            self.step(instruction_table, host);
+            self.step(instruction_table, gas_table, host);
         }
         self.take_next_action()
     }
@@ -344,17 +352,19 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
 pub fn asm_step(
     interpreter: &mut Interpreter<EthInterpreter>,
     instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    gas_table: &GasTable,
     host: &mut DummyHost,
 ) {
-    interpreter.step(instruction_table, host);
+    interpreter.step(instruction_table, gas_table, host);
 }
 
 pub fn asm_run(
     interpreter: &mut Interpreter<EthInterpreter>,
     instruction_table: &InstructionTable<EthInterpreter, DummyHost>,
+    gas_table: &GasTable,
     host: &mut DummyHost,
 ) {
-    interpreter.run_plain(instruction_table, host);
+    interpreter.run_plain(instruction_table, gas_table, host);
 }
 */
 
@@ -424,9 +434,10 @@ where
     pub fn run_plain_as_output<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) -> IW::Output {
-        From::from(self.run_plain(instruction_table, host))
+        From::from(self.run_plain(instruction_table, gas_table, host))
     }
 }
 
@@ -463,7 +474,10 @@ mod tests {
 #[test]
 fn test_mstore_big_offset_memory_oog() {
     use super::*;
-    use crate::{host::DummyHost, instructions::instruction_table};
+    use crate::{
+        host::DummyHost,
+        instructions::{gas_table, instruction_table},
+    };
     use bytecode::Bytecode;
     use primitives::Bytes;
 
@@ -487,8 +501,9 @@ fn test_mstore_big_offset_memory_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let gas = gas_table();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, &gas, &mut host);
 
     assert!(action.is_return());
     assert_eq!(
@@ -501,7 +516,10 @@ fn test_mstore_big_offset_memory_oog() {
 #[cfg(feature = "memory_limit")]
 fn test_mstore_big_offset_memory_limit_oog() {
     use super::*;
-    use crate::{host::DummyHost, instructions::instruction_table};
+    use crate::{
+        host::DummyHost,
+        instructions::{gas_table, instruction_table},
+    };
     use bytecode::Bytecode;
     use primitives::Bytes;
 
@@ -525,8 +543,9 @@ fn test_mstore_big_offset_memory_limit_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let gas = gas_table();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, &gas, &mut host);
 
     assert!(action.is_return());
     assert_eq!(
