@@ -142,6 +142,16 @@ pub trait MemoryTr {
         self.slice(offset..offset + len)
     }
 
+    /// Returns a 32-byte EVM word from memory.
+    fn get_u256(&self, offset: usize) -> U256 {
+        U256::try_from_be_slice(self.slice_len(offset, 32).as_ref()).unwrap()
+    }
+
+    /// Sets a 32-byte EVM word in memory.
+    fn set_u256(&mut self, offset: usize, value: U256) {
+        self.set(offset, &value.to_be_bytes::<32>())
+    }
+
     /// Resizes memory to new size
     ///
     /// # Note
