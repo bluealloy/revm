@@ -18,7 +18,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 // imports
 use crate::{
-    instruction_context::InstructionContext, interpreter_types::*, Gas, Host,
+    instruction_context::InstructionContext, interpreter_types::*, Gas, GasTable, Host,
     InstructionExecResult, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
@@ -296,6 +296,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn step<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) -> InstructionExecResult {
         // Get current opcode.
@@ -307,8 +308,9 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.bytecode.relative_jump(1);
 
         let instruction = instruction_table[opcode as usize];
+        let static_gas = unsafe { *gas_table.get_unchecked(opcode as usize) };
 
-        if self.gas.record_cost_unsafe(instruction.static_gas()) {
+        if self.gas.record_cost_unsafe(static_gas as u64) {
             cold_path();
             return Err(InstructionResult::OutOfGas);
         }
@@ -324,10 +326,11 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
     pub fn run_plain<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) -> InterpreterAction {
         let e = loop {
-            if let Err(e) = self.step(instruction_table, host) {
+            if let Err(e) = self.step(instruction_table, gas_table, host) {
                 cold_path();
                 break e;
             }
@@ -348,7 +351,8 @@ pub fn asm_run(
     host: &mut context_interface::DummyHost,
 ) {
     let table = crate::instruction_table();
-    interpreter.run_plain(&table, host);
+    let gas_table = crate::gas_table();
+    interpreter.run_plain(&table, &gas_table, host);
 }
 */
 
@@ -375,11 +379,11 @@ impl InterpreterResult {
     }
 
     /// Returns a new `InterpreterResult` for an out-of-gas error with the given gas limit.
-    pub fn new_oog(gas_limit: u64) -> Self {
+    pub fn new_oog(gas_limit: u64, reservoir: u64) -> Self {
         Self {
             result: InstructionResult::OutOfGas,
             output: Bytes::default(),
-            gas: Gas::new_spent(gas_limit),
+            gas: Gas::new_spent_with_reservoir(gas_limit, reservoir),
         }
     }
 
@@ -418,9 +422,10 @@ where
     pub fn run_plain_as_output<H: Host + ?Sized>(
         &mut self,
         instruction_table: &InstructionTable<IW, H>,
+        gas_table: &GasTable,
         host: &mut H,
     ) -> IW::Output {
-        From::from(self.run_plain(instruction_table, host))
+        From::from(self.run_plain(instruction_table, gas_table, host))
     }
 }
 
@@ -457,7 +462,10 @@ mod tests {
 #[test]
 fn test_mstore_big_offset_memory_oog() {
     use super::*;
-    use crate::{host::DummyHost, instructions::instruction_table};
+    use crate::{
+        host::DummyHost,
+        instructions::{gas_table, instruction_table},
+    };
     use bytecode::Bytecode;
     use primitives::Bytes;
 
@@ -481,8 +489,9 @@ fn test_mstore_big_offset_memory_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let gas = gas_table();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, &gas, &mut host);
 
     assert!(action.is_return());
     assert_eq!(
@@ -495,7 +504,10 @@ fn test_mstore_big_offset_memory_oog() {
 #[cfg(feature = "memory_limit")]
 fn test_mstore_big_offset_memory_limit_oog() {
     use super::*;
-    use crate::{host::DummyHost, instructions::instruction_table};
+    use crate::{
+        host::DummyHost,
+        instructions::{gas_table, instruction_table},
+    };
     use bytecode::Bytecode;
     use primitives::Bytes;
 
@@ -519,8 +531,9 @@ fn test_mstore_big_offset_memory_limit_oog() {
     );
 
     let table = instruction_table::<EthInterpreter, DummyHost>();
+    let gas = gas_table();
     let mut host = DummyHost::default();
-    let action = interpreter.run_plain(&table, &mut host);
+    let action = interpreter.run_plain(&table, &gas, &mut host);
 
     assert!(action.is_return());
     assert_eq!(

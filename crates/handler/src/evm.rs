@@ -202,9 +202,11 @@ where
         let context = &mut self.ctx;
         let instructions = &mut self.instruction;
 
-        let action = frame
-            .interpreter
-            .run_plain(instructions.instruction_table(), context);
+        let action = frame.interpreter.run_plain(
+            instructions.instruction_table(),
+            instructions.gas_table(),
+            context,
+        );
 
         frame.process_next_action(context, action).inspect(|i| {
             if i.is_result() {

@@ -155,6 +155,7 @@ pub trait InspectorEvmTr:
             &mut frame.interpreter,
             inspector,
             instructions.instruction_table(),
+            instructions.gas_table(),
         );
         let mut result = frame.process_next_action(ctx, next_action);
 
