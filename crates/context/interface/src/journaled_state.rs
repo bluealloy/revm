@@ -111,7 +111,7 @@ pub trait JournalTr {
     fn warm_coinbase_account(&mut self, address: Address);
 
     /// Warms the precompiles.
-    fn warm_precompiles(&mut self, addresses: AddressSet);
+    fn warm_precompiles(&mut self, addresses: &AddressSet);
 
     /// Returns the addresses of the precompiles.
     fn precompile_addresses(&self) -> &AddressSet;
