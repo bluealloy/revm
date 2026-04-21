@@ -269,6 +269,18 @@ pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionCont
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)
         );
+
+        // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
+        // directly rather than routing the state gas through the capped refund
+        // counter. The regular-gas portion of the restoration still flows
+        // through `sstore_refund` below.
+        let refill = context
+            .host
+            .gas_params()
+            .sstore_state_gas_refill(&state_load.data);
+        if refill > 0 {
+            context.interpreter.gas.refill_reservoir(refill);
+        }
     }
 
     // refund

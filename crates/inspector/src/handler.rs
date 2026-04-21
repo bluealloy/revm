@@ -160,7 +160,7 @@ where
                 let result_gas = ResultGas::default()
                     .with_total_gas_spent(gas.total_gas_spent())
                     .with_refunded(gas.refunded() as u64)
-                    .with_state_gas_spent(gas.state_gas_spent());
+                    .with_state_gas_spent(gas.state_gas_spent().max(0) as u64);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,

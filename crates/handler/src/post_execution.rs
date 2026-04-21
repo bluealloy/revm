@@ -10,8 +10,11 @@ use primitives::{hardfork::SpecId, U256};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
-    let state_gas = gas
-        .state_gas_spent()
+    // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
+    // negative on 0→x→0 restoration; at the top level, post-reconciliation it
+    // is expected to be >= 0 and is clamped defensively before combining with
+    // intrinsic state gas.
+    let state_gas = (gas.state_gas_spent().max(0) as u64)
         .saturating_add(init_and_floor_gas.initial_state_gas)
         .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);
 

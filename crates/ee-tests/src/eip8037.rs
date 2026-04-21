@@ -1383,7 +1383,13 @@ fn test_eip8037_nested_call_create_sstore() {
 
 // ---- Category 6: Interactions ----
 
-/// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund does NOT undo state gas.
+/// 6.1 SSTORE 0→1 (state gas), then 1→0 restoration.
+///
+/// EIP-8037 issue #2: 0→x→0 storage restoration directly refills the reservoir
+/// with the state gas originally charged for the 0→x transition, rather than
+/// routing it through the capped refund counter. The state gas net-out means
+/// `state_gas_spent == 0` after the full set+clear cycle, and no net state
+/// gas shows up in `total_gas_spent`.
 #[test]
 fn test_eip8037_sstore_set_then_clear_refund() {
     let bytecode = sstore_set_then_clear_bytecode();
@@ -1392,7 +1398,6 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1400,13 +1405,13 @@ fn test_eip8037_sstore_set_then_clear_refund() {
         .unwrap();
 
     assert!(result.is_success());
-    // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
-    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
-    // Refund does NOT undo state gas — gas_used is higher than baseline.
-    assert!(result.tx_gas_used() > baseline_gas);
-    assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
+    // State gas originally charged for 0→1 is refilled by the 1→0 restoration.
+    assert_eq!(result.gas().state_gas_spent(), 0);
+    // Total gas spent matches baseline — reservoir ends where it started.
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     compare_or_save_eip8037_testdata(
         "test_eip8037_sstore_set_then_clear_refund.json",
         &(baseline_result, result),
@@ -2040,4 +2045,139 @@ fn test_eip8037_parent_sstore_after_child_revert() {
         "test_eip8037_parent_sstore_after_child_revert.json",
         &(baseline_result, result),
     );
+}
+
+// ---- EIP-8037 issue #2: 0→x→0 storage reservoir refill ----
+
+/// EIP-8037 issue #2 — same frame: 0→1→0 restoration refills the reservoir
+/// with the state gas originally charged on 0→1 (via `refill_reservoir`)
+/// rather than routing it through the capped refund counter.
+///
+/// Compared against a set-only variant (0→1 with no clear): the set-then-clear
+/// variant must end with `state_gas_spent == 0`, while the set-only variant
+/// retains the full `STATE_GAS_SSTORE_SET` charge.
+#[test]
+fn test_eip8037_sstore_refill_same_frame() {
+    let mut evm = state_gas_evm(sstore_set_then_clear_bytecode(), u64::MAX);
+    let restored = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let mut evm = state_gas_evm(sstore_bytecode(0, 1), u64::MAX);
+    let set_only = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(restored.is_success());
+    assert!(set_only.is_success());
+
+    // The refill nets state gas back to zero for the 0→1→0 round-trip.
+    assert_eq!(restored.gas().state_gas_spent(), 0);
+    // Without the clear, the full state gas stays spent.
+    assert_eq!(set_only.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+}
+
+/// Parent SSTORE(0,1), CREATE a child, DELEGATECALL the child which SSTORE(0,0).
+///
+/// DELEGATECALL runs the child's code in the parent's storage context, so the
+/// child's SSTORE clears the slot the parent set. Used to exercise the
+/// cross-frame 0→x→0 case.
+fn sstore_parent_then_delegatecall_clear_bytecode() -> Bytecode {
+    // Child runtime: SSTORE(0, 0); STOP
+    let child_runtime: [u8; 6] = [
+        opcode::PUSH1,
+        0,
+        opcode::PUSH1,
+        0,
+        opcode::SSTORE,
+        opcode::STOP,
+    ];
+
+    // Init code: MSTORE8 each byte of child_runtime, then RETURN(0, len).
+    let mut init_code = Vec::new();
+    for (i, &byte) in child_runtime.iter().enumerate() {
+        init_code.push(opcode::PUSH1);
+        init_code.push(byte);
+        init_code.push(opcode::PUSH1);
+        init_code.push(i as u8);
+        init_code.push(opcode::MSTORE8);
+    }
+    init_code.push(opcode::PUSH1);
+    init_code.push(child_runtime.len() as u8);
+    init_code.push(opcode::PUSH1);
+    init_code.push(0);
+    init_code.push(opcode::RETURN);
+
+    let mut bytecode = Vec::new();
+
+    // Parent: SSTORE(0, 1) — state gas charged on the parent frame.
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(1);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::SSTORE);
+
+    // MSTORE8 init_code into memory.
+    for (i, &byte) in init_code.iter().enumerate() {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(byte);
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(i as u8);
+        bytecode.push(opcode::MSTORE8);
+    }
+
+    // CREATE(value=0, offset=0, length=init_code.len())
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(init_code.len() as u8);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::CREATE);
+    // Stack: [child_addr]
+
+    // DELEGATECALL args (retLen, retOff, argsLen, argsOff, addr, gas).
+    for _ in 0..4 {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(0);
+    }
+    // Stack: [child_addr, 0, 0, 0, 0]
+    bytecode.push(opcode::SWAP4);
+    // Stack: [0, 0, 0, 0, child_addr]
+    bytecode.push(opcode::GAS);
+    // Stack: [0, 0, 0, 0, child_addr, gas]
+    bytecode.push(opcode::DELEGATECALL);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// EIP-8037 issue #2 — cross frame: parent charges state gas on SSTORE(0,1),
+/// then DELEGATECALLs a child that does SSTORE(0,0). Because DELEGATECALL
+/// shares the caller's storage, the child performs the 0→1→0 restoration
+/// and calls `refill_reservoir` inside its own frame, driving the child's
+/// `state_gas_spent` to `-STATE_GAS_SSTORE_SET`. On frame return, the
+/// parent's +STATE_GAS_SSTORE_SET and the child's negative net out via the
+/// i64 accumulation in `handle_reservoir_remaining_gas`.
+///
+/// After the call, only the parent's CREATE + code-deposit state gas
+/// remains; the SSTORE round-trip leaves no net state gas.
+#[test]
+fn test_eip8037_sstore_refill_cross_frame() {
+    const CHILD_RUNTIME_LEN: u64 = 6;
+
+    let bytecode = sstore_parent_then_delegatecall_clear_bytecode();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+
+    // Parent charged STATE_GAS_SSTORE_SET on 0→1; the child's DELEGATECALL
+    // refills it on 1→0. Only the CREATE + code-deposit state gas remains.
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * CHILD_RUNTIME_LEN;
+    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
 }
