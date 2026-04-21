@@ -37,7 +37,7 @@ impl CustomPrecompileProvider {
 
     fn renew(&mut self) {
         // Include our custom precompile address along with standard ones
-        self.addresses.clone_from(&mut self.inner.warm_addresses());
+        self.addresses.clone_from(self.inner.warm_addresses());
         self.addresses.insert(CUSTOM_PRECOMPILE_ADDRESS);
     }
 }
