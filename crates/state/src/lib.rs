@@ -106,7 +106,7 @@ impl Account {
 
     /// Is account marked for self destruct.
     #[inline]
-    pub fn is_selfdestructed(&self) -> bool {
+    pub const fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
     }
 
@@ -124,7 +124,7 @@ impl Account {
 
     /// If account status is marked as touched.
     #[inline]
-    pub fn is_touched(&self) -> bool {
+    pub const fn is_touched(&self) -> bool {
         self.status.contains(AccountStatus::Touched)
     }
 
@@ -148,7 +148,7 @@ impl Account {
 
     /// Is account warm for given transaction id.
     #[inline]
-    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
         self.transaction_id != transaction_id || self.status.contains(AccountStatus::Cold)
     }
 
@@ -163,13 +163,13 @@ impl Account {
 
     /// Is account locally created
     #[inline]
-    pub fn is_created_locally(&self) -> bool {
+    pub const fn is_created_locally(&self) -> bool {
         self.status.contains(AccountStatus::CreatedLocal)
     }
 
     /// Is account locally selfdestructed
     #[inline]
-    pub fn is_selfdestructed_locally(&self) -> bool {
+    pub const fn is_selfdestructed_locally(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructedLocal)
     }
 
@@ -225,17 +225,17 @@ impl Account {
     ///
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
-    pub fn is_loaded_as_not_existing(&self) -> bool {
+    pub const fn is_loaded_as_not_existing(&self) -> bool {
         self.status.contains(AccountStatus::LoadedAsNotExisting)
     }
 
     /// Is account loaded as not existing from database and not touched.
-    pub fn is_loaded_as_not_existing_not_touched(&self) -> bool {
+    pub const fn is_loaded_as_not_existing_not_touched(&self) -> bool {
         self.is_loaded_as_not_existing() && !self.is_touched()
     }
 
     /// Is account newly created in this transaction.
-    pub fn is_created(&self) -> bool {
+    pub const fn is_created(&self) -> bool {
         self.status.contains(AccountStatus::Created)
     }
 
@@ -422,7 +422,7 @@ bitflags! {
 impl AccountStatus {
     /// Returns true if the account status is touched.
     #[inline]
-    pub fn is_touched(&self) -> bool {
+    pub const fn is_touched(&self) -> bool {
         self.contains(AccountStatus::Touched)
     }
 }
@@ -449,7 +449,7 @@ pub struct EvmStorageSlot {
 
 impl EvmStorageSlot {
     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
-    pub fn new(original: StorageValue, transaction_id: usize) -> Self {
+    pub const fn new(original: StorageValue, transaction_id: usize) -> Self {
         Self {
             original_value: original,
             present_value: original,
@@ -459,7 +459,7 @@ impl EvmStorageSlot {
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
-    pub fn new_changed(
+    pub const fn new_changed(
         original_value: StorageValue,
         present_value: StorageValue,
         transaction_id: usize,
@@ -478,25 +478,25 @@ impl EvmStorageSlot {
 
     /// Returns the original value of the storage slot.
     #[inline]
-    pub fn original_value(&self) -> StorageValue {
+    pub const fn original_value(&self) -> StorageValue {
         self.original_value
     }
 
     /// Returns the current value of the storage slot.
     #[inline]
-    pub fn present_value(&self) -> StorageValue {
+    pub const fn present_value(&self) -> StorageValue {
         self.present_value
     }
 
     /// Marks the storage slot as cold. Does not change transaction_id.
     #[inline]
-    pub fn mark_cold(&mut self) {
+    pub const fn mark_cold(&mut self) {
         self.is_cold = true;
     }
 
     /// Is storage slot cold for given transaction id.
     #[inline]
-    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
         self.transaction_id != transaction_id || self.is_cold
     }
 
@@ -505,7 +505,7 @@ impl EvmStorageSlot {
     ///
     /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
     #[inline]
-    pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
+    pub const fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
         if is_cold {
             // if slot is cold original value should be reset to present value.

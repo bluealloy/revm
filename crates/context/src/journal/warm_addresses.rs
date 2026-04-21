@@ -54,13 +54,13 @@ impl WarmAddresses {
 
     /// Returns the precompile addresses.
     #[inline]
-    pub fn precompiles(&self) -> &AddressSet {
+    pub const fn precompiles(&self) -> &AddressSet {
         &self.precompile_set
     }
 
     /// Returns the coinbase address.
     #[inline]
-    pub fn coinbase(&self) -> Option<Address> {
+    pub const fn coinbase(&self) -> Option<Address> {
         self.coinbase
     }
 
@@ -83,7 +83,7 @@ impl WarmAddresses {
 
     /// Set the coinbase address.
     #[inline]
-    pub fn set_coinbase(&mut self, address: Address) {
+    pub const fn set_coinbase(&mut self, address: Address) {
         self.coinbase = Some(address);
     }
 
@@ -95,13 +95,13 @@ impl WarmAddresses {
 
     /// Returns the access list.
     #[inline]
-    pub fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
+    pub const fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
         &self.access_list
     }
 
     /// Clear the coinbase address.
     #[inline]
-    pub fn clear_coinbase(&mut self) {
+    pub const fn clear_coinbase(&mut self) {
         self.coinbase = None;
     }
 

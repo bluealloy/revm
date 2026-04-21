@@ -87,7 +87,7 @@ pub const fn gas_table() -> GasTable {
 
 /// Create a gas table with applied spec changes to static gas cost.
 #[inline]
-pub fn gas_table_spec(spec: SpecId) -> GasTable {
+pub const fn gas_table_spec(spec: SpecId) -> GasTable {
     use bytecode::opcode::*;
     use SpecId::*;
     let mut table = gas_table();

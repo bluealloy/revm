@@ -147,7 +147,7 @@ impl SharedMemory {
 
     /// Creates a new invalid memory instance.
     #[inline]
-    pub fn invalid() -> Self {
+    pub const fn invalid() -> Self {
         Self {
             buffer: None,
             my_checkpoint: 0,
@@ -158,7 +158,7 @@ impl SharedMemory {
     }
 
     /// Creates a new memory instance with a given shared buffer.
-    pub fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
+    pub const fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
         Self {
             buffer: Some(buffer),
             my_checkpoint: 0,
@@ -195,7 +195,7 @@ impl SharedMemory {
 
     /// Sets the memory limit in bytes.
     #[inline]
-    pub fn set_memory_limit(&mut self, limit: u64) {
+    pub const fn set_memory_limit(&mut self, limit: u64) {
         #[cfg(feature = "memory_limit")]
         {
             self.memory_limit = limit;

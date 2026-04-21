@@ -102,7 +102,7 @@ pub mod algo {
     #[inline(always)]
     #[allow(clippy::many_single_char_names)]
     /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
-    fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+    const fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
         let mut va = v[a];
         let mut vb = v[b];
         let mut vc = v[c];
@@ -173,7 +173,7 @@ pub mod algo {
     }
 
     #[inline(always)]
-    fn round(v: &mut [u64; 16], m: &[u64; 16], r: usize) {
+    const fn round(v: &mut [u64; 16], m: &[u64; 16], r: usize) {
         // Message word selection permutation for this round.
         let s = &SIGMA[r % 10];
         // g1
@@ -514,12 +514,12 @@ mod avx2 {
     }
 
     #[inline(always)]
-    pub(crate) fn count_low(count: Count) -> Word {
+    pub(crate) const fn count_low(count: Count) -> Word {
         count as Word
     }
 
     #[inline(always)]
-    pub(crate) fn count_high(count: Count) -> Word {
+    pub(crate) const fn count_high(count: Count) -> Word {
         (count >> Word::BITS as usize) as Word
     }
 

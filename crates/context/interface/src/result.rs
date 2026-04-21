@@ -37,7 +37,7 @@ pub type ResultVecAndState<R, S> = ExecResultAndState<Vec<R>, S>;
 
 impl<R, S> ExecResultAndState<R, S> {
     /// Creates new ResultAndState.
-    pub fn new(result: R, state: S) -> Self {
+    pub const fn new(result: R, state: S) -> Self {
         Self { result, state }
     }
 }
@@ -172,25 +172,25 @@ impl ResultGas {
 
     /// Sets the `total_gas_spent` field by mutable reference.
     #[inline]
-    pub fn set_total_gas_spent(&mut self, total_gas_spent: u64) {
+    pub const fn set_total_gas_spent(&mut self, total_gas_spent: u64) {
         self.total_gas_spent = total_gas_spent;
     }
 
     /// Sets the `refunded` field by mutable reference.
     #[inline]
-    pub fn set_refunded(&mut self, refunded: u64) {
+    pub const fn set_refunded(&mut self, refunded: u64) {
         self.refunded = refunded;
     }
 
     /// Sets the `floor_gas` field by mutable reference.
     #[inline]
-    pub fn set_floor_gas(&mut self, floor_gas: u64) {
+    pub const fn set_floor_gas(&mut self, floor_gas: u64) {
         self.floor_gas = floor_gas;
     }
 
     /// Sets the `state_gas_spent` field by mutable reference.
     #[inline]
-    pub fn set_state_gas_spent(&mut self, state_gas_spent: u64) {
+    pub const fn set_state_gas_spent(&mut self, state_gas_spent: u64) {
         self.state_gas_spent = state_gas_spent;
     }
 
@@ -202,7 +202,7 @@ impl ResultGas {
             regular and state gas, this method is no longer valid.
             Use [`ResultGas::set_total_gas_spent`] instead"
     )]
-    pub fn set_spent(&mut self, spent: u64) {
+    pub const fn set_spent(&mut self, spent: u64) {
         self.total_gas_spent = spent;
     }
 
@@ -407,7 +407,7 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     /// 1 indicates success, 0 indicates revert.
     ///
     /// <https://eips.ethereum.org/EIPS/eip-658>
-    pub fn is_success(&self) -> bool {
+    pub const fn is_success(&self) -> bool {
         matches!(self, Self::Success { .. })
     }
 
@@ -447,14 +447,14 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     }
 
     /// Returns true if execution result is a Halt.
-    pub fn is_halt(&self) -> bool {
+    pub const fn is_halt(&self) -> bool {
         matches!(self, Self::Halt { .. })
     }
 
     /// Returns the output data of the execution.
     ///
     /// Returns [`None`] if the execution was halted.
-    pub fn output(&self) -> Option<&Bytes> {
+    pub const fn output(&self) -> Option<&Bytes> {
         match self {
             Self::Success { output, .. } => Some(output.data()),
             Self::Revert { output, .. } => Some(output),
@@ -474,7 +474,7 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     }
 
     /// Returns the logs emitted during execution.
-    pub fn logs(&self) -> &[Log] {
+    pub const fn logs(&self) -> &[Log] {
         match self {
             Self::Success { logs, .. } | Self::Revert { logs, .. } | Self::Halt { logs, .. } => {
                 logs.as_slice()
@@ -492,14 +492,14 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
     }
 
     /// Returns the gas accounting information.
-    pub fn gas(&self) -> &ResultGas {
+    pub const fn gas(&self) -> &ResultGas {
         match self {
             Self::Success { gas, .. } | Self::Revert { gas, .. } | Self::Halt { gas, .. } => gas,
         }
     }
 
     /// Returns the gas used needed for the transaction receipt.
-    pub fn tx_gas_used(&self) -> u64 {
+    pub const fn tx_gas_used(&self) -> u64 {
         self.gas().tx_gas_used()
     }
 
@@ -509,7 +509,7 @@ impl<HaltReasonTy> ExecutionResult<HaltReasonTy> {
         since = "32.0.0",
         note = "Use `tx_gas_used()` instead, `gas_used` is ambiguous after EIP-8037 state gas split"
     )]
-    pub fn gas_used(&self) -> u64 {
+    pub const fn gas_used(&self) -> u64 {
         self.tx_gas_used()
     }
 }
@@ -585,7 +585,7 @@ impl Output {
     }
 
     /// Returns the output data of the execution output.
-    pub fn data(&self) -> &Bytes {
+    pub const fn data(&self) -> &Bytes {
         match self {
             Output::Call(data) => data,
             Output::Create(data, _) => data,
@@ -593,7 +593,7 @@ impl Output {
     }
 
     /// Returns the created address, if any.
-    pub fn address(&self) -> Option<&Address> {
+    pub const fn address(&self) -> Option<&Address> {
         match self {
             Output::Call(_) => None,
             Output::Create(_, address) => address.as_ref(),
@@ -1210,7 +1210,7 @@ pub struct TransactionIndexedError<Error> {
 impl<Error> TransactionIndexedError<Error> {
     /// Create a new `TransactionIndexedError` with the given error and transaction index.
     #[must_use]
-    pub fn new(error: Error, transaction_index: usize) -> Self {
+    pub const fn new(error: Error, transaction_index: usize) -> Self {
         Self {
             error,
             transaction_index,
@@ -1218,7 +1218,7 @@ impl<Error> TransactionIndexedError<Error> {
     }
 
     /// Get a reference to the underlying error.
-    pub fn error(&self) -> &Error {
+    pub const fn error(&self) -> &Error {
         &self.error
     }
 

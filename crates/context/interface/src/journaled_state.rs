@@ -335,13 +335,13 @@ pub type JournalLoadErasedError = JournalLoadError<ErasedError>;
 impl<E> JournalLoadError<E> {
     /// Returns true if the error is a database error.
     #[inline]
-    pub fn is_db_error(&self) -> bool {
+    pub const fn is_db_error(&self) -> bool {
         matches!(self, JournalLoadError::DBError(_))
     }
 
     /// Returns true if the error is a cold load skipped.
     #[inline]
-    pub fn is_cold_load_skipped(&self) -> bool {
+    pub const fn is_cold_load_skipped(&self) -> bool {
         matches!(self, JournalLoadError::ColdLoadSkipped)
     }
 
@@ -452,7 +452,7 @@ impl<T> DerefMut for StateLoad<T> {
 impl<T> StateLoad<T> {
     /// Returns a new [`StateLoad`] with the given data and cold load status.
     #[inline]
-    pub fn new(data: T, is_cold: bool) -> Self {
+    pub const fn new(data: T, is_cold: bool) -> Self {
         Self { data, is_cold }
     }
 
@@ -493,7 +493,7 @@ pub struct AccountInfoLoad<'a> {
 impl<'a> AccountInfoLoad<'a> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
     #[inline]
-    pub fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
+    pub const fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
         Self {
             account: Cow::Borrowed(account),
             is_cold,

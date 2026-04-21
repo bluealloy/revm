@@ -22,7 +22,7 @@ pub struct Erc20MainnetHandler<EVM, ERROR, FRAME> {
 
 impl<CTX, ERROR, FRAME> Erc20MainnetHandler<CTX, ERROR, FRAME> {
     /// Creates a new ERC20 gas payment handler
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             _phantom: core::marker::PhantomData,
         }

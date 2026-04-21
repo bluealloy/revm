@@ -52,7 +52,7 @@ impl EthPrecompiles {
     }
 
     /// Returns addresses of the precompiles.
-    pub fn warm_addresses(&self) -> &AddressSet {
+    pub const fn warm_addresses(&self) -> &AddressSet {
         self.precompiles.addresses_set()
     }
 

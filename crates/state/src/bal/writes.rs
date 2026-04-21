@@ -57,7 +57,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     }
 
     /// Returns true if the builder is empty.
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.writes.is_empty()
     }
 

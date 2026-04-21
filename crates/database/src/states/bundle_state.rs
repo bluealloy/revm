@@ -49,7 +49,7 @@ pub enum OriginalValuesKnown {
 }
 impl OriginalValuesKnown {
     /// Original value is not known for sure.
-    pub fn is_not_known(&self) -> bool {
+    pub const fn is_not_known(&self) -> bool {
         matches!(self, Self::No)
     }
 }
@@ -320,58 +320,58 @@ impl BundleBuilder {
     }
 
     /// Getter for `states` field
-    pub fn get_states(&self) -> &AddressSet {
+    pub const fn get_states(&self) -> &AddressSet {
         &self.states
     }
 
     /// Mutable getter for `states` field
-    pub fn get_states_mut(&mut self) -> &mut AddressSet {
+    pub const fn get_states_mut(&mut self) -> &mut AddressSet {
         &mut self.states
     }
 
     /// Mutable getter for `state_original` field
-    pub fn get_state_original_mut(&mut self) -> &mut AddressMap<AccountInfo> {
+    pub const fn get_state_original_mut(&mut self) -> &mut AddressMap<AccountInfo> {
         &mut self.state_original
     }
 
     /// Mutable getter for `state_present` field
-    pub fn get_state_present_mut(&mut self) -> &mut AddressMap<AccountInfo> {
+    pub const fn get_state_present_mut(&mut self) -> &mut AddressMap<AccountInfo> {
         &mut self.state_present
     }
 
     /// Mutable getter for `state_storage` field
-    pub fn get_state_storage_mut(
+    pub const fn get_state_storage_mut(
         &mut self,
     ) -> &mut AddressMap<StorageKeyMap<(StorageValue, StorageValue)>> {
         &mut self.state_storage
     }
 
     /// Mutable getter for `reverts` field
-    pub fn get_reverts_mut(&mut self) -> &mut BTreeSet<(u64, Address)> {
+    pub const fn get_reverts_mut(&mut self) -> &mut BTreeSet<(u64, Address)> {
         &mut self.reverts
     }
 
     /// Mutable getter for `revert_range` field
-    pub fn get_revert_range_mut(&mut self) -> &mut RangeInclusive<u64> {
+    pub const fn get_revert_range_mut(&mut self) -> &mut RangeInclusive<u64> {
         &mut self.revert_range
     }
 
     /// Mutable getter for `revert_account` field
-    pub fn get_revert_account_mut(
+    pub const fn get_revert_account_mut(
         &mut self,
     ) -> &mut HashMap<(u64, Address), Option<Option<AccountInfo>>> {
         &mut self.revert_account
     }
 
     /// Mutable getter for `revert_storage` field
-    pub fn get_revert_storage_mut(
+    pub const fn get_revert_storage_mut(
         &mut self,
     ) -> &mut HashMap<(u64, Address), Vec<(StorageKey, StorageValue)>> {
         &mut self.revert_storage
     }
 
     /// Mutable getter for `contracts` field
-    pub fn get_contracts_mut(&mut self) -> &mut B256Map<Bytecode> {
+    pub const fn get_contracts_mut(&mut self) -> &mut B256Map<Bytecode> {
         &mut self.contracts
     }
 }
@@ -387,7 +387,7 @@ pub enum BundleRetention {
 
 impl BundleRetention {
     /// Returns `true` if reverts should be retained.
-    pub fn includes_reverts(&self) -> bool {
+    pub const fn includes_reverts(&self) -> bool {
         matches!(self, Self::Reverts)
     }
 }
@@ -513,7 +513,7 @@ impl BundleState {
     }
 
     /// Returns reference to the state.
-    pub fn state(&self) -> &AddressMap<BundleAccount> {
+    pub const fn state(&self) -> &AddressMap<BundleAccount> {
         &self.state
     }
 
