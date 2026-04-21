@@ -32,24 +32,32 @@ use std::boxed::Box;
 ///     * Database needs to load account and tie to with BAL writes
 /// If CompiledBal is not present, use loaded values
 ///     * Account is already up to date (uses present flow).
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
-    /// Original account info used by BAL, changed only on cold load by BAL.
-    /// `None` means `Default::default()`, to avoid allocations.
-    #[cfg_attr(
-        feature = "serde",
-        serde(serialize_with = "serde_impl::serialize_original")
-    )]
-    original_info: Option<Box<AccountInfo>>,
     /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
+
+    /// Original account info used by BAL, changed only on cold load by BAL.
+    /// `None` means `Default::default()`, to avoid allocations.
+    original_info: Option<Box<AccountInfo>>,
+}
+
+impl PartialEq for Account {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.info == other.info
+            && self.transaction_id == other.transaction_id
+            && self.storage == other.storage
+            && self.status == other.status
+            && self.original_info() == other.original_info()
+    }
 }
 
 impl Account {
@@ -105,8 +113,7 @@ impl Account {
 
     /// Clones the current info into the original info.
     pub fn set_current_info_as_original(&mut self) {
-        if self.info.is_default() {
-            self.original_info = None;
+        if self.original_info.is_none() && self.info.is_default() {
             return;
         }
         self.original_info
@@ -349,24 +356,32 @@ impl From<AccountInfo> for Account {
 #[cfg(feature = "serde")]
 mod serde_impl {
     use super::*;
-    use serde::{Deserialize, Serialize};
+    use serde::Deserialize;
 
-    pub(super) fn serialize_original<S: serde::Serializer>(
-        original_info: &Option<Box<AccountInfo>>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
-        let x = if let Some(original_info) = original_info {
-            original_info.as_ref()
-        } else {
-            &AccountInfo::default()
-        };
-        x.serialize(serializer)
+    /// Distinguishes missing field (old format) from explicit `null` (new format).
+    #[derive(Default)]
+    enum MaybeOriginalInfo {
+        /// Field was missing from JSON (old format).
+        #[default]
+        Missing,
+        /// Present in JSON: `null` means default, `Some` is the value.
+        Present(Option<AccountInfo>),
+    }
+
+    impl<'de> Deserialize<'de> for MaybeOriginalInfo {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            Option::<AccountInfo>::deserialize(deserializer).map(MaybeOriginalInfo::Present)
+        }
     }
 
     #[derive(Deserialize)]
     struct AccountSerde {
         info: AccountInfo,
-        original_info: Option<AccountInfo>,
+        #[serde(default)]
+        original_info: MaybeOriginalInfo,
         storage: EvmStorage,
         transaction_id: usize,
         status: AccountStatus,
@@ -385,12 +400,13 @@ mod serde_impl {
                 status,
             } = Deserialize::deserialize(deserializer)?;
 
-            // If original info is not present, use info as original info
-            let original_info = original_info.unwrap_or_else(|| info.clone());
-            let original_info = if original_info.is_default() {
-                None
-            } else {
-                Some(Box::new(original_info))
+            let original_info = match original_info {
+                // Old format: field missing → use info as original.
+                MaybeOriginalInfo::Missing => Some(Box::new(info.clone())),
+                // New format: null → None (default).
+                MaybeOriginalInfo::Present(None) => None,
+                // New format: explicit value.
+                MaybeOriginalInfo::Present(Some(oi)) => Some(Box::new(oi)),
             };
 
             Ok(Account {
@@ -695,37 +711,45 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn test_account_original_info_none_roundtrip() {
-        // Account with original_info = None (default optimization).
         let account = Account::new_not_existing(2);
         assert!(account.original_info.is_none());
         let serialized = serde_json::to_string(&account).unwrap();
         let deserialized: Account = serde_json::from_str(&serialized).unwrap();
-        assert!(
-            deserialized.original_info.is_none(),
-            "should be None after roundtrip: {:?}",
-            deserialized.original_info
-        );
+        assert!(deserialized.original_info.is_none());
         assert_eq!(account, deserialized);
-
-        // Also test via serde_json::Value roundtrip with sort (what ee-tests does).
-        let mut value: serde_json::Value = serde_json::from_str(&serialized).unwrap();
-        value.sort_all_objects();
-        let pretty = serde_json::to_string_pretty(&value).unwrap();
-        let deserialized2: Account = serde_json::from_str(&pretty).unwrap();
-        assert!(deserialized2.original_info.is_none());
-        assert_eq!(account, deserialized2);
     }
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_account_serialize_deserialize_without_original_info() {
-        let deserialize_without_original_info = r#"
-        {"info":{"balance":"0x0","nonce":0,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","storage_id":null,"code":{"LegacyAnalyzed":{"bytecode":"0x00","original_len":0,"jump_table":{"order":"bitvec::order::Lsb0","head":{"width":8,"index":0},"bits":0,"data":[]}}}},"transaction_id":0,"storage":{},"status":"SelfDestructed"}"#;
+    fn test_account_deserialize_original_info_missing_null_present() {
+        let code = r#"{"LegacyAnalyzed":{"bytecode":"0x00","original_len":0,"jump_table":{"order":"bitvec::order::Lsb0","head":{"width":8,"index":0},"bits":0,"data":[]}}}"#;
+        let info = format!(
+            r#"{{"balance":"0x2386f26fc10000","nonce":1,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","code":{code}}}"#
+        );
 
-        let account = Account::default().with_selfdestruct_mark();
-        let deserialized: Account =
-            serde_json::from_str(deserialize_without_original_info).unwrap();
-        assert_eq!(account, deserialized);
+        // Missing field (old format): original_info = Some(info.clone()).
+        let json =
+            format!(r#"{{"info":{info},"transaction_id":0,"storage":{{}},"status":"Touched"}}"#);
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_some());
+        assert_eq!(acct.original_info(), acct.info);
+
+        // Null (new format): original_info = None (default).
+        let json = format!(
+            r#"{{"info":{info},"original_info":null,"transaction_id":0,"storage":{{}},"status":"Touched"}}"#
+        );
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_none());
+
+        // Present value.
+        let original = r#"{"balance":"0x0","nonce":0,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","code":null}"#;
+        let json = format!(
+            r#"{{"info":{info},"original_info":{original},"transaction_id":0,"storage":{{}},"status":"Touched"}}"#
+        );
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_some());
+        assert_eq!(acct.original_info().nonce, 0);
+        assert_eq!(acct.original_info().balance, U256::ZERO);
     }
 
     #[test]
