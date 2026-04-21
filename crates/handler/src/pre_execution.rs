@@ -210,7 +210,7 @@ pub fn apply_eip7702_auth_list<
         apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
 
     // EIP-8037: Split auth list refund into state gas and regular gas portions.
-    // The state gas portion is added to the reservoir after initial_state_gas deduction,
+    // The state gas portion is added to the reservoir after `state_gas` deduction,
     // matching the Python spec where set_delegation adds state refund directly to
     // state_gas_reservoir. This ensures refunded state gas stays as reservoir gas
     // (not regular gas), so it's not consumed on frame halt.

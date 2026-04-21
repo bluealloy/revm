@@ -250,10 +250,10 @@ pub fn validate_initial_tx_gas(
     }
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if gas.initial_total_gas > tx.gas_limit() {
+    if gas.total_gas() > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
             gas_limit: tx.gas_limit(),
-            initial_gas: gas.initial_total_gas,
+            initial_gas: gas.total_gas(),
         });
     }
 
@@ -270,7 +270,7 @@ pub fn validate_initial_tx_gas(
     // Validate that both intrinsic regular gas and floor gas fit within the cap.
     // State gas is excluded — it uses its own reservoir.
     if is_amsterdam_eip8037_enabled && tx.gas_limit() > tx_gas_limit_cap {
-        let min_regular_gas = gas.initial_regular_gas().max(gas.floor_gas);
+        let min_regular_gas = gas.regular_gas.max(gas.floor_gas);
         if min_regular_gas > tx_gas_limit_cap {
             return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
                 gas_floor: min_regular_gas,

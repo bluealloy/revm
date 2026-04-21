@@ -12,7 +12,7 @@ use primitives::{hardfork::SpecId, U256};
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
     let state_gas = gas
         .state_gas_spent()
-        .saturating_add(init_and_floor_gas.initial_state_gas)
+        .saturating_add(init_and_floor_gas.state_gas)
         .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);
 
     ResultGas::default()

@@ -263,63 +263,89 @@ pub const INITCODE_WORD_COST: u64 = 2;
 /// Gas stipend provided to the recipient of a CALL with value transfer.
 pub const CALL_STIPEND: u64 = 2300;
 
-/// Init and floor gas from transaction
+/// Init and floor gas from transaction.
+///
+/// Tracks the intrinsic gas split into regular and state-gas portions
+/// (EIP-8037). Use [`Self::total_gas`] for the combined amount,
+/// [`Self::add_regular_gas`] / [`Self::add_state_gas`] to accumulate into
+/// the respective portion.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitialAndFloorGas {
-    /// Initial gas for transaction.
-    pub initial_total_gas: u64,
-    /// State gas component of initial_gas (subset of initial_total_gas).
-    /// Under EIP-8037, this includes:
+    /// Regular (non-state) portion of the initial intrinsic gas.
+    ///
+    /// Under EIP-8037 this is the part constrained by `TX_MAX_GAS_LIMIT`;
+    /// state gas uses its own reservoir and is not subject to that cap.
+    pub regular_gas: u64,
+    /// State-gas portion of the initial intrinsic gas (EIP-8037).
+    ///
+    /// Includes:
     /// - EIP-7702 auth list state gas (per-auth account creation + metadata costs)
     /// - For CREATE transactions: `create_state_gas` (account creation + contract metadata)
     /// - For CALL transactions: 0 (state gas is unpredictable at validation time)
-    pub initial_state_gas: u64,
+    pub state_gas: u64,
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
     /// EIP-7702 state gas refund for existing authorities.
-    /// Added to the reservoir after initial_state_gas is deducted.
+    /// Added to the reservoir after `state_gas` is deducted.
     /// In the Python spec, set_delegation adds this back to state_gas_reservoir
-    /// rather than reducing initial_state_gas, so the refunded gas stays as
+    /// rather than reducing `state_gas`, so the refunded gas stays as
     /// reservoir gas (not regular gas).
     pub eip7702_reservoir_refund: u64,
 }
 
 impl InitialAndFloorGas {
-    /// Create a new InitialAndFloorGas instance.
+    /// Creates a new `InitialAndFloorGas` instance with only regular gas set.
     #[inline]
-    pub const fn new(initial_total_gas: u64, floor_gas: u64) -> Self {
+    pub const fn new(regular_gas: u64, floor_gas: u64) -> Self {
         Self {
-            initial_total_gas,
-            initial_state_gas: 0,
+            regular_gas,
+            state_gas: 0,
             floor_gas,
             eip7702_reservoir_refund: 0,
         }
     }
 
-    /// Create a new InitialAndFloorGas instance with state gas tracking.
+    /// Creates a new `InitialAndFloorGas` instance with both regular and state gas.
+    ///
+    /// `regular_gas` is the non-state portion and `state_gas` is the EIP-8037
+    /// state portion; [`Self::total_gas`] returns their sum.
     #[inline]
-    pub const fn new_with_state_gas(
-        initial_total_gas: u64,
-        initial_state_gas: u64,
-        floor_gas: u64,
-    ) -> Self {
+    pub const fn new_with_state_gas(regular_gas: u64, state_gas: u64, floor_gas: u64) -> Self {
         Self {
-            initial_total_gas,
-            initial_state_gas,
+            regular_gas,
+            state_gas,
             floor_gas,
             eip7702_reservoir_refund: 0,
         }
+    }
+
+    /// Total intrinsic gas: `regular_gas + state_gas`.
+    #[inline]
+    pub const fn total_gas(&self) -> u64 {
+        self.regular_gas.saturating_add(self.state_gas)
+    }
+
+    /// Adds `gas` to the regular-gas portion.
+    #[inline]
+    pub fn add_regular_gas(&mut self, gas: u64) {
+        self.regular_gas = self.regular_gas.saturating_add(gas);
+    }
+
+    /// Adds `gas` to the state-gas portion.
+    #[inline]
+    pub fn add_state_gas(&mut self, gas: u64) {
+        self.state_gas = self.state_gas.saturating_add(gas);
     }
 
     /// Regular (non-state) portion of the initial intrinsic gas.
     ///
-    /// Under EIP-8037, this is the part constrained by `TX_MAX_GAS_LIMIT`;
-    /// state gas uses its own reservoir and is not subject to that cap.
+    /// Retained as a transition alias for pre-rename call sites; equivalent
+    /// to reading [`Self::regular_gas`] directly.
     #[inline]
     pub const fn initial_regular_gas(&self) -> u64 {
-        self.initial_total_gas - self.initial_state_gas
+        self.regular_gas
     }
 
     /// Computes the regular gas budget and reservoir for the initial call frame.
@@ -342,14 +368,14 @@ impl InitialAndFloorGas {
         tx_gas_limit_cap: u64,
         is_eip8037: bool,
     ) -> (u64, u64) {
-        let execution_gas = tx_gas_limit - self.initial_regular_gas();
+        let execution_gas = tx_gas_limit - self.regular_gas;
 
         // System calls pass InitialAndFloorGas with all zeros and should not be
         // subject to the TX_MAX_GAS_LIMIT cap.
-        let regular_gas_cap = if self.initial_total_gas == 0 {
+        let regular_gas_cap = if self.total_gas() == 0 {
             u64::MAX
         } else if is_eip8037 {
-            tx_gas_limit_cap.saturating_sub(self.initial_regular_gas())
+            tx_gas_limit_cap.saturating_sub(self.regular_gas)
         } else {
             tx_gas_limit_cap
         };
@@ -359,11 +385,11 @@ impl InitialAndFloorGas {
 
         // Deduct initial state gas from the reservoir. When the reservoir is
         // insufficient, the deficit is charged from the regular gas budget.
-        if self.initial_state_gas > 0 {
-            if reservoir >= self.initial_state_gas {
-                reservoir -= self.initial_state_gas;
+        if self.state_gas > 0 {
+            if reservoir >= self.state_gas {
+                reservoir -= self.state_gas;
             } else {
-                gas_limit -= self.initial_state_gas - reservoir;
+                gas_limit -= self.state_gas - reservoir;
                 reservoir = 0;
             }
         }
