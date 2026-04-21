@@ -105,22 +105,25 @@ impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
+        Self::default_ref().clone()
+    }
+
+    #[inline]
+    fn default_ref() -> &'static Self {
         static DEFAULT: OnceLock<Bytecode> = OnceLock::new();
-        DEFAULT
-            .get_or_init(|| {
-                Self(Arc::new(BytecodeInner {
-                    kind: BytecodeKind::LegacyAnalyzed,
-                    bytecode: Bytes::from_static(&[opcode::STOP]),
-                    original_len: 0,
-                    jump_table: JumpTable::default(),
-                    hash: {
-                        let hash = OnceLock::new();
-                        let _ = hash.set(KECCAK_EMPTY);
-                        hash
-                    },
-                }))
-            })
-            .clone()
+        DEFAULT.get_or_init(|| {
+            Self(Arc::new(BytecodeInner {
+                kind: BytecodeKind::LegacyAnalyzed,
+                bytecode: Bytes::from_static(&[opcode::STOP]),
+                original_len: 0,
+                jump_table: JumpTable::default(),
+                hash: {
+                    let hash = OnceLock::new();
+                    let _ = hash.set(KECCAK_EMPTY);
+                    hash
+                },
+            }))
+        })
     }
 
     /// Creates a new legacy [`Bytecode`] by analyzing raw bytes.
@@ -351,6 +354,12 @@ impl Bytecode {
         self.0.original_len == 0
     }
 
+    /// Returns `true` if the bytecode is empty and has the default bytecode hash.
+    #[inline]
+    pub fn is_default(&self) -> bool {
+        Arc::ptr_eq(&self.0, &Self::default_ref().0)
+    }
+
     /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
     #[inline]
     pub fn iter_opcodes(&self) -> crate::BytecodeIterator<'_> {
@@ -460,5 +469,19 @@ mod tests {
             bytecode.original_bytes(),
             bytes!("ef01000101010101010101010101010101010101010101")
         );
+    }
+
+    #[test]
+    fn is_default() {
+        assert!(Bytecode::default().is_default());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn is_default_after_serde() {
+        let bc = Bytecode::default();
+        let json = serde_json::to_string(&bc).unwrap();
+        let deser: Bytecode = serde_json::from_str(&json).unwrap();
+        assert!(deser.is_default());
     }
 }

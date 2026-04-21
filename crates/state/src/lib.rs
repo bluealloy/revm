@@ -17,7 +17,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use primitives::{hardfork::SpecId, HashMap, OnceLock, StorageKey, StorageValue, U256};
+use primitives::{hardfork::SpecId, HashMap, StorageKey, StorageValue, U256};
 use std::boxed::Box;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
@@ -38,7 +38,12 @@ pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
     /// Original account info used by BAL, changed only on cold load by BAL.
-    pub original_info: Box<AccountInfo>,
+    /// `None` means `Default::default()`, to avoid allocations.
+    #[cfg_attr(
+        feature = "serde",
+        serde(serialize_with = "serde_impl::serialize_original")
+    )]
+    original_info: Option<Box<AccountInfo>>,
     /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
@@ -49,19 +54,13 @@ pub struct Account {
 
 impl Account {
     /// Creates new account and mark it as non existing.
+    #[inline]
     pub fn new_not_existing(transaction_id: usize) -> Self {
-        static DEFAULT: OnceLock<Account> = OnceLock::new();
-        let mut account = DEFAULT
-            .get_or_init(|| Self {
-                info: AccountInfo::default(),
-                storage: HashMap::default(),
-                transaction_id: 0,
-                status: AccountStatus::LoadedAsNotExisting,
-                original_info: Box::new(AccountInfo::default()),
-            })
-            .clone();
-        account.transaction_id = transaction_id;
-        account
+        Self {
+            transaction_id,
+            status: AccountStatus::LoadedAsNotExisting,
+            ..Default::default()
+        }
     }
 
     /// Make changes to the caller account.
@@ -90,6 +89,30 @@ impl Account {
         } else {
             self.is_loaded_as_not_existing_not_touched()
         }
+    }
+
+    /// Returns the original account info.
+    #[inline]
+    pub fn original_info(&self) -> AccountInfo {
+        self.original_info.as_deref().cloned().unwrap_or_default()
+    }
+
+    /// Returns a mutable reference to the original account info.
+    #[inline]
+    pub fn original_info_mut(&mut self) -> &mut AccountInfo {
+        self.original_info.get_or_insert_default()
+    }
+
+    /// Clones the current info into the original info.
+    pub fn set_current_info_as_original(&mut self) {
+        if self.info.is_default() {
+            self.original_info = None;
+            return;
+        }
+        self.original_info
+            .get_or_insert_default()
+            .as_mut()
+            .clone_from(&self.info);
     }
 
     /// Marks the account as self destructed.
@@ -308,13 +331,17 @@ impl Account {
 
 impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
-        let original_info = Box::new(info.clone());
+        let original_info = if info.is_default() {
+            None
+        } else {
+            Some(Box::new(info.clone()))
+        };
         Self {
             info,
-            storage: HashMap::default(),
-            transaction_id: 0,
-            status: AccountStatus::empty(),
             original_info,
+            transaction_id: 0,
+            storage: HashMap::default(),
+            status: AccountStatus::empty(),
         }
     }
 }
@@ -324,7 +351,19 @@ mod serde_impl {
     use super::*;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize)]
+    pub(super) fn serialize_original<S: serde::Serializer>(
+        original_info: &Option<Box<AccountInfo>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        let x = if let Some(original_info) = original_info {
+            original_info.as_ref()
+        } else {
+            &AccountInfo::default()
+        };
+        x.serialize(serializer)
+    }
+
+    #[derive(Deserialize)]
     struct AccountSerde {
         info: AccountInfo,
         original_info: Option<AccountInfo>,
@@ -348,10 +387,15 @@ mod serde_impl {
 
             // If original info is not present, use info as original info
             let original_info = original_info.unwrap_or_else(|| info.clone());
+            let original_info = if original_info.is_default() {
+                None
+            } else {
+                Some(Box::new(original_info))
+            };
 
             Ok(Account {
                 info,
-                original_info: Box::new(original_info),
+                original_info,
                 storage,
                 transaction_id,
                 status,
@@ -646,6 +690,30 @@ mod tests {
         let serialized = serde_json::to_string(&account).unwrap();
         let deserialized: Account = serde_json::from_str(&serialized).unwrap();
         assert_eq!(account, deserialized);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_account_original_info_none_roundtrip() {
+        // Account with original_info = None (default optimization).
+        let account = Account::new_not_existing(2);
+        assert!(account.original_info.is_none());
+        let serialized = serde_json::to_string(&account).unwrap();
+        let deserialized: Account = serde_json::from_str(&serialized).unwrap();
+        assert!(
+            deserialized.original_info.is_none(),
+            "should be None after roundtrip: {:?}",
+            deserialized.original_info
+        );
+        assert_eq!(account, deserialized);
+
+        // Also test via serde_json::Value roundtrip with sort (what ee-tests does).
+        let mut value: serde_json::Value = serde_json::from_str(&serialized).unwrap();
+        value.sort_all_objects();
+        let pretty = serde_json::to_string_pretty(&value).unwrap();
+        let deserialized2: Account = serde_json::from_str(&pretty).unwrap();
+        assert!(deserialized2.original_info.is_none());
+        assert_eq!(account, deserialized2);
     }
 
     #[test]
