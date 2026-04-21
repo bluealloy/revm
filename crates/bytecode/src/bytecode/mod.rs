@@ -105,8 +105,8 @@ impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
-        static DEFAULT_BYTECODE: OnceLock<Bytecode> = OnceLock::new();
-        DEFAULT_BYTECODE
+        static DEFAULT: OnceLock<Bytecode> = OnceLock::new();
+        DEFAULT
             .get_or_init(|| {
                 Self(Arc::new(BytecodeInner {
                     kind: BytecodeKind::LegacyAnalyzed,

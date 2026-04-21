@@ -3,11 +3,8 @@ use context::{Cfg, LocalContextTr};
 use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileOutput, PrecompileSpecId, PrecompileStatus, Precompiles};
-use primitives::{hardfork::SpecId, Address, Bytes};
-use std::{
-    boxed::Box,
-    string::{String, ToString},
-};
+use primitives::{hardfork::SpecId, Address, AddressSet, Bytes};
+use std::string::{String, ToString};
 
 /// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
@@ -28,10 +25,12 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     ) -> Result<Option<Self::Output>, String>;
 
     /// Get the warm addresses.
-    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>>;
+    fn warm_addresses(&self) -> &AddressSet;
 
     /// Check if the address is a precompile.
-    fn contains(&self, address: &Address) -> bool;
+    fn contains(&self, address: &Address) -> bool {
+        self.warm_addresses().contains(address)
+    }
 }
 
 /// The [`PrecompileProvider`] for ethereum precompiles.
@@ -53,8 +52,8 @@ impl EthPrecompiles {
     }
 
     /// Returns addresses of the precompiles.
-    pub fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
-        Box::new(self.precompiles.addresses().cloned())
+    pub fn warm_addresses(&self) -> &AddressSet {
+        self.precompiles.addresses_set()
     }
 
     /// Returns whether the address is a precompile.
@@ -169,7 +168,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         Ok(Some(result))
     }
 
-    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
+    fn warm_addresses(&self) -> &AddressSet {
         Self::warm_addresses(self)
     }
 
