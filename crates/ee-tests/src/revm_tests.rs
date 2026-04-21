@@ -742,19 +742,17 @@ fn test_custom_opcode_transaction() {
     let mut instructions = EthInstructions::new_mainnet_with_spec(SpecId::CANCUN);
     instructions.insert_instruction(
         DOUBLE,
-        Instruction::new(
-            |ctx: InstructionContext<'_, _, EthInterpreter>| {
-                let Ok(val) = ctx.interpreter.stack.pop() else {
-                    ctx.interpreter.halt_underflow();
-                    return;
-                };
-                if !ctx.interpreter.stack.push(val.wrapping_mul(U256::from(2))) {
-                    ctx.interpreter
-                        .halt(revm::interpreter::InstructionResult::StackOverflow);
-                }
-            },
-            3, // static gas cost (same as ADD)
-        ),
+        Instruction::new(|ctx: InstructionContext<'_, _, EthInterpreter>| {
+            let Ok(val) = ctx.interpreter.stack.pop() else {
+                ctx.interpreter.halt_underflow();
+                return;
+            };
+            if !ctx.interpreter.stack.push(val.wrapping_mul(U256::from(2))) {
+                ctx.interpreter
+                    .halt(revm::interpreter::InstructionResult::StackOverflow);
+            }
+        }),
+        3, // static gas cost (same as ADD)
     );
 
     let mut evm = Evm::new(ctx, instructions, EthPrecompiles::new(SpecId::CANCUN));
