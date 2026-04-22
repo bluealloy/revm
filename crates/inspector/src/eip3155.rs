@@ -161,13 +161,13 @@ impl TracerEip3155 {
     }
 
     /// Don't include a summary at the end of the trace
-    pub fn without_summary(mut self) -> Self {
+    pub const fn without_summary(mut self) -> Self {
         self.print_summary = false;
         self
     }
 
     /// Include a memory field for each step. This significantly increases processing time and output size.
-    pub fn with_memory(mut self) -> Self {
+    pub const fn with_memory(mut self) -> Self {
         self.include_memory = true;
         self
     }

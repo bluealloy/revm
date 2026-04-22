@@ -5,8 +5,7 @@
         "floor_gas": 0,
         "gas_refunded": 24000,
         "gas_spent": 53603,
-        "intrinsic_gas": 21000,
-        "limit": 1000000000
+        "state_gas_spent": 0
       },
       "logs": [],
       "output": {
@@ -21,8 +20,7 @@
         "floor_gas": 0,
         "gas_refunded": 0,
         "gas_spent": 21000,
-        "intrinsic_gas": 21000,
-        "limit": 1000000000
+        "state_gas_spent": 0
       },
       "logs": [],
       "output": {
@@ -53,26 +51,7 @@
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "nonce": 0
       },
-      "original_info": {
-        "balance": "0x0",
-        "code": {
-          "LegacyAnalyzed": {
-            "bytecode": "0x00",
-            "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
-            },
-            "original_len": 0
-          }
-        },
-        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
-      },
+      "original_info": null,
       "status": "Touched | LoadedAsNotExisting",
       "storage": {},
       "transaction_id": 1
@@ -98,26 +77,7 @@
         "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
         "nonce": 0
       },
-      "original_info": {
-        "balance": "0x0",
-        "code": {
-          "LegacyAnalyzed": {
-            "bytecode": "0x00",
-            "jump_table": {
-              "bits": 0,
-              "data": [],
-              "head": {
-                "index": 0,
-                "width": 8
-              },
-              "order": "bitvec::order::Lsb0"
-            },
-            "original_len": 0
-          }
-        },
-        "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-        "nonce": 0
-      },
+      "original_info": null,
       "status": "Touched | LoadedAsNotExisting",
       "storage": {},
       "transaction_id": 0

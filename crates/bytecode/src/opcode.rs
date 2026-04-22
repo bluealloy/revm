@@ -88,7 +88,7 @@ impl OpCode {
     #[inline]
     #[deprecated = "use new_or_unknown instead"]
     #[doc(hidden)]
-    pub unsafe fn new_unchecked(opcode: u8) -> Self {
+    pub const unsafe fn new_unchecked(opcode: u8) -> Self {
         Self(opcode)
     }
 

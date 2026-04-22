@@ -69,13 +69,13 @@ use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
 #[inline]
-pub fn calc_linear_cost(len: usize, base: u64, word: u64) -> u64 {
+pub const fn calc_linear_cost(len: usize, base: u64, word: u64) -> u64 {
     (len as u64).div_ceil(32) * word + base
 }
 
 /// Calculate the linear cost of a precompile.
 #[deprecated(note = "please use `calc_linear_cost` instead")]
-pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
+pub const fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     calc_linear_cost(len, base, word)
 }
 
@@ -133,7 +133,7 @@ impl Precompiles {
     }
 
     /// Returns inner HashMap of precompiles.
-    pub fn inner(&self) -> &AddressMap<Precompile> {
+    pub const fn inner(&self) -> &AddressMap<Precompile> {
         &self.inner
     }
 
@@ -270,7 +270,7 @@ impl Precompiles {
     }
 
     /// Returns the precompiles addresses as a set.
-    pub fn addresses_set(&self) -> &AddressSet {
+    pub const fn addresses_set(&self) -> &AddressSet {
         &self.addresses
     }
 
@@ -371,13 +371,13 @@ impl Precompile {
 
     /// Returns reference to precompile identifier.
     #[inline]
-    pub fn id(&self) -> &PrecompileId {
+    pub const fn id(&self) -> &PrecompileId {
         &self.id
     }
 
     /// Returns reference to address.
     #[inline]
-    pub fn address(&self) -> &Address {
+    pub const fn address(&self) -> &Address {
         &self.address
     }
 

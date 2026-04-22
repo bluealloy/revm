@@ -66,7 +66,7 @@ impl<T> FrameStack<T> {
 
     /// Returns the current index of the stack.
     #[inline]
-    pub fn index(&self) -> Option<usize> {
+    pub const fn index(&self) -> Option<usize> {
         self.index
     }
 
@@ -95,7 +95,7 @@ impl<T> FrameStack<T> {
     /// Clears the stack by setting the index to 0.
     /// It does not destroy the stack.
     #[inline]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.index = None;
     }
 
@@ -194,7 +194,7 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     /// Consumes the `OutFrame`, returning a `FrameToken` that indicates the frame has been initialized.
-    pub fn consume(self) -> FrameToken {
+    pub const fn consume(self) -> FrameToken {
         FrameToken(self.init)
     }
 }

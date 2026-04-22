@@ -20,30 +20,30 @@ impl Default for GasInspector {
 impl GasInspector {
     /// Returns the remaining gas.
     #[inline]
-    pub fn gas_remaining(&self) -> u64 {
+    pub const fn gas_remaining(&self) -> u64 {
         self.gas_remaining
     }
 
     /// Returns the last gas cost.
     #[inline]
-    pub fn last_gas_cost(&self) -> u64 {
+    pub const fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
     }
 
     /// Returns the state gas spent.
     #[inline]
-    pub fn state_gas_spent(&self) -> u64 {
+    pub const fn state_gas_spent(&self) -> u64 {
         self.state_gas_spent
     }
 
     /// Returns the reservoir gas.
     #[inline]
-    pub fn reservoir(&self) -> u64 {
+    pub const fn reservoir(&self) -> u64 {
         self.reservoir
     }
 
     /// Create a new gas inspector.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             gas_remaining: 0,
             last_gas_cost: 0,
@@ -54,7 +54,7 @@ impl GasInspector {
 
     /// Sets remaining gas to gas limit.
     #[inline]
-    pub fn initialize_interp(&mut self, gas: &Gas) {
+    pub const fn initialize_interp(&mut self, gas: &Gas) {
         self.gas_remaining = gas.limit();
         self.state_gas_spent = gas.state_gas_spent();
         self.reservoir = gas.reservoir();
@@ -62,7 +62,7 @@ impl GasInspector {
 
     /// Sets the remaining gas.
     #[inline]
-    pub fn step(&mut self, gas: &Gas) {
+    pub const fn step(&mut self, gas: &Gas) {
         self.gas_remaining = gas.remaining();
         self.state_gas_spent = gas.state_gas_spent();
         self.reservoir = gas.reservoir();
@@ -70,7 +70,7 @@ impl GasInspector {
 
     /// calculate last gas cost and remaining gas.
     #[inline]
-    pub fn step_end(&mut self, gas: &Gas) {
+    pub const fn step_end(&mut self, gas: &Gas) {
         let remaining = gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
@@ -80,7 +80,7 @@ impl GasInspector {
 
     /// Spend all gas if call failed.
     #[inline]
-    pub fn call_end(&mut self, outcome: &mut CallOutcome) {
+    pub const fn call_end(&mut self, outcome: &mut CallOutcome) {
         if outcome.result.result.is_error() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
@@ -91,7 +91,7 @@ impl GasInspector {
 
     /// Spend all gas if create failed.
     #[inline]
-    pub fn create_end(&mut self, outcome: &mut CreateOutcome) {
+    pub const fn create_end(&mut self, outcome: &mut CreateOutcome) {
         if outcome.result.result.is_error() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;

@@ -66,7 +66,7 @@ impl<DB, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     /// Creates a new JournaledState by copying state data from a JournalInit and provided database.
     /// This allows reusing the state, logs, and other data from a previous execution context while
     /// connecting it to a different database backend.
-    pub fn new_with_inner(database: DB, inner: JournalInner<ENTRY>) -> Self {
+    pub const fn new_with_inner(database: DB, inner: JournalInner<ENTRY>) -> Self {
         Self { database, inner }
     }
 

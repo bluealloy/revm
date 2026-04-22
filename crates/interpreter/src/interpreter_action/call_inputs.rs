@@ -235,22 +235,22 @@ pub enum CallScheme {
 
 impl CallScheme {
     /// Returns true if it is `CALL`.
-    pub fn is_call(&self) -> bool {
+    pub const fn is_call(&self) -> bool {
         matches!(self, Self::Call)
     }
 
     /// Returns true if it is `CALLCODE`.
-    pub fn is_call_code(&self) -> bool {
+    pub const fn is_call_code(&self) -> bool {
         matches!(self, Self::CallCode)
     }
 
     /// Returns true if it is `DELEGATECALL`.
-    pub fn is_delegate_call(&self) -> bool {
+    pub const fn is_delegate_call(&self) -> bool {
         matches!(self, Self::DelegateCall)
     }
 
     /// Returns true if it is `STATICCALL`.
-    pub fn is_static_call(&self) -> bool {
+    pub const fn is_static_call(&self) -> bool {
         matches!(self, Self::StaticCall)
     }
 }

@@ -37,12 +37,12 @@ impl<ITEM, RES> ItemOrResult<ITEM, RES> {
 
 impl<ITEM, RES> ItemOrResult<ITEM, RES> {
     /// Returns true if this is a result variant.
-    pub fn is_result(&self) -> bool {
+    pub const fn is_result(&self) -> bool {
         matches!(self, ItemOrResult::Result(_))
     }
 
     /// Returns true if this is an item variant.
-    pub fn is_item(&self) -> bool {
+    pub const fn is_item(&self) -> bool {
         matches!(self, ItemOrResult::Item(_))
     }
 }

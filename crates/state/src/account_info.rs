@@ -3,7 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{OnceLock, B256, KECCAK_EMPTY, U256};
+use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// Account information that contains balance, nonce, code hash and code
 ///
@@ -33,21 +33,20 @@ pub struct AccountInfo {
 }
 
 impl Default for AccountInfo {
+    #[inline]
     fn default() -> Self {
-        static DEFAULT: OnceLock<AccountInfo> = OnceLock::new();
-        DEFAULT
-            .get_or_init(|| Self {
-                balance: U256::ZERO,
-                code_hash: KECCAK_EMPTY,
-                account_id: None,
-                nonce: 0,
-                code: Some(Bytecode::default()),
-            })
-            .clone()
+        Self {
+            balance: U256::ZERO,
+            code_hash: KECCAK_EMPTY,
+            account_id: None,
+            nonce: 0,
+            code: Some(Bytecode::default()),
+        }
     }
 }
 
 impl PartialEq for AccountInfo {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.balance == other.balance
             && self.nonce == other.nonce
@@ -56,6 +55,7 @@ impl PartialEq for AccountInfo {
 }
 
 impl Hash for AccountInfo {
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.balance.hash(state);
         self.nonce.hash(state);
@@ -64,12 +64,14 @@ impl Hash for AccountInfo {
 }
 
 impl PartialOrd for AccountInfo {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for AccountInfo {
+    #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         self.balance
             .cmp(&other.balance)
@@ -81,7 +83,7 @@ impl Ord for AccountInfo {
 impl AccountInfo {
     /// Creates a new [`AccountInfo`] with the given fields.
     #[inline]
-    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
+    pub const fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,
@@ -96,6 +98,7 @@ impl AccountInfo {
     /// # Note
     ///
     /// As code hash is calculated with [`Bytecode::hash_slow`] there will be performance penalty if used frequently.
+    #[inline]
     pub fn with_code(self, code: Bytecode) -> Self {
         Self {
             code_hash: code.hash_slow(),
@@ -110,6 +113,7 @@ impl AccountInfo {
     ///
     /// Resets code to `None`. Not guaranteed to maintain invariant `code` and `code_hash`. See
     /// also [Self::with_code_and_hash].
+    #[inline]
     pub fn with_code_hash(self, code_hash: B256) -> Self {
         Self {
             code_hash,
@@ -124,6 +128,7 @@ impl AccountInfo {
     ///
     /// In debug mode panics if [`Bytecode::hash_slow`] called on `code` is not equivalent to
     /// `code_hash`. See also [`Self::with_code`].
+    #[inline]
     pub fn with_code_and_hash(self, code: Bytecode, code_hash: B256) -> Self {
         debug_assert_eq!(code.hash_slow(), code_hash);
         Self {
@@ -134,27 +139,29 @@ impl AccountInfo {
     }
 
     /// Creates a new [`AccountInfo`] with the given balance.
-    pub fn with_balance(mut self, balance: U256) -> Self {
+    #[inline]
+    pub const fn with_balance(mut self, balance: U256) -> Self {
         self.balance = balance;
         self
     }
 
     /// Creates a new [`AccountInfo`] with the given nonce.
-    pub fn with_nonce(mut self, nonce: u64) -> Self {
+    #[inline]
+    pub const fn with_nonce(mut self, nonce: u64) -> Self {
         self.nonce = nonce;
         self
     }
 
     /// Sets the [`AccountInfo`] `balance`.
     #[inline]
-    pub fn set_balance(&mut self, balance: U256) -> &mut Self {
+    pub const fn set_balance(&mut self, balance: U256) -> &mut Self {
         self.balance = balance;
         self
     }
 
     /// Sets the [`AccountInfo`] `nonce`.
     #[inline]
-    pub fn set_nonce(&mut self, nonce: u64) -> &mut Self {
+    pub const fn set_nonce(&mut self, nonce: u64) -> &mut Self {
         self.nonce = nonce;
         self
     }
@@ -204,7 +211,7 @@ impl AccountInfo {
     ///
     /// [`without_code`][Self::without_code] will modify and return the same instance.
     #[inline]
-    pub fn copy_without_code(&self) -> Self {
+    pub const fn copy_without_code(&self) -> Self {
         Self {
             balance: self.balance,
             nonce: self.nonce,
@@ -226,6 +233,7 @@ impl AccountInfo {
     ///
     /// [`copy_without_code`][Self::copy_without_code]
     /// will copy the non-code fields and return a new [`AccountInfo`] instance.
+    #[inline]
     pub fn without_code(mut self) -> Self {
         self.take_bytecode();
         self
@@ -241,6 +249,12 @@ impl AccountInfo {
     pub fn is_empty(&self) -> bool {
         let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
         code_empty && self.balance.is_zero() && self.nonce == 0
+    }
+
+    /// Optimization hint.
+    #[inline]
+    pub(crate) fn is_default(&self) -> bool {
+        self.is_empty() && self.code.as_ref().is_some_and(Bytecode::is_default)
     }
 
     /// Returns `true` if the account is not empty.
@@ -259,7 +273,7 @@ impl AccountInfo {
     ///
     /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     #[inline]
-    pub fn code_hash(&self) -> B256 {
+    pub const fn code_hash(&self) -> B256 {
         self.code_hash
     }
 
@@ -273,7 +287,7 @@ impl AccountInfo {
     ///
     /// Code will be set to [None].
     #[inline]
-    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+    pub const fn take_bytecode(&mut self) -> Option<Bytecode> {
         self.code.take()
     }
 
@@ -305,9 +319,7 @@ impl AccountInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::AccountInfo;
-    use bytecode::Bytecode;
-    use core::cmp::Ordering;
+    use super::*;
     use std::collections::BTreeSet;
 
     #[test]
@@ -346,5 +358,19 @@ mod tests {
         let mut accounts = [account2, account1];
         accounts.sort();
         assert_eq!(accounts[0], accounts[1], "Sorted vec treats them as equal");
+    }
+
+    #[test]
+    fn is_default() {
+        assert!(AccountInfo::default().is_default())
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn is_default_after_serde() {
+        let info = AccountInfo::default();
+        let json = serde_json::to_string(&info).unwrap();
+        let deser: AccountInfo = serde_json::from_str(&json).unwrap();
+        assert!(deser.is_default());
     }
 }

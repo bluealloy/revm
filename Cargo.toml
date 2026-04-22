@@ -123,6 +123,7 @@ indicatif = "0.18"
 rstest = "0.26.0"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
+similar-asserts = "2.0"
 
 [workspace.package]
 license = "MIT"
@@ -142,6 +143,7 @@ rust.rust_2018_idioms = { level = "deny", priority = -1 }
 rust.unreachable_pub = "warn"
 rust.unused_must_use = "deny"
 rustdoc.all = "warn"
+clippy.missing_const_for_fn = "warn"
 
 [workspace.metadata.docs.rs]
 all-features = true

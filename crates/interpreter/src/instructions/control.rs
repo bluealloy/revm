@@ -50,7 +50,9 @@ fn jump_inner<WIRE: IT>(
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn jumpdest<WIRE: IT, H: ?Sized>(
+    _context: Icx<'_, H, WIRE>,
+) -> Result {
     Ok(())
 }
 

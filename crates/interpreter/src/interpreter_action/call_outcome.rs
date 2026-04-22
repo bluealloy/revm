@@ -36,7 +36,7 @@ impl CallOutcome {
     ///
     /// * `result` - The result of the interpreter's execution.
     /// * `memory_offset` - The range in memory indicating where the output data is stored.
-    pub fn new(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
+    pub const fn new(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
         Self {
             result,
             memory_offset,
@@ -65,7 +65,7 @@ impl CallOutcome {
     /// # Returns
     ///
     /// A reference to the [`InstructionResult`].
-    pub fn instruction_result(&self) -> &InstructionResult {
+    pub const fn instruction_result(&self) -> &InstructionResult {
         &self.result.result
     }
 
@@ -76,7 +76,7 @@ impl CallOutcome {
     /// # Returns
     ///
     /// An instance of [`Gas`] representing the gas usage.
-    pub fn gas(&self) -> Gas {
+    pub const fn gas(&self) -> Gas {
         self.result.gas
     }
 
@@ -87,7 +87,7 @@ impl CallOutcome {
     /// # Returns
     ///
     /// A reference to the output data as [`Bytes`].
-    pub fn output(&self) -> &Bytes {
+    pub const fn output(&self) -> &Bytes {
         &self.result.output
     }
 
@@ -98,7 +98,7 @@ impl CallOutcome {
     /// # Returns
     ///
     /// The starting index of the memory offset as [`usize`].
-    pub fn memory_start(&self) -> usize {
+    pub const fn memory_start(&self) -> usize {
         self.memory_offset.start
     }
 

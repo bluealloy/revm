@@ -105,31 +105,31 @@ impl Stack {
 
     /// Instantiate a new invalid Stack.
     #[inline]
-    pub fn invalid() -> Self {
+    pub const fn invalid() -> Self {
         Self { data: Vec::new() }
     }
 
     /// Returns the length of the stack in words.
     #[inline]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.data.len()
     }
 
     /// Returns whether the stack is empty.
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
     /// Returns a reference to the underlying data buffer.
     #[inline]
-    pub fn data(&self) -> &Vec<U256> {
+    pub const fn data(&self) -> &Vec<U256> {
         &self.data
     }
 
     /// Returns a mutable reference to the underlying data buffer.
     #[inline]
-    pub fn data_mut(&mut self) -> &mut Vec<U256> {
+    pub const fn data_mut(&mut self) -> &mut Vec<U256> {
         &mut self.data
     }
 
