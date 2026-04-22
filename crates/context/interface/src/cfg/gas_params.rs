@@ -830,7 +830,13 @@ impl GasParams {
         } else {
             get_tokens_in_calldata(input, non_zero_multiplier)
         };
-        self.tx_floor_cost_per_token() * floor_tokens + self.tx_floor_cost_base_gas()
+        self.tx_floor_cost_with_tokens(floor_tokens)
+    }
+
+    /// Calculate the floor gas cost for a transaction with the given number of tokens.
+    #[inline]
+    pub fn tx_floor_cost_with_tokens(&self, tokens: u64) -> u64 {
+        self.tx_floor_cost_per_token() * tokens + self.tx_floor_cost_base_gas()
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
@@ -953,7 +959,7 @@ impl GasParams {
         }
 
         // Calculate gas floor. Introduced by EIP-7623 and updated by EIP-7976.
-        gas.floor_gas = self.tx_floor_cost(input);
+        gas.floor_gas = self.tx_floor_cost(&input);
 
         // EIP-8037: Include state gas in total initial gas.
         // State gas is a subset of initial_total_gas, deducted before execution starts.
@@ -1137,7 +1143,9 @@ impl GasId {
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
             "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
-            "tx_floor_token_zero_byte_multiplier" => Some(Self::tx_floor_token_zero_byte_multiplier()),
+            "tx_floor_token_zero_byte_multiplier" => {
+                Some(Self::tx_floor_token_zero_byte_multiplier())
+            }
             _ => None,
         }
     }
