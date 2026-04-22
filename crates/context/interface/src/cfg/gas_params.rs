@@ -313,6 +313,9 @@ impl GasParams {
 
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
+            // EIP-7623 floor tokens reuse `tokens_in_calldata`, i.e. zero bytes count as
+            // one token each.
+            table[GasId::tx_floor_token_zero_byte_weight().as_usize()] = 1;
         }
 
         // EIP-8037: State creation gas cost increase
@@ -352,6 +355,14 @@ impl GasParams {
 
             // State gas per auth for initial_state_gas tracking
             table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] = (112 + 23) * CPSB;
+
+            // EIP-7976: Increase calldata floor cost from 10/40 to 16/64 gas per byte.
+            // The per-token constant bumps from 10 to 16, and `floor_tokens_in_calldata`
+            // switches from `zero + nonzero * 4` to `(zero + nonzero) * 4` — i.e. zero
+            // bytes now carry the same floor weight as nonzero bytes.
+            table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
+            table[GasId::tx_floor_token_zero_byte_weight().as_usize()] =
+                table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
         }
 
         Self::new(Arc::new(table))
@@ -790,12 +801,30 @@ impl GasParams {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
-    /// Used [GasParams::initial_tx_gas] to calculate the floor gas.
+    /// Weight of a zero byte in the floor tokens calculation.
     ///
-    /// Floor gas is introduced in EIP-7623.
+    /// Under EIP-7623 this is `1` (zero bytes count as one token), so the floor
+    /// reuses `tokens_in_calldata`. Under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976)
+    /// it is raised to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// so every calldata byte contributes the same amount (`floor_tokens_in_calldata =
+    /// (zero + nonzero) * 4`).
+    pub fn tx_floor_token_zero_byte_weight(&self) -> u64 {
+        self.get(GasId::tx_floor_token_zero_byte_weight())
+    }
+
+    /// Floor gas cost for a transaction with the given calldata.
+    ///
+    /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
+    /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
+    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_weight
+    /// + nonzero * tx_token_non_zero_byte_multiplier`.
     #[inline]
-    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
-        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
+    pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
+        let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+        let non_zero_data_len = input.len() as u64 - zero_data_len;
+        let floor_tokens = zero_data_len * self.tx_floor_token_zero_byte_weight()
+            + non_zero_data_len * self.tx_token_non_zero_byte_multiplier();
+        self.tx_floor_cost_per_token() * floor_tokens + self.tx_floor_cost_base_gas()
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
@@ -917,8 +946,8 @@ impl GasParams {
             gas.initial_state_gas += self.create_state_gas();
         }
 
-        // Calculate gas floor for EIP-7623
-        gas.floor_gas = self.tx_floor_cost(tokens_in_calldata);
+        // Calculate gas floor. Introduced by EIP-7623 and updated by EIP-7976.
+        gas.floor_gas = self.tx_floor_cost(input);
 
         // EIP-8037: Include state gas in total initial gas.
         // State gas is a subset of initial_total_gas, deducted before execution starts.
@@ -1034,6 +1063,9 @@ impl GasId {
             x if x == Self::tx_eip7702_per_auth_state_gas().as_u8() => {
                 "tx_eip7702_per_auth_state_gas"
             }
+            x if x == Self::tx_floor_token_zero_byte_weight().as_u8() => {
+                "tx_floor_token_zero_byte_weight"
+            }
             _ => "unknown",
         }
     }
@@ -1099,6 +1131,7 @@ impl GasId {
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
             "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
+            "tx_floor_token_zero_byte_weight" => Some(Self::tx_floor_token_zero_byte_weight()),
             _ => None,
         }
     }
@@ -1329,6 +1362,16 @@ impl GasId {
     pub const fn tx_eip7702_per_auth_state_gas() -> GasId {
         Self::new(44)
     }
+
+    /// Weight of a zero byte in `floor_tokens_in_calldata`.
+    ///
+    /// `1` under [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) and raised
+    /// to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976), which makes the
+    /// floor cost uniform across zero and nonzero calldata bytes. Zero before PRAGUE.
+    pub const fn tx_floor_token_zero_byte_weight() -> GasId {
+        Self::new(45)
+    }
 }
 
 #[cfg(test)]
@@ -1399,11 +1442,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 44 known GasIds (based on the indices 1-44 used)
+        // We should have exactly 45 known GasIds (based on the indices 1-45 used)
         assert_eq!(
             unique_names.len(),
-            44,
-            "Expected 44 unique GasIds, found {}",
+            45,
+            "Expected 45 unique GasIds, found {}",
             unique_names.len()
         );
     }
