@@ -315,7 +315,7 @@ impl GasParams {
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
             // EIP-7623 floor tokens reuse `tokens_in_calldata`, i.e. zero bytes count as
             // one token each.
-            table[GasId::tx_floor_token_zero_byte_weight().as_usize()] = 1;
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] = 1;
         }
 
         // EIP-8037: State creation gas cost increase
@@ -361,7 +361,7 @@ impl GasParams {
             // `floor_tokens_in_calldata` switches from `zero + nonzero * 4` to
             // `(zero + nonzero) * 4`, i.e. every byte now costs 16 * 4 = 64 gas in the floor.
             table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
-            table[GasId::tx_floor_token_zero_byte_weight().as_usize()] =
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] =
                 table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
         }
 
@@ -801,34 +801,34 @@ impl GasParams {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
-    /// Weight of a zero byte in the floor tokens calculation.
+    /// Multiplier for a zero byte in the floor tokens calculation.
     ///
     /// Under EIP-7623 this is `1` (zero bytes count as one token), so the floor
     /// reuses `tokens_in_calldata`. Under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976)
     /// it is raised to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
     /// so every calldata byte contributes the same amount (`floor_tokens_in_calldata =
     /// (zero + nonzero) * 4`).
-    pub fn tx_floor_token_zero_byte_weight(&self) -> u64 {
-        self.get(GasId::tx_floor_token_zero_byte_weight())
+    pub fn tx_floor_token_zero_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_floor_token_zero_byte_multiplier())
     }
 
     /// Floor gas cost for a transaction with the given calldata.
     ///
     /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
     /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
-    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_weight
-    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two weights match
+    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier
+    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two multipliers match
     /// (EIP-7976), the zero/nonzero split is skipped and `input.len()` is used directly.
     #[inline]
     pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
-        let zero_weight = self.tx_floor_token_zero_byte_weight();
-        let nonzero_weight = self.tx_token_non_zero_byte_multiplier();
-        let floor_tokens = if zero_weight == nonzero_weight {
-            input.len() as u64 * nonzero_weight
+        let zero_multiplier = self.tx_floor_token_zero_byte_multiplier();
+        let non_zero_multiplier = self.tx_token_non_zero_byte_multiplier();
+        let floor_tokens = if zero_multiplier == non_zero_multiplier {
+            input.len() as u64 * non_zero_multiplier
         } else {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
             let non_zero_data_len = input.len() as u64 - zero_data_len;
-            zero_data_len * zero_weight + non_zero_data_len * nonzero_weight
+            zero_data_len * zero_multiplier + non_zero_data_len * non_zero_multiplier
         };
         self.tx_floor_cost_per_token() * floor_tokens + self.tx_floor_cost_base_gas()
     }
@@ -1069,8 +1069,8 @@ impl GasId {
             x if x == Self::tx_eip7702_per_auth_state_gas().as_u8() => {
                 "tx_eip7702_per_auth_state_gas"
             }
-            x if x == Self::tx_floor_token_zero_byte_weight().as_u8() => {
-                "tx_floor_token_zero_byte_weight"
+            x if x == Self::tx_floor_token_zero_byte_multiplier().as_u8() => {
+                "tx_floor_token_zero_byte_multiplier"
             }
             _ => "unknown",
         }
@@ -1137,7 +1137,7 @@ impl GasId {
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
             "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
-            "tx_floor_token_zero_byte_weight" => Some(Self::tx_floor_token_zero_byte_weight()),
+            "tx_floor_token_zero_byte_multiplier" => Some(Self::tx_floor_token_zero_byte_multiplier()),
             _ => None,
         }
     }
@@ -1369,13 +1369,13 @@ impl GasId {
         Self::new(44)
     }
 
-    /// Weight of a zero byte in `floor_tokens_in_calldata`.
+    /// Multiplier for a zero byte in `floor_tokens_in_calldata`.
     ///
     /// `1` under [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) and raised
     /// to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
     /// under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976), which makes the
     /// floor cost uniform across zero and nonzero calldata bytes. Zero before PRAGUE.
-    pub const fn tx_floor_token_zero_byte_weight() -> GasId {
+    pub const fn tx_floor_token_zero_byte_multiplier() -> GasId {
         Self::new(45)
     }
 }
