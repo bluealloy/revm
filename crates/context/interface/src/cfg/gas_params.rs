@@ -818,7 +818,9 @@ impl GasParams {
     /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
     /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier
     /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two multipliers match
-    /// (EIP-7976), the zero/nonzero split is skipped and `input.len()` is used directly.
+    /// (EIP-7976), every byte contributes the same amount, so the zero/nonzero split is
+    /// skipped and `input.len()` is used directly; otherwise (EIP-7623 path, zero
+    /// multiplier = 1) the result matches `get_tokens_in_calldata(input, nonzero)`.
     #[inline]
     pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
         let zero_multiplier = self.tx_floor_token_zero_byte_multiplier();
@@ -826,9 +828,7 @@ impl GasParams {
         let floor_tokens = if zero_multiplier == non_zero_multiplier {
             input.len() as u64 * non_zero_multiplier
         } else {
-            let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-            let non_zero_data_len = input.len() as u64 - zero_data_len;
-            zero_data_len * zero_multiplier + non_zero_data_len * non_zero_multiplier
+            get_tokens_in_calldata(input, non_zero_multiplier)
         };
         self.tx_floor_cost_per_token() * floor_tokens + self.tx_floor_cost_base_gas()
     }
