@@ -906,8 +906,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
-                    // set original info to current info.
-                    *account.original_info = account.info.clone();
+                    account.set_current_info_as_original();
 
                     // unmark locally created
                     account.unmark_created_locally();
