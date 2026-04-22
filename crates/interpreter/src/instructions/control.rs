@@ -50,9 +50,7 @@ fn jump_inner<WIRE: IT>(
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub const fn jumpdest<WIRE: IT, H: ?Sized>(
-    _context: Icx<'_, H, WIRE>,
-) -> Result {
+pub const fn jumpdest<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
     Ok(())
 }
 
@@ -119,16 +117,16 @@ pub fn revert<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn stop<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
     Err(InstructionResult::Stop)
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn invalid<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
     Err(InstructionResult::InvalidFEOpcode)
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn unknown<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
     Err(InstructionResult::OpcodeNotFound)
 }
