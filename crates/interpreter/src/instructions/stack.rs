@@ -114,7 +114,7 @@ pub fn exchange<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'
     }
 }
 
-fn decode_single(x: usize) -> Option<usize> {
+const fn decode_single(x: usize) -> Option<usize> {
     if x <= 90 || x >= 128 {
         Some((x + 145) % 256)
     } else {
@@ -122,7 +122,7 @@ fn decode_single(x: usize) -> Option<usize> {
     }
 }
 
-fn decode_pair(x: usize) -> Option<(usize, usize)> {
+const fn decode_pair(x: usize) -> Option<(usize, usize)> {
     if x > 81 && x < 128 {
         return None;
     }

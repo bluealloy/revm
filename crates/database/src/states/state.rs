@@ -200,7 +200,7 @@ impl<DB: Database> State<DB> {
 
     /// Takes build bal from bal state.
     #[inline]
-    pub fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.bal_state.take_built_bal()
     }
 
@@ -212,19 +212,19 @@ impl<DB: Database> State<DB> {
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_state.bump_bal_index();
     }
 
     /// Set BAL index.
     #[inline]
-    pub fn set_bal_index(&mut self, index: u64) {
+    pub const fn set_bal_index(&mut self, index: u64) {
         self.bal_state.bal_index = index;
     }
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(&mut self) {
+    pub const fn reset_bal_index(&mut self) {
         self.bal_state.reset_bal_index();
     }
 

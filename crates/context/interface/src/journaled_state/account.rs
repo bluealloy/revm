@@ -140,7 +140,7 @@ pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
 impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     /// Creates new JournaledAccount
     #[inline]
-    pub fn new(
+    pub const fn new(
         address: Address,
         account: &'a mut Account,
         journal_entries: &'a mut Vec<ENTRY>,
@@ -283,7 +283,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
 
     /// Consumes the journaled account and returns the account.
     #[inline]
-    pub fn into_account(self) -> &'a Account {
+    pub const fn into_account(self) -> &'a Account {
         self.account
     }
 }

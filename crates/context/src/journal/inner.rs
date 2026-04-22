@@ -298,19 +298,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut EvmState {
+    pub const fn state(&mut self) -> &mut EvmState {
         &mut self.state
     }
 
     /// Sets SpecId.
     #[inline]
-    pub fn set_spec_id(&mut self, spec: SpecId) {
+    pub const fn set_spec_id(&mut self, spec: SpecId) {
         self.cfg.spec = spec;
     }
 
     /// Sets EIP-7708 configuration flags.
     #[inline]
-    pub fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+    pub const fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
         self.cfg.eip7708_disabled = disabled;
         self.cfg.eip7708_delayed_burn_disabled = delayed_burn_disabled;
     }
@@ -574,7 +574,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Makes a checkpoint that in case of Revert can bring back state to this point.
     #[inline]
-    pub fn checkpoint(&mut self) -> JournalCheckpoint {
+    pub const fn checkpoint(&mut self) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
@@ -586,7 +586,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Commits the checkpoint.
     #[inline]
-    pub fn checkpoint_commit(&mut self) {
+    pub const fn checkpoint_commit(&mut self) {
         self.depth = self.depth.saturating_sub(1);
     }
 

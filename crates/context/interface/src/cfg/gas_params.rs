@@ -373,20 +373,20 @@ impl GasParams {
 
     /// Selfdestruct refund.
     #[inline]
-    pub fn selfdestruct_refund(&self) -> i64 {
+    pub const fn selfdestruct_refund(&self) -> i64 {
         self.get(GasId::selfdestruct_refund()) as i64
     }
 
     /// Selfdestruct cold cost is calculated differently from other cold costs.
     /// and it contains both cold and warm costs.
     #[inline]
-    pub fn selfdestruct_cold_cost(&self) -> u64 {
+    pub const fn selfdestruct_cold_cost(&self) -> u64 {
         self.cold_account_additional_cost() + self.warm_storage_read_cost()
     }
 
     /// Selfdestruct cost.
     #[inline]
-    pub fn selfdestruct_cost(&self, should_charge_topup: bool, is_cold: bool) -> u64 {
+    pub const fn selfdestruct_cost(&self, should_charge_topup: bool, is_cold: bool) -> u64 {
         let mut gas = 0;
 
         // EIP-150: Gas cost changes for IO-heavy operations
@@ -407,51 +407,51 @@ impl GasParams {
 
     /// EXTCODECOPY gas cost
     #[inline]
-    pub fn extcodecopy(&self, len: usize) -> u64 {
+    pub const fn extcodecopy(&self, len: usize) -> u64 {
         self.get(GasId::extcodecopy_per_word())
             .saturating_mul(num_words(len) as u64)
     }
 
     /// MCOPY gas cost
     #[inline]
-    pub fn mcopy_cost(&self, len: usize) -> u64 {
+    pub const fn mcopy_cost(&self, len: usize) -> u64 {
         self.get(GasId::mcopy_per_word())
             .saturating_mul(num_words(len) as u64)
     }
 
     /// Static gas cost for SSTORE opcode
     #[inline]
-    pub fn sstore_static_gas(&self) -> u64 {
+    pub const fn sstore_static_gas(&self) -> u64 {
         self.get(GasId::sstore_static())
     }
 
     /// SSTORE set cost
     #[inline]
-    pub fn sstore_set_without_load_cost(&self) -> u64 {
+    pub const fn sstore_set_without_load_cost(&self) -> u64 {
         self.get(GasId::sstore_set_without_load_cost())
     }
 
     /// SSTORE reset cost
     #[inline]
-    pub fn sstore_reset_without_cold_load_cost(&self) -> u64 {
+    pub const fn sstore_reset_without_cold_load_cost(&self) -> u64 {
         self.get(GasId::sstore_reset_without_cold_load_cost())
     }
 
     /// SSTORE clearing slot refund
     #[inline]
-    pub fn sstore_clearing_slot_refund(&self) -> u64 {
+    pub const fn sstore_clearing_slot_refund(&self) -> u64 {
         self.get(GasId::sstore_clearing_slot_refund())
     }
 
     /// SSTORE set refund. Used in sstore_refund for SSTORE_SET_GAS - SLOAD_GAS.
     #[inline]
-    pub fn sstore_set_refund(&self) -> u64 {
+    pub const fn sstore_set_refund(&self) -> u64 {
         self.get(GasId::sstore_set_refund())
     }
 
     /// SSTORE reset refund. Used in sstore_refund for SSTORE_RESET_GAS - SLOAD_GAS.
     #[inline]
-    pub fn sstore_reset_refund(&self) -> u64 {
+    pub const fn sstore_reset_refund(&self) -> u64 {
         self.get(GasId::sstore_reset_refund())
     }
 
@@ -459,7 +459,12 @@ impl GasParams {
     ///
     /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
     #[inline]
-    pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
+    pub const fn sstore_dynamic_gas(
+        &self,
+        is_istanbul: bool,
+        vals: &SStoreResult,
+        is_cold: bool,
+    ) -> u64 {
         // frontier logic gets charged for every SSTORE operation if original value is zero.
         // this behaviour is fixed in istanbul fork.
         if !is_istanbul {
@@ -493,7 +498,7 @@ impl GasParams {
 
     /// SSTORE refund calculation.
     #[inline]
-    pub fn sstore_refund(&self, is_istanbul: bool, vals: &SStoreResult) -> i64 {
+    pub const fn sstore_refund(&self, is_istanbul: bool, vals: &SStoreResult) -> i64 {
         // EIP-3529: Reduction in refunds
         let sstore_clearing_slot_refund = self.sstore_clearing_slot_refund() as i64;
 
@@ -555,14 +560,14 @@ impl GasParams {
 
     /// KECCAK256 gas cost per word
     #[inline]
-    pub fn keccak256_cost(&self, len: usize) -> u64 {
+    pub const fn keccak256_cost(&self, len: usize) -> u64 {
         self.get(GasId::keccak256_per_word())
             .saturating_mul(num_words(len) as u64)
     }
 
     /// Memory gas cost
     #[inline]
-    pub fn memory_cost(&self, len: usize) -> u64 {
+    pub const fn memory_cost(&self, len: usize) -> u64 {
         let len = len as u64;
         self.get(GasId::memory_linear_cost())
             .saturating_mul(len)
@@ -574,20 +579,20 @@ impl GasParams {
 
     /// Initcode word cost
     #[inline]
-    pub fn initcode_cost(&self, len: usize) -> u64 {
+    pub const fn initcode_cost(&self, len: usize) -> u64 {
         self.get(GasId::initcode_per_word())
             .saturating_mul(num_words(len) as u64)
     }
 
     /// Create gas cost
     #[inline]
-    pub fn create_cost(&self) -> u64 {
+    pub const fn create_cost(&self) -> u64 {
         self.get(GasId::create())
     }
 
     /// Create2 gas cost.
     #[inline]
-    pub fn create2_cost(&self, len: usize) -> u64 {
+    pub const fn create2_cost(&self, len: usize) -> u64 {
         self.get(GasId::create()).saturating_add(
             self.get(GasId::keccak256_per_word())
                 .saturating_mul(num_words(len) as u64),
@@ -596,43 +601,43 @@ impl GasParams {
 
     /// Call stipend.
     #[inline]
-    pub fn call_stipend(&self) -> u64 {
+    pub const fn call_stipend(&self) -> u64 {
         self.get(GasId::call_stipend())
     }
 
     /// Call stipend reduction. Call stipend is reduced by 1/64 of the gas limit.
     #[inline]
-    pub fn call_stipend_reduction(&self, gas_limit: u64) -> u64 {
+    pub const fn call_stipend_reduction(&self, gas_limit: u64) -> u64 {
         gas_limit - gas_limit / self.get(GasId::call_stipend_reduction())
     }
 
     /// Transfer value cost
     #[inline]
-    pub fn transfer_value_cost(&self) -> u64 {
+    pub const fn transfer_value_cost(&self) -> u64 {
         self.get(GasId::transfer_value_cost())
     }
 
     /// Additional cold cost. Additional cold cost is added to the gas cost if the account is cold loaded.
     #[inline]
-    pub fn cold_account_additional_cost(&self) -> u64 {
+    pub const fn cold_account_additional_cost(&self) -> u64 {
         self.get(GasId::cold_account_additional_cost())
     }
 
     /// Cold storage additional cost.
     #[inline]
-    pub fn cold_storage_additional_cost(&self) -> u64 {
+    pub const fn cold_storage_additional_cost(&self) -> u64 {
         self.get(GasId::cold_storage_additional_cost())
     }
 
     /// Cold storage cost.
     #[inline]
-    pub fn cold_storage_cost(&self) -> u64 {
+    pub const fn cold_storage_cost(&self) -> u64 {
         self.get(GasId::cold_storage_cost())
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.
     #[inline]
-    pub fn new_account_cost(&self, is_spurious_dragon: bool, transfers_value: bool) -> u64 {
+    pub const fn new_account_cost(&self, is_spurious_dragon: bool, transfers_value: bool) -> u64 {
         // EIP-161: State trie clearing (invariant-preserving alternative)
         // Pre-Spurious Dragon: always charge for new account
         // Post-Spurious Dragon: only charge if value is transferred
@@ -644,39 +649,39 @@ impl GasParams {
 
     /// New account cost for selfdestruct.
     #[inline]
-    pub fn new_account_cost_for_selfdestruct(&self) -> u64 {
+    pub const fn new_account_cost_for_selfdestruct(&self) -> u64 {
         self.get(GasId::new_account_cost_for_selfdestruct())
     }
 
     /// Warm storage read cost. Warm storage read cost is added to the gas cost if the account is warm loaded.
     #[inline]
-    pub fn warm_storage_read_cost(&self) -> u64 {
+    pub const fn warm_storage_read_cost(&self) -> u64 {
         self.get(GasId::warm_storage_read_cost())
     }
 
     /// Copy cost
     #[inline]
-    pub fn copy_cost(&self, len: usize) -> u64 {
+    pub const fn copy_cost(&self, len: usize) -> u64 {
         self.copy_per_word_cost(num_words(len))
     }
 
     /// Copy per word cost
     #[inline]
-    pub fn copy_per_word_cost(&self, word_num: usize) -> u64 {
+    pub const fn copy_per_word_cost(&self, word_num: usize) -> u64 {
         self.get(GasId::copy_per_word())
             .saturating_mul(word_num as u64)
     }
 
     /// Code deposit cost, calculated per byte as len * code_deposit_cost.
     #[inline]
-    pub fn code_deposit_cost(&self, len: usize) -> u64 {
+    pub const fn code_deposit_cost(&self, len: usize) -> u64 {
         self.get(GasId::code_deposit_cost())
             .saturating_mul(len as u64)
     }
 
     /// State gas for SSTORE: charges for new slot creation (zero → non-zero).
     #[inline]
-    pub fn sstore_state_gas(&self, vals: &SStoreResult) -> u64 {
+    pub const fn sstore_state_gas(&self, vals: &SStoreResult) -> u64 {
         if vals.new_values_changes_present()
             && vals.is_original_eq_present()
             && vals.is_original_zero()
@@ -689,26 +694,26 @@ impl GasParams {
 
     /// State gas for new account creation.
     #[inline]
-    pub fn new_account_state_gas(&self) -> u64 {
+    pub const fn new_account_state_gas(&self) -> u64 {
         self.get(GasId::new_account_state_gas())
     }
 
     /// State gas per byte for code deposit.
     #[inline]
-    pub fn code_deposit_state_gas(&self, len: usize) -> u64 {
+    pub const fn code_deposit_state_gas(&self, len: usize) -> u64 {
         self.get(GasId::code_deposit_state_gas())
             .saturating_mul(len as u64)
     }
 
     /// State gas for contract metadata creation.
     #[inline]
-    pub fn create_state_gas(&self) -> u64 {
+    pub const fn create_state_gas(&self) -> u64 {
         self.get(GasId::create_state_gas())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per empty account cost.
     #[inline]
-    pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
+    pub const fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
         self.get(GasId::tx_eip7702_per_empty_account_cost())
     }
 
@@ -718,7 +723,7 @@ impl GasParams {
     /// to an account that already exists in the trie. By default this is
     /// `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500).
     #[inline]
-    pub fn tx_eip7702_auth_refund(&self) -> u64 {
+    pub const fn tx_eip7702_auth_refund(&self) -> u64 {
         self.get(GasId::tx_eip7702_auth_refund())
     }
 
@@ -726,7 +731,7 @@ impl GasParams {
     ///
     /// Used for `initial_state_gas` tracking. Zero before AMSTERDAM.
     #[inline]
-    pub fn tx_eip7702_per_auth_state_gas(&self) -> u64 {
+    pub const fn tx_eip7702_per_auth_state_gas(&self) -> u64 {
         self.get(GasId::tx_eip7702_per_auth_state_gas())
     }
 
@@ -757,18 +762,18 @@ impl GasParams {
 
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
     #[inline]
-    pub fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
+    pub const fn tx_token_non_zero_byte_multiplier(&self) -> u64 {
         self.get(GasId::tx_token_non_zero_byte_multiplier())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the token cost for input data.
     #[inline]
-    pub fn tx_token_cost(&self) -> u64 {
+    pub const fn tx_token_cost(&self) -> u64 {
         self.get(GasId::tx_token_cost())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas per token.
-    pub fn tx_floor_cost_per_token(&self) -> u64 {
+    pub const fn tx_floor_cost_per_token(&self) -> u64 {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
@@ -776,22 +781,22 @@ impl GasParams {
     ///
     /// Floor gas is introduced in EIP-7623.
     #[inline]
-    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
+    pub const fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
         self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
-    pub fn tx_floor_cost_base_gas(&self) -> u64 {
+    pub const fn tx_floor_cost_base_gas(&self) -> u64 {
         self.get(GasId::tx_floor_cost_base_gas())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the access list address cost.
-    pub fn tx_access_list_address_cost(&self) -> u64 {
+    pub const fn tx_access_list_address_cost(&self) -> u64 {
         self.get(GasId::tx_access_list_address_cost())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the access list storage key cost.
-    pub fn tx_access_list_storage_key_cost(&self) -> u64 {
+    pub const fn tx_access_list_storage_key_cost(&self) -> u64 {
         self.get(GasId::tx_access_list_storage_key_cost())
     }
 
@@ -813,14 +818,14 @@ impl GasParams {
     /// assert_eq!(cost, 2 * 2400 + 5 * 1900); // 2 * ACCESS_LIST_ADDRESS + 5 * ACCESS_LIST_STORAGE_KEY
     /// ```
     #[inline]
-    pub fn tx_access_list_cost(&self, accounts: u64, storages: u64) -> u64 {
+    pub const fn tx_access_list_cost(&self, accounts: u64, storages: u64) -> u64 {
         accounts
             .saturating_mul(self.tx_access_list_address_cost())
             .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
-    pub fn tx_base_stipend(&self) -> u64 {
+    pub const fn tx_base_stipend(&self) -> u64 {
         self.get(GasId::tx_base_stipend())
     }
 
@@ -828,13 +833,13 @@ impl GasParams {
     ///
     /// Similar to the [`Self::create_cost`] method but it got activated in different fork,
     #[inline]
-    pub fn tx_create_cost(&self) -> u64 {
+    pub const fn tx_create_cost(&self) -> u64 {
         self.get(GasId::tx_create_cost())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the initcode cost per word of len.
     #[inline]
-    pub fn tx_initcode_cost(&self, len: usize) -> u64 {
+    pub const fn tx_initcode_cost(&self, len: usize) -> u64 {
         self.get(GasId::tx_initcode_cost())
             .saturating_mul(num_words(len) as u64)
     }

@@ -43,7 +43,10 @@ fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, targe
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(_context: InstructionContext<'_, H, WIRE>) {}
+pub const fn jumpdest<WIRE: InterpreterTypes, H: ?Sized>(
+    _context: InstructionContext<'_, H, WIRE>,
+) {
+}
 
 /// Implements the PC instruction.
 ///

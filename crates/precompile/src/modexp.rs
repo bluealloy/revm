@@ -52,11 +52,11 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
             }
         }
 
-        fn as_ptr(&self) -> *const gmp::mpz_t {
+        const fn as_ptr(&self) -> *const gmp::mpz_t {
             &self.0
         }
 
-        fn as_mut_ptr(&mut self) -> *mut gmp::mpz_t {
+        const fn as_mut_ptr(&mut self) -> *mut gmp::mpz_t {
             &mut self.0
         }
 

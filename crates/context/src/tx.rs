@@ -132,7 +132,7 @@ impl TxEnv {
 
     /// Derives tx type from transaction fields and sets it to `tx_type`.
     /// Returns error in case some fields were not set correctly.
-    pub fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
+    pub const fn derive_tx_type(&mut self) -> Result<(), DeriveTxTypeError> {
         if !self.access_list.0.is_empty() {
             self.tx_type = TransactionType::Eip2930 as u8;
         }
@@ -282,65 +282,65 @@ impl TxEnvBuilder {
     }
 
     /// Set the transaction type
-    pub fn tx_type(mut self, tx_type: Option<u8>) -> Self {
+    pub const fn tx_type(mut self, tx_type: Option<u8>) -> Self {
         self.tx_type = tx_type;
         self
     }
 
     /// Get the transaction type
-    pub fn get_tx_type(&self) -> Option<u8> {
+    pub const fn get_tx_type(&self) -> Option<u8> {
         self.tx_type
     }
 
     /// Set the caller address
-    pub fn caller(mut self, caller: Address) -> Self {
+    pub const fn caller(mut self, caller: Address) -> Self {
         self.caller = caller;
         self
     }
 
     /// Set the gas limit
-    pub fn gas_limit(mut self, gas_limit: u64) -> Self {
+    pub const fn gas_limit(mut self, gas_limit: u64) -> Self {
         self.gas_limit = gas_limit;
         self
     }
 
     /// Set the max fee per gas.
-    pub fn max_fee_per_gas(mut self, max_fee_per_gas: u128) -> Self {
+    pub const fn max_fee_per_gas(mut self, max_fee_per_gas: u128) -> Self {
         self.gas_price = max_fee_per_gas;
         self
     }
 
     /// Set the gas price
-    pub fn gas_price(mut self, gas_price: u128) -> Self {
+    pub const fn gas_price(mut self, gas_price: u128) -> Self {
         self.gas_price = gas_price;
         self
     }
 
     /// Set the transaction kind
-    pub fn kind(mut self, kind: TxKind) -> Self {
+    pub const fn kind(mut self, kind: TxKind) -> Self {
         self.kind = kind;
         self
     }
 
     /// Set the transaction kind to call
-    pub fn call(mut self, target: Address) -> Self {
+    pub const fn call(mut self, target: Address) -> Self {
         self.kind = TxKind::Call(target);
         self
     }
 
     /// Set the transaction kind to create
-    pub fn create(mut self) -> Self {
+    pub const fn create(mut self) -> Self {
         self.kind = TxKind::Create;
         self
     }
 
     /// Set the transaction kind to create
-    pub fn to(self, target: Address) -> Self {
+    pub const fn to(self, target: Address) -> Self {
         self.call(target)
     }
 
     /// Set the transaction value
-    pub fn value(mut self, value: U256) -> Self {
+    pub const fn value(mut self, value: U256) -> Self {
         self.value = value;
         self
     }
@@ -352,13 +352,13 @@ impl TxEnvBuilder {
     }
 
     /// Set the transaction nonce
-    pub fn nonce(mut self, nonce: u64) -> Self {
+    pub const fn nonce(mut self, nonce: u64) -> Self {
         self.nonce = nonce;
         self
     }
 
     /// Set the chain ID
-    pub fn chain_id(mut self, chain_id: Option<u64>) -> Self {
+    pub const fn chain_id(mut self, chain_id: Option<u64>) -> Self {
         self.chain_id = chain_id;
         self
     }
@@ -370,7 +370,7 @@ impl TxEnvBuilder {
     }
 
     /// Set the gas priority fee
-    pub fn gas_priority_fee(mut self, gas_priority_fee: Option<u128>) -> Self {
+    pub const fn gas_priority_fee(mut self, gas_priority_fee: Option<u128>) -> Self {
         self.gas_priority_fee = gas_priority_fee;
         self
     }
@@ -382,7 +382,7 @@ impl TxEnvBuilder {
     }
 
     /// Set the max fee per blob gas
-    pub fn max_fee_per_blob_gas(mut self, max_fee_per_blob_gas: u128) -> Self {
+    pub const fn max_fee_per_blob_gas(mut self, max_fee_per_blob_gas: u128) -> Self {
         self.max_fee_per_blob_gas = max_fee_per_blob_gas;
         self
     }

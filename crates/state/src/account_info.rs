@@ -83,7 +83,7 @@ impl Ord for AccountInfo {
 impl AccountInfo {
     /// Creates a new [`AccountInfo`] with the given fields.
     #[inline]
-    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
+    pub const fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,
@@ -140,28 +140,28 @@ impl AccountInfo {
 
     /// Creates a new [`AccountInfo`] with the given balance.
     #[inline]
-    pub fn with_balance(mut self, balance: U256) -> Self {
+    pub const fn with_balance(mut self, balance: U256) -> Self {
         self.balance = balance;
         self
     }
 
     /// Creates a new [`AccountInfo`] with the given nonce.
     #[inline]
-    pub fn with_nonce(mut self, nonce: u64) -> Self {
+    pub const fn with_nonce(mut self, nonce: u64) -> Self {
         self.nonce = nonce;
         self
     }
 
     /// Sets the [`AccountInfo`] `balance`.
     #[inline]
-    pub fn set_balance(&mut self, balance: U256) -> &mut Self {
+    pub const fn set_balance(&mut self, balance: U256) -> &mut Self {
         self.balance = balance;
         self
     }
 
     /// Sets the [`AccountInfo`] `nonce`.
     #[inline]
-    pub fn set_nonce(&mut self, nonce: u64) -> &mut Self {
+    pub const fn set_nonce(&mut self, nonce: u64) -> &mut Self {
         self.nonce = nonce;
         self
     }
@@ -211,7 +211,7 @@ impl AccountInfo {
     ///
     /// [`without_code`][Self::without_code] will modify and return the same instance.
     #[inline]
-    pub fn copy_without_code(&self) -> Self {
+    pub const fn copy_without_code(&self) -> Self {
         Self {
             balance: self.balance,
             nonce: self.nonce,
@@ -273,7 +273,7 @@ impl AccountInfo {
     ///
     /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     #[inline]
-    pub fn code_hash(&self) -> B256 {
+    pub const fn code_hash(&self) -> B256 {
         self.code_hash
     }
 
@@ -287,7 +287,7 @@ impl AccountInfo {
     ///
     /// Code will be set to [None].
     #[inline]
-    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+    pub const fn take_bytecode(&mut self) -> Option<Bytecode> {
         self.code.take()
     }
 
