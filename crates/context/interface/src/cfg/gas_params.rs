@@ -356,10 +356,10 @@ impl GasParams {
             // State gas per auth for initial_state_gas tracking
             table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] = (112 + 23) * CPSB;
 
-            // EIP-7976: Increase calldata floor cost from 10/40 to 16/64 gas per byte.
-            // The per-token constant bumps from 10 to 16, and `floor_tokens_in_calldata`
-            // switches from `zero + nonzero * 4` to `(zero + nonzero) * 4` — i.e. zero
-            // bytes now carry the same floor weight as nonzero bytes.
+            // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
+            // (zero/nonzero). The per-token constant bumps from 10 to 16, and
+            // `floor_tokens_in_calldata` switches from `zero + nonzero * 4` to
+            // `(zero + nonzero) * 4`, i.e. every byte now costs 16 * 4 = 64 gas in the floor.
             table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
             table[GasId::tx_floor_token_zero_byte_weight().as_usize()] =
                 table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
