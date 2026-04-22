@@ -817,13 +817,19 @@ impl GasParams {
     /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
     /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
     /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_weight
-    /// + nonzero * tx_token_non_zero_byte_multiplier`.
+    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two weights match
+    /// (EIP-7976), the zero/nonzero split is skipped and `input.len()` is used directly.
     #[inline]
     pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
-        let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-        let non_zero_data_len = input.len() as u64 - zero_data_len;
-        let floor_tokens = zero_data_len * self.tx_floor_token_zero_byte_weight()
-            + non_zero_data_len * self.tx_token_non_zero_byte_multiplier();
+        let zero_weight = self.tx_floor_token_zero_byte_weight();
+        let nonzero_weight = self.tx_token_non_zero_byte_multiplier();
+        let floor_tokens = if zero_weight == nonzero_weight {
+            input.len() as u64 * nonzero_weight
+        } else {
+            let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+            let non_zero_data_len = input.len() as u64 - zero_data_len;
+            zero_data_len * zero_weight + non_zero_data_len * nonzero_weight
+        };
         self.tx_floor_cost_per_token() * floor_tokens + self.tx_floor_cost_base_gas()
     }
 
