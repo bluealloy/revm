@@ -13,9 +13,6 @@ pub struct CreateOutcome {
     pub result: InterpreterResult,
     /// An optional address associated with the create operation
     pub address: Option<Address>,
-    /// State gas the parent charged upfront in the CREATE/CREATE2 opcode (EIP-8037).
-    /// On revert/halt this amount is refunded to the parent's reservoir.
-    pub state_gas_charged: u64,
 }
 
 impl CreateOutcome {
@@ -30,11 +27,7 @@ impl CreateOutcome {
     ///
     /// A new [`CreateOutcome`] instance.
     pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
-        Self {
-            result,
-            address,
-            state_gas_charged: 0,
-        }
+        Self { result, address }
     }
 
     /// Constructs a new [`CreateOutcome`] for an out-of-gas error.
@@ -48,12 +41,6 @@ impl CreateOutcome {
     /// A new [`CreateOutcome`] instance with no address.
     pub fn new_oog(gas_limit: u64, reservoir: u64) -> Self {
         Self::new(InterpreterResult::new_oog(gas_limit, reservoir), None)
-    }
-
-    /// Sets the upfront state gas charge captured from the parent's CREATE/CREATE2 opcode.
-    pub fn with_state_gas_charged(mut self, state_gas_charged: u64) -> Self {
-        self.state_gas_charged = state_gas_charged;
-        self
     }
 
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].

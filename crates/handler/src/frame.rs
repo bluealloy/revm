@@ -274,7 +274,6 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 address: None,
-                state_gas_charged,
             })))
         };
 
@@ -436,15 +435,16 @@ impl EthFrame<EthInterpreter> {
                     journal,
                     cfg,
                     cpsb,
+                    frame.state_gas_charged,
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                 );
 
-                ItemOrResult::Result(FrameResult::Create(
-                    CreateOutcome::new(interpreter_result, Some(frame.created_address))
-                        .with_state_gas_charged(frame.state_gas_charged),
-                ))
+                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
+                    interpreter_result,
+                    Some(frame.created_address),
+                )))
             }
         };
 
@@ -530,17 +530,6 @@ impl EthFrame<EthInterpreter> {
                 // handle reservoir remaining gas
                 handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
 
-                // EIP-8037: Refund the upfront create_state_gas to the parent's reservoir
-                // when the create child reverted or halted. State changes are rolled back,
-                // so the parent's CREATE state gas charge must be undone.
-                if !instruction_result.is_ok() && outcome.state_gas_charged > 0 {
-                    let charged = outcome.state_gas_charged;
-                    this_gas.set_reservoir(this_gas.reservoir().saturating_add(charged));
-                    this_gas.set_state_gas_spent(
-                        this_gas.state_gas_spent().saturating_sub(charged as i64),
-                    );
-                }
-
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
@@ -604,10 +593,16 @@ pub fn handle_reservoir_remaining_gas(
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
+///
+/// `state_gas_charged` is the EIP-8037 state gas the parent charged upfront in the
+/// CREATE/CREATE2 opcode. It is refunded to the reservoir at entry and re-applied
+/// at the end of a successful create. On revert/halt the refund persists, so the
+/// state gas flows back to the parent via `handle_reservoir_remaining_gas`.
 pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     journal: &mut JOURNAL,
     cfg: CFG,
     cpsb: u64,
+    state_gas_charged: u64,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
@@ -615,6 +610,13 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
+
+    // EIP-8037: Refund the upfront CREATE state gas to the reservoir. If the
+    // create commits successfully we re-charge at the end; on revert/halt the
+    // refund stays and propagates back to the parent.
+    if state_gas_charged > 0 {
+        interpreter_result.gas.refill_reservoir(state_gas_charged);
+    }
 
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
@@ -701,6 +703,13 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
 
     // Set code
     journal.set_code(address, bytecode);
+
+    // EIP-8037: Re-apply the upfront CREATE state gas now that the create succeeded,
+    // undoing the entry-side refund so the charge is reflected in the child's
+    // final reservoir and `state_gas_spent`.
+    if state_gas_charged > 0 {
+        let _ = interpreter_result.gas.record_state_cost(state_gas_charged);
+    }
 
     interpreter_result.result = InstructionResult::Return;
 }
