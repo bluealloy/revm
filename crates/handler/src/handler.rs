@@ -41,6 +41,17 @@ impl<
 {
 }
 
+/// Caches the EIP-8037 `cost_per_state_byte` on the local context for the
+/// current transaction, honoring `cfg.cpsb_override`.
+///
+/// Called at the start of every top-level execution entry point so that
+/// `Host::cpsb` becomes a single field read instead of a recomputation.
+#[inline]
+pub fn cache_cpsb_on_local<CTX: ContextTr>(ctx: &mut CTX) {
+    let cpsb = ctx.cfg().cpsb(ctx.block().gas_limit());
+    ctx.local_mut().set_cpsb(cpsb);
+}
+
 /// The main implementation of Ethereum Mainnet transaction execution.
 ///
 /// The [`Handler::run`] method serves as the entry point for execution and provides
@@ -98,6 +109,9 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
+        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
+        cache_cpsb_on_local(evm.ctx_mut());
         // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
@@ -124,6 +138,10 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context. System calls
+        // skip validation/pre-execution but still execute interpreter code that
+        // reads Host::cpsb, so this must be populated here too.
+        cache_cpsb_on_local(evm.ctx_mut());
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.

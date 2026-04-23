@@ -45,7 +45,7 @@ pub use api::{ExecuteCommitEvm, ExecuteEvm};
 pub use evm::{EvmTr, FrameTr};
 pub use frame::{handle_reservoir_remaining_gas, return_create, ContextTrDbError, EthFrame};
 pub use frame_data::{CallFrame, CreateFrame, FrameData, FrameResult};
-pub use handler::{EvmTrError, Handler};
+pub use handler::{cache_cpsb_on_local, EvmTrError, Handler};
 pub use item_or_result::{FrameInitOrResult, ItemOrResult};
 pub use mainnet_builder::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
 pub use mainnet_handler::MainnetHandler;

@@ -2113,14 +2113,14 @@ fn sstore_parent_then_delegatecall_clear_bytecode() -> Bytecode {
     init_code.push(0);
     init_code.push(opcode::RETURN);
 
-    let mut bytecode = Vec::new();
-
     // Parent: SSTORE(0, 1) — state gas charged on the parent frame.
-    bytecode.push(opcode::PUSH1);
-    bytecode.push(1);
-    bytecode.push(opcode::PUSH1);
-    bytecode.push(0);
-    bytecode.push(opcode::SSTORE);
+    let mut bytecode = vec![
+        opcode::PUSH1,
+        1,
+        opcode::PUSH1,
+        0,
+        opcode::SSTORE,
+    ];
 
     // MSTORE8 init_code into memory.
     for (i, &byte) in init_code.iter().enumerate() {

@@ -488,7 +488,7 @@ impl<
 
     #[inline]
     fn cpsb(&self) -> u64 {
-        self.cfg().cpsb(self.block().gas_limit())
+        self.local().cpsb()
     }
 
     fn block_number(&self) -> U256 {

@@ -69,10 +69,11 @@ pub trait Host {
     /// Returns whether state gas (EIP-8037) is enabled.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
-    /// Returns the EIP-8037 `cost_per_state_byte` for the current block.
+    /// Returns the EIP-8037 `cost_per_state_byte` for the current transaction.
     ///
-    /// Equivalent to `ctx.cfg().cpsb(ctx.block().gas_limit())`. Returns `0` when
-    /// EIP-8037 is not enabled.
+    /// Reads the cached value set on the local context at transaction start
+    /// (via `cfg.cpsb(block.gas_limit())`, honoring `cpsb_override`). Returns
+    /// `0` when EIP-8037 is not enabled.
     fn cpsb(&self) -> u64;
 
     /* Database */
