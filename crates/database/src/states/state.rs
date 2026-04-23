@@ -234,6 +234,12 @@ impl<DB: Database> State<DB> {
         self.bal_state.bal = bal;
     }
 
+    /// Returns whether the state has a BAL configured.
+    #[inline]
+    pub const fn has_bal(&self) -> bool {
+        self.bal_state.bal.is_some()
+    }
+
     /// Gets storage value of address at index.
     #[inline]
     fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
@@ -497,6 +503,15 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
     use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
+    #[test]
+    fn has_bal_helper() {
+        let state = State::builder().build();
+        assert!(!state.has_bal());
+
+        let state = State::builder().with_bal(Arc::new(Bal::new())).build();
+        assert!(state.has_bal());
+    }
+
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();
