@@ -18,9 +18,6 @@ pub struct CreateInputs {
     gas_limit: u64,
     /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
     reservoir: u64,
-    /// State gas the parent charged upfront in the CREATE/CREATE2 opcode (EIP-8037).
-    /// On child revert/halt this amount is refunded back to the parent's reservoir.
-    state_gas_charged: u64,
     /// Cached created address. This is computed lazily and cached to avoid
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -44,7 +41,6 @@ impl CreateInputs {
             init_code,
             gas_limit,
             reservoir,
-            state_gas_charged: 0,
             cached_address: OnceCell::new(),
         }
     }
@@ -123,15 +119,5 @@ impl CreateInputs {
     /// Set the state gas reservoir (EIP-8037).
     pub fn set_reservoir(&mut self, reservoir: u64) {
         self.reservoir = reservoir;
-    }
-
-    /// Returns the state gas the parent charged upfront for the CREATE/CREATE2 opcode (EIP-8037).
-    pub fn state_gas_charged(&self) -> u64 {
-        self.state_gas_charged
-    }
-
-    /// Set the state gas the parent charged upfront for the CREATE/CREATE2 opcode (EIP-8037).
-    pub fn set_state_gas_charged(&mut self, state_gas_charged: u64) {
-        self.state_gas_charged = state_gas_charged;
     }
 }

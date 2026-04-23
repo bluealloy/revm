@@ -261,7 +261,6 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir();
-        let state_gas_charged = inputs.state_gas_charged();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -340,10 +339,7 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame {
-                created_address,
-                state_gas_charged,
-            }),
+            FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -429,13 +425,8 @@ impl EthFrame<EthInterpreter> {
                 )))
             }
             FrameData::Create(frame) => {
-                let cpsb = context.cfg().cpsb(context.block().gas_limit());
-                let (cfg, journal) = context.cfg_journal_mut();
                 return_create(
-                    journal,
-                    cfg,
-                    cpsb,
-                    frame.state_gas_charged,
+                    context,
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
@@ -594,26 +585,35 @@ pub fn handle_reservoir_remaining_gas(
 
 /// Handles the result of a CREATE operation, including validation and state updates.
 ///
-/// `state_gas_charged` is the EIP-8037 state gas the parent charged upfront in the
-/// CREATE/CREATE2 opcode. It is refunded to the reservoir at entry and re-applied
-/// at the end of a successful create. On revert/halt the refund persists, so the
-/// state gas flows back to the parent via `handle_reservoir_remaining_gas`.
-pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
-    journal: &mut JOURNAL,
-    cfg: CFG,
-    cpsb: u64,
-    state_gas_charged: u64,
+/// The EIP-8037 upfront CREATE state gas is derived from `cfg` (and the current
+/// block's CPSB) inside this function: it is refunded to the reservoir on entry
+/// and re-recorded at the end of a successful commit. On revert/halt the refund
+/// persists, so the state gas flows back to the parent via
+/// `handle_reservoir_remaining_gas`.
+pub fn return_create<CTX: ContextTr>(
+    context: &mut CTX,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
 ) {
+    let block_gas_limit = context.block().gas_limit();
+    let (cfg, journal) = context.cfg_journal_mut();
+
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
+    let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
+    let cpsb = cfg.cpsb(block_gas_limit);
+    let gas_params = cfg.gas_params();
 
-    // EIP-8037: Refund the upfront CREATE state gas to the reservoir. If the
-    // create commits successfully we re-charge at the end; on revert/halt the
-    // refund stays and propagates back to the parent.
+    // EIP-8037: The parent charged `create_state_gas` upfront in the CREATE/CREATE2
+    // opcode. Refund it here so the reservoir reflects only what the child actually
+    // consumed; re-record at the end on success, or leave refunded on revert/halt.
+    let state_gas_charged = if is_amsterdam_eip8037 {
+        gas_params.create_state_gas(cpsb)
+    } else {
+        0
+    };
     if state_gas_charged > 0 {
         interpreter_result.gas.refill_reservoir(state_gas_charged);
     }
@@ -648,9 +648,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     }
 
     // regular gas for code deposit. It is zero in EIP-8037.
-    let gas_for_code = cfg
-        .gas_params()
-        .code_deposit_cost(interpreter_result.output.len());
+    let gas_for_code = gas_params.code_deposit_cost(interpreter_result.output.len());
     if !interpreter_result.gas.record_regular_cost(gas_for_code) {
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
@@ -671,10 +669,8 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     // to compute the code_hash stored in the account. CREATE2's existing keccak256 charge
     // (in create2_cost) is for hashing the init code during address derivation, which is
     // a different hash.
-    if cfg.is_amsterdam_eip8037_enabled() {
-        let hash_cost = cfg
-            .gas_params()
-            .keccak256_cost(interpreter_result.output.len());
+    if is_amsterdam_eip8037 {
+        let hash_cost = gas_params.keccak256_cost(interpreter_result.output.len());
         if !interpreter_result.gas.record_regular_cost(hash_cost) {
             journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
@@ -685,9 +681,8 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         //
         // Note: This should be last operation before checkpoint commit as spending state before this messes
         // with refilling of state gas.
-        let state_gas_for_code = cfg
-            .gas_params()
-            .code_deposit_state_gas(interpreter_result.output.len(), cpsb);
+        let state_gas_for_code =
+            gas_params.code_deposit_state_gas(interpreter_result.output.len(), cpsb);
         if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
             journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
