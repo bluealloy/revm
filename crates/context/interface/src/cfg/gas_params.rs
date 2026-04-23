@@ -313,6 +313,9 @@ impl GasParams {
 
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
+            // EIP-7623 floor tokens reuse `tokens_in_calldata`, i.e. zero bytes count as
+            // one token each.
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] = 1;
         }
 
         // EIP-8037: State creation gas cost increase.
@@ -354,6 +357,25 @@ impl GasParams {
                 eip8037::NEW_ACCOUNT_BYTES;
             table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] =
                 eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
+
+            // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
+            // (zero/nonzero). The per-token constant bumps from 10 to 16, and
+            // `floor_tokens_in_calldata` switches from `zero + nonzero * 4` to
+            // `(zero + nonzero) * 4`, i.e. every byte now costs 16 * 4 = 64 gas in the floor.
+            table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] =
+                table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
+
+            // EIP-7981: Charge access list data at 64 gas per byte, matching
+            // calldata floor pricing. Per-item costs bake in the data charge:
+            //   address: 2400 + 20 * 64 = 3680
+            //   key:     1900 + 32 * 64 = 3948
+            // And every access-list byte contributes 4 floor tokens (16 * 4 = 64 gas).
+            table[GasId::tx_access_list_address_cost().as_usize()] =
+                gas::ACCESS_LIST_ADDRESS + 20 * 64;
+            table[GasId::tx_access_list_storage_key_cost().as_usize()] =
+                gas::ACCESS_LIST_STORAGE_KEY + 32 * 64;
+            table[GasId::tx_access_list_floor_byte_multiplier().as_usize()] = 4;
         }
 
         Self::new(Arc::new(table))
@@ -808,12 +830,42 @@ impl GasParams {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
-    /// Used [GasParams::initial_tx_gas] to calculate the floor gas.
+    /// Multiplier for a zero byte in the floor tokens calculation.
     ///
-    /// Floor gas is introduced in EIP-7623.
+    /// Under EIP-7623 this is `1` (zero bytes count as one token), so the floor
+    /// reuses `tokens_in_calldata`. Under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976)
+    /// it is raised to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// so every calldata byte contributes the same amount (`floor_tokens_in_calldata =
+    /// (zero + nonzero) * 4`).
+    pub fn tx_floor_token_zero_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_floor_token_zero_byte_multiplier())
+    }
+
+    /// Floor gas cost for a transaction with the given calldata.
+    ///
+    /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
+    /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
+    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier
+    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two multipliers match
+    /// (EIP-7976), every byte contributes the same amount, so the zero/nonzero split is
+    /// skipped and `input.len()` is used directly; otherwise (EIP-7623 path, zero
+    /// multiplier = 1) the result matches `get_tokens_in_calldata(input, nonzero)`.
     #[inline]
-    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
-        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
+    pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
+        let zero_multiplier = self.tx_floor_token_zero_byte_multiplier();
+        let non_zero_multiplier = self.tx_token_non_zero_byte_multiplier();
+        let floor_tokens = if zero_multiplier == non_zero_multiplier {
+            input.len() as u64 * non_zero_multiplier
+        } else {
+            get_tokens_in_calldata(input, non_zero_multiplier)
+        };
+        self.tx_floor_cost_with_tokens(floor_tokens)
+    }
+
+    /// Calculate the floor gas cost for a transaction with the given number of tokens.
+    #[inline]
+    pub fn tx_floor_cost_with_tokens(&self, tokens: u64) -> u64 {
+        self.tx_floor_cost_per_token() * tokens + self.tx_floor_cost_base_gas()
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
@@ -853,6 +905,30 @@ impl GasParams {
         accounts
             .saturating_mul(self.tx_access_list_address_cost())
             .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
+    }
+
+    /// Floor tokens contributed per access-list byte ([EIP-7981]).
+    ///
+    /// Zero before AMSTERDAM. From AMSTERDAM onward this is `4`, so each
+    /// access-list byte contributes the same 64 gas to the floor as a calldata
+    /// byte under EIP-7976.
+    ///
+    /// [EIP-7981]: https://eips.ethereum.org/EIPS/eip-7981
+    #[inline]
+    pub fn tx_access_list_floor_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_access_list_floor_byte_multiplier())
+    }
+
+    /// Floor tokens contributed by an access list with the given address and
+    /// storage-key counts (EIP-7981). Each address is 20 bytes, each storage
+    /// key is 32 bytes; tokens per byte come from
+    /// [`tx_access_list_floor_byte_multiplier`](Self::tx_access_list_floor_byte_multiplier).
+    #[inline]
+    pub fn tx_floor_tokens_in_access_list(&self, accounts: u64, storages: u64) -> u64 {
+        let bytes = accounts
+            .saturating_mul(20)
+            .saturating_add(storages.saturating_mul(32));
+        bytes.saturating_mul(self.tx_access_list_floor_byte_multiplier())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
@@ -936,8 +1012,12 @@ impl GasParams {
             gas.initial_state_gas += self.create_state_gas(cpsb);
         }
 
-        // Calculate gas floor for EIP-7623
-        gas.floor_gas = self.tx_floor_cost(tokens_in_calldata);
+        // Calculate gas floor. Introduced by EIP-7623, updated by EIP-7976, and
+        // extended by EIP-7981 to include access-list data alongside calldata.
+        let access_list_floor_tokens =
+            self.tx_floor_tokens_in_access_list(access_list_accounts, access_list_storages);
+        gas.floor_gas = self.tx_floor_cost(input)
+            + access_list_floor_tokens * self.tx_floor_cost_per_token();
 
         // EIP-8037: Include state gas in total initial gas.
         // State gas is a subset of initial_total_gas, deducted before execution starts.
@@ -1056,6 +1136,12 @@ impl GasId {
             x if x == Self::tx_eip7702_auth_refund_state_bytes().as_u8() => {
                 "tx_eip7702_auth_refund_state_bytes"
             }
+            x if x == Self::tx_floor_token_zero_byte_multiplier().as_u8() => {
+                "tx_floor_token_zero_byte_multiplier"
+            }
+            x if x == Self::tx_access_list_floor_byte_multiplier().as_u8() => {
+                "tx_access_list_floor_byte_multiplier"
+            }
             _ => "unknown",
         }
     }
@@ -1123,6 +1209,12 @@ impl GasId {
             "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
             "tx_eip7702_auth_refund_state_bytes" => {
                 Some(Self::tx_eip7702_auth_refund_state_bytes())
+            }
+            "tx_floor_token_zero_byte_multiplier" => {
+                Some(Self::tx_floor_token_zero_byte_multiplier())
+            }
+            "tx_access_list_floor_byte_multiplier" => {
+                Some(Self::tx_access_list_floor_byte_multiplier())
             }
             _ => None,
         }
@@ -1360,6 +1452,25 @@ impl GasId {
     pub const fn tx_eip7702_auth_refund_state_bytes() -> GasId {
         Self::new(45)
     }
+
+    /// Multiplier for a zero byte in `floor_tokens_in_calldata`.
+    ///
+    /// `1` under [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) and raised
+    /// to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976), which makes the
+    /// floor cost uniform across zero and nonzero calldata bytes. Zero before PRAGUE.
+    pub const fn tx_floor_token_zero_byte_multiplier() -> GasId {
+        Self::new(46)
+    }
+
+    /// Floor tokens contributed per byte of access-list data (EIP-7981).
+    ///
+    /// Zero before AMSTERDAM. From AMSTERDAM onward, set to `4` so every
+    /// access-list byte contributes the same 16 × 4 = 64 gas as a calldata byte
+    /// under EIP-7976.
+    pub const fn tx_access_list_floor_byte_multiplier() -> GasId {
+        Self::new(47)
+    }
 }
 
 #[cfg(test)]
@@ -1430,11 +1541,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 45 known GasIds (based on the indices 1-45 used)
+        // We should have exactly 47 known GasIds (based on the indices 1-47 used)
         assert_eq!(
             unique_names.len(),
-            45,
-            "Expected 45 unique GasIds, found {}",
+            47,
+            "Expected 47 unique GasIds, found {}",
             unique_names.len()
         );
     }
@@ -1505,5 +1616,38 @@ mod tests {
         assert_eq!(call_gas.initial_state_gas, 0);
         // initial_gas should be unchanged for calls
         assert_eq!(call_gas.initial_total_gas, gas_params.tx_base_stipend());
+    }
+
+    #[test]
+    fn test_eip7981_access_list_cost_amsterdam() {
+        // EIP-7981 folds a 64 gas/byte data charge into the per-item access-list cost
+        // and adds 4 floor tokens per access-list byte on top of the EIP-7976 floor.
+        let params = GasParams::new_spec(SpecId::AMSTERDAM);
+
+        // Per-item intrinsic cost: base + bytes * 64
+        assert_eq!(params.tx_access_list_address_cost(), 2400 + 20 * 64);
+        assert_eq!(params.tx_access_list_storage_key_cost(), 1900 + 32 * 64);
+        assert_eq!(params.tx_access_list_cost(1, 0), 2400 + 20 * 64);
+        assert_eq!(params.tx_access_list_cost(0, 1), 1900 + 32 * 64);
+
+        // Floor multiplier activates at AMSTERDAM.
+        assert_eq!(params.tx_access_list_floor_byte_multiplier(), 4);
+        // 2 addresses (40 bytes) + 3 keys (96 bytes) = 136 bytes => 544 floor tokens.
+        assert_eq!(params.tx_floor_tokens_in_access_list(2, 3), (40 + 96) * 4);
+
+        // Floor gas includes both calldata (empty here) and access-list contribution.
+        let gas = params.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        let expected_al_floor = (40 + 96) * 4 * params.tx_floor_cost_per_token();
+        assert_eq!(
+            gas.floor_gas,
+            params.tx_floor_cost_base_gas() + expected_al_floor,
+        );
+
+        // Pre-AMSTERDAM the access-list floor contribution is zero.
+        let prague = GasParams::new_spec(SpecId::PRAGUE);
+        assert_eq!(prague.tx_access_list_floor_byte_multiplier(), 0);
+        assert_eq!(prague.tx_floor_tokens_in_access_list(2, 3), 0);
+        let prague_gas = prague.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        assert_eq!(prague_gas.floor_gas, prague.tx_floor_cost_base_gas());
     }
 }
