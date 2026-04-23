@@ -19,7 +19,7 @@ pub mod writes;
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use writes::BalWrites;
 
-use crate::{Account, AccountInfo};
+use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
 
@@ -146,7 +146,7 @@ impl Bal {
         let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
             return Err(BalError::AccountNotFound);
         };
-        account.account_id = Some(account_id);
+        account.account_id = AccountId::new(account_id as u32);
 
         Ok(bal_account.populate_account_info(bal_index, account))
     }

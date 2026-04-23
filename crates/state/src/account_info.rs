@@ -5,6 +5,27 @@ use core::{
 };
 use primitives::{B256, KECCAK_EMPTY, U256};
 
+use nonmax::NonMaxU32;
+
+/// Account ID is a custom type that wraps a `NonMaxU32`
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct AccountId(NonMaxU32);
+
+impl AccountId {
+    /// Creates a new AccountId. Returns `None` if the value is `u32::MAX`.
+    #[inline]
+    pub fn new(id: u32) -> Option<Self> {
+        NonMaxU32::new(id).map(Self)
+    }
+
+    /// Gets the underlying u32 value.
+    #[inline]
+    pub fn get(self) -> u32 {
+        self.0.get()
+    }
+}
+
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
@@ -22,7 +43,7 @@ pub struct AccountInfo {
     /// It is set when account is loaded from the database, and if it is `Some` it will called
     /// by journal to ask database the storage with this account_id (It will still send the address to the database).
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub account_id: Option<usize>,
+    pub account_id: Option<AccountId>,
     /// [`Bytecode`] data associated with this account.
     ///
     /// If [`None`], `code_hash` will be used to fetch it from the database, if code needs to be

@@ -30,6 +30,7 @@ bitflags.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
+nonmax = { version = "0.5.5", default-features = false }
 
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc"] }
@@ -50,5 +51,6 @@ serde = [
     "bitflags/serde",
     "bytecode/serde",
     "alloy-eip7928/serde",
+    "nonmax/serde",
 ]
 map-foldhash = ["primitives/map-foldhash"]
