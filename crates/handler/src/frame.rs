@@ -2,12 +2,12 @@ use crate::{
     evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
     CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
 };
-use context::result::FromStringError;
+use context::{result::FromStringError, LocalContextTr};
 use context_interface::{
     context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
-    Block, Cfg, ContextTr, Database,
+    Cfg, ContextTr, Database,
 };
 use core::cmp::min;
 use derive_where::derive_where;
@@ -596,25 +596,21 @@ pub fn return_create<CTX: ContextTr>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
 ) {
-    let block_gas_limit = context.block().gas_limit();
-    let (cfg, journal) = context.cfg_journal_mut();
+    let (_, _, cfg, journal, _, local) = context.all_mut();
 
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
     let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
-    let cpsb = cfg.cpsb(block_gas_limit);
+    let cpsb = local.cpsb();
     let gas_params = cfg.gas_params();
 
     // EIP-8037: The parent charged `create_state_gas` upfront in the CREATE/CREATE2
     // opcode. Refund it here so the reservoir reflects only what the child actually
     // consumed; re-record at the end on success, or leave refunded on revert/halt.
-    let state_gas_charged = if is_amsterdam_eip8037 {
-        gas_params.create_state_gas(cpsb)
-    } else {
-        0
-    };
-    if state_gas_charged > 0 {
+    let state_gas_charged = gas_params.create_state_gas(cpsb);
+
+    if is_amsterdam_eip8037 {
         interpreter_result.gas.refill_reservoir(state_gas_charged);
     }
 
@@ -702,7 +698,7 @@ pub fn return_create<CTX: ContextTr>(
     // EIP-8037: Re-apply the upfront CREATE state gas now that the create succeeded,
     // undoing the entry-side refund so the charge is reflected in the child's
     // final reservoir and `state_gas_spent`.
-    if state_gas_charged > 0 {
+    if is_amsterdam_eip8037 {
         let _ = interpreter_result.gas.record_state_cost(state_gas_charged);
     }
 
