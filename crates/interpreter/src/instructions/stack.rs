@@ -1,13 +1,13 @@
 use crate::{
-    interpreter_types::{Immediates, InterpreterTypes as IT, Jumps, RuntimeFlag, StackTr},
-    InstructionContext as Icx, InstructionExecResult as Result, InstructionResult,
+    interpreter_types::{Immediates, InterpreterTypes as ITy, Jumps, RuntimeFlag, StackTr},
+    InstructionContext as Ictx, InstructionExecResult as Result, InstructionResult,
 };
 use primitives::U256;
 
 /// Implements the POP instruction.
 ///
 /// Removes the top item from the stack.
-pub fn pop<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn pop<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     // Can ignore return. as relative N jump is safe operation.
     popn!([_i], context.interpreter);
     Ok(())
@@ -16,7 +16,7 @@ pub fn pop<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn push0<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, SHANGHAI);
     push!(context.interpreter, U256::ZERO);
     Ok(())
@@ -25,7 +25,7 @@ pub fn push0<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// Implements the PUSH1-PUSH32 instructions.
 ///
 /// Pushes N bytes from bytecode onto the stack as a 32-byte value.
-pub fn push<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn push<const N: usize, IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     let slice = context.interpreter.bytecode.read_slice(N);
     if !context.interpreter.stack.push_slice(slice) {
         return Err(InstructionResult::StackOverflow);
@@ -38,7 +38,7 @@ pub fn push<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> R
 /// Implements the DUP1-DUP16 instructions.
 ///
 /// Duplicates the Nth stack item to the top of the stack.
-pub fn dup<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn dup<const N: usize, IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     if !context.interpreter.stack.dup(N) {
         return Err(InstructionResult::StackOverflow);
     }
@@ -48,7 +48,7 @@ pub fn dup<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Re
 /// Implements the SWAP1-SWAP16 instructions.
 ///
 /// Swaps the top stack item with the Nth stack item.
-pub fn swap<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn swap<const N: usize, IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     assert!(N != 0);
     if !context.interpreter.stack.exchange(0, N) {
         return Err(InstructionResult::StackUnderflow);
@@ -59,7 +59,7 @@ pub fn swap<const N: usize, WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> R
 /// Implements the DUPN instruction.
 ///
 /// Duplicates the Nth stack item to the top of the stack, with N given by an immediate.
-pub fn dupn<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn dupn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
@@ -76,7 +76,7 @@ pub fn dupn<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// Implements the SWAPN instruction.
 ///
 /// Swaps the top stack item with the N+1th stack item, with N given by an immediate.
-pub fn swapn<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn swapn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
@@ -93,7 +93,7 @@ pub fn swapn<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// Implements the EXCHANGE instruction.
 ///
 /// Swaps the N+1th stack item with the M+1th stack item, with N, M given by an immediate.
-pub fn exchange<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn exchange<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some((n, m)) = decode_pair(x) {

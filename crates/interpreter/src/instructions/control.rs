@@ -1,19 +1,19 @@
 use crate::{
     interpreter::Interpreter,
     interpreter_types::{
-        InterpreterTypes as IT, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr,
+        InterpreterTypes as ITy, Jumps, LoopControl, MemoryTr, RuntimeFlag, StackTr,
     },
     InstructionExecResult as Result, InstructionResult, InterpreterAction,
 };
 use context_interface::{cfg::GasParams, Host};
 use primitives::{hints_util::cold_path, Bytes, U256};
 
-use crate::InstructionContext as Icx;
+use crate::InstructionContext as Ictx;
 
 /// Implements the JUMP instruction.
 ///
 /// Unconditional jump to a valid destination.
-pub fn jump<ITy: IT, H: ?Sized>(context: Icx<'_, H, ITy>) -> Result {
+pub fn jump<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn!([target], context.interpreter);
     jump_inner(context.interpreter, target)
 }
@@ -21,7 +21,7 @@ pub fn jump<ITy: IT, H: ?Sized>(context: Icx<'_, H, ITy>) -> Result {
 /// Implements the JUMPI instruction.
 ///
 /// Conditional jump to a valid destination if condition is true.
-pub fn jumpi<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn jumpi<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn!([target, cond], context.interpreter);
     if !cond.is_zero() {
         jump_inner(context.interpreter, target)?;
@@ -33,8 +33,8 @@ pub fn jumpi<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 ///
 /// Validates jump target and performs the actual jump.
 #[inline(always)]
-fn jump_inner<WIRE: IT>(
-    interpreter: &mut Interpreter<WIRE>,
+fn jump_inner<IT: ITy>(
+    interpreter: &mut Interpreter<IT>,
     target: U256,
 ) -> Result<(), InstructionResult> {
     let target = as_usize_saturated!(target);
@@ -50,14 +50,14 @@ fn jump_inner<WIRE: IT>(
 /// Implements the JUMPDEST instruction.
 ///
 /// Marks a valid destination for jump operations.
-pub const fn jumpdest<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn jumpdest<IT: ITy, H: ?Sized>(_context: Ictx<'_, H, IT>) -> Result {
     Ok(())
 }
 
 /// Implements the PC instruction.
 ///
 /// Pushes the current program counter onto the stack.
-pub fn pc<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn pc<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(
         context.interpreter,
@@ -71,7 +71,7 @@ pub fn pc<WIRE: IT, H: ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// Handles memory data retrieval and sets the return action.
 #[inline]
 fn return_inner(
-    interpreter: &mut Interpreter<impl IT>,
+    interpreter: &mut Interpreter<impl ITy>,
     gas_params: &GasParams,
     instruction_result: InstructionResult,
 ) -> Result<(), InstructionResult> {
@@ -98,7 +98,7 @@ fn return_inner(
 /// Implements the RETURN instruction.
 ///
 /// Halts execution and returns data from memory.
-pub fn ret<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn ret<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     return_inner(
         context.interpreter,
         context.host.gas_params(),
@@ -107,7 +107,7 @@ pub fn ret<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn revert<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, BYZANTIUM);
     return_inner(
         context.interpreter,
@@ -117,16 +117,16 @@ pub fn revert<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub const fn stop<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn stop<IT: ITy, H: ?Sized>(_context: Ictx<'_, H, IT>) -> Result {
     Err(InstructionResult::Stop)
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub const fn invalid<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn invalid<IT: ITy, H: ?Sized>(_context: Ictx<'_, H, IT>) -> Result {
     Err(InstructionResult::InvalidFEOpcode)
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub const fn unknown<WIRE: IT, H: ?Sized>(_context: Icx<'_, H, WIRE>) -> Result {
+pub const fn unknown<IT: ITy, H: ?Sized>(_context: Ictx<'_, H, IT>) -> Result {
     Err(InstructionResult::OpcodeNotFound)
 }

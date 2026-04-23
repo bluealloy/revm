@@ -1,12 +1,12 @@
 use crate::{
-    interpreter_types::{InterpreterTypes as IT, RuntimeFlag, StackTr},
-    Host, InstructionContext as Icx, InstructionExecResult as Result,
+    interpreter_types::{InterpreterTypes as ITy, RuntimeFlag, StackTr},
+    Host, InstructionContext as Ictx, InstructionExecResult as Result,
 };
 
 /// Implements the GASPRICE instruction.
 ///
 /// Gets the gas price of the originating transaction.
-pub fn gasprice<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn gasprice<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     push!(context.interpreter, context.host.effective_gas_price());
     Ok(())
 }
@@ -14,7 +14,7 @@ pub fn gasprice<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result
 /// Implements the ORIGIN instruction.
 ///
 /// Gets the execution origination address.
-pub fn origin<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn origin<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     push!(
         context.interpreter,
         context.host.caller().into_word().into()
@@ -25,7 +25,7 @@ pub fn origin<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
 /// Implements the BLOBHASH instruction.
 ///
 /// EIP-4844: Shard Blob Transactions - gets the hash of a transaction blob.
-pub fn blob_hash<WIRE: IT, H: Host + ?Sized>(context: Icx<'_, H, WIRE>) -> Result {
+pub fn blob_hash<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, CANCUN);
     popn_top!([], index, context.interpreter);
     let i = as_usize_saturated!(*index);
