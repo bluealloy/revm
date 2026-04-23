@@ -103,33 +103,80 @@ impl Default for Precompiles {
     }
 }
 
+fn init_precompiles(spec: PrecompileSpecId) -> Precompiles {
+    use PrecompileSpecId::*;
+
+    let mut precompiles = Precompiles::default();
+
+    // Homestead
+    precompiles.extend([
+        secp256k1::ECRECOVER,
+        hash::SHA256,
+        hash::RIPEMD160,
+        identity::FUN,
+    ]);
+
+    if spec.is_enabled_in(BYZANTIUM) {
+        // EIP-198: Big integer modular exponentiation.
+        precompiles.extend([modexp::BYZANTIUM]);
+        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+        precompiles.extend([
+            bn254::add::BYZANTIUM,
+            bn254::mul::BYZANTIUM,
+            bn254::pair::BYZANTIUM,
+        ]);
+    }
+
+    if spec.is_enabled_in(ISTANBUL) {
+        // EIP-1108: Reduce alt_bn128 precompile gas costs.
+        precompiles.extend([
+            bn254::add::ISTANBUL,
+            bn254::mul::ISTANBUL,
+            bn254::pair::ISTANBUL,
+        ]);
+        // EIP-152: Add BLAKE2 compression function `F` precompile.
+        precompiles.extend([blake2::FUN]);
+    }
+
+    if spec.is_enabled_in(BERLIN) {
+        // EIP-2565: ModExp Gas Cost.
+        precompiles.extend([modexp::BERLIN]);
+    }
+
+    if spec.is_enabled_in(CANCUN) {
+        // EIP-4844: Shard Blob Transactions.
+        precompiles.extend([kzg_point_evaluation::POINT_EVALUATION]);
+    }
+
+    if spec.is_enabled_in(PRAGUE) {
+        // EIP-2537: Precompile for BLS12-381 curve operations.
+        precompiles.extend(bls12_381::precompiles());
+    }
+
+    if spec.is_enabled_in(OSAKA) {
+        // EIP-7823: Set upper bounds for MODEXP.
+        // EIP-7883: ModExp Gas Cost Increase.
+        precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
+    }
+
+    precompiles
+}
+
 impl Precompiles {
     /// Returns the precompiles for the given spec.
     pub fn new(spec: PrecompileSpecId) -> &'static Self {
-        match spec {
-            PrecompileSpecId::HOMESTEAD => Self::homestead(),
-            PrecompileSpecId::BYZANTIUM => Self::byzantium(),
-            PrecompileSpecId::ISTANBUL => Self::istanbul(),
-            PrecompileSpecId::BERLIN => Self::berlin(),
-            PrecompileSpecId::CANCUN => Self::cancun(),
-            PrecompileSpecId::PRAGUE => Self::prague(),
-            PrecompileSpecId::OSAKA => Self::osaka(),
-        }
+        static INSTANCES: [OnceLock<Precompiles>; PrecompileSpecId::NEXT as usize + 1] = {
+            #[allow(clippy::declare_interior_mutable_const)]
+            const NEW: OnceLock<Precompiles> = OnceLock::new();
+            [NEW; PrecompileSpecId::NEXT as usize + 1]
+        };
+        INSTANCES[spec as usize].get_or_init(|| init_precompiles(spec))
     }
 
     /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Precompiles::default();
-            precompiles.extend([
-                secp256k1::ECRECOVER,
-                hash::SHA256,
-                hash::RIPEMD160,
-                identity::FUN,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::HOMESTEAD)
     }
 
     /// Returns inner HashMap of precompiles.
@@ -139,50 +186,17 @@ impl Precompiles {
 
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::homestead().clone();
-            precompiles.extend([
-                // EIP-198: Big integer modular exponentiation.
-                modexp::BYZANTIUM,
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                bn254::add::BYZANTIUM,
-                bn254::mul::BYZANTIUM,
-                bn254::pair::BYZANTIUM,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::BYZANTIUM)
     }
 
     /// Returns precompiles for Istanbul spec.
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::byzantium().clone();
-            precompiles.extend([
-                // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                bn254::add::ISTANBUL,
-                bn254::mul::ISTANBUL,
-                bn254::pair::ISTANBUL,
-                // EIP-152: Add BLAKE2 compression function `F` precompile.
-                blake2::FUN,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::ISTANBUL)
     }
 
     /// Returns precompiles for Berlin spec.
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::istanbul().clone();
-            precompiles.extend([
-                // EIP-2565: ModExp Gas Cost.
-                modexp::BERLIN,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::BERLIN)
     }
 
     /// Returns precompiles for Cancun spec.
@@ -190,40 +204,22 @@ impl Precompiles {
     /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
     /// effectively making this the same as Berlin.
     pub fn cancun() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::berlin().clone();
-            precompiles.extend([
-                // EIP-4844: Shard Blob Transactions
-                kzg_point_evaluation::POINT_EVALUATION,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::CANCUN)
     }
 
     /// Returns precompiles for Prague spec.
     pub fn prague() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::cancun().clone();
-            precompiles.extend(bls12_381::precompiles());
-            precompiles
-        })
+        Self::new(PrecompileSpecId::PRAGUE)
     }
 
     /// Returns precompiles for Osaka spec.
     pub fn osaka() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::prague().clone();
-            precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::OSAKA)
     }
 
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::osaka()
+        Self::new(PrecompileSpecId::NEXT)
     }
 
     /// Returns an iterator over the precompiles addresses.
@@ -392,10 +388,11 @@ impl Precompile {
 }
 
 /// Ethereum hardfork spec ids. Represents the specs where precompiles had a change.
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum PrecompileSpecId {
     /// Frontier spec.
-    HOMESTEAD,
+    HOMESTEAD = 0,
     /// Byzantium spec introduced
     /// * [EIP-198](https://eips.ethereum.org/EIPS/eip-198) a EIP-198: Big integer modular exponentiation (at 0x05 address).
     /// * [EIP-196](https://eips.ethereum.org/EIPS/eip-196) a bn_add (at 0x06 address) and bn_mul (at 0x07 address) precompile
@@ -434,6 +431,16 @@ impl From<SpecId> for PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
+    /// The latest known precompile spec.
+    #[doc(alias = "MAX")]
+    pub const NEXT: Self = Self::OSAKA;
+
+    /// Returns `true` if the given specification ID is enabled in this spec.
+    #[inline]
+    pub const fn is_enabled_in(self, other: Self) -> bool {
+        self as u8 >= other as u8
+    }
+
     /// Returns the appropriate precompile Spec for the primitive [SpecId].
     pub const fn from_spec_id(spec_id: primitives::hardfork::SpecId) -> Self {
         use primitives::hardfork::SpecId::*;
