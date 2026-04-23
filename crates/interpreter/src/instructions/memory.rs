@@ -1,58 +1,72 @@
-use crate::interpreter_types::{InterpreterTypes, MemoryTr, RuntimeFlag, StackTr};
+use crate::interpreter::resize_memory;
+use crate::interpreter_types::{InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr};
+use crate::{InstructionContext as Ictx, InstructionExecResult as Result};
 use context_interface::Host;
 use core::cmp::max;
 use primitives::U256;
 
-use crate::InstructionContext;
-
 /// Implements the MLOAD instruction.
 ///
 /// Loads a 32-byte word from memory.
-pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mload<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    resize_memory(
+        &mut context.interpreter.gas,
+        &mut context.interpreter.memory,
+        context.host.gas_params(),
+        offset,
+        32,
+    )?;
     *top =
-        U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
+        U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap();
+    Ok(())
 }
 
 /// Implements the MSTORE instruction.
 ///
 /// Stores a 32-byte word to memory.
-pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), offset, 32)?;
     context
         .interpreter
         .memory
         .set(offset, &value.to_be_bytes::<32>());
+    Ok(())
 }
 
 /// Implements the MSTORE8 instruction.
 ///
 /// Stores a single byte to memory.
-pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mstore8<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn!([offset, value], context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, offset);
-    resize_memory!(context.interpreter, context.host.gas_params(), offset, 1);
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), offset, 1)?;
     context.interpreter.memory.set(offset, &[value.byte(0)]);
+    Ok(())
 }
 
 /// Implements the MSIZE instruction.
 ///
 /// Gets the size of active memory in bytes.
-pub fn msize<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn msize<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     push!(
         context.interpreter,
         U256::from(context.interpreter.memory.size())
     );
+    Ok(())
 }
 
 /// Implements the MCOPY instruction.
 ///
 /// EIP-5656: Memory copying instruction that copies memory from one location to another.
-pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionContext<'_, H, WIRE>) {
+pub fn mcopy<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, CANCUN);
     popn!([dst, src, len], context.interpreter);
 
@@ -65,18 +79,16 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     );
 
     if len == 0 {
-        return;
+        return Ok(());
     }
 
     let dst = as_usize_or_fail!(context.interpreter, dst);
     let src = as_usize_or_fail!(context.interpreter, src);
     // Resize memory
-    resize_memory!(
-        context.interpreter,
-        context.host.gas_params(),
-        max(dst, src),
-        len
-    );
+    context
+        .interpreter
+        .resize_memory(context.host.gas_params(), max(dst, src), len)?;
     // Copy memory in place
     context.interpreter.memory.copy(dst, src, len);
+    Ok(())
 }
