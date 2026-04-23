@@ -129,7 +129,7 @@ impl MemoryTr for SharedMemory {
     #[cfg(feature = "memory_limit")]
     #[inline]
     fn limit_reached(&self, new_words: usize) -> bool {
-        self.my_checkpoint.saturating_add(new_words * 32) as u64 > self.memory_limit
+        self.my_checkpoint.saturating_add(new_words.saturating_mul(32)) as u64 > self.memory_limit
     }
 }
 
