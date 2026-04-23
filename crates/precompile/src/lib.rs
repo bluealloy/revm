@@ -112,11 +112,6 @@ impl Precompiles {
         Self::new(PrecompileSpecId::HOMESTEAD)
     }
 
-    /// Returns inner HashMap of precompiles.
-    pub const fn inner(&self) -> &AddressMap<Precompile> {
-        &self.inner
-    }
-
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
         Self::new(PrecompileSpecId::BYZANTIUM)
@@ -155,6 +150,12 @@ impl Precompiles {
         Self::new(PrecompileSpecId::NEXT)
     }
 
+    /// Returns inner HashMap of precompiles.
+    #[inline]
+    pub const fn inner(&self) -> &AddressMap<Precompile> {
+        &self.inner
+    }
+
     /// Returns an iterator over the precompiles addresses.
     #[inline]
     pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
@@ -189,16 +190,19 @@ impl Precompiles {
     }
 
     /// Is the precompiles list empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
 
     /// Returns the number of precompiles.
+    #[inline]
     pub fn len(&self) -> usize {
         self.inner.len()
     }
 
     /// Returns the precompiles addresses as a set.
+    #[inline]
     pub const fn addresses_set(&self) -> &AddressSet {
         &self.addresses
     }
@@ -206,7 +210,6 @@ impl Precompiles {
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
-    #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
         let iter = other.into_iter();
         let (lower, _) = iter.size_hint();
