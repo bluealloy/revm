@@ -3,7 +3,7 @@ use crate::{
     interpreter_types::{
         InputsTr, InterpreterTypes, LegacyBytecode, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
-    CallInput, InstructionResult,
+    InstructionResult,
 };
 use context_interface::{cfg::GasParams, Host};
 use core::ptr;
@@ -28,7 +28,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         let from = as_usize_or_fail!(context.interpreter, offset);
         resize_memory!(context.interpreter, context.host.gas_params(), from, len);
-        primitives::keccak256(context.interpreter.memory.slice_len(from, len).as_ref())
+        primitives::keccak256(context.interpreter.memory.slice_len(from, len))
     };
     *top = hash.into();
 }
@@ -111,7 +111,6 @@ pub fn calldataload<WIRE: InterpreterTypes, H: ?Sized>(context: InstructionConte
     let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
-        let input = &*input.as_bytes_memory(&context.interpreter.memory);
         // SAFETY: `count` is bounded by the calldata length.
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
@@ -156,22 +155,12 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let data_offset = as_usize_saturated!(data_offset);
-    match context.interpreter.input.input() {
-        CallInput::Bytes(bytes) => {
-            context
-                .interpreter
-                .memory
-                .set_data(memory_offset, data_offset, len, bytes.as_ref());
-        }
-        CallInput::SharedBuffer(range) => {
-            context.interpreter.memory.set_data_from_global(
-                memory_offset,
-                data_offset,
-                len,
-                range.clone(),
-            );
-        }
-    }
+    context.interpreter.memory.set_data(
+        memory_offset,
+        data_offset,
+        len,
+        context.interpreter.input.input().as_ref(),
+    );
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY

@@ -15,9 +15,9 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
-    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterResult, InterpreterTypes, SharedMemory,
+    CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme, FrameInput, Gas,
+    InputsImpl, InstructionResult, Interpreter, InterpreterAction, InterpreterResult,
+    InterpreterTypes,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -106,7 +106,6 @@ impl EthFrame<EthInterpreter> {
         data: FrameData,
         input: FrameInput,
         depth: usize,
-        memory: SharedMemory,
         bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
@@ -128,7 +127,6 @@ impl EthFrame<EthInterpreter> {
         *depth_ref = depth;
         *is_finished_ref = false;
         interpreter.clear(
-            memory,
             bytecode,
             inputs,
             is_static,
@@ -150,7 +148,6 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         precompiles: &mut PRECOMPILES,
         depth: usize,
-        memory: SharedMemory,
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
@@ -236,7 +233,6 @@ impl EthFrame<EthInterpreter> {
             }),
             FrameInput::Call(inputs),
             depth,
-            memory,
             ExtBytecode::new_with_hash(bytecode, bytecode_hash),
             interpreter_input,
             is_static,
@@ -257,7 +253,6 @@ impl EthFrame<EthInterpreter> {
         mut this: OutFrame<'_, Self>,
         context: &mut CTX,
         depth: usize,
-        memory: SharedMemory,
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir();
@@ -333,7 +328,7 @@ impl EthFrame<EthInterpreter> {
             target_address: created_address,
             caller_address: inputs.caller(),
             bytecode_address: None,
-            input: CallInput::Bytes(Bytes::new()),
+            input: Bytes::new(),
             call_value: inputs.value(),
         };
         let gas_limit = inputs.gas_limit();
@@ -342,7 +337,6 @@ impl EthFrame<EthInterpreter> {
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
-            memory,
             bytecode,
             interpreter_input,
             false,
@@ -368,18 +362,13 @@ impl EthFrame<EthInterpreter> {
         ItemOrResult<FrameToken, FrameResult>,
         ContextError<<<CTX as ContextTr>::Db as Database>::Error>,
     > {
-        // TODO cleanup inner make functions
-        let FrameInit {
-            depth,
-            memory,
-            frame_input,
-        } = frame_init;
+        let FrameInit { depth, frame_input } = frame_init;
 
         match frame_input {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(this, ctx, precompiles, depth, memory, inputs)
+                Self::make_call_frame(this, ctx, precompiles, depth, inputs)
             }
-            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, memory, inputs),
+            FrameInput::Create(inputs) => Self::make_create_frame(this, ctx, depth, inputs),
             FrameInput::Empty => unreachable!(),
         }
     }
@@ -400,11 +389,7 @@ impl EthFrame<EthInterpreter> {
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(frame_input) => {
                 let depth = self.depth + 1;
-                return Ok(ItemOrResult::Item(FrameInit {
-                    frame_input,
-                    depth,
-                    memory: self.interpreter.memory.new_child_context(),
-                }));
+                return Ok(ItemOrResult::Item(FrameInit { frame_input, depth }));
             }
             InterpreterAction::Return(result) => result,
         };
@@ -450,7 +435,6 @@ impl EthFrame<EthInterpreter> {
         ctx: &mut CTX,
         result: FrameResult,
     ) -> Result<(), ERROR> {
-        self.interpreter.memory.free_child_context();
         take_error::<ERROR, _>(ctx.error())?;
 
         // Insert result to the top frame.
@@ -471,13 +455,12 @@ impl EthFrame<EthInterpreter> {
                     panic!("Fatal external error in insert_call_outcome");
                 }
 
-                let item = if ins_result.is_ok() {
-                    U256::from(1)
+                // Safe to push without stack limit check
+                let _ = interpreter.stack.push(if ins_result.is_ok() {
+                    U256::ONE
                 } else {
                     U256::ZERO
-                };
-                // Safe to push without stack limit check
-                let _ = interpreter.stack.push(item);
+                });
 
                 // Return unspend gas.
                 if ins_result.is_ok_or_revert() {

@@ -1,74 +1,38 @@
 use super::MemoryTr;
 use crate::InstructionResult;
 use context_interface::cfg::GasParams;
-use core::{
-    cell::{Ref, RefCell, RefMut},
-    cmp::min,
-    fmt,
-    ops::Range,
-};
+use core::{cmp::min, fmt, ops::Range};
 use primitives::{hex, B256, U256};
-use std::{rc::Rc, vec::Vec};
+use std::vec::Vec;
 
-trait RefcellExt<T> {
-    fn dbg_borrow(&self) -> Ref<'_, T>;
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T>;
-}
-
-impl<T> RefcellExt<T> for RefCell<T> {
-    #[inline]
-    fn dbg_borrow(&self) -> Ref<'_, T> {
-        match self.try_borrow() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-
-    #[inline]
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
-        match self.try_borrow_mut() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-}
-
-/// A sequential memory shared between calls, which uses
-/// a `Vec` for internal representation.
-/// A [SharedMemory] instance should always be obtained using
-/// the `new` static method to ensure memory safety.
+/// EVM memory.
 #[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SharedMemory {
+pub struct Memory {
     /// The underlying buffer.
-    buffer: Option<Rc<RefCell<Vec<u8>>>>,
-    /// Memory checkpoints for each depth.
-    /// Invariant: these are always in bounds of `data`.
-    my_checkpoint: usize,
-    /// Child checkpoint that we need to free context to.
-    child_checkpoint: Option<usize>,
+    buffer: Vec<u8>,
     /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }
 
-impl fmt::Debug for SharedMemory {
+impl fmt::Debug for Memory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SharedMemory")
-            .field("current_len", &self.len())
-            .field("context_memory", &hex::encode(&*self.context_memory()))
-            .finish_non_exhaustive()
+        f.debug_struct("Memory")
+            .field("len", &self.buffer.len())
+            .field("data", &hex::encode(&self.buffer))
+            .finish()
     }
 }
 
-impl Default for SharedMemory {
+impl Default for Memory {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl MemoryTr for SharedMemory {
+impl MemoryTr for Memory {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         self.set_data(memory_offset, data_offset, len, data);
     }
@@ -85,38 +49,8 @@ impl MemoryTr for SharedMemory {
         self.copy(destination, source, len);
     }
 
-    fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        self.slice_range(range)
-    }
-
-    fn local_memory_offset(&self) -> usize {
-        self.my_checkpoint
-    }
-
-    fn set_data_from_global(
-        &mut self,
-        memory_offset: usize,
-        data_offset: usize,
-        len: usize,
-        data_range: Range<usize>,
-    ) {
-        self.global_to_local_set_data(memory_offset, data_offset, len, data_range);
-    }
-
-    /// Returns a byte slice of the memory region at the given offset.
-    ///
-    /// # Panics
-    ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
-    #[inline]
-    #[cfg_attr(debug_assertions, track_caller)]
-    fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        self.global_slice_range(range)
+    fn slice(&self, range: Range<usize>) -> &[u8] {
+        self.slice(range)
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
@@ -129,15 +63,12 @@ impl MemoryTr for SharedMemory {
     #[cfg(feature = "memory_limit")]
     #[inline]
     fn limit_reached(&self, offset: usize, len: usize) -> bool {
-        self.my_checkpoint
-            .saturating_add(offset)
-            .saturating_add(len) as u64
-            > self.memory_limit
+        offset.saturating_add(len) as u64 > self.memory_limit
     }
 }
 
-impl SharedMemory {
-    /// Creates a new memory instance that can be shared between calls.
+impl Memory {
+    /// Creates a new memory instance.
     ///
     /// The default initial capacity is 4KiB.
     #[inline]
@@ -145,43 +76,17 @@ impl SharedMemory {
         Self::with_capacity(4 * 1024) // from evmone
     }
 
-    /// Creates a new invalid memory instance.
-    #[inline]
-    pub const fn invalid() -> Self {
-        Self {
-            buffer: None,
-            my_checkpoint: 0,
-            child_checkpoint: None,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: 0,
-        }
-    }
-
-    /// Creates a new memory instance with a given shared buffer.
-    pub const fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
-        Self {
-            buffer: Some(buffer),
-            my_checkpoint: 0,
-            child_checkpoint: None,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: u64::MAX,
-        }
-    }
-
-    /// Creates a new memory instance that can be shared between calls with the given `capacity`.
+    /// Creates a new memory instance with a given `capacity`.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            buffer: Some(Rc::new(RefCell::new(Vec::with_capacity(capacity)))),
-            my_checkpoint: 0,
-            child_checkpoint: None,
+            buffer: Vec::with_capacity(capacity),
             #[cfg(feature = "memory_limit")]
             memory_limit: u64::MAX,
         }
     }
 
-    /// Creates a new memory instance that can be shared between calls,
-    /// with `memory_limit` as upper bound for allocation size.
+    /// Creates a new memory instance with `memory_limit` as upper bound for allocation size.
     ///
     /// The default initial capacity is 4KiB.
     #[cfg(feature = "memory_limit")]
@@ -204,158 +109,78 @@ impl SharedMemory {
         let _ = limit;
     }
 
+    /// Returns the length of the memory.
     #[inline]
-    fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
-        debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
-        unsafe { self.buffer.as_ref().unwrap_unchecked() }
+    pub const fn len(&self) -> usize {
+        self.buffer.len()
     }
 
+    /// Returns the length of the memory.
     #[inline]
-    fn buffer_ref(&self) -> Ref<'_, Vec<u8>> {
-        self.buffer().dbg_borrow()
+    pub const fn size(&self) -> usize {
+        self.buffer.len()
     }
 
+    /// Returns `true` if the memory is empty.
     #[inline]
-    fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
-        self.buffer().dbg_borrow_mut()
+    pub const fn is_empty(&self) -> bool {
+        self.buffer.is_empty()
     }
 
-    /// Returns a byte slice of the backing buffer, applying `base` to `range`.
+    /// Resizes the memory in-place so that `len` is equal to `new_size`.
     #[inline]
-    #[cfg_attr(debug_assertions, track_caller)]
-    fn slice_range_with_base(&self, range: Range<usize>, base: usize) -> Ref<'_, [u8]> {
-        let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| {
-            let range = range.start + base..range.end + base;
-            match b.get(range.clone()) {
-                Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {range:?}; len: {}", self.len()),
-            }
-        })
+    pub fn resize(&mut self, new_size: usize) {
+        self.buffer.resize(new_size, 0);
     }
 
-    /// Prepares the shared memory for a new child context.
+    /// Clears the memory, setting the length to 0 without deallocating.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.buffer.clear();
+    }
+
+    /// Returns a byte slice of the memory region at the given range.
     ///
     /// # Panics
     ///
-    /// Panics if this function was already called without freeing child context.
+    /// Panics on out of bounds access in debug builds only.
+    ///
+    /// # Safety
+    ///
+    /// In release builds, calling this method with an out-of-bounds range triggers undefined
+    /// behavior. Callers must ensure that the range is within the bounds of the memory.
     #[inline]
-    pub fn new_child_context(&mut self) -> SharedMemory {
-        if self.child_checkpoint.is_some() {
-            panic!("new_child_context was already called without freeing child context");
-        }
-        let new_checkpoint = self.full_len();
-        self.child_checkpoint = Some(new_checkpoint);
-        SharedMemory {
-            buffer: Some(self.buffer().clone()),
-            my_checkpoint: new_checkpoint,
-            // child_checkpoint is same as my_checkpoint
-            child_checkpoint: None,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: self.memory_limit,
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice(&self, range: Range<usize>) -> &[u8] {
+        match self.buffer.get(range.clone()) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {range:?}; len: {}", self.len()),
         }
     }
 
-    /// Prepares the shared memory for returning from child context. Do nothing if there is no child context.
-    #[inline]
-    pub fn free_child_context(&mut self) {
-        let Some(child_checkpoint) = self.child_checkpoint.take() else {
-            return;
-        };
-        unsafe {
-            self.buffer_ref_mut().set_len(child_checkpoint);
-        }
-    }
-
-    /// Returns the length of the current memory range.
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.full_len() - self.my_checkpoint
-    }
-
-    fn full_len(&self) -> usize {
-        self.buffer_ref().len()
-    }
-
-    /// Returns `true` if the current memory range is empty.
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Resizes the memory in-place so that `len` is equal to `new_len`.
-    #[inline]
-    pub fn resize(&mut self, new_size: usize) {
-        self.buffer()
-            .dbg_borrow_mut()
-            .resize(self.my_checkpoint + new_size, 0);
-    }
-
-    /// Returns a byte slice of the memory region at the given offset.
+    /// Returns a byte slice of the memory region at the given offset and size.
     ///
     /// # Panics
     ///
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_len(&self, offset: usize, size: usize) -> Ref<'_, [u8]> {
-        self.slice_range(offset..offset + size)
+    pub fn slice_len(&self, offset: usize, size: usize) -> &[u8] {
+        self.slice(offset..offset + size)
     }
 
-    /// Returns a byte slice of the memory region at the given offset.
+    /// Returns a mutable byte slice of the memory region at the given offset and size.
     ///
     /// # Panics
     ///
     /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
-    /// `range.end <= self.len()`).
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        self.slice_range_with_base(range, self.my_checkpoint)
-    }
-
-    /// Returns a byte slice of the memory region at the given offset.
-    ///
-    /// # Panics
-    ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
-    #[inline]
-    #[cfg_attr(debug_assertions, track_caller)]
-    pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
-        self.slice_range_with_base(range, 0)
-    }
-
-    /// Returns a byte slice of the memory region at the given offset.
-    ///
-    /// # Panics
-    ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
-    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
-    /// memory.
-    #[inline]
-    #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
-        let buffer = self.buffer_ref_mut();
-        RefMut::map(buffer, |b| {
-            match b.get_mut(self.my_checkpoint + offset..self.my_checkpoint + offset + size) {
-                Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {offset}..{}", offset + size),
-            }
-        })
+    fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+        match self.buffer.get_mut(offset..offset + size) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {offset}..{}", offset + size),
+        }
     }
 
     /// Returns the byte at the given offset.
@@ -375,7 +200,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
-        (*self.slice_len(offset, 32)).try_into().unwrap()
+        self.slice_len(offset, 32).try_into().unwrap()
     }
 
     /// Returns a U256 of the memory region at the given offset.
@@ -443,28 +268,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
-        let mut dst = self.context_memory_mut();
-        unsafe { set_data(dst.as_mut(), data, memory_offset, data_offset, len) };
-    }
-
-    /// Set data from global memory to local memory. If global range is smaller than len, zeroes the rest.
-    #[inline]
-    #[cfg_attr(debug_assertions, track_caller)]
-    pub fn global_to_local_set_data(
-        &mut self,
-        memory_offset: usize,
-        data_offset: usize,
-        len: usize,
-        data_range: Range<usize>,
-    ) {
-        let mut buffer = self.buffer_ref_mut();
-        let (src, dst) = buffer.split_at_mut(self.my_checkpoint);
-        let src = if data_range.is_empty() {
-            &mut []
-        } else {
-            src.get_mut(data_range).unwrap()
-        };
-        unsafe { set_data(dst, src, memory_offset, data_offset, len) };
+        unsafe { set_data(&mut self.buffer, data, memory_offset, data_offset, len) };
     }
 
     /// Copies elements from one part of the memory to another part of itself.
@@ -475,45 +279,7 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
-        self.context_memory_mut().copy_within(src..src + len, dst);
-    }
-
-    /// Returns a reference to the memory of the current context, the active memory.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
-    #[inline]
-    pub fn context_memory(&self) -> Ref<'_, [u8]> {
-        let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
-        })
-    }
-
-    /// Returns a mutable reference to the memory of the current context.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
-    #[inline]
-    pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
-        let buffer = self.buffer_ref_mut();
-        RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
-        })
+        self.buffer.copy_within(src..src + len, dst);
     }
 }
 
@@ -625,69 +391,18 @@ mod tests {
     }
 
     #[test]
-    fn new_free_child_context() {
-        let mut sm1 = SharedMemory::new();
-
-        assert_eq!(sm1.buffer_ref().len(), 0);
-        assert_eq!(sm1.my_checkpoint, 0);
-
-        unsafe { sm1.buffer_ref_mut().set_len(32) };
-        assert_eq!(sm1.len(), 32);
-        let mut sm2 = sm1.new_child_context();
-
-        assert_eq!(sm2.buffer_ref().len(), 32);
-        assert_eq!(sm2.my_checkpoint, 32);
-        assert_eq!(sm2.len(), 0);
-
-        unsafe { sm2.buffer_ref_mut().set_len(96) };
-        assert_eq!(sm2.len(), 64);
-        let mut sm3 = sm2.new_child_context();
-
-        assert_eq!(sm3.buffer_ref().len(), 96);
-        assert_eq!(sm3.my_checkpoint, 96);
-        assert_eq!(sm3.len(), 0);
-
-        unsafe { sm3.buffer_ref_mut().set_len(128) };
-        let sm4 = sm3.new_child_context();
-        assert_eq!(sm4.buffer_ref().len(), 128);
-        assert_eq!(sm4.my_checkpoint, 128);
-        assert_eq!(sm4.len(), 0);
-
-        // Free contexts
-        drop(sm4);
-        sm3.free_child_context();
-        assert_eq!(sm3.buffer_ref().len(), 128);
-        assert_eq!(sm3.my_checkpoint, 96);
-        assert_eq!(sm3.len(), 32);
-
-        sm2.free_child_context();
-        assert_eq!(sm2.buffer_ref().len(), 96);
-        assert_eq!(sm2.my_checkpoint, 32);
-        assert_eq!(sm2.len(), 64);
-
-        sm1.free_child_context();
-        assert_eq!(sm1.buffer_ref().len(), 32);
-        assert_eq!(sm1.my_checkpoint, 0);
-        assert_eq!(sm1.len(), 32);
-    }
-
-    #[test]
     fn resize() {
-        let mut sm1 = SharedMemory::new();
-        sm1.resize(32);
-        assert_eq!(sm1.buffer_ref().len(), 32);
-        assert_eq!(sm1.len(), 32);
-        assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
+        let mut m = Memory::new();
+        m.resize(32);
+        assert_eq!(m.len(), 32);
+        assert_eq!(&m.buffer[..32], &[0_u8; 32]);
 
-        let mut sm2 = sm1.new_child_context();
-        sm2.resize(96);
-        assert_eq!(sm2.buffer_ref().len(), 128);
-        assert_eq!(sm2.len(), 96);
-        assert_eq!(sm2.buffer_ref().get(32..128), Some(&[0_u8; 96] as &[u8]));
+        m.resize(96);
+        assert_eq!(m.len(), 96);
+        assert_eq!(&m.buffer[..96], &[0_u8; 96]);
 
-        sm1.free_child_context();
-        assert_eq!(sm1.buffer_ref().len(), 32);
-        assert_eq!(sm1.len(), 32);
-        assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
+        m.clear();
+        assert_eq!(m.len(), 0);
+        assert!(m.is_empty());
     }
 }

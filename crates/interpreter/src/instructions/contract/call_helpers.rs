@@ -7,7 +7,7 @@ use context_interface::{cfg::GasParams, host::LoadError, Host};
 use core::{cmp::min, ops::Range};
 use primitives::{
     hardfork::SpecId::{self, *},
-    Address, B256, U256,
+    Address, Bytes, B256, U256,
 };
 use state::Bytecode;
 
@@ -16,18 +16,18 @@ use state::Bytecode;
 pub fn get_memory_input_and_out_ranges(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     gas_params: &GasParams,
-) -> Option<(Range<usize>, Range<usize>)> {
+) -> Option<(Bytes, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
-    let mut in_range = resize_memory(interpreter, gas_params, in_offset, in_len)?;
-
-    if !in_range.is_empty() {
-        let offset = interpreter.memory.local_memory_offset();
-        in_range = in_range.start.saturating_add(offset)..in_range.end.saturating_add(offset);
-    }
+    let in_range = resize_memory(interpreter, gas_params, in_offset, in_len)?;
+    let input = if in_range.is_empty() {
+        Bytes::new()
+    } else {
+        Bytes::copy_from_slice(interpreter.memory.slice(in_range))
+    };
 
     let ret_range = resize_memory(interpreter, gas_params, out_offset, out_len)?;
-    Some((in_range, ret_range))
+    Some((input, ret_range))
 }
 
 /// Resize memory and return range of memory.

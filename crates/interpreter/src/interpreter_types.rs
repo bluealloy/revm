@@ -1,8 +1,5 @@
-use crate::{CallInput, InstructionResult, InterpreterAction};
-use core::{
-    cell::Ref,
-    ops::{Deref, Range},
-};
+use crate::{InstructionResult, InterpreterAction};
+use core::ops::Range;
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode
@@ -49,7 +46,7 @@ pub trait InputsTr {
     /// Returns caller address of the call.
     fn caller_address(&self) -> Address;
     /// Returns input of the call.
-    fn input(&self) -> &CallInput;
+    fn input(&self) -> &Bytes;
     /// Returns call value of the call.
     fn call_value(&self) -> U256;
 }
@@ -88,30 +85,6 @@ pub trait MemoryTr {
     /// Panics if range is out of scope of allocated memory.
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]);
 
-    /// Inner clone part of memory from global context to local context.
-    /// This is used to clone calldata to memory.
-    ///
-    /// # Panics
-    ///
-    /// Panics if range is out of scope of allocated memory.
-    fn set_data_from_global(
-        &mut self,
-        memory_offset: usize,
-        data_offset: usize,
-        len: usize,
-        data_range: Range<usize>,
-    );
-
-    /// Memory slice with global range. This range
-    ///
-    /// # Panics
-    ///
-    /// Panics if range is out of scope of allocated memory.
-    fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
-
-    /// Offset of local context of memory.
-    fn local_memory_offset(&self) -> usize;
-
     /// Sets memory data at given offset.
     ///
     /// # Panics
@@ -128,21 +101,21 @@ pub trait MemoryTr {
     /// Panics if range is out of scope of allocated memory.
     fn copy(&mut self, destination: usize, source: usize, len: usize);
 
-    /// Memory slice with range
+    /// Memory slice with range.
     ///
     /// # Panics
     ///
     /// Panics if range is out of scope of allocated memory.
-    fn slice(&self, range: Range<usize>) -> Ref<'_, [u8]>;
+    fn slice(&self, range: Range<usize>) -> &[u8];
 
-    /// Memory slice len
+    /// Memory slice len.
     ///
     /// Uses [`slice`][MemoryTr::slice] internally.
-    fn slice_len(&self, offset: usize, len: usize) -> impl Deref<Target = [u8]> + '_ {
+    fn slice_len(&self, offset: usize, len: usize) -> &[u8] {
         self.slice(offset..offset + len)
     }
 
-    /// Resizes memory to new size
+    /// Resizes memory to new size.
     ///
     /// # Note
     ///

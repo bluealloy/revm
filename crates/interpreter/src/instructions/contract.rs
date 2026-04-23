@@ -9,8 +9,7 @@ use crate::{
     instructions::utility::IntoAddress,
     interpreter_action::FrameInput,
     interpreter_types::{InputsTr, InterpreterTypes, LoopControl, MemoryTr, RuntimeFlag, StackTr},
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host, InstructionResult,
-    InterpreterAction,
+    CallInputs, CallScheme, CallValue, CreateInputs, Host, InstructionResult, InterpreterAction,
 };
 use context_interface::CreateScheme;
 use primitives::{hardfork::SpecId, Address, Bytes, B256, U256};
@@ -67,13 +66,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
             len
         );
 
-        code = Bytes::copy_from_slice(
-            context
-                .interpreter
-                .memory
-                .slice_len(code_offset, len)
-                .as_ref(),
-        );
+        code = Bytes::copy_from_slice(context.interpreter.memory.slice_len(code_offset, len));
     }
 
     // EIP-1014: Skinny CREATE2
@@ -166,7 +159,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
             CallInputs {
-                input: CallInput::SharedBuffer(input),
+                input,
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),
@@ -211,7 +204,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
             CallInputs {
-                input: CallInput::SharedBuffer(input),
+                input,
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.target_address(),
@@ -256,7 +249,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
             CallInputs {
-                input: CallInput::SharedBuffer(input),
+                input,
                 gas_limit,
                 target_address: context.interpreter.input.target_address(),
                 caller: context.interpreter.input.caller_address(),
@@ -301,7 +294,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .bytecode
         .set_action(InterpreterAction::NewFrame(FrameInput::Call(Box::new(
             CallInputs {
-                input: CallInput::SharedBuffer(input),
+                input,
                 gas_limit,
                 target_address: to,
                 caller: context.interpreter.input.target_address(),

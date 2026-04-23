@@ -14,7 +14,7 @@ use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
-use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
+use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas};
 use primitives::U256;
 
 /// Trait for errors that can occur during EVM execution.
@@ -345,14 +345,9 @@ pub trait Handler {
         reservoir: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
-        let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
-        memory.set_memory_limit(ctx.cfg().memory_limit());
-
         let frame_input = execution::create_init_frame(ctx, gas_limit, reservoir)?;
-
         Ok(FrameInit {
             depth: 0,
-            memory,
             frame_input,
         })
     }

@@ -82,7 +82,7 @@ fn run_custom_precompile<CTX: ContextTr>(
     context: &mut CTX,
     inputs: &CallInputs,
 ) -> Result<InterpreterResult, String> {
-    let input_bytes = inputs.input.bytes(context);
+    let input_bytes = &inputs.input;
 
     // For this example, we'll implement a simple precompile that:
     // - If called with empty data: reads a storage value
@@ -96,7 +96,7 @@ fn run_custom_precompile<CTX: ContextTr>(
             return Err("Cannot modify state in static context".to_string());
         }
         // Write storage operation
-        handle_write_storage(context, &input_bytes, inputs.gas_limit)
+        handle_write_storage(context, input_bytes, inputs.gas_limit)
     } else {
         Err(PrecompileHalt::Other("Invalid input length".into()))
     };

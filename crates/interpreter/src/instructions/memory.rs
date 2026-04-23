@@ -12,8 +12,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(context: InstructionConte
     popn_top!([], top, context.interpreter);
     let offset = as_usize_or_fail!(context.interpreter, top);
     resize_memory!(context.interpreter, context.host.gas_params(), offset, 32);
-    *top =
-        U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
+    *top = U256::try_from_be_slice(context.interpreter.memory.slice_len(offset, 32)).unwrap()
 }
 
 /// Implements the MSTORE instruction.

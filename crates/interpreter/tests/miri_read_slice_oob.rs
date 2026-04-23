@@ -15,7 +15,7 @@ use primitives::{hardfork::SpecId, Bytes};
 use revm_interpreter::{
     host::DummyHost,
     instructions::instruction_table,
-    interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
+    interpreter::{EthInterpreter, ExtBytecode, InputsImpl, Memory},
     Interpreter,
 };
 
@@ -46,7 +46,7 @@ fn read_slice_oob_via_new_analyzed() {
     let bytecode = unsafe { Bytecode::new_analyzed(raw, original_len, jump_table) };
 
     let mut interpreter = Interpreter::<EthInterpreter>::new(
-        SharedMemory::new(),
+        Memory::new(),
         ExtBytecode::new(bytecode),
         InputsImpl::default(),
         false,

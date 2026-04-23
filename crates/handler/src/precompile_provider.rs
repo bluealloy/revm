@@ -1,6 +1,6 @@
 use auto_impl::auto_impl;
-use context::{Cfg, LocalContextTr};
-use context_interface::{ContextTr, JournalTr};
+use context::Cfg;
+use context_interface::{ContextTr, JournalTr, LocalContextTr};
 use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileOutput, PrecompileSpecId, PrecompileStatus, Precompiles};
 use primitives::{hardfork::SpecId, Address, AddressSet, Bytes};
@@ -146,11 +146,7 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         };
 
         let output = precompile
-            .execute(
-                &inputs.input.as_bytes(context),
-                inputs.gas_limit,
-                inputs.reservoir,
-            )
+            .execute(&inputs.input, inputs.gas_limit, inputs.reservoir)
             .map_err(|e| e.to_string())?;
 
         // If this is a top-level precompile call (depth == 1), persist the error message

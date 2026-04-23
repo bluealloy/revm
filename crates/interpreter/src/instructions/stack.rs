@@ -141,7 +141,7 @@ mod tests {
     use crate::{
         host::DummyHost,
         instructions::{gas_table, instruction_table},
-        interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
+        interpreter::{EthInterpreter, ExtBytecode, InputsImpl, Memory},
         interpreter_types::LoopControl,
         Interpreter,
     };
@@ -152,7 +152,7 @@ mod tests {
     fn run_bytecode(code: &[u8]) -> Interpreter {
         let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(code));
         let mut interpreter = Interpreter::<EthInterpreter>::new(
-            SharedMemory::new(),
+            Memory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
             false,

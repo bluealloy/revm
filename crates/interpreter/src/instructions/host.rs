@@ -323,7 +323,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
         let offset = as_usize_or_fail!(context.interpreter, offset);
         // Resize memory to fit the data
         resize_memory!(context.interpreter, context.host.gas_params(), offset, len);
-        Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len).as_ref())
+        Bytes::copy_from_slice(context.interpreter.memory.slice_len(offset, len))
     };
     let Some(topics) = context.interpreter.stack.popn::<N>() else {
         context.interpreter.halt_underflow();

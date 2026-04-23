@@ -1,8 +1,6 @@
 use context::{ContextTr, Database, JournalTr};
 use context_interface::Transaction;
-use interpreter::{
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
-};
+use interpreter::{CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput};
 use primitives::TxKind;
 use state::Bytecode;
 use std::boxed::Box;
@@ -36,7 +34,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 )
             };
             Ok(FrameInput::Call(Box::new(CallInputs {
-                input: CallInput::Bytes(input),
+                input,
                 gas_limit,
                 target_address,
                 bytecode_address: target_address,

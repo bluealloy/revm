@@ -1,5 +1,5 @@
-use crate::{interpreter_types::InputsTr, CallInput};
-use primitives::{Address, U256};
+use crate::interpreter_types::InputsTr;
+use primitives::{Address, Bytes, U256};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +15,7 @@ pub struct InputsImpl {
     /// Address of the caller of the call.
     pub caller_address: Address,
     /// Input data for the call.
-    pub input: CallInput,
+    pub input: Bytes,
     /// Value of the call.
     pub call_value: U256,
 }
@@ -33,7 +33,7 @@ impl InputsTr for InputsImpl {
         self.bytecode_address.as_ref()
     }
 
-    fn input(&self) -> &CallInput {
+    fn input(&self) -> &Bytes {
         &self.input
     }
 

@@ -246,7 +246,7 @@ where
         interp.stack.clone_into(&mut self.stack);
         self.memory = if self.include_memory {
             Some(hex::encode_prefixed(
-                interp.memory.slice(0..interp.memory.size()).as_ref(),
+                interp.memory.slice(0..interp.memory.size()),
             ))
         } else {
             None

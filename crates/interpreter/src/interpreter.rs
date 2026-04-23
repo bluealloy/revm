@@ -13,7 +13,7 @@ pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 pub use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
-pub use shared_memory::{num_words, resize_memory, SharedMemory};
+pub use shared_memory::{num_words, resize_memory, Memory};
 pub use stack::{Stack, STACK_LIMIT};
 
 // imports
@@ -50,7 +50,7 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
 impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     /// Create new interpreter
     pub fn new(
-        memory: SharedMemory,
+        memory: Memory,
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
@@ -70,18 +70,18 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
 
     /// Create a new interpreter with default extended functionality.
     pub fn default_ext() -> Self {
-        Self::do_default(Stack::new(), SharedMemory::new())
+        Self::do_default(Stack::new())
     }
 
     /// Create a new invalid interpreter.
     pub fn invalid() -> Self {
-        Self::do_default(Stack::invalid(), SharedMemory::invalid())
+        Self::do_default(Stack::invalid())
     }
 
-    fn do_default(stack: Stack, memory: SharedMemory) -> Self {
+    fn do_default(stack: Stack) -> Self {
         Self::new_inner(
             stack,
-            memory,
+            Memory::new(),
             ExtBytecode::default(),
             InputsImpl::default(),
             false,
@@ -93,7 +93,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     #[allow(clippy::too_many_arguments)]
     fn new_inner(
         stack: Stack,
-        memory: SharedMemory,
+        memory: Memory,
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
@@ -117,7 +117,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     #[inline(always)]
     pub fn clear(
         &mut self,
-        memory: SharedMemory,
         bytecode: ExtBytecode,
         input: InputsImpl,
         is_static: bool,
@@ -130,7 +129,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             gas,
             stack,
             return_data,
-            memory: memory_ref,
+            memory,
             input: input_ref,
             runtime_flag,
             extend,
@@ -143,7 +142,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
             stack.clear();
         }
         return_data.0.clear();
-        *memory_ref = memory;
+        memory.clear();
         *input_ref = input;
         *runtime_flag = RuntimeFlags { spec_id, is_static };
         *extend = EXT::default();
@@ -164,13 +163,13 @@ impl Default for Interpreter<EthInterpreter> {
 
 /// Default types for Ethereum interpreter.
 #[derive(Debug)]
-pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
-    _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
+pub struct EthInterpreter<EXT = ()> {
+    _phantom: core::marker::PhantomData<fn() -> EXT>,
 }
 
 impl<EXT> InterpreterTypes for EthInterpreter<EXT> {
     type Stack = Stack;
-    type Memory = SharedMemory;
+    type Memory = Memory;
     type Bytecode = ExtBytecode;
     type ReturnData = ReturnDataImpl;
     type Input = InputsImpl;
@@ -452,7 +451,7 @@ mod tests {
 
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
-            SharedMemory::new(),
+            Memory::new(),
             ExtBytecode::new(bytecode),
             InputsImpl::default(),
             false,
@@ -492,7 +491,7 @@ fn test_mstore_big_offset_memory_oog() {
     let bytecode = Bytecode::new_raw(code);
 
     let mut interpreter = Interpreter::<EthInterpreter>::new(
-        SharedMemory::new(),
+        Memory::new(),
         ExtBytecode::new(bytecode),
         InputsImpl::default(),
         false,
@@ -534,7 +533,7 @@ fn test_mstore_big_offset_memory_limit_oog() {
     let bytecode = Bytecode::new_raw(code);
 
     let mut interpreter = Interpreter::<EthInterpreter>::new(
-        SharedMemory::new_with_memory_limit(1000),
+        Memory::new_with_memory_limit(1000),
         ExtBytecode::new(bytecode),
         InputsImpl::default(),
         false,
