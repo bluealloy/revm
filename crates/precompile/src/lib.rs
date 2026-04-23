@@ -65,7 +65,6 @@ use primitives::{
     hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
     SHORT_ADDRESS_CAP,
 };
-use std::vec::Vec;
 
 /// Calculate the linear cost of a precompile.
 #[inline]
@@ -87,9 +86,7 @@ pub struct Precompiles {
     /// Addresses of precompiles.
     addresses: AddressSet,
     /// Optimized addresses filter.
-    optimized_access: Vec<Option<Precompile>>,
-    /// `true` if all precompiles are short addresses.
-    all_short_addresses: bool,
+    optimized_access: Box<[Option<Precompile>; SHORT_ADDRESS_CAP]>,
 }
 
 impl Default for Precompiles {
@@ -97,80 +94,16 @@ impl Default for Precompiles {
         Self {
             inner: HashMap::default(),
             addresses: AddressSet::default(),
-            optimized_access: vec![None; SHORT_ADDRESS_CAP],
-            all_short_addresses: true,
+            optimized_access: Box::new([const { None }; SHORT_ADDRESS_CAP]),
         }
     }
-}
-
-fn init_precompiles(spec: PrecompileSpecId) -> Precompiles {
-    use PrecompileSpecId::*;
-
-    let mut precompiles = Precompiles::default();
-
-    // Homestead
-    precompiles.extend([
-        secp256k1::ECRECOVER,
-        hash::SHA256,
-        hash::RIPEMD160,
-        identity::FUN,
-    ]);
-
-    if spec.is_enabled_in(BYZANTIUM) {
-        // EIP-198: Big integer modular exponentiation.
-        precompiles.extend([modexp::BYZANTIUM]);
-        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-        precompiles.extend([
-            bn254::add::BYZANTIUM,
-            bn254::mul::BYZANTIUM,
-            bn254::pair::BYZANTIUM,
-        ]);
-    }
-
-    if spec.is_enabled_in(ISTANBUL) {
-        // EIP-1108: Reduce alt_bn128 precompile gas costs.
-        precompiles.extend([
-            bn254::add::ISTANBUL,
-            bn254::mul::ISTANBUL,
-            bn254::pair::ISTANBUL,
-        ]);
-        // EIP-152: Add BLAKE2 compression function `F` precompile.
-        precompiles.extend([blake2::FUN]);
-    }
-
-    if spec.is_enabled_in(BERLIN) {
-        // EIP-2565: ModExp Gas Cost.
-        precompiles.extend([modexp::BERLIN]);
-    }
-
-    if spec.is_enabled_in(CANCUN) {
-        // EIP-4844: Shard Blob Transactions.
-        precompiles.extend([kzg_point_evaluation::POINT_EVALUATION]);
-    }
-
-    if spec.is_enabled_in(PRAGUE) {
-        // EIP-2537: Precompile for BLS12-381 curve operations.
-        precompiles.extend(bls12_381::precompiles());
-    }
-
-    if spec.is_enabled_in(OSAKA) {
-        // EIP-7823: Set upper bounds for MODEXP.
-        // EIP-7883: ModExp Gas Cost Increase.
-        precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
-    }
-
-    precompiles
 }
 
 impl Precompiles {
     /// Returns the precompiles for the given spec.
     pub fn new(spec: PrecompileSpecId) -> &'static Self {
-        static INSTANCES: [OnceLock<Precompiles>; PrecompileSpecId::NEXT as usize + 1] = {
-            #[allow(clippy::declare_interior_mutable_const)]
-            const NEW: OnceLock<Precompiles> = OnceLock::new();
-            [NEW; PrecompileSpecId::NEXT as usize + 1]
-        };
+        static INSTANCES: [OnceLock<Precompiles>; PrecompileSpecId::NEXT as usize + 1] =
+            [const { OnceLock::new() }; PrecompileSpecId::NEXT as usize + 1];
         INSTANCES[spec as usize].get_or_init(|| init_precompiles(spec))
     }
 
@@ -283,8 +216,6 @@ impl Precompiles {
             let address = *item.address();
             if let Some(short_idx) = short_address(&address) {
                 self.optimized_access[short_idx] = Some(item.clone());
-            } else {
-                self.all_short_addresses = false;
             }
             self.addresses.insert(address);
             self.inner.insert(address, item);
@@ -324,6 +255,66 @@ impl Precompiles {
         precompiles.extend(inner.into_iter().map(|p| p.1));
         precompiles
     }
+}
+
+fn init_precompiles(spec: PrecompileSpecId) -> Precompiles {
+    use PrecompileSpecId::*;
+
+    let mut precompiles = Precompiles::default();
+
+    // Homestead
+    precompiles.extend([
+        secp256k1::ECRECOVER,
+        hash::SHA256,
+        hash::RIPEMD160,
+        identity::FUN,
+    ]);
+
+    if spec.is_enabled_in(BYZANTIUM) {
+        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+        // EIP-198: Big integer modular exponentiation.
+        precompiles.extend([
+            modexp::BYZANTIUM,
+            bn254::add::BYZANTIUM,
+            bn254::mul::BYZANTIUM,
+            bn254::pair::BYZANTIUM,
+        ]);
+    }
+
+    if spec.is_enabled_in(ISTANBUL) {
+        // EIP-152: Add BLAKE2 compression function `F` precompile.
+        // EIP-1108: Reduce alt_bn128 precompile gas costs.
+        precompiles.extend([
+            bn254::add::ISTANBUL,
+            bn254::mul::ISTANBUL,
+            bn254::pair::ISTANBUL,
+            blake2::FUN,
+        ]);
+    }
+
+    if spec.is_enabled_in(BERLIN) {
+        // EIP-2565: ModExp Gas Cost.
+        precompiles.extend([modexp::BERLIN]);
+    }
+
+    if spec.is_enabled_in(CANCUN) {
+        // EIP-4844: Shard Blob Transactions.
+        precompiles.extend([kzg_point_evaluation::POINT_EVALUATION]);
+    }
+
+    if spec.is_enabled_in(PRAGUE) {
+        // EIP-2537: Precompile for BLS12-381 curve operations.
+        precompiles.extend(bls12_381::precompiles());
+    }
+
+    if spec.is_enabled_in(OSAKA) {
+        // EIP-7823: Set upper bounds for MODEXP.
+        // EIP-7883: ModExp Gas Cost Increase.
+        precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
+    }
+
+    precompiles
 }
 
 /// Precompile wrapper for simple eth function that provides complex interface on execution.
@@ -392,7 +383,7 @@ impl Precompile {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum PrecompileSpecId {
     /// Frontier spec.
-    HOMESTEAD = 0,
+    HOMESTEAD,
     /// Byzantium spec introduced
     /// * [EIP-198](https://eips.ethereum.org/EIPS/eip-198) a EIP-198: Big integer modular exponentiation (at 0x05 address).
     /// * [EIP-196](https://eips.ethereum.org/EIPS/eip-196) a bn_add (at 0x06 address) and bn_mul (at 0x07 address) precompile
