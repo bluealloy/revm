@@ -363,7 +363,7 @@ impl GasParams {
             table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
             table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] =
                 table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
-
+          
             // EIP-7981: Charge access list data at 64 gas per byte, matching
             // calldata floor pricing. Per-item costs bake in the data charge:
             //   address: 2400 + 20 * 64 = 3680
