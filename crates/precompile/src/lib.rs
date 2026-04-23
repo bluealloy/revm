@@ -65,6 +65,7 @@ use primitives::{
     hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
     SHORT_ADDRESS_CAP,
 };
+use std::boxed::Box;
 
 /// Calculate the linear cost of a precompile.
 #[inline]
