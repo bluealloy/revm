@@ -436,8 +436,8 @@ impl PrecompileSpecId {
     }
 
     /// Returns the appropriate precompile Spec for the primitive [SpecId].
-    pub const fn from_spec_id(spec_id: primitives::hardfork::SpecId) -> Self {
-        use primitives::hardfork::SpecId::*;
+    pub const fn from_spec_id(spec_id: SpecId) -> Self {
+        use SpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD
