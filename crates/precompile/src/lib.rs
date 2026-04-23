@@ -426,7 +426,11 @@ impl From<SpecId> for PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
-    /// The latest known precompile spec.
+    /// The latest known precompile spec. This may refer to a highly experimental hard fork
+    /// that is not yet finalized or deployed on any network.
+    ///
+    /// **Warning**: This value will change between minor versions as new hard forks are added.
+    /// Do not rely on it for stable behavior.
     #[doc(alias = "MAX")]
     pub const NEXT: Self = Self::OSAKA;
 
