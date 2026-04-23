@@ -12,7 +12,7 @@ use database_interface::{
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal},
-    Account, AccountInfo,
+    Account, AccountId, AccountInfo,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -334,7 +334,7 @@ impl<DB: Database> Database for State<DB> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         if let Some(storage) = self.bal_state.storage_by_account_id(account_id, key)? {

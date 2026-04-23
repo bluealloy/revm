@@ -139,14 +139,14 @@ impl Bal {
     /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
-        account_id: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
             return Err(BalError::AccountNotFound);
         };
-        account.account_id = AccountId::new(account_id as u32);
+        account.account_id = Some(account_id);
 
         Ok(bal_account.populate_account_info(bal_index, account))
     }
@@ -157,12 +157,12 @@ impl Bal {
     #[inline]
     pub fn populate_storage_slot_by_account_id(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -195,11 +195,11 @@ impl Bal {
     /// Get storage from BAL.
     pub fn account_storage(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
             return Err(BalError::AccountNotFound);
         };
 
