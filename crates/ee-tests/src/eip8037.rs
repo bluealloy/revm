@@ -46,11 +46,15 @@ const fn hash_cost(len: usize) -> u64 {
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
 
 /// Builds an EVM with state gas enabled and custom gas params.
+///
+/// Sets `cpsb_override = Some(1)` so the overridden gas-table values are
+/// interpreted as final gas amounts (the CPSB multiplier becomes a no-op).
 fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(cap);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -1112,6 +1116,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(u64::MAX);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -1211,7 +1216,8 @@ fn test_eip8037_create_child_propagates() {
     );
 }
 
-/// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
+/// 5.2 Reverted CREATE: both the parent's CREATE state gas and the child's SSTORE
+/// state gas are refunded on revert (state changes are rolled back).
 #[test]
 fn test_eip8037_reverted_create_child() {
     let init = init_code_sstore_and_revert();
@@ -1228,15 +1234,16 @@ fn test_eip8037_reverted_create_child() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    // On child revert, state gas is returned to parent's reservoir (matching Python spec).
-    // Only CREATE state gas contributes to the delta (SSTORE state gas is refunded).
-    let expected_delta = STATE_GAS_CREATE;
-    let parent_state_gas = STATE_GAS_CREATE;
+    // On child revert, ALL state gas is returned to the parent's reservoir:
+    // the child's SSTORE state gas via handle_reservoir_remaining_gas, and the
+    // parent's upfront CREATE state gas via the refund in return_result.
+    let expected_delta = 0;
+    let parent_state_gas = 0;
 
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    // state_gas_spent reflects only parent's state gas (child's SSTORE state gas refunded on revert).
+    // state_gas_spent is fully refunded (CREATE charge undone, SSTORE charge undone).
     assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     compare_or_save_eip8037_testdata(

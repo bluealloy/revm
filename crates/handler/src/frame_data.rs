@@ -17,6 +17,9 @@ pub struct CallFrame {
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
+    /// State gas the parent charged upfront in the CREATE/CREATE2 opcode (EIP-8037).
+    /// On revert/halt this amount is refunded to the parent's reservoir.
+    pub state_gas_charged: u64,
 }
 
 /// Frame Data
@@ -124,7 +127,10 @@ impl FrameResult {
 impl FrameData {
     /// Creates a new create frame data.
     pub fn new_create(created_address: Address) -> Self {
-        Self::Create(CreateFrame { created_address })
+        Self::Create(CreateFrame {
+            created_address,
+            state_gas_charged: 0,
+        })
     }
 
     /// Creates a new call frame data.

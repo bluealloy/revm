@@ -7,7 +7,7 @@ use context_interface::{
     context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
-    Cfg, ContextTr, Database,
+    Block, Cfg, ContextTr, Database,
 };
 use core::cmp::min;
 use derive_where::derive_where;
@@ -261,6 +261,7 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CreateInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir();
+        let state_gas_charged = inputs.state_gas_charged();
         let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
@@ -273,6 +274,7 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 address: None,
+                state_gas_charged,
             })))
         };
 
@@ -339,7 +341,10 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::Create(CreateFrame {
+                created_address,
+                state_gas_charged,
+            }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -425,19 +430,21 @@ impl EthFrame<EthInterpreter> {
                 )))
             }
             FrameData::Create(frame) => {
+                let cpsb = context.cfg().cpsb(context.block().gas_limit());
                 let (cfg, journal) = context.cfg_journal_mut();
                 return_create(
                     journal,
                     cfg,
+                    cpsb,
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                 );
 
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
+                ItemOrResult::Result(FrameResult::Create(
+                    CreateOutcome::new(interpreter_result, Some(frame.created_address))
+                        .with_state_gas_charged(frame.state_gas_charged),
+                ))
             }
         };
 
@@ -523,6 +530,17 @@ impl EthFrame<EthInterpreter> {
                 // handle reservoir remaining gas
                 handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
 
+                // EIP-8037: Refund the upfront create_state_gas to the parent's reservoir
+                // when the create child reverted or halted. State changes are rolled back,
+                // so the parent's CREATE state gas charge must be undone.
+                if !instruction_result.is_ok() && outcome.state_gas_charged > 0 {
+                    let charged = outcome.state_gas_charged;
+                    this_gas.set_reservoir(this_gas.reservoir().saturating_add(charged));
+                    this_gas.set_state_gas_spent(
+                        this_gas.state_gas_spent().saturating_sub(charged as i64),
+                    );
+                }
+
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
@@ -589,6 +607,7 @@ pub fn handle_reservoir_remaining_gas(
 pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
     journal: &mut JOURNAL,
     cfg: CFG,
+    cpsb: u64,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
@@ -666,7 +685,7 @@ pub fn return_create<JOURNAL: JournalTr, CFG: Cfg>(
         // with refilling of state gas.
         let state_gas_for_code = cfg
             .gas_params()
-            .code_deposit_state_gas(interpreter_result.output.len());
+            .code_deposit_state_gas(interpreter_result.output.len(), cpsb);
         if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
             journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;

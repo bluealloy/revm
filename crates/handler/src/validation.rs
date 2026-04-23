@@ -242,8 +242,9 @@ pub fn validate_initial_tx_gas(
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
+    cpsb: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
+    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec, cpsb);
 
     if is_eip7623_disabled {
         gas.floor_gas = 0
@@ -304,6 +305,7 @@ mod tests {
                     c.set_spec_and_mainnet_gas_params(spec_id);
                 }
             })
+            .modify_block_chained(|block| block.gas_limit = 100_000_000)
             .with_db(CacheDB::<EmptyDB>::default());
 
         let mut evm = ctx.build_mainnet();

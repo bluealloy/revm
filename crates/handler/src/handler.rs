@@ -12,7 +12,7 @@ use context::{
 use context_interface::{
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
-    Cfg, ContextTr, Database, JournalTr, Transaction,
+    Block, Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
@@ -292,6 +292,7 @@ pub trait Handler {
             ctx.cfg().is_eip7623_disabled(),
             ctx.cfg().is_amsterdam_eip8037_enabled(),
             ctx.cfg().tx_gas_limit_cap(),
+            ctx.cfg().cpsb(ctx.block().gas_limit()),
         )?;
 
         Ok(gas)

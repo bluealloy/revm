@@ -90,12 +90,17 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    // State gas for account creation + contract metadata (EIP-8037)
+    // State gas for account creation + contract metadata (EIP-8037).
+    // Charged upfront on the parent's tracker; refunded to the parent's reservoir
+    // in `return_result` when the child frame reverts or halts (see frame.rs).
+    let mut state_gas_charged = 0u64;
     if context.host.is_amsterdam_eip8037_enabled() {
-        state_gas!(
-            context.interpreter,
-            context.host.gas_params().create_state_gas()
-        );
+        let cost = context
+            .host
+            .gas_params()
+            .create_state_gas(context.host.cpsb());
+        state_gas!(context.interpreter, cost);
+        state_gas_charged = cost;
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();
@@ -113,7 +118,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     gas!(context.interpreter, gas_limit);
 
     // Call host to interact with target contract
-    let create_inputs = CreateInputs::new(
+    let mut create_inputs = CreateInputs::new(
         context.interpreter.input.target_address(),
         scheme,
         value,
@@ -121,6 +126,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         gas_limit,
         context.interpreter.gas.reservoir(),
     );
+    create_inputs.set_state_gas_charged(state_gas_charged);
     context
         .interpreter
         .bytecode

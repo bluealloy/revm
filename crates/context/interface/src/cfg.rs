@@ -94,6 +94,13 @@ pub trait Cfg {
     /// via the reservoir model. EIP-8037 specifies concrete gas values based on
     /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
+
+    /// Returns the EIP-8037 `cost_per_state_byte` (CPSB) for the given block gas limit.
+    ///
+    /// When [`Cfg::is_amsterdam_eip8037_enabled`] is `false` this returns `0`.
+    /// Otherwise, if an override is configured it is returned directly; otherwise the
+    /// value is derived from `block_gas_limit` via [`primitives::eip8037::cost_per_state_byte`].
+    fn cpsb(&self, block_gas_limit: u64) -> u64;
 }
 
 /// What bytecode analysis to perform
