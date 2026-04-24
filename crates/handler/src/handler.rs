@@ -264,6 +264,12 @@ pub trait Handler {
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
     ) -> Result<ResultGas, Self::Error> {
+        // EIP-8037: Refund reservoir for accounts that were created and then
+        // self-destructed in this tx (EIP-6780 erasure). Runs first so the
+        // updated reservoir feeds into refund, reimbursement, and beneficiary
+        // reward accounting below.
+        self.eip8037_selfdestruct_refund(evm, exec_result);
+
         // Calculate final refund and add EIP-7702 refund to gas.
         self.refund(evm, exec_result, eip7702_gas_refund);
 
@@ -481,6 +487,23 @@ pub trait Handler {
         init_and_floor_gas: InitialAndFloorGas,
     ) {
         post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
+    }
+
+    /// EIP-8037: Refunds state gas for accounts that were both created and
+    /// self-destructed in this transaction (EIP-6780 erasure).
+    ///
+    /// Iterates over destroyed accounts in the journal, sums the state gas that
+    /// was charged for creating each account, depositing its code, and setting
+    /// its storage slots, and refills the reservoir with the total. Refilling
+    /// the reservoir (rather than recording a refund) bypasses the 1/5 refund
+    /// cap because this state never actually persists.
+    #[inline]
+    fn eip8037_selfdestruct_refund(
+        &self,
+        evm: &mut Self::Evm,
+        exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+    ) {
+        post_execution::eip8037_selfdestruct_state_gas_refund(evm.ctx(), exec_result.gas_mut())
     }
 
     /// Calculates the final gas refund amount, including any EIP-7702 refunds.
