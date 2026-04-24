@@ -262,6 +262,10 @@ impl EthFrame<EthInterpreter> {
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir();
         let spec = context.cfg().spec().into();
+        // EIP-8037 refund for the CREATE opcode's upfront `create_state_gas` is
+        // applied uniformly in `return_result` when the create fails (revert,
+        // halt, or early-fail with `address == None`), so early-fail results
+        // only carry the reservoir they inherited from the parent.
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
@@ -521,6 +525,22 @@ impl EthFrame<EthInterpreter> {
                 // handle reservoir remaining gas
                 handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
 
+                // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
+                // this frame's tracker. When the child fails to deploy a contract
+                // (revert, halt, or early-fail paths that return `address == None`
+                // such as nonce overflow, depth, OutOfFunds), refund the upfront
+                // charge to the reservoir and undo it on `state_gas_spent`.
+                if !instruction_result.is_ok() && ctx.cfg().is_amsterdam_eip8037_enabled() {
+                    let state_gas_charged =
+                        ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
+                    this_gas.set_reservoir(this_gas.reservoir().saturating_add(state_gas_charged));
+                    this_gas.set_state_gas_spent(
+                        this_gas
+                            .state_gas_spent()
+                            .saturating_sub(state_gas_charged as i64),
+                    );
+                }
+
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
@@ -580,11 +600,11 @@ pub fn handle_reservoir_remaining_gas(
 
 /// Handles the result of a CREATE operation, including validation and state updates.
 ///
-/// The EIP-8037 upfront CREATE state gas is derived from `cfg` (and the current
-/// block's CPSB) inside this function: it is refunded to the reservoir on entry
-/// and re-recorded at the end of a successful commit. On revert/halt the refund
-/// persists, so the state gas flows back to the parent via
-/// `handle_reservoir_remaining_gas`.
+/// The EIP-8037 upfront CREATE state gas is charged on the parent's tracker by
+/// the CREATE/CREATE2 opcode. On child failure (revert/halt/early-fail) it is
+/// refunded to the parent in `return_result`. The child frame is NOT allowed to
+/// borrow the upfront charge to pay for code deposit: it must cover code deposit
+/// state gas from its own reservoir and remaining gas.
 pub fn return_create<CTX: ContextTr>(
     context: &mut CTX,
     checkpoint: JournalCheckpoint,
@@ -599,15 +619,6 @@ pub fn return_create<CTX: ContextTr>(
     let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
     let cpsb = local.cpsb();
     let gas_params = cfg.gas_params();
-
-    // EIP-8037: The parent charged `create_state_gas` upfront in the CREATE/CREATE2
-    // opcode. Refund it here so the reservoir reflects only what the child actually
-    // consumed; re-record at the end on success, or leave refunded on revert/halt.
-    let state_gas_charged = gas_params.create_state_gas(cpsb);
-
-    if is_amsterdam_eip8037 {
-        interpreter_result.gas.refill_reservoir(state_gas_charged);
-    }
 
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
@@ -689,13 +700,6 @@ pub fn return_create<CTX: ContextTr>(
 
     // Set code
     journal.set_code(address, bytecode);
-
-    // EIP-8037: Re-apply the upfront CREATE state gas now that the create succeeded,
-    // undoing the entry-side refund so the charge is reflected in the child's
-    // final reservoir and `state_gas_spent`.
-    if is_amsterdam_eip8037 {
-        let _ = interpreter_result.gas.record_state_cost(state_gas_charged);
-    }
 
     interpreter_result.result = InstructionResult::Return;
 }
