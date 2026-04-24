@@ -1,17 +1,16 @@
+//! Ethereum hardfork specification IDs.
+
 #![allow(non_camel_case_types)]
-// enumn has missing docs. Should be replaced in the future https://github.com/bluealloy/revm/issues/2402
-#![allow(missing_docs)]
 
 use core::str::FromStr;
-pub use num_enum::TryFromPrimitive;
 pub use std::string::{String, ToString};
 pub use SpecId::*;
 
-/// Specification IDs and their activation block
+/// Specification IDs and their activation block.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs).
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     /// Frontier hard fork
@@ -81,16 +80,45 @@ pub enum SpecId {
 }
 
 impl SpecId {
+    /// The latest known spec. This may refer to a highly experimental hard fork
+    /// that is not yet finalized or deployed on any network.
+    ///
+    /// **Warning**: This value will change between minor versions as new hard forks are added.
+    /// Do not rely on it for stable behavior.
+    #[doc(alias = "MAX")]
+    pub const NEXT: Self = Self::AMSTERDAM;
+
     /// Returns the [`SpecId`] for the given [`u8`].
     #[inline]
-    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
-        Self::try_from(spec_id).ok()
+    pub const fn try_from_u8(spec_id: u8) -> Option<Self> {
+        if spec_id <= Self::NEXT as u8 {
+            // SAFETY: `spec_id` is within the valid range.
+            Some(unsafe { core::mem::transmute::<u8, Self>(spec_id) })
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
     pub const fn is_enabled_in(self, other: Self) -> bool {
         self as u8 >= other as u8
+    }
+}
+
+impl From<SpecId> for u8 {
+    #[inline]
+    fn from(spec_id: SpecId) -> Self {
+        spec_id as u8
+    }
+}
+
+impl TryFrom<u8> for SpecId {
+    type Error = u8;
+
+    #[inline]
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::try_from_u8(value).ok_or(value)
     }
 }
 
