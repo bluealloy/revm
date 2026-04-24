@@ -4,7 +4,7 @@
 //
 // Changes from upstream:
 // - Removed compress1_loop, compress4_loop, and all multi-hash (Job, transpose) code.
-// - Changed compress_block signature for EIP-152: takes (rounds, h, m, t, f) instead of
+// - Changed compress_block signature for EIP-152: takes (rounds, words, m, t, f) instead of
 //   (block, words, count, last_block, last_node), with variable round count.
 // - Replaced 12 hardcoded rounds with a loop over 10 unrolled rounds using a remaining counter.
 
@@ -13,19 +13,20 @@ use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
+use super::Word;
 use arrayref::{array_refs, mut_array_refs};
 
 const DEGREE: usize = 4;
-const BLOCKBYTES: usize = 128;
+const BLOCKBYTES: usize = 16 * size_of::<Word>();
 
 #[inline(always)]
-unsafe fn loadu(src: *const [u64; DEGREE]) -> __m256i {
+unsafe fn loadu(src: *const [Word; DEGREE]) -> __m256i {
     // This is an unaligned load, so the pointer cast is allowed.
     unsafe { _mm256_loadu_si256(src as *const __m256i) }
 }
 
 #[inline(always)]
-unsafe fn storeu(src: __m256i, dest: *mut [u64; DEGREE]) {
+unsafe fn storeu(src: __m256i, dest: *mut [Word; DEGREE]) {
     // This is an unaligned store, so the pointer cast is allowed.
     unsafe { _mm256_storeu_si256(dest as *mut __m256i, src) }
 }
@@ -134,14 +135,20 @@ unsafe fn undiagonalize(a: &mut __m256i, _b: &mut __m256i, c: &mut __m256i, d: &
 }
 
 #[target_feature(enable = "avx2")]
-pub(super) unsafe fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
+pub(super) unsafe fn compress(
+    rounds: u32,
+    words: &mut [Word; 8],
+    m: &[Word; 16],
+    t: &[Word; 2],
+    f: bool,
+) {
     unsafe {
-        let (words_low, words_high) = mut_array_refs!(h, DEGREE, DEGREE);
+        let (words_low, words_high) = mut_array_refs!(words, DEGREE, DEGREE);
         let (iv_low, iv_high) = array_refs!(&super::IV, DEGREE, DEGREE);
         let mut a = loadu(words_low);
         let mut b = loadu(words_high);
         let mut c = loadu(iv_low);
-        let last_block: u64 = if f { !0 } else { 0 };
+        let last_block: Word = if f { !0 } else { 0 };
         let flags = set4(t[0], t[1], last_block, 0);
         let mut d = xor(loadu(iv_high), flags);
 

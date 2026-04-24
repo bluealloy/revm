@@ -13,10 +13,12 @@ use crate::{
 mod avx2;
 mod portable;
 
+type Word = u64;
+
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub(crate) const IV: [u64; 8] = [
+const IV: [Word; 8] = [
     0x6A09E667F3BCC908,
     0xBB67AE8584CAA73B,
     0x3C6EF372FE94F82B,
@@ -27,7 +29,7 @@ pub(crate) const IV: [u64; 8] = [
     0x5BE0CD19137E2179,
 ];
 
-pub(crate) const SIGMA: [[usize; 16]; 10] = [
+const SIGMA: [[u8; 16]; 12] = [
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
     [11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4],
@@ -38,12 +40,14 @@ pub(crate) const SIGMA: [[usize; 16]; 10] = [
     [13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10],
     [6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5],
     [10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0],
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
 ];
 
 /// BLAKE2b compression function F (EIP-152).
 ///
 /// Dispatches to the best available implementation (AVX2 or portable).
-pub fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
+pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
         #[cfg(target_feature = "avx2")]

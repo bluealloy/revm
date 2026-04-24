@@ -4,12 +4,11 @@
 //
 // Changes from upstream:
 // - Removed compress1_loop and all Finalize/LastNode/Stride/Count machinery.
-// - Changed compress_block signature for EIP-152: takes (rounds, h, m, t, f) with pre-parsed
-//   u64 arrays instead of raw bytes, and variable round count.
+// - Changed compress_block signature for EIP-152: takes (rounds, words, m, t, f) with pre-parsed
+//   Word arrays instead of raw bytes, and variable round count.
 // - Replaced 12 hardcoded round() calls with a for loop.
-// - Changed Word type alias to u64, SIGMA entries from u8 to usize.
 
-use super::{IV, SIGMA};
+use super::{Word, IV, SIGMA};
 
 // G is the mixing function, called eight times per round in the compression
 // function. V is the 16-word state vector of the compression function, usually
@@ -18,7 +17,7 @@ use super::{IV, SIGMA};
 // Y are words of input, chosen by the caller according to the message
 // schedule, SIGMA.
 #[inline(always)]
-const fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+const fn g(v: &mut [Word; 16], a: usize, b: usize, c: usize, d: usize, x: Word, y: Word) {
     v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
     v[d] = (v[d] ^ v[a]).rotate_right(32);
     v[c] = v[c].wrapping_add(v[d]);
@@ -30,34 +29,34 @@ const fn g(v: &mut [u64; 16], a: usize, b: usize, c: usize, d: usize, x: u64, y:
 }
 
 #[inline(always)]
-const fn round(r: usize, m: &[u64; 16], v: &mut [u64; 16]) {
+const fn round(r: usize, m: &[Word; 16], v: &mut [Word; 16]) {
     // Select the message schedule based on the round.
-    let s = SIGMA[r % 10];
+    let s = SIGMA[r % 12];
 
     // Mix the columns.
-    g(v, 0, 4, 8, 12, m[s[0]], m[s[1]]);
-    g(v, 1, 5, 9, 13, m[s[2]], m[s[3]]);
-    g(v, 2, 6, 10, 14, m[s[4]], m[s[5]]);
-    g(v, 3, 7, 11, 15, m[s[6]], m[s[7]]);
+    g(v, 0, 4, 8, 12, m[s[0] as usize], m[s[1] as usize]);
+    g(v, 1, 5, 9, 13, m[s[2] as usize], m[s[3] as usize]);
+    g(v, 2, 6, 10, 14, m[s[4] as usize], m[s[5] as usize]);
+    g(v, 3, 7, 11, 15, m[s[6] as usize], m[s[7] as usize]);
 
     // Mix the rows.
-    g(v, 0, 5, 10, 15, m[s[8]], m[s[9]]);
-    g(v, 1, 6, 11, 12, m[s[10]], m[s[11]]);
-    g(v, 2, 7, 8, 13, m[s[12]], m[s[13]]);
-    g(v, 3, 4, 9, 14, m[s[14]], m[s[15]]);
+    g(v, 0, 5, 10, 15, m[s[8] as usize], m[s[9] as usize]);
+    g(v, 1, 6, 11, 12, m[s[10] as usize], m[s[11] as usize]);
+    g(v, 2, 7, 8, 13, m[s[12] as usize], m[s[13] as usize]);
+    g(v, 3, 4, 9, 14, m[s[14] as usize], m[s[15] as usize]);
 }
 
-pub(crate) fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
+pub(crate) fn compress(rounds: u32, words: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
     // Initialize the compression state.
     let mut v = [
-        h[0],
-        h[1],
-        h[2],
-        h[3],
-        h[4],
-        h[5],
-        h[6],
-        h[7],
+        words[0],
+        words[1],
+        words[2],
+        words[3],
+        words[4],
+        words[5],
+        words[6],
+        words[7],
         IV[0],
         IV[1],
         IV[2],
@@ -72,12 +71,12 @@ pub(crate) fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2
         round(i, m, &mut v);
     }
 
-    h[0] ^= v[0] ^ v[8];
-    h[1] ^= v[1] ^ v[9];
-    h[2] ^= v[2] ^ v[10];
-    h[3] ^= v[3] ^ v[11];
-    h[4] ^= v[4] ^ v[12];
-    h[5] ^= v[5] ^ v[13];
-    h[6] ^= v[6] ^ v[14];
-    h[7] ^= v[7] ^ v[15];
+    words[0] ^= v[0] ^ v[8];
+    words[1] ^= v[1] ^ v[9];
+    words[2] ^= v[2] ^ v[10];
+    words[3] ^= v[3] ^ v[11];
+    words[4] ^= v[4] ^ v[12];
+    words[5] ^= v[5] ^ v[13];
+    words[6] ^= v[6] ^ v[14];
+    words[7] ^= v[7] ^ v[15];
 }
