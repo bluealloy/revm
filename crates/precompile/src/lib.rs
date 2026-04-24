@@ -65,7 +65,7 @@ use primitives::{
     hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
     SHORT_ADDRESS_CAP,
 };
-use std::vec::Vec;
+use std::boxed::Box;
 
 /// Calculate the linear cost of a precompile.
 #[inline]
@@ -87,9 +87,7 @@ pub struct Precompiles {
     /// Addresses of precompiles.
     addresses: AddressSet,
     /// Optimized addresses filter.
-    optimized_access: Vec<Option<Precompile>>,
-    /// `true` if all precompiles are short addresses.
-    all_short_addresses: bool,
+    optimized_access: Box<[Option<Precompile>; SHORT_ADDRESS_CAP]>,
 }
 
 impl Default for Precompiles {
@@ -97,8 +95,7 @@ impl Default for Precompiles {
         Self {
             inner: HashMap::default(),
             addresses: AddressSet::default(),
-            optimized_access: vec![None; SHORT_ADDRESS_CAP],
-            all_short_addresses: true,
+            optimized_access: Box::new([const { None }; SHORT_ADDRESS_CAP]),
         }
     }
 }
@@ -106,83 +103,29 @@ impl Default for Precompiles {
 impl Precompiles {
     /// Returns the precompiles for the given spec.
     pub fn new(spec: PrecompileSpecId) -> &'static Self {
-        match spec {
-            PrecompileSpecId::HOMESTEAD => Self::homestead(),
-            PrecompileSpecId::BYZANTIUM => Self::byzantium(),
-            PrecompileSpecId::ISTANBUL => Self::istanbul(),
-            PrecompileSpecId::BERLIN => Self::berlin(),
-            PrecompileSpecId::CANCUN => Self::cancun(),
-            PrecompileSpecId::PRAGUE => Self::prague(),
-            PrecompileSpecId::OSAKA => Self::osaka(),
-        }
+        static INSTANCES: [OnceLock<Precompiles>; PrecompileSpecId::NEXT as usize + 1] =
+            [const { OnceLock::new() }; PrecompileSpecId::NEXT as usize + 1];
+        INSTANCES[spec as usize].get_or_init(|| init_precompiles(spec))
     }
 
     /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Precompiles::default();
-            precompiles.extend([
-                secp256k1::ECRECOVER,
-                hash::SHA256,
-                hash::RIPEMD160,
-                identity::FUN,
-            ]);
-            precompiles
-        })
-    }
-
-    /// Returns inner HashMap of precompiles.
-    pub const fn inner(&self) -> &AddressMap<Precompile> {
-        &self.inner
+        Self::new(PrecompileSpecId::HOMESTEAD)
     }
 
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::homestead().clone();
-            precompiles.extend([
-                // EIP-198: Big integer modular exponentiation.
-                modexp::BYZANTIUM,
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                bn254::add::BYZANTIUM,
-                bn254::mul::BYZANTIUM,
-                bn254::pair::BYZANTIUM,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::BYZANTIUM)
     }
 
     /// Returns precompiles for Istanbul spec.
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::byzantium().clone();
-            precompiles.extend([
-                // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                bn254::add::ISTANBUL,
-                bn254::mul::ISTANBUL,
-                bn254::pair::ISTANBUL,
-                // EIP-152: Add BLAKE2 compression function `F` precompile.
-                blake2::FUN,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::ISTANBUL)
     }
 
     /// Returns precompiles for Berlin spec.
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::istanbul().clone();
-            precompiles.extend([
-                // EIP-2565: ModExp Gas Cost.
-                modexp::BERLIN,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::BERLIN)
     }
 
     /// Returns precompiles for Cancun spec.
@@ -190,40 +133,28 @@ impl Precompiles {
     /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
     /// effectively making this the same as Berlin.
     pub fn cancun() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::berlin().clone();
-            precompiles.extend([
-                // EIP-4844: Shard Blob Transactions
-                kzg_point_evaluation::POINT_EVALUATION,
-            ]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::CANCUN)
     }
 
     /// Returns precompiles for Prague spec.
     pub fn prague() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::cancun().clone();
-            precompiles.extend(bls12_381::precompiles());
-            precompiles
-        })
+        Self::new(PrecompileSpecId::PRAGUE)
     }
 
     /// Returns precompiles for Osaka spec.
     pub fn osaka() -> &'static Self {
-        static INSTANCE: OnceLock<Precompiles> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::prague().clone();
-            precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
-            precompiles
-        })
+        Self::new(PrecompileSpecId::OSAKA)
     }
 
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::osaka()
+        Self::new(PrecompileSpecId::NEXT)
+    }
+
+    /// Returns inner HashMap of precompiles.
+    #[inline]
+    pub const fn inner(&self) -> &AddressMap<Precompile> {
+        &self.inner
     }
 
     /// Returns an iterator over the precompiles addresses.
@@ -260,16 +191,19 @@ impl Precompiles {
     }
 
     /// Is the precompiles list empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
 
     /// Returns the number of precompiles.
+    #[inline]
     pub fn len(&self) -> usize {
         self.inner.len()
     }
 
     /// Returns the precompiles addresses as a set.
+    #[inline]
     pub const fn addresses_set(&self) -> &AddressSet {
         &self.addresses
     }
@@ -277,7 +211,6 @@ impl Precompiles {
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
-    #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
         let iter = other.into_iter();
         let (lower, _) = iter.size_hint();
@@ -287,8 +220,6 @@ impl Precompiles {
             let address = *item.address();
             if let Some(short_idx) = short_address(&address) {
                 self.optimized_access[short_idx] = Some(item.clone());
-            } else {
-                self.all_short_addresses = false;
             }
             self.addresses.insert(address);
             self.inner.insert(address, item);
@@ -328,6 +259,66 @@ impl Precompiles {
         precompiles.extend(inner.into_iter().map(|p| p.1));
         precompiles
     }
+}
+
+fn init_precompiles(spec: PrecompileSpecId) -> Precompiles {
+    use PrecompileSpecId::*;
+
+    let mut precompiles = Precompiles::default();
+
+    // Homestead
+    precompiles.extend([
+        secp256k1::ECRECOVER,
+        hash::SHA256,
+        hash::RIPEMD160,
+        identity::FUN,
+    ]);
+
+    if spec.is_enabled_in(BYZANTIUM) {
+        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+        // EIP-198: Big integer modular exponentiation.
+        precompiles.extend([
+            modexp::BYZANTIUM,
+            bn254::add::BYZANTIUM,
+            bn254::mul::BYZANTIUM,
+            bn254::pair::BYZANTIUM,
+        ]);
+    }
+
+    if spec.is_enabled_in(ISTANBUL) {
+        // EIP-152: Add BLAKE2 compression function `F` precompile.
+        // EIP-1108: Reduce alt_bn128 precompile gas costs.
+        precompiles.extend([
+            bn254::add::ISTANBUL,
+            bn254::mul::ISTANBUL,
+            bn254::pair::ISTANBUL,
+            blake2::FUN,
+        ]);
+    }
+
+    if spec.is_enabled_in(BERLIN) {
+        // EIP-2565: ModExp Gas Cost.
+        precompiles.extend([modexp::BERLIN]);
+    }
+
+    if spec.is_enabled_in(CANCUN) {
+        // EIP-4844: Shard Blob Transactions.
+        precompiles.extend([kzg_point_evaluation::POINT_EVALUATION]);
+    }
+
+    if spec.is_enabled_in(PRAGUE) {
+        // EIP-2537: Precompile for BLS12-381 curve operations.
+        precompiles.extend(bls12_381::precompiles());
+    }
+
+    if spec.is_enabled_in(OSAKA) {
+        // EIP-7823: Set upper bounds for MODEXP.
+        // EIP-7883: ModExp Gas Cost Increase.
+        precompiles.extend([modexp::OSAKA, secp256r1::P256VERIFY_OSAKA]);
+    }
+
+    precompiles
 }
 
 /// Precompile wrapper for simple eth function that provides complex interface on execution.
@@ -392,6 +383,7 @@ impl Precompile {
 }
 
 /// Ethereum hardfork spec ids. Represents the specs where precompiles had a change.
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum PrecompileSpecId {
     /// Frontier spec.
@@ -434,9 +426,23 @@ impl From<SpecId> for PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
+    /// The latest known precompile spec. This may refer to a highly experimental hard fork
+    /// that is not yet finalized or deployed on any network.
+    ///
+    /// **Warning**: This value will change between minor versions as new hard forks are added.
+    /// Do not rely on it for stable behavior.
+    #[doc(alias = "MAX")]
+    pub const NEXT: Self = Self::OSAKA;
+
+    /// Returns `true` if the given specification ID is enabled in this spec.
+    #[inline]
+    pub const fn is_enabled_in(self, other: Self) -> bool {
+        self as u8 >= other as u8
+    }
+
     /// Returns the appropriate precompile Spec for the primitive [SpecId].
-    pub const fn from_spec_id(spec_id: primitives::hardfork::SpecId) -> Self {
-        use primitives::hardfork::SpecId::*;
+    pub const fn from_spec_id(spec_id: SpecId) -> Self {
+        use SpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD
