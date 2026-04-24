@@ -104,7 +104,7 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
         let t = [0u64, 0u64];
         b.iter(|| {
             let mut h_copy = h;
-            blake2::algo::compress(
+            blake2::compress(
                 black_box(12),
                 &mut h_copy,
                 &black_box(m),
