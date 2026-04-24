@@ -8,6 +8,7 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+#[allow(unreachable_code)]
 pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;

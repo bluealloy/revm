@@ -43,7 +43,6 @@ pub(crate) const SIGMA: [[usize; 16]; 10] = [
 /// BLAKE2b compression function F (EIP-152).
 ///
 /// Dispatches to the best available implementation (AVX2 or portable).
-#[allow(unreachable_code)]
 pub fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
