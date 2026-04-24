@@ -561,25 +561,20 @@ pub fn handle_reservoir_remaining_gas(
                 .saturating_add(child_gas.state_gas_spent()),
         );
     } else {
-        // On revert or halt: state changes are undone, so ALL state gas returns
-        // to the parent's reservoir.
-        // - child.state_gas_spent(): state gas the child consumed (state rolled back, so refunded)
-        // - child.reservoir(): state gas the child didn't use (including gas returned from
-        //   deeper failed frames)
-        // This replaces (not adds to) the parent's reservoir because the child started with
-        // the parent's reservoir value (REVM doesn't zero it before the call), so the child's
-        // total already includes the parent's original reservoir.
+        // On revert or halt: state changes are undone. Charges (including the
+        // portion that spilled into regular gas) that weren't refilled are
+        // returned to the parent's reservoir; any 0→x→0 refills that inflated
+        // the reservoir above the parent's pre-call value are rolled back.
         //
-        // `child.state_gas_spent()` can be negative when the child refilled the
-        // reservoir past what it itself charged (0→x→0 restoration on a slot
-        // the parent had set). The net `state_gas_spent + reservoir` cannot
-        // legitimately go below zero — the parent had already consumed the
-        // extra reservoir via its own 0→x charge, so the child's reservoir is
-        // correspondingly higher — but we saturate defensively.
-        let combined = (child_gas.state_gas_spent())
-            .saturating_add_unsigned(child_gas.reservoir())
-            .max(0) as u64;
-        parent_gas.set_reservoir(combined);
+        // Parent's reservoir was not modified while the child executed, so it
+        // still holds the pre-call value. Capping the child's reservoir at the
+        // parent's value strips off refill-driven inflation; clamping
+        // `state_gas_spent` to non-negative avoids "refunding" refills that
+        // offset charges made by the parent (those are the parent's work and
+        // must not be undone here).
+        let capped_reservoir = child_gas.reservoir().min(parent_gas.reservoir());
+        let state_gas_returned = child_gas.state_gas_spent().max(0) as u64;
+        parent_gas.set_reservoir(capped_reservoir.saturating_add(state_gas_returned));
     }
 }
 
