@@ -40,9 +40,20 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
     let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
     let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
     if gas_used_after_refund < init_and_floor_gas.floor_gas {
-        // Set spent so that (limit - remaining - reservoir) = floor_gas
-        // i.e. remaining = limit - floor_gas - reservoir
-        gas.set_spent(init_and_floor_gas.floor_gas + gas.reservoir());
+        // Want reimbursable = `limit - floor_gas`. When `floor_gas + reservoir`
+        // exceeds `limit` (e.g. an EIP-7702 reservoir refund pushed `reservoir`
+        // above `limit - floor_gas`), the plain `set_spent` saturates `remaining`
+        // to 0 and silently over-reimburses by `floor_gas + reservoir - limit`;
+        // clamp the reservoir instead.
+        let floor = init_and_floor_gas.floor_gas;
+        let reservoir = gas.reservoir();
+        let limit = gas.limit();
+        if limit >= floor.saturating_add(reservoir) {
+            gas.set_spent(floor + reservoir);
+        } else {
+            gas.set_reservoir(limit.saturating_sub(floor));
+            gas.set_remaining(0);
+        }
         // clear refund
         gas.set_refund(0);
     }
