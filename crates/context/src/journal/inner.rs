@@ -320,11 +320,17 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
 
         let mut refund: u64 = 0;
-        for (address, account) in self.state.iter() {
-            if !(account.is_selfdestructed_locally() && account.is_created_locally()) {
+        let sstore_set = gas_params
+            .get(GasId::sstore_set_state_gas())
+            .saturating_mul(cpsb);
+        for address in self.selfdestructed_addresses.iter() {
+            if skip_address == Some(*address) {
                 continue;
             }
-            if skip_address == Some(*address) {
+            let Some(account) = self.state.get(address) else {
+                continue;
+            };
+            if !account.is_created_locally() {
                 continue;
             }
 
@@ -340,15 +346,11 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 }
             }
 
-            // Storage slot state gas — each 0→non-zero slot set during this tx
-            // was charged SSTORE_SET_BYTES × cpsb; since the account is destroyed,
-            // refund that for every slot that still holds a non-zero present value
-            // and had an original value of zero.
-            let sstore_set = gas_params
-                .get(GasId::sstore_set_state_gas())
-                .saturating_mul(cpsb);
+            // Storage slot state gas — each slot set during this tx was charged
+            // SSTORE_SET_BYTES × cpsb; since the account is destroyed, refund
+            // that for every slot that still holds a non-zero present value.
             for slot in account.storage.values() {
-                if slot.original_value.is_zero() && !slot.present_value.is_zero() {
+                if !slot.present_value.is_zero() {
                     refund = refund.saturating_add(sstore_set);
                 }
             }
