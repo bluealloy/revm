@@ -1,6 +1,12 @@
 // Adapted from https://github.com/oconnor663/blake2_simd
 // Copyright (c) 2018 Jack O'Connor
 // Licensed under the MIT license
+//
+// Changes from upstream:
+// - Removed compress1_loop, compress4_loop, and all multi-hash (Job, transpose) code.
+// - Changed compress_block signature for EIP-152: takes (rounds, h, m, t, f) instead of
+//   (block, words, count, last_block, last_node), with variable round count.
+// - Replaced 12 hardcoded rounds with a loop over 10 unrolled rounds using a remaining counter.
 
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
@@ -9,14 +15,123 @@ use core::arch::x86_64::*;
 
 use arrayref::{array_refs, mut_array_refs};
 
+const DEGREE: usize = 4;
+const BLOCKBYTES: usize = 128;
+
+#[inline(always)]
+unsafe fn loadu(src: *const [u64; DEGREE]) -> __m256i {
+    // This is an unaligned load, so the pointer cast is allowed.
+    unsafe { _mm256_loadu_si256(src as *const __m256i) }
+}
+
+#[inline(always)]
+unsafe fn storeu(src: __m256i, dest: *mut [u64; DEGREE]) {
+    // This is an unaligned store, so the pointer cast is allowed.
+    unsafe { _mm256_storeu_si256(dest as *mut __m256i, src) }
+}
+
+#[inline(always)]
+unsafe fn loadu_128(mem_addr: &[u8; 16]) -> __m128i {
+    unsafe { _mm_loadu_si128(mem_addr.as_ptr() as *const __m128i) }
+}
+
+#[inline(always)]
+unsafe fn add(a: __m256i, b: __m256i) -> __m256i {
+    unsafe { _mm256_add_epi64(a, b) }
+}
+
+#[inline(always)]
+unsafe fn xor(a: __m256i, b: __m256i) -> __m256i {
+    unsafe { _mm256_xor_si256(a, b) }
+}
+
+#[inline(always)]
+unsafe fn set4(a: u64, b: u64, c: u64, d: u64) -> __m256i {
+    unsafe { _mm256_setr_epi64x(a as i64, b as i64, c as i64, d as i64) }
+}
+
+// Adapted from https://github.com/rust-lang-nursery/stdsimd/pull/479.
 macro_rules! _MM_SHUFFLE {
     ($z:expr, $y:expr, $x:expr, $w:expr) => {
         ($z << 6) | ($y << 4) | ($x << 2) | $w
     };
 }
 
-const DEGREE: usize = 4;
-const BLOCKBYTES: usize = 128;
+// These rotations are the "simple version". For the "complicated version", see
+// https://github.com/sneves/blake2-avx2/blob/b3723921f668df09ece52dcd225a36d4a4eea1d9/blake2b-common.h#L43-L46.
+// For a discussion of the tradeoffs, see
+// https://github.com/sneves/blake2-avx2/pull/5. In short:
+// - Due to an LLVM bug (https://bugs.llvm.org/show_bug.cgi?id=44379), this
+//   version performs better on recent x86 chips.
+// - LLVM is able to optimize this version to AVX-512 rotation instructions
+//   when those are enabled.
+
+#[inline(always)]
+unsafe fn rot32(x: __m256i) -> __m256i {
+    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 32), _mm256_slli_epi64(x, 64 - 32)) }
+}
+
+#[inline(always)]
+unsafe fn rot24(x: __m256i) -> __m256i {
+    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 24), _mm256_slli_epi64(x, 64 - 24)) }
+}
+
+#[inline(always)]
+unsafe fn rot16(x: __m256i) -> __m256i {
+    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 16), _mm256_slli_epi64(x, 64 - 16)) }
+}
+
+#[inline(always)]
+unsafe fn rot63(x: __m256i) -> __m256i {
+    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 63), _mm256_slli_epi64(x, 64 - 63)) }
+}
+
+#[inline(always)]
+unsafe fn g1(a: &mut __m256i, b: &mut __m256i, c: &mut __m256i, d: &mut __m256i, m: &mut __m256i) {
+    unsafe {
+        *a = add(*a, *m);
+        *a = add(*a, *b);
+        *d = xor(*d, *a);
+        *d = rot32(*d);
+        *c = add(*c, *d);
+        *b = xor(*b, *c);
+        *b = rot24(*b);
+    }
+}
+
+#[inline(always)]
+unsafe fn g2(a: &mut __m256i, b: &mut __m256i, c: &mut __m256i, d: &mut __m256i, m: &mut __m256i) {
+    unsafe {
+        *a = add(*a, *m);
+        *a = add(*a, *b);
+        *d = xor(*d, *a);
+        *d = rot16(*d);
+        *c = add(*c, *d);
+        *b = xor(*b, *c);
+        *b = rot63(*b);
+    }
+}
+
+// Note the optimization here of leaving b as the unrotated row, rather than a.
+// All the message loads below are adjusted to compensate for this. See
+// discussion at https://github.com/sneves/blake2-avx2/pull/4
+#[inline(always)]
+unsafe fn diagonalize(a: &mut __m256i, _b: &mut __m256i, c: &mut __m256i, d: &mut __m256i) {
+    unsafe {
+        *a = _mm256_permute4x64_epi64(*a, _MM_SHUFFLE!(2, 1, 0, 3));
+        *d = _mm256_permute4x64_epi64(*d, _MM_SHUFFLE!(1, 0, 3, 2));
+        *c = _mm256_permute4x64_epi64(*c, _MM_SHUFFLE!(0, 3, 2, 1));
+    }
+}
+
+#[inline(always)]
+unsafe fn undiagonalize(a: &mut __m256i, _b: &mut __m256i, c: &mut __m256i, d: &mut __m256i) {
+    unsafe {
+        *a = _mm256_permute4x64_epi64(*a, _MM_SHUFFLE!(0, 3, 2, 1));
+        *d = _mm256_permute4x64_epi64(*d, _MM_SHUFFLE!(1, 0, 3, 2));
+        *c = _mm256_permute4x64_epi64(*c, _MM_SHUFFLE!(2, 1, 0, 3));
+    }
+}
 
 #[target_feature(enable = "avx2")]
 pub(super) unsafe fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
@@ -307,99 +422,5 @@ pub(super) unsafe fn compress(rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &
 
         storeu(a, words_low);
         storeu(b, words_high);
-    }
-}
-
-#[inline(always)]
-unsafe fn loadu(src: *const [u64; DEGREE]) -> __m256i {
-    unsafe { _mm256_loadu_si256(src as *const __m256i) }
-}
-
-#[inline(always)]
-unsafe fn storeu(src: __m256i, dest: *mut [u64; DEGREE]) {
-    unsafe { _mm256_storeu_si256(dest as *mut __m256i, src) }
-}
-
-#[inline(always)]
-unsafe fn loadu_128(mem_addr: &[u8; 16]) -> __m128i {
-    unsafe { _mm_loadu_si128(mem_addr.as_ptr() as *const __m128i) }
-}
-
-#[inline(always)]
-unsafe fn add(a: __m256i, b: __m256i) -> __m256i {
-    unsafe { _mm256_add_epi64(a, b) }
-}
-
-#[inline(always)]
-unsafe fn xor(a: __m256i, b: __m256i) -> __m256i {
-    unsafe { _mm256_xor_si256(a, b) }
-}
-
-#[inline(always)]
-unsafe fn set4(a: u64, b: u64, c: u64, d: u64) -> __m256i {
-    unsafe { _mm256_setr_epi64x(a as i64, b as i64, c as i64, d as i64) }
-}
-
-#[inline(always)]
-unsafe fn rot32(x: __m256i) -> __m256i {
-    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 32), _mm256_slli_epi64(x, 64 - 32)) }
-}
-
-#[inline(always)]
-unsafe fn rot24(x: __m256i) -> __m256i {
-    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 24), _mm256_slli_epi64(x, 64 - 24)) }
-}
-
-#[inline(always)]
-unsafe fn rot16(x: __m256i) -> __m256i {
-    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 16), _mm256_slli_epi64(x, 64 - 16)) }
-}
-
-#[inline(always)]
-unsafe fn rot63(x: __m256i) -> __m256i {
-    unsafe { _mm256_or_si256(_mm256_srli_epi64(x, 63), _mm256_slli_epi64(x, 64 - 63)) }
-}
-
-#[inline(always)]
-unsafe fn g1(a: &mut __m256i, b: &mut __m256i, c: &mut __m256i, d: &mut __m256i, m: &mut __m256i) {
-    unsafe {
-        *a = add(*a, *m);
-        *a = add(*a, *b);
-        *d = xor(*d, *a);
-        *d = rot32(*d);
-        *c = add(*c, *d);
-        *b = xor(*b, *c);
-        *b = rot24(*b);
-    }
-}
-
-#[inline(always)]
-unsafe fn g2(a: &mut __m256i, b: &mut __m256i, c: &mut __m256i, d: &mut __m256i, m: &mut __m256i) {
-    unsafe {
-        *a = add(*a, *m);
-        *a = add(*a, *b);
-        *d = xor(*d, *a);
-        *d = rot16(*d);
-        *c = add(*c, *d);
-        *b = xor(*b, *c);
-        *b = rot63(*b);
-    }
-}
-
-#[inline(always)]
-unsafe fn diagonalize(a: &mut __m256i, _b: &mut __m256i, c: &mut __m256i, d: &mut __m256i) {
-    unsafe {
-        *a = _mm256_permute4x64_epi64(*a, _MM_SHUFFLE!(2, 1, 0, 3));
-        *d = _mm256_permute4x64_epi64(*d, _MM_SHUFFLE!(1, 0, 3, 2));
-        *c = _mm256_permute4x64_epi64(*c, _MM_SHUFFLE!(0, 3, 2, 1));
-    }
-}
-
-#[inline(always)]
-unsafe fn undiagonalize(a: &mut __m256i, _b: &mut __m256i, c: &mut __m256i, d: &mut __m256i) {
-    unsafe {
-        *a = _mm256_permute4x64_epi64(*a, _MM_SHUFFLE!(0, 3, 2, 1));
-        *d = _mm256_permute4x64_epi64(*d, _MM_SHUFFLE!(1, 0, 3, 2));
-        *c = _mm256_permute4x64_epi64(*c, _MM_SHUFFLE!(2, 1, 0, 3));
     }
 }
