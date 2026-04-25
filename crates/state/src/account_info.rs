@@ -21,7 +21,7 @@ impl AccountId {
 
     /// Gets the underlying u32 value.
     #[inline]
-    pub fn get(self) -> u32 {
+    pub const fn get(self) -> u32 {
         self.0.get()
     }
 }
