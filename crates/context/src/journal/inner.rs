@@ -18,7 +18,7 @@ use primitives::{
     hints_util::unlikely,
     Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, TransientStorage};
+use state::{Account, EvmState, TransactionId, TransientStorage};
 use std::vec::Vec;
 
 /// Configuration for the journal that affects EVM execution behavior.
@@ -74,7 +74,7 @@ pub struct JournalInner<ENTRY> {
     /// reverted or had a error on execution.
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
-    pub transaction_id: usize,
+    pub transaction_id: TransactionId,
     /// Journal configuration containing spec ID and EIP-7708 flags.
     pub cfg: JournalCfg,
     /// Warm addresses containing both coinbase and current precompiles.
@@ -108,7 +108,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
-            transaction_id: 0,
+            transaction_id: TransactionId::ZERO,
             depth: 0,
             cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
@@ -160,7 +160,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
         // increment transaction id.
-        *transaction_id += 1;
+        transaction_id.increment();
 
         logs.clear();
         selfdestructed_addresses.clear();
@@ -189,7 +189,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         selfdestructed_addresses.clear();
-        *transaction_id += 1;
+        transaction_id.increment();
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
@@ -249,7 +249,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
         *depth = 0;
         // reset transaction id.
-        *transaction_id = 0;
+        *transaction_id = TransactionId::ZERO;
 
         state
     }

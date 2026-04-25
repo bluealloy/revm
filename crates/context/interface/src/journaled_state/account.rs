@@ -16,7 +16,7 @@ use primitives::{
     hash_map::Entry, Address, AddressMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
     U256,
 };
-use state::{Account, Bytecode, EvmStorageSlot};
+use state::{Account, Bytecode, EvmStorageSlot, TransactionId};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the account.
@@ -132,7 +132,7 @@ pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
     /// Access list.
     access_list: &'a AddressMap<HashSet<StorageKey>>,
     /// Transaction ID.
-    transaction_id: usize,
+    transaction_id: TransactionId,
     /// Database used to load storage.
     db: &'a mut DB,
 }
@@ -146,7 +146,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
         journal_entries: &'a mut Vec<ENTRY>,
         db: &'a mut DB,
         access_list: &'a AddressMap<HashSet<StorageKey>>,
-        transaction_id: usize,
+        transaction_id: TransactionId,
     ) -> Self {
         Self {
             address,
