@@ -8,7 +8,6 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
-#[allow(clippy::large_enum_variant)]
 pub enum MainCmd {
     /// Execute Ethereum state tests.
     Statetest(statetest::Cmd),

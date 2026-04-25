@@ -10,7 +10,6 @@ pub enum Sign {
     Minus = -1,
     /// Zero value sign  
     Zero = 0,
-    #[allow(dead_code)] // "constructed" with `mem::transmute` in `i256_sign` below
     /// Positive value sign
     Plus = 1,
 }
