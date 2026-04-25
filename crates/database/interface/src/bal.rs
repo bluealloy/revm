@@ -128,7 +128,11 @@ impl BalState {
     ///
     /// Panics if account_id is invalid
     #[inline]
-    pub fn basic_by_account_id(&self, account_id: AccountId, basic: &mut Option<AccountInfo>) -> bool {
+    pub fn basic_by_account_id(
+        &self,
+        account_id: AccountId,
+        basic: &mut Option<AccountInfo>,
+    ) -> bool {
         if let Some(bal) = &self.bal {
             let is_none = basic.is_none();
             let mut bal_basic = core::mem::take(basic).unwrap_or_default();
