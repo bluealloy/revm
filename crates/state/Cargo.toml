@@ -44,6 +44,7 @@ std = [
     "bitflags/std",
     "bytecode/std",
     "alloy-eip7928/std",
+    "nonmax/std",
 ]
 serde = [
     "dep:serde",
