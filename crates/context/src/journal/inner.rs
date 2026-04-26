@@ -330,9 +330,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             let Some(account) = self.state.get(address) else {
                 continue;
             };
-            if !account.is_created_locally() {
-                continue;
-            }
 
             // New account state gas (same magnitude as create_state_gas).
             refund = refund.saturating_add(gas_params.new_account_state_gas(cpsb));
@@ -340,10 +337,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             // Code deposit state gas — for code bytes that were written during this tx.
             if let Some(code) = account.info.code.as_ref() {
                 let len = code.len();
-                if len != 0 {
-                    refund =
-                        refund.saturating_add(gas_params.code_deposit_state_gas(len, cpsb));
-                }
+                refund = refund.saturating_add(gas_params.code_deposit_state_gas(len, cpsb));
             }
 
             // Storage slot state gas — each slot set during this tx was charged

@@ -6,7 +6,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{hardfork::SpecId, TxKind, U256};
+use primitives::{hardfork::SpecId, U256};
 
 /// EIP-8037: Refunds state gas for accounts that were both created and
 /// self-destructed in this transaction.
@@ -18,27 +18,28 @@ use primitives::{hardfork::SpecId, TxKind, U256};
 /// so the updated reservoir is reflected in reimbursement and beneficiary
 /// reward.
 ///
-/// For CREATE transactions the tx-level contract address is excluded from the
-/// iteration: its creation state gas was charged via the intrinsic
-/// `initial_state_gas` and is surfaced separately in [`build_result_gas`]; it
-/// is not a reservoir-side charge and must not be returned to the reservoir.
+/// For a tx-kind `Create`, the contract's new-account state gas was charged
+/// via intrinsic `initial_state_gas` (not via a reservoir-side
+/// `record_state_cost`), so when that contract self-destructs the journal's
+/// per-address refund must not be returned to the reservoir — it was never
+/// reservoir-backed. Pass the CREATE-tx target as `skip_address` to exclude it.
 #[inline]
 pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas) {
     if !context.cfg().is_amsterdam_eip8037_enabled() {
         return;
     }
     let cpsb = context.local().cpsb();
-    let skip_address = match context.tx().kind() {
-        TxKind::Create => Some(context.tx().caller().create(context.tx().nonce())),
-        TxKind::Call(_) => None,
-    };
+
     let amount = {
         let cfg = context.cfg();
         let gas_params = cfg.gas_params();
         context
             .journal_ref()
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, skip_address)
+            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
     };
+    // cap the refund to the state gas spent
+    let amount = amount.min(gas.state_gas_spent() as u64);
+
     if amount != 0 {
         gas.refill_reservoir(amount);
     }

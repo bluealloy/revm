@@ -1016,8 +1016,8 @@ impl GasParams {
         // extended by EIP-7981 to include access-list data alongside calldata.
         let access_list_floor_tokens =
             self.tx_floor_tokens_in_access_list(access_list_accounts, access_list_storages);
-        gas.floor_gas = self.tx_floor_cost(input)
-            + access_list_floor_tokens * self.tx_floor_cost_per_token();
+        gas.floor_gas =
+            self.tx_floor_cost(input) + access_list_floor_tokens * self.tx_floor_cost_per_token();
 
         // EIP-8037: Include state gas in total initial gas.
         // State gas is a subset of initial_total_gas, deducted before execution starts.
