@@ -74,7 +74,7 @@ impl<N: Network, P: Provider<N>> AlloyDB<N, P> {
     }
 
     /// Sets the block number on which the queries will be based on.
-    pub fn set_block_number(&mut self, block_number: BlockId) {
+    pub const fn set_block_number(&mut self, block_number: BlockId) {
         self.block_number = block_number;
     }
 }

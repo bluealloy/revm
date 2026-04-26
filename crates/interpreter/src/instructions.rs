@@ -29,19 +29,19 @@ pub mod utility;
 
 pub use context_interface::cfg::gas::{self, *};
 
-use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext};
+use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext, InstructionExecResult};
 use primitives::hardfork::SpecId;
 
 /// EVM opcode function pointer.
 #[derive(Debug)]
 pub struct Instruction<W: InterpreterTypes, H: ?Sized> {
-    fn_: fn(InstructionContext<'_, H, W>),
+    fn_: fn(InstructionContext<'_, H, W>) -> InstructionExecResult,
 }
 
 impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
     /// Creates a new instruction with the given function.
     #[inline]
-    pub const fn new(fn_: fn(InstructionContext<'_, H, W>)) -> Self {
+    pub const fn new(fn_: fn(InstructionContext<'_, H, W>) -> InstructionExecResult) -> Self {
         Self { fn_ }
     }
 
@@ -55,7 +55,7 @@ impl<W: InterpreterTypes, H: Host + ?Sized> Instruction<W, H> {
 
     /// Executes the instruction with the given context.
     #[inline(always)]
-    pub fn execute(self, ctx: InstructionContext<'_, H, W>) {
+    pub fn execute(self, ctx: InstructionContext<'_, H, W>) -> InstructionExecResult {
         (self.fn_)(ctx)
     }
 }
@@ -87,7 +87,7 @@ pub const fn gas_table() -> GasTable {
 
 /// Create a gas table with applied spec changes to static gas cost.
 #[inline]
-pub fn gas_table_spec(spec: SpecId) -> GasTable {
+pub const fn gas_table_spec(spec: SpecId) -> GasTable {
     use bytecode::opcode::*;
     use SpecId::*;
     let mut table = gas_table();

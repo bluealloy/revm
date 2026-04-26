@@ -6,9 +6,9 @@ use revm::{
     handler::{precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
-    primitives::{address, hardfork::SpecId, Address, Bytes, Log, B256, U256},
+    primitives::{address, hardfork::SpecId, Address, AddressSet, Bytes, Log, B256, U256},
 };
-use std::{boxed::Box, string::String};
+use std::string::String;
 
 // Define our custom precompile address
 pub const CUSTOM_PRECOMPILE_ADDRESS: Address = address!("0000000000000000000000000000000000000100");
@@ -20,15 +20,25 @@ const STORAGE_KEY: U256 = U256::ZERO;
 #[derive(Debug, Clone)]
 pub struct CustomPrecompileProvider {
     inner: EthPrecompiles,
+    addresses: AddressSet,
     spec: SpecId,
 }
 
 impl CustomPrecompileProvider {
     pub fn new_with_spec(spec: SpecId) -> Self {
-        Self {
+        let mut this = Self {
             inner: EthPrecompiles::new(spec),
+            addresses: AddressSet::default(),
             spec,
-        }
+        };
+        this.renew();
+        this
+    }
+
+    fn renew(&mut self) {
+        // Include our custom precompile address along with standard ones
+        self.addresses.clone_from(self.inner.warm_addresses());
+        self.addresses.insert(CUSTOM_PRECOMPILE_ADDRESS);
     }
 }
 
@@ -43,8 +53,8 @@ where
             return false;
         }
         self.spec = spec;
-        // Create a new inner provider with the new spec
         self.inner = EthPrecompiles::new(spec);
+        self.renew();
         true
     }
 
@@ -62,15 +72,8 @@ where
         self.inner.run(context, inputs)
     }
 
-    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address>> {
-        // Include our custom precompile address along with standard ones
-        let mut addresses = vec![CUSTOM_PRECOMPILE_ADDRESS];
-        addresses.extend(self.inner.warm_addresses());
-        Box::new(addresses.into_iter())
-    }
-
-    fn contains(&self, address: &Address) -> bool {
-        *address == CUSTOM_PRECOMPILE_ADDRESS || self.inner.contains(address)
+    fn warm_addresses(&self) -> &AddressSet {
+        &self.addresses
     }
 }
 

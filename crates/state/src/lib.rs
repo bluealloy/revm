@@ -17,7 +17,7 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
-use primitives::{hardfork::SpecId, HashMap, OnceLock, StorageKey, StorageValue, U256};
+use primitives::{hardfork::SpecId, HashMap, StorageKey, StorageValue, U256};
 use std::boxed::Box;
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
@@ -32,36 +32,43 @@ use std::boxed::Box;
 ///     * Database needs to load account and tie to with BAL writes
 /// If CompiledBal is not present, use loaded values
 ///     * Account is already up to date (uses present flow).
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
-    /// Original account info used by BAL, changed only on cold load by BAL.
-    pub original_info: Box<AccountInfo>,
     /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: usize,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
     pub status: AccountStatus,
+
+    /// Original account info used by BAL, changed only on cold load by BAL.
+    /// `None` means `Default::default()`, to avoid allocations.
+    original_info: Option<Box<AccountInfo>>,
+}
+
+impl PartialEq for Account {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.info == other.info
+            && self.transaction_id == other.transaction_id
+            && self.storage == other.storage
+            && self.status == other.status
+            && self.original_info() == other.original_info()
+    }
 }
 
 impl Account {
     /// Creates new account and mark it as non existing.
+    #[inline]
     pub fn new_not_existing(transaction_id: usize) -> Self {
-        static DEFAULT: OnceLock<Account> = OnceLock::new();
-        let mut account = DEFAULT
-            .get_or_init(|| Self {
-                info: AccountInfo::default(),
-                storage: HashMap::default(),
-                transaction_id: 0,
-                status: AccountStatus::LoadedAsNotExisting,
-                original_info: Box::new(AccountInfo::default()),
-            })
-            .clone();
-        account.transaction_id = transaction_id;
-        account
+        Self {
+            transaction_id,
+            status: AccountStatus::LoadedAsNotExisting,
+            ..Default::default()
+        }
     }
 
     /// Make changes to the caller account.
@@ -92,6 +99,29 @@ impl Account {
         }
     }
 
+    /// Returns the original account info.
+    #[inline]
+    pub fn original_info(&self) -> AccountInfo {
+        self.original_info.as_deref().cloned().unwrap_or_default()
+    }
+
+    /// Returns a mutable reference to the original account info.
+    #[inline]
+    pub fn original_info_mut(&mut self) -> &mut AccountInfo {
+        self.original_info.get_or_insert_default()
+    }
+
+    /// Clones the current info into the original info.
+    pub fn set_current_info_as_original(&mut self) {
+        if self.original_info.is_none() && self.info.is_default() {
+            return;
+        }
+        self.original_info
+            .get_or_insert_default()
+            .as_mut()
+            .clone_from(&self.info);
+    }
+
     /// Marks the account as self destructed.
     #[inline]
     pub fn mark_selfdestruct(&mut self) {
@@ -106,7 +136,7 @@ impl Account {
 
     /// Is account marked for self destruct.
     #[inline]
-    pub fn is_selfdestructed(&self) -> bool {
+    pub const fn is_selfdestructed(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructed)
     }
 
@@ -124,7 +154,7 @@ impl Account {
 
     /// If account status is marked as touched.
     #[inline]
-    pub fn is_touched(&self) -> bool {
+    pub const fn is_touched(&self) -> bool {
         self.status.contains(AccountStatus::Touched)
     }
 
@@ -148,7 +178,7 @@ impl Account {
 
     /// Is account warm for given transaction id.
     #[inline]
-    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
         self.transaction_id != transaction_id || self.status.contains(AccountStatus::Cold)
     }
 
@@ -163,13 +193,13 @@ impl Account {
 
     /// Is account locally created
     #[inline]
-    pub fn is_created_locally(&self) -> bool {
+    pub const fn is_created_locally(&self) -> bool {
         self.status.contains(AccountStatus::CreatedLocal)
     }
 
     /// Is account locally selfdestructed
     #[inline]
-    pub fn is_selfdestructed_locally(&self) -> bool {
+    pub const fn is_selfdestructed_locally(&self) -> bool {
         self.status.contains(AccountStatus::SelfDestructedLocal)
     }
 
@@ -225,17 +255,17 @@ impl Account {
     ///
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
-    pub fn is_loaded_as_not_existing(&self) -> bool {
+    pub const fn is_loaded_as_not_existing(&self) -> bool {
         self.status.contains(AccountStatus::LoadedAsNotExisting)
     }
 
     /// Is account loaded as not existing from database and not touched.
-    pub fn is_loaded_as_not_existing_not_touched(&self) -> bool {
+    pub const fn is_loaded_as_not_existing_not_touched(&self) -> bool {
         self.is_loaded_as_not_existing() && !self.is_touched()
     }
 
     /// Is account newly created in this transaction.
-    pub fn is_created(&self) -> bool {
+    pub const fn is_created(&self) -> bool {
         self.status.contains(AccountStatus::Created)
     }
 
@@ -308,13 +338,17 @@ impl Account {
 
 impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
-        let original_info = Box::new(info.clone());
+        let original_info = if info.is_default() {
+            None
+        } else {
+            Some(Box::new(info.clone()))
+        };
         Self {
             info,
-            storage: HashMap::default(),
-            transaction_id: 0,
-            status: AccountStatus::empty(),
             original_info,
+            transaction_id: 0,
+            storage: HashMap::default(),
+            status: AccountStatus::empty(),
         }
     }
 }
@@ -322,12 +356,32 @@ impl From<AccountInfo> for Account {
 #[cfg(feature = "serde")]
 mod serde_impl {
     use super::*;
-    use serde::{Deserialize, Serialize};
+    use serde::Deserialize;
 
-    #[derive(Serialize, Deserialize)]
+    /// Distinguishes missing field (old format) from explicit `null` (new format).
+    #[derive(Default)]
+    enum MaybeOriginalInfo {
+        /// Field was missing from JSON (old format).
+        #[default]
+        Missing,
+        /// Present in JSON: `null` means default, `Some` is the value.
+        Present(Option<AccountInfo>),
+    }
+
+    impl<'de> Deserialize<'de> for MaybeOriginalInfo {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            Option::<AccountInfo>::deserialize(deserializer).map(MaybeOriginalInfo::Present)
+        }
+    }
+
+    #[derive(Deserialize)]
     struct AccountSerde {
         info: AccountInfo,
-        original_info: Option<AccountInfo>,
+        #[serde(default)]
+        original_info: MaybeOriginalInfo,
         storage: EvmStorage,
         transaction_id: usize,
         status: AccountStatus,
@@ -346,12 +400,18 @@ mod serde_impl {
                 status,
             } = Deserialize::deserialize(deserializer)?;
 
-            // If original info is not present, use info as original info
-            let original_info = original_info.unwrap_or_else(|| info.clone());
+            let original_info = match original_info {
+                // Old format: field missing → use info as original.
+                MaybeOriginalInfo::Missing => Some(Box::new(info.clone())),
+                // New format: null → None (default).
+                MaybeOriginalInfo::Present(None) => None,
+                // New format: explicit value.
+                MaybeOriginalInfo::Present(Some(oi)) => Some(Box::new(oi)),
+            };
 
             Ok(Account {
                 info,
-                original_info: Box::new(original_info),
+                original_info,
                 storage,
                 transaction_id,
                 status,
@@ -422,7 +482,7 @@ bitflags! {
 impl AccountStatus {
     /// Returns true if the account status is touched.
     #[inline]
-    pub fn is_touched(&self) -> bool {
+    pub const fn is_touched(&self) -> bool {
         self.contains(AccountStatus::Touched)
     }
 }
@@ -449,7 +509,7 @@ pub struct EvmStorageSlot {
 
 impl EvmStorageSlot {
     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
-    pub fn new(original: StorageValue, transaction_id: usize) -> Self {
+    pub const fn new(original: StorageValue, transaction_id: usize) -> Self {
         Self {
             original_value: original,
             present_value: original,
@@ -459,7 +519,7 @@ impl EvmStorageSlot {
     }
 
     /// Creates a new _changed_ `EvmStorageSlot`.
-    pub fn new_changed(
+    pub const fn new_changed(
         original_value: StorageValue,
         present_value: StorageValue,
         transaction_id: usize,
@@ -478,25 +538,25 @@ impl EvmStorageSlot {
 
     /// Returns the original value of the storage slot.
     #[inline]
-    pub fn original_value(&self) -> StorageValue {
+    pub const fn original_value(&self) -> StorageValue {
         self.original_value
     }
 
     /// Returns the current value of the storage slot.
     #[inline]
-    pub fn present_value(&self) -> StorageValue {
+    pub const fn present_value(&self) -> StorageValue {
         self.present_value
     }
 
     /// Marks the storage slot as cold. Does not change transaction_id.
     #[inline]
-    pub fn mark_cold(&mut self) {
+    pub const fn mark_cold(&mut self) {
         self.is_cold = true;
     }
 
     /// Is storage slot cold for given transaction id.
     #[inline]
-    pub fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
+    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
         self.transaction_id != transaction_id || self.is_cold
     }
 
@@ -505,7 +565,7 @@ impl EvmStorageSlot {
     ///
     /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
     #[inline]
-    pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
+    pub const fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
         if is_cold {
             // if slot is cold original value should be reset to present value.
@@ -650,14 +710,46 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_account_serialize_deserialize_without_original_info() {
-        let deserialize_without_original_info = r#"
-        {"info":{"balance":"0x0","nonce":0,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","storage_id":null,"code":{"LegacyAnalyzed":{"bytecode":"0x00","original_len":0,"jump_table":{"order":"bitvec::order::Lsb0","head":{"width":8,"index":0},"bits":0,"data":[]}}}},"transaction_id":0,"storage":{},"status":"SelfDestructed"}"#;
-
-        let account = Account::default().with_selfdestruct_mark();
-        let deserialized: Account =
-            serde_json::from_str(deserialize_without_original_info).unwrap();
+    fn test_account_original_info_none_roundtrip() {
+        let account = Account::new_not_existing(2);
+        assert!(account.original_info.is_none());
+        let serialized = serde_json::to_string(&account).unwrap();
+        let deserialized: Account = serde_json::from_str(&serialized).unwrap();
+        assert!(deserialized.original_info.is_none());
         assert_eq!(account, deserialized);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_account_deserialize_original_info_missing_null_present() {
+        let code = r#"{"LegacyAnalyzed":{"bytecode":"0x00","original_len":0,"jump_table":{"order":"bitvec::order::Lsb0","head":{"width":8,"index":0},"bits":0,"data":[]}}}"#;
+        let info = format!(
+            r#"{{"balance":"0x2386f26fc10000","nonce":1,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","code":{code}}}"#
+        );
+
+        // Missing field (old format): original_info = Some(info.clone()).
+        let json =
+            format!(r#"{{"info":{info},"transaction_id":0,"storage":{{}},"status":"Touched"}}"#);
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_some());
+        assert_eq!(acct.original_info(), acct.info);
+
+        // Null (new format): original_info = None (default).
+        let json = format!(
+            r#"{{"info":{info},"original_info":null,"transaction_id":0,"storage":{{}},"status":"Touched"}}"#
+        );
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_none());
+
+        // Present value.
+        let original = r#"{"balance":"0x0","nonce":0,"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470","code":null}"#;
+        let json = format!(
+            r#"{{"info":{info},"original_info":{original},"transaction_id":0,"storage":{{}},"status":"Touched"}}"#
+        );
+        let acct: Account = serde_json::from_str(&json).unwrap();
+        assert!(acct.original_info.is_some());
+        assert_eq!(acct.original_info().nonce, 0);
+        assert_eq!(acct.original_info().balance, U256::ZERO);
     }
 
     #[test]

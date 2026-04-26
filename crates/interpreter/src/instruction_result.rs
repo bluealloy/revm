@@ -1,8 +1,15 @@
 use context_interface::{
+    host::LoadError,
     journaled_state::TransferError,
     result::{HaltReason, OutOfGasError, SuccessReason},
 };
 use core::fmt::Debug;
+
+/// Result type returned by instruction implementations.
+///
+/// `Ok(())` means the instruction completed normally and execution should continue.
+/// `Err(result)` means execution should halt with the given [`InstructionResult`].
+pub type InstructionExecResult<T = (), E = InstructionResult> = Result<T, E>;
 
 /// Result of executing an EVM instruction.
 ///
@@ -19,6 +26,8 @@ pub enum InstructionResult {
     Return,
     /// Self-destruct the current contract.
     SelfDestruct,
+    /// Temporarily suspended, for CALL/CREATE.
+    Suspend,
 
     // Revert Codes
     /// Revert the transaction.
@@ -139,6 +148,15 @@ impl From<HaltReason> for InstructionResult {
     }
 }
 
+impl From<LoadError> for InstructionResult {
+    fn from(error: LoadError) -> Self {
+        match error {
+            LoadError::ColdLoadSkipped => Self::OutOfGas,
+            LoadError::DBError => Self::FatalExternalError,
+        }
+    }
+}
+
 /// Macro that matches all successful instruction results.
 /// Used in pattern matching to handle all successful execution outcomes.
 #[macro_export]
@@ -147,6 +165,7 @@ macro_rules! return_ok {
         $crate::InstructionResult::Stop
             | $crate::InstructionResult::Return
             | $crate::InstructionResult::SelfDestruct
+            | $crate::InstructionResult::Suspend
     };
 }
 
@@ -238,6 +257,8 @@ pub enum InternalResult {
     CreateInitCodeStartingEF00,
     /// Internal to ExtDelegateCall
     InvalidExtDelegateCallTarget,
+    /// Execution suspended internally.
+    Suspend,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -306,6 +327,7 @@ impl<HaltReasonTr: From<HaltReason>> From<InstructionResult> for SuccessOrHalt<H
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
+            InstructionResult::Suspend => Self::Internal(InternalResult::Suspend),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), // not gonna happen for first call

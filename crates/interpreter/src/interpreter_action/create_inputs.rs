@@ -26,7 +26,7 @@ pub struct CreateInputs {
 
 impl CreateInputs {
     /// Creates a new `CreateInputs` instance.
-    pub fn new(
+    pub const fn new(
         caller: Address,
         scheme: CreateScheme,
         value: U256,
@@ -59,44 +59,44 @@ impl CreateInputs {
     }
 
     /// Returns the caller address of the EVM.
-    pub fn caller(&self) -> Address {
+    pub const fn caller(&self) -> Address {
         self.caller
     }
 
     /// Returns the create scheme of the EVM.
-    pub fn scheme(&self) -> CreateScheme {
+    pub const fn scheme(&self) -> CreateScheme {
         self.scheme
     }
 
     /// Returns the value to transfer.
-    pub fn value(&self) -> U256 {
+    pub const fn value(&self) -> U256 {
         self.value
     }
 
     /// Returns the init code of the contract.
-    pub fn init_code(&self) -> &Bytes {
+    pub const fn init_code(&self) -> &Bytes {
         &self.init_code
     }
 
     /// Returns the gas limit of the call.
-    pub fn gas_limit(&self) -> u64 {
+    pub const fn gas_limit(&self) -> u64 {
         self.gas_limit
     }
 
     /// Set call
-    pub fn set_call(&mut self, caller: Address) {
+    pub const fn set_call(&mut self, caller: Address) {
         self.caller = caller;
         self.cached_address = OnceCell::new();
     }
 
     /// Set scheme
-    pub fn set_scheme(&mut self, scheme: CreateScheme) {
+    pub const fn set_scheme(&mut self, scheme: CreateScheme) {
         self.scheme = scheme;
         self.cached_address = OnceCell::new();
     }
 
     /// Set value
-    pub fn set_value(&mut self, value: U256) {
+    pub const fn set_value(&mut self, value: U256) {
         self.value = value;
     }
 
@@ -107,17 +107,17 @@ impl CreateInputs {
     }
 
     /// Set gas limit
-    pub fn set_gas_limit(&mut self, gas_limit: u64) {
+    pub const fn set_gas_limit(&mut self, gas_limit: u64) {
         self.gas_limit = gas_limit;
     }
 
     /// Returns the state gas reservoir (EIP-8037).
-    pub fn reservoir(&self) -> u64 {
+    pub const fn reservoir(&self) -> u64 {
         self.reservoir
     }
 
     /// Set the state gas reservoir (EIP-8037).
-    pub fn set_reservoir(&mut self, reservoir: u64) {
+    pub const fn set_reservoir(&mut self, reservoir: u64) {
         self.reservoir = reservoir;
     }
 }

@@ -200,7 +200,7 @@ impl<DB: Database> State<DB> {
 
     /// Takes build bal from bal state.
     #[inline]
-    pub fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.bal_state.take_built_bal()
     }
 
@@ -212,19 +212,19 @@ impl<DB: Database> State<DB> {
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_state.bump_bal_index();
     }
 
     /// Set BAL index.
     #[inline]
-    pub fn set_bal_index(&mut self, index: u64) {
+    pub const fn set_bal_index(&mut self, index: u64) {
         self.bal_state.bal_index = index;
     }
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(&mut self) {
+    pub const fn reset_bal_index(&mut self) {
         self.bal_state.reset_bal_index();
     }
 
@@ -232,6 +232,12 @@ impl<DB: Database> State<DB> {
     #[inline]
     pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
         self.bal_state.bal = bal;
+    }
+
+    /// Returns whether the state has a BAL configured.
+    #[inline]
+    pub const fn has_bal(&self) -> bool {
+        self.bal_state.bal.is_some()
     }
 
     /// Gets storage value of address at index.
@@ -497,6 +503,15 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
     use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
+    #[test]
+    fn has_bal_helper() {
+        let state = State::builder().build();
+        assert!(!state.has_bal());
+
+        let state = State::builder().with_bal(Arc::new(Bal::new())).build();
+        assert!(state.has_bal());
+    }
+
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();

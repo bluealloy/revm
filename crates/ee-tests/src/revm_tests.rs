@@ -746,14 +746,9 @@ fn test_custom_opcode_transaction() {
     instructions.insert_instruction(
         DOUBLE,
         Instruction::new(|ctx: InstructionContext<'_, _, EthInterpreter>| {
-            let Ok(val) = ctx.interpreter.stack.pop() else {
-                ctx.interpreter.halt_underflow();
-                return;
-            };
-            if !ctx.interpreter.stack.push(val.wrapping_mul(U256::from(2))) {
-                ctx.interpreter
-                    .halt(revm::interpreter::InstructionResult::StackOverflow);
-            }
+            revm::interpreter::popn_top!([], val, ctx.interpreter);
+            *val = val.wrapping_mul(U256::from(2));
+            Ok(())
         }),
         3, // static gas cost (same as ADD)
     );

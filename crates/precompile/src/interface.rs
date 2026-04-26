@@ -45,7 +45,7 @@ pub struct EthPrecompileOutput {
 
 impl EthPrecompileOutput {
     /// Returns new precompile output with the given gas used and output bytes.
-    pub fn new(gas_used: u64, bytes: Bytes) -> Self {
+    pub const fn new(gas_used: u64, bytes: Bytes) -> Self {
         Self { gas_used, bytes }
     }
 }
@@ -64,19 +64,19 @@ pub enum PrecompileStatus {
 impl PrecompileStatus {
     /// Returns `true` if the precompile execution was successful or reverted.
     #[inline]
-    pub fn is_success_or_revert(&self) -> bool {
+    pub const fn is_success_or_revert(&self) -> bool {
         matches!(self, PrecompileStatus::Success | PrecompileStatus::Revert)
     }
 
     /// Returns `true` if the precompile execution was reverted or halted.
     #[inline]
-    pub fn is_revert_or_halt(&self) -> bool {
+    pub const fn is_revert_or_halt(&self) -> bool {
         matches!(self, PrecompileStatus::Revert | PrecompileStatus::Halt(_))
     }
 
     /// Returns the halt reason if the precompile halted, `None` otherwise.
     #[inline]
-    pub fn halt_reason(&self) -> Option<&PrecompileHalt> {
+    pub const fn halt_reason(&self) -> Option<&PrecompileHalt> {
         match &self {
             PrecompileStatus::Halt(reason) => Some(reason),
             _ => None,
@@ -85,19 +85,19 @@ impl PrecompileStatus {
 
     /// Returns `true` if the precompile execution was successful.
     #[inline]
-    pub fn is_success(&self) -> bool {
+    pub const fn is_success(&self) -> bool {
         matches!(self, PrecompileStatus::Success)
     }
 
     /// Returns `true` if the precompile reverted.
     #[inline]
-    pub fn is_revert(&self) -> bool {
+    pub const fn is_revert(&self) -> bool {
         matches!(self, PrecompileStatus::Revert)
     }
 
     /// Returns `true` if the precompile halted.
     #[inline]
-    pub fn is_halt(&self) -> bool {
+    pub const fn is_halt(&self) -> bool {
         matches!(self, PrecompileStatus::Halt(_))
     }
 }
@@ -131,7 +131,7 @@ impl PrecompileOutput {
         }
     }
     /// Returns a new successful precompile output.
-    pub fn new(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
+    pub const fn new(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Success,
             gas_used,
@@ -143,7 +143,7 @@ impl PrecompileOutput {
     }
 
     /// Returns a new halted precompile output with the given halt reason.
-    pub fn halt(reason: PrecompileHalt, reservoir: u64) -> Self {
+    pub const fn halt(reason: PrecompileHalt, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Halt(reason),
             gas_used: 0,
@@ -155,7 +155,7 @@ impl PrecompileOutput {
     }
 
     /// Returns a new reverted precompile output.
-    pub fn revert(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
+    pub const fn revert(gas_used: u64, bytes: Bytes, reservoir: u64) -> Self {
         Self {
             status: PrecompileStatus::Revert,
             gas_used,
@@ -167,29 +167,29 @@ impl PrecompileOutput {
     }
 
     /// Returns `true` if the precompile execution was successful.
-    pub fn is_success(&self) -> bool {
+    pub const fn is_success(&self) -> bool {
         matches!(self.status, PrecompileStatus::Success)
     }
 
     /// Returns `true` if the precompile execution was successful.
     #[deprecated(note = "use `is_success` instead")]
-    pub fn is_ok(&self) -> bool {
+    pub const fn is_ok(&self) -> bool {
         self.is_success()
     }
 
     /// Returns `true` if the precompile reverted.
-    pub fn is_revert(&self) -> bool {
+    pub const fn is_revert(&self) -> bool {
         matches!(self.status, PrecompileStatus::Revert)
     }
 
     /// Returns `true` if the precompile halted.
-    pub fn is_halt(&self) -> bool {
+    pub const fn is_halt(&self) -> bool {
         matches!(self.status, PrecompileStatus::Halt(_))
     }
 
     /// Returns the halt reason if the precompile halted, `None` otherwise.
     #[inline]
-    pub fn halt_reason(&self) -> Option<&PrecompileHalt> {
+    pub const fn halt_reason(&self) -> Option<&PrecompileHalt> {
         self.status.halt_reason()
     }
 }
@@ -255,7 +255,7 @@ pub trait Crypto: Send + Sync + Debug {
     /// Blake2 compression function.
     #[inline]
     fn blake2_compress(&self, rounds: u32, h: &mut [u64; 8], m: &[u64; 16], t: &[u64; 2], f: bool) {
-        crate::blake2::algo::compress(rounds as usize, h, m, t, f);
+        crate::blake2::compress(rounds, h, m, t, f);
     }
 
     /// secp256r1 (P-256) signature verification.
@@ -475,7 +475,7 @@ impl PrecompileHalt {
     }
 
     /// Returns `true` if the halt reason is out of gas.
-    pub fn is_oog(&self) -> bool {
+    pub const fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
     }
 }
@@ -543,7 +543,7 @@ pub enum PrecompileError {
 
 impl PrecompileError {
     /// Returns `true` if the error is `Fatal` or `FatalAny`.
-    pub fn is_fatal(&self) -> bool {
+    pub const fn is_fatal(&self) -> bool {
         true
     }
 }

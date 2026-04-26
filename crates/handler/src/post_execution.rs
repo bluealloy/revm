@@ -70,7 +70,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
 ///
 /// Per EIP-8037, gas used before refund is `tx.gas - gas_left - state_gas_reservoir`.
 /// The floor applies to this combined total, not just regular gas.
-pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
+pub const fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
     // EIP-7623: Increase calldata cost
     // EIP-8037: tx_gas_used_before_refund = tx.gas - gas_left - reservoir
     // The floor must apply to this combined value, not just (limit - remaining).

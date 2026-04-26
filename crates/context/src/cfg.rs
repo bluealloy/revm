@@ -171,12 +171,12 @@ impl CfgEnv {
 impl<SPEC> CfgEnv<SPEC> {
     /// Returns the spec for the `CfgEnv`.
     #[inline]
-    pub fn spec(&self) -> &SPEC {
+    pub const fn spec(&self) -> &SPEC {
         &self.spec
     }
 
     /// Consumes `self` and returns a new `CfgEnv` with the specified chain ID.
-    pub fn with_chain_id(mut self, chain_id: u64) -> Self {
+    pub const fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
     }
@@ -202,13 +202,13 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Enables the transaction's chain ID check.
-    pub fn enable_tx_chain_id_check(mut self) -> Self {
+    pub const fn enable_tx_chain_id_check(mut self) -> Self {
         self.tx_chain_id_check = true;
         self
     }
 
     /// Disables the transaction's chain ID check.
-    pub fn disable_tx_chain_id_check(mut self) -> Self {
+    pub const fn disable_tx_chain_id_check(mut self) -> Self {
         self.tx_chain_id_check = false;
         self
     }
@@ -280,44 +280,44 @@ impl<SPEC> CfgEnv<SPEC> {
     }
 
     /// Sets the blob target
-    pub fn with_max_blobs_per_tx(mut self, max_blobs_per_tx: u64) -> Self {
+    pub const fn with_max_blobs_per_tx(mut self, max_blobs_per_tx: u64) -> Self {
         self.set_max_blobs_per_tx(max_blobs_per_tx);
         self
     }
 
     /// Sets the blob target
-    pub fn set_max_blobs_per_tx(&mut self, max_blobs_per_tx: u64) {
+    pub const fn set_max_blobs_per_tx(&mut self, max_blobs_per_tx: u64) {
         self.max_blobs_per_tx = Some(max_blobs_per_tx);
     }
 
     /// Clears the blob target and max count over hardforks.
-    pub fn clear_max_blobs_per_tx(&mut self) {
+    pub const fn clear_max_blobs_per_tx(&mut self) {
         self.max_blobs_per_tx = None;
     }
 
     /// Sets the disable priority fee check flag.
     #[cfg(feature = "optional_priority_fee_check")]
-    pub fn with_disable_priority_fee_check(mut self, disable: bool) -> Self {
+    pub const fn with_disable_priority_fee_check(mut self, disable: bool) -> Self {
         self.disable_priority_fee_check = disable;
         self
     }
 
     /// Sets the disable fee charge flag.
     #[cfg(feature = "optional_fee_charge")]
-    pub fn with_disable_fee_charge(mut self, disable: bool) -> Self {
+    pub const fn with_disable_fee_charge(mut self, disable: bool) -> Self {
         self.disable_fee_charge = disable;
         self
     }
 
     /// Sets the disable eip7623 flag.
     #[cfg(feature = "optional_eip7623")]
-    pub fn with_disable_eip7623(mut self, disable: bool) -> Self {
+    pub const fn with_disable_eip7623(mut self, disable: bool) -> Self {
         self.disable_eip7623 = disable;
         self
     }
 
     /// Sets the enable EIP-8037 (Amsterdam) state creation gas cost flag.
-    pub fn with_enable_amsterdam_eip8037(mut self, enable: bool) -> Self {
+    pub const fn with_enable_amsterdam_eip8037(mut self, enable: bool) -> Self {
         self.enable_amsterdam_eip8037 = enable;
         self
     }

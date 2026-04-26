@@ -21,12 +21,12 @@ pub enum TransactionType {
 
 impl TransactionType {
     /// Returns true if the transaction type is legacy.
-    pub fn is_legacy(&self) -> bool {
+    pub const fn is_legacy(&self) -> bool {
         matches!(self, Self::Legacy)
     }
 
     /// Returns true if the transaction type is custom.
-    pub fn is_custom(&self) -> bool {
+    pub const fn is_custom(&self) -> bool {
         matches!(self, Self::Custom)
     }
 }

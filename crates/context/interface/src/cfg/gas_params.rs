@@ -17,8 +17,6 @@ use std::sync::Arc;
 pub struct GasParams {
     /// Table of gas costs for operations
     table: Arc<[u64; 256]>,
-    /// Pointer to the table.
-    ptr: *const u64,
 }
 
 impl PartialEq<GasParams> for GasParams {
@@ -32,11 +30,6 @@ impl Hash for GasParams {
         self.table.hash(hasher);
     }
 }
-
-/// Pointer points to Arc so it is safe to send across threads
-unsafe impl Send for GasParams {}
-/// Pointer points to Arc so it is safe to access
-unsafe impl Sync for GasParams {}
 
 impl core::fmt::Debug for GasParams {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -90,6 +83,7 @@ mod serde {
 }
 
 impl Default for GasParams {
+    #[inline]
     fn default() -> Self {
         Self::new_spec(SpecId::default())
     }
@@ -98,11 +92,8 @@ impl Default for GasParams {
 impl GasParams {
     /// Creates a new `GasParams` with the given table.
     #[inline]
-    pub fn new(table: Arc<[u64; 256]>) -> Self {
-        Self {
-            ptr: table.as_ptr(),
-            table,
-        }
+    pub const fn new(table: Arc<[u64; 256]>) -> Self {
+        Self { table }
     }
 
     /// Overrides the gas cost for the given gas id.
@@ -383,8 +374,8 @@ impl GasParams {
 
     /// Gets the gas cost for the given gas id.
     #[inline]
-    pub const fn get(&self, id: GasId) -> u64 {
-        unsafe { *self.ptr.add(id.as_usize()) }
+    pub fn get(&self, id: GasId) -> u64 {
+        self.table[id.as_usize()]
     }
 
     /// `EXP` opcode cost calculation.
@@ -574,7 +565,7 @@ impl GasParams {
 
     /// `LOG` opcode cost calculation.
     #[inline]
-    pub const fn log_cost(&self, n: u8, len: u64) -> u64 {
+    pub fn log_cost(&self, n: u8, len: u64) -> u64 {
         self.get(GasId::logdata())
             .saturating_mul(len)
             .saturating_add(self.get(GasId::logtopic()) * n as u64)
@@ -1044,16 +1035,19 @@ pub struct GasId(u8);
 
 impl GasId {
     /// Creates a new `GasId` with the given id.
+    #[inline]
     pub const fn new(id: u8) -> Self {
         Self(id)
     }
 
     /// Returns the id of the gas.
+    #[inline]
     pub const fn as_u8(&self) -> u8 {
         self.0
     }
 
     /// Returns the id of the gas as a usize.
+    #[inline]
     pub const fn as_usize(&self) -> usize {
         self.0 as usize
     }

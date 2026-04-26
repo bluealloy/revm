@@ -84,12 +84,12 @@ impl EthFrame<EthInterpreter> {
     }
 
     /// Returns true if the frame has finished execution.
-    pub fn is_finished(&self) -> bool {
+    pub const fn is_finished(&self) -> bool {
         self.is_finished
     }
 
     /// Sets the finished state of the frame.
-    pub fn set_finished(&mut self, finished: bool) {
+    pub const fn set_finished(&mut self, finished: bool) {
         self.is_finished = finished;
     }
 }

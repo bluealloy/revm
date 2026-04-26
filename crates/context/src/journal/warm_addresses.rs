@@ -54,19 +54,18 @@ impl WarmAddresses {
 
     /// Returns the precompile addresses.
     #[inline]
-    pub fn precompiles(&self) -> &AddressSet {
+    pub const fn precompiles(&self) -> &AddressSet {
         &self.precompile_set
     }
 
     /// Returns the coinbase address.
     #[inline]
-    pub fn coinbase(&self) -> Option<Address> {
+    pub const fn coinbase(&self) -> Option<Address> {
         self.coinbase
     }
 
     /// Set the precompile addresses and short addresses.
-    #[inline]
-    pub fn set_precompile_addresses(&mut self, addresses: AddressSet) {
+    pub fn set_precompile_addresses(&mut self, addresses: &AddressSet) {
         self.precompile_short_addresses.fill(false);
 
         let mut all_short_addresses = true;
@@ -79,12 +78,12 @@ impl WarmAddresses {
         }
 
         self.precompile_all_short_addresses = all_short_addresses;
-        self.precompile_set = addresses;
+        self.precompile_set.clone_from(addresses);
     }
 
     /// Set the coinbase address.
     #[inline]
-    pub fn set_coinbase(&mut self, address: Address) {
+    pub const fn set_coinbase(&mut self, address: Address) {
         self.coinbase = Some(address);
     }
 
@@ -96,13 +95,13 @@ impl WarmAddresses {
 
     /// Returns the access list.
     #[inline]
-    pub fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
+    pub const fn access_list(&self) -> &AddressMap<HashSet<StorageKey>> {
         &self.access_list
     }
 
     /// Clear the coinbase address.
     #[inline]
-    pub fn clear_coinbase(&mut self) {
+    pub const fn clear_coinbase(&mut self) {
         self.coinbase = None;
     }
 
@@ -114,7 +113,6 @@ impl WarmAddresses {
     }
 
     /// Returns true if the address is warm loaded.
-    #[inline]
     pub fn is_warm(&self, address: &Address) -> bool {
         // check if it is coinbase
         if Some(*address) == self.coinbase {
@@ -161,7 +159,6 @@ impl WarmAddresses {
     }
 
     /// Checks if the address is cold loaded and returns an error if it is and skip_cold_load is true.
-    #[inline(never)]
     pub fn check_is_cold<E>(
         &self,
         address: &Address,
@@ -231,7 +228,7 @@ mod tests {
         precompiles.insert(short_addr1);
         precompiles.insert(short_addr2);
 
-        warm_addresses.set_precompile_addresses(precompiles.clone());
+        warm_addresses.set_precompile_addresses(&precompiles);
 
         // Verify storage
         assert_eq!(warm_addresses.precompile_set, precompiles);
@@ -271,7 +268,7 @@ mod tests {
         precompiles.insert(regular_addr);
         precompiles.insert(boundary_addr);
 
-        warm_addresses.set_precompile_addresses(precompiles.clone());
+        warm_addresses.set_precompile_addresses(&precompiles);
 
         // Verify storage
         assert_eq!(warm_addresses.precompile_set, precompiles);
@@ -299,7 +296,7 @@ mod tests {
         precompiles.insert(short_addr);
         precompiles.insert(regular_addr);
 
-        warm_addresses.set_precompile_addresses(precompiles);
+        warm_addresses.set_precompile_addresses(&precompiles);
 
         // Both types should be warm
         assert!(warm_addresses.is_warm(&short_addr));
@@ -324,7 +321,7 @@ mod tests {
         let mut precompiles = HashSet::default();
         precompiles.insert(boundary_addr);
 
-        warm_addresses.set_precompile_addresses(precompiles);
+        warm_addresses.set_precompile_addresses(&precompiles);
 
         assert!(warm_addresses.is_warm(&boundary_addr));
         assert!(warm_addresses.precompile_short_addresses[SHORT_ADDRESS_CAP - 1]);

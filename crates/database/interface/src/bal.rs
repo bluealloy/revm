@@ -36,19 +36,19 @@ impl BalState {
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(&mut self) {
+    pub const fn reset_bal_index(&mut self) {
         self.bal_index = 0;
     }
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_index += 1;
     }
 
     /// Get BAL index.
     #[inline]
-    pub fn bal_index(&self) -> u64 {
+    pub const fn bal_index(&self) -> u64 {
         self.bal_index
     }
 
@@ -80,7 +80,7 @@ impl BalState {
 
     /// Take BAL builder.
     #[inline]
-    pub fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.reset_bal_index();
         self.bal_builder.take()
     }
@@ -271,14 +271,14 @@ impl<DB> BalDatabase<DB> {
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(mut self) -> Self {
+    pub const fn reset_bal_index(mut self) -> Self {
         self.bal_state.reset_bal_index();
         self
     }
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_state.bump_bal_index();
     }
 }

@@ -82,13 +82,13 @@ impl Gas {
 
     /// Returns the memory gas.
     #[inline]
-    pub fn memory(&self) -> &MemoryGas {
+    pub const fn memory(&self) -> &MemoryGas {
         &self.memory
     }
 
     /// Returns the memory gas.
     #[inline]
-    pub fn memory_mut(&mut self) -> &mut MemoryGas {
+    pub const fn memory_mut(&mut self) -> &mut MemoryGas {
         &mut self.memory
     }
 
@@ -148,7 +148,7 @@ impl Gas {
 
     /// Sets the state gas reservoir (used when propagating from child frame).
     #[inline]
-    pub fn set_reservoir(&mut self, val: u64) {
+    pub const fn set_reservoir(&mut self, val: u64) {
         self.tracker.set_reservoir(val);
     }
 
@@ -190,7 +190,7 @@ impl Gas {
 
     /// Erases a gas cost from remaining (returns gas from child frame).
     #[inline]
-    pub fn erase_cost(&mut self, returned: u64) {
+    pub const fn erase_cost(&mut self, returned: u64) {
         self.tracker.erase_cost(returned);
     }
 
@@ -201,7 +201,7 @@ impl Gas {
     ///
     /// Note that this does not affect the reservoir.
     #[inline]
-    pub fn spend_all(&mut self) {
+    pub const fn spend_all(&mut self) {
         self.tracker.spend_all();
     }
 
@@ -210,7 +210,7 @@ impl Gas {
     /// `refund` can be negative but `self.refunded` should always be positive
     /// at the end of transact.
     #[inline]
-    pub fn record_refund(&mut self, refund: i64) {
+    pub const fn record_refund(&mut self, refund: i64) {
         self.tracker.record_refund(refund);
     }
 
@@ -230,19 +230,19 @@ impl Gas {
 
     /// Set a refund value. This overrides the current refund value.
     #[inline]
-    pub fn set_refund(&mut self, refund: i64) {
+    pub const fn set_refund(&mut self, refund: i64) {
         self.tracker.set_refunded(refund);
     }
 
     /// Set a remaining value. This overrides the current remaining value.
     #[inline]
-    pub fn set_remaining(&mut self, remaining: u64) {
+    pub const fn set_remaining(&mut self, remaining: u64) {
         self.tracker.set_remaining(remaining);
     }
 
     /// Set a spent value. This overrides the current spent value.
     #[inline]
-    pub fn set_spent(&mut self, spent: u64) {
+    pub const fn set_spent(&mut self, spent: u64) {
         self.tracker
             .set_remaining(self.tracker.limit().saturating_sub(spent));
     }
@@ -257,7 +257,7 @@ impl Gas {
     #[inline]
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     #[deprecated(since = "32.0.0", note = "use record_regular_cost instead")]
-    pub fn record_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_cost(&mut self, cost: u64) -> bool {
         self.record_regular_cost(cost)
     }
 
@@ -268,7 +268,7 @@ impl Gas {
     /// without consequence if the caller handles it.
     #[inline(always)]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_cost_unsafe(&mut self, cost: u64) -> bool {
+    pub const fn record_cost_unsafe(&mut self, cost: u64) -> bool {
         let remaining = self.tracker.remaining();
         let oog = remaining < cost;
         self.tracker.set_remaining(remaining.wrapping_sub(cost));
@@ -284,7 +284,7 @@ impl Gas {
     /// Returns `false` if total remaining gas is insufficient.
     #[inline]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_state_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
         self.tracker.record_state_cost(cost)
     }
 
@@ -293,7 +293,7 @@ impl Gas {
     /// Used for forwarding gas to child frames.
     #[inline]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_regular_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_regular_cost(&mut self, cost: u64) -> bool {
         self.tracker.record_regular_cost(cost)
     }
 }
@@ -336,7 +336,11 @@ impl MemoryGas {
     ///
     /// Returns the difference between the new and old expansion cost.
     #[inline]
-    pub fn set_words_num(&mut self, words_num: usize, mut expansion_cost: u64) -> Option<u64> {
+    pub const fn set_words_num(
+        &mut self,
+        words_num: usize,
+        mut expansion_cost: u64,
+    ) -> Option<u64> {
         self.words_num = words_num;
         core::mem::swap(&mut self.expansion_cost, &mut expansion_cost);
         self.expansion_cost.checked_sub(expansion_cost)

@@ -53,7 +53,7 @@ impl AccountBal {
         if account.is_selfdestructed_locally() {
             let empty_info = AccountInfo::default();
             self.account_info
-                .update(bal_index, &account.original_info, &empty_info);
+                .update(bal_index, &account.original_info(), &empty_info);
             // Selfdestruct wipes all storage to zero, record writes accordingly.
             self.storage
                 .update_selfdestruct(bal_index, &account.storage);
@@ -61,7 +61,7 @@ impl AccountBal {
         }
 
         self.account_info
-            .update(bal_index, &account.original_info, &account.info);
+            .update(bal_index, &account.original_info(), &account.info);
 
         self.storage.update(bal_index, &account.storage);
     }

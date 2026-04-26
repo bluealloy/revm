@@ -60,7 +60,7 @@ impl GasTracker {
 
     /// Sets the gas limit.
     #[inline]
-    pub fn set_limit(&mut self, val: u64) {
+    pub const fn set_limit(&mut self, val: u64) {
         self.gas_limit = val;
     }
 
@@ -72,7 +72,7 @@ impl GasTracker {
 
     /// Sets the remaining gas.
     #[inline]
-    pub fn set_remaining(&mut self, val: u64) {
+    pub const fn set_remaining(&mut self, val: u64) {
         self.remaining = val;
     }
 
@@ -84,7 +84,7 @@ impl GasTracker {
 
     /// Sets the reservoir gas.
     #[inline]
-    pub fn set_reservoir(&mut self, val: u64) {
+    pub const fn set_reservoir(&mut self, val: u64) {
         self.reservoir = val;
     }
 
@@ -108,7 +108,7 @@ impl GasTracker {
 
     /// Sets the refunded gas.
     #[inline]
-    pub fn set_refunded(&mut self, val: i64) {
+    pub const fn set_refunded(&mut self, val: i64) {
         self.refunded = val;
     }
 
@@ -117,7 +117,7 @@ impl GasTracker {
     /// Deducts from `remaining`. Returns `false` if insufficient gas.
     #[inline]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_regular_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_regular_cost(&mut self, cost: u64) -> bool {
         if let Some(new_remaining) = self.remaining.checked_sub(cost) {
             self.remaining = new_remaining;
             return true;
@@ -134,7 +134,7 @@ impl GasTracker {
     /// Returns `false` if total remaining gas is insufficient.
     #[inline]
     #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub fn record_state_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
         if self.reservoir >= cost {
             self.state_gas_spent = self.state_gas_spent.saturating_add(cost as i64);
             self.reservoir -= cost;
@@ -184,19 +184,19 @@ impl GasTracker {
 
     /// Records a refund value.
     #[inline]
-    pub fn record_refund(&mut self, refund: i64) {
+    pub const fn record_refund(&mut self, refund: i64) {
         self.refunded += refund;
     }
 
     /// Erases a gas cost from remaining (returns gas from child frame).
     #[inline]
-    pub fn erase_cost(&mut self, returned: u64) {
+    pub const fn erase_cost(&mut self, returned: u64) {
         self.remaining += returned;
     }
 
     /// Spends all remaining gas excluding the reservoir.
     #[inline]
-    pub fn spend_all(&mut self) {
+    pub const fn spend_all(&mut self) {
         self.remaining = 0;
     }
 }
