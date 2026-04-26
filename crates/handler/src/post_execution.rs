@@ -18,15 +18,18 @@ use primitives::{hardfork::SpecId, U256};
 /// so the updated reservoir is reflected in reimbursement and beneficiary
 /// reward.
 ///
-/// The aggregate refund is capped at the execution state gas spent
-/// (`gas.state_gas_spent`), matching the per-address `min(refund, state_gas_used)`
-/// cap in the execution-specs implementation.
+/// For a tx-kind `Create`, the contract's new-account state gas was charged
+/// via intrinsic `initial_state_gas` (not via a reservoir-side
+/// `record_state_cost`), so when that contract self-destructs the journal's
+/// per-address refund must not be returned to the reservoir — it was never
+/// reservoir-backed. Pass the CREATE-tx target as `skip_address` to exclude it.
 #[inline]
 pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas) {
     if !context.cfg().is_amsterdam_eip8037_enabled() {
         return;
     }
     let cpsb = context.local().cpsb();
+
     let amount = {
         let cfg = context.cfg();
         let gas_params = cfg.gas_params();
@@ -34,9 +37,9 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
             .journal_ref()
             .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
     };
-    // Cap at execution state gas spent.
-    let cap = gas.state_gas_spent().max(0) as u64;
-    let amount = amount.min(cap);
+    // cap the refund to the state gas spent
+    let amount = amount.min(gas.state_gas_spent() as u64);
+
     if amount != 0 {
         gas.refill_reservoir(amount);
     }

@@ -490,7 +490,7 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(&mut interpreter.gas, &out_gas, ins_result);
+                handle_reservoir_remaining_gas(ins_result.is_ok(), &mut interpreter.gas, &out_gas);
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -523,7 +523,7 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
+                handle_reservoir_remaining_gas(instruction_result.is_ok(), this_gas, outcome.gas());
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
                 // this frame's tracker. When the child fails to deploy a contract
@@ -537,6 +537,7 @@ impl EthFrame<EthInterpreter> {
                 // `refill_amount` and gets unwound if the parent itself
                 // reverts/halts (matching 0→x→0 storage restoration).
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
+
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
                     let state_gas_charged =
                         ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
@@ -561,12 +562,8 @@ impl EthFrame<EthInterpreter> {
 
 /// Handles the remaining gas of the parent frame.
 #[inline]
-pub fn handle_reservoir_remaining_gas(
-    parent_gas: &mut Gas,
-    child_gas: &Gas,
-    result: InstructionResult,
-) {
-    if result.is_ok() {
+pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, child_gas: &Gas) {
+    if is_success {
         // On success: parent takes the child's final reservoir.
         parent_gas.set_reservoir(child_gas.reservoir());
         // Accumulate child's state gas into parent's total.
