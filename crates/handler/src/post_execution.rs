@@ -6,7 +6,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
 };
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
-use primitives::{hardfork::SpecId, TxKind, U256};
+use primitives::{hardfork::SpecId, U256};
 
 /// EIP-8037: Refunds state gas for accounts that were both created and
 /// self-destructed in this transaction.
@@ -18,27 +18,25 @@ use primitives::{hardfork::SpecId, TxKind, U256};
 /// so the updated reservoir is reflected in reimbursement and beneficiary
 /// reward.
 ///
-/// For CREATE transactions the tx-level contract address is excluded from the
-/// iteration: its creation state gas was charged via the intrinsic
-/// `initial_state_gas` and is surfaced separately in [`build_result_gas`]; it
-/// is not a reservoir-side charge and must not be returned to the reservoir.
+/// The aggregate refund is capped at the execution state gas spent
+/// (`gas.state_gas_spent`), matching the per-address `min(refund, state_gas_used)`
+/// cap in the execution-specs implementation.
 #[inline]
 pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas) {
     if !context.cfg().is_amsterdam_eip8037_enabled() {
         return;
     }
     let cpsb = context.local().cpsb();
-    let skip_address = match context.tx().kind() {
-        TxKind::Create => Some(context.tx().caller().create(context.tx().nonce())),
-        TxKind::Call(_) => None,
-    };
     let amount = {
         let cfg = context.cfg();
         let gas_params = cfg.gas_params();
         context
             .journal_ref()
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, skip_address)
+            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
     };
+    // Cap at execution state gas spent.
+    let cap = gas.state_gas_spent().max(0) as u64;
+    let amount = amount.min(cap);
     if amount != 0 {
         gas.refill_reservoir(amount);
     }

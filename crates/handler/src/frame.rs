@@ -530,15 +530,17 @@ impl EthFrame<EthInterpreter> {
                 // (revert, halt, or early-fail paths that return `address == None`
                 // such as nonce overflow, depth, OutOfFunds), refund the upfront
                 // charge to the reservoir and undo it on `state_gas_spent`.
-                if !instruction_result.is_ok() && ctx.cfg().is_amsterdam_eip8037_enabled() {
+                // The nonce-overflow path reports `InstructionResult::Return` (ok)
+                // with `address == None`, so gate on address rather than the result.
+                //
+                // Use `refill_reservoir` so that this refund is counted in
+                // `refill_amount` and gets unwound if the parent itself
+                // reverts/halts (matching 0→x→0 storage restoration).
+                let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
+                if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
                     let state_gas_charged =
                         ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
-                    this_gas.set_reservoir(this_gas.reservoir().saturating_add(state_gas_charged));
-                    this_gas.set_state_gas_spent(
-                        this_gas
-                            .state_gas_spent()
-                            .saturating_sub(state_gas_charged as i64),
-                    );
+                    this_gas.refill_reservoir(state_gas_charged);
                 }
 
                 let stack_item = if instruction_result.is_ok() {
@@ -580,21 +582,43 @@ pub fn handle_reservoir_remaining_gas(
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
         );
+        // Propagate child's 0→x→0 refill total so that if the parent
+        // later reverts/halts, the refill contribution can be unwound.
+        parent_gas.set_refill_amount(
+            parent_gas
+                .refill_amount()
+                .saturating_add(child_gas.refill_amount()),
+        );
     } else {
-        // On revert or halt: state changes are undone. Charges (including the
-        // portion that spilled into regular gas) that weren't refilled are
-        // returned to the parent's reservoir; any 0→x→0 refills that inflated
-        // the reservoir above the parent's pre-call value are rolled back.
+        // On revert or halt: child state changes are rolled back. Compute
+        // the gas to add to parent's pre-call reservoir as:
         //
-        // Parent's reservoir was not modified while the child executed, so it
-        // still holds the pre-call value. Capping the child's reservoir at the
-        // parent's value strips off refill-driven inflation; clamping
-        // `state_gas_spent` to non-negative avoids "refunding" refills that
-        // offset charges made by the parent (those are the parent's work and
-        // must not be undone here).
-        let capped_reservoir = child_gas.reservoir().min(parent_gas.reservoir());
-        let state_gas_returned = child_gas.state_gas_spent().max(0) as u64;
-        parent_gas.set_reservoir(capped_reservoir.saturating_add(state_gas_returned));
+        //   excess = max(0, child.reservoir + max(0, child.state_gas_spent)
+        //                  - parent.reservoir - child.refill_amount)
+        //
+        // The intuition:
+        // * `child.reservoir + max(0, child.state_gas_spent)` is the
+        //   "logical refund" if no refills had happened: it adds back the
+        //   child's own state-gas charges (positive `state_gas_spent`) on
+        //   top of whatever reservoir value the child carried out
+        //   (including refunds propagated from deeper halted/reverted
+        //   sub-frames, which reach `child.reservoir` via `set_reservoir`).
+        // * Subtracting `parent.reservoir` (the pre-call value) and the
+        //   in-frame 0→x→0 refill total leaves only the contribution that
+        //   genuinely belongs to the parent on revert/halt — i.e. own
+        //   charges + grandchild propagations.
+        // * The `max(0, ...)` guards against cases where own charges
+        //   spilled into regular gas (irrecoverable) and the refunded
+        //   charges are smaller than the refill the child did against
+        //   parent's prior charges.
+        let logical_refund = child_gas
+            .reservoir()
+            .saturating_add(child_gas.state_gas_spent().max(0) as u64);
+        let baseline = parent_gas
+            .reservoir()
+            .saturating_add(child_gas.refill_amount());
+        let excess = logical_refund.saturating_sub(baseline);
+        parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
     }
 }
 

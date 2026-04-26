@@ -176,6 +176,18 @@ impl Gas {
         self.tracker.refill_reservoir(amount);
     }
 
+    /// Returns the cumulative reservoir refill amount in this frame.
+    #[inline]
+    pub const fn refill_amount(&self) -> u64 {
+        self.tracker.refill_amount()
+    }
+
+    /// Sets the cumulative refill amount.
+    #[inline]
+    pub fn set_refill_amount(&mut self, val: u64) {
+        self.tracker.set_refill_amount(val);
+    }
+
     /// Erases a gas cost from remaining (returns gas from child frame).
     #[inline]
     pub fn erase_cost(&mut self, returned: u64) {
