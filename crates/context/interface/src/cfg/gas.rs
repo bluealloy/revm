@@ -22,6 +22,12 @@ pub struct GasTracker {
     /// more state gas than the frame itself has charged (the parent previously
     /// charged the 0→x portion). The net is reconciled on frame return.
     state_gas_spent: i64,
+    /// Cumulative reservoir refill amount from 0→x→0 storage restorations
+    /// performed by this frame (EIP-8037 issue #2). Tracked so that on
+    /// revert/halt the parent can subtract this inflation when propagating
+    /// the child's reservoir, without confusing it with legitimate reservoir
+    /// growth from grandchild halt/revert refunds.
+    refill_amount: u64,
     /// Refunded gas. Used to refund the gas to the caller at the end of execution.
     refunded: i64,
 }
@@ -35,6 +41,7 @@ impl GasTracker {
             remaining,
             reservoir,
             state_gas_spent: 0,
+            refill_amount: 0,
             refunded: 0,
         }
     }
@@ -159,6 +166,20 @@ impl GasTracker {
     pub fn refill_reservoir(&mut self, amount: u64) {
         self.reservoir = self.reservoir.saturating_add(amount);
         self.state_gas_spent = self.state_gas_spent.saturating_sub(amount as i64);
+        self.refill_amount = self.refill_amount.saturating_add(amount);
+    }
+
+    /// Returns cumulative reservoir refill amount from 0→x→0 restorations
+    /// performed in this frame.
+    #[inline]
+    pub const fn refill_amount(&self) -> u64 {
+        self.refill_amount
+    }
+
+    /// Sets the refill amount.
+    #[inline]
+    pub fn set_refill_amount(&mut self, val: u64) {
+        self.refill_amount = val;
     }
 
     /// Records a refund value.
@@ -414,6 +435,7 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
+    cpsb: u64,
 ) -> InitialAndFloorGas {
     GasParams::new_spec(spec_id).initial_tx_gas(
         input,
@@ -421,6 +443,7 @@ pub fn calculate_initial_tx_gas(
         access_list_accounts,
         access_list_storages,
         authorization_list_num,
+        cpsb,
     )
 }
 
@@ -431,7 +454,11 @@ pub fn calculate_initial_tx_gas(
 ///
 /// - Intrinsic gas
 /// - Number of tokens in calldata
-pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
+pub fn calculate_initial_tx_gas_for_tx(
+    tx: impl Transaction,
+    spec: SpecId,
+    cpsb: u64,
+) -> InitialAndFloorGas {
     let mut accounts = 0;
     let mut storages = 0;
     // legacy is only tx type that does not have access list.
@@ -456,6 +483,7 @@ pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> In
         accounts as u64,
         storages as u64,
         tx.authorization_list_len() as u64,
+        cpsb,
     )
 }
 

@@ -3,7 +3,7 @@ use context::{
     result::{ExecutionResult, ResultGas},
     Cfg, ContextTr, JournalEntry, JournalTr, Transaction,
 };
-use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
+use handler::{cache_cpsb_on_local, evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::{GasTable, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
@@ -45,6 +45,9 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
+        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
+        cache_cpsb_on_local(evm.ctx_mut());
         match self.inspect_run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
@@ -149,6 +152,10 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context. Inspector
+        // system calls skip validation/pre-execution but still execute
+        // interpreter code that reads Host::cpsb.
+        cache_cpsb_on_local(evm.ctx_mut());
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution with inspection and then output.

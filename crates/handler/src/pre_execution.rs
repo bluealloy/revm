@@ -199,7 +199,8 @@ pub fn apply_eip7702_auth_list<
     init_and_floor_gas: &mut InitialAndFloorGas,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
-    let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund();
+    let cpsb = context.cfg().cpsb(context.block().gas_limit());
+    let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund(cpsb);
     let (tx, journal) = context.tx_journal_mut();
 
     // Return if not EIP-7702 transaction.
@@ -218,7 +219,7 @@ pub fn apply_eip7702_auth_list<
     let (eip7702_state_refund, eip7702_regular_refund_raw) = context
         .cfg()
         .gas_params()
-        .split_eip7702_refund(eip7702_refund);
+        .split_eip7702_refund(eip7702_refund, cpsb);
     if eip7702_state_refund > 0 {
         init_and_floor_gas.eip7702_reservoir_refund = eip7702_state_refund;
     }

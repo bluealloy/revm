@@ -203,6 +203,15 @@ impl InstructionResult {
         matches!(self, return_ok!())
     }
 
+    /// Returns whether the result is a success without selfdestruct.
+    #[inline]
+    pub fn is_ok_without_selfdestruct(self) -> bool {
+        if matches!(self, return_ok!()) {
+            return self != InstructionResult::SelfDestruct;
+        }
+        false
+    }
+
     #[inline]
     /// Returns whether the result is a success or revert (not an error).
     pub const fn is_ok_or_revert(self) -> bool {

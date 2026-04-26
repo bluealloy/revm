@@ -463,6 +463,7 @@ const SELFDESTRUCT_TO_SELF_INIT_CODE: &[u8] = &[
 fn test_eip7708_selfdestruct_to_self() {
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .build_mainnet();
 
@@ -556,6 +557,7 @@ fn test_eip7708_call_with_value() {
 
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .build_mainnet();
 
@@ -651,6 +653,7 @@ fn test_eip7708_create_with_value() {
 
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .build_mainnet();
 

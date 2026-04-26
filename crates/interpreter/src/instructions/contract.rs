@@ -90,11 +90,16 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    // State gas for account creation + contract metadata (EIP-8037)
+    // State gas for account creation + contract metadata (EIP-8037).
+    // Charged upfront on the parent's tracker; `return_create` refunds the same
+    // amount (derived from cfg) on entry and re-records it on a successful commit.
     if context.host.is_amsterdam_eip8037_enabled() {
         state_gas!(
             context.interpreter,
-            context.host.gas_params().create_state_gas()
+            context
+                .host
+                .gas_params()
+                .create_state_gas(context.host.cpsb())
         );
     }
 

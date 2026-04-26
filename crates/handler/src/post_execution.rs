@@ -8,6 +8,43 @@ use context_interface::{
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 
+/// EIP-8037: Refunds state gas for accounts that were both created and
+/// self-destructed in this transaction.
+///
+/// Per EIP-6780 those accounts are erased at tx end; the state gas charged
+/// during execution for creating the account, depositing its code, and setting
+/// its storage slots is returned directly to the reservoir (not routed through
+/// the capped refund counter). Must run before [`refund`] / [`build_result_gas`]
+/// so the updated reservoir is reflected in reimbursement and beneficiary
+/// reward.
+///
+/// For a tx-kind `Create`, the contract's new-account state gas was charged
+/// via intrinsic `initial_state_gas` (not via a reservoir-side
+/// `record_state_cost`), so when that contract self-destructs the journal's
+/// per-address refund must not be returned to the reservoir — it was never
+/// reservoir-backed. Pass the CREATE-tx target as `skip_address` to exclude it.
+#[inline]
+pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas) {
+    if !context.cfg().is_amsterdam_eip8037_enabled() {
+        return;
+    }
+    let cpsb = context.local().cpsb();
+
+    let amount = {
+        let cfg = context.cfg();
+        let gas_params = cfg.gas_params();
+        context
+            .journal_ref()
+            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
+    };
+    // cap the refund to the state gas spent
+    let amount = amount.min(gas.state_gas_spent() as u64);
+
+    if amount != 0 {
+        gas.refill_reservoir(amount);
+    }
+}
+
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
     // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
@@ -40,10 +77,12 @@ pub fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloo
     let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
     let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
     if gas_used_after_refund < init_and_floor_gas.floor_gas {
-        // Set spent so that (limit - remaining - reservoir) = floor_gas
-        // i.e. remaining = limit - floor_gas - reservoir
-        gas.set_spent(init_and_floor_gas.floor_gas + gas.reservoir());
-        // clear refund
+        // Match execution-specs: when the floor wins, the unused state gas
+        // (reservoir) is absorbed into the floor cost rather than reimbursed
+        // separately. Zeroing it keeps `reimburse_caller`'s
+        // `remaining + reservoir + refunded` sum equal to `limit - floor`.
+        gas.set_spent(init_and_floor_gas.floor_gas);
+        gas.set_reservoir(0);
         gas.set_refund(0);
     }
 }

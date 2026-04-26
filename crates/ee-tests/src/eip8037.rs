@@ -46,11 +46,15 @@ const fn hash_cost(len: usize) -> u64 {
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
 
 /// Builds an EVM with state gas enabled and custom gas params.
+///
+/// Sets `cpsb_override = Some(1)` so the overridden gas-table values are
+/// interpreted as final gas amounts (the CPSB multiplier becomes a no-op).
 fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(cap);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -1112,6 +1116,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(u64::MAX);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -2108,14 +2113,8 @@ fn sstore_parent_then_delegatecall_clear_bytecode() -> Bytecode {
     init_code.push(0);
     init_code.push(opcode::RETURN);
 
-    let mut bytecode = Vec::new();
-
     // Parent: SSTORE(0, 1) — state gas charged on the parent frame.
-    bytecode.push(opcode::PUSH1);
-    bytecode.push(1);
-    bytecode.push(opcode::PUSH1);
-    bytecode.push(0);
-    bytecode.push(opcode::SSTORE);
+    let mut bytecode = vec![opcode::PUSH1, 1, opcode::PUSH1, 0, opcode::SSTORE];
 
     // MSTORE8 init_code into memory.
     for (i, &byte) in init_code.iter().enumerate() {
