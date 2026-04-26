@@ -544,22 +544,6 @@ impl EthFrame<EthInterpreter> {
                     this_gas.refill_reservoir(state_gas_charged);
                 }
 
-                // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent`.
-                if !instruction_result.is_ok() && ctx.cfg().is_amsterdam_eip8037_enabled() {
-                    let state_gas_charged =
-                        ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
-                    this_gas.set_reservoir(this_gas.reservoir().saturating_add(state_gas_charged));
-                    this_gas.set_state_gas_spent(
-                        this_gas
-                            .state_gas_spent()
-                            .saturating_sub(state_gas_charged as i64),
-                    );
-                }
-
                 let stack_item = if instruction_result.is_ok() {
                     this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
