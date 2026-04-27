@@ -102,7 +102,7 @@ impl BalState {
                 bal.accounts
                     .get_full(address)
                     .map(|i| AccountId::new(i.0).expect("too many bals"))
-                    .ok_or(BalError::AccountNotFound)
+                    .ok_or(BalError::AccountNotFound { address: *address })
             })
             .transpose()
     }
@@ -121,34 +121,30 @@ impl BalState {
         let Some(account_id) = self.get_account_id(&address)? else {
             return Ok(false);
         };
-        Ok(self.basic_by_account_id(account_id, basic))
+        self.basic_by_account_id(account_id, basic)
     }
 
     /// Fetch account from database and apply bal changes to it by account id.
-    ///
-    /// Panics if account_id is invalid
     #[inline]
     pub fn basic_by_account_id(
         &self,
         account_id: AccountId,
         basic: &mut Option<AccountInfo>,
-    ) -> bool {
-        if let Some(bal) = &self.bal {
-            let is_none = basic.is_none();
-            let mut bal_basic = core::mem::take(basic).unwrap_or_default();
-            let changed = bal
-                .populate_account_info(account_id, self.bal_index, &mut bal_basic)
-                .expect("Invalid account id");
+    ) -> Result<bool, BalError> {
+        let Some(bal) = &self.bal else {
+            return Ok(false);
+        };
+        let is_none = basic.is_none();
+        let mut bal_basic = core::mem::take(basic).unwrap_or_default();
+        let changed = bal.populate_account_info(account_id, self.bal_index, &mut bal_basic)?;
 
-            // If account was not in DB and BAL has no changes, keep it as None.
-            if !changed && is_none {
-                return true;
-            }
-
-            *basic = Some(bal_basic);
-            return true;
+        // If account was not in DB and BAL has no changes, keep it as None.
+        if !changed && is_none {
+            return Ok(true);
         }
-        false
+
+        *basic = Some(bal_basic);
+        Ok(true)
     }
 
     /// Get storage value from BAL.
@@ -165,20 +161,18 @@ impl BalState {
         };
 
         let Some(bal_account) = bal.accounts.get(account) else {
-            return Err(BalError::AccountNotFound);
+            return Err(BalError::AccountNotFound { address: *account });
         };
 
         Ok(bal_account
             .storage
-            .get_bal_writes(storage_key)?
+            .get_bal_writes(account, storage_key)?
             .get(self.bal_index))
     }
 
     /// Get the storage value by account id.
     ///
     /// Return Err if bal is present but account or storage is not found inside BAL.
-    ///
-    ///
     #[inline]
     pub fn storage_by_account_id(
         &self,
@@ -189,13 +183,13 @@ impl BalState {
             return Ok(None);
         };
 
-        let Some((_, bal_account)) = bal.accounts.get_index(account_id.get()) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = bal.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
         Ok(bal_account
             .storage
-            .get_bal_writes(storage_key)?
+            .get_bal_writes(address, storage_key)?
             .get(self.bal_index))
     }
 
@@ -338,7 +332,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
         let mut account = self.db.basic(address).map_err(EvmDatabaseError::Database)?;
 
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account);
+            self.bal_state.basic_by_account_id(account_id, &mut account)?;
         }
 
         Ok(account)

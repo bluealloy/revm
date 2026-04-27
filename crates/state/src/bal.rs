@@ -136,7 +136,7 @@ impl Bal {
         bal_account.update(bal_index, account);
     }
 
-    /// Populate account from BAL. Return true if account info got changed
+    /// Populate account from BAL. Return true if account info got changed.
     pub fn populate_account_info(
         &self,
         account_id: AccountId,
@@ -144,7 +144,7 @@ impl Bal {
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
         let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
-            return Err(BalError::AccountNotFound);
+            return Err(BalError::InvalidAccountId { account_id });
         };
         account.account_id = Some(account_id);
 
@@ -162,11 +162,11 @@ impl Bal {
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = self.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
-        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+        if let Some(bal_value) = bal_account.storage.get(address, key, bal_index)? {
             *value = bal_value;
         };
 
@@ -183,10 +183,12 @@ impl Bal {
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
         let Some(bal_account) = self.accounts.get(&account_address) else {
-            return Err(BalError::AccountNotFound);
+            return Err(BalError::AccountNotFound {
+                address: account_address,
+            });
         };
 
-        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+        if let Some(bal_value) = bal_account.storage.get(&account_address, key, bal_index)? {
             *value = bal_value;
         };
         Ok(())
@@ -199,12 +201,15 @@ impl Bal {
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = self.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
-        let Some(storage_value) = bal_account.storage.get(key, bal_index)? else {
-            return Err(BalError::SlotNotFound);
+        let Some(storage_value) = bal_account.storage.get(address, key, bal_index)? else {
+            return Err(BalError::SlotNotFound {
+                address: *address,
+                slot: key,
+            });
         };
 
         Ok(storage_value)
@@ -233,17 +238,40 @@ impl Bal {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BalError {
-    /// Account not found in BAL.
-    AccountNotFound,
-    /// Slot not found in BAL.
-    SlotNotFound,
+    /// Account not found in BAL by address.
+    AccountNotFound {
+        /// Address that was not found.
+        address: Address,
+    },
+    /// Account id does not point at a valid entry in the BAL accounts map.
+    ///
+    /// Signals that a stale or mismatched id was supplied — the id is expected to come
+    /// from a prior BAL lookup against the same BAL.
+    InvalidAccountId {
+        /// Account id that was supplied.
+        account_id: AccountId,
+    },
+    /// Slot not found in BAL for a given account.
+    SlotNotFound {
+        /// Address of the account whose slot was missing.
+        address: Address,
+        /// Storage slot that was not found.
+        slot: StorageKey,
+    },
 }
 
 impl core::fmt::Display for BalError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::AccountNotFound => write!(f, "Account not found in BAL"),
-            Self::SlotNotFound => write!(f, "Slot not found in BAL"),
+            Self::AccountNotFound { address } => {
+                write!(f, "Account {address} not found in BAL")
+            }
+            Self::InvalidAccountId { account_id } => {
+                write!(f, "Invalid BAL account id {}", account_id.get())
+            }
+            Self::SlotNotFound { address, slot } => {
+                write!(f, "Slot {slot:#x} not found in BAL for account {address}")
+            }
         }
     }
 }

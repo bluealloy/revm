@@ -258,16 +258,26 @@ impl StorageBal {
     #[inline]
     pub fn get(
         &self,
+        address: &Address,
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<Option<StorageValue>, BalError> {
-        Ok(self.get_bal_writes(key)?.get(bal_index))
+        Ok(self.get_bal_writes(address, key)?.get(bal_index))
     }
 
     /// Get storage writes from the builder.
+    ///
+    /// `address` is only needed in case of an error to propagate the address.
     #[inline]
-    pub fn get_bal_writes(&self, key: StorageKey) -> Result<&BalWrites<StorageValue>, BalError> {
-        self.storage.get(&key).ok_or(BalError::SlotNotFound)
+    pub fn get_bal_writes(
+        &self,
+        address: &Address,
+        key: StorageKey,
+    ) -> Result<&BalWrites<StorageValue>, BalError> {
+        self.storage.get(&key).ok_or_else(|| BalError::SlotNotFound {
+            address: *address,
+            slot: key,
+        })
     }
 
     /// Extend storage from another storage.
