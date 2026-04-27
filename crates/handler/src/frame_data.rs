@@ -44,14 +44,18 @@ pub enum FrameResult {
 impl FrameResult {
     /// Creates a new call frame result for an out-of-gas error.
     #[inline]
-    pub fn new_call_oog(gas_limit: u64, memory_offset: core::ops::Range<usize>) -> Self {
-        Self::Call(CallOutcome::new_oog(gas_limit, memory_offset))
+    pub fn new_call_oog(
+        gas_limit: u64,
+        memory_offset: core::ops::Range<usize>,
+        reservoir: u64,
+    ) -> Self {
+        Self::Call(CallOutcome::new_oog(gas_limit, memory_offset, reservoir))
     }
 
     /// Creates a new create frame result for an out-of-gas error.
     #[inline]
-    pub fn new_create_oog(gas_limit: u64) -> Self {
-        Self::Create(CreateOutcome::new_oog(gas_limit))
+    pub fn new_create_oog(gas_limit: u64, reservoir: u64) -> Self {
+        Self::Create(CreateOutcome::new_oog(gas_limit, reservoir))
     }
 
     /// Casts frame result to interpreter result.
@@ -76,7 +80,7 @@ impl FrameResult {
 
     /// Returns reference to gas.
     #[inline]
-    pub fn gas(&self) -> &Gas {
+    pub const fn gas(&self) -> &Gas {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
@@ -85,7 +89,7 @@ impl FrameResult {
 
     /// Returns mutable reference to interpreter result.
     #[inline]
-    pub fn gas_mut(&mut self) -> &mut Gas {
+    pub const fn gas_mut(&mut self) -> &mut Gas {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
@@ -94,7 +98,7 @@ impl FrameResult {
 
     /// Returns reference to interpreter result.
     #[inline]
-    pub fn interpreter_result(&self) -> &InterpreterResult {
+    pub const fn interpreter_result(&self) -> &InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
@@ -103,7 +107,7 @@ impl FrameResult {
 
     /// Returns mutable reference to interpreter result.
     #[inline]
-    pub fn interpreter_result_mut(&mut self) -> &mut InterpreterResult {
+    pub const fn interpreter_result_mut(&mut self) -> &mut InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
@@ -112,36 +116,36 @@ impl FrameResult {
 
     /// Return Instruction result.
     #[inline]
-    pub fn instruction_result(&self) -> InstructionResult {
+    pub const fn instruction_result(&self) -> InstructionResult {
         self.interpreter_result().result
     }
 }
 
 impl FrameData {
     /// Creates a new create frame data.
-    pub fn new_create(created_address: Address) -> Self {
+    pub const fn new_create(created_address: Address) -> Self {
         Self::Create(CreateFrame { created_address })
     }
 
     /// Creates a new call frame data.
-    pub fn new_call(return_memory_range: Range<usize>) -> Self {
+    pub const fn new_call(return_memory_range: Range<usize>) -> Self {
         Self::Call(CallFrame {
             return_memory_range,
         })
     }
 
     /// Returns true if frame is call frame.
-    pub fn is_call(&self) -> bool {
+    pub const fn is_call(&self) -> bool {
         matches!(self, Self::Call { .. })
     }
 
     /// Returns true if frame is create frame.
-    pub fn is_create(&self) -> bool {
+    pub const fn is_create(&self) -> bool {
         matches!(self, Self::Create { .. })
     }
 
     /// Returns created address if frame is create otherwise returns None.
-    pub fn created_address(&self) -> Option<Address> {
+    pub const fn created_address(&self) -> Option<Address> {
         match self {
             Self::Create(create_frame) => Some(create_frame.created_address),
             _ => None,

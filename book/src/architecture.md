@@ -71,7 +71,7 @@ The Inspector is ideal for building debuggers, gas analyzers, security tools, te
 
 To learn how to build your own custom EVM:
 - Check out the [example-my-evm](https://github.com/bluealloy/revm/tree/main/examples/my_evm) guide
-- Look at [op-revm](https://github.com/bluealloy/revm/tree/main/crates/op-revm) to see how Optimism uses REVM
+- Look at [op-revm](https://github.com/ethereum-optimism/optimism) to see how Optimism uses REVM
 
 Each trait needed to build custom EVM has detailed documentation explaining how it works and is worth reading.
 

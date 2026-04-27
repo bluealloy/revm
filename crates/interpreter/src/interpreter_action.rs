@@ -36,6 +36,41 @@ pub struct FrameInit {
     pub frame_input: FrameInput,
 }
 
+impl FrameInput {
+    /// Reduces the gas limit of the contained Call or Create inputs by `amount`.
+    /// Used to charge initial state gas from the frame's regular gas budget
+    /// when the reservoir is insufficient.
+    pub fn reduce_gas_limit(&mut self, amount: u64) {
+        match self {
+            FrameInput::Call(inputs) => {
+                inputs.gas_limit = inputs.gas_limit.saturating_sub(amount);
+            }
+            FrameInput::Create(inputs) => {
+                inputs.set_gas_limit(inputs.gas_limit().saturating_sub(amount));
+            }
+            FrameInput::Empty => {}
+        }
+    }
+
+    /// Returns the state gas reservoir (EIP-8037).
+    pub fn reservoir(&self) -> u64 {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir,
+            FrameInput::Create(inputs) => inputs.reservoir(),
+            FrameInput::Empty => 0,
+        }
+    }
+
+    /// Sets the state gas reservoir (EIP-8037).
+    pub fn set_reservoir(&mut self, reservoir: u64) {
+        match self {
+            FrameInput::Call(inputs) => inputs.reservoir = reservoir,
+            FrameInput::Create(inputs) => inputs.set_reservoir(reservoir),
+            FrameInput::Empty => {}
+        }
+    }
+}
+
 impl AsMut<Self> for FrameInput {
     fn as_mut(&mut self) -> &mut Self {
         self
@@ -55,25 +90,25 @@ pub enum InterpreterAction {
 impl InterpreterAction {
     /// Returns `true` if action is call.
     #[inline]
-    pub fn is_call(&self) -> bool {
+    pub const fn is_call(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Call(..)))
     }
 
     /// Returns `true` if action is create.
     #[inline]
-    pub fn is_create(&self) -> bool {
+    pub const fn is_create(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Create(..)))
     }
 
     /// Returns `true` if action is return.
     #[inline]
-    pub fn is_return(&self) -> bool {
+    pub const fn is_return(&self) -> bool {
         matches!(self, InterpreterAction::Return { .. })
     }
 
     /// Returns [`Gas`] if action is return.
     #[inline]
-    pub fn gas_mut(&mut self) -> Option<&mut Gas> {
+    pub const fn gas_mut(&mut self) -> Option<&mut Gas> {
         match self {
             InterpreterAction::Return(result) => Some(&mut result.gas),
             _ => None,
@@ -95,7 +130,7 @@ impl InterpreterAction {
     ///
     /// Else it returns [None].
     #[inline]
-    pub fn instruction_result(&self) -> Option<InstructionResult> {
+    pub const fn instruction_result(&self) -> Option<InstructionResult> {
         match self {
             InterpreterAction::Return(result) => Some(result.result),
             _ => None,
@@ -104,25 +139,25 @@ impl InterpreterAction {
 
     /// Create new frame action with the given frame input.
     #[inline]
-    pub fn new_frame(frame_input: FrameInput) -> Self {
+    pub const fn new_frame(frame_input: FrameInput) -> Self {
         Self::NewFrame(frame_input)
     }
 
     /// Create new halt action with the given result and gas.
     #[inline]
-    pub fn new_halt(result: InstructionResult, gas: Gas) -> Self {
+    pub const fn new_halt(result: InstructionResult, gas: Gas) -> Self {
         Self::Return(InterpreterResult::new(result, Bytes::new(), gas))
     }
 
     /// Create new return action with the given result, output and gas.
     #[inline]
-    pub fn new_return(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+    pub const fn new_return(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
         Self::Return(InterpreterResult::new(result, output, gas))
     }
 
     /// Create new stop action.
     #[inline]
-    pub fn new_stop() -> Self {
+    pub const fn new_stop() -> Self {
         Self::Return(InterpreterResult::new(
             InstructionResult::Stop,
             Bytes::new(),

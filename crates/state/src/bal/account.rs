@@ -53,13 +53,15 @@ impl AccountBal {
         if account.is_selfdestructed_locally() {
             let empty_info = AccountInfo::default();
             self.account_info
-                .update(bal_index, &account.original_info, &empty_info);
-            self.storage.update_reads(account.storage.keys().copied());
+                .update(bal_index, &account.original_info(), &empty_info);
+            // Selfdestruct wipes all storage to zero, record writes accordingly.
+            self.storage
+                .update_selfdestruct(bal_index, &account.storage);
             return;
         }
 
         self.account_info
-            .update(bal_index, &account.original_info, &account.info);
+            .update(bal_index, &account.original_info(), &account.info);
 
         self.storage.update(bal_index, &account.storage);
     }
@@ -273,6 +275,20 @@ impl StorageBal {
                 bal_index,
                 &value.original_value,
                 value.present_value,
+            );
+        }
+    }
+
+    /// Update storage for a selfdestructed account.
+    ///
+    /// All accessed slots are recorded as written to zero since selfdestruct wipes storage.
+    #[inline]
+    pub fn update_selfdestruct(&mut self, bal_index: BalIndex, storage: &EvmStorage) {
+        for (key, value) in storage {
+            self.storage.entry(*key).or_default().update(
+                bal_index,
+                &value.original_value,
+                StorageValue::ZERO,
             );
         }
     }

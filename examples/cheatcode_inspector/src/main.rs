@@ -125,7 +125,7 @@ impl JournalTr for Backend {
         self.journaled_state.warm_coinbase_account(address)
     }
 
-    fn warm_precompiles(&mut self, addresses: AddressSet) {
+    fn warm_precompiles(&mut self, addresses: &AddressSet) {
         self.journaled_state.warm_precompiles(addresses)
     }
 

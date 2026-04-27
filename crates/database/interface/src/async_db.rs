@@ -130,7 +130,7 @@ impl<T> WrapDatabaseAsync<T> {
     /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
     ///
     /// If you are already using something like [tokio::main], call [`WrapDatabaseAsync::new`] instead.
-    pub fn with_runtime(db: T, runtime: Runtime) -> Self {
+    pub const fn with_runtime(db: T, runtime: Runtime) -> Self {
         let rt = HandleOrRuntime::Runtime(runtime);
         Self { db, rt }
     }
@@ -141,7 +141,7 @@ impl<T> WrapDatabaseAsync<T> {
     /// to obtain a handle.
     ///
     /// If you are already in asynchronous world, like [tokio::main], use [`WrapDatabaseAsync::new`] instead.
-    pub fn with_handle(db: T, handle: Handle) -> Self {
+    pub const fn with_handle(db: T, handle: Handle) -> Self {
         let rt = HandleOrRuntime::Handle(handle);
         Self { db, rt }
     }

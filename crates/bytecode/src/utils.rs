@@ -6,7 +6,7 @@
 ///
 /// The pointer must point to at least 2 bytes.
 #[inline]
-pub unsafe fn read_i16(ptr: *const u8) -> i16 {
+pub const unsafe fn read_i16(ptr: *const u8) -> i16 {
     read_u16(ptr) as i16
 }
 
@@ -16,7 +16,7 @@ pub unsafe fn read_i16(ptr: *const u8) -> i16 {
 ///
 /// The pointer must point to at least 2 bytes.
 #[inline]
-pub unsafe fn read_u16(ptr: *const u8) -> u16 {
+pub const unsafe fn read_u16(ptr: *const u8) -> u16 {
     u16::from_be_bytes(unsafe { ptr.cast::<[u8; 2]>().read() })
 }
 

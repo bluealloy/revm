@@ -124,14 +124,13 @@ impl MemoryTr for SharedMemory {
         true
     }
 
-    /// Returns `true` if the `new_size` for the current context memory will
+    /// Returns `true` if the `new_words` for the current context memory will
     /// make the shared buffer length exceed the `memory_limit`.
     #[cfg(feature = "memory_limit")]
     #[inline]
-    fn limit_reached(&self, offset: usize, len: usize) -> bool {
+    fn limit_reached(&self, new_words: usize) -> bool {
         self.my_checkpoint
-            .saturating_add(offset)
-            .saturating_add(len) as u64
+            .saturating_add(new_words.saturating_mul(32)) as u64
             > self.memory_limit
     }
 }
@@ -147,7 +146,7 @@ impl SharedMemory {
 
     /// Creates a new invalid memory instance.
     #[inline]
-    pub fn invalid() -> Self {
+    pub const fn invalid() -> Self {
         Self {
             buffer: None,
             my_checkpoint: 0,
@@ -158,7 +157,7 @@ impl SharedMemory {
     }
 
     /// Creates a new memory instance with a given shared buffer.
-    pub fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
+    pub const fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
         Self {
             buffer: Some(buffer),
             my_checkpoint: 0,
@@ -195,7 +194,7 @@ impl SharedMemory {
 
     /// Sets the memory limit in bytes.
     #[inline]
-    pub fn set_memory_limit(&mut self, limit: u64) {
+    pub const fn set_memory_limit(&mut self, limit: u64) {
         #[cfg(feature = "memory_limit")]
         {
             self.memory_limit = limit;
@@ -570,11 +569,6 @@ pub fn resize_memory<Memory: MemoryTr>(
     offset: usize,
     len: usize,
 ) -> Result<(), InstructionResult> {
-    #[cfg(feature = "memory_limit")]
-    if memory.limit_reached(offset, len) {
-        return Err(InstructionResult::MemoryLimitOOG);
-    }
-
     let new_num_words = num_words(offset.saturating_add(len));
     if new_num_words > gas.memory().words_num {
         return resize_memory_cold(gas, memory, gas_table, new_num_words);
@@ -591,6 +585,11 @@ fn resize_memory_cold<Memory: MemoryTr>(
     gas_table: &GasParams,
     new_num_words: usize,
 ) -> Result<(), InstructionResult> {
+    #[cfg(feature = "memory_limit")]
+    if memory.limit_reached(new_num_words) {
+        return Err(InstructionResult::MemoryLimitOOG);
+    }
+
     let cost = gas_table.memory_cost(new_num_words);
     let cost = unsafe {
         gas.memory_mut()
@@ -598,7 +597,7 @@ fn resize_memory_cold<Memory: MemoryTr>(
             .unwrap_unchecked()
     };
 
-    if !gas.record_cost(cost) {
+    if !gas.record_regular_cost(cost) {
         return Err(InstructionResult::MemoryOOG);
     }
     memory.resize(new_num_words * 32);
@@ -689,5 +688,31 @@ mod tests {
         assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.len(), 32);
         assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
+    }
+
+    #[cfg(feature = "memory_limit")]
+    #[test]
+    fn resize_memory_limit() {
+        let gas_table = GasParams::default();
+
+        // Limit of 64 bytes allows 2 words.
+        let mut memory = SharedMemory::new_with_memory_limit(64);
+        let mut gas = crate::Gas::new(100_000);
+
+        // Resize to 1 word (32 bytes) should succeed.
+        assert!(resize_memory(&mut gas, &mut memory, &gas_table, 0, 32).is_ok());
+        assert_eq!(memory.len(), 32);
+
+        // Resize to 2 words (64 bytes) should succeed.
+        assert!(resize_memory(&mut gas, &mut memory, &gas_table, 0, 64).is_ok());
+        assert_eq!(memory.len(), 64);
+
+        // Resize to 3 words (96 bytes) should fail with MemoryLimitOOG.
+        assert_eq!(
+            resize_memory(&mut gas, &mut memory, &gas_table, 0, 96),
+            Err(InstructionResult::MemoryLimitOOG),
+        );
+        // Memory should not have grown.
+        assert_eq!(memory.len(), 64);
     }
 }

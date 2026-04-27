@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v9.0.0...revm-bytecode-v10.0.0) - 2026-04-10
+
+### Added
+
+- add crate-level re-exports for all revm-* dependencies ([#3507](https://github.com/bluealloy/revm/pull/3507))
+
+### Fixed
+
+- make Bytecode Ord consistent with PartialEq and Hash ([#3479](https://github.com/bluealloy/revm/pull/3479))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v8.0.0...revm-bytecode-v9.0.0) - 2026-03-02
 
 ### Added

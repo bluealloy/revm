@@ -105,22 +105,25 @@ impl Bytecode {
     /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
-        static DEFAULT_BYTECODE: OnceLock<Bytecode> = OnceLock::new();
-        DEFAULT_BYTECODE
-            .get_or_init(|| {
-                Self(Arc::new(BytecodeInner {
-                    kind: BytecodeKind::LegacyAnalyzed,
-                    bytecode: Bytes::from_static(&[opcode::STOP]),
-                    original_len: 0,
-                    jump_table: JumpTable::default(),
-                    hash: {
-                        let hash = OnceLock::new();
-                        let _ = hash.set(KECCAK_EMPTY);
-                        hash
-                    },
-                }))
-            })
-            .clone()
+        Self::default_ref().clone()
+    }
+
+    #[inline]
+    fn default_ref() -> &'static Self {
+        static DEFAULT: OnceLock<Bytecode> = OnceLock::new();
+        DEFAULT.get_or_init(|| {
+            Self(Arc::new(BytecodeInner {
+                kind: BytecodeKind::LegacyAnalyzed,
+                bytecode: Bytes::from_static(&[opcode::STOP]),
+                original_len: 0,
+                jump_table: JumpTable::default(),
+                hash: {
+                    let hash = OnceLock::new();
+                    let _ = hash.set(KECCAK_EMPTY);
+                    hash
+                },
+            }))
+        })
     }
 
     /// Creates a new legacy [`Bytecode`] by analyzing raw bytes.
@@ -203,13 +206,33 @@ impl Bytecode {
 
     /// Create new checked bytecode from pre-analyzed components.
     ///
+    /// # Safety
+    ///
+    /// `bytecode` must satisfy the same padding invariants produced by
+    /// `analyze_legacy`. In particular, execution must never cause the
+    /// interpreter to read past the backing allocation when decoding opcode
+    /// immediates (`PUSH1`–`PUSH32` via `read_slice`, and `DUPN`/`SWAPN`/
+    /// `EXCHANGE` via `read_u8`).
+    ///
+    /// [`Bytecode::new_legacy`] handles this automatically.
+    /// This constructor is only for restoring trusted, previously analyzed
+    /// bytecode (e.g., from database storage) where the padding was already
+    /// applied.
+    ///
+    /// Violating this causes undefined behavior during execution due to
+    /// out-of-bounds reads from raw pointers.
+    ///
     /// # Panics
     ///
     /// * If `original_len` is greater than `bytecode.len()`
     /// * If jump table length is less than `original_len`
     /// * If bytecode is empty
     #[inline]
-    pub fn new_analyzed(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
+    pub unsafe fn new_analyzed(
+        bytecode: Bytes,
+        original_len: usize,
+        jump_table: JumpTable,
+    ) -> Self {
         assert!(
             original_len <= bytecode.len(),
             "original_len is greater than bytecode length"
@@ -331,6 +354,12 @@ impl Bytecode {
         self.0.original_len == 0
     }
 
+    /// Returns `true` if the bytecode is empty and has the default bytecode hash.
+    #[inline]
+    pub fn is_default(&self) -> bool {
+        Arc::ptr_eq(&self.0, &Self::default_ref().0)
+    }
+
     /// Returns an iterator over the opcodes in this bytecode, skipping immediates.
     #[inline]
     pub fn iter_opcodes(&self) -> crate::BytecodeIterator<'_> {
@@ -363,22 +392,28 @@ mod tests {
     fn test_new_analyzed() {
         let raw = Bytes::from_static(&[opcode::PUSH1, 0x01]);
         let bytecode = Bytecode::new_legacy(raw);
-        let _ = Bytecode::new_analyzed(
-            bytecode.bytecode().clone(),
-            bytecode.len(),
-            bytecode.legacy_jump_table().unwrap().clone(),
-        );
+        // SAFETY: bytecode was produced by `new_legacy` which pads correctly.
+        let _ = unsafe {
+            Bytecode::new_analyzed(
+                bytecode.bytecode().clone(),
+                bytecode.len(),
+                bytecode.legacy_jump_table().unwrap().clone(),
+            )
+        };
     }
 
     #[test]
     #[should_panic(expected = "original_len is greater than bytecode length")]
     fn test_panic_on_large_original_len() {
         let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::PUSH1, 0x01]));
-        let _ = Bytecode::new_analyzed(
-            bytecode.bytecode().clone(),
-            100,
-            bytecode.legacy_jump_table().unwrap().clone(),
-        );
+        // SAFETY: testing the panic, not execution safety.
+        let _ = unsafe {
+            Bytecode::new_analyzed(
+                bytecode.bytecode().clone(),
+                100,
+                bytecode.legacy_jump_table().unwrap().clone(),
+            )
+        };
     }
 
     #[test]
@@ -386,7 +421,10 @@ mod tests {
     fn test_panic_on_short_jump_table() {
         let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::PUSH1, 0x01]));
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 1]);
-        let _ = Bytecode::new_analyzed(bytecode.bytecode().clone(), bytecode.len(), jump_table);
+        // SAFETY: testing the panic, not execution safety.
+        let _ = unsafe {
+            Bytecode::new_analyzed(bytecode.bytecode().clone(), bytecode.len(), jump_table)
+        };
     }
 
     #[test]
@@ -394,7 +432,8 @@ mod tests {
     fn test_panic_on_empty_bytecode() {
         let bytecode = Bytes::from_static(&[]);
         let jump_table = JumpTable::new(bitvec![u8, Lsb0; 0; 0]);
-        let _ = Bytecode::new_analyzed(bytecode, 0, jump_table);
+        // SAFETY: testing the panic, not execution safety.
+        let _ = unsafe { Bytecode::new_analyzed(bytecode, 0, jump_table) };
     }
 
     #[test]
@@ -430,5 +469,19 @@ mod tests {
             bytecode.original_bytes(),
             bytes!("ef01000101010101010101010101010101010101010101")
         );
+    }
+
+    #[test]
+    fn is_default() {
+        assert!(Bytecode::default().is_default());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn is_default_after_serde() {
+        let bc = Bytecode::default();
+        let json = serde_json::to_string(&bc).unwrap();
+        let deser: Bytecode = serde_json::from_str(&json).unwrap();
+        assert!(deser.is_default());
     }
 }

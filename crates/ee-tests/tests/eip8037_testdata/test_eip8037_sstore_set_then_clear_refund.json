@@ -1,0 +1,32 @@
+[
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 5222,
+        "gas_spent": 26112,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "Stop"
+    }
+  },
+  {
+    "Success": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 40368,
+        "gas_spent": 226112,
+        "state_gas_spent": 200000
+      },
+      "logs": [],
+      "output": {
+        "Call": "0x"
+      },
+      "reason": "Stop"
+    }
+  }
+]

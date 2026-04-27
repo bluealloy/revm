@@ -26,7 +26,7 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A new [`CreateOutcome`] instance.
-    pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
+    pub const fn new(result: InterpreterResult, address: Option<Address>) -> Self {
         Self { result, address }
     }
 
@@ -39,8 +39,8 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A new [`CreateOutcome`] instance with no address.
-    pub fn new_oog(gas_limit: u64) -> Self {
-        Self::new(InterpreterResult::new_oog(gas_limit), None)
+    pub fn new_oog(gas_limit: u64, reservoir: u64) -> Self {
+        Self::new(InterpreterResult::new_oog(gas_limit, reservoir), None)
     }
 
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].
@@ -54,7 +54,7 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A reference to the [`InstructionResult`].
-    pub fn instruction_result(&self) -> &InstructionResult {
+    pub const fn instruction_result(&self) -> &InstructionResult {
         &self.result.result
     }
 
@@ -68,7 +68,7 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A reference to the output [`Bytes`].
-    pub fn output(&self) -> &Bytes {
+    pub const fn output(&self) -> &Bytes {
         &self.result.output
     }
 
@@ -82,7 +82,7 @@ impl CreateOutcome {
     /// # Returns
     ///
     /// A reference to the [`Gas`] details.
-    pub fn gas(&self) -> &Gas {
+    pub const fn gas(&self) -> &Gas {
         &self.result.gas
     }
 }

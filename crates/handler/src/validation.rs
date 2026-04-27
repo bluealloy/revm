@@ -25,7 +25,7 @@ pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTra
 
 /// Validate legacy transaction gas price against basefee.
 #[inline]
-pub fn validate_legacy_gas_price(
+pub const fn validate_legacy_gas_price(
     gas_price: u128,
     base_fee: Option<u128>,
 ) -> Result<(), InvalidTransaction> {
@@ -146,13 +146,16 @@ pub fn validate_tx_env<CTX: ContextTr>(
         }
     }
 
-    // EIP-7825: Transaction Gas Limit Cap
-    let cap = context.cfg().tx_gas_limit_cap();
-    if tx.gas_limit() > cap {
-        return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
-            gas_limit: tx.gas_limit(),
-            cap,
-        });
+    // tx gas cap is not enforced if state gas is enabled.
+    if !context.cfg().is_amsterdam_eip8037_enabled() {
+        // EIP-7825: Transaction Gas Limit Cap
+        let cap = context.cfg().tx_gas_limit_cap();
+        if tx.gas_limit() > cap {
+            return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+                gas_limit: tx.gas_limit(),
+                cap,
+            });
+        }
     }
 
     let disable_priority_fee_check = context.cfg().is_priority_fee_check_disabled();
@@ -208,6 +211,8 @@ pub fn validate_tx_env<CTX: ContextTr>(
     };
 
     // Check if gas_limit is more than block_gas_limit
+    // TODO(eip8037) should we enforce to `min(tx.gas_limit(), 16M) < block.gas_limit`?
+    // This would enforce that regular gas is constrained.
     if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
@@ -221,6 +226,12 @@ pub fn validate_tx_env<CTX: ContextTr>(
         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
     }
 
+    // Check that the transaction's nonce is not at the maximum value.
+    // Incrementing the nonce would overflow. Can't happen in the real world.
+    if tx.nonce() == u64::MAX {
+        return Err(InvalidTransaction::NonceOverflowInTransaction);
+    }
+
     Ok(())
 }
 
@@ -229,6 +240,8 @@ pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
+    is_amsterdam_eip8037_enabled: bool,
+    tx_gas_limit_cap: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
     let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
 
@@ -237,10 +250,10 @@ pub fn validate_initial_tx_gas(
     }
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if gas.initial_gas > tx.gas_limit() {
+    if gas.initial_total_gas > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit {
             gas_limit: tx.gas_limit(),
-            initial_gas: gas.initial_gas,
+            initial_gas: gas.initial_total_gas,
         });
     }
 
@@ -252,6 +265,19 @@ pub fn validate_initial_tx_gas(
             gas_limit: tx.gas_limit(),
         });
     };
+
+    // EIP-8037: Regular gas is capped at TX_MAX_GAS_LIMIT.
+    // Validate that both intrinsic regular gas and floor gas fit within the cap.
+    // State gas is excluded — it uses its own reservoir.
+    if is_amsterdam_eip8037_enabled && tx.gas_limit() > tx_gas_limit_cap {
+        let min_regular_gas = gas.initial_regular_gas().max(gas.floor_gas);
+        if min_regular_gas > tx_gas_limit_cap {
+            return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
+                gas_floor: min_regular_gas,
+                gas_limit: tx_gas_limit_cap,
+            });
+        }
+    }
 
     Ok(gas)
 }

@@ -149,10 +149,10 @@ pub trait MemoryTr {
     /// It checks if the memory allocation fits under gas cap.
     fn resize(&mut self, new_size: usize) -> bool;
 
-    /// Returns `true` if the `new_size` for the current context memory will
+    /// Returns `true` if the `new_words` for the current context memory will
     /// make the shared buffer length exceed the `memory_limit`.
     #[cfg(feature = "memory_limit")]
-    fn limit_reached(&self, offset: usize, len: usize) -> bool;
+    fn limit_reached(&self, new_words: usize) -> bool;
 }
 
 /// Functions needed for Interpreter Stack operations.
@@ -186,6 +186,7 @@ pub trait StackTr {
     ///
     /// # Note
     /// Error is internally set in interpreter.
+    #[must_use]
     fn push_slice(&mut self, slice: &[u8]) -> bool;
 
     /// Pushes B256 value to the stack.

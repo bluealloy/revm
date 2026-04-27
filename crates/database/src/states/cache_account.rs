@@ -40,7 +40,7 @@ impl From<&BundleAccount> for CacheAccount {
 
 impl CacheAccount {
     /// Creates new account that is loaded from database.
-    pub fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Loaded,
@@ -56,7 +56,7 @@ impl CacheAccount {
     }
 
     /// Loaded not existing account.
-    pub fn new_loaded_not_existing() -> Self {
+    pub const fn new_loaded_not_existing() -> Self {
         Self {
             account: None,
             status: AccountStatus::LoadedNotExisting,
@@ -64,7 +64,7 @@ impl CacheAccount {
     }
 
     /// Creates new account that is newly created.
-    pub fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::InMemoryChange,
@@ -72,7 +72,7 @@ impl CacheAccount {
     }
 
     /// Creates account that is destroyed.
-    pub fn new_destroyed() -> Self {
+    pub const fn new_destroyed() -> Self {
         Self {
             account: None,
             status: AccountStatus::Destroyed,
@@ -80,7 +80,7 @@ impl CacheAccount {
     }
 
     /// Creates changed account.
-    pub fn new_changed(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_changed(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Changed,
@@ -88,7 +88,7 @@ impl CacheAccount {
     }
 
     /// Returns true if account is some.
-    pub fn is_some(&self) -> bool {
+    pub const fn is_some(&self) -> bool {
         matches!(
             self.status,
             AccountStatus::Changed

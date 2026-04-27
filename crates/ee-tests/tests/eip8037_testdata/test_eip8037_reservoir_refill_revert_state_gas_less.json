@@ -1,0 +1,26 @@
+[
+  {
+    "Revert": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 26012,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": "0x"
+    }
+  },
+  {
+    "Revert": {
+      "gas": {
+        "floor_gas": 21000,
+        "gas_refunded": 0,
+        "gas_spent": 26012,
+        "state_gas_spent": 0
+      },
+      "logs": [],
+      "output": "0x"
+    }
+  }
+]

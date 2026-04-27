@@ -57,7 +57,6 @@ The workspace consists of these core crates:
 - **revm-database**: State database traits and implementations
 - **revm-precompile**: Ethereum precompiled contracts
 - **revm-inspector**: Tracing and debugging framework
-- **op-revm**: Example of custom EVM variant (Optimism)
 
 ### Key Design Patterns
 
