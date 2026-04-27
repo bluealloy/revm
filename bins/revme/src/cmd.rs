@@ -7,7 +7,7 @@ pub mod statetest;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(infer_subcommands = true)]
+#[command(infer_subcommands = true, version)]
 #[allow(clippy::large_enum_variant)]
 pub enum MainCmd {
     /// Execute Ethereum state tests.

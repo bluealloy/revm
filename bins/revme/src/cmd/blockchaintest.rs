@@ -3,6 +3,7 @@ pub mod pre_block;
 
 use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
+use regex::Regex;
 
 use revm::statetest_types::blockchain::{
     Account, BlockchainTest, BlockchainTestCase, ForkSpec, Withdrawal,
@@ -55,11 +56,26 @@ pub struct Cmd {
     /// Output results in JSON format
     #[arg(long)]
     json: bool,
+    /// Output results as a JSON array with standard schema to stdout
+    ///
+    /// Fields: name, pass, fork, stateRoot, error
+    #[arg(long)]
+    json_array: bool,
+    /// Only run tests whose name matches this regex
+    #[arg(long)]
+    run: Option<String>,
 }
 
 impl Cmd {
     /// Runs `blockchaintest` command.
     pub fn run(&self) -> Result<(), Error> {
+        let run_filter = self
+            .run
+            .as_deref()
+            .map(Regex::new)
+            .transpose()
+            .map_err(|e| Error::RegexError(e.to_string()))?;
+
         for path in &self.paths {
             if !path.exists() {
                 return Err(Error::PathNotFound(path.clone()));
@@ -80,6 +96,8 @@ impl Cmd {
                 self.keep_going,
                 self.print_env_on_error,
                 self.json,
+                self.json_array,
+                run_filter.as_ref(),
             )?;
         }
         Ok(())
@@ -93,11 +111,15 @@ fn run_tests(
     keep_going: bool,
     print_env_on_error: bool,
     json_output: bool,
+    json_array: bool,
+    run_filter: Option<&Regex>,
 ) -> Result<(), Error> {
     let mut passed = 0;
     let mut failed = 0;
     let mut skipped = 0;
     let mut failed_paths = Vec::new();
+    let mut json_array_results: Vec<serde_json::Value> = Vec::new();
+    let keep_going = keep_going || json_array;
 
     let start_time = Instant::now();
     let total_files = test_files.len();
@@ -124,7 +146,14 @@ fn run_tests(
             continue;
         }
 
-        let result = run_test_file(&file_path, json_output, print_env_on_error);
+        let result = run_test_file(
+            &file_path,
+            json_output,
+            json_array,
+            print_env_on_error,
+            run_filter,
+            &mut json_array_results,
+        );
 
         match result {
             Ok(test_count) => {
@@ -172,6 +201,14 @@ fn run_tests(
 
     let duration = start_time.elapsed();
 
+    if json_array {
+        println!(
+            "{}",
+            serde_json::to_string(&json_array_results).unwrap_or_else(|_| "[]".to_string())
+        );
+        return Ok(());
+    }
+
     if json_output {
         let results = json!({
             "summary": {
@@ -209,7 +246,10 @@ fn run_tests(
 fn run_test_file(
     file_path: &Path,
     json_output: bool,
+    json_array: bool,
     print_env_on_error: bool,
+    run_filter: Option<&Regex>,
+    json_array_results: &mut Vec<serde_json::Value>,
 ) -> Result<usize, Error> {
     let content =
         fs::read_to_string(file_path).map_err(|e| Error::FileRead(file_path.to_path_buf(), e))?;
@@ -220,23 +260,41 @@ fn run_test_file(
     let mut test_count = 0;
 
     for (test_name, test_case) in blockchain_test.0 {
-        if json_output {
-            // Output test start in JSON format
-            let output = json!({
-                "test": test_name,
-                "file": file_path.display().to_string(),
-                "status": "running"
-            });
-            print_json(&output);
-        } else {
-            println!("  Running: {test_name}");
+        if let Some(filter) = run_filter {
+            if !filter.is_match(&test_name) {
+                continue;
+            }
+        }
+        if !json_array {
+            if json_output {
+                // Output test start in JSON format
+                let output = json!({
+                    "test": test_name,
+                    "file": file_path.display().to_string(),
+                    "status": "running"
+                });
+                print_json(&output);
+            } else {
+                println!("  Running: {test_name}");
+            }
         }
         // Execute the blockchain test
-        let result = execute_blockchain_test(&test_case, print_env_on_error, json_output);
+        let result = execute_blockchain_test(&test_case, print_env_on_error, json_output && !json_array);
+
+        // Get fork name for json_array output
+        let fork_name: &'static str = fork_to_spec_id(test_case.network).into();
 
         match result {
             Ok(()) => {
-                if json_output {
+                if json_array {
+                    json_array_results.push(json!({
+                        "name": test_name,
+                        "pass": true,
+                        "fork": fork_name,
+                        "stateRoot": "",
+                        "error": "",
+                    }));
+                } else if json_output {
                     let output = json!({
                         "test": test_name,
                         "file": file_path.display().to_string(),
@@ -247,20 +305,30 @@ fn run_test_file(
                 test_count += 1;
             }
             Err(e) => {
-                if json_output {
-                    let output = json!({
-                        "test": test_name,
-                        "file": file_path.display().to_string(),
-                        "status": "failed",
-                        "error": e.to_string()
+                if json_array {
+                    json_array_results.push(json!({
+                        "name": test_name,
+                        "pass": false,
+                        "fork": fork_name,
+                        "stateRoot": "",
+                        "error": e.to_string(),
+                    }));
+                } else {
+                    if json_output {
+                        let output = json!({
+                            "test": test_name,
+                            "file": file_path.display().to_string(),
+                            "status": "failed",
+                            "error": e.to_string()
+                        });
+                        print_json(&output);
+                    }
+                    return Err(Error::TestExecution {
+                        test_name,
+                        test_path: file_path.to_path_buf(),
+                        error: e.to_string(),
                     });
-                    print_json(&output);
                 }
-                return Err(Error::TestExecution {
-                    test_name,
-                    test_path: file_path.to_path_buf(),
-                    error: e.to_string(),
-                });
             }
         }
     }
@@ -1233,4 +1301,7 @@ pub enum Error {
 
     #[error("{failed} tests failed")]
     TestsFailed { failed: usize },
+
+    #[error("Invalid regex: {0}")]
+    RegexError(String),
 }
