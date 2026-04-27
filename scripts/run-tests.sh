@@ -85,6 +85,22 @@ check_fixtures() {
     fi
 }
 
+retry() {
+    local attempts=5
+    local delay=2
+    local attempt=1
+
+    until "$@"; do
+        if [ "$attempt" -ge "$attempts" ]; then
+            return 1
+        fi
+        echo "Attempt $attempt failed. Retrying in ${delay}s..."
+        sleep "$delay"
+        attempt=$((attempt + 1))
+        delay=$((delay * 2))
+    done
+}
+
 # Download and extract a single fixture
 # Arguments: target directory, tar file name, label for logging
 download_and_extract() {
@@ -94,8 +110,7 @@ download_and_extract() {
     local version="$4"
 
     echo "Downloading ${label} fixtures..."
-    # Use -fsSL to fail on HTTP errors; add small retry for transient network issues
-    curl -fsSL --retry 3 --retry-delay 2 "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
+    retry curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
     echo "Extracting ${label} fixtures..."
      # strip-components=1 removes the first top level directory from the flepath
      # This is needed because when we extract the tar, it is placed under an
@@ -122,7 +137,7 @@ download_fixtures() {
 
     # Clone legacytests repository
     echo "Cloning legacytests repository..."
-    git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
+    retry git clone --depth 1 "$LEGACY_REPO_URL" "$LEGACY_DIR"
     
     echo "Fixtures download and extraction complete."
 }
