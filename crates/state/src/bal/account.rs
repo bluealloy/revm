@@ -274,7 +274,7 @@ impl StorageBal {
         address: &Address,
         key: StorageKey,
     ) -> Result<&BalWrites<StorageValue>, BalError> {
-        self.storage.get(&key).ok_or_else(|| BalError::SlotNotFound {
+        self.storage.get(&key).ok_or(BalError::SlotNotFound {
             address: *address,
             slot: key,
         })

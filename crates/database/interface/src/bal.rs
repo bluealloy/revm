@@ -332,7 +332,8 @@ impl<DB: Database> Database for BalDatabase<DB> {
         let mut account = self.db.basic(address).map_err(EvmDatabaseError::Database)?;
 
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account)?;
+            self.bal_state
+                .basic_by_account_id(account_id, &mut account)?;
         }
 
         Ok(account)
