@@ -1,5 +1,11 @@
 # AGENTS.md
 
+REVM is a highly efficient Rust implementation of the Ethereum Virtual Machine (EVM). It serves both as:
+1. A standard EVM for executing Ethereum transactions
+2. A framework for building custom EVM variants (like Optimism's op-revm)
+
+The project is used by major Ethereum infrastructure including Reth, Foundry, Hardhat, Optimism, Scroll, and many zkVMs.
+
 ## Commands
 
 ```bash
