@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v18.0.0...revm-inspector-v19.0.0) - 2026-04-17
+
+### Other
+
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v17.0.0...revm-inspector-v18.0.0) - 2026-04-10
 
 ### Added

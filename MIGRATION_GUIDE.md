@@ -1,4 +1,11 @@
 
+# v107 tag (revm v38.0.0)
+
+* `Handler::first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578)): `init_and_floor_gas: &InitialAndFloorGas` param replaced by `reservoir: u64`. Compute via `InitialAndFloorGas::initial_gas_and_reservoir(tx_gas_limit, tx_gas_limit_cap, is_eip8037) -> (gas_limit, reservoir)`.
+  * `create_init_frame` and `CreateInputs::new` gained a trailing `reservoir: u64` param.
+* `Handler::validate_against_state_and_deduct_caller` ([#3577](https://github.com/bluealloy/revm/pull/3577)): gained `&mut InitialAndFloorGas` param.
+* `PrecompileOutput::gas_refunded: i64` field re-added ([#3574](https://github.com/bluealloy/revm/pull/3574)). Breaks struct literal constructors.
+
 # v106 tag (revm v37.0.0)
 
 * EIP-8037 state gas support ([#3406](https://github.com/bluealloy/revm/pull/3406)). Gas is now split into regular gas and state gas tracked via a reservoir. State gas draws from the reservoir first and spills into regular gas when exhausted. This affects gas accounting across the entire stack.
