@@ -27,10 +27,10 @@ alloy-eip7928.workspace = true
 
 # misc
 bitflags.workspace = true
+nonmax = { version = "0.5.5", default-features = false }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
-nonmax = { version = "0.5.5", default-features = false }
 
 [dev-dependencies]
 serde_json = { workspace = true, features = ["alloc"] }

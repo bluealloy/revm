@@ -17,8 +17,50 @@ pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
+use nonmax::NonMaxU32;
 use primitives::{hardfork::SpecId, HashMap, StorageKey, StorageValue, U256};
 use std::boxed::Box;
+
+/// Transaction id used to track when account or storage slot was touched/loaded into the journal.
+///
+/// Wraps a [`NonMaxU32`] so that `Option<TransactionId>` benefits from niche optimization.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
+pub struct TransactionId(NonMaxU32);
+
+impl TransactionId {
+    /// The zero transaction id.
+    pub const ZERO: Self = Self(NonMaxU32::ZERO);
+
+    /// Creates a new [`TransactionId`].
+    ///
+    /// Returns `None` if the value does not fit in the internal representation.
+    #[inline]
+    pub fn new(id: usize) -> Option<Self> {
+        let id = u32::try_from(id).ok()?;
+        NonMaxU32::new(id).map(Self)
+    }
+
+    /// Returns the transaction id as a usize.
+    #[inline]
+    pub const fn get(self) -> usize {
+        self.0.get() as usize
+    }
+
+    /// Increments the transaction id by 1.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the resulting value would equal `u32::MAX`.
+    #[inline]
+    pub const fn increment(&mut self) {
+        self.0 = match NonMaxU32::new(self.0.get() + 1) {
+            Some(id) => id,
+            None => panic!("transaction id overflow"),
+        };
+    }
+}
 
 /// The main account type used inside Revm. It is stored inside Journal and contains all the information about the account.
 ///
@@ -38,7 +80,7 @@ pub struct Account {
     /// Balance, nonce, and code
     pub info: AccountInfo,
     /// Transaction id, used to track when account was touched/loaded into journal.
-    pub transaction_id: usize,
+    pub transaction_id: TransactionId,
     /// Storage cache
     pub storage: EvmStorage,
     /// Account status flags
@@ -63,7 +105,7 @@ impl PartialEq for Account {
 impl Account {
     /// Creates new account and mark it as non existing.
     #[inline]
-    pub fn new_not_existing(transaction_id: usize) -> Self {
+    pub fn new_not_existing(transaction_id: TransactionId) -> Self {
         Self {
             transaction_id,
             status: AccountStatus::LoadedAsNotExisting,
@@ -178,13 +220,14 @@ impl Account {
 
     /// Is account warm for given transaction id.
     #[inline]
-    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
-        self.transaction_id != transaction_id || self.status.contains(AccountStatus::Cold)
+    pub const fn is_cold_transaction_id(&self, transaction_id: TransactionId) -> bool {
+        self.transaction_id.get() != transaction_id.get()
+            || self.status.contains(AccountStatus::Cold)
     }
 
     /// Marks the account as warm and return true if it was previously cold.
     #[inline]
-    pub fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
+    pub fn mark_warm_with_transaction_id(&mut self, transaction_id: TransactionId) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
         self.status -= AccountStatus::Cold;
         self.transaction_id = transaction_id;
@@ -324,13 +367,13 @@ impl Account {
 
     /// Marks the account as warm (not cold) and returns self for method chaining.
     /// Also returns whether the account was previously cold.
-    pub fn with_warm_mark(mut self, transaction_id: usize) -> (Self, bool) {
+    pub fn with_warm_mark(mut self, transaction_id: TransactionId) -> (Self, bool) {
         let was_cold = self.mark_warm_with_transaction_id(transaction_id);
         (self, was_cold)
     }
 
     /// Variant of with_warm_mark that doesn't return the previous state.
-    pub fn with_warm(mut self, transaction_id: usize) -> Self {
+    pub fn with_warm(mut self, transaction_id: TransactionId) -> Self {
         self.mark_warm_with_transaction_id(transaction_id);
         self
     }
@@ -346,7 +389,7 @@ impl From<AccountInfo> for Account {
         Self {
             info,
             original_info,
-            transaction_id: 0,
+            transaction_id: TransactionId::ZERO,
             storage: HashMap::default(),
             status: AccountStatus::empty(),
         }
@@ -383,7 +426,7 @@ mod serde_impl {
         #[serde(default)]
         original_info: MaybeOriginalInfo,
         storage: EvmStorage,
-        transaction_id: usize,
+        transaction_id: TransactionId,
         status: AccountStatus,
     }
 
@@ -502,14 +545,14 @@ pub struct EvmStorageSlot {
     /// Present value of the storage slot
     pub present_value: StorageValue,
     /// Transaction id, used to track when storage slot was made warm.
-    pub transaction_id: usize,
+    pub transaction_id: TransactionId,
     /// Represents if the storage slot is cold
     pub is_cold: bool,
 }
 
 impl EvmStorageSlot {
     /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
-    pub const fn new(original: StorageValue, transaction_id: usize) -> Self {
+    pub const fn new(original: StorageValue, transaction_id: TransactionId) -> Self {
         Self {
             original_value: original,
             present_value: original,
@@ -522,7 +565,7 @@ impl EvmStorageSlot {
     pub const fn new_changed(
         original_value: StorageValue,
         present_value: StorageValue,
-        transaction_id: usize,
+        transaction_id: TransactionId,
     ) -> Self {
         Self {
             original_value,
@@ -556,8 +599,8 @@ impl EvmStorageSlot {
 
     /// Is storage slot cold for given transaction id.
     #[inline]
-    pub const fn is_cold_transaction_id(&self, transaction_id: usize) -> bool {
-        self.transaction_id != transaction_id || self.is_cold
+    pub const fn is_cold_transaction_id(&self, transaction_id: TransactionId) -> bool {
+        self.transaction_id.get() != transaction_id.get() || self.is_cold
     }
 
     /// Marks the storage slot as warm and sets transaction_id to the given value
@@ -565,7 +608,7 @@ impl EvmStorageSlot {
     ///
     /// Returns false if old transition_id is different from given id or in case they are same return `Self::is_cold` value.
     #[inline]
-    pub const fn mark_warm_with_transaction_id(&mut self, transaction_id: usize) -> bool {
+    pub const fn mark_warm_with_transaction_id(&mut self, transaction_id: TransactionId) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
         if is_cold {
             // if slot is cold original value should be reset to present value.
@@ -650,7 +693,7 @@ mod tests {
         assert!(!account.status.contains(crate::AccountStatus::Cold));
 
         // When marking warm account as warm again, it should return false
-        assert!(!account.mark_warm_with_transaction_id(0));
+        assert!(!account.mark_warm_with_transaction_id(TransactionId::ZERO));
 
         // Mark account as cold
         account.mark_cold();
@@ -659,7 +702,7 @@ mod tests {
         assert!(account.status.contains(crate::AccountStatus::Cold));
 
         // When marking cold account as warm, it should return true
-        assert!(account.mark_warm_with_transaction_id(0));
+        assert!(account.mark_warm_with_transaction_id(TransactionId::ZERO));
     }
 
     #[test]
@@ -677,8 +720,8 @@ mod tests {
         let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         let key1 = StorageKey::from(1);
         let key2 = StorageKey::from(2);
-        let slot1 = EvmStorageSlot::new(StorageValue::from(10), 0);
-        let slot2 = EvmStorageSlot::new(StorageValue::from(20), 0);
+        let slot1 = EvmStorageSlot::new(StorageValue::from(10), TransactionId::ZERO);
+        let slot2 = EvmStorageSlot::new(StorageValue::from(20), TransactionId::ZERO);
 
         storage.insert(key1, slot1.clone());
         storage.insert(key2, slot2.clone());
@@ -711,7 +754,7 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn test_account_original_info_none_roundtrip() {
-        let account = Account::new_not_existing(2);
+        let account = Account::new_not_existing(TransactionId::new(2).unwrap());
         assert!(account.original_info.is_none());
         let serialized = serde_json::to_string(&account).unwrap();
         let deserialized: Account = serde_json::from_str(&serialized).unwrap();
@@ -779,23 +822,25 @@ mod tests {
 
     #[test]
     fn test_storage_mark_warm_with_transaction_id() {
-        let mut slot = EvmStorageSlot::new(U256::ZERO, 0);
+        let tx_zero = TransactionId::ZERO;
+        let tx_one = TransactionId::new(1).unwrap();
+        let mut slot = EvmStorageSlot::new(U256::ZERO, tx_zero);
         slot.is_cold = true;
-        slot.transaction_id = 0;
-        assert!(slot.mark_warm_with_transaction_id(1));
+        slot.transaction_id = tx_zero;
+        assert!(slot.mark_warm_with_transaction_id(tx_one));
 
         slot.is_cold = false;
-        slot.transaction_id = 0;
-        assert!(slot.mark_warm_with_transaction_id(1));
+        slot.transaction_id = tx_zero;
+        assert!(slot.mark_warm_with_transaction_id(tx_one));
 
         slot.is_cold = true;
-        slot.transaction_id = 1;
-        assert!(slot.mark_warm_with_transaction_id(1));
+        slot.transaction_id = tx_one;
+        assert!(slot.mark_warm_with_transaction_id(tx_one));
 
         slot.is_cold = false;
-        slot.transaction_id = 1;
+        slot.transaction_id = tx_one;
         // Only if transaction id is same and is_cold is false, return false.
-        assert!(!slot.mark_warm_with_transaction_id(1));
+        assert!(!slot.mark_warm_with_transaction_id(tx_one));
     }
 
     #[test]
@@ -805,14 +850,14 @@ mod tests {
         assert!(cold_account.status.contains(AccountStatus::Cold));
 
         // Use with_warm_mark to warm it
-        let (warm_account, was_cold) = cold_account.with_warm_mark(0);
+        let (warm_account, was_cold) = cold_account.with_warm_mark(TransactionId::ZERO);
 
         // Check that it's now warm and previously was cold
         assert!(!warm_account.status.contains(AccountStatus::Cold));
         assert!(was_cold);
 
         // Try with an already warm account
-        let (still_warm_account, was_cold) = warm_account.with_warm_mark(0);
+        let (still_warm_account, was_cold) = warm_account.with_warm_mark(TransactionId::ZERO);
         assert!(!still_warm_account.status.contains(AccountStatus::Cold));
         assert!(!was_cold);
     }
@@ -824,7 +869,7 @@ mod tests {
         assert!(cold_account.status.contains(AccountStatus::Cold));
 
         // Use with_warm to warm it
-        let warm_account = cold_account.with_warm(0);
+        let warm_account = cold_account.with_warm(TransactionId::ZERO);
 
         // Check that it's now warm
         assert!(!warm_account.status.contains(AccountStatus::Cold));
@@ -838,7 +883,7 @@ mod tests {
         };
 
         let slot_key = StorageKey::from(42);
-        let slot_value = EvmStorageSlot::new(StorageValue::from(123), 0);
+        let slot_value = EvmStorageSlot::new(StorageValue::from(123), TransactionId::ZERO);
         let mut storage = HashMap::<StorageKey, EvmStorageSlot>::default();
         storage.insert(slot_key, slot_value.clone());
 
@@ -849,7 +894,7 @@ mod tests {
             .with_created_mark()
             .with_touched_mark()
             .with_cold_mark()
-            .with_warm(0);
+            .with_warm(TransactionId::ZERO);
 
         // Verify all modifications were applied
         assert_eq!(account.info, info);
@@ -861,14 +906,16 @@ mod tests {
 
     #[test]
     fn test_account_is_cold_transaction_id() {
+        let tx_zero = TransactionId::ZERO;
+        let tx_one = TransactionId::new(1).unwrap();
         let mut account = Account::default();
         // only case where it is warm.
-        assert!(!account.is_cold_transaction_id(0));
+        assert!(!account.is_cold_transaction_id(tx_zero));
 
         // all other cases are cold
-        assert!(account.is_cold_transaction_id(1));
+        assert!(account.is_cold_transaction_id(tx_one));
         account.mark_cold();
-        assert!(account.is_cold_transaction_id(0));
-        assert!(account.is_cold_transaction_id(1));
+        assert!(account.is_cold_transaction_id(tx_zero));
+        assert!(account.is_cold_transaction_id(tx_one));
     }
 }
