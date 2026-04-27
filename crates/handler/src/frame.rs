@@ -99,7 +99,7 @@ pub type ContextTrDbError<CTX> = <<CTX as ContextTr>::Db as Database>::Error;
 
 impl EthFrame<EthInterpreter> {
     /// Clear and initialize a frame.
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn clear(
         &mut self,
