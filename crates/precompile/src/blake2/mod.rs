@@ -9,7 +9,10 @@ use crate::{
     PrecompileHalt, PrecompileId,
 };
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(all(
+    any(target_arch = "x86", target_arch = "x86_64"),
+    any(target_feature = "avx2", feature = "std")
+))]
 mod avx2;
 mod portable;
 
