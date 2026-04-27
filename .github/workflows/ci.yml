@@ -18,7 +18,7 @@ permissions: {}
 jobs:
   test:
     name: test ${{ matrix.rust }} ${{ matrix.flags }}
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest-4' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -65,7 +65,7 @@ jobs:
 
   check-no-std:
     name: check no_std ${{ matrix.target }} ${{ matrix.features }}
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -85,7 +85,7 @@ jobs:
 
   check:
     name: check ${{ matrix.features }}
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -100,7 +100,7 @@ jobs:
 
   feature-checks:
     name: features
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest-4' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -120,7 +120,7 @@ jobs:
 
   clippy:
     name: clippy
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -139,7 +139,7 @@ jobs:
 
   docs:
     name: docs
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest-4' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -158,7 +158,7 @@ jobs:
 
   doctest:
     name: doctest
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -172,7 +172,7 @@ jobs:
 
   fmt:
     name: fmt
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -184,7 +184,7 @@ jobs:
       - run: cargo fmt --all --check
 
   feature-propagation:
-    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
