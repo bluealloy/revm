@@ -581,12 +581,12 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
     }
 
     #[inline]
-    fn cpsb(&self, block_gas_limit: u64) -> u64 {
+    fn cpsb(&self) -> u64 {
         if !self.enable_amsterdam_eip8037 {
             return 0;
         }
         self.cpsb_override
-            .unwrap_or_else(|| eip8037::cost_per_state_byte(block_gas_limit))
+            .unwrap_or_else(|| eip8037::CPSB_GLAMSTERDAM)
     }
 }
 

@@ -239,14 +239,14 @@ pub trait LocalContextTr {
     ///
     /// Populated by [`LocalContextTr::set_cpsb`] at transaction start so that
     /// the hot-path `Host::cpsb` is a single field read instead of recomputing
-    /// `cfg.cpsb(block.gas_limit())`.
+    /// `cfg.cpsb()`.
     fn cpsb(&self) -> u64;
 
     /// Caches the EIP-8037 `cost_per_state_byte` for the current transaction.
     ///
     /// Called at the start of every execution entry point (regular transaction,
     /// system call, and their inspector variants). The value must be derived via
-    /// `cfg.cpsb(block.gas_limit())` so that `cpsb_override` is honored.
+    /// `cfg.cpsb()` so that `cpsb_override` is honored.
     fn set_cpsb(&mut self, cpsb: u64);
 }
 

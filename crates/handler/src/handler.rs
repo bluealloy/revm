@@ -12,7 +12,7 @@ use context::{
 use context_interface::{
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
-    Block, Cfg, ContextTr, Database, JournalTr, Transaction,
+    Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::U256;
@@ -48,7 +48,7 @@ impl<
 /// `Host::cpsb` becomes a single field read instead of a recomputation.
 #[inline]
 pub fn cache_cpsb_on_local<CTX: ContextTr>(ctx: &mut CTX) {
-    let cpsb = ctx.cfg().cpsb(ctx.block().gas_limit());
+    let cpsb = ctx.cfg().cpsb();
     ctx.local_mut().set_cpsb(cpsb);
 }
 
@@ -316,7 +316,7 @@ pub trait Handler {
             ctx.cfg().is_eip7623_disabled(),
             ctx.cfg().is_amsterdam_eip8037_enabled(),
             ctx.cfg().tx_gas_limit_cap(),
-            ctx.cfg().cpsb(ctx.block().gas_limit()),
+            ctx.cfg().cpsb(),
         )?;
 
         Ok(gas)

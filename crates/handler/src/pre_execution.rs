@@ -199,7 +199,7 @@ pub fn apply_eip7702_auth_list<
     init_and_floor_gas: &mut InitialAndFloorGas,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
-    let cpsb = context.cfg().cpsb(context.block().gas_limit());
+    let cpsb = context.cfg().cpsb();
     let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund(cpsb);
     let (tx, journal) = context.tx_journal_mut();
 

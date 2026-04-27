@@ -72,7 +72,7 @@ pub trait Host {
     /// Returns the EIP-8037 `cost_per_state_byte` for the current transaction.
     ///
     /// Reads the cached value set on the local context at transaction start
-    /// (via `cfg.cpsb(block.gas_limit())`, honoring `cpsb_override`). Returns
+    /// (via `cfg.cpsb()`, honoring `cpsb_override`). Returns
     /// `0` when EIP-8037 is not enabled.
     fn cpsb(&self) -> u64;
 
