@@ -204,6 +204,9 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
                 // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
                     StorageValue::ZERO
+                } else if let Some(account_id) = self.account.info.account_id {
+                    self.db
+                        .storage_by_account_id(self.address, account_id, key)?
                 } else {
                     self.db.storage(self.address, key)?
                 };
