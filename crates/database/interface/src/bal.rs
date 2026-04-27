@@ -101,7 +101,7 @@ impl BalState {
             .map(|bal| {
                 bal.accounts
                     .get_full(address)
-                    .map(|i| AccountId::new(i.0 as u32).expect("valid id"))
+                    .map(|i| AccountId::new(i.0).expect("too many bals"))
                     .ok_or(BalError::AccountNotFound)
             })
             .transpose()
@@ -189,7 +189,7 @@ impl BalState {
             return Ok(None);
         };
 
-        let Some((_, bal_account)) = bal.accounts.get_index(account_id.get() as usize) else {
+        let Some((_, bal_account)) = bal.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 

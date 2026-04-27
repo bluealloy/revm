@@ -143,7 +143,7 @@ impl Bal {
         bal_index: BalIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
         account.account_id = Some(account_id);
@@ -162,7 +162,7 @@ impl Bal {
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -199,7 +199,7 @@ impl Bal {
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id.get() as usize) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 

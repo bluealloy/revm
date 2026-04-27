@@ -13,16 +13,19 @@ use nonmax::NonMaxU32;
 pub struct AccountId(NonMaxU32);
 
 impl AccountId {
-    /// Creates a new AccountId. Returns `None` if the value is `u32::MAX`.
+    /// Creates a new AccountId.
+    ///
+    /// Returns `None` if the value does not fit in the internal representation.
     #[inline]
-    pub fn new(id: u32) -> Option<Self> {
+    pub fn new(id: usize) -> Option<Self> {
+        let id = u32::try_from(id).ok()?;
         NonMaxU32::new(id).map(Self)
     }
 
-    /// Gets the underlying u32 value.
+    /// Gets the account ID as a usize.
     #[inline]
-    pub const fn get(self) -> u32 {
-        self.0.get()
+    pub const fn get(self) -> usize {
+        self.0.get() as usize
     }
 }
 
