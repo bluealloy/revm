@@ -19,7 +19,7 @@ pub mod writes;
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use writes::BalWrites;
 
-use crate::{Account, AccountInfo};
+use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
 
@@ -139,11 +139,11 @@ impl Bal {
     /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
-        account_id: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
         account.account_id = Some(account_id);
@@ -157,12 +157,12 @@ impl Bal {
     #[inline]
     pub fn populate_storage_slot_by_account_id(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -195,11 +195,11 @@ impl Bal {
     /// Get storage from BAL.
     pub fn account_storage(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 

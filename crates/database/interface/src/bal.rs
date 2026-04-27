@@ -7,7 +7,7 @@ use core::{
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal, BalError},
-    Account, AccountInfo, Bytecode, EvmState,
+    Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
 
@@ -95,13 +95,13 @@ impl BalState {
     ///
     /// Return Error if BAL is not found and Account is not
     #[inline]
-    pub fn get_account_id(&self, address: &Address) -> Result<Option<usize>, BalError> {
+    pub fn get_account_id(&self, address: &Address) -> Result<Option<AccountId>, BalError> {
         self.bal
             .as_ref()
             .map(|bal| {
                 bal.accounts
                     .get_full(address)
-                    .map(|i| i.0)
+                    .map(|i| AccountId::new(i.0).expect("too many bals"))
                     .ok_or(BalError::AccountNotFound)
             })
             .transpose()
@@ -128,7 +128,11 @@ impl BalState {
     ///
     /// Panics if account_id is invalid
     #[inline]
-    pub fn basic_by_account_id(&self, account_id: usize, basic: &mut Option<AccountInfo>) -> bool {
+    pub fn basic_by_account_id(
+        &self,
+        account_id: AccountId,
+        basic: &mut Option<AccountInfo>,
+    ) -> bool {
         if let Some(bal) = &self.bal {
             let is_none = basic.is_none();
             let mut bal_basic = core::mem::take(basic).unwrap_or_default();
@@ -178,14 +182,14 @@ impl BalState {
     #[inline]
     pub fn storage_by_account_id(
         &self,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<Option<StorageValue>, BalError> {
         let Some(bal) = &self.bal else {
             return Ok(None);
         };
 
-        let Some((_, bal_account)) = bal.accounts.get_index(account_id) else {
+        let Some((_, bal_account)) = bal.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -362,7 +366,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         if let Some(value) = self
