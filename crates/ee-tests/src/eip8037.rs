@@ -273,7 +273,7 @@ fn sstore_multi_then_revert_bytecode() -> Bytecode {
 }
 
 /// Bytecode that performs a CALL with value to a specific address.
-#[allow(clippy::vec_init_then_push)]
+#[expect(clippy::vec_init_then_push)]
 fn call_with_value_bytecode(target: [u8; 20], value: U256) -> Bytecode {
     // CALL(gas, addr, value, argsOffset, argsSize, retOffset, retSize)
     let mut bytecode = Vec::new();
@@ -457,7 +457,7 @@ fn sstore_then_invalid_bytecode() -> Bytecode {
 }
 
 /// Bytecode: CALL to identity precompile (0x04) with no args, then STOP.
-#[allow(clippy::vec_init_then_push)]
+#[expect(clippy::vec_init_then_push)]
 fn call_precompile_bytecode() -> Bytecode {
     let mut bytecode = Vec::new();
     bytecode.push(opcode::PUSH1);
@@ -1846,7 +1846,7 @@ fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
 
 /// Bytecode: CALL(gas, addr, value=0, 0, 0, 0, 0); POP; STOP
 /// CALL without value transfer to given address.
-#[allow(clippy::vec_init_then_push)]
+#[expect(clippy::vec_init_then_push)]
 fn call_no_value_bytecode(target: [u8; 20]) -> Bytecode {
     let mut bytecode = Vec::new();
     bytecode.push(opcode::PUSH1);

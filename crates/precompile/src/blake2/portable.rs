@@ -31,7 +31,7 @@ const fn g(v: &mut [Word; 16], a: usize, b: usize, c: usize, d: usize, x: Word, 
 #[inline(always)]
 const fn round(r: usize, m: &[Word; 16], v: &mut [Word; 16]) {
     // Select the message schedule based on the round.
-    let s = SIGMA[r % 12];
+    let s = SIGMA[r % 10];
 
     // Mix the columns.
     g(v, 0, 4, 8, 12, m[s[0] as usize], m[s[1] as usize]);

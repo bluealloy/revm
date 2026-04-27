@@ -501,7 +501,7 @@ fn test_eip7708_selfdestruct_to_self() {
 }
 
 /// Bytecode that performs a CALL with value to a specific address
-#[allow(clippy::vec_init_then_push)]
+#[expect(clippy::vec_init_then_push)]
 fn call_with_value_bytecode(target: [u8; 20], value: U256) -> Bytecode {
     // CALL(gas, addr, value, argsOffset, argsSize, retOffset, retSize)
     let mut bytecode = Vec::new();
@@ -593,7 +593,6 @@ fn test_eip7708_call_with_value() {
 }
 
 /// Bytecode that creates a contract with initial value
-#[allow(clippy::vec_init_then_push)]
 fn create_with_value_bytecode(init_code: &[u8], value: U256) -> Bytecode {
     // CREATE(value, offset, length)
     let mut bytecode = Vec::new();

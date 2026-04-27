@@ -95,7 +95,16 @@ impl AccountBal {
         ))
     }
 
-    /// Consumes AccountBal and converts it into [`AlloyAccountChanges`].
+    /// Consumes `AccountBal` and converts it into canonical EIP-7928
+    /// [`AlloyAccountChanges`].
+    ///
+    /// The returned account changes are ordered deterministically: storage reads
+    /// and storage changes are sorted lexicographically by slot key, changes
+    /// within each storage slot are sorted by block access index, and balance,
+    /// nonce, and code changes are sorted by block access index.
+    ///
+    /// This matches the EIP-7928 ordering requirements:
+    /// <https://eips.ethereum.org/EIPS/eip-7928#ordering-uniqueness-and-determinism>.
     #[inline]
     pub fn into_alloy_account(self, address: Address) -> AlloyAccountChanges {
         let storage_len = self.storage.storage.len();
@@ -105,42 +114,51 @@ impl AccountBal {
             if value.writes.is_empty() {
                 storage_reads.push(key);
             } else {
-                storage_changes.push(AlloySlotChanges::new(
-                    key,
-                    value
-                        .writes
-                        .into_iter()
-                        .map(|(index, value)| AlloyStorageChange::new(index, value))
-                        .collect(),
-                ));
+                let mut changes = value
+                    .writes
+                    .into_iter()
+                    .map(|(index, value)| AlloyStorageChange::new(index, value))
+                    .collect::<Vec<_>>();
+                changes.sort_unstable_by_key(|change| change.block_access_index);
+
+                storage_changes.push(AlloySlotChanges::new(key, changes));
             }
         }
+
+        let mut balance_changes = self
+            .account_info
+            .balance
+            .writes
+            .into_iter()
+            .map(|(index, value)| AlloyBalanceChange::new(index, value))
+            .collect::<Vec<_>>();
+        balance_changes.sort_unstable_by_key(|change| change.block_access_index);
+
+        let mut nonce_changes = self
+            .account_info
+            .nonce
+            .writes
+            .into_iter()
+            .map(|(index, value)| AlloyNonceChange::new(index, value))
+            .collect::<Vec<_>>();
+        nonce_changes.sort_unstable_by_key(|change| change.block_access_index);
+
+        let mut code_changes = self
+            .account_info
+            .code
+            .writes
+            .into_iter()
+            .map(|(index, (_, value))| AlloyCodeChange::new(index, value.original_bytes()))
+            .collect::<Vec<_>>();
+        code_changes.sort_unstable_by_key(|change| change.block_access_index);
 
         AlloyAccountChanges {
             address,
             storage_changes,
             storage_reads,
-            balance_changes: self
-                .account_info
-                .balance
-                .writes
-                .into_iter()
-                .map(|(index, value)| AlloyBalanceChange::new(index, value))
-                .collect(),
-            nonce_changes: self
-                .account_info
-                .nonce
-                .writes
-                .into_iter()
-                .map(|(index, value)| AlloyNonceChange::new(index, value))
-                .collect(),
-            code_changes: self
-                .account_info
-                .code
-                .writes
-                .into_iter()
-                .map(|(index, (_, value))| AlloyCodeChange::new(index, value.original_bytes()))
-                .collect(),
+            balance_changes,
+            nonce_changes,
+            code_changes,
         }
     }
 }

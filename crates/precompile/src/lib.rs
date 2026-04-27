@@ -8,7 +8,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-#[allow(unreachable_code)]
+#[cfg_attr(
+    all(
+        any(target_arch = "x86", target_arch = "x86_64"),
+        target_feature = "avx2"
+    ),
+    expect(unreachable_code)
+)]
 pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;

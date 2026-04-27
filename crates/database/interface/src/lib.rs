@@ -9,7 +9,7 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountInfo, Bytecode, TransactionId};
+use state::{Account, AccountId, AccountInfo, Bytecode, TransactionId};
 use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
@@ -75,7 +75,7 @@ pub trait Database {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         let _ = account_id;
@@ -157,7 +157,7 @@ pub trait DatabaseRef {
     fn storage_by_account_id_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         let _ = account_id;
@@ -205,7 +205,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.0
@@ -251,7 +251,7 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     fn storage_by_account_id_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.0

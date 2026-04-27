@@ -32,7 +32,7 @@ pub trait InspectorEvmTr:
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all_inspector(
         &self,
     ) -> (
@@ -46,7 +46,7 @@ pub trait InspectorEvmTr:
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all_mut_inspector(
         &mut self,
     ) -> (

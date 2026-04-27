@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [18.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v18.0.0...revm-handler-v18.1.0) - 2026-04-17
+
+### Added
+
+- propagate InitialAndFloorGas to validate_against_state_and_deduct_caller ([#3577](https://github.com/bluealloy/revm/pull/3577))
+
+### Fixed
+
+- re-add PrecompileOutput::gas_refunded ([#3574](https://github.com/bluealloy/revm/pull/3574))
+
+### Other
+
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v17.0.0...revm-handler-v18.0.0) - 2026-04-10
 
 ### Added

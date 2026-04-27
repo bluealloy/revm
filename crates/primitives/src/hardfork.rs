@@ -1,6 +1,6 @@
 //! Ethereum hardfork specification IDs.
 
-#![allow(non_camel_case_types)]
+#![expect(non_camel_case_types)]
 
 use core::str::FromStr;
 pub use std::string::{String, ToString};

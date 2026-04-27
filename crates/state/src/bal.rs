@@ -19,7 +19,7 @@ pub mod writes;
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use writes::BalWrites;
 
-use crate::{Account, AccountInfo};
+use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
 
@@ -64,7 +64,7 @@ impl Bal {
 
         // Sort accounts by address before printing
         let mut sorted_accounts: Vec<_> = self.accounts.iter().collect();
-        sorted_accounts.sort_by_key(|(address, _)| *address);
+        sorted_accounts.sort_unstable_by_key(|(address, _)| *address);
 
         for (idx, (address, account)) in sorted_accounts.into_iter().enumerate() {
             println!("Account #{idx} - Address: {address:?}");
@@ -139,11 +139,11 @@ impl Bal {
     /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
-        account_id: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
         account.account_id = Some(account_id);
@@ -157,12 +157,12 @@ impl Bal {
     #[inline]
     pub fn populate_storage_slot_by_account_id(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         bal_index: BalIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -195,11 +195,11 @@ impl Bal {
     /// Get storage from BAL.
     pub fn account_storage(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         key: StorageKey,
         bal_index: BalIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::AccountNotFound);
         };
 
@@ -210,14 +210,21 @@ impl Bal {
         Ok(storage_value)
     }
 
-    /// Consume Bal and create [`AlloyBal`]
+    /// Consume `Bal` and create a canonical EIP-7928 [`AlloyBal`].
+    ///
+    /// The returned access list is ordered deterministically: accounts are
+    /// sorted lexicographically by address, and each account's nested reads and
+    /// changes are sorted by [`AccountBal::into_alloy_account`].
+    ///
+    /// This matches the EIP-7928 ordering requirements:
+    /// <https://eips.ethereum.org/EIPS/eip-7928#ordering-uniqueness-and-determinism>.
     pub fn into_alloy_bal(self) -> AlloyBal {
         let mut alloy_bal = AlloyBal::from_iter(
             self.accounts
                 .into_iter()
                 .map(|(address, account)| account.into_alloy_account(address)),
         );
-        alloy_bal.sort_by_key(|a| a.address);
+        alloy_bal.sort_unstable_by_key(|a| a.address);
         alloy_bal
     }
 }
@@ -242,3 +249,119 @@ impl core::fmt::Display for BalError {
 }
 
 impl core::error::Error for BalError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bytecode::Bytecode;
+    use primitives::{B256, U256};
+    use std::collections::BTreeMap;
+
+    fn code(byte: u8) -> (B256, Bytecode) {
+        let bytecode = Bytecode::new_raw(vec![byte].into());
+        (bytecode.hash_slow(), bytecode)
+    }
+
+    #[test]
+    fn into_alloy_bal_canonicalizes_eip_7928_ordering() {
+        let low_address = Address::with_last_byte(1);
+        let high_address = Address::with_last_byte(2);
+
+        let unordered_account = AccountBal {
+            account_info: AccountInfoBal {
+                nonce: BalWrites {
+                    writes: vec![(9, 90), (4, 40)],
+                },
+                balance: BalWrites {
+                    writes: vec![(5, U256::from(50)), (2, U256::from(20))],
+                },
+                code: BalWrites {
+                    writes: vec![(7, code(7)), (3, code(3))],
+                },
+            },
+            storage: StorageBal {
+                storage: BTreeMap::from([
+                    (
+                        U256::from(4),
+                        BalWrites {
+                            writes: vec![(8, U256::from(80)), (6, U256::from(60))],
+                        },
+                    ),
+                    (U256::from(1), BalWrites { writes: vec![] }),
+                    (
+                        U256::from(2),
+                        BalWrites {
+                            writes: vec![(3, U256::from(30)), (1, U256::from(10))],
+                        },
+                    ),
+                    (U256::from(3), BalWrites { writes: vec![] }),
+                ]),
+            },
+        };
+
+        let alloy_bal = Bal::from_iter([
+            (high_address, AccountBal::default()),
+            (low_address, unordered_account),
+        ])
+        .into_alloy_bal();
+
+        assert_eq!(
+            alloy_bal
+                .iter()
+                .map(|account| account.address)
+                .collect::<Vec<_>>(),
+            vec![low_address, high_address]
+        );
+
+        let account = &alloy_bal[0];
+        assert_eq!(account.storage_reads, vec![U256::from(1), U256::from(3)]);
+        assert_eq!(
+            account
+                .storage_changes
+                .iter()
+                .map(|slot| slot.slot)
+                .collect::<Vec<_>>(),
+            vec![U256::from(2), U256::from(4)]
+        );
+        assert_eq!(
+            account.storage_changes[0]
+                .changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![1, 3]
+        );
+        assert_eq!(
+            account.storage_changes[1]
+                .changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![6, 8]
+        );
+        assert_eq!(
+            account
+                .balance_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![2, 5]
+        );
+        assert_eq!(
+            account
+                .nonce_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![4, 9]
+        );
+        assert_eq!(
+            account
+                .code_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![3, 7]
+        );
+    }
+}
