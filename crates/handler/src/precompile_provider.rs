@@ -81,6 +81,8 @@ impl Clone for EthPrecompiles {
 pub fn precompile_output_to_interpreter_result(
     output: PrecompileOutput,
     gas_limit: u64,
+    gas_params: &context_interface::cfg::GasParams,
+    cpsb: u64,
 ) -> InterpreterResult {
     // set output bytes
     let bytes = if output.status.is_success_or_revert() {
@@ -95,8 +97,10 @@ pub fn precompile_output_to_interpreter_result(
         output: bytes,
     };
 
-    // set new-state counters; reservoir is already set in the Gas constructor.
-    result.gas.set_new_state(output.new_state);
+    // Convert the precompile's new-state counters into a state-gas charge on
+    // the result's gas tracker. The reservoir is already set above.
+    let state_gas = output.new_state.state_gas_spent(gas_params, cpsb);
+    let _ = result.gas.record_state_cost(state_gas);
     result.gas.record_refund(output.gas_refunded);
 
     // spend used gas.
@@ -164,7 +168,13 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
             }
         }
 
-        let result = precompile_output_to_interpreter_result(output, inputs.gas_limit);
+        let cpsb = context.local().cpsb();
+        let result = precompile_output_to_interpreter_result(
+            output,
+            inputs.gas_limit,
+            context.cfg().gas_params(),
+            cpsb,
+        );
         Ok(Some(result))
     }
 

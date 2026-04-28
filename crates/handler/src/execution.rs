@@ -47,6 +47,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 is_static: false,
                 return_memory_offset: 0..0,
                 reservoir,
+                state_gas: 0,
             })))
         }
         TxKind::Create => Ok(FrameInput::Create(Box::new(CreateInputs::new(
@@ -56,6 +57,7 @@ pub fn create_init_frame<CTX: ContextTr>(
             input,
             gas_limit,
             reservoir,
+            0,
         )))),
     }
 }

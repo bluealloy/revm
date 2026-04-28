@@ -150,7 +150,7 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas = build_result_gas(evm.ctx_ref(), gas, init_and_floor_gas);
+                let result_gas = build_result_gas(gas, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -276,7 +276,7 @@ pub trait Handler {
         // Build ResultGas from the final gas state
         // This includes all necessary fields and gas values.
         let result_gas =
-            post_execution::build_result_gas(evm.ctx_ref(), exec_result.gas(), init_and_floor_gas);
+            post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
 
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
@@ -407,22 +407,26 @@ pub trait Handler {
             FrameResult::Call(_) => false,
         };
 
-        let cpsb = evm.ctx().local().cpsb();
-        let gas_params = evm.ctx().cfg().gas_params().clone();
+        let create_top_state_gas = if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled()
+        {
+            let cpsb = evm.ctx().local().cpsb();
+            evm.ctx().cfg().gas_params().create_state_gas(cpsb) as i64
+        } else {
+            0
+        };
 
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
-        let new_state = *gas.new_state();
-        let state_gas_spent = new_state.state_gas_spent(&gas_params, cpsb);
+        let state_gas = gas.state_gas();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
         if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas. Reservoir is handled separately via the
-            // new-state counters / derived state gas.
+            // Return unused regular gas. Reservoir is handled separately via
+            // the cumulative `state_gas` field.
             gas.erase_cost(remaining);
         }
 
@@ -431,26 +435,23 @@ pub trait Handler {
         }
 
         if instruction_result.is_ok() {
-            gas.set_new_state(new_state);
+            gas.set_state_gas(state_gas);
         } else {
-            // State changes rolled back, so no execution state gas was consumed.
-            // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
-            // frame refilled more than it charged; clamp to zero for reservoir
-            // recovery since the combined value cannot go below zero.
-            let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
+            // State changes rolled back, so no execution state gas was
+            // consumed. `state_gas` can be negative (EIP-8037 issue #2) if
+            // the top frame refilled more than it charged; clamp to zero for
+            // reservoir recovery since the combined value cannot go below
+            // zero.
+            let combined = state_gas.saturating_add_unsigned(reservoir).max(0) as u64;
             gas.set_reservoir(combined);
         }
 
         // EIP-8037: for a failed top-level CREATE (or one that self-destructs
         // in init code, see EIP-6780), refund the intrinsic `create_state_gas`
-        // to the reservoir. The nested-create equivalent is
-        // `EthFrame::return_result`'s `refill_reservoir(create_state_gas)`; at
-        // the top level the same charge is deducted in
-        // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
-        // it would otherwise stay consumed when the deployment is rolled back
-        // or erased.
-        if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
-            gas.new_state_mut().remove_create_account();
+        // by recording a negative state cost — that subtracts from
+        // `state_gas` and adds back to `reservoir`.
+        if create_top_state_gas != 0 {
+            let _ = gas.record_state_cost(-create_top_state_gas);
         }
 
         Ok(())

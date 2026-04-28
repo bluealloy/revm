@@ -1,5 +1,4 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
-use context::context_interface::cfg::NewStateTracker;
 use interpreter::{CallOutcome, CreateOutcome, Gas};
 
 /// Helper that keeps track of gas.
@@ -8,7 +7,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
-    new_state: NewStateTracker,
+    state_gas: i64,
     reservoir: u64,
 }
 
@@ -31,14 +30,14 @@ impl GasInspector {
         self.last_gas_cost
     }
 
-    /// Returns the new-state counters.
+    /// Returns the cumulative state gas charged on the gas tracker (signed).
     ///
-    /// `new_storages` can be negative within a call frame (EIP-8037 issue #2):
-    /// a child that restores a slot set by its parent via 0→x→0 goes negative
-    /// until the frame returns and the parent's charge is reconciled.
+    /// Can be negative within a call frame (EIP-8037 issue #2): a child that
+    /// restores a slot set by its parent via 0→x→0 goes negative until the
+    /// frame returns and the parent's charge is reconciled.
     #[inline]
-    pub const fn new_state(&self) -> &NewStateTracker {
-        &self.new_state
+    pub const fn state_gas(&self) -> i64 {
+        self.state_gas
     }
 
     /// Returns the reservoir gas.
@@ -52,7 +51,7 @@ impl GasInspector {
         Self {
             gas_remaining: 0,
             last_gas_cost: 0,
-            new_state: NewStateTracker::new(),
+            state_gas: 0,
             reservoir: 0,
         }
     }
@@ -61,7 +60,7 @@ impl GasInspector {
     #[inline]
     pub const fn initialize_interp(&mut self, gas: &Gas) {
         self.gas_remaining = gas.limit();
-        self.new_state = *gas.new_state();
+        self.state_gas = gas.state_gas();
         self.reservoir = gas.reservoir();
     }
 
@@ -69,7 +68,7 @@ impl GasInspector {
     #[inline]
     pub const fn step(&mut self, gas: &Gas) {
         self.gas_remaining = gas.remaining();
-        self.new_state = *gas.new_state();
+        self.state_gas = gas.state_gas();
         self.reservoir = gas.reservoir();
     }
 
@@ -79,7 +78,7 @@ impl GasInspector {
         let remaining = gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
-        self.new_state = *gas.new_state();
+        self.state_gas = gas.state_gas();
         self.reservoir = gas.reservoir();
     }
 
@@ -90,7 +89,7 @@ impl GasInspector {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
-        self.new_state = *outcome.result.gas.new_state();
+        self.state_gas = outcome.result.gas.state_gas();
         self.reservoir = outcome.result.gas.reservoir();
     }
 
@@ -101,7 +100,7 @@ impl GasInspector {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
-        self.new_state = *outcome.result.gas.new_state();
+        self.state_gas = outcome.result.gas.state_gas();
         self.reservoir = outcome.result.gas.reservoir();
     }
 }

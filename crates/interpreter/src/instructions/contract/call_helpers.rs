@@ -77,7 +77,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
     // EIP-8037 new-account counter for CALL-with-value-to-empty.
     if creates_new_account {
-        interpreter.gas.new_state_mut().add_call_account();
+        interpreter.new_state.add_call_account();
     }
 
     let interpreter = &mut context.interpreter;

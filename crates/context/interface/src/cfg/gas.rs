@@ -1,10 +1,6 @@
 //! Gas constants and functions for gas calculation.
 
-use crate::{
-    cfg::{GasParams, NewStateTracker},
-    transaction::AccessListItemTr as _,
-    Transaction, TransactionType,
-};
+use crate::{cfg::GasParams, transaction::AccessListItemTr as _, Transaction, TransactionType};
 use primitives::hardfork::SpecId;
 
 /// Tracker for gas during execution.
@@ -20,11 +16,10 @@ pub struct GasTracker {
     /// State gas reservoir (gas exceeding TX_MAX_GAS_LIMIT). Starts as `execution_gas - min(execution_gas, regular_gas_budget)`.
     /// When 0, all remaining gas is regular gas with hard cap at `TX_MAX_GAS_LIMIT`.
     reservoir: u64,
-    /// Net new state created by this frame: storages, accounts, and code
-    /// deposit bytes. Total state gas spent is derivable via
-    /// [`NewStateTracker::state_gas_spent`] from these counts plus the gas
-    /// table and CPSB.
-    new_state: NewStateTracker,
+    /// Cumulative state gas charged on this tracker (signed). Negative values
+    /// represent reservoir refills (e.g. from 0→x→0 storage restoration).
+    /// Updated by [`Self::record_state_cost`].
+    state_gas: i64,
     /// Refunded gas. Used to refund the gas to the caller at the end of execution.
     refunded: i64,
 }
@@ -37,7 +32,7 @@ impl GasTracker {
             gas_limit,
             remaining,
             reservoir,
-            new_state: NewStateTracker::new(),
+            state_gas: 0,
             refunded: 0,
         }
     }
@@ -84,28 +79,22 @@ impl GasTracker {
         self.reservoir = val;
     }
 
-    /// Returns the new-state counter tracker.
+    /// Returns the cumulative state gas charged on this tracker (signed).
     #[inline]
-    pub const fn new_state(&self) -> &NewStateTracker {
-        &self.new_state
+    pub const fn state_gas(&self) -> i64 {
+        self.state_gas
     }
 
-    /// Returns the new-state counter tracker mutably.
+    /// Sets the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn new_state_mut(&mut self) -> &mut NewStateTracker {
-        &mut self.new_state
+    pub const fn set_state_gas(&mut self, val: i64) {
+        self.state_gas = val;
     }
 
-    /// Sets the new-state counter tracker.
+    /// Returns the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn set_new_state(&mut self, val: NewStateTracker) {
-        self.new_state = val;
-    }
-
-    /// Returns the state gas spent so far, derived from the new-state counters.
-    #[inline]
-    pub fn state_gas_spent(&self, gas_params: &GasParams, cpsb: u64) -> i64 {
-        self.new_state.state_gas_spent(gas_params, cpsb)
+    pub const fn state_gas_spent(&self) -> i64 {
+        self.state_gas
     }
 
     /// Returns the refunded gas.
@@ -139,10 +128,14 @@ impl GasTracker {
     /// `remaining` when the reservoir is exhausted. A negative `cost` refills
     /// the reservoir by `|cost|` (used when the derived state gas of a frame
     /// turns out to be negative, e.g. due to 0→x→0 storage restoration that
-    /// unwinds a prior charge). The OOG check is performed in a later step;
-    /// reservoir/remaining updates here are saturating.
+    /// unwinds a prior charge).
+    ///
+    /// `state_gas` accumulates the signed `cost` regardless of whether the
+    /// regular-gas spill succeeded; the boolean return reports whether the
+    /// regular-gas budget was sufficient. Callers should treat `false` as OOG.
     #[inline]
     pub const fn record_state_cost(&mut self, cost: i64) -> bool {
+        self.state_gas = self.state_gas.saturating_add(cost);
         if cost < 0 {
             self.reservoir = self.reservoir.saturating_add((-cost) as u64);
             return true;
@@ -153,8 +146,11 @@ impl GasTracker {
             return true;
         }
         let spill = cost - self.reservoir;
-        self.reservoir = 0;
-        self.record_regular_cost(spill)
+        let success = self.record_regular_cost(spill);
+        if success {
+            self.reservoir = 0;
+        }
+        success
     }
 
     /// Refills the reservoir with state gas that is returned by 0→x→0 storage

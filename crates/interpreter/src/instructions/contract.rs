@@ -90,7 +90,7 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
     // Bumped upfront on the parent's tracker; `return_result` decrements it
     // again on a failed deployment (revert/halt/early-fail).
     if context.host.is_amsterdam_eip8037_enabled() {
-        context.interpreter.gas.new_state_mut().add_create_account();
+        context.interpreter.new_state.add_create_account();
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();
@@ -115,6 +115,7 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
         code,
         gas_limit,
         context.interpreter.gas.reservoir(),
+        context.interpreter.gas.state_gas(),
     );
     context
         .interpreter
@@ -162,6 +163,7 @@ pub fn call<IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, IT>) -> Result {
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
+                state_gas: context.interpreter.gas.state_gas(),
             },
         ))));
     Err(InstructionResult::Suspend)
@@ -200,6 +202,7 @@ pub fn call_code<IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, IT>) -> Res
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
+                state_gas: context.interpreter.gas.state_gas(),
             },
         ))));
     Err(InstructionResult::Suspend)
@@ -238,6 +241,7 @@ pub fn delegate_call<IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, IT>) ->
                 is_static: context.interpreter.runtime_flag.is_static(),
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
+                state_gas: context.interpreter.gas.state_gas(),
             },
         ))));
     Err(InstructionResult::Suspend)
@@ -276,6 +280,7 @@ pub fn static_call<IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, IT>) -> R
                 is_static: true,
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
+                state_gas: context.interpreter.gas.state_gas(),
             },
         ))));
     Err(InstructionResult::Suspend)

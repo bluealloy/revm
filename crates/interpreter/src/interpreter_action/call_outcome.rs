@@ -76,8 +76,8 @@ impl CallOutcome {
     /// # Returns
     ///
     /// An instance of [`Gas`] representing the gas usage.
-    pub const fn gas(&self) -> Gas {
-        self.result.gas
+    pub const fn gas(&self) -> &Gas {
+        &self.result.gas
     }
 
     /// Returns a reference to the output data.

@@ -114,9 +114,12 @@ fn run_custom_precompile<CTX: ContextTr>(
         }
     }
 
+    let cpsb = context.local().cpsb();
     Ok(precompile_output_to_interpreter_result(
         output,
         inputs.gas_limit,
+        context.cfg().gas_params(),
+        cpsb,
     ))
 }
 

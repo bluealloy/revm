@@ -241,13 +241,13 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
             && vals.is_original_eq_present()
             && vals.is_original_zero()
         {
-            context.interpreter.gas.new_state_mut().add_storage();
+            context.interpreter.new_state.add_storage();
         }
         // EIP-8037 issue #2: 0 → x → 0 storage restoration unwinds the slot
         // creation. The regular-gas portion of the restoration still flows
         // through `sstore_refund` below.
         if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
-            context.interpreter.gas.new_state_mut().remove_storage();
+            context.interpreter.new_state.remove_storage();
         }
     }
 
@@ -357,7 +357,7 @@ pub fn selfdestruct<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resu
 
     // EIP-8037 new-account counter for SELFDESTRUCT-to-empty.
     if context.host.is_amsterdam_eip8037_enabled() && should_charge_topup {
-        context.interpreter.gas.new_state_mut().add_call_account();
+        context.interpreter.new_state.add_call_account();
     }
 
     if !res.previously_destroyed {

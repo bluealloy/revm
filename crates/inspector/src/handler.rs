@@ -1,7 +1,7 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{
     result::{ExecutionResult, ResultGas},
-    Cfg, ContextTr, JournalEntry, JournalTr, LocalContextTr, Transaction,
+    Cfg, ContextTr, JournalEntry, JournalTr, Transaction,
 };
 use handler::{cache_cpsb_on_local, evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
@@ -165,10 +165,7 @@ where
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let cpsb = evm.ctx_ref().local().cpsb();
-                let state_gas = gas
-                    .state_gas_spent(evm.ctx_ref().cfg().gas_params(), cpsb)
-                    .max(0) as u64;
+                let state_gas = gas.state_gas_spent().max(0) as u64;
                 let result_gas = ResultGas::default()
                     .with_total_gas_spent(gas.total_gas_spent())
                     .with_refunded(gas.refunded() as u64)

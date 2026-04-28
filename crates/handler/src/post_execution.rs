@@ -37,26 +37,30 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
         return;
     }
 
-    // Saturating decrement keeps each counter non-negative (storages is i64 so
-    // we just subtract); decrementing past the in-frame contribution is fine
-    // because parent merges have already absorbed the matching positives.
-    let new_state = gas.new_state_mut();
-    new_state.new_create_accounts = new_state.new_create_accounts.saturating_sub(accounts);
-    new_state.new_storages = new_state.new_storages.saturating_sub(storages as i64);
+    let cpsb = context.local().cpsb();
+    let gas_params = context.cfg().gas_params();
+    let refund = gas_params
+        .new_account_state_gas(cpsb)
+        .saturating_mul(accounts)
+        .saturating_add(
+            gas_params
+                .get(context_interface::cfg::GasId::sstore_set_state_gas())
+                .saturating_mul(cpsb)
+                .saturating_mul(storages),
+        );
+    if refund == 0 {
+        return;
+    }
+    // Negative cost: subtract from `state_gas` and add back to reservoir.
+    let _ = gas.record_state_cost(-(refund as i64));
 }
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
-pub fn build_result_gas<CTX: ContextTr>(
-    context: &CTX,
-    gas: &Gas,
-    init_and_floor_gas: InitialAndFloorGas,
-) -> ResultGas {
-    // State gas spent during execution is derived from the new-state counters.
-    // At the top level, after parent/child reconciliation, the value is
-    // expected to be >= 0; clamp defensively before combining with intrinsic
-    // state gas.
-    let cpsb = context.local().cpsb();
-    let exec_state_gas = gas.state_gas_spent(context.cfg().gas_params(), cpsb).max(0) as u64;
+pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+    // The execution-time state gas is the cumulative `state_gas` recorded on
+    // the gas tracker. Top-level reconciliation guarantees a non-negative
+    // value; clamp defensively before combining with intrinsic state gas.
+    let exec_state_gas = gas.state_gas().max(0) as u64;
     let state_gas = exec_state_gas
         .saturating_add(init_and_floor_gas.initial_state_gas)
         .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);

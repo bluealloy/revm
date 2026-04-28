@@ -113,6 +113,7 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         reservoir_remaining_gas: u64,
+        state_gas: i64,
         checkpoint: JournalCheckpoint,
     ) {
         let Self {
@@ -136,6 +137,7 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             reservoir_remaining_gas,
         );
+        interpreter.gas.set_state_gas(state_gas);
         *checkpoint_ref = checkpoint;
     }
 
@@ -154,8 +156,9 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
-        let gas =
+        let mut gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
+        gas.set_state_gas(inputs.state_gas);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -230,6 +233,7 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
+        let inherited_state_gas = inputs.state_gas;
         this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
@@ -243,6 +247,7 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             reservoir_remaining_gas,
+            inherited_state_gas,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -341,6 +346,7 @@ impl EthFrame<EthInterpreter> {
             call_value: inputs.value(),
         };
         let gas_limit = inputs.gas_limit();
+        let inherited_state_gas = inputs.state_gas();
 
         this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
@@ -353,6 +359,7 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             reservoir_remaining_gas,
+            inherited_state_gas,
             checkpoint,
         );
 
@@ -413,45 +420,55 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => result,
         };
 
-        // calculate state gas that frame spent.
-        let state_gas = interpreter_result
-            .gas
-            .state_gas_spent(context.cfg().gas_params(), context.local().cpsb());
+        // Snapshot the relevant frame data so the immutable borrow on
+        // `self.data` does not block mutable access to `self.interpreter`.
+        let (return_memory_range, created_address) = match &self.data {
+            FrameData::Call(f) => (Some(f.return_memory_range.clone()), None),
+            FrameData::Create(f) => (None, Some(f.created_address)),
+        };
 
-        // Handle return from frame
-        let (result, commit) = match &self.data {
-            FrameData::Call(frame) => {
-                let commit = interpreter_result.result.is_ok();
+        let (result, commit) = if let Some(address) = created_address {
+            // CREATE / CREATE2 path: validate deployment and add code-deposit
+            // bytes to `interpreter.new_state` before computing state gas.
+            let commit = return_create(
+                context,
+                &mut self.interpreter,
+                &mut interpreter_result,
+                address,
+            );
 
-                // reduce gas by state gas spent. oog if there is not enough gas.
-                if commit && !interpreter_result.gas.record_state_cost(state_gas) {
-                    interpreter_result.result = InstructionResult::OutOfGas;
-                }
-
-                (
-                    ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                        interpreter_result,
-                        frame.return_memory_range.clone(),
-                    ))),
-                    commit,
-                )
+            let state_gas = self.interpreter.new_state.state_gas_spent(
+                context.cfg().gas_params(),
+                context.local().cpsb(),
+            );
+            if commit && !interpreter_result.gas.record_state_cost(state_gas) {
+                interpreter_result.result = InstructionResult::OutOfGas;
             }
-            FrameData::Create(frame) => {
-                let commit = return_create(context, &mut interpreter_result, frame.created_address);
 
-                // reduce gas by state gas spent. oog if there is not enough gas.
-                if commit && !interpreter_result.gas.record_state_cost(state_gas) {
-                    interpreter_result.result = InstructionResult::OutOfGas;
-                }
-
-                (
-                    ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                        interpreter_result,
-                        Some(frame.created_address),
-                    ))),
-                    commit,
-                )
+            (
+                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
+                    interpreter_result,
+                    Some(address),
+                ))),
+                commit,
+            )
+        } else {
+            let commit = interpreter_result.result.is_ok();
+            let state_gas = self.interpreter.new_state.state_gas_spent(
+                context.cfg().gas_params(),
+                context.local().cpsb(),
+            );
+            if commit && !interpreter_result.gas.record_state_cost(state_gas) {
+                interpreter_result.result = InstructionResult::OutOfGas;
             }
+
+            (
+                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
+                    interpreter_result,
+                    return_memory_range.expect("Call frame has return memory range"),
+                ))),
+                commit,
+            )
         };
 
         if commit {
@@ -475,7 +492,7 @@ impl EthFrame<EthInterpreter> {
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
-                let out_gas = outcome.gas();
+                let out_gas = &outcome.result.gas;
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
 
@@ -506,15 +523,8 @@ impl EthFrame<EthInterpreter> {
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
-                // handle reservoir remaining gas
-                let cpsb = ctx.local().cpsb();
-                handle_reservoir_remaining_gas(
-                    ins_result.is_ok(),
-                    &mut interpreter.gas,
-                    &out_gas,
-                    ctx.cfg().gas_params(),
-                    cpsb,
-                );
+                // handle reservoir / state gas propagated up from child
+                handle_reservoir_remaining_gas(&mut interpreter.gas, out_gas);
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -546,28 +556,21 @@ impl EthFrame<EthInterpreter> {
                     this_gas.erase_cost(outcome.gas().remaining());
                 }
 
-                // handle reservoir remaining gas
-                let cpsb = ctx.local().cpsb();
-                handle_reservoir_remaining_gas(
-                    instruction_result.is_ok(),
-                    this_gas,
-                    outcome.gas(),
-                    ctx.cfg().gas_params(),
-                    cpsb,
-                );
+                // handle reservoir / state gas propagated up from child
+                handle_reservoir_remaining_gas(this_gas, outcome.gas());
 
                 // EIP-8037: The CREATE opcode bumped `new_create_accounts` on
-                // this frame's tracker. When the child fails to deploy (revert,
-                // halt, or early-fail paths that return `address == None` such
-                // as nonce overflow, depth, OutOfFunds), decrement the counter
-                // so the failed CREATE leaves no trace.
+                // this frame's interpreter. When the child fails to deploy
+                // (revert, halt, or early-fail paths that return `address ==
+                // None` such as nonce overflow, depth, OutOfFunds), decrement
+                // the counter so the failed CREATE leaves no trace.
                 //
                 // The nonce-overflow path reports `InstructionResult::Return` (ok)
                 // with `address == None`, so gate on address rather than the result.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
-                    this_gas.new_state_mut().remove_create_account();
+                    interpreter.new_state.remove_create_account();
                 }
 
                 let stack_item = if instruction_result.is_ok() {
@@ -588,54 +591,13 @@ impl EthFrame<EthInterpreter> {
 
 /// Handles the remaining gas of the parent frame.
 ///
-/// `gas_params` and `cpsb` are needed to derive the child's net state-gas
-/// contribution from its `NewStateTracker` counters; pass `0` for `cpsb` when
-/// EIP-8037 is disabled (the derived value is then trivially zero).
+/// Both `reservoir` and `state_gas` were forwarded from the parent into the
+/// child at frame creation, so the child's final values already include the
+/// parent's prior contribution plus the child's own. We simply hand them back.
 #[inline]
-pub fn handle_reservoir_remaining_gas(
-    is_success: bool,
-    parent_gas: &mut Gas,
-    child_gas: &Gas,
-    gas_params: &context_interface::cfg::GasParams,
-    cpsb: u64,
-) {
-    if is_success {
-        // On success: parent takes the child's final reservoir and merges in
-        // the child's net new-state counters. Negative `new_storages` from
-        // cross-frame 0→x→0 restorations correctly cancel the parent's
-        // matching positive charge during the merge.
-        parent_gas.set_reservoir(child_gas.reservoir());
-        let merged = {
-            let mut p = *parent_gas.new_state();
-            p.merge(child_gas.new_state());
-            p
-        };
-        parent_gas.set_new_state(merged);
-    } else {
-        // On revert or halt: child state changes are rolled back; the parent
-        // keeps its pre-call counters (we drop the child's). For the reservoir,
-        // compute the gas legitimately owed to the parent:
-        //
-        //   excess = max(0, child.reservoir + child.state_gas_spent_signed - parent.reservoir)
-        //
-        // `child.reservoir + child.state_gas_spent_signed` is the "logical
-        // refund": if the child's own state charges are forgiven (state was
-        // rolled back) and any cross-frame refill against parent's charges
-        // is netted out (negative state_gas_spent contribution), the result
-        // equals what should be visible to the parent. Subtracting the
-        // pre-call parent reservoir leaves only the genuine excess flowing up
-        // from grandchild reverts/halts.
-        let child_state_gas = child_gas.state_gas_spent(gas_params, cpsb);
-        let logical_refund = if child_state_gas >= 0 {
-            child_gas.reservoir().saturating_add(child_state_gas as u64)
-        } else {
-            child_gas
-                .reservoir()
-                .saturating_sub((-child_state_gas) as u64)
-        };
-        let excess = logical_refund.saturating_sub(parent_gas.reservoir());
-        parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
-    }
+pub fn handle_reservoir_remaining_gas(parent_gas: &mut Gas, child_gas: &Gas) {
+    parent_gas.set_reservoir(child_gas.reservoir());
+    parent_gas.set_state_gas(child_gas.state_gas());
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
@@ -652,6 +614,7 @@ pub fn handle_reservoir_remaining_gas(
 /// state gas from its own reservoir and remaining gas.
 pub fn return_create<CTX: ContextTr>(
     context: &mut CTX,
+    interpreter: &mut Interpreter<EthInterpreter>,
     interpreter_result: &mut InterpreterResult,
     address: Address,
 ) -> bool {
@@ -712,15 +675,16 @@ pub fn return_create<CTX: ContextTr>(
     // a different hash.
     if is_amsterdam_eip8037 {
         let hash_cost = gas_params.keccak256_cost(interpreter_result.output.len());
-        let gas = &mut interpreter_result.gas;
-        if !gas.record_regular_cost(hash_cost) {
+        if !interpreter_result.gas.record_regular_cost(hash_cost) {
             interpreter_result.result = InstructionResult::OutOfGas;
             return false;
         }
         // EIP-8037 code-deposit counter. The actual gas charge is computed
-        // from the new-state counters at OOG-check time.
+        // from the new-state counter in `process_next_action`.
         let code_len = interpreter_result.output.len();
-        gas.new_state_mut().add_code_deposit_bytes(code_len as u64);
+        interpreter
+            .new_state
+            .add_code_deposit_bytes(code_len as u64);
     }
 
     // Do analysis of bytecode straight away.
