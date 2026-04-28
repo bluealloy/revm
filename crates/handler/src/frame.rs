@@ -113,7 +113,6 @@ impl EthFrame<EthInterpreter> {
         spec_id: SpecId,
         gas_limit: u64,
         reservoir_remaining_gas: u64,
-        state_gas: i64,
         checkpoint: JournalCheckpoint,
     ) {
         let Self {
@@ -137,7 +136,6 @@ impl EthFrame<EthInterpreter> {
             gas_limit,
             reservoir_remaining_gas,
         );
-        interpreter.gas.set_state_gas(state_gas);
         *checkpoint_ref = checkpoint;
     }
 
@@ -156,9 +154,8 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
-        let mut gas =
+        let gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
-        gas.set_state_gas(inputs.state_gas);
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -233,7 +230,6 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        let inherited_state_gas = inputs.state_gas;
         this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
@@ -247,7 +243,6 @@ impl EthFrame<EthInterpreter> {
             ctx.cfg().spec().into(),
             gas_limit,
             reservoir_remaining_gas,
-            inherited_state_gas,
             checkpoint,
         );
         Ok(ItemOrResult::Item(this.consume()))
@@ -346,7 +341,6 @@ impl EthFrame<EthInterpreter> {
             call_value: inputs.value(),
         };
         let gas_limit = inputs.gas_limit();
-        let inherited_state_gas = inputs.state_gas();
 
         this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
@@ -359,7 +353,6 @@ impl EthFrame<EthInterpreter> {
             spec,
             gas_limit,
             reservoir_remaining_gas,
-            inherited_state_gas,
             checkpoint,
         );
 
@@ -591,13 +584,14 @@ impl EthFrame<EthInterpreter> {
 
 /// Handles the remaining gas of the parent frame.
 ///
-/// Both `reservoir` and `state_gas` were forwarded from the parent into the
-/// child at frame creation, so the child's final values already include the
-/// parent's prior contribution plus the child's own. We simply hand them back.
+/// `reservoir` was forwarded from the parent into the child at frame
+/// creation, so we just take the child's final value back. `state_gas` is
+/// per-frame and accumulated into the parent so the running total covers
+/// both the parent's prior contribution and the child's own.
 #[inline]
 pub fn handle_reservoir_remaining_gas(parent_gas: &mut Gas, child_gas: &Gas) {
     parent_gas.set_reservoir(child_gas.reservoir());
-    parent_gas.set_state_gas(child_gas.state_gas());
+    parent_gas.set_state_gas(parent_gas.state_gas().saturating_add(child_gas.state_gas()));
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
