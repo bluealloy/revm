@@ -3,7 +3,7 @@ use core::{
     cell::{Ref, RefCell, RefMut},
     ops::Range,
 };
-use std::{rc::Rc, string::String, vec, vec::Vec};
+use std::{rc::Rc, string::String, vec::Vec};
 
 trait RefcellExt<T> {
     fn dbg_borrow(&self) -> Ref<'_, T>;
@@ -246,7 +246,7 @@ impl FrameToken {
     }
 }
 
-/// A shared byte buffer whose spare capacity is always zeroed.
+/// A shared byte buffer.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedMemoryBuffer(Rc<RefCell<Vec<u8>>>);
@@ -258,12 +258,10 @@ impl Default for SharedMemoryBuffer {
 }
 
 impl SharedMemoryBuffer {
-    /// Creates a new buffer with zeroed spare capacity.
+    /// Creates a new buffer with the given capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        let mut buffer = vec![0; capacity];
-        unsafe { buffer.set_len(0) };
-        Self(Rc::new(RefCell::new(buffer)))
+        Self(Rc::new(RefCell::new(Vec::with_capacity(capacity))))
     }
 
     /// Returns the buffer length.
@@ -290,35 +288,16 @@ impl SharedMemoryBuffer {
         RefMut::map(self.0.dbg_borrow_mut(), Vec::as_mut_slice)
     }
 
-    /// Resizes the initialized bytes, zeroing any bytes that become spare capacity.
+    /// Resizes the initialized bytes.
     #[inline]
     pub fn resize(&self, new_len: usize) {
-        let buffer = &mut *self.0.dbg_borrow_mut();
-        let len = buffer.len();
-        let cap = buffer.capacity();
-        if new_len > cap {
-            buffer.reserve(new_len - len);
-            let new_cap = buffer.capacity();
-            // SAFETY: `cap..new_cap` is the newly allocated spare capacity and is in bounds.
-            unsafe { buffer.as_mut_ptr().add(cap).write_bytes(0, new_cap - cap) };
-        } else if new_len < len {
-            // SAFETY: `new_len..len` is initialized and in bounds.
-            unsafe {
-                buffer
-                    .as_mut_ptr()
-                    .add(new_len)
-                    .write_bytes(0, len - new_len)
-            };
-        }
-        // SAFETY: `new_len` is at most the capacity. Newly exposed bytes were zeroed either when
-        // allocated or when they previously became spare capacity.
-        unsafe { buffer.set_len(new_len) };
+        self.0.dbg_borrow_mut().resize(new_len, 0);
     }
 
-    /// Clears the initialized bytes, zeroing them first so they become zeroed spare capacity.
+    /// Clears the initialized bytes.
     #[inline]
     pub fn clear(&self) {
-        self.resize(0);
+        self.0.dbg_borrow_mut().clear();
     }
 }
 
@@ -351,32 +330,20 @@ pub trait LocalContextTr {
 mod tests {
     use super::*;
 
-    fn assert_spare_capacity_zeroed(buffer: &SharedMemoryBuffer) {
-        let mut vec = buffer.0.borrow_mut();
-        assert!(vec
-            .spare_capacity_mut()
-            .iter_mut()
-            .all(|byte| unsafe { byte.assume_init() } == 0));
-    }
-
     #[test]
-    fn shared_memory_buffer_zeroes_spare_capacity() {
+    fn shared_memory_buffer_resize() {
         let buffer = SharedMemoryBuffer::with_capacity(4);
-        assert_spare_capacity_zeroed(&buffer);
+        assert!(buffer.is_empty());
 
-        buffer.resize(64);
+        buffer.resize(8);
+        assert_eq!(&*buffer.borrow(), &[0; 8]);
+
         buffer.borrow_mut().fill(0xff);
-        buffer.resize(32);
-        assert_eq!(&*buffer.borrow(), &[0xff; 32]);
-        assert_spare_capacity_zeroed(&buffer);
-
-        buffer.resize(128);
-        assert_eq!(&buffer.borrow()[32..128], &[0; 96]);
-        assert_spare_capacity_zeroed(&buffer);
+        buffer.resize(4);
+        assert_eq!(&*buffer.borrow(), &[0xff; 4]);
 
         buffer.clear();
         assert!(buffer.is_empty());
-        assert_spare_capacity_zeroed(&buffer);
     }
 
     #[test]

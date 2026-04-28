@@ -325,10 +325,9 @@ mod tests {
 
     impl TestLocalContext {
         fn new(data: Vec<u8>) -> Self {
-            let len = data.len().next_multiple_of(32);
-            let buffer = SharedMemoryBuffer::with_capacity(len);
-            buffer.resize(len);
-            buffer.borrow_mut()[..data.len()].copy_from_slice(&data);
+            let buffer = SharedMemoryBuffer::with_capacity(data.len());
+            buffer.resize(data.len());
+            buffer.borrow_mut().copy_from_slice(&data);
             Self { buffer }
         }
     }
@@ -367,7 +366,7 @@ mod tests {
 
     #[test]
     fn as_bytes_local_with_out_of_range_buffer() {
-        let input = CallInput::SharedBuffer(40..50);
+        let input = CallInput::SharedBuffer(10..20);
         let local = TestLocalContext::new(vec![0, 1, 2]);
         let result = input.as_bytes_local(&local);
         // Out of range returns empty via unwrap_or_default on the Option<Ref>
@@ -392,7 +391,7 @@ mod tests {
 
     #[test]
     fn bytes_local_with_out_of_range_buffer() {
-        let input = CallInput::SharedBuffer(40..50);
+        let input = CallInput::SharedBuffer(5..10);
         let local = TestLocalContext::new(vec![0]);
         let result = input.bytes_local(&local);
         assert_eq!(result, Bytes::new());
