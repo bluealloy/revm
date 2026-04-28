@@ -235,15 +235,18 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     // EIP-8037 state-creation tracking. The actual gas charge against the
     // reservoir is computed from these counters at OOG-check time.
     if context.host.is_amsterdam_eip8037_enabled() {
-        let cpsb = context.host.cpsb();
-        let gas_params = context.host.gas_params();
-        if gas_params.sstore_state_gas(&state_load.data, cpsb) > 0 {
+        let vals = &state_load.data;
+        // 0 → x slot creation.
+        if vals.new_values_changes_present()
+            && vals.is_original_eq_present()
+            && vals.is_original_zero()
+        {
             context.interpreter.gas.new_state_mut().add_storage();
         }
-        // EIP-8037 issue #2: 0→x→0 storage restoration unwinds the slot
+        // EIP-8037 issue #2: 0 → x → 0 storage restoration unwinds the slot
         // creation. The regular-gas portion of the restoration still flows
         // through `sstore_refund` below.
-        if gas_params.sstore_state_gas_refill(&state_load.data, cpsb) > 0 {
+        if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
             context.interpreter.gas.new_state_mut().remove_storage();
         }
     }

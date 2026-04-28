@@ -331,8 +331,8 @@ impl GasParams {
             table[GasId::create_state_gas().as_usize()] = eip8037::NEW_ACCOUNT_BYTES;
 
             // SSTORE refund for 0→X→0 restoration: regular gas only.
-            // The state-gas portion (SSTORE_SET_BYTES × CPSB) is restored directly
-            // to the reservoir via `GasParams::sstore_state_gas_refill`.
+            // The state-gas portion is unwound by decrementing the new-state
+            // counter on the gas tracker (see SSTORE in the interpreter).
             table[GasId::sstore_set_refund().as_usize()] = 2800;
 
             // EIP-7702 under EIP-8037: regular and state-gas components are stored
@@ -690,36 +690,6 @@ impl GasParams {
     pub fn code_deposit_cost(&self, len: usize) -> u64 {
         self.get(GasId::code_deposit_cost())
             .saturating_mul(len as u64)
-    }
-
-    /// State gas for SSTORE: charges for new slot creation (zero → non-zero).
-    #[inline]
-    pub fn sstore_state_gas(&self, vals: &SStoreResult, cpsb: u64) -> u64 {
-        if vals.new_values_changes_present()
-            && vals.is_original_eq_present()
-            && vals.is_original_zero()
-        {
-            self.get(GasId::sstore_set_state_gas()).saturating_mul(cpsb)
-        } else {
-            0
-        }
-    }
-
-    /// State gas to refill the reservoir on 0→x→0 storage restoration (EIP-8037).
-    ///
-    /// When a storage slot is restored to its original zero value within the
-    /// same transaction, the state gas originally charged for the 0→x
-    /// transition is returned directly to the reservoir (not via the capped
-    /// refund counter). Returns 0 in any other case.
-    ///
-    /// `cpsb` is the current `cost_per_state_byte` (see [`Cfg::cpsb`]).
-    #[inline]
-    pub fn sstore_state_gas_refill(&self, vals: &SStoreResult, cpsb: u64) -> u64 {
-        if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
-            self.get(GasId::sstore_set_state_gas()).saturating_mul(cpsb)
-        } else {
-            0
-        }
     }
 
     /// State gas for new account creation.
