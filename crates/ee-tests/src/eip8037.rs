@@ -1773,7 +1773,12 @@ fn test_eip8037_reservoir_refill_halt_state_gas_less() {
     );
 }
 
-/// 7.4 HALT (OOG) with tight cap forcing regular gas exhaustion.
+/// 7.4 HALT (OOG) with tight cap.
+///
+/// SSTORE accumulates its state-gas charge without failing inline (the
+/// EIP-8037 check is deferred to frame return). When the frame returns and
+/// the budget cannot cover the recorded state gas, the call is reverted
+/// as OutOfGas and the entire transaction gas is consumed.
 #[test]
 fn test_eip8037_reservoir_refill_halt_state_gas_more() {
     let bytecode = sstore_multi_bytecode();
@@ -1796,10 +1801,8 @@ fn test_eip8037_reservoir_refill_halt_state_gas_more() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    // EIP-8037: tx_gas_used = tx.gas - gas_left - state_gas_left
-    // On halt, gas_left=0 but state_gas_left (reservoir) may be non-zero.
-    // Unused reservoir gas is refunded, so tx_gas_used < gas_limit.
-    assert!(result.tx_gas_used() < gas_limit);
+    // State-gas overflow at frame return consumes the full transaction gas.
+    assert_eq!(result.tx_gas_used(), gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     compare_or_save_eip8037_testdata(

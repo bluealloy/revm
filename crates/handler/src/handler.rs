@@ -411,9 +411,22 @@ pub trait Handler {
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
         let state_gas_spent = gas.state_gas_spent();
+        let state_gas_oog = gas.state_gas_oog();
+
+        // EIP-8037: when state-gas saturated during execution, the call is
+        // reverted at frame return and no gas (regular or reservoir) is
+        // refunded — the full budget is consumed, matching standard OOG.
+        // `record_state_cost` already drove `reservoir`/`remaining` to zero,
+        // but a later `refill_reservoir` (e.g. failed-CREATE refund) may have
+        // re-inflated them. Zero them out here so total_gas_spent = limit.
+        let initial_reservoir = if state_gas_oog && !instruction_result.is_ok() {
+            0
+        } else {
+            reservoir
+        };
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
+        *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), initial_reservoir);
 
         if instruction_result.is_ok_or_revert() {
             // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
@@ -426,6 +439,11 @@ pub trait Handler {
 
         if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
+        } else if state_gas_oog {
+            // State-gas overflow OOG: reservoir already zeroed above,
+            // `state_gas_spent` reflects the *intended* charge rather than
+            // actual consumption — clamp it to zero.
+            gas.set_state_gas_spent(0);
         } else {
             // State changes rolled back, so no execution state gas was consumed.
             // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top

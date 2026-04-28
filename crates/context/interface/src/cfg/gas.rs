@@ -28,6 +28,11 @@ pub struct GasTracker {
     /// the child's reservoir, without confusing it with legitimate reservoir
     /// growth from grandchild halt/revert refunds.
     refill_amount: u64,
+    /// Set when a state gas charge could not be fully covered by `reservoir +
+    /// remaining`. The opcode is allowed to continue (state gas no longer
+    /// fails inline); the frame is converted to OutOfGas and reverted at
+    /// frame return.
+    state_gas_oog: bool,
     /// Refunded gas. Used to refund the gas to the caller at the end of execution.
     refunded: i64,
 }
@@ -42,6 +47,7 @@ impl GasTracker {
             reservoir,
             state_gas_spent: 0,
             refill_amount: 0,
+            state_gas_oog: false,
             refunded: 0,
         }
     }
@@ -127,28 +133,40 @@ impl GasTracker {
 
     /// Records a state gas cost (EIP-8037 reservoir model).
     ///
-    /// State gas charges deduct from the reservoir first. If the reservoir is exhausted,
-    /// remaining charges spill into `remaining` (requiring `remaining >= cost`).
-    /// Tracks state gas spent.
-    ///
-    /// Returns `false` if total remaining gas is insufficient.
+    /// State gas charges deduct from the reservoir first; if the reservoir is
+    /// exhausted, the remainder spills into `remaining`. The charge is always
+    /// applied to `state_gas_spent`; if `reservoir + remaining` cannot cover
+    /// it, the available budget is consumed (saturating) and `state_gas_oog`
+    /// is set so the frame can be reverted at return.
     #[inline]
-    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
+    pub const fn record_state_cost(&mut self, cost: u64) {
+        self.state_gas_spent = self.state_gas_spent.saturating_add(cost as i64);
         if self.reservoir >= cost {
-            self.state_gas_spent = self.state_gas_spent.saturating_add(cost as i64);
             self.reservoir -= cost;
-            return true;
+            return;
         }
 
         let spill = cost - self.reservoir;
-
-        let success = self.record_regular_cost(spill);
-        if success {
-            self.state_gas_spent = self.state_gas_spent.saturating_add(cost as i64);
-            self.reservoir = 0;
+        self.reservoir = 0;
+        if self.remaining >= spill {
+            self.remaining -= spill;
+        } else {
+            self.remaining = 0;
+            self.state_gas_oog = true;
         }
-        success
+    }
+
+    /// Returns whether a state gas charge in this frame exceeded the available
+    /// budget. Used by the frame-return logic to convert success into OOG.
+    #[inline]
+    pub const fn state_gas_oog(&self) -> bool {
+        self.state_gas_oog
+    }
+
+    /// Sets the state gas OOG flag.
+    #[inline]
+    pub const fn set_state_gas_oog(&mut self, val: bool) {
+        self.state_gas_oog = val;
     }
 
     /// Refills the reservoir with state gas that is returned by 0→x→0 storage

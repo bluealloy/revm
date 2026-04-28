@@ -413,6 +413,19 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => result,
         };
 
+        // EIP-8037: state-gas charges in opcodes (SSTORE, CREATE, CALL into
+        // empty accounts, SELFDESTRUCT, code deposit) accumulate without
+        // failing inline. If any such charge could not be covered by the
+        // frame's reservoir + remaining, the budget was saturated and the
+        // `state_gas_oog` flag was set. Convert the frame's success into
+        // OutOfGas here so state changes are rolled back.
+        if interpreter_result.gas.state_gas_oog() && interpreter_result.result.is_ok() {
+            interpreter_result.result = InstructionResult::OutOfGas;
+            // Match other OOG paths: no regular gas is returned.
+            interpreter_result.gas.spend_all();
+            interpreter_result.output = Bytes::new();
+        }
+
         // Handle return from frame
         let result = match &self.data {
             FrameData::Call(frame) => {
@@ -702,14 +715,14 @@ pub fn return_create<CTX: ContextTr>(
         // State gas for code deposit (EIP-8037).
         // Charged after size check: only code that passes validation incurs state gas cost.
         //
-        // Note: This should be last operation before checkpoint commit as spending state before this messes
-        // with refilling of state gas.
+        // Note: This should be the last state-gas operation before checkpoint
+        // commit. The charge is recorded unconditionally; the eventual
+        // OutOfGas (when the budget cannot cover it) is enforced by the
+        // frame-return state gas check, not here.
         let state_gas_for_code =
             gas_params.code_deposit_state_gas(interpreter_result.output.len(), cpsb);
-        if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
-            journal.checkpoint_revert(checkpoint);
-            interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+        if state_gas_for_code > 0 {
+            interpreter_result.gas.record_state_cost(state_gas_for_code);
         }
     }
 

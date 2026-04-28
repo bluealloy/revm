@@ -28,16 +28,17 @@ macro_rules! check {
     };
 }
 
-/// Records a state gas cost (EIP-8037) and fails the instruction if it would exceed the available gas.
-/// State gas only deducts from `remaining` (not `regular_gas_remaining`).
+/// Records a state gas cost (EIP-8037).
+///
+/// The opcode does not fail when the state gas charge exceeds the available
+/// budget; instead `record_state_cost` saturates `reservoir`/`remaining` and
+/// sets a frame-level flag that converts the frame's eventual success into an
+/// OutOfGas at return (reverting state changes).
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! state_gas {
     ($interpreter:expr, $gas:expr) => {{
-        if !$interpreter.gas.record_state_cost($gas) {
-            $crate::primitives::hints_util::cold_path();
-            return Err($crate::InstructionResult::OutOfGas);
-        }
+        $interpreter.gas.record_state_cost($gas);
     }};
 }
 
