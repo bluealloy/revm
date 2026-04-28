@@ -902,7 +902,7 @@ impl GasParams {
 }
 
 #[inline]
-pub(crate) fn log2floor(value: U256) -> u64 {
+pub(crate) const fn log2floor(value: U256) -> u64 {
     255u64.saturating_sub(value.leading_zeros() as u64)
 }
 
