@@ -6,8 +6,9 @@ use crate::{
 };
 use alloy_eip7928::{
     AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
-    CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
-    SlotChanges as AlloySlotChanges, StorageChange as AlloyStorageChange,
+    BlockAccessIndex as AlloyBlockAccessIndex, CodeChange as AlloyCodeChange,
+    NonceChange as AlloyNonceChange, SlotChanges as AlloySlotChanges,
+    StorageChange as AlloyStorageChange,
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
@@ -117,7 +118,9 @@ impl AccountBal {
                 let mut changes = value
                     .writes
                     .into_iter()
-                    .map(|(index, value)| AlloyStorageChange::new(index, value))
+                    .map(|(index, value)| {
+                        AlloyStorageChange::new(AlloyBlockAccessIndex::new(index), value)
+                    })
                     .collect::<Vec<_>>();
                 changes.sort_unstable_by_key(|change| change.block_access_index);
 
@@ -130,7 +133,7 @@ impl AccountBal {
             .balance
             .writes
             .into_iter()
-            .map(|(index, value)| AlloyBalanceChange::new(index, value))
+            .map(|(index, value)| AlloyBalanceChange::new(AlloyBlockAccessIndex::new(index), value))
             .collect::<Vec<_>>();
         balance_changes.sort_unstable_by_key(|change| change.block_access_index);
 
@@ -139,7 +142,7 @@ impl AccountBal {
             .nonce
             .writes
             .into_iter()
-            .map(|(index, value)| AlloyNonceChange::new(index, value))
+            .map(|(index, value)| AlloyNonceChange::new(AlloyBlockAccessIndex::new(index), value))
             .collect::<Vec<_>>();
         nonce_changes.sort_unstable_by_key(|change| change.block_access_index);
 
@@ -148,7 +151,9 @@ impl AccountBal {
             .code
             .writes
             .into_iter()
-            .map(|(index, (_, value))| AlloyCodeChange::new(index, value.original_bytes()))
+            .map(|(index, (_, value))| {
+                AlloyCodeChange::new(AlloyBlockAccessIndex::new(index), value.original_bytes())
+            })
             .collect::<Vec<_>>();
         code_changes.sort_unstable_by_key(|change| change.block_access_index);
 

@@ -2,8 +2,8 @@
 
 // Re-export Alloy BAL types.
 pub use alloy_eip7928::{
-    BalanceChange as AlloyBalanceChange, BlockAccessList as AlloyBal,
-    CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+    BalanceChange as AlloyBalanceChange, BlockAccessIndex as AlloyBlockAccessIndex,
+    BlockAccessList as AlloyBal, CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
     StorageChange as AlloyStorageChange,
 };
 
@@ -32,7 +32,7 @@ impl From<Vec<AlloyBalanceChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.post_balance))
+                .map(|change| (change.block_access_index.get(), change.post_balance))
                 .collect(),
         }
     }
@@ -43,7 +43,7 @@ impl From<Vec<AlloyNonceChange>> for BalWrites<u64> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.new_nonce))
+                .map(|change| (change.block_access_index.get(), change.new_nonce))
                 .collect(),
         }
     }
@@ -54,7 +54,7 @@ impl From<Vec<AlloyStorageChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
-                .map(|change| (change.block_access_index, change.new_value))
+                .map(|change| (change.block_access_index.get(), change.new_value))
                 .collect(),
         }
     }
@@ -71,7 +71,7 @@ impl TryFrom<Vec<AlloyCodeChange>> for BalWrites<(B256, Bytecode)> {
                     // convert bytes to bytecode.
                     Bytecode::new_raw_checked(change.new_code).map(|bytecode| {
                         let hash = bytecode.hash_slow();
-                        (change.block_access_index, (hash, bytecode))
+                        (change.block_access_index.get(), (hash, bytecode))
                     })
                 })
                 .collect::<Result<Vec<_>, Self::Error>>()?,

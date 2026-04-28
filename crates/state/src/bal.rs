@@ -327,7 +327,7 @@ mod tests {
             account.storage_changes[0]
                 .changes
                 .iter()
-                .map(|change| change.block_access_index)
+                .map(|change| change.block_access_index.get())
                 .collect::<Vec<_>>(),
             vec![1, 3]
         );
@@ -335,7 +335,7 @@ mod tests {
             account.storage_changes[1]
                 .changes
                 .iter()
-                .map(|change| change.block_access_index)
+                .map(|change| change.block_access_index.get())
                 .collect::<Vec<_>>(),
             vec![6, 8]
         );
@@ -343,7 +343,7 @@ mod tests {
             account
                 .balance_changes
                 .iter()
-                .map(|change| change.block_access_index)
+                .map(|change| change.block_access_index.get())
                 .collect::<Vec<_>>(),
             vec![2, 5]
         );
@@ -351,7 +351,7 @@ mod tests {
             account
                 .nonce_changes
                 .iter()
-                .map(|change| change.block_access_index)
+                .map(|change| change.block_access_index.get())
                 .collect::<Vec<_>>(),
             vec![4, 9]
         );
@@ -359,7 +359,7 @@ mod tests {
             account
                 .code_changes
                 .iter()
-                .map(|change| change.block_access_index)
+                .map(|change| change.block_access_index.get())
                 .collect::<Vec<_>>(),
             vec![3, 7]
         );

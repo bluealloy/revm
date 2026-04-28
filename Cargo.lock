@@ -133,6 +133,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-eip7928"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1031f4cbbf83817c1c8c63bd2f561f9ac7fd790c81534ed8741eb5bd9b896770"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rlp",
+ "borsh",
+ "once_cell",
+ "serde",
+]
+
+[[package]]
 name = "alloy-eips"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -141,7 +154,7 @@ dependencies = [
  "alloy-eip2124",
  "alloy-eip2930",
  "alloy-eip7702",
- "alloy-eip7928",
+ "alloy-eip7928 0.3.3",
  "alloy-primitives",
  "alloy-rlp",
  "alloy-serde",
@@ -3885,7 +3898,7 @@ dependencies = [
 name = "revm-state"
 version = "11.0.1"
 dependencies = [
- "alloy-eip7928",
+ "alloy-eip7928 0.4.0",
  "bitflags",
  "nonmax",
  "revm-bytecode",
@@ -3898,7 +3911,7 @@ dependencies = [
 name = "revm-statetest-types"
 version = "17.0.1"
 dependencies = [
- "alloy-eip7928",
+ "alloy-eip7928 0.4.0",
  "k256",
  "revm-context",
  "revm-context-interface",
