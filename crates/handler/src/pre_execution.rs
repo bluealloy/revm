@@ -106,6 +106,9 @@ pub fn validate_account_nonce_and_code(
     if !is_nonce_check_disabled {
         let tx = tx_nonce;
         let state = caller_info.nonce;
+        if tx == u64::MAX && state == u64::MAX {
+            return Err(InvalidTransaction::NonceOverflowInTransaction);
+        }
         match tx.cmp(&state) {
             Ordering::Greater => {
                 return Err(InvalidTransaction::NonceTooHigh { tx, state });
@@ -299,4 +302,34 @@ pub fn apply_auth_list<
     let refunded_gas = refunded_accounts * refund_per_auth;
 
     Ok(refunded_gas)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_account_nonce_and_code;
+    use context_interface::result::InvalidTransaction;
+    use state::AccountInfo;
+
+    #[test]
+    fn rejects_transactions_when_sender_nonce_is_max() {
+        let caller_info = AccountInfo {
+            nonce: u64::MAX,
+            ..AccountInfo::default()
+        };
+
+        let err = validate_account_nonce_and_code(&caller_info, u64::MAX, false, false)
+            .expect_err("nonce-max sender should be rejected before execution");
+
+        assert_eq!(err, InvalidTransaction::NonceOverflowInTransaction);
+    }
+
+    #[test]
+    fn allows_matching_non_max_nonce() {
+        let caller_info = AccountInfo {
+            nonce: 7,
+            ..AccountInfo::default()
+        };
+
+        assert!(validate_account_nonce_and_code(&caller_info, 7, false, false).is_ok());
+    }
 }
