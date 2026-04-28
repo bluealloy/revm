@@ -210,10 +210,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn eip8037_selfdestruct_state_gas_refund(
-        &self,
-        skip_address: Option<Address>,
-    ) -> (u64, u64) {
+    fn eip8037_selfdestruct_state_gas_refund(&self, skip_address: Option<Address>) -> (u64, u64) {
         self.inner
             .eip8037_selfdestruct_state_gas_refund(skip_address)
     }

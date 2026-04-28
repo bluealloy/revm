@@ -142,10 +142,7 @@ pub trait JournalTr {
     /// because its creation contribution was paid via the intrinsic
     /// `initial_state_gas` rather than counted on the execution tracker.
     /// Both values are zero when EIP-8037 is not enabled for the current spec.
-    fn eip8037_selfdestruct_state_gas_refund(
-        &self,
-        skip_address: Option<Address>,
-    ) -> (u64, u64);
+    fn eip8037_selfdestruct_state_gas_refund(&self, skip_address: Option<Address>) -> (u64, u64);
 
     /// Touches the account.
     fn touch_account(&mut self, address: Address);

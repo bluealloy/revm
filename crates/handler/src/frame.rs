@@ -413,35 +413,52 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => result,
         };
 
+        // calculate state gas that frame spent.
+        let state_gas = interpreter_result
+            .gas
+            .state_gas_spent(context.cfg().gas_params(), context.local().cpsb());
+
         // Handle return from frame
-        let result = match &self.data {
+        let (result, commit) = match &self.data {
             FrameData::Call(frame) => {
-                // return_call
-                // Revert changes or not.
-                if interpreter_result.result.is_ok() {
-                    context.journal_mut().checkpoint_commit();
-                } else {
-                    context.journal_mut().checkpoint_revert(self.checkpoint);
+                let commit = interpreter_result.result.is_ok();
+
+                // reduce gas by state gas spent. oog if there is not enough gas.
+                if commit && !interpreter_result.gas.record_state_cost(state_gas) {
+                    interpreter_result.result = InstructionResult::OutOfGas;
                 }
-                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                    interpreter_result,
-                    frame.return_memory_range.clone(),
-                )))
+
+                (
+                    ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
+                        interpreter_result,
+                        frame.return_memory_range.clone(),
+                    ))),
+                    commit,
+                )
             }
             FrameData::Create(frame) => {
-                return_create(
-                    context,
-                    self.checkpoint,
-                    &mut interpreter_result,
-                    frame.created_address,
-                );
+                let commit = return_create(context, &mut interpreter_result, frame.created_address);
 
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
+                // reduce gas by state gas spent. oog if there is not enough gas.
+                if commit && !interpreter_result.gas.record_state_cost(state_gas) {
+                    interpreter_result.result = InstructionResult::OutOfGas;
+                }
+
+                (
+                    ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
+                        interpreter_result,
+                        Some(frame.created_address),
+                    ))),
+                    commit,
+                )
             }
         };
+
+        if commit {
+            context.journal_mut().checkpoint_commit();
+        } else {
+            context.journal_mut().checkpoint_revert(self.checkpoint);
+        }
 
         Ok(result)
     }
@@ -623,6 +640,11 @@ pub fn handle_reservoir_remaining_gas(
 
 /// Handles the result of a CREATE operation, including validation and state updates.
 ///
+/// Returns `true` when the deployment succeeds and the caller should commit
+/// the journal checkpoint, `false` when the caller should revert it.
+/// `interpreter_result.result` is updated in-place to reflect the failure
+/// reason on `false`.
+///
 /// The EIP-8037 upfront CREATE state gas is charged on the parent's tracker by
 /// the CREATE/CREATE2 opcode. On child failure (revert/halt/early-fail) it is
 /// refunded to the parent in `return_result`. The child frame is NOT allowed to
@@ -630,23 +652,20 @@ pub fn handle_reservoir_remaining_gas(
 /// state gas from its own reservoir and remaining gas.
 pub fn return_create<CTX: ContextTr>(
     context: &mut CTX,
-    checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
-) {
-    let (_, _, cfg, journal, _, local) = context.all_mut();
+) -> bool {
+    let (_, _, cfg, journal, _, _) = context.all_mut();
 
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
     let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
-    let cpsb = local.cpsb();
     let gas_params = cfg.gas_params();
 
     // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
-        journal.checkpoint_revert(checkpoint);
-        return;
+        return false;
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
@@ -654,9 +673,8 @@ pub fn return_create<CTX: ContextTr>(
     // This must be checked BEFORE charging state gas for code deposit,
     // so that oversized code does not incur storage gas costs.
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
+        return false;
     }
 
     // Host error if present on execution
@@ -667,9 +685,8 @@ pub fn return_create<CTX: ContextTr>(
         && spec_id.is_enabled_in(LONDON)
         && interpreter_result.output.first() == Some(&0xEF)
     {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-        return;
+        return false;
     }
 
     // regular gas for code deposit. It is zero in EIP-8037.
@@ -680,9 +697,8 @@ pub fn return_create<CTX: ContextTr>(
         // final gas fee for adding the contract code to the state, the contract
         // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
         if spec_id.is_enabled_in(HOMESTEAD) {
-            journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return false;
         } else {
             interpreter_result.output = Bytes::new();
         }
@@ -696,24 +712,16 @@ pub fn return_create<CTX: ContextTr>(
     // a different hash.
     if is_amsterdam_eip8037 {
         let hash_cost = gas_params.keccak256_cost(interpreter_result.output.len());
-        if !interpreter_result.gas.record_regular_cost(hash_cost) {
-            journal.checkpoint_revert(checkpoint);
+        let gas = &mut interpreter_result.gas;
+        if !gas.record_regular_cost(hash_cost) {
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return false;
         }
         // EIP-8037 code-deposit counter. The actual gas charge is computed
         // from the new-state counters at OOG-check time.
         let code_len = interpreter_result.output.len();
-        if gas_params.code_deposit_state_gas(code_len, cpsb) > 0 {
-            interpreter_result
-                .gas
-                .new_state_mut()
-                .add_code_deposit_bytes(code_len as u64);
-        }
+        gas.new_state_mut().add_code_deposit_bytes(code_len as u64);
     }
-
-    // If we have enough gas we can commit changes.
-    journal.checkpoint_commit();
 
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
@@ -722,4 +730,5 @@ pub fn return_create<CTX: ContextTr>(
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;
+    true
 }

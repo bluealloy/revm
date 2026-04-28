@@ -90,11 +90,7 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
     // Bumped upfront on the parent's tracker; `return_result` decrements it
     // again on a failed deployment (revert/halt/early-fail).
     if context.host.is_amsterdam_eip8037_enabled() {
-        context
-            .interpreter
-            .gas
-            .new_state_mut()
-            .add_create_account();
+        context.interpreter.gas.new_state_mut().add_create_account();
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();

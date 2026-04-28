@@ -135,19 +135,26 @@ impl GasTracker {
 
     /// Records a state gas cost (EIP-8037 reservoir model).
     ///
-    /// State gas charges deduct from the reservoir first. If the reservoir is
-    /// exhausted, the remainder spills into `remaining`. The OOG check is
-    /// performed in a later step; here both `reservoir` and `remaining` are
-    /// updated with `saturating_sub` so the deduction is best-effort.
+    /// A positive `cost` deducts from the reservoir first, spilling into
+    /// `remaining` when the reservoir is exhausted. A negative `cost` refills
+    /// the reservoir by `|cost|` (used when the derived state gas of a frame
+    /// turns out to be negative, e.g. due to 0→x→0 storage restoration that
+    /// unwinds a prior charge). The OOG check is performed in a later step;
+    /// reservoir/remaining updates here are saturating.
     #[inline]
-    pub const fn record_state_cost(&mut self, cost: u64) {
+    pub const fn record_state_cost(&mut self, cost: i64) -> bool {
+        if cost < 0 {
+            self.reservoir = self.reservoir.saturating_add((-cost) as u64);
+            return true;
+        }
+        let cost = cost as u64;
         if self.reservoir >= cost {
             self.reservoir -= cost;
-            return;
+            return true;
         }
         let spill = cost - self.reservoir;
         self.reservoir = 0;
-        self.remaining = self.remaining.saturating_sub(spill);
+        self.record_regular_cost(spill)
     }
 
     /// Refills the reservoir with state gas that is returned by 0→x→0 storage

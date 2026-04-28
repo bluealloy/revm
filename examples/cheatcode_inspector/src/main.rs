@@ -142,10 +142,7 @@ impl JournalTr for Backend {
             .set_eip7708_config(disabled, delayed_burn_disabled);
     }
 
-    fn eip8037_selfdestruct_state_gas_refund(
-        &self,
-        skip_address: Option<Address>,
-    ) -> (u64, u64) {
+    fn eip8037_selfdestruct_state_gas_refund(&self, skip_address: Option<Address>) -> (u64, u64) {
         self.journaled_state
             .eip8037_selfdestruct_state_gas_refund(skip_address)
     }

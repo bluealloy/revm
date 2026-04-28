@@ -279,12 +279,12 @@ impl Gas {
 
     /// Records a state gas cost (EIP-8037 reservoir model).
     ///
-    /// State gas charges deduct from the reservoir first. If the reservoir is
-    /// exhausted, the remainder spills into `remaining`. The OOG check is
-    /// performed in a later step.
+    /// A positive `cost` deducts from the reservoir first, spilling into
+    /// `remaining` when the reservoir is exhausted. A negative `cost` refills
+    /// the reservoir by `|cost|`. The OOG check is performed in a later step.
     #[inline]
-    pub const fn record_state_cost(&mut self, cost: u64) {
-        self.tracker.record_state_cost(cost);
+    pub const fn record_state_cost(&mut self, cost: i64) -> bool {
+        self.tracker.record_state_cost(cost)
     }
 
     /// Deducts from `remaining` only (used for child frame gas forwarding).
@@ -376,5 +376,14 @@ mod tests {
         assert_eq!((gas.reservoir(), gas.remaining()), (300, 1000));
         gas.refill_reservoir(200);
         assert_eq!((gas.reservoir(), gas.remaining()), (500, 1000));
+    }
+
+    #[test]
+    fn test_record_state_cost_negative_refills_reservoir() {
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
+        gas.record_state_cost(200);
+        assert_eq!((gas.reservoir(), gas.remaining()), (300, 1000));
+        gas.record_state_cost(-150);
+        assert_eq!((gas.reservoir(), gas.remaining()), (450, 1000));
     }
 }
