@@ -2,7 +2,6 @@
 use super::warm_addresses::WarmAddresses;
 use bytecode::Bytecode;
 use context_interface::{
-    cfg::{gas_params::GasId, GasParams},
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
         account::{JournaledAccount, JournaledAccountTr},
@@ -297,32 +296,32 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         }
     }
 
-    /// EIP-8037: Computes the total state gas to refund at end of transaction for
-    /// accounts that were both created and self-destructed in this transaction.
+    /// EIP-8037: Counts the new-state contributions to unwind at end of
+    /// transaction for accounts that were both created and self-destructed in
+    /// this transaction.
     ///
-    /// Per EIP-6780, such accounts are erased at end of tx — the state gas
-    /// charged during execution for the account, its code, and its storage
-    /// slot sets must be returned to the reservoir. `skip_address` (when
-    /// present) is excluded from the sum; callers pass the CREATE transaction's
-    /// target contract here, because its creation state gas was charged via
-    /// intrinsic accounting rather than an execution-time reservoir draw.
-    /// Returns the cumulative refund amount (in gas units); zero when EIP-8037
-    /// is not enabled.
+    /// Per EIP-6780 such accounts are erased at tx end — the new-state
+    /// counters bumped during execution for the account creation and its
+    /// non-zero storage slots must be decremented so the derived state gas
+    /// reflects only state that survives. `skip_address` (when present) is
+    /// excluded from the sum; callers pass the CREATE transaction's target
+    /// contract here because its creation contribution was paid via the
+    /// intrinsic `initial_state_gas` rather than counted on the execution
+    /// tracker.
+    ///
+    /// Returns `(accounts, storages)` — both zero when EIP-8037 is not
+    /// enabled for the current spec.
     #[inline]
     pub fn eip8037_selfdestruct_state_gas_refund(
         &self,
-        gas_params: &GasParams,
-        cpsb: u64,
         skip_address: Option<Address>,
-    ) -> u64 {
+    ) -> (u64, u64) {
         if !self.cfg.spec.is_enabled_in(AMSTERDAM) {
-            return 0;
+            return (0, 0);
         }
 
-        let mut refund: u64 = 0;
-        let sstore_set = gas_params
-            .get(GasId::sstore_set_state_gas())
-            .saturating_mul(cpsb);
+        let mut accounts: u64 = 0;
+        let mut storages: u64 = 0;
         for address in self.selfdestructed_addresses.iter() {
             if skip_address == Some(*address) {
                 continue;
@@ -331,25 +330,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 continue;
             };
 
-            // New account state gas (same magnitude as create_state_gas).
-            refund = refund.saturating_add(gas_params.new_account_state_gas(cpsb));
-
-            // Code deposit state gas — for code bytes that were written during this tx.
-            if let Some(code) = account.info.code.as_ref() {
-                let len = code.len();
-                refund = refund.saturating_add(gas_params.code_deposit_state_gas(len, cpsb));
-            }
-
-            // Storage slot state gas — each slot set during this tx was charged
-            // SSTORE_SET_BYTES × cpsb; since the account is destroyed, refund
-            // that for every slot that still holds a non-zero present value.
+            accounts = accounts.saturating_add(1);
             for slot in account.storage.values() {
                 if !slot.present_value.is_zero() {
-                    refund = refund.saturating_add(sstore_set);
+                    storages = storages.saturating_add(1);
                 }
             }
         }
-        refund
+        (accounts, storages)
     }
 
     /// Return reference to state.

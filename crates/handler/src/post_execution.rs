@@ -28,23 +28,21 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
     if !context.cfg().is_amsterdam_eip8037_enabled() {
         return;
     }
-    let cpsb = context.local().cpsb();
 
-    let (amount, state_gas_spent) = {
-        let cfg = context.cfg();
-        let gas_params = cfg.gas_params();
-        let amount = context
-            .journal_ref()
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None);
-        let state_gas_spent = gas.state_gas_spent(gas_params, cpsb).max(0) as u64;
-        (amount, state_gas_spent)
-    };
-    // cap the refund to the state gas spent
-    let amount = amount.min(state_gas_spent);
+    let (accounts, storages) = context
+        .journal_ref()
+        .eip8037_selfdestruct_state_gas_refund(None);
 
-    if amount != 0 {
-        gas.refill_reservoir(amount);
+    if accounts == 0 && storages == 0 {
+        return;
     }
+
+    // Saturating decrement keeps each counter non-negative (storages is i64 so
+    // we just subtract); decrementing past the in-frame contribution is fine
+    // because parent merges have already absorbed the matching positives.
+    let new_state = gas.new_state_mut();
+    new_state.new_create_accounts = new_state.new_create_accounts.saturating_sub(accounts);
+    new_state.new_storages = new_state.new_storages.saturating_sub(storages as i64);
 }
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].

@@ -13,7 +13,6 @@ use revm::{
         BlockEnv, Cfg, CfgEnv, ContextTr, Evm, LocalContext, TxEnv,
     },
     context_interface::{
-        cfg::GasParams,
         journaled_state::{AccountLoad, JournalCheckpoint, TransferError},
         result::EVMError,
         Block, JournalTr, Transaction,
@@ -145,12 +144,10 @@ impl JournalTr for Backend {
 
     fn eip8037_selfdestruct_state_gas_refund(
         &self,
-        gas_params: &GasParams,
-        cpsb: u64,
         skip_address: Option<Address>,
-    ) -> u64 {
+    ) -> (u64, u64) {
         self.journaled_state
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, skip_address)
+            .eip8037_selfdestruct_state_gas_refund(skip_address)
     }
 
     fn touch_account(&mut self, address: Address) {
