@@ -130,6 +130,10 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
 pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, IT>) -> Result {
     use bytecode::opcode::{CALL, CALLCODE, DELEGATECALL, STATICCALL};
 
+    if !matches!(KIND, CALL | CALLCODE | DELEGATECALL | STATICCALL) {
+        unreachable!("invalid call kind")
+    }
+
     if KIND == DELEGATECALL {
         check!(context.interpreter, HOMESTEAD);
     } else if KIND == STATICCALL {
