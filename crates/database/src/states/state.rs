@@ -293,7 +293,9 @@ impl<DB: Database> Database for State<DB> {
         // will populate account code if there was a bal change to it. If there is no change
         // it will be fetched in code_by_hash.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut basic);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut basic)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(basic)
     }
@@ -431,7 +433,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
         // if it is inside bal, overwrite the account with the bal changes.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut account)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(account)
     }
