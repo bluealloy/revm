@@ -5,7 +5,7 @@
 //!
 //! ## Key Types
 //!
-//! - **`BalIndex`**: Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
+//! - [`BlockAccessIndex`]: block access index
 //! - **`Bal`**: Main BAL structure containing a map of accounts
 //! - **`BalWrites<T>`**: Array of (index, value) pairs representing sequential writes to a state item
 //! - **`AccountBal`**: Complete BAL structure for an account (balance, nonce, code, and storage)
@@ -17,14 +17,12 @@ pub mod alloy;
 pub mod writes;
 
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
+pub use alloy_eip7928::BlockAccessIndex;
 pub use writes::BalWrites;
 
 use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
-
-/// Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
-pub type BalIndex = u64;
 
 /// BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -131,7 +129,12 @@ impl Bal {
 
     #[inline]
     /// Extend BAL with account.
-    pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
+    pub fn update_account(
+        &mut self,
+        bal_index: BlockAccessIndex,
+        address: Address,
+        account: &Account,
+    ) {
         let bal_account = self.accounts.entry(address).or_default();
         bal_account.update(bal_index, account);
     }
@@ -140,7 +143,7 @@ impl Bal {
     pub fn populate_account_info(
         &self,
         account_id: AccountId,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
         let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
@@ -158,7 +161,7 @@ impl Bal {
     pub fn populate_storage_slot_by_account_id(
         &self,
         account_id: AccountId,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
@@ -178,7 +181,7 @@ impl Bal {
     pub fn populate_storage_slot(
         &self,
         account_address: Address,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
@@ -199,7 +202,7 @@ impl Bal {
         &self,
         account_id: AccountId,
         key: StorageKey,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
     ) -> Result<StorageValue, BalError> {
         let Some((address, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::InvalidAccountId { account_id });
@@ -290,6 +293,10 @@ mod tests {
         (bytecode.hash_slow(), bytecode)
     }
 
+    const fn idx(index: u64) -> BlockAccessIndex {
+        BlockAccessIndex::new(index)
+    }
+
     #[test]
     fn into_alloy_bal_canonicalizes_eip_7928_ordering() {
         let low_address = Address::with_last_byte(1);
@@ -298,13 +305,13 @@ mod tests {
         let unordered_account = AccountBal {
             account_info: AccountInfoBal {
                 nonce: BalWrites {
-                    writes: vec![(9, 90), (4, 40)],
+                    writes: vec![(idx(9), 90), (idx(4), 40)],
                 },
                 balance: BalWrites {
-                    writes: vec![(5, U256::from(50)), (2, U256::from(20))],
+                    writes: vec![(idx(5), U256::from(50)), (idx(2), U256::from(20))],
                 },
                 code: BalWrites {
-                    writes: vec![(7, code(7)), (3, code(3))],
+                    writes: vec![(idx(7), code(7)), (idx(3), code(3))],
                 },
             },
             storage: StorageBal {
@@ -312,14 +319,14 @@ mod tests {
                     (
                         U256::from(4),
                         BalWrites {
-                            writes: vec![(8, U256::from(80)), (6, U256::from(60))],
+                            writes: vec![(idx(8), U256::from(80)), (idx(6), U256::from(60))],
                         },
                     ),
                     (U256::from(1), BalWrites { writes: vec![] }),
                     (
                         U256::from(2),
                         BalWrites {
-                            writes: vec![(3, U256::from(30)), (1, U256::from(10))],
+                            writes: vec![(idx(3), U256::from(30)), (idx(1), U256::from(10))],
                         },
                     ),
                     (U256::from(3), BalWrites { writes: vec![] }),
@@ -357,7 +364,7 @@ mod tests {
                 .iter()
                 .map(|change| change.block_access_index)
                 .collect::<Vec<_>>(),
-            vec![1, 3]
+            vec![idx(1), idx(3)]
         );
         assert_eq!(
             account.storage_changes[1]
@@ -365,7 +372,7 @@ mod tests {
                 .iter()
                 .map(|change| change.block_access_index)
                 .collect::<Vec<_>>(),
-            vec![6, 8]
+            vec![idx(6), idx(8)]
         );
         assert_eq!(
             account
@@ -373,7 +380,7 @@ mod tests {
                 .iter()
                 .map(|change| change.block_access_index)
                 .collect::<Vec<_>>(),
-            vec![2, 5]
+            vec![idx(2), idx(5)]
         );
         assert_eq!(
             account
@@ -381,7 +388,7 @@ mod tests {
                 .iter()
                 .map(|change| change.block_access_index)
                 .collect::<Vec<_>>(),
-            vec![4, 9]
+            vec![idx(4), idx(9)]
         );
         assert_eq!(
             account
@@ -389,7 +396,7 @@ mod tests {
                 .iter()
                 .map(|change| change.block_access_index)
                 .collect::<Vec<_>>(),
-            vec![3, 7]
+            vec![idx(3), idx(7)]
         );
     }
 }

@@ -1,6 +1,6 @@
 //! BAL containing writes.
 
-use crate::bal::BalIndex;
+use crate::bal::BlockAccessIndex;
 use std::vec::Vec;
 
 /// Use to store values
@@ -9,20 +9,20 @@ use std::vec::Vec;
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BalWrites<T: PartialEq + Clone> {
-    /// List of writes with BalIndex.
-    pub writes: Vec<(BalIndex, T)>,
+    /// List of writes with [`BlockAccessIndex`].
+    pub writes: Vec<(BlockAccessIndex, T)>,
 }
 
 impl<T: PartialEq + Clone> BalWrites<T> {
     /// Create a new BalWrites.
-    pub fn new(mut writes: Vec<(BalIndex, T)>) -> Self {
+    pub fn new(mut writes: Vec<(BlockAccessIndex, T)>) -> Self {
         writes.sort_by_key(|(index, _)| *index);
         Self { writes }
     }
 
     /// Linear search is used for small number of writes. It is faster than binary search.
     #[inline(never)]
-    pub fn get_linear_search(&self, bal_index: BalIndex) -> Option<T> {
+    pub fn get_linear_search(&self, bal_index: BlockAccessIndex) -> Option<T> {
         let mut last_item = None;
         for (index, item) in self.writes.iter() {
             // if index is greater than bal_index we return the last item.
@@ -35,7 +35,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     }
 
     /// Get value from BAL.
-    pub fn get(&self, bal_index: BalIndex) -> Option<T> {
+    pub fn get(&self, bal_index: BlockAccessIndex) -> Option<T> {
         if self.writes.len() < 5 {
             return self.get_linear_search(bal_index);
         }
@@ -69,7 +69,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ///
     /// No checks for original value is done. This is useful when we know that value is different.
     #[inline]
-    pub fn force_update(&mut self, index: BalIndex, value: T) {
+    pub fn force_update(&mut self, index: BlockAccessIndex, value: T) {
         if let Some(last) = self.writes.last_mut() {
             if index == last.0 {
                 last.1 = value;
@@ -81,20 +81,20 @@ impl<T: PartialEq + Clone> BalWrites<T> {
 
     /// Insert a value into the builder.
     ///
-    /// If BalIndex is same as last it will override the value.
-    pub fn update(&mut self, index: BalIndex, original_value: &T, value: T) {
+    /// If [`BlockAccessIndex`] is same as last it will override the value.
+    pub fn update(&mut self, index: BlockAccessIndex, original_value: &T, value: T) {
         self.update_with_key(index, original_value, value, |i| i);
     }
 
     /// Insert a value into the builder.
     ///
-    /// If BalIndex is same as last it will override the value.
+    /// If [`BlockAccessIndex`] is same as last it will override the value.
     ///
     /// Assumes that index is always greater than last one and that Writes are updated in proper order.
     #[inline]
     pub fn update_with_key<K: PartialEq, F>(
         &mut self,
-        index: BalIndex,
+        index: BlockAccessIndex,
         original_subvalue: &K,
         value: T,
         f: F,
@@ -140,38 +140,42 @@ impl<T: PartialEq + Clone> BalWrites<T> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_get() {
-        let bal_writes = BalWrites::new(vec![(0, 1), (1, 2), (2, 3)]);
-        assert_eq!(bal_writes.get(0), None);
-        assert_eq!(bal_writes.get(1), Some(1));
-        assert_eq!(bal_writes.get(2), Some(2));
-        assert_eq!(bal_writes.get(3), Some(3));
-        assert_eq!(bal_writes.get(4), Some(3));
+    const fn idx(index: u64) -> BlockAccessIndex {
+        BlockAccessIndex::new(index)
     }
 
-    fn get_binary_search(threshold: BalIndex) {
+    #[test]
+    fn test_get() {
+        let bal_writes = BalWrites::new(vec![(idx(0), 1), (idx(1), 2), (idx(2), 3)]);
+        assert_eq!(bal_writes.get(idx(0)), None);
+        assert_eq!(bal_writes.get(idx(1)), Some(1));
+        assert_eq!(bal_writes.get(idx(2)), Some(2));
+        assert_eq!(bal_writes.get(idx(3)), Some(3));
+        assert_eq!(bal_writes.get(idx(4)), Some(3));
+    }
+
+    fn get_binary_search(threshold: u64) {
         // Construct test data up to (threshold - 1), skipping one key to simulate a gap.
         let entries: Vec<_> = (0..threshold - 1)
-            .map(|i| (i, i + 1))
-            .chain(std::iter::once((threshold, threshold + 1)))
+            .map(|i| (idx(i), i + 1))
+            .chain(std::iter::once((idx(threshold), threshold + 1)))
             .collect();
 
         let bal_writes = BalWrites::new(entries);
 
         // Case 1: lookup before any entries
-        assert_eq!(bal_writes.get(0), None);
+        assert_eq!(bal_writes.get(idx(0)), None);
 
         // Case 2: lookups for existing keys before the gap
         for i in 1..threshold - 1 {
-            assert_eq!(bal_writes.get(i), Some(i));
+            assert_eq!(bal_writes.get(idx(i)), Some(i));
         }
 
         // Case 3: lookup at the skipped key — should return the previous value
-        assert_eq!(bal_writes.get(threshold), Some(threshold - 1));
+        assert_eq!(bal_writes.get(idx(threshold)), Some(threshold - 1));
 
         // Case 4: lookup after the skipped key — should return the next valid value
-        assert_eq!(bal_writes.get(threshold + 1), Some(threshold + 1));
+        assert_eq!(bal_writes.get(idx(threshold + 1)), Some(threshold + 1));
     }
 
     #[test]

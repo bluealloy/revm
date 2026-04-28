@@ -11,7 +11,7 @@ use database_interface::{
 };
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal},
+    bal::{alloy::AlloyBal, Bal, BlockAccessIndex},
     Account, AccountId, AccountInfo,
 };
 use std::{boxed::Box, sync::Arc};
@@ -218,7 +218,7 @@ impl<DB: Database> State<DB> {
 
     /// Set BAL index.
     #[inline]
-    pub const fn set_bal_index(&mut self, index: u64) {
+    pub const fn set_bal_index(&mut self, index: BlockAccessIndex) {
         self.bal_state.bal_index = index;
     }
 

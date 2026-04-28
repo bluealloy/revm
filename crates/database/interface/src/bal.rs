@@ -6,7 +6,7 @@ use core::{
 };
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError},
+    bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
     Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
@@ -24,7 +24,7 @@ pub struct BalState {
     pub bal_builder: Option<Bal>,
     /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
     /// to submit changes.
-    pub bal_index: u64,
+    pub bal_index: BlockAccessIndex,
 }
 
 impl BalState {
@@ -34,21 +34,21 @@ impl BalState {
         Self::default()
     }
 
-    /// Reset BAL index.
+    /// Reset BAL index to pre-execution.
     #[inline]
     pub const fn reset_bal_index(&mut self) {
-        self.bal_index = 0;
+        self.bal_index = BlockAccessIndex::PRE_EXECUTION;
     }
 
     /// Bump BAL index.
     #[inline]
     pub const fn bump_bal_index(&mut self) {
-        self.bal_index += 1;
+        self.bal_index.increment();
     }
 
     /// Get BAL index.
     #[inline]
-    pub const fn bal_index(&self) -> u64 {
+    pub const fn bal_index(&self) -> BlockAccessIndex {
         self.bal_index
     }
 
