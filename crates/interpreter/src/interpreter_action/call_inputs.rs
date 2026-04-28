@@ -317,28 +317,29 @@ impl CallValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::cell::RefCell;
-    use std::rc::Rc;
+    use context_interface::SharedMemoryBuffer;
 
     struct TestLocalContext {
-        buffer: Rc<RefCell<Vec<u8>>>,
+        buffer: SharedMemoryBuffer,
     }
 
     impl TestLocalContext {
         fn new(data: Vec<u8>) -> Self {
-            Self {
-                buffer: Rc::new(RefCell::new(data)),
-            }
+            let len = data.len().next_multiple_of(32);
+            let buffer = SharedMemoryBuffer::with_capacity(len);
+            buffer.resize(len);
+            buffer.borrow_mut()[..data.len()].copy_from_slice(&data);
+            Self { buffer }
         }
     }
 
     impl LocalContextTr for TestLocalContext {
-        fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+        fn shared_memory_buffer(&self) -> &SharedMemoryBuffer {
             &self.buffer
         }
 
         fn clear(&mut self) {
-            self.buffer.borrow_mut().clear();
+            self.buffer.clear();
         }
 
         fn set_precompile_error_context(&mut self, _output: String) {}
@@ -366,7 +367,7 @@ mod tests {
 
     #[test]
     fn as_bytes_local_with_out_of_range_buffer() {
-        let input = CallInput::SharedBuffer(10..20);
+        let input = CallInput::SharedBuffer(40..50);
         let local = TestLocalContext::new(vec![0, 1, 2]);
         let result = input.as_bytes_local(&local);
         // Out of range returns empty via unwrap_or_default on the Option<Ref>
@@ -391,7 +392,7 @@ mod tests {
 
     #[test]
     fn bytes_local_with_out_of_range_buffer() {
-        let input = CallInput::SharedBuffer(5..10);
+        let input = CallInput::SharedBuffer(40..50);
         let local = TestLocalContext::new(vec![0]);
         let result = input.bytes_local(&local);
         assert_eq!(result, Bytes::new());

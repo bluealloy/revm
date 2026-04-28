@@ -1,9 +1,44 @@
 //! Local context trait [`LocalContextTr`] and related types.
 use core::{
-    cell::{Ref, RefCell},
+    cell::{Ref, RefCell, RefMut},
     ops::Range,
 };
-use std::{rc::Rc, string::String, vec::Vec};
+use std::{rc::Rc, string::String, vec, vec::Vec};
+
+trait RefcellExt<T> {
+    fn dbg_borrow(&self) -> Ref<'_, T>;
+    fn dbg_borrow_mut(&self) -> RefMut<'_, T>;
+}
+
+impl<T> RefcellExt<T> for RefCell<T> {
+    #[inline]
+    fn dbg_borrow(&self) -> Ref<'_, T> {
+        match self.try_borrow() {
+            Ok(b) => b,
+            Err(e) => {
+                if cfg!(debug_assertions) {
+                    unreachable!("{e}");
+                } else {
+                    unsafe { core::hint::unreachable_unchecked() }
+                }
+            }
+        }
+    }
+
+    #[inline]
+    fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
+        match self.try_borrow_mut() {
+            Ok(b) => b,
+            Err(e) => {
+                if cfg!(debug_assertions) {
+                    unreachable!("{e}");
+                } else {
+                    unsafe { core::hint::unreachable_unchecked() }
+                }
+            }
+        }
+    }
+}
 
 /// Non-empty, item-pooling Vec.
 #[derive(Debug, Clone)]
@@ -211,10 +246,86 @@ impl FrameToken {
     }
 }
 
+/// A shared byte buffer whose spare capacity is always zeroed.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SharedMemoryBuffer(Rc<RefCell<Vec<u8>>>);
+
+impl Default for SharedMemoryBuffer {
+    fn default() -> Self {
+        Self::with_capacity(4 * 1024)
+    }
+}
+
+impl SharedMemoryBuffer {
+    /// Creates a new buffer with zeroed spare capacity.
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        let mut buffer = vec![0; capacity];
+        unsafe { buffer.set_len(0) };
+        Self(Rc::new(RefCell::new(buffer)))
+    }
+
+    /// Returns the buffer length.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.0.borrow().len()
+    }
+
+    /// Returns `true` if the buffer is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Borrows the initialized bytes.
+    #[inline]
+    pub fn borrow(&self) -> Ref<'_, [u8]> {
+        Ref::map(self.0.dbg_borrow(), Vec::as_slice)
+    }
+
+    /// Mutably borrows the initialized bytes.
+    #[inline]
+    pub fn borrow_mut(&self) -> RefMut<'_, [u8]> {
+        RefMut::map(self.0.dbg_borrow_mut(), Vec::as_mut_slice)
+    }
+
+    /// Resizes the initialized bytes, zeroing any bytes that become spare capacity.
+    #[inline]
+    pub fn resize(&self, new_len: usize) {
+        let buffer = &mut *self.0.dbg_borrow_mut();
+        let len = buffer.len();
+        let cap = buffer.capacity();
+        if new_len > cap {
+            buffer.reserve(new_len - len);
+            let new_cap = buffer.capacity();
+            // SAFETY: `cap..new_cap` is the newly allocated spare capacity and is in bounds.
+            unsafe { buffer.as_mut_ptr().add(cap).write_bytes(0, new_cap - cap) };
+        } else if new_len < len {
+            // SAFETY: `new_len..len` is initialized and in bounds.
+            unsafe {
+                buffer
+                    .as_mut_ptr()
+                    .add(new_len)
+                    .write_bytes(0, len - new_len)
+            };
+        }
+        // SAFETY: `new_len` is at most the capacity. Newly exposed bytes were zeroed either when
+        // allocated or when they previously became spare capacity.
+        unsafe { buffer.set_len(new_len) };
+    }
+
+    /// Clears the initialized bytes, zeroing them first so they become zeroed spare capacity.
+    #[inline]
+    pub fn clear(&self) {
+        self.resize(0);
+    }
+}
+
 /// Local context used for caching initcode from Initcode transactions.
 pub trait LocalContextTr {
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
-    fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>>;
+    fn shared_memory_buffer(&self) -> &SharedMemoryBuffer;
 
     /// Slice of the shared memory buffer returns None if range is not valid or buffer can't be borrowed.
     fn shared_memory_buffer_slice(&self, range: Range<usize>) -> Option<Ref<'_, [u8]>> {
@@ -239,6 +350,34 @@ pub trait LocalContextTr {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn assert_spare_capacity_zeroed(buffer: &SharedMemoryBuffer) {
+        let mut vec = buffer.0.borrow_mut();
+        assert!(vec
+            .spare_capacity_mut()
+            .iter_mut()
+            .all(|byte| unsafe { byte.assume_init() } == 0));
+    }
+
+    #[test]
+    fn shared_memory_buffer_zeroes_spare_capacity() {
+        let buffer = SharedMemoryBuffer::with_capacity(4);
+        assert_spare_capacity_zeroed(&buffer);
+
+        buffer.resize(64);
+        buffer.borrow_mut().fill(0xff);
+        buffer.resize(32);
+        assert_eq!(&*buffer.borrow(), &[0xff; 32]);
+        assert_spare_capacity_zeroed(&buffer);
+
+        buffer.resize(128);
+        assert_eq!(&buffer.borrow()[32..128], &[0; 96]);
+        assert_spare_capacity_zeroed(&buffer);
+
+        buffer.clear();
+        assert!(buffer.is_empty());
+        assert_spare_capacity_zeroed(&buffer);
+    }
 
     #[test]
     fn frame_stack() {

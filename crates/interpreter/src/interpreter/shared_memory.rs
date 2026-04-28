@@ -1,37 +1,13 @@
 use super::MemoryTr;
 use crate::InstructionResult;
-use context_interface::cfg::GasParams;
+use context_interface::{cfg::GasParams, SharedMemoryBuffer};
 use core::{
-    cell::{Ref, RefCell, RefMut},
+    cell::{Ref, RefMut},
     cmp::min,
     fmt,
     ops::Range,
 };
 use primitives::{hex, B256, U256};
-use std::{rc::Rc, vec::Vec};
-
-trait RefcellExt<T> {
-    fn dbg_borrow(&self) -> Ref<'_, T>;
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T>;
-}
-
-impl<T> RefcellExt<T> for RefCell<T> {
-    #[inline]
-    fn dbg_borrow(&self) -> Ref<'_, T> {
-        match self.try_borrow() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-
-    #[inline]
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
-        match self.try_borrow_mut() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-}
 
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
@@ -41,7 +17,7 @@ impl<T> RefcellExt<T> for RefCell<T> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedMemory {
     /// The underlying buffer.
-    buffer: Option<Rc<RefCell<Vec<u8>>>>,
+    buffer: Option<SharedMemoryBuffer>,
     /// Memory checkpoints for each depth.
     /// Invariant: these are always in bounds of `data`.
     my_checkpoint: usize,
@@ -157,7 +133,7 @@ impl SharedMemory {
     }
 
     /// Creates a new memory instance with a given shared buffer.
-    pub const fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
+    pub const fn new_with_buffer(buffer: SharedMemoryBuffer) -> Self {
         Self {
             buffer: Some(buffer),
             my_checkpoint: 0,
@@ -171,7 +147,7 @@ impl SharedMemory {
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            buffer: Some(Rc::new(RefCell::new(Vec::with_capacity(capacity)))),
+            buffer: Some(SharedMemoryBuffer::with_capacity(capacity)),
             my_checkpoint: 0,
             child_checkpoint: None,
             #[cfg(feature = "memory_limit")]
@@ -204,19 +180,19 @@ impl SharedMemory {
     }
 
     #[inline]
-    fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+    fn buffer(&self) -> &SharedMemoryBuffer {
         debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
         unsafe { self.buffer.as_ref().unwrap_unchecked() }
     }
 
     #[inline]
-    fn buffer_ref(&self) -> Ref<'_, Vec<u8>> {
-        self.buffer().dbg_borrow()
+    fn buffer_ref(&self) -> Ref<'_, [u8]> {
+        self.buffer().borrow()
     }
 
     #[inline]
-    fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
-        self.buffer().dbg_borrow_mut()
+    fn buffer_ref_mut(&self) -> RefMut<'_, [u8]> {
+        self.buffer().borrow_mut()
     }
 
     /// Returns a byte slice of the backing buffer, applying `base` to `range`.
@@ -261,9 +237,7 @@ impl SharedMemory {
         let Some(child_checkpoint) = self.child_checkpoint.take() else {
             return;
         };
-        unsafe {
-            self.buffer_ref_mut().set_len(child_checkpoint);
-        }
+        self.buffer().resize(child_checkpoint);
     }
 
     /// Returns the length of the current memory range.
@@ -285,9 +259,7 @@ impl SharedMemory {
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
-        self.buffer()
-            .dbg_borrow_mut()
-            .resize(self.my_checkpoint + new_size, 0);
+        self.buffer().resize(self.my_checkpoint + new_size);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -630,7 +602,7 @@ mod tests {
         assert_eq!(sm1.buffer_ref().len(), 0);
         assert_eq!(sm1.my_checkpoint, 0);
 
-        unsafe { sm1.buffer_ref_mut().set_len(32) };
+        sm1.buffer().resize(32);
         assert_eq!(sm1.len(), 32);
         let mut sm2 = sm1.new_child_context();
 
@@ -638,7 +610,7 @@ mod tests {
         assert_eq!(sm2.my_checkpoint, 32);
         assert_eq!(sm2.len(), 0);
 
-        unsafe { sm2.buffer_ref_mut().set_len(96) };
+        sm2.buffer().resize(96);
         assert_eq!(sm2.len(), 64);
         let mut sm3 = sm2.new_child_context();
 
@@ -646,7 +618,7 @@ mod tests {
         assert_eq!(sm3.my_checkpoint, 96);
         assert_eq!(sm3.len(), 0);
 
-        unsafe { sm3.buffer_ref_mut().set_len(128) };
+        sm3.buffer().resize(128);
         let sm4 = sm3.new_child_context();
         assert_eq!(sm4.buffer_ref().len(), 128);
         assert_eq!(sm4.my_checkpoint, 128);

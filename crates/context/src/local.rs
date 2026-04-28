@@ -1,13 +1,12 @@
 //! Local context that is filled by execution.
-use context_interface::LocalContextTr;
-use core::cell::RefCell;
-use std::{rc::Rc, string::String, vec::Vec};
+use context_interface::{LocalContextTr, SharedMemoryBuffer};
+use std::string::String;
 
 /// Local context that is filled by execution.
 #[derive(Clone, Debug)]
 pub struct LocalContext {
     /// Interpreter shared memory buffer. A reused memory buffer for calls.
-    pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
+    pub shared_memory_buffer: SharedMemoryBuffer,
     /// Optional precompile error message to bubble up.
     pub precompile_error_message: Option<String>,
 }
@@ -15,7 +14,7 @@ pub struct LocalContext {
 impl Default for LocalContext {
     fn default() -> Self {
         Self {
-            shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
+            shared_memory_buffer: SharedMemoryBuffer::with_capacity(1024 * 4),
             precompile_error_message: None,
         }
     }
@@ -24,11 +23,11 @@ impl Default for LocalContext {
 impl LocalContextTr for LocalContext {
     fn clear(&mut self) {
         // Sets len to 0 but it will not shrink to drop the capacity.
-        unsafe { self.shared_memory_buffer.borrow_mut().set_len(0) };
+        self.shared_memory_buffer.clear();
         self.precompile_error_message = None;
     }
 
-    fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+    fn shared_memory_buffer(&self) -> &SharedMemoryBuffer {
         &self.shared_memory_buffer
     }
 
