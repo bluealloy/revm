@@ -1588,7 +1588,7 @@ mod tests {
         // Use AMSTERDAM spec since EIP-8037 state gas is only enabled starting from Amsterdam.
         // CPSB = 1174 corresponds to a 100M block gas limit (canonical test reference).
         let gas_params = GasParams::new_spec(SpecId::AMSTERDAM);
-        let cpsb = eip8037::cost_per_state_byte(100_000_000);
+        let cpsb = eip8037::CPSB_GLAMSTERDAM;
 
         // Test CREATE transaction (is_create = true)
         let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0, cpsb);

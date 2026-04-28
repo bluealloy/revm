@@ -76,7 +76,10 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     gas!(interpreter, gas);
 
     // deduct state gas (EIP-8037) if any.
-    state_gas!(interpreter, state_gas_cost);
+    if state_gas_cost > 0 {
+        state_gas!(interpreter, state_gas_cost);
+        interpreter.gas.new_state_mut().add_call_account();
+    }
 
     let interpreter = &mut context.interpreter;
     let host = &mut context.host;

@@ -585,8 +585,7 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
         if !self.enable_amsterdam_eip8037 {
             return 0;
         }
-        self.cpsb_override
-            .unwrap_or_else(|| eip8037::CPSB_GLAMSTERDAM)
+        self.cpsb_override.unwrap_or(eip8037::CPSB_GLAMSTERDAM)
     }
 }
 

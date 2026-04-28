@@ -235,13 +235,14 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     // state gas for new slot creation (EIP-8037)
     if context.host.is_amsterdam_eip8037_enabled() {
         let cpsb = context.host.cpsb();
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .sstore_state_gas(&state_load.data, cpsb)
-        );
+        let new_storage_cost = context
+            .host
+            .gas_params()
+            .sstore_state_gas(&state_load.data, cpsb);
+        if new_storage_cost > 0 {
+            state_gas!(context.interpreter, new_storage_cost);
+            context.interpreter.gas.new_state_mut().add_storage();
+        }
 
         // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
         // directly rather than routing the state gas through the capped refund
@@ -253,6 +254,7 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
             .sstore_state_gas_refill(&state_load.data, cpsb);
         if refill > 0 {
             context.interpreter.gas.refill_reservoir(refill);
+            context.interpreter.gas.new_state_mut().remove_storage();
         }
     }
 
@@ -362,13 +364,12 @@ pub fn selfdestruct<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resu
 
     // State gas for new account creation (EIP-8037)
     if context.host.is_amsterdam_eip8037_enabled() && should_charge_topup {
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .new_account_state_gas(context.host.cpsb())
-        );
+        let cost = context
+            .host
+            .gas_params()
+            .new_account_state_gas(context.host.cpsb());
+        state_gas!(context.interpreter, cost);
+        context.interpreter.gas.new_state_mut().add_call_account();
     }
 
     if !res.previously_destroyed {

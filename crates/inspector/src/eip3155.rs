@@ -1,5 +1,5 @@
 use crate::{inspectors::GasInspector, Inspector};
-use context::{Cfg, ContextTr, JournalTr, Transaction};
+use context::{Cfg, ContextTr, JournalTr, LocalContextTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
@@ -240,7 +240,7 @@ where
         self.gas_inspector.initialize_interp(&interp.gas);
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, ctx: &mut CTX) {
         self.gas_inspector.step(&interp.gas);
         self.stack.clear();
         interp.stack.clone_into(&mut self.stack);
@@ -259,7 +259,11 @@ where
         // Clamp to 0: EIP-8037 allows state_gas_spent to briefly go negative
         // within a child frame (0→x→0 restoration); the tracer exposes it as a
         // u64 counter.
-        self.state_gas = interp.gas.state_gas_spent().max(0) as u64;
+        let cpsb = ctx.local().cpsb();
+        self.state_gas = interp
+            .gas
+            .state_gas_spent(ctx.cfg().gas_params(), cpsb)
+            .max(0) as u64;
         self.refunded = interp.gas.refunded();
     }
 

@@ -150,7 +150,7 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas = build_result_gas(gas, init_and_floor_gas);
+                let result_gas = build_result_gas(evm.ctx_ref(), gas, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -275,7 +275,8 @@ pub trait Handler {
 
         // Build ResultGas from the final gas state
         // This includes all necessary fields and gas values.
-        let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
+        let result_gas =
+            post_execution::build_result_gas(evm.ctx_ref(), exec_result.gas(), init_and_floor_gas);
 
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
@@ -406,17 +407,22 @@ pub trait Handler {
         //     FrameResult::Call(_) => false,
         // };
 
+        let cpsb = evm.ctx().local().cpsb();
+        let gas_params = evm.ctx().cfg().gas_params().clone();
+
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
-        let state_gas_spent = gas.state_gas_spent();
+        let new_state = *gas.new_state();
+        let state_gas_spent = new_state.state_gas_spent(&gas_params, cpsb);
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
         if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
+            // Return unused regular gas. Reservoir is handled separately via the
+            // new-state counters / derived state gas.
             gas.erase_cost(remaining);
         }
 
@@ -425,13 +431,12 @@ pub trait Handler {
         }
 
         if instruction_result.is_ok() {
-            gas.set_state_gas_spent(state_gas_spent);
+            gas.set_new_state(new_state);
         } else {
             // State changes rolled back, so no execution state gas was consumed.
             // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
             // frame refilled more than it charged; clamp to zero for reservoir
             // recovery since the combined value cannot go below zero.
-            gas.set_state_gas_spent(0);
             let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
             gas.set_reservoir(combined);
         }

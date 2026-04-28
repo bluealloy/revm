@@ -30,15 +30,17 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
     }
     let cpsb = context.local().cpsb();
 
-    let amount = {
+    let (amount, state_gas_spent) = {
         let cfg = context.cfg();
         let gas_params = cfg.gas_params();
-        context
+        let amount = context
             .journal_ref()
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
+            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None);
+        let state_gas_spent = gas.state_gas_spent(gas_params, cpsb).max(0) as u64;
+        (amount, state_gas_spent)
     };
     // cap the refund to the state gas spent
-    let amount = amount.min(gas.state_gas_spent() as u64);
+    let amount = amount.min(state_gas_spent);
 
     if amount != 0 {
         gas.refill_reservoir(amount);
@@ -46,12 +48,18 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
 }
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
-pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
-    // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
-    // negative on 0→x→0 restoration; at the top level, post-reconciliation it
-    // is expected to be >= 0 and is clamped defensively before combining with
-    // intrinsic state gas.
-    let state_gas = (gas.state_gas_spent().max(0) as u64)
+pub fn build_result_gas<CTX: ContextTr>(
+    context: &CTX,
+    gas: &Gas,
+    init_and_floor_gas: InitialAndFloorGas,
+) -> ResultGas {
+    // State gas spent during execution is derived from the new-state counters.
+    // At the top level, after parent/child reconciliation, the value is
+    // expected to be >= 0; clamp defensively before combining with intrinsic
+    // state gas.
+    let cpsb = context.local().cpsb();
+    let exec_state_gas = gas.state_gas_spent(context.cfg().gas_params(), cpsb).max(0) as u64;
+    let state_gas = exec_state_gas
         .saturating_add(init_and_floor_gas.initial_state_gas)
         .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);
 

@@ -95,9 +95,8 @@ pub fn precompile_output_to_interpreter_result(
         output: bytes,
     };
 
-    // set state gas, reservoir is already set in the Gas constructor
-    result.gas.set_state_gas_spent(output.state_gas_used as i64);
-    result.gas.set_refill_amount(output.refill_amount);
+    // set new-state counters; reservoir is already set in the Gas constructor.
+    result.gas.set_new_state(output.new_state);
     result.gas.record_refund(output.gas_refunded);
 
     // spend used gas.

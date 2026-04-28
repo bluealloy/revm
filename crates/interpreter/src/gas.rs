@@ -1,13 +1,15 @@
 //! EVM gas calculation utilities.
 
 pub use context_interface::cfg::gas::*;
+use context_interface::cfg::{GasParams, NewStateTracker};
 
 /// Represents the state of gas during execution.
 ///
 /// Implements the EIP-8037 reservoir model for dual-limit gas accounting:
 /// - `remaining`: regular gas left (`gas_left`). Does NOT include `reservoir`.
 /// - `reservoir`: state gas pool (separate from `remaining`). Starts as `execution_gas - gas_left`.
-/// - `state_gas_spent`: tracks total state gas spent
+/// - `new_state`: counts of newly created state. Total state gas spent is
+///   derivable from these counts.
 ///
 /// **Regular gas charges** (`record_cost`): deduct from `remaining`, checked against `remaining`.
 /// **State gas charges** (`record_state_cost`): deduct from `reservoir` first; when exhausted, spill into `remaining`.
@@ -152,40 +154,40 @@ impl Gas {
         self.tracker.set_reservoir(val);
     }
 
-    /// Returns total state gas spent so far.
+    /// Returns total state gas spent so far, derived from the new-state counters.
     ///
     /// Can be negative within a call frame when 0→x→0 storage restoration
-    /// refills more state gas than this frame charged (see
-    /// [`GasTracker::refill_reservoir`]).
+    /// uncreated more storage than this frame created (the matching positive
+    /// charge lives on a parent frame).
     #[inline]
-    pub const fn state_gas_spent(&self) -> i64 {
-        self.tracker.state_gas_spent()
+    pub fn state_gas_spent(&self, gas_params: &GasParams, cpsb: u64) -> i64 {
+        self.tracker.state_gas_spent(gas_params, cpsb)
     }
 
-    /// Sets the total state gas spent (used when propagating from child frame).
+    /// Returns the new-state counter tracker.
     #[inline]
-    pub fn set_state_gas_spent(&mut self, val: i64) {
-        self.tracker.set_state_gas_spent(val);
+    pub const fn new_state(&self) -> &NewStateTracker {
+        self.tracker.new_state()
+    }
+
+    /// Returns the new-state counter tracker mutably.
+    #[inline]
+    pub const fn new_state_mut(&mut self) -> &mut NewStateTracker {
+        self.tracker.new_state_mut()
+    }
+
+    /// Sets the new-state counter tracker.
+    #[inline]
+    pub const fn set_new_state(&mut self, val: NewStateTracker) {
+        self.tracker.set_new_state(val);
     }
 
     /// Refills the reservoir with state gas returned by 0→x→0 storage restoration.
     ///
     /// See [`GasTracker::refill_reservoir`].
     #[inline]
-    pub fn refill_reservoir(&mut self, amount: u64) {
+    pub const fn refill_reservoir(&mut self, amount: u64) {
         self.tracker.refill_reservoir(amount);
-    }
-
-    /// Returns the cumulative reservoir refill amount in this frame.
-    #[inline]
-    pub const fn refill_amount(&self) -> u64 {
-        self.tracker.refill_amount()
-    }
-
-    /// Sets the cumulative refill amount.
-    #[inline]
-    pub fn set_refill_amount(&mut self, val: u64) {
-        self.tracker.set_refill_amount(val);
     }
 
     /// Erases a gas cost from remaining (returns gas from child frame).
@@ -277,15 +279,12 @@ impl Gas {
 
     /// Records a state gas cost (EIP-8037 reservoir model).
     ///
-    /// State gas charges deduct from the reservoir first. If the reservoir is exhausted,
-    /// remaining charges spill into `gas_left` (requiring total `remaining >= cost`).
-    /// Tracks state gas spent.
-    ///
-    /// Returns `false` if total remaining gas is insufficient.
+    /// State gas charges deduct from the reservoir first. If the reservoir is
+    /// exhausted, the remainder spills into `remaining`. The OOG check is
+    /// performed in a later step.
     #[inline]
-    #[must_use = "In case of not enough gas, the interpreter should halt with an out-of-gas error"]
-    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
-        self.tracker.record_state_cost(cost)
+    pub const fn record_state_cost(&mut self, cost: u64) {
+        self.tracker.record_state_cost(cost);
     }
 
     /// Deducts from `remaining` only (used for child frame gas forwarding).
@@ -353,137 +352,29 @@ mod tests {
 
     #[test]
     fn test_record_state_cost() {
-        // Test 1: Cost from reservoir only
+        // Cost from reservoir only.
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
-        assert!(gas.record_state_cost(200));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (300, 1000, 200)
-        );
+        gas.record_state_cost(200);
+        assert_eq!((gas.reservoir(), gas.remaining()), (300, 1000));
 
-        // Test 2: Exhaust reservoir exactly
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
-        assert!(gas.record_state_cost(500));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (0, 1000, 500)
-        );
-
-        // Test 3: Spill to remaining (reservoir < cost)
+        // Spill to remaining when reservoir is too small.
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 300);
-        assert!(gas.record_state_cost(500));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (0, 800, 500)
-        );
+        gas.record_state_cost(500);
+        assert_eq!((gas.reservoir(), gas.remaining()), (0, 800));
 
-        // Test 4: No reservoir (mainnet standard)
-        let mut gas = Gas::new(1000);
-        assert!(gas.record_state_cost(200));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (0, 800, 200)
-        );
-
-        // Test 5: Zero cost
+        // Saturating behaviour when total budget is insufficient (OOG check is
+        // performed in a separate later step).
         let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
-        assert!(gas.record_state_cost(0));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (50, 100, 0)
-        );
-
-        // Test 6: Out of gas (cost > remaining + reservoir)
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(100, 50);
-        assert!(!gas.record_state_cost(200));
-
-        // Test 7: Multiple operations accumulate state_gas_spent
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(2000, 1000);
-        assert!(gas.record_state_cost(100));
-        assert!(gas.record_state_cost(200));
-        assert!(gas.record_state_cost(150));
-        assert_eq!(gas.state_gas_spent(), 450);
-
-        // Test 8: Complex scenario exhausting reservoir then remaining
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(500, 300);
-        assert!(gas.record_state_cost(150)); // 150 from reservoir
-        assert_eq!((gas.reservoir(), gas.remaining()), (150, 500));
-        assert!(gas.record_state_cost(200)); // 150 from reservoir, 50 from remaining
-        assert_eq!((gas.reservoir(), gas.remaining()), (0, 450));
-        assert!(gas.record_state_cost(100)); // 100 from remaining
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (0, 350, 450)
-        );
+        gas.record_state_cost(200);
+        assert_eq!((gas.reservoir(), gas.remaining()), (0, 0));
     }
 
-    /// A.1: Verify state_gas_spent is incremented even after failed record_state_cost.
-    /// On OOG, state_gas_spent is NOT incremented and reservoir is unchanged.
-    #[test]
-    fn test_record_state_cost_oog_inflates_state_gas_spent() {
-        // remaining=30, reservoir=0, cost=100 → OOG
-        let mut gas = Gas::new(30);
-        assert!(!gas.record_state_cost(100));
-        // On OOG, state_gas_spent is NOT incremented (operation failed)
-        assert_eq!(gas.state_gas_spent(), 0);
-
-        // With reservoir partially covering: reservoir=20, remaining=30, cost=100
-        // spill = 100 - 20 = 80, remaining(30) < 80 → OOG
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(30, 20);
-        assert!(!gas.record_state_cost(100));
-        // On OOG, state_gas_spent is NOT incremented and reservoir is unchanged
-        assert_eq!(gas.state_gas_spent(), 0);
-        assert_eq!(gas.reservoir(), 20);
-    }
-
-    /// Refill reservoir restores state gas in-place (EIP-8037 0→x→0 restoration).
-    ///
-    /// The refill decrements `state_gas_spent` and may drive it negative if the
-    /// matching charge was made by a parent frame.
     #[test]
     fn test_refill_reservoir() {
-        // Simple case: charge then refill within the same frame.
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
-        assert!(gas.record_state_cost(200));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (300, 1000, 200)
-        );
+        gas.record_state_cost(200);
+        assert_eq!((gas.reservoir(), gas.remaining()), (300, 1000));
         gas.refill_reservoir(200);
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (500, 1000, 0)
-        );
-
-        // Child-frame case: refill without a prior charge makes state_gas_spent
-        // negative. The parent's matching +charge is reconciled on return.
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 100);
-        gas.refill_reservoir(300);
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (400, 1000, -300)
-        );
-    }
-
-    /// A.3: State gas with zero regular remaining but non-zero reservoir.
-    #[test]
-    fn test_record_state_cost_zero_remaining_with_reservoir() {
-        // remaining=0, reservoir=500: state gas draws entirely from reservoir
-        let mut gas = Gas::new_with_regular_gas_and_reservoir(0, 500);
-        assert!(gas.record_state_cost(200));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (300, 0, 200)
-        );
-
-        // Exhaust reservoir exactly
-        assert!(gas.record_state_cost(300));
-        assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
-            (0, 0, 500)
-        );
-
-        // Now any cost → OOG (both remaining and reservoir are 0)
-        assert!(!gas.record_state_cost(1));
+        assert_eq!((gas.reservoir(), gas.remaining()), (500, 1000));
     }
 }

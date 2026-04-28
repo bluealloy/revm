@@ -490,7 +490,14 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(ins_result.is_ok(), &mut interpreter.gas, &out_gas);
+                let cpsb = ctx.local().cpsb();
+                handle_reservoir_remaining_gas(
+                    ins_result.is_ok(),
+                    &mut interpreter.gas,
+                    &out_gas,
+                    ctx.cfg().gas_params(),
+                    cpsb,
+                );
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -523,25 +530,32 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(instruction_result.is_ok(), this_gas, outcome.gas());
+                let cpsb = ctx.local().cpsb();
+                handle_reservoir_remaining_gas(
+                    instruction_result.is_ok(),
+                    this_gas,
+                    outcome.gas(),
+                    ctx.cfg().gas_params(),
+                    cpsb,
+                );
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent`.
+                // this frame's tracker and bumped `new_accounts`. When the child
+                // fails to deploy a contract (revert, halt, or early-fail paths
+                // that return `address == None` such as nonce overflow, depth,
+                // OutOfFunds), refund the upfront charge to the reservoir and
+                // decrement the account counter so the failed CREATE leaves
+                // no trace.
+                //
                 // The nonce-overflow path reports `InstructionResult::Return` (ok)
                 // with `address == None`, so gate on address rather than the result.
-                //
-                // Use `refill_reservoir` so that this refund is counted in
-                // `refill_amount` and gets unwound if the parent itself
-                // reverts/halts (matching 0→x→0 storage restoration).
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
                     let state_gas_charged =
                         ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
                     this_gas.refill_reservoir(state_gas_charged);
+                    this_gas.new_state_mut().remove_create_account();
                 }
 
                 let stack_item = if instruction_result.is_ok() {
@@ -561,60 +575,53 @@ impl EthFrame<EthInterpreter> {
 }
 
 /// Handles the remaining gas of the parent frame.
+///
+/// `gas_params` and `cpsb` are needed to derive the child's net state-gas
+/// contribution from its `NewStateTracker` counters; pass `0` for `cpsb` when
+/// EIP-8037 is disabled (the derived value is then trivially zero).
 #[inline]
-pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, child_gas: &Gas) {
+pub fn handle_reservoir_remaining_gas(
+    is_success: bool,
+    parent_gas: &mut Gas,
+    child_gas: &Gas,
+    gas_params: &context_interface::cfg::GasParams,
+    cpsb: u64,
+) {
     if is_success {
-        // On success: parent takes the child's final reservoir.
+        // On success: parent takes the child's final reservoir and merges in
+        // the child's net new-state counters. Negative `new_storages` from
+        // cross-frame 0→x→0 restorations correctly cancel the parent's
+        // matching positive charge during the merge.
         parent_gas.set_reservoir(child_gas.reservoir());
-        // Accumulate child's state gas into parent's total.
-        // Parent may have already charged state gas (e.g., new_account + create) before
-        // creating the child frame. Child starts with state_gas_spent=0, so we must add
-        // rather than overwrite to preserve the parent's prior charges.
-        //
-        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
-        // child did more 0→x→0 restorations than 0→x creations; the negative
-        // contribution is the parent's matching charge flowing back out.
-        parent_gas.set_state_gas_spent(
-            parent_gas
-                .state_gas_spent()
-                .saturating_add(child_gas.state_gas_spent()),
-        );
-        // Propagate child's 0→x→0 refill total so that if the parent
-        // later reverts/halts, the refill contribution can be unwound.
-        parent_gas.set_refill_amount(
-            parent_gas
-                .refill_amount()
-                .saturating_add(child_gas.refill_amount()),
-        );
+        let merged = {
+            let mut p = *parent_gas.new_state();
+            p.merge(child_gas.new_state());
+            p
+        };
+        parent_gas.set_new_state(merged);
     } else {
-        // On revert or halt: child state changes are rolled back. Compute
-        // the gas to add to parent's pre-call reservoir as:
+        // On revert or halt: child state changes are rolled back; the parent
+        // keeps its pre-call counters (we drop the child's). For the reservoir,
+        // compute the gas legitimately owed to the parent:
         //
-        //   excess = max(0, child.reservoir + max(0, child.state_gas_spent)
-        //                  - parent.reservoir - child.refill_amount)
+        //   excess = max(0, child.reservoir + child.state_gas_spent_signed - parent.reservoir)
         //
-        // The intuition:
-        // * `child.reservoir + max(0, child.state_gas_spent)` is the
-        //   "logical refund" if no refills had happened: it adds back the
-        //   child's own state-gas charges (positive `state_gas_spent`) on
-        //   top of whatever reservoir value the child carried out
-        //   (including refunds propagated from deeper halted/reverted
-        //   sub-frames, which reach `child.reservoir` via `set_reservoir`).
-        // * Subtracting `parent.reservoir` (the pre-call value) and the
-        //   in-frame 0→x→0 refill total leaves only the contribution that
-        //   genuinely belongs to the parent on revert/halt — i.e. own
-        //   charges + grandchild propagations.
-        // * The `max(0, ...)` guards against cases where own charges
-        //   spilled into regular gas (irrecoverable) and the refunded
-        //   charges are smaller than the refill the child did against
-        //   parent's prior charges.
-        let logical_refund = child_gas
-            .reservoir()
-            .saturating_add(child_gas.state_gas_spent().max(0) as u64);
-        let baseline = parent_gas
-            .reservoir()
-            .saturating_add(child_gas.refill_amount());
-        let excess = logical_refund.saturating_sub(baseline);
+        // `child.reservoir + child.state_gas_spent_signed` is the "logical
+        // refund": if the child's own state charges are forgiven (state was
+        // rolled back) and any cross-frame refill against parent's charges
+        // is netted out (negative state_gas_spent contribution), the result
+        // equals what should be visible to the parent. Subtracting the
+        // pre-call parent reservoir leaves only the genuine excess flowing up
+        // from grandchild reverts/halts.
+        let child_state_gas = child_gas.state_gas_spent(gas_params, cpsb);
+        let logical_refund = if child_state_gas >= 0 {
+            child_gas.reservoir().saturating_add(child_state_gas as u64)
+        } else {
+            child_gas
+                .reservoir()
+                .saturating_sub((-child_state_gas) as u64)
+        };
+        let excess = logical_refund.saturating_sub(parent_gas.reservoir());
         parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
     }
 }
@@ -704,12 +711,14 @@ pub fn return_create<CTX: ContextTr>(
         //
         // Note: This should be last operation before checkpoint commit as spending state before this messes
         // with refilling of state gas.
-        let state_gas_for_code =
-            gas_params.code_deposit_state_gas(interpreter_result.output.len(), cpsb);
-        if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
-            journal.checkpoint_revert(checkpoint);
-            interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+        let code_len = interpreter_result.output.len();
+        let state_gas_for_code = gas_params.code_deposit_state_gas(code_len, cpsb);
+        if state_gas_for_code > 0 {
+            interpreter_result.gas.record_state_cost(state_gas_for_code);
+            interpreter_result
+                .gas
+                .new_state_mut()
+                .add_code_deposit_bytes(code_len as u64);
         }
     }
 

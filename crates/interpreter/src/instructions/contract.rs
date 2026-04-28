@@ -90,13 +90,16 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
     // Charged upfront on the parent's tracker; `return_create` refunds the same
     // amount (derived from cfg) on entry and re-records it on a successful commit.
     if context.host.is_amsterdam_eip8037_enabled() {
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .create_state_gas(context.host.cpsb())
-        );
+        let cost = context
+            .host
+            .gas_params()
+            .create_state_gas(context.host.cpsb());
+        state_gas!(context.interpreter, cost);
+        context
+            .interpreter
+            .gas
+            .new_state_mut()
+            .add_create_account();
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();

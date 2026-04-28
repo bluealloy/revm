@@ -2,8 +2,10 @@
 
 pub mod gas;
 pub mod gas_params;
+pub mod new_state_tracker;
 
 pub use gas_params::{GasId, GasParams};
+pub use new_state_tracker::NewStateTracker;
 
 use auto_impl::auto_impl;
 use core::{fmt::Debug, hash::Hash};

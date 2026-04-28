@@ -1,6 +1,6 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
-use context_interface::result::AnyError;
+use context_interface::{cfg::NewStateTracker, result::AnyError};
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
 use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
@@ -114,13 +114,10 @@ pub struct PrecompileOutput {
     pub gas_used: u64,
     /// Gas refunded by the precompile.
     pub gas_refunded: i64,
-    /// State gas used by the precompile.
-    pub state_gas_used: u64,
+    /// New-state counter deltas produced by the precompile (EIP-8037).
+    pub new_state: NewStateTracker,
     /// Reservoir gas for EIP-8037.
     pub reservoir: u64,
-    /// Cumulative reservoir refill amount from 0→x→0 storage restorations
-    /// performed during precompile execution (EIP-8037).
-    pub refill_amount: u64,
     /// Output bytes.
     pub bytes: Bytes,
 }
@@ -139,9 +136,8 @@ impl PrecompileOutput {
             status: PrecompileStatus::Success,
             gas_used,
             gas_refunded: 0,
-            state_gas_used: 0,
+            new_state: NewStateTracker::new(),
             reservoir,
-            refill_amount: 0,
             bytes,
         }
     }
@@ -152,9 +148,8 @@ impl PrecompileOutput {
             status: PrecompileStatus::Halt(reason),
             gas_used: 0,
             gas_refunded: 0,
-            state_gas_used: 0,
+            new_state: NewStateTracker::new(),
             reservoir,
-            refill_amount: 0,
             bytes: Bytes::new(),
         }
     }
@@ -165,9 +160,8 @@ impl PrecompileOutput {
             status: PrecompileStatus::Revert,
             gas_used,
             gas_refunded: 0,
-            state_gas_used: 0,
+            new_state: NewStateTracker::new(),
             reservoir,
-            refill_amount: 0,
             bytes,
         }
     }
