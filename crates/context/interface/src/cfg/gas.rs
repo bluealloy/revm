@@ -153,18 +153,6 @@ impl GasTracker {
         success
     }
 
-    /// Refills the reservoir with state gas that is returned by 0→x→0 storage
-    /// restoration (EIP-8037 issue #2).
-    ///
-    /// Per the spec, when a storage slot is restored to its original zero value
-    /// within the same transaction, the state gas charged for the initial 0→x
-    /// transition is directly restored to the reservoir rather than routed
-    /// through the capped refund counter.
-    #[inline]
-    pub const fn refill_reservoir(&mut self, amount: u64) {
-        self.reservoir = self.reservoir.saturating_add(amount);
-    }
-
     /// Records a refund value.
     #[inline]
     pub const fn record_refund(&mut self, refund: i64) {
