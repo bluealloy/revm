@@ -75,9 +75,8 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     // deduct dynamic gas.
     gas!(interpreter, gas);
 
-    // deduct state gas (EIP-8037) if any.
+    // EIP-8037 new-account counter for CALL-with-value-to-empty.
     if state_gas_cost > 0 {
-        state_gas!(interpreter, state_gas_cost);
         interpreter.gas.new_state_mut().add_call_account();
     }
 

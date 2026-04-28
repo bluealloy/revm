@@ -539,22 +539,17 @@ impl EthFrame<EthInterpreter> {
                     cpsb,
                 );
 
-                // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker and bumped `new_accounts`. When the child
-                // fails to deploy a contract (revert, halt, or early-fail paths
-                // that return `address == None` such as nonce overflow, depth,
-                // OutOfFunds), refund the upfront charge to the reservoir and
-                // decrement the account counter so the failed CREATE leaves
-                // no trace.
+                // EIP-8037: The CREATE opcode bumped `new_create_accounts` on
+                // this frame's tracker. When the child fails to deploy (revert,
+                // halt, or early-fail paths that return `address == None` such
+                // as nonce overflow, depth, OutOfFunds), decrement the counter
+                // so the failed CREATE leaves no trace.
                 //
                 // The nonce-overflow path reports `InstructionResult::Return` (ok)
                 // with `address == None`, so gate on address rather than the result.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
-                    let state_gas_charged =
-                        ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
-                    this_gas.refill_reservoir(state_gas_charged);
                     this_gas.new_state_mut().remove_create_account();
                 }
 
@@ -706,15 +701,10 @@ pub fn return_create<CTX: ContextTr>(
             interpreter_result.result = InstructionResult::OutOfGas;
             return;
         }
-        // State gas for code deposit (EIP-8037).
-        // Charged after size check: only code that passes validation incurs state gas cost.
-        //
-        // Note: This should be last operation before checkpoint commit as spending state before this messes
-        // with refilling of state gas.
+        // EIP-8037 code-deposit counter. The actual gas charge is computed
+        // from the new-state counters at OOG-check time.
         let code_len = interpreter_result.output.len();
-        let state_gas_for_code = gas_params.code_deposit_state_gas(code_len, cpsb);
-        if state_gas_for_code > 0 {
-            interpreter_result.gas.record_state_cost(state_gas_for_code);
+        if gas_params.code_deposit_state_gas(code_len, cpsb) > 0 {
             interpreter_result
                 .gas
                 .new_state_mut()

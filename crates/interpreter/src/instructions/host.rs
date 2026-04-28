@@ -232,28 +232,18 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
         )
     );
 
-    // state gas for new slot creation (EIP-8037)
+    // EIP-8037 state-creation tracking. The actual gas charge against the
+    // reservoir is computed from these counters at OOG-check time.
     if context.host.is_amsterdam_eip8037_enabled() {
         let cpsb = context.host.cpsb();
-        let new_storage_cost = context
-            .host
-            .gas_params()
-            .sstore_state_gas(&state_load.data, cpsb);
-        if new_storage_cost > 0 {
-            state_gas!(context.interpreter, new_storage_cost);
+        let gas_params = context.host.gas_params();
+        if gas_params.sstore_state_gas(&state_load.data, cpsb) > 0 {
             context.interpreter.gas.new_state_mut().add_storage();
         }
-
-        // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
-        // directly rather than routing the state gas through the capped refund
-        // counter. The regular-gas portion of the restoration still flows
+        // EIP-8037 issue #2: 0→x→0 storage restoration unwinds the slot
+        // creation. The regular-gas portion of the restoration still flows
         // through `sstore_refund` below.
-        let refill = context
-            .host
-            .gas_params()
-            .sstore_state_gas_refill(&state_load.data, cpsb);
-        if refill > 0 {
-            context.interpreter.gas.refill_reservoir(refill);
+        if gas_params.sstore_state_gas_refill(&state_load.data, cpsb) > 0 {
             context.interpreter.gas.new_state_mut().remove_storage();
         }
     }
@@ -362,13 +352,8 @@ pub fn selfdestruct<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resu
             .selfdestruct_cost(should_charge_topup, res.is_cold)
     );
 
-    // State gas for new account creation (EIP-8037)
+    // EIP-8037 new-account counter for SELFDESTRUCT-to-empty.
     if context.host.is_amsterdam_eip8037_enabled() && should_charge_topup {
-        let cost = context
-            .host
-            .gas_params()
-            .new_account_state_gas(context.host.cpsb());
-        state_gas!(context.interpreter, cost);
         context.interpreter.gas.new_state_mut().add_call_account();
     }
 

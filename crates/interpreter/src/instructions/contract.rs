@@ -86,15 +86,10 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    // State gas for account creation + contract metadata (EIP-8037).
-    // Charged upfront on the parent's tracker; `return_create` refunds the same
-    // amount (derived from cfg) on entry and re-records it on a successful commit.
+    // EIP-8037 CREATE state counter (account creation + contract metadata).
+    // Bumped upfront on the parent's tracker; `return_result` decrements it
+    // again on a failed deployment (revert/halt/early-fail).
     if context.host.is_amsterdam_eip8037_enabled() {
-        let cost = context
-            .host
-            .gas_params()
-            .create_state_gas(context.host.cpsb());
-        state_gas!(context.interpreter, cost);
         context
             .interpreter
             .gas

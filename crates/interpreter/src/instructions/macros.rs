@@ -28,18 +28,6 @@ macro_rules! check {
     };
 }
 
-/// Records a state gas cost (EIP-8037).
-///
-/// Deducts from the reservoir first, spilling into `remaining` when the
-/// reservoir is exhausted. The OOG check is performed in a separate step.
-#[macro_export]
-#[collapse_debuginfo(yes)]
-macro_rules! state_gas {
-    ($interpreter:expr, $gas:expr) => {{
-        $interpreter.gas.record_state_cost($gas);
-    }};
-}
-
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
 #[collapse_debuginfo(yes)]
