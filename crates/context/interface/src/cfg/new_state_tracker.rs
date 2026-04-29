@@ -1,18 +1,20 @@
 //! State creation counters (EIP-8037).
 //!
-//! Tracks net new state created within a call frame (or across the whole
+//! Tracks new state created within a call frame (or across the whole
 //! transaction at the top level): new storage slots, new accounts, and bytes
-//! deposited as code on successful contract creations. Total state gas spent
-//! is derivable from these counts via [`NewStateTracker::state_gas_spent`].
+//! deposited as code on successful contract creations. Total state gas
+//! charged and refunded is derivable from these counts via
+//! [`NewStateTracker::state_gas_charged_and_refunded`].
 
 use crate::cfg::{GasId, GasParams};
 
-/// Net counts of new state created in this scope.
+/// Counts of new state created and unwound in this scope.
 ///
 /// Under EIP-8037 every state-creating operation charges
 /// `unit_count × bytes_per_unit × cpsb` of state gas. By tracking the unit
-/// counts here we can derive the total state gas spent at any point and
-/// propagate state-gas accounting cleanly across parent/child frames.
+/// counts here we can derive the total state gas charged (and separately
+/// refunded) at any point and propagate state-gas accounting cleanly across
+/// parent/child frames.
 ///
 /// Account creation is split into two counters because EIP-8037 distinguishes
 /// the gas costs:
@@ -22,13 +24,13 @@ use crate::cfg::{GasId, GasParams};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NewStateTracker {
-    /// Net number of new storage slots created (`SSTORE 0 → x`).
-    ///
-    /// Can be negative within a sub-frame when a `0 → x → 0` storage
-    /// restoration removes a slot whose original `0 → x` charge happened on a
-    /// parent frame. The parent's matching positive contribution is reconciled
-    /// when child counters are merged into the parent on success.
-    pub new_storages: i64,
+    /// Number of new storage slots created (`SSTORE 0 → x`).
+    pub new_storages: u64,
+    /// Number of storage slots restored (`SSTORE x → 0`) whose original
+    /// pre-tx value was zero. Counted separately from `new_storages` so the
+    /// charged and refunded contributions to state gas can be tracked
+    /// independently.
+    pub new_storages_refunded: u64,
     /// Net number of new accounts created via CREATE / CREATE2.
     pub new_create_accounts: u64,
     /// Net number of new accounts materialized via CALL with value to empty
@@ -46,6 +48,7 @@ impl NewStateTracker {
     pub const fn new() -> Self {
         Self {
             new_storages: 0,
+            new_storages_refunded: 0,
             new_create_accounts: 0,
             new_call_accounts: 0,
             code_deposit_bytes: 0,
@@ -63,7 +66,7 @@ impl NewStateTracker {
     /// original value at the start of the transaction was zero).
     #[inline]
     pub const fn remove_storage(&mut self) {
-        self.new_storages = self.new_storages.saturating_sub(1);
+        self.new_storages_refunded = self.new_storages_refunded.saturating_add(1);
     }
 
     /// Records a CREATE / CREATE2 new account.
@@ -108,6 +111,9 @@ impl NewStateTracker {
     #[inline]
     pub const fn merge(&mut self, other: &NewStateTracker) {
         self.new_storages = self.new_storages.saturating_add(other.new_storages);
+        self.new_storages_refunded = self
+            .new_storages_refunded
+            .saturating_add(other.new_storages_refunded);
         self.new_create_accounts = self
             .new_create_accounts
             .saturating_add(other.new_create_accounts);
@@ -123,40 +129,49 @@ impl NewStateTracker {
     #[inline]
     pub const fn clear(&mut self) {
         self.new_storages = 0;
+        self.new_storages_refunded = 0;
         self.new_create_accounts = 0;
         self.new_call_accounts = 0;
         self.code_deposit_bytes = 0;
     }
 
-    /// Total state gas implied by these deltas given the gas table and CPSB.
-    ///
-    /// The result can be negative when `new_storages` is, signalling that a
-    /// sub-frame uncreated more storage than it created (the missing positive
-    /// contribution lives on a parent frame and is reconciled when counters
-    /// are merged).
+    /// State gas charged and refunded implied by these counts given the gas
+    /// table and CPSB. The first element is the total charge (new storages,
+    /// creates, calls, code-deposit bytes, and additional state gas spending).
+    /// The second element is the total refund derived from
+    /// `new_storages_refunded`.
     #[inline]
-    pub fn state_gas_spent(&self, gas_params: &GasParams, cpsb: u64) -> i64 {
+    pub fn state_gas_charged_and_refunded(
+        &self,
+        gas_params: &GasParams,
+        cpsb: u64,
+    ) -> (u64, u64) {
         let storage_per = gas_params
             .get(GasId::sstore_set_state_gas())
-            .saturating_mul(cpsb) as i64;
+            .saturating_mul(cpsb);
         let create_per = gas_params
             .get(GasId::create_state_gas())
-            .saturating_mul(cpsb) as i64;
+            .saturating_mul(cpsb);
         let call_per = gas_params
             .get(GasId::new_account_state_gas())
-            .saturating_mul(cpsb) as i64;
+            .saturating_mul(cpsb);
         let code_per_byte = gas_params
             .get(GasId::code_deposit_state_gas())
-            .saturating_mul(cpsb) as i64;
+            .saturating_mul(cpsb);
 
         let storages = self.new_storages.saturating_mul(storage_per);
-        let creates = (self.new_create_accounts as i64).saturating_mul(create_per);
-        let calls = (self.new_call_accounts as i64).saturating_mul(call_per);
-        let code = (self.code_deposit_bytes as i64).saturating_mul(code_per_byte);
+        let creates = self.new_create_accounts.saturating_mul(create_per);
+        let calls = self.new_call_accounts.saturating_mul(call_per);
+        let code = self.code_deposit_bytes.saturating_mul(code_per_byte);
 
-        storages
+        let charged = storages
             .saturating_add(creates)
             .saturating_add(calls)
             .saturating_add(code)
+            .saturating_add(self.additional_state_gas_spending);
+
+        let refunded = self.new_storages_refunded.saturating_mul(storage_per);
+
+        (charged, refunded)
     }
 }

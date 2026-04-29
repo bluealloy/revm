@@ -152,24 +152,33 @@ impl Gas {
         self.tracker.set_reservoir(val);
     }
 
-    /// Returns the cumulative state gas charged on this tracker (signed).
-    ///
-    /// Can be negative when more state gas was refilled (e.g. via 0→x→0
-    /// storage restoration) than charged on this gas tracker.
+    /// Returns the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn state_gas(&self) -> i64 {
+    pub const fn state_gas(&self) -> u64 {
         self.tracker.state_gas()
     }
 
     /// Sets the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn set_state_gas(&mut self, val: i64) {
+    pub const fn set_state_gas(&mut self, val: u64) {
         self.tracker.set_state_gas(val);
     }
 
-    /// Returns the cumulative state gas charged on this tracker.
+    /// Returns the cumulative state gas refunded on this tracker.
     #[inline]
-    pub const fn state_gas_spent(&self) -> i64 {
+    pub const fn state_gas_refunded(&self) -> u64 {
+        self.tracker.state_gas_refunded()
+    }
+
+    /// Sets the cumulative state gas refunded on this tracker.
+    #[inline]
+    pub const fn set_state_gas_refunded(&mut self, val: u64) {
+        self.tracker.set_state_gas_refunded(val);
+    }
+
+    /// Returns the net state gas spent on this tracker (charges minus refunds).
+    #[inline]
+    pub const fn state_gas_spent(&self) -> u64 {
         self.tracker.state_gas_spent()
     }
 
@@ -260,14 +269,22 @@ impl Gas {
         oog
     }
 
-    /// Records a state gas cost (EIP-8037 reservoir model).
+    /// Records a state gas charge (EIP-8037 reservoir model).
     ///
-    /// A positive `cost` deducts from the reservoir first, spilling into
-    /// `remaining` when the reservoir is exhausted. A negative `cost` refills
-    /// the reservoir by `|cost|`. The OOG check is performed in a later step.
+    /// Deducts from the reservoir first, spilling into `remaining` when the
+    /// reservoir is exhausted. The OOG check is performed in a later step.
     #[inline]
-    pub const fn record_state_cost(&mut self, cost: i64) -> bool {
+    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
         self.tracker.record_state_cost(cost)
+    }
+
+    /// Records a state gas refund (EIP-8037 reservoir model).
+    ///
+    /// Refills the reservoir by `refund` and accumulates into
+    /// `state_gas_refunded`.
+    #[inline]
+    pub const fn record_state_refund(&mut self, refund: u64) {
+        self.tracker.record_state_refund(refund);
     }
 
     /// Deducts from `remaining` only (used for child frame gas forwarding).
@@ -362,14 +379,20 @@ mod tests {
     }
 
     #[test]
-    fn test_record_state_cost_negative_refills_reservoir() {
+    fn test_record_state_refund_refills_reservoir() {
         let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
         assert!(gas.record_state_cost(200));
         assert_eq!((gas.reservoir(), gas.remaining()), (300, 1000));
-        assert!(gas.record_state_cost(-150));
+        gas.record_state_refund(150);
         assert_eq!(
-            (gas.reservoir(), gas.remaining(), gas.state_gas()),
-            (450, 1000, 50)
+            (
+                gas.reservoir(),
+                gas.remaining(),
+                gas.state_gas(),
+                gas.state_gas_refunded(),
+                gas.state_gas_spent(),
+            ),
+            (450, 1000, 200, 150, 50)
         );
     }
 }

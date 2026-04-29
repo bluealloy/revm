@@ -430,12 +430,17 @@ impl EthFrame<EthInterpreter> {
                 address,
             );
 
-            let state_gas = self.interpreter.new_state.state_gas_spent(
-                context.cfg().gas_params(),
-                context.local().cpsb(),
-            );
-            if commit && !interpreter_result.gas.record_state_cost(state_gas) {
-                interpreter_result.result = InstructionResult::OutOfGas;
+            let (state_gas_charged, state_gas_refunded) =
+                self.interpreter.new_state.state_gas_charged_and_refunded(
+                    context.cfg().gas_params(),
+                    context.local().cpsb(),
+                );
+
+            if commit {
+                interpreter_result.gas.record_state_refund(state_gas_refunded);
+                if !interpreter_result.gas.record_state_cost(state_gas_charged) {
+                    interpreter_result.result = InstructionResult::OutOfGas;
+                }
             }
 
             (
@@ -447,12 +452,16 @@ impl EthFrame<EthInterpreter> {
             )
         } else {
             let commit = interpreter_result.result.is_ok();
-            let state_gas = self.interpreter.new_state.state_gas_spent(
-                context.cfg().gas_params(),
-                context.local().cpsb(),
-            );
-            if commit && !interpreter_result.gas.record_state_cost(state_gas) {
-                interpreter_result.result = InstructionResult::OutOfGas;
+            let (state_gas_charged, state_gas_refunded) =
+                self.interpreter.new_state.state_gas_charged_and_refunded(
+                    context.cfg().gas_params(),
+                    context.local().cpsb(),
+                );
+            if commit {
+                interpreter_result.gas.record_state_refund(state_gas_refunded);
+                if !interpreter_result.gas.record_state_cost(state_gas_charged) {
+                    interpreter_result.result = InstructionResult::OutOfGas;
+                }
             }
 
             (
@@ -585,13 +594,19 @@ impl EthFrame<EthInterpreter> {
 /// Handles the remaining gas of the parent frame.
 ///
 /// `reservoir` was forwarded from the parent into the child at frame
-/// creation, so we just take the child's final value back. `state_gas` is
-/// per-frame and accumulated into the parent so the running total covers
-/// both the parent's prior contribution and the child's own.
+/// creation, so we just take the child's final value back. `state_gas` and
+/// `state_gas_refunded` are per-frame and accumulated into the parent so the
+/// running totals cover both the parent's prior contribution and the child's
+/// own.
 #[inline]
-pub fn handle_reservoir_remaining_gas(parent_gas: &mut Gas, child_gas: &Gas) {
+pub const fn handle_reservoir_remaining_gas(parent_gas: &mut Gas, child_gas: &Gas) {
     parent_gas.set_reservoir(child_gas.reservoir());
     parent_gas.set_state_gas(parent_gas.state_gas().saturating_add(child_gas.state_gas()));
+    parent_gas.set_state_gas_refunded(
+        parent_gas
+            .state_gas_refunded()
+            .saturating_add(child_gas.state_gas_refunded()),
+    );
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.

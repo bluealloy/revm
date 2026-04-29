@@ -165,11 +165,10 @@ where
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let state_gas = gas.state_gas_spent().max(0) as u64;
                 let result_gas = ResultGas::default()
                     .with_total_gas_spent(gas.total_gas_spent())
                     .with_refunded(gas.refunded() as u64)
-                    .with_state_gas_spent(state_gas);
+                    .with_state_gas_spent(gas.state_gas_spent());
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,

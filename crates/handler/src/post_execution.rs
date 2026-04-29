@@ -51,16 +51,13 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
     if refund == 0 {
         return;
     }
-    // Negative cost: subtract from `state_gas` and add back to reservoir.
-    let _ = gas.record_state_cost(-(refund as i64));
+    gas.record_state_refund(refund);
 }
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
-    // The execution-time state gas is the cumulative `state_gas` recorded on
-    // the gas tracker. Top-level reconciliation guarantees a non-negative
-    // value; clamp defensively before combining with intrinsic state gas.
-    let exec_state_gas = gas.state_gas().max(0) as u64;
+    // Net execution-time state gas (charges minus refunds).
+    let exec_state_gas = gas.state_gas_spent();
     let state_gas = exec_state_gas
         .saturating_add(init_and_floor_gas.initial_state_gas)
         .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);

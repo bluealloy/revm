@@ -16,10 +16,13 @@ pub struct GasTracker {
     /// State gas reservoir (gas exceeding TX_MAX_GAS_LIMIT). Starts as `execution_gas - min(execution_gas, regular_gas_budget)`.
     /// When 0, all remaining gas is regular gas with hard cap at `TX_MAX_GAS_LIMIT`.
     reservoir: u64,
-    /// Cumulative state gas charged on this tracker (signed). Negative values
-    /// represent reservoir refills (e.g. from 0→x→0 storage restoration).
-    /// Updated by [`Self::record_state_cost`].
-    state_gas: i64,
+    /// Cumulative state gas charged on this tracker. Updated by
+    /// [`Self::record_state_cost`]. Net state gas is
+    /// `state_gas.saturating_sub(state_gas_refunded)`.
+    state_gas: u64,
+    /// Cumulative state gas refunded on this tracker (e.g. 0→x→0 storage
+    /// restoration). Updated by [`Self::record_state_refund`].
+    state_gas_refunded: u64,
     /// Refunded gas. Used to refund the gas to the caller at the end of execution.
     refunded: i64,
 }
@@ -33,6 +36,7 @@ impl GasTracker {
             remaining,
             reservoir,
             state_gas: 0,
+            state_gas_refunded: 0,
             refunded: 0,
         }
     }
@@ -79,22 +83,35 @@ impl GasTracker {
         self.reservoir = val;
     }
 
-    /// Returns the cumulative state gas charged on this tracker (signed).
+    /// Returns the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn state_gas(&self) -> i64 {
+    pub const fn state_gas(&self) -> u64 {
         self.state_gas
     }
 
     /// Sets the cumulative state gas charged on this tracker.
     #[inline]
-    pub const fn set_state_gas(&mut self, val: i64) {
+    pub const fn set_state_gas(&mut self, val: u64) {
         self.state_gas = val;
     }
 
-    /// Returns the cumulative state gas charged on this tracker.
+    /// Returns the cumulative state gas refunded on this tracker.
     #[inline]
-    pub const fn state_gas_spent(&self) -> i64 {
-        self.state_gas
+    pub const fn state_gas_refunded(&self) -> u64 {
+        self.state_gas_refunded
+    }
+
+    /// Sets the cumulative state gas refunded on this tracker.
+    #[inline]
+    pub const fn set_state_gas_refunded(&mut self, val: u64) {
+        self.state_gas_refunded = val;
+    }
+
+    /// Returns the net cumulative state gas spent on this tracker
+    /// (`state_gas` minus `state_gas_refunded`, saturating at zero).
+    #[inline]
+    pub const fn state_gas_spent(&self) -> u64 {
+        self.state_gas.saturating_sub(self.state_gas_refunded)
     }
 
     /// Returns the refunded gas.
@@ -122,25 +139,16 @@ impl GasTracker {
         false
     }
 
-    /// Records a state gas cost (EIP-8037 reservoir model).
+    /// Records a state gas charge (EIP-8037 reservoir model).
     ///
-    /// A positive `cost` deducts from the reservoir first, spilling into
-    /// `remaining` when the reservoir is exhausted. A negative `cost` refills
-    /// the reservoir by `|cost|` (used when the derived state gas of a frame
-    /// turns out to be negative, e.g. due to 0→x→0 storage restoration that
-    /// unwinds a prior charge).
-    ///
-    /// `state_gas` accumulates the signed `cost` regardless of whether the
-    /// regular-gas spill succeeded; the boolean return reports whether the
-    /// regular-gas budget was sufficient. Callers should treat `false` as OOG.
+    /// Deducts from the reservoir first, spilling into `remaining` when the
+    /// reservoir is exhausted. `state_gas` accumulates the charge regardless
+    /// of whether the regular-gas spill succeeded; the boolean return reports
+    /// whether the regular-gas budget was sufficient. Callers should treat
+    /// `false` as OOG.
     #[inline]
-    pub const fn record_state_cost(&mut self, cost: i64) -> bool {
+    pub const fn record_state_cost(&mut self, cost: u64) -> bool {
         self.state_gas = self.state_gas.saturating_add(cost);
-        if cost < 0 {
-            self.reservoir = self.reservoir.saturating_add((-cost) as u64);
-            return true;
-        }
-        let cost = cost as u64;
         if self.reservoir >= cost {
             self.reservoir -= cost;
             return true;
@@ -149,8 +157,21 @@ impl GasTracker {
         let success = self.record_regular_cost(spill);
         if success {
             self.reservoir = 0;
+            return true;
         }
-        success
+        false
+    }
+
+    /// Records a state gas refund (EIP-8037 reservoir model).
+    ///
+    /// Refills the reservoir by `refund` and accumulates the value into
+    /// `state_gas_refunded`. Used when state work is undone (e.g. 0→x→0
+    /// storage restoration, failed CREATE intrinsic refund, selfdestruct
+    /// refund of accounts created in the same tx).
+    #[inline]
+    pub const fn record_state_refund(&mut self, refund: u64) {
+        self.state_gas_refunded = self.state_gas_refunded.saturating_add(refund);
+        self.reservoir = self.reservoir.saturating_add(refund);
     }
 
     /// Records a refund value.

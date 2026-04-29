@@ -275,8 +275,7 @@ pub trait Handler {
 
         // Build ResultGas from the final gas state
         // This includes all necessary fields and gas values.
-        let result_gas =
-            post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
+        let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
 
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
@@ -407,19 +406,20 @@ pub trait Handler {
             FrameResult::Call(_) => false,
         };
 
-        let create_top_state_gas = if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled()
-        {
-            let cpsb = evm.ctx().local().cpsb();
-            evm.ctx().cfg().gas_params().create_state_gas(cpsb) as i64
-        } else {
-            0
-        };
+        let create_top_state_gas =
+            if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
+                let cpsb = evm.ctx().local().cpsb();
+                evm.ctx().cfg().gas_params().create_state_gas(cpsb)
+            } else {
+                0
+            };
 
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
         let state_gas = gas.state_gas();
+        let state_gas_refunded = gas.state_gas_refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
@@ -436,22 +436,16 @@ pub trait Handler {
 
         if instruction_result.is_ok() {
             gas.set_state_gas(state_gas);
+            gas.set_state_gas_refunded(state_gas_refunded);
         } else {
-            // State changes rolled back, so no execution state gas was
-            // consumed. `state_gas` can be negative (EIP-8037 issue #2) if
-            // the top frame refilled more than it charged; clamp to zero for
-            // reservoir recovery since the combined value cannot go below
-            // zero.
-            let combined = state_gas.saturating_add_unsigned(reservoir).max(0) as u64;
-            gas.set_reservoir(combined);
+            gas.set_reservoir(reservoir);
         }
 
         // EIP-8037: for a failed top-level CREATE (or one that self-destructs
         // in init code, see EIP-6780), refund the intrinsic `create_state_gas`
-        // by recording a negative state cost — that subtracts from
-        // `state_gas` and adds back to `reservoir`.
-        if create_top_state_gas != 0 {
-            let _ = gas.record_state_cost(-create_top_state_gas);
+        // back to the reservoir.
+        if create_failed {
+            gas.record_state_refund(create_top_state_gas);
         }
 
         Ok(())

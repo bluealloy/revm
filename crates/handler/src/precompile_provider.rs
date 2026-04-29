@@ -97,10 +97,12 @@ pub fn precompile_output_to_interpreter_result(
         output: bytes,
     };
 
-    // Convert the precompile's new-state counters into a state-gas charge on
-    // the result's gas tracker. The reservoir is already set above.
-    let state_gas = output.new_state.state_gas_spent(gas_params, cpsb);
-    let _ = result.gas.record_state_cost(state_gas);
+    // Convert the precompile's new-state counters into state-gas charges and
+    // refunds on the result's gas tracker. The reservoir is already set above.
+    let (state_gas_charged, state_gas_refunded) =
+        output.new_state.state_gas_charged_and_refunded(gas_params, cpsb);
+    result.gas.record_state_refund(state_gas_refunded);
+    let _ = result.gas.record_state_cost(state_gas_charged);
     result.gas.record_refund(output.gas_refunded);
 
     // spend used gas.

@@ -7,7 +7,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
-    state_gas: i64,
+    state_gas: u64,
     reservoir: u64,
 }
 
@@ -30,13 +30,9 @@ impl GasInspector {
         self.last_gas_cost
     }
 
-    /// Returns the cumulative state gas charged on the gas tracker (signed).
-    ///
-    /// Can be negative within a call frame (EIP-8037 issue #2): a child that
-    /// restores a slot set by its parent via 0→x→0 goes negative until the
-    /// frame returns and the parent's charge is reconciled.
+    /// Returns the cumulative state gas charged on the gas tracker.
     #[inline]
-    pub const fn state_gas(&self) -> i64 {
+    pub const fn state_gas(&self) -> u64 {
         self.state_gas
     }
 
