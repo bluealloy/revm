@@ -630,31 +630,61 @@ impl EthFrame<EthInterpreter> {
 }
 
 /// Handles the remaining gas of the parent frame.
-///
-/// Under the deferred state-gas model (EIP-8037), the child frame applies its
-/// own state-gas to its gas tracker at frame return (`process_next_action`):
-/// on success the charge is committed to `reservoir` / `remaining`, on
-/// revert/halt the per-frame counters are dropped. As a result the child's
-/// reservoir is always "the parent's pre-call value plus the net effect of
-/// successful sub-work" — there's no spill-on-revert distortion to undo here.
 #[inline]
 pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, child_gas: &Gas) {
-    parent_gas.set_reservoir(child_gas.reservoir());
-
     if is_success {
-        // Audit totals: accumulate child's contribution into the parent's.
-        // (state_gas_spent / refill_amount on the gas tracker are populated
-        // by the child's process_next_action when state-gas was applied.)
+        // On success: parent takes the child's final reservoir.
+        parent_gas.set_reservoir(child_gas.reservoir());
+        // Accumulate child's state gas into parent's total.
+        // Parent may have already charged state gas (e.g., new_account + create) before
+        // creating the child frame. Child starts with state_gas_spent=0, so we must add
+        // rather than overwrite to preserve the parent's prior charges.
+        //
+        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
+        // child did more 0→x→0 restorations than 0→x creations; the negative
+        // contribution is the parent's matching charge flowing back out.
         parent_gas.set_state_gas_spent(
             parent_gas
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
         );
+        // Propagate child's 0→x→0 refill total so that if the parent
+        // later reverts/halts, the refill contribution can be unwound.
         parent_gas.set_refill_amount(
             parent_gas
                 .refill_amount()
                 .saturating_add(child_gas.refill_amount()),
         );
+    } else {
+        // On revert or halt: child state changes are rolled back. Compute
+        // the gas to add to parent's pre-call reservoir as:
+        //
+        //   excess = max(0, child.reservoir + max(0, child.state_gas_spent)
+        //                  - parent.reservoir - child.refill_amount)
+        //
+        // The intuition:
+        // * `child.reservoir + max(0, child.state_gas_spent)` is the
+        //   "logical refund" if no refills had happened: it adds back the
+        //   child's own state-gas charges (positive `state_gas_spent`) on
+        //   top of whatever reservoir value the child carried out
+        //   (including refunds propagated from deeper halted/reverted
+        //   sub-frames, which reach `child.reservoir` via `set_reservoir`).
+        // * Subtracting `parent.reservoir` (the pre-call value) and the
+        //   in-frame 0→x→0 refill total leaves only the contribution that
+        //   genuinely belongs to the parent on revert/halt — i.e. own
+        //   charges + grandchild propagations.
+        // * The `max(0, ...)` guards against cases where own charges
+        //   spilled into regular gas (irrecoverable) and the refunded
+        //   charges are smaller than the refill the child did against
+        //   parent's prior charges.
+        let logical_refund = child_gas
+            .reservoir()
+            .saturating_add(child_gas.state_gas_spent().max(0) as u64);
+        let baseline = parent_gas
+            .reservoir()
+            .saturating_add(child_gas.refill_amount());
+        let excess = logical_refund.saturating_sub(baseline);
+        parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
     }
 }
 
