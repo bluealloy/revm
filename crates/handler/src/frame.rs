@@ -436,18 +436,24 @@ impl EthFrame<EthInterpreter> {
             interpreter_result.result.is_ok()
         };
 
-        // EIP-8037 deferred state-gas reconciliation:
-        // - on commit: refund first (grows reservoir), then charge (may OOG)
-        // - otherwise: drop the counters (state work undone, no charge)
+        // EIP-8037 deferred state-gas reconciliation. Apply only the net
+        // delta between charges and refunds:
+        // - charges > refunds: deduct the difference from the reservoir
+        //   (may spill into regular gas → OOG)
+        // - refunds > charges: refill the reservoir by the difference
+        // - on revert/halt: drop the counters (state work undone, no charge)
         let new_state = self.interpreter.new_state;
         self.interpreter.new_state.clear();
         if commit {
-            interpreter_result
-                .gas
-                .refill_reservoir(new_state.state_gas_refunded);
-            if !interpreter_result.gas.record_state_cost(new_state.state_gas) {
-                interpreter_result.result = InstructionResult::OutOfGas;
-                commit = false;
+            if new_state.state_gas >= new_state.state_gas_refunded {
+                let net_cost = new_state.state_gas - new_state.state_gas_refunded;
+                if !interpreter_result.gas.record_state_cost(net_cost) {
+                    interpreter_result.result = InstructionResult::OutOfGas;
+                    commit = false;
+                }
+            } else {
+                let net_refund = new_state.state_gas_refunded - new_state.state_gas;
+                interpreter_result.gas.refill_reservoir(net_refund);
             }
         }
 
