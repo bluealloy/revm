@@ -232,27 +232,19 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
         )
     );
 
-    // state gas for new slot creation (EIP-8037)
+    // EIP-8037: bump per-frame state-gas counters. Reconciled at frame return.
     if context.host.is_amsterdam_eip8037_enabled() {
-        let cpsb = context.host.cpsb();
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .sstore_state_gas(&state_load.data, cpsb)
-        );
-
-        // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
-        // directly rather than routing the state gas through the capped refund
-        // counter. The regular-gas portion of the restoration still flows
-        // through `sstore_refund` below.
-        let refill = context
-            .host
-            .gas_params()
-            .sstore_state_gas_refill(&state_load.data, cpsb);
-        if refill > 0 {
-            context.interpreter.gas.refill_reservoir(refill);
+        let vals = &state_load.data;
+        // SSTORE 0→x: charge a new-slot.
+        if vals.new_values_changes_present()
+            && vals.is_original_eq_present()
+            && vals.is_original_zero()
+        {
+            context.interpreter.new_state.add_storage();
+        }
+        // SSTORE x→0 against an originally-zero slot: refund.
+        if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
+            context.interpreter.new_state.remove_storage();
         }
     }
 
@@ -360,15 +352,9 @@ pub fn selfdestruct<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resu
             .selfdestruct_cost(should_charge_topup, res.is_cold)
     );
 
-    // State gas for new account creation (EIP-8037)
+    // State gas for new account creation (EIP-8037).
     if context.host.is_amsterdam_eip8037_enabled() && should_charge_topup {
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .new_account_state_gas(context.host.cpsb())
-        );
+        context.interpreter.new_state.add_call_account();
     }
 
     if !res.previously_destroyed {

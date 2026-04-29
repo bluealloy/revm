@@ -87,16 +87,9 @@ pub fn create<IT: ITy, const IS_CREATE2: bool, H: Host + ?Sized>(
     };
 
     // State gas for account creation + contract metadata (EIP-8037).
-    // Charged upfront on the parent's tracker; `return_create` refunds the same
-    // amount (derived from cfg) on entry and re-records it on a successful commit.
+    // Bumps the per-frame state-gas counter; reconciled at frame return.
     if context.host.is_amsterdam_eip8037_enabled() {
-        state_gas!(
-            context.interpreter,
-            context
-                .host
-                .gas_params()
-                .create_state_gas(context.host.cpsb())
-        );
+        context.interpreter.new_state.add_create_account();
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();

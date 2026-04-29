@@ -2,7 +2,7 @@ use crate::{
     evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
     CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
 };
-use context::{result::FromStringError, LocalContextTr};
+use context::result::FromStringError;
 use context_interface::{
     context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
@@ -22,7 +22,7 @@ use interpreter::{
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-    keccak256, Address, Bytes, U256,
+    keccak256, Bytes, U256,
 };
 use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
@@ -413,38 +413,97 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => result,
         };
 
-        // Handle return from frame
-        let result = match &self.data {
-            FrameData::Call(frame) => {
-                // return_call
-                // Revert changes or not.
-                if interpreter_result.result.is_ok() {
-                    context.journal_mut().checkpoint_commit();
-                } else {
-                    context.journal_mut().checkpoint_revert(self.checkpoint);
-                }
-                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                    interpreter_result,
-                    frame.return_memory_range.clone(),
-                )))
-            }
-            FrameData::Create(frame) => {
-                return_create(
-                    context,
-                    self.checkpoint,
-                    &mut interpreter_result,
-                    frame.created_address,
-                );
+        // For Create frames, run validation + bump new_state for code deposit.
+        // This may set interpreter_result.result to a failure variant.
+        let create_address = match &self.data {
+            FrameData::Create(frame) => Some(frame.created_address),
+            FrameData::Call(_) => None,
+        };
+        if create_address.is_some() {
+            return_create(context, &mut self.interpreter, &mut interpreter_result);
+        }
 
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
+        // Apply per-frame state-gas reconciliation (EIP-8037, deferred model).
+        // - on ok: refund first (grows reservoir), then charge (may OOG)
+        // - on revert/halt: drop the counters (state work undone, no charge)
+        let new_state = self.interpreter.new_state;
+        self.interpreter.new_state.clear();
+        if interpreter_result.result.is_ok() {
+            interpreter_result
+                .gas
+                .refill_reservoir(new_state.state_gas_refunded);
+            if !interpreter_result.gas.record_state_cost(new_state.state_gas) {
+                interpreter_result.result = InstructionResult::OutOfGas;
             }
+        }
+
+        // Commit or revert the journal based on the final result; for a
+        // successful CREATE, also persist the deployed bytecode.
+        if interpreter_result.result.is_ok() {
+            context.journal_mut().checkpoint_commit();
+            if let Some(address) = create_address {
+                let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
+                context.journal_mut().set_code(address, bytecode);
+                interpreter_result.result = InstructionResult::Return;
+            }
+        } else {
+            context.journal_mut().checkpoint_revert(self.checkpoint);
+        }
+
+        let result = match &self.data {
+            FrameData::Call(frame) => ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
+                interpreter_result,
+                frame.return_memory_range.clone(),
+            ))),
+            FrameData::Create(frame) => ItemOrResult::Result(FrameResult::Create(
+                CreateOutcome::new(interpreter_result, Some(frame.created_address)),
+            )),
         };
 
         Ok(result)
     }
+
+    /*
+
+    10:5 regular:reservoir
+
+    1:6 sstore 1 regular 6 state.
+
+    call1 10:5 state_created:0 state_refunded:0
+    add 9:5 state_created:0 state_refunded:0
+    call2 9:5 state_created:0 state_refunded:0
+    sstore 8:5 state_created:6 state_refunded:0
+    call2 return ok 7:0 state_created:6 state_refunded:0
+    call1 7:0 state_created:6 state_refunded:0
+    call3 7:0 state_created:0 state_refunded:0
+    sstore 6:0 state_created:6 state_refunded:0
+
+        call3 ok 1:0 state_created:6 state_refunded:0
+        call1 1:0 state_created:12 state_refunded:0
+
+        call3 halts: 6:0 state_created:0 state_refunded:0
+        call1 6:0 state_created:6 state_refunded:0
+
+        call3 reverts: 6:0 state_created:6 state_refunded:0
+        call1 6:0 state_created:6 state_refunded:0
+
+    call1 1:0 state_created:12 state_refunded:0
+
+        case call1 return ok: Expectation two sstores were created 12 gas should be spent.
+        call1 1:0
+
+        case call1 return halt: Expectation two sstores were created 12 gas should be returned.
+        call1 0:5 (use previous parent gas value)
+
+        case call1 return revert: Expectation two sstores were created 12 gas should be returned.
+        call1 1:12 reservoir gets increased by 12.
+
+
+
+    Rules:
+    * Inside one frame
+
+    */
 
     /// Processes a frame result and updates the interpreter state accordingly.
     pub fn return_result<CTX: ContextTr, ERROR: From<ContextTrDbError<CTX>> + FromStringError>(
@@ -516,36 +575,37 @@ impl EthFrame<EthInterpreter> {
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let this_gas = &mut interpreter.gas;
-                // Refund unused gas for success and revert cases.
-                if instruction_result.is_ok_or_revert() {
-                    this_gas.erase_cost(outcome.gas().remaining());
+                {
+                    let this_gas = &mut interpreter.gas;
+                    // Refund unused gas for success and revert cases.
+                    if instruction_result.is_ok_or_revert() {
+                        this_gas.erase_cost(outcome.gas().remaining());
+                    }
+
+                    // handle reservoir remaining gas
+                    handle_reservoir_remaining_gas(
+                        instruction_result.is_ok(),
+                        this_gas,
+                        outcome.gas(),
+                    );
+
+                    if instruction_result.is_ok() {
+                        this_gas.record_refund(outcome.gas().refunded());
+                    }
                 }
 
-                // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(instruction_result.is_ok(), this_gas, outcome.gas());
-
-                // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent`.
-                // The nonce-overflow path reports `InstructionResult::Return` (ok)
-                // with `address == None`, so gate on address rather than the result.
-                //
-                // Use `refill_reservoir` so that this refund is counted in
-                // `refill_amount` and gets unwound if the parent itself
-                // reverts/halts (matching 0→x→0 storage restoration).
+                // EIP-8037 (deferred model): the CREATE opcode bumped this
+                // frame's `new_state.add_create_account()` for the upfront
+                // create_state_gas. On child failure (revert/halt/early-fail
+                // paths that return `address == None` — nonce overflow, depth,
+                // OutOfFunds), undo the bump so the parent doesn't end up
+                // charged for a CREATE that didn't deploy.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
-
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
-                    let state_gas_charged =
-                        ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
-                    this_gas.refill_reservoir(state_gas_charged);
+                    interpreter.new_state.remove_create_account();
                 }
 
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO
@@ -561,124 +621,83 @@ impl EthFrame<EthInterpreter> {
 }
 
 /// Handles the remaining gas of the parent frame.
+///
+/// Under the deferred state-gas model (EIP-8037), the child frame applies its
+/// own state-gas to its gas tracker at frame return (`process_next_action`):
+/// on success the charge is committed to `reservoir` / `remaining`, on
+/// revert/halt the per-frame counters are dropped. As a result the child's
+/// reservoir is always "the parent's pre-call value plus the net effect of
+/// successful sub-work" — there's no spill-on-revert distortion to undo here.
 #[inline]
 pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, child_gas: &Gas) {
+    parent_gas.set_reservoir(child_gas.reservoir());
+
     if is_success {
-        // On success: parent takes the child's final reservoir.
-        parent_gas.set_reservoir(child_gas.reservoir());
-        // Accumulate child's state gas into parent's total.
-        // Parent may have already charged state gas (e.g., new_account + create) before
-        // creating the child frame. Child starts with state_gas_spent=0, so we must add
-        // rather than overwrite to preserve the parent's prior charges.
-        //
-        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
-        // child did more 0→x→0 restorations than 0→x creations; the negative
-        // contribution is the parent's matching charge flowing back out.
+        // Audit totals: accumulate child's contribution into the parent's.
+        // (state_gas_spent / refill_amount on the gas tracker are populated
+        // by the child's process_next_action when state-gas was applied.)
         parent_gas.set_state_gas_spent(
             parent_gas
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
         );
-        // Propagate child's 0→x→0 refill total so that if the parent
-        // later reverts/halts, the refill contribution can be unwound.
         parent_gas.set_refill_amount(
             parent_gas
                 .refill_amount()
                 .saturating_add(child_gas.refill_amount()),
         );
-    } else {
-        // On revert or halt: child state changes are rolled back. Compute
-        // the gas to add to parent's pre-call reservoir as:
-        //
-        //   excess = max(0, child.reservoir + max(0, child.state_gas_spent)
-        //                  - parent.reservoir - child.refill_amount)
-        //
-        // The intuition:
-        // * `child.reservoir + max(0, child.state_gas_spent)` is the
-        //   "logical refund" if no refills had happened: it adds back the
-        //   child's own state-gas charges (positive `state_gas_spent`) on
-        //   top of whatever reservoir value the child carried out
-        //   (including refunds propagated from deeper halted/reverted
-        //   sub-frames, which reach `child.reservoir` via `set_reservoir`).
-        // * Subtracting `parent.reservoir` (the pre-call value) and the
-        //   in-frame 0→x→0 refill total leaves only the contribution that
-        //   genuinely belongs to the parent on revert/halt — i.e. own
-        //   charges + grandchild propagations.
-        // * The `max(0, ...)` guards against cases where own charges
-        //   spilled into regular gas (irrecoverable) and the refunded
-        //   charges are smaller than the refill the child did against
-        //   parent's prior charges.
-        let logical_refund = child_gas
-            .reservoir()
-            .saturating_add(child_gas.state_gas_spent().max(0) as u64);
-        let baseline = parent_gas
-            .reservoir()
-            .saturating_add(child_gas.refill_amount());
-        let excess = logical_refund.saturating_sub(baseline);
-        parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
     }
 }
 
-/// Handles the result of a CREATE operation, including validation and state updates.
+/// Validates the deployed bytecode of a successful CREATE/CREATE2 and bumps
+/// the per-frame state-gas counter. Charging state gas and committing the
+/// journal are handled by [`EthFrame::process_next_action`] after this call.
 ///
-/// The EIP-8037 upfront CREATE state gas is charged on the parent's tracker by
-/// the CREATE/CREATE2 opcode. On child failure (revert/halt/early-fail) it is
-/// refunded to the parent in `return_result`. The child frame is NOT allowed to
-/// borrow the upfront charge to pay for code deposit: it must cover code deposit
-/// state gas from its own reservoir and remaining gas.
+/// Sets `interpreter_result.result` to a failure variant (e.g.
+/// `CreateContractSizeLimit`, `OutOfGas`) when validation or gas charges fail;
+/// the caller is responsible for journal revert in that case.
 pub fn return_create<CTX: ContextTr>(
     context: &mut CTX,
-    checkpoint: JournalCheckpoint,
+    interpreter: &mut Interpreter<EthInterpreter>,
     interpreter_result: &mut InterpreterResult,
-    address: Address,
 ) {
-    let (_, _, cfg, journal, _, local) = context.all_mut();
+    let (_, _, cfg, _, _, _) = context.all_mut();
 
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
     let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
-    let cpsb = local.cpsb();
     let gas_params = cfg.gas_params();
 
-    // If return is not ok revert and return.
+    // If return is not ok, nothing to validate or charge.
     if !interpreter_result.result.is_ok() {
-        journal.checkpoint_revert(checkpoint);
         return;
     }
 
-    // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7954 increased this limit to 0x8000 (~32kb).
-    // This must be checked BEFORE charging state gas for code deposit,
-    // so that oversized code does not incur storage gas costs.
+    // EIP-170 / EIP-7954: code size limit. Checked BEFORE state gas so
+    // oversized code does not incur storage gas costs.
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
         return;
     }
 
-    // Host error if present on execution
-    // If ok, check contract creation limit and calculate gas deduction on output len.
-    //
-    // EIP-3541: Reject new contract code starting with the 0xEF byte
+    // EIP-3541: reject new contract code starting with the 0xEF byte.
     if !is_eip3541_disabled
         && spec_id.is_enabled_in(LONDON)
         && interpreter_result.output.first() == Some(&0xEF)
     {
-        journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
         return;
     }
 
-    // regular gas for code deposit. It is zero in EIP-8037.
+    // Regular gas for code deposit. Zero under EIP-8037.
     let gas_for_code = gas_params.code_deposit_cost(interpreter_result.output.len());
     if !interpreter_result.gas.record_regular_cost(gas_for_code) {
-        // Record code deposit gas cost and check if we are out of gas.
-        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
-        // final gas fee for adding the contract code to the state, the contract
-        // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
+        // EIP-2 point 3: If contract creation does not have enough gas to pay
+        // for the final gas fee for adding the contract code to the state,
+        // the contract creation fails (i.e. goes out-of-gas) rather than
+        // leaving an empty contract.
         if spec_id.is_enabled_in(HOMESTEAD) {
-            journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
             return;
         } else {
@@ -686,41 +705,20 @@ pub fn return_create<CTX: ContextTr>(
         }
     }
 
-    // EIP-8037: Hash cost for deployed bytecode (keccak256)
-    // HASH_COST(L) = 6 × ceil(L / 32)
-    // Both CREATE and CREATE2 must pay this cost: it covers hashing the deployed code
-    // to compute the code_hash stored in the account. CREATE2's existing keccak256 charge
-    // (in create2_cost) is for hashing the init code during address derivation, which is
-    // a different hash.
+    // EIP-8037: hash cost for deployed bytecode (keccak256).
+    // HASH_COST(L) = 6 × ceil(L / 32). Both CREATE and CREATE2 pay this — it
+    // covers hashing the deployed code to compute the code_hash stored on the
+    // account (distinct from CREATE2's init-code hash).
     if is_amsterdam_eip8037 {
         let hash_cost = gas_params.keccak256_cost(interpreter_result.output.len());
         if !interpreter_result.gas.record_regular_cost(hash_cost) {
-            journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
             return;
         }
-        // State gas for code deposit (EIP-8037).
-        // Charged after size check: only code that passes validation incurs state gas cost.
-        //
-        // Note: This should be last operation before checkpoint commit as spending state before this messes
-        // with refilling of state gas.
-        let state_gas_for_code =
-            gas_params.code_deposit_state_gas(interpreter_result.output.len(), cpsb);
-        if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
-            journal.checkpoint_revert(checkpoint);
-            interpreter_result.result = InstructionResult::OutOfGas;
-            return;
-        }
+        // State gas for code deposit accumulates on the frame's NewStateTracker;
+        // the actual reservoir charge happens in process_next_action.
+        interpreter
+            .new_state
+            .add_code_deposit_bytes(interpreter_result.output.len() as u64);
     }
-
-    // If we have enough gas we can commit changes.
-    journal.checkpoint_commit();
-
-    // Do analysis of bytecode straight away.
-    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
-
-    // Set code
-    journal.set_code(address, bytecode);
-
-    interpreter_result.result = InstructionResult::Return;
 }

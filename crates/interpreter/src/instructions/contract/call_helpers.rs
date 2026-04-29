@@ -75,8 +75,11 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     // deduct dynamic gas.
     gas!(interpreter, gas);
 
-    // deduct state gas (EIP-8037) if any.
-    state_gas!(interpreter, state_gas_cost);
+    // EIP-8037: bump per-frame state-gas counter for a CALL that materializes
+    // a new empty account (value transfer to an empty account).
+    if state_gas_cost > 0 {
+        interpreter.new_state.add_call_account();
+    }
 
     let interpreter = &mut context.interpreter;
     let host = &mut context.host;

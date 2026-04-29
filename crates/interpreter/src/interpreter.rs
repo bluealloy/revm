@@ -22,7 +22,10 @@ use crate::{
     InstructionExecResult, InstructionResult, InstructionTable, InterpreterAction,
 };
 use bytecode::Bytecode;
-use context_interface::{cfg::GasParams, host::LoadError};
+use context_interface::{
+    cfg::{GasParams, NewStateTracker},
+    host::LoadError,
+};
 use primitives::{hardfork::SpecId, hints_util::cold_path, Bytes};
 
 /// Main interpreter structure that contains all components defined in [`InterpreterTypes`].
@@ -33,6 +36,9 @@ pub struct Interpreter<WIRE: InterpreterTypes = EthInterpreter> {
     pub bytecode: WIRE::Bytecode,
     /// Gas tracking for execution costs.
     pub gas: Gas,
+    /// Per-frame EIP-8037 state-gas accumulator. Reset on every frame entry;
+    /// reconciled with `gas` at frame return (see `EthFrame::process_next_action`).
+    pub new_state: NewStateTracker,
     /// EVM stack for computation.
     pub stack: WIRE::Stack,
     /// Buffer for return data from calls.
@@ -103,6 +109,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         Self {
             bytecode,
             gas: Gas::new(gas_limit),
+            new_state: NewStateTracker::new(),
             stack,
             return_data: Default::default(),
             memory,
@@ -128,6 +135,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         let Self {
             bytecode: bytecode_ref,
             gas,
+            new_state,
             stack,
             return_data,
             memory: memory_ref,
@@ -137,6 +145,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         } = self;
         *bytecode_ref = bytecode;
         *gas = Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir_remaining_gas);
+        new_state.clear();
         if stack.data().capacity() == 0 {
             *stack = Stack::new();
         } else {
