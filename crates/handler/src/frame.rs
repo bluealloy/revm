@@ -443,6 +443,7 @@ impl EthFrame<EthInterpreter> {
         // - refunds > charges: refill the reservoir by the difference
         // - on revert/halt: drop the counters (state work undone, no charge)
         let new_state = self.interpreter.new_state;
+
         self.interpreter.new_state.clear();
         if commit {
             if new_state.state_gas >= new_state.state_gas_refunded {
@@ -455,6 +456,13 @@ impl EthFrame<EthInterpreter> {
                 let net_refund = new_state.state_gas_refunded - new_state.state_gas;
                 interpreter_result.gas.refill_reservoir(net_refund);
             }
+        } else {
+            interpreter_result.gas.set_reservoir(
+                interpreter_result
+                    .gas
+                    .reservoir()
+                    .saturating_add(new_state.state_gas),
+            );
         }
 
         if commit {
