@@ -22,7 +22,7 @@ use interpreter::{
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-    keccak256, Bytes, U256,
+    keccak256, Address, Bytes, U256,
 };
 use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
@@ -413,51 +413,60 @@ impl EthFrame<EthInterpreter> {
             InterpreterAction::Return(result) => result,
         };
 
-        // For Create frames, run validation + bump new_state for code deposit.
-        // This may set interpreter_result.result to a failure variant.
-        let create_address = match &self.data {
-            FrameData::Create(frame) => Some(frame.created_address),
-            FrameData::Call(_) => None,
+        // Snapshot the relevant frame data so the immutable borrow on
+        // `self.data` does not block mutable access to `self.interpreter`.
+        let (return_memory_range, created_address) = match &self.data {
+            FrameData::Call(f) => (Some(f.return_memory_range.clone()), None),
+            FrameData::Create(f) => (None, Some(f.created_address)),
         };
-        if create_address.is_some() {
-            return_create(context, &mut self.interpreter, &mut interpreter_result);
-        }
 
-        // Apply per-frame state-gas reconciliation (EIP-8037, deferred model).
-        // - on ok: refund first (grows reservoir), then charge (may OOG)
-        // - on revert/halt: drop the counters (state work undone, no charge)
+        // For CREATE / CREATE2: validate, charge code-deposit + hash gas,
+        // bump state-gas for deployed bytes, and (on success) persist the
+        // bytecode. `return_create` is the single owner of create-specific
+        // logic; it returns whether the journal should be committed.
+        // For CALL: commit when the interpreter returned ok.
+        let mut commit = if let Some(address) = created_address {
+            return_create(
+                context,
+                &mut self.interpreter,
+                &mut interpreter_result,
+                address,
+            )
+        } else {
+            interpreter_result.result.is_ok()
+        };
+
+        // EIP-8037 deferred state-gas reconciliation:
+        // - on commit: refund first (grows reservoir), then charge (may OOG)
+        // - otherwise: drop the counters (state work undone, no charge)
         let new_state = self.interpreter.new_state;
         self.interpreter.new_state.clear();
-        if interpreter_result.result.is_ok() {
+        if commit {
             interpreter_result
                 .gas
                 .refill_reservoir(new_state.state_gas_refunded);
             if !interpreter_result.gas.record_state_cost(new_state.state_gas) {
                 interpreter_result.result = InstructionResult::OutOfGas;
+                commit = false;
             }
         }
 
-        // Commit or revert the journal based on the final result; for a
-        // successful CREATE, also persist the deployed bytecode.
-        if interpreter_result.result.is_ok() {
+        if commit {
             context.journal_mut().checkpoint_commit();
-            if let Some(address) = create_address {
-                let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
-                context.journal_mut().set_code(address, bytecode);
-                interpreter_result.result = InstructionResult::Return;
-            }
         } else {
             context.journal_mut().checkpoint_revert(self.checkpoint);
         }
 
-        let result = match &self.data {
-            FrameData::Call(frame) => ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
+        let result = if let Some(address) = created_address {
+            ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
                 interpreter_result,
-                frame.return_memory_range.clone(),
-            ))),
-            FrameData::Create(frame) => ItemOrResult::Result(FrameResult::Create(
-                CreateOutcome::new(interpreter_result, Some(frame.created_address)),
-            )),
+                Some(address),
+            )))
+        } else {
+            ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
+                interpreter_result,
+                return_memory_range.expect("Call frame has return memory range"),
+            )))
         };
 
         Ok(result)
@@ -649,19 +658,22 @@ pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, ch
     }
 }
 
-/// Validates the deployed bytecode of a successful CREATE/CREATE2 and bumps
-/// the per-frame state-gas counter. Charging state gas and committing the
-/// journal are handled by [`EthFrame::process_next_action`] after this call.
+/// Validates the deployed bytecode of a successful CREATE/CREATE2, charges
+/// the regular code-deposit + hash gas, bumps the per-frame state-gas
+/// counter for the deployed bytes, and on success persists the bytecode in
+/// the journal.
 ///
-/// Sets `interpreter_result.result` to a failure variant (e.g.
-/// `CreateContractSizeLimit`, `OutOfGas`) when validation or gas charges fail;
-/// the caller is responsible for journal revert in that case.
+/// Returns `true` when the deployment should be committed by the caller and
+/// `false` when the caller should revert the journal checkpoint. State-gas
+/// reconciliation is handled generically in [`EthFrame::process_next_action`]
+/// after this call.
 pub fn return_create<CTX: ContextTr>(
     context: &mut CTX,
     interpreter: &mut Interpreter<EthInterpreter>,
     interpreter_result: &mut InterpreterResult,
-) {
-    let (_, _, cfg, _, _, _) = context.all_mut();
+    address: Address,
+) -> bool {
+    let (_, _, cfg, journal, _, _) = context.all_mut();
 
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
@@ -671,14 +683,14 @@ pub fn return_create<CTX: ContextTr>(
 
     // If return is not ok, nothing to validate or charge.
     if !interpreter_result.result.is_ok() {
-        return;
+        return false;
     }
 
     // EIP-170 / EIP-7954: code size limit. Checked BEFORE state gas so
     // oversized code does not incur storage gas costs.
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
         interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-        return;
+        return false;
     }
 
     // EIP-3541: reject new contract code starting with the 0xEF byte.
@@ -687,7 +699,7 @@ pub fn return_create<CTX: ContextTr>(
         && interpreter_result.output.first() == Some(&0xEF)
     {
         interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-        return;
+        return false;
     }
 
     // Regular gas for code deposit. Zero under EIP-8037.
@@ -699,7 +711,7 @@ pub fn return_create<CTX: ContextTr>(
         // leaving an empty contract.
         if spec_id.is_enabled_in(HOMESTEAD) {
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return false;
         } else {
             interpreter_result.output = Bytes::new();
         }
@@ -713,7 +725,7 @@ pub fn return_create<CTX: ContextTr>(
         let hash_cost = gas_params.keccak256_cost(interpreter_result.output.len());
         if !interpreter_result.gas.record_regular_cost(hash_cost) {
             interpreter_result.result = InstructionResult::OutOfGas;
-            return;
+            return false;
         }
         // State gas for code deposit accumulates on the frame's NewStateTracker;
         // the actual reservoir charge happens in process_next_action.
@@ -721,4 +733,10 @@ pub fn return_create<CTX: ContextTr>(
             .new_state
             .add_code_deposit_bytes(interpreter_result.output.len() as u64);
     }
+
+    // Persist the deployed bytecode.
+    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
+    journal.set_code(address, bytecode);
+    interpreter_result.result = InstructionResult::Return;
+    true
 }
