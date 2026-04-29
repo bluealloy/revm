@@ -51,9 +51,12 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // negative on 0→x→0 restoration; at the top level, post-reconciliation it
     // is expected to be >= 0 and is clamped defensively before combining with
     // intrinsic state gas.
+    //
+    // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas.
+    // The EIP-7702 reservoir refund is added back to the reservoir budget at
+    // tx start; it does not reduce the gross state gas spent reported here.
     let state_gas = (gas.state_gas_spent().max(0) as u64)
-        .saturating_add(init_and_floor_gas.initial_state_gas)
-        .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);
+        .saturating_add(init_and_floor_gas.initial_state_gas);
 
     ResultGas::default()
         .with_total_gas_spent(
