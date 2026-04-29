@@ -68,7 +68,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     }
 
     // load account delegated and deduct dynamic gas.
-    let (gas, _state_gas_cost, bytecode, code_hash) =
+    let (gas, state_gas_cost, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
     let interpreter = &mut context.interpreter;
 
@@ -76,8 +76,10 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     gas!(interpreter, gas);
 
     // EIP-8037: bump per-frame state-gas counter for a CALL that materializes
-    // a new empty account (value transfer to an empty account).
-    if context.host.is_amsterdam_eip8037_enabled() {
+    // a new empty account (value transfer to an empty account). `state_gas_cost`
+    // is non-zero only when EIP-8037 is enabled and the CALL actually creates
+    // a new empty account.
+    if state_gas_cost > 0 {
         interpreter.new_state.add_call_account();
     }
 
