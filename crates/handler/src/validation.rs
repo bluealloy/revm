@@ -197,6 +197,10 @@ pub fn validate_tx_env<CTX: ContextTr>(
                 return Err(InvalidTransaction::Eip7702NotSupported);
             }
 
+            if tx.kind().is_create() {
+                return Err(InvalidTransaction::Eip7702NotSupported);
+            }
+
             validate_priority_fee_for_tx(tx, base_fee, disable_priority_fee_check)?;
 
             let auth_list_len = tx.authorization_list_len();
