@@ -56,9 +56,19 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // The EIP-7702 reservoir refund is added back to the reservoir budget at
     // tx start; it does not reduce the gross state gas spent reported here.
     let state_gas = (gas.state_gas_spent().max(0) as u64)
-        .saturating_add(init_and_floor_gas.initial_state_gas_final());
+        .saturating_add(init_and_floor_gas.initial_state_gas);
 
-    ResultGas::default()
+    // println!("NEW:");
+    // println!("  SSS exec state gas: {:?}", gas.state_gas_spent());
+    // println!("  SSS init_and_floor_gas: {init_and_floor_gas:?}");
+    // println!(
+    //     "  SSS state_refund {}",
+    //     init_and_floor_gas.initial_eip7702_refund
+    // );
+    // println!("  SSS state_gas: {state_gas}");
+    // println!("  SSS gas: {:?}", gas.refunded());
+
+    let res = ResultGas::default()
         .with_total_gas_spent(
             gas.limit()
                 .saturating_sub(gas.remaining())
@@ -66,7 +76,11 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
         )
         .with_refunded(gas.refunded() as u64)
         .with_floor_gas(init_and_floor_gas.floor_gas())
-        .with_state_gas_spent(state_gas)
+        .with_state_gas_spent(state_gas);
+
+    //println!("  SSS res: {res:?}");
+
+    res
 }
 
 /// Ensures minimum gas floor is spent according to EIP-7623.

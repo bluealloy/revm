@@ -1585,8 +1585,8 @@ mod tests {
         let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0, cpsb);
         let expected_state_gas = gas_params.create_state_gas(cpsb);
 
-        assert_eq!(create_gas.initial_state_gas(), expected_state_gas);
-        assert_eq!(create_gas.initial_state_gas(), 131488);
+        assert_eq!(create_gas.initial_state_gas_final(), expected_state_gas);
+        assert_eq!(create_gas.initial_state_gas_final(), 131488);
 
         // initial_total_gas() returns both regular and state gas combined
         let create_cost = gas_params.tx_create_cost();
@@ -1598,7 +1598,7 @@ mod tests {
 
         // Test CALL transaction (is_create = false)
         let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0, cpsb);
-        assert_eq!(call_gas.initial_state_gas(), 0);
+        assert_eq!(call_gas.initial_state_gas_final(), 0);
         // initial_gas should be unchanged for calls
         assert_eq!(call_gas.initial_total_gas(), gas_params.tx_base_stipend());
     }
