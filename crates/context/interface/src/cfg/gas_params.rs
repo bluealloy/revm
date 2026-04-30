@@ -779,29 +779,23 @@ impl GasParams {
             .saturating_mul(cpsb)
     }
 
-    /// EIP-8037: Splits a total EIP-7702 refund into state gas and regular gas portions.
+    /// EIP-7702 per-auth refund: state-gas portion only.
     ///
-    /// At validation time, `initial_tx_gas` splits each auth cost into state + regular.
-    /// This method is the inverse: it recovers how much of the total refund was state gas.
-    ///
-    /// The state gas portion reduces `initial_state_gas` directly (not subject to refund caps).
-    /// The regular gas portion goes through the standard 1/5 refund cap.
-    ///
-    /// # Returns
-    ///
-    /// `(state_refund, regular_refund)` for the given total refund.
+    /// Pre-Amsterdam this is zero (the refund is entirely regular gas).
+    /// Under EIP-8037 the refund is entirely state gas (`NEW_ACCOUNT_BYTES * cpsb`).
     #[inline]
-    pub fn split_eip7702_refund(&self, total_refund: u64, cpsb: u64) -> (u64, u64) {
-        let per_auth_refund = self.tx_eip7702_auth_refund(cpsb);
-        let per_auth_state_gas = self.tx_eip7702_per_auth_state_gas(cpsb);
-        if per_auth_state_gas > 0 && per_auth_refund > 0 && total_refund > 0 {
-            let state_refund_per_auth = core::cmp::min(per_auth_refund, per_auth_state_gas);
-            let num_refunded = total_refund / per_auth_refund;
-            let state_refund = num_refunded * state_refund_per_auth;
-            (state_refund, total_refund - state_refund)
-        } else {
-            (0, total_refund)
-        }
+    pub fn tx_eip7702_auth_refund_state(&self, cpsb: u64) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund_state_bytes())
+            .saturating_mul(cpsb)
+    }
+
+    /// EIP-7702 per-auth refund: regular-gas portion only.
+    ///
+    /// Pre-Amsterdam this is `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (12500).
+    /// Under EIP-8037 it is zero — the refund is entirely state gas.
+    #[inline]
+    pub fn tx_eip7702_auth_refund_regular(&self) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
@@ -945,8 +939,9 @@ impl GasParams {
     /// Initial gas that is deducted for transaction to be included.
     /// Initial gas contains initial stipend gas, gas for access list and input data.
     ///
-    /// Under EIP-8037, state gas is tracked separately in `initial_state_gas` and
-    /// added to `initial_total_gas` at the end. The state gas components are:
+    /// Under EIP-8037, state gas is tracked separately in `initial_state_gas`,
+    /// while regular intrinsic gas accumulates in `initial_regular_gas`. The state
+    /// gas components are:
     /// - EIP-7702 auth list state gas (per-auth account creation + metadata costs)
     /// - For CREATE transactions: `create_state_gas` (account creation + contract metadata)
     ///
@@ -965,20 +960,18 @@ impl GasParams {
         authorization_list_num: u64,
         cpsb: u64,
     ) -> InitialAndFloorGas {
-        let mut gas = InitialAndFloorGas::default();
-
         // Initdate stipend
         let tokens_in_calldata =
             get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
 
         // EIP-7702: Compute auth list costs.
         // Under EIP-8037, tx_eip7702_per_empty_account_cost bundles regular + state gas.
-        // We split them: regular goes in initial_total_gas, state goes in initial_state_gas.
+        // We split them: regular goes in initial_regular_gas, state goes in initial_state_gas.
         let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost(cpsb);
         let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas(cpsb);
         let auth_regular_cost = auth_total_cost - auth_state_gas;
 
-        gas.initial_total_gas += tokens_in_calldata * self.tx_token_cost()
+        let mut initial_regular_gas = tokens_in_calldata * self.tx_token_cost()
             // before berlin tx_access_list_address_cost will be zero
             + access_list_accounts * self.tx_access_list_address_cost()
             // before berlin tx_access_list_storage_key_cost will be zero
@@ -988,33 +981,31 @@ impl GasParams {
             + auth_regular_cost;
 
         // EIP-8037: Track auth list state gas separately for reservoir handling.
-        // State gas is added to initial_total_gas at the end of this function.
-        gas.initial_state_gas += auth_state_gas;
+        let mut initial_state_gas = auth_state_gas;
 
         if is_create {
             // EIP-2: Homestead Hard-fork Changes
-            gas.initial_total_gas += self.tx_create_cost();
+            initial_regular_gas += self.tx_create_cost();
 
             // EIP-3860: Limit and meter initcode
-            gas.initial_total_gas += self.tx_initcode_cost(input.len());
+            initial_regular_gas += self.tx_initcode_cost(input.len());
 
             // EIP-8037: State gas for CREATE transactions.
             // create_state_gas covers both account creation and contract metadata.
-            gas.initial_state_gas += self.create_state_gas(cpsb);
+            initial_state_gas += self.create_state_gas(cpsb);
         }
 
         // Calculate gas floor. Introduced by EIP-7623, updated by EIP-7976, and
         // extended by EIP-7981 to include access-list data alongside calldata.
         let access_list_floor_tokens =
             self.tx_floor_tokens_in_access_list(access_list_accounts, access_list_storages);
-        gas.floor_gas =
+        let floor_gas =
             self.tx_floor_cost(input) + access_list_floor_tokens * self.tx_floor_cost_per_token();
 
-        // EIP-8037: Include state gas in total initial gas.
-        // State gas is a subset of initial_total_gas, deducted before execution starts.
-        gas.initial_total_gas += gas.initial_state_gas;
-
-        gas
+        InitialAndFloorGas::default()
+            .with_initial_regular_gas(initial_regular_gas)
+            .with_initial_state_gas(initial_state_gas)
+            .with_floor_gas(floor_gas)
     }
 }
 
@@ -1594,22 +1585,22 @@ mod tests {
         let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0, cpsb);
         let expected_state_gas = gas_params.create_state_gas(cpsb);
 
-        assert_eq!(create_gas.initial_state_gas, expected_state_gas);
-        assert_eq!(create_gas.initial_state_gas, 131488);
+        assert_eq!(create_gas.initial_state_gas(), expected_state_gas);
+        assert_eq!(create_gas.initial_state_gas(), 131488);
 
-        // initial_total_gas includes both regular and state gas
+        // initial_total_gas() returns both regular and state gas combined
         let create_cost = gas_params.tx_create_cost();
         let initcode_cost = gas_params.tx_initcode_cost(0);
         assert_eq!(
-            create_gas.initial_total_gas,
+            create_gas.initial_total_gas(),
             gas_params.tx_base_stipend() + create_cost + initcode_cost + expected_state_gas
         );
 
         // Test CALL transaction (is_create = false)
         let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0, cpsb);
-        assert_eq!(call_gas.initial_state_gas, 0);
+        assert_eq!(call_gas.initial_state_gas(), 0);
         // initial_gas should be unchanged for calls
-        assert_eq!(call_gas.initial_total_gas, gas_params.tx_base_stipend());
+        assert_eq!(call_gas.initial_total_gas(), gas_params.tx_base_stipend());
     }
 
     #[test]
@@ -1633,7 +1624,7 @@ mod tests {
         let gas = params.initial_tx_gas(b"", false, 2, 3, 0, 0);
         let expected_al_floor = (40 + 96) * 4 * params.tx_floor_cost_per_token();
         assert_eq!(
-            gas.floor_gas,
+            gas.floor_gas(),
             params.tx_floor_cost_base_gas() + expected_al_floor,
         );
 
@@ -1642,6 +1633,6 @@ mod tests {
         assert_eq!(prague.tx_access_list_floor_byte_multiplier(), 0);
         assert_eq!(prague.tx_floor_tokens_in_access_list(2, 3), 0);
         let prague_gas = prague.initial_tx_gas(b"", false, 2, 3, 0, 0);
-        assert_eq!(prague_gas.floor_gas, prague.tx_floor_cost_base_gas());
+        assert_eq!(prague_gas.floor_gas(), prague.tx_floor_cost_base_gas());
     }
 }

@@ -56,7 +56,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // The EIP-7702 reservoir refund is added back to the reservoir budget at
     // tx start; it does not reduce the gross state gas spent reported here.
     let state_gas = (gas.state_gas_spent().max(0) as u64)
-        .saturating_add(init_and_floor_gas.initial_state_gas);
+        .saturating_add(init_and_floor_gas.initial_state_gas());
 
     ResultGas::default()
         .with_total_gas_spent(
@@ -65,7 +65,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
                 .saturating_sub(gas.reservoir()),
         )
         .with_refunded(gas.refunded() as u64)
-        .with_floor_gas(init_and_floor_gas.floor_gas)
+        .with_floor_gas(init_and_floor_gas.floor_gas())
         .with_state_gas_spent(state_gas)
 }
 
@@ -79,12 +79,12 @@ pub const fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialA
     // The floor must apply to this combined value, not just (limit - remaining).
     let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
     let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
-    if gas_used_after_refund < init_and_floor_gas.floor_gas {
+    if gas_used_after_refund < init_and_floor_gas.floor_gas() {
         // Match execution-specs: when the floor wins, the unused state gas
         // (reservoir) is absorbed into the floor cost rather than reimbursed
         // separately. Zeroing it keeps `reimburse_caller`'s
         // `remaining + reservoir + refunded` sum equal to `limit - floor`.
-        gas.set_spent(init_and_floor_gas.floor_gas);
+        gas.set_spent(init_and_floor_gas.floor_gas());
         gas.set_reservoir(0);
         gas.set_refund(0);
     }

@@ -264,6 +264,8 @@ pub trait Handler {
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
     ) -> Result<ResultGas, Self::Error> {
+
+        //println!("init_and_floor_gas: {:?}", exec_result.gas());
         // EIP-8037: Refund reservoir for accounts that were created and then
         // self-destructed in this tx (EIP-6780 erasure). Runs first so the
         // updated reservoir feeds into refund, reimbursement, and beneficiary
