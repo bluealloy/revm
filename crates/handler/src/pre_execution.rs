@@ -225,11 +225,7 @@ pub fn apply_eip7702_auth_list<
     let state_refund = params
         .tx_eip7702_auth_refund_state(cpsb)
         .saturating_mul(num_refunded_accounts);
-    init_and_floor_gas.set_initial_state_gas(
-        init_and_floor_gas
-            .initial_state_gas()
-            .saturating_sub(state_refund),
-    );
+    init_and_floor_gas.initial_eip7702_refund = state_refund;
 
     let eip7702_regular_refund_raw = params
         .tx_eip7702_auth_refund_regular()

@@ -56,7 +56,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // The EIP-7702 reservoir refund is added back to the reservoir budget at
     // tx start; it does not reduce the gross state gas spent reported here.
     let state_gas = (gas.state_gas_spent().max(0) as u64)
-        .saturating_add(init_and_floor_gas.initial_state_gas());
+        .saturating_add(init_and_floor_gas.initial_state_gas_final());
 
     ResultGas::default()
         .with_total_gas_spent(

@@ -320,6 +320,9 @@ pub struct InitialAndFloorGas {
     /// - For CREATE transactions: `create_state_gas` (account creation + contract metadata)
     /// - For CALL transactions: 0 (state gas is unpredictable at validation time)
     pub initial_state_gas: u64,
+    /// EIP-7702 refund for existing authorities.
+    /// This is the refund given when an authorization is applied to an already existing account.
+    pub initial_eip7702_refund: u64,
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
@@ -334,6 +337,7 @@ impl InitialAndFloorGas {
         Self {
             initial_regular_gas,
             initial_state_gas: 0,
+            initial_eip7702_refund: 0,
             floor_gas,
         }
     }
@@ -348,6 +352,7 @@ impl InitialAndFloorGas {
         Self {
             initial_regular_gas,
             initial_state_gas,
+            initial_eip7702_refund: 0,
             floor_gas,
         }
     }
@@ -364,9 +369,10 @@ impl InitialAndFloorGas {
     }
 
     /// State gas component of the initial intrinsic gas.
+    /// This is the state gas component of the initial intrinsic gas minus the EIP-7702 refund.
     #[inline]
-    pub const fn initial_state_gas(&self) -> u64 {
-        self.initial_state_gas
+    pub const fn initial_state_gas_final(&self) -> u64 {
+        self.initial_state_gas - self.initial_eip7702_refund
     }
 
     /// EIP-7623 floor gas.
@@ -378,7 +384,7 @@ impl InitialAndFloorGas {
     /// Total initial intrinsic gas: `initial_regular_gas + initial_state_gas`.
     #[inline]
     pub const fn initial_total_gas(&self) -> u64 {
-        self.initial_regular_gas + self.initial_state_gas
+        self.initial_regular_gas + self.initial_state_gas_final()
     }
 
     /***** Simple setters *****/
@@ -468,6 +474,13 @@ impl InitialAndFloorGas {
                 gas_limit -= self.initial_state_gas - reservoir;
                 reservoir = 0;
             }
+        }
+
+        // EIP-7702 state gas refund for existing authorities goes directly to
+        // the reservoir. In the Python spec, set_delegation adds this refund to
+        // state_gas_reservoir so it stays as state gas (not regular gas).
+        if self.initial_eip7702_refund > 0 {
+            reservoir += self.initial_eip7702_refund;
         }
 
         (gas_limit, reservoir)
