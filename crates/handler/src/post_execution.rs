@@ -46,7 +46,11 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
 }
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
-pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+pub fn build_result_gas(
+    is_halt: bool,
+    gas: &Gas,
+    init_and_floor_gas: InitialAndFloorGas,
+) -> ResultGas {
     // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
     // negative on 0→x→0 restoration; at the top level, post-reconciliation it
     // is expected to be >= 0 and is clamped defensively before combining with
@@ -55,8 +59,10 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
     // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas.
     // The EIP-7702 reservoir refund is added back to the reservoir budget at
     // tx start; it does not reduce the gross state gas spent reported here.
-    let state_gas = (gas.state_gas_spent().max(0) as u64)
-        .saturating_add(init_and_floor_gas.initial_state_gas);
+    let state_gas = gas
+        .state_gas_spent()
+        .saturating_add_unsigned(init_and_floor_gas.initial_state_gas)
+        .max(0) as u64;
 
     // println!("NEW:");
     // println!("  SSS exec state gas: {:?}", gas.state_gas_spent());

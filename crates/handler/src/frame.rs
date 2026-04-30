@@ -490,7 +490,7 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(ins_result.is_ok(), &mut interpreter.gas, &out_gas);
+                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &out_gas);
 
                 if ins_result.is_ok() {
                     interpreter.gas.record_refund(out_gas.refunded());
@@ -523,7 +523,7 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(instruction_result.is_ok(), this_gas, outcome.gas());
+                handle_reservoir_remaining_gas(instruction_result, this_gas, outcome.gas());
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
                 // this frame's tracker. When the child fails to deploy a contract
@@ -562,8 +562,12 @@ impl EthFrame<EthInterpreter> {
 
 /// Handles the remaining gas of the parent frame.
 #[inline]
-pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, child_gas: &Gas) {
-    if is_success {
+pub fn handle_reservoir_remaining_gas(
+    instruction_result: InstructionResult,
+    parent_gas: &mut Gas,
+    child_gas: &Gas,
+) {
+    if instruction_result.is_ok() {
         // On success: parent takes the child's final reservoir.
         parent_gas.set_reservoir(child_gas.reservoir());
         // Accumulate child's state gas into parent's total.
@@ -586,7 +590,7 @@ pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, ch
                 .refill_amount()
                 .saturating_add(child_gas.refill_amount()),
         );
-    } else {
+    } else if instruction_result.is_revert() {
         // On revert or halt: child state changes are rolled back. Compute
         // the gas to add to parent's pre-call reservoir as:
         //
@@ -616,6 +620,7 @@ pub fn handle_reservoir_remaining_gas(is_success: bool, parent_gas: &mut Gas, ch
             .saturating_add(child_gas.refill_amount());
         let excess = logical_refund.saturating_sub(baseline);
         parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
+    } else {
     }
 }
 

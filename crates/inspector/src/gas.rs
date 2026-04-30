@@ -85,7 +85,7 @@ impl GasInspector {
     /// Spend all gas if call failed.
     #[inline]
     pub const fn call_end(&mut self, outcome: &mut CallOutcome) {
-        if outcome.result.result.is_error() {
+        if outcome.result.result.is_halt() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
@@ -96,7 +96,7 @@ impl GasInspector {
     /// Spend all gas if create failed.
     #[inline]
     pub const fn create_end(&mut self, outcome: &mut CreateOutcome) {
-        if outcome.result.result.is_error() {
+        if outcome.result.result.is_halt() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }

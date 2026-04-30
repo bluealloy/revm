@@ -150,7 +150,7 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas = build_result_gas(gas, init_and_floor_gas);
+                let result_gas = build_result_gas(false, gas, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -242,7 +242,7 @@ pub trait Handler {
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, reservoir, &mut frame_result)?;
         Ok(frame_result)
     }
 
@@ -264,7 +264,6 @@ pub trait Handler {
         init_and_floor_gas: InitialAndFloorGas,
         eip7702_gas_refund: i64,
     ) -> Result<ResultGas, Self::Error> {
-
         //println!("init_and_floor_gas: {:?}", exec_result.gas());
         // EIP-8037: Refund reservoir for accounts that were created and then
         // self-destructed in this tx (EIP-6780 erasure). Runs first so the
@@ -277,7 +276,11 @@ pub trait Handler {
 
         // Build ResultGas from the final gas state
         // This includes all necessary fields and gas values.
-        let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
+        let result_gas = post_execution::build_result_gas(
+            exec_result.instruction_result().is_halt(),
+            exec_result.gas(),
+            init_and_floor_gas,
+        );
 
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
@@ -389,6 +392,7 @@ pub trait Handler {
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
+        original_reservoir: u64,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
@@ -413,6 +417,7 @@ pub trait Handler {
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
         let state_gas_spent = gas.state_gas_spent();
+        let state_refill = gas.refill_amount();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
@@ -426,16 +431,23 @@ pub trait Handler {
             gas.record_refund(refunded);
         }
 
+        // return zero state gas on halt/revert.
         if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
+            //gas.set_refill_amount(gas.refill_amount() + state_refill);
         } else {
+            gas.set_state_gas_spent(0);
+        }
+
+        if instruction_result.is_revert() {
             // State changes rolled back, so no execution state gas was consumed.
             // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
             // frame refilled more than it charged; clamp to zero for reservoir
             // recovery since the combined value cannot go below zero.
-            gas.set_state_gas_spent(0);
             let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
             gas.set_reservoir(combined);
+        } else if instruction_result.is_halt() {
+            gas.set_reservoir(original_reservoir);
         }
 
         // // EIP-8037: for a failed top-level CREATE (or one that self-destructs
@@ -450,6 +462,9 @@ pub trait Handler {
         //     let ctx = evm.ctx();
         //     let state_gas_charged = ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
         //     gas.refill_reservoir(state_gas_charged);
+        //     //gas.set_reservoir(original_reservoir);
+        //     // on halt set reservoir at most of original reservoir
+        //     //if instruction_result.is_halt() && gas.reservoir() > original_reservoir {}
         // }
 
         Ok(())
