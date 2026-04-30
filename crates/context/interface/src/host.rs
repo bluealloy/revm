@@ -87,6 +87,15 @@ pub trait Host {
     /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
 
+    /// Records a refund value, calls `ContextTr::journal_mut().record_refund(refund)`
+    fn record_refund(&mut self, refund: i64);
+
+    /// Returns the current accumulated refund, calls `ContextTr::journal_mut().refund()`
+    fn refund(&self) -> i64;
+
+    /// Sets the refund value, calls `ContextTr::journal_mut().set_refund(refund)`
+    fn set_refund(&mut self, refund: i64);
+
     /// Sstore with optional fetch from database. Return none if the value is cold or if there is db error.
     fn sstore_skip_cold_load(
         &mut self,
@@ -301,6 +310,14 @@ impl Host for DummyHost {
     }
 
     fn log(&mut self, _log: Log) {}
+
+    fn record_refund(&mut self, _refund: i64) {}
+
+    fn refund(&self) -> i64 {
+        0
+    }
+
+    fn set_refund(&mut self, _refund: i64) {}
 
     fn tstore(&mut self, _address: Address, _key: StorageKey, _value: StorageValue) {}
 

@@ -241,7 +241,7 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     }
 
     // refund
-    context.interpreter.gas.record_refund(
+    context.host.record_refund(
         context
             .host
             .gas_params()
@@ -354,8 +354,7 @@ pub fn selfdestruct<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resu
 
     if !res.previously_destroyed {
         context
-            .interpreter
-            .gas
+            .host
             .record_refund(context.host.gas_params().selfdestruct_refund());
     }
 

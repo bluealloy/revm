@@ -240,7 +240,7 @@ where
         self.gas_inspector.initialize_interp(&interp.gas);
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, ctx: &mut CTX) {
         self.gas_inspector.step(&interp.gas);
         self.stack.clear();
         interp.stack.clone_into(&mut self.stack);
@@ -257,7 +257,7 @@ where
         self.gas = interp.gas.remaining();
         self.reservoir = interp.gas.reservoir();
         self.state_gas = interp.gas.state_gas_spent();
-        self.refunded = interp.gas.refunded();
+        self.refunded = ctx.journal().refund();
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {

@@ -9,7 +9,11 @@ use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
-pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+pub fn build_result_gas(
+    gas: &Gas,
+    refund: i64,
+    init_and_floor_gas: InitialAndFloorGas,
+) -> ResultGas {
     let state_gas = gas
         .state_gas_spent()
         .saturating_add(init_and_floor_gas.initial_state_gas)
@@ -21,7 +25,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
                 .saturating_sub(gas.remaining())
                 .saturating_sub(gas.reservoir()),
         )
-        .with_refunded(gas.refunded() as u64)
+        .with_refunded(refund as u64)
         .with_floor_gas(init_and_floor_gas.floor_gas)
         .with_state_gas_spent(state_gas)
 }
@@ -30,28 +34,36 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
 ///
 /// Per EIP-8037, gas used before refund is `tx.gas - gas_left - state_gas_reservoir`.
 /// The floor applies to this combined total, not just regular gas.
-pub const fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialAndFloorGas) {
+pub fn eip7623_check_gas_floor(
+    gas: &mut Gas,
+    refund: &mut i64,
+    init_and_floor_gas: InitialAndFloorGas,
+) {
     // EIP-7623: Increase calldata cost
     // EIP-8037: tx_gas_used_before_refund = tx.gas - gas_left - reservoir
     // The floor must apply to this combined value, not just (limit - remaining).
     let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
-    let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
+    let gas_used_after_refund = gas_used_before_refund.saturating_sub(*refund as u64);
     if gas_used_after_refund < init_and_floor_gas.floor_gas {
         // Set spent so that (limit - remaining - reservoir) = floor_gas
         // i.e. remaining = limit - floor_gas - reservoir
         gas.set_spent(init_and_floor_gas.floor_gas + gas.reservoir());
         // clear refund
-        gas.set_refund(0);
+        *refund = 0;
     }
 }
 
-/// Calculates and applies gas refunds based on the specification.
-pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
-    gas.record_refund(eip7702_refund);
+/// Calculates final gas refunds based on the specification.
+pub fn refund(spec: SpecId, gas: &Gas, journal_refund: i64, eip7702_refund: i64) -> i64 {
+    let mut refund = journal_refund + eip7702_refund;
     // Calculate gas refund for transaction.
     // If spec is set to london, it will decrease the maximum refund amount to 5th part of
     // gas spend. (Before london it was 2th part of gas spend)
-    gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
+    let max_refund_quotient = if spec.is_enabled_in(SpecId::LONDON) { 5 } else { 2 };
+    // EIP-8037: gas_used = total_gas_spent - reservoir (reservoir is unused state gas)
+    let gas_used = gas.total_gas_spent().saturating_sub(gas.reservoir());
+    refund = (refund as u64).min(gas_used / max_refund_quotient) as i64;
+    refund
 }
 
 /// Reimburses the caller for unused gas.
@@ -59,6 +71,7 @@ pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
 pub fn reimburse_caller<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
+    refund: i64,
     additional_refund: U256,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     // If fee charge was disabled (e.g. eth_call simulations), no gas was
@@ -72,7 +85,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
 
     // Return balance of not spent gas.
     // Include reservoir gas (EIP-8037) which is also unused and must be reimbursed.
-    let reimbursable = gas.remaining() + gas.reservoir() + gas.refunded() as u64;
+    let reimbursable = gas.remaining() + gas.reservoir() + refund as u64;
     context
         .journal_mut()
         .load_account_mut(caller)?
@@ -89,6 +102,7 @@ pub fn reimburse_caller<CTX: ContextTr>(
 pub fn reward_beneficiary<CTX: ContextTr>(
     context: &mut CTX,
     gas: &Gas,
+    refund: i64,
 ) -> Result<(), <CTX::Db as Database>::Error> {
     // If fee charge was disabled (e.g. eth_call simulations), the caller was
     // never charged for gas so there are no fees to transfer to the beneficiary.
@@ -109,7 +123,8 @@ pub fn reward_beneficiary<CTX: ContextTr>(
 
     // Reward beneficiary.
     // Exclude reservoir gas (EIP-8037) from the used gas — reservoir is unused and reimbursed.
-    let effective_used = gas.used().saturating_sub(gas.reservoir());
+    let gas_used = gas.total_gas_spent().saturating_sub(gas.reservoir());
+    let effective_used = gas_used.saturating_sub(refund as u64);
     journal
         .load_account_mut(block.beneficiary())?
         .incr_balance(U256::from(coinbase_gas_price * effective_used as u128));

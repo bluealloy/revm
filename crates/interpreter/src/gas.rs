@@ -92,11 +92,7 @@ impl Gas {
         &mut self.memory
     }
 
-    /// Returns the total amount of gas that was refunded.
-    #[inline]
-    pub const fn refunded(&self) -> i64 {
-        self.tracker.refunded()
-    }
+
 
     /// Returns the total amount of gas spent.
     #[inline]
@@ -120,19 +116,7 @@ impl Gas {
             .saturating_sub(self.tracker.remaining())
     }
 
-    /// Returns the final amount of gas used by subtracting the refund from spent gas.
-    #[inline]
-    pub const fn used(&self) -> u64 {
-        self.total_gas_spent()
-            .saturating_sub(self.refunded() as u64)
-    }
 
-    /// Returns the total amount of gas spent, minus the refunded gas.
-    #[inline]
-    pub const fn spent_sub_refunded(&self) -> u64 {
-        self.total_gas_spent()
-            .saturating_sub(self.tracker.refunded() as u64)
-    }
 
     /// Returns the amount of gas remaining.
     #[inline]
@@ -181,34 +165,9 @@ impl Gas {
         self.tracker.spend_all();
     }
 
-    /// Records a refund value.
-    ///
-    /// `refund` can be negative but `self.refunded` should always be positive
-    /// at the end of transact.
-    #[inline]
-    pub const fn record_refund(&mut self, refund: i64) {
-        self.tracker.record_refund(refund);
-    }
 
-    /// Set a refund value for final refund.
-    ///
-    /// Max refund value is limited to Nth part (depending of fork) of gas spend.
-    ///
-    /// Related to EIP-3529: Reduction in refunds
-    #[inline]
-    pub fn set_final_refund(&mut self, is_london: bool) {
-        let max_refund_quotient = if is_london { 5 } else { 2 };
-        // EIP-8037: gas_used = total_gas_spent - reservoir (reservoir is unused state gas)
-        let gas_used = self.total_gas_spent().saturating_sub(self.reservoir());
-        self.tracker
-            .set_refunded((self.refunded() as u64).min(gas_used / max_refund_quotient) as i64);
-    }
 
-    /// Set a refund value. This overrides the current refund value.
-    #[inline]
-    pub const fn set_refund(&mut self, refund: i64) {
-        self.tracker.set_refunded(refund);
-    }
+
 
     /// Set a remaining value. This overrides the current remaining value.
     #[inline]

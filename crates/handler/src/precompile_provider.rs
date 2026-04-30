@@ -97,7 +97,6 @@ pub fn precompile_output_to_interpreter_result(
 
     // set state gas, reservoir is already set in the Gas constructor
     result.gas.set_state_gas_spent(output.state_gas_used);
-    result.gas.record_refund(output.gas_refunded);
 
     // spend used gas.
     if output.status.is_success_or_revert() {
@@ -162,6 +161,10 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
                     .local_mut()
                     .set_precompile_error_context(halt_reason.to_string());
             }
+        }
+
+        if output.status.is_success() {
+            context.journal_mut().record_refund(output.gas_refunded);
         }
 
         let result = precompile_output_to_interpreter_result(output, inputs.gas_limit);

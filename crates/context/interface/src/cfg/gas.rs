@@ -18,8 +18,6 @@ pub struct GasTracker {
     reservoir: u64,
     /// Total state gas spent so far.
     state_gas_spent: u64,
-    /// Refunded gas. Used to refund the gas to the caller at the end of execution.
-    refunded: i64,
 }
 
 impl GasTracker {
@@ -31,7 +29,6 @@ impl GasTracker {
             remaining,
             reservoir,
             state_gas_spent: 0,
-            refunded: 0,
         }
     }
 
@@ -89,17 +86,7 @@ impl GasTracker {
         self.state_gas_spent = val;
     }
 
-    /// Returns the refunded gas.
-    #[inline]
-    pub const fn refunded(&self) -> i64 {
-        self.refunded
-    }
 
-    /// Sets the refunded gas.
-    #[inline]
-    pub const fn set_refunded(&mut self, val: i64) {
-        self.refunded = val;
-    }
 
     /// Records a regular gas cost.
     ///
@@ -140,11 +127,7 @@ impl GasTracker {
         success
     }
 
-    /// Records a refund value.
-    #[inline]
-    pub const fn record_refund(&mut self, refund: i64) {
-        self.refunded += refund;
-    }
+
 
     /// Erases a gas cost from remaining (returns gas from child frame).
     #[inline]

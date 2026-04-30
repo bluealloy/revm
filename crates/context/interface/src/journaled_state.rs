@@ -96,6 +96,15 @@ pub trait JournalTr {
     /// Returns the logs from journal.
     fn logs(&self) -> &[Log];
 
+    /// Records a refund value. Refund is global per transaction.
+    fn record_refund(&mut self, refund: i64);
+
+    /// Returns the current accumulated refund.
+    fn refund(&self) -> i64;
+
+    /// Sets the refund value. This overwrites the current refund.
+    fn set_refund(&mut self, refund: i64);
+
     /// Marks the account for selfdestruction and transfers all the balance to the target.
     fn selfdestruct(
         &mut self,
@@ -423,6 +432,8 @@ pub struct JournalCheckpoint {
     pub journal_i: usize,
     /// Checkpoint for self-destructed addresses tracking (EIP-7708).
     pub selfdestructed_i: usize,
+    /// Checkpoint for the global refund counter.
+    pub refund: i64,
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded

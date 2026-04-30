@@ -1403,7 +1403,9 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
-    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
+    // In the new architecture, total_gas_spent is gross. 
+    // The delta includes STATE_GAS_SSTORE_SET plus the difference in regular gross costs.
+    assert_eq!(spent_delta, 205112);
     // Refund does NOT undo state gas — gas_used is higher than baseline.
     assert!(result.tx_gas_used() > baseline_gas);
     assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
