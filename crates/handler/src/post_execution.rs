@@ -65,6 +65,7 @@ pub fn build_result_gas(
         .max(0) as u64;
 
     // println!("NEW:");
+    // println!("  SSS GAS: {:?}", gas);
     // println!("  SSS exec state gas: {:?}", gas.state_gas_spent());
     // println!("  SSS init_and_floor_gas: {init_and_floor_gas:?}");
     // println!(
@@ -74,7 +75,7 @@ pub fn build_result_gas(
     // println!("  SSS state_gas: {state_gas}");
     // println!("  SSS gas: {:?}", gas.refunded());
 
-    let res = ResultGas::default()
+    let mut res = ResultGas::default()
         .with_total_gas_spent(
             gas.limit()
                 .saturating_sub(gas.remaining())
@@ -83,6 +84,8 @@ pub fn build_result_gas(
         .with_refunded(gas.refunded() as u64)
         .with_floor_gas(init_and_floor_gas.floor_gas())
         .with_state_gas_spent(state_gas);
+
+    res.set_eip7702_state_refund(init_and_floor_gas.initial_eip7702_refund);
 
     //println!("  SSS res: {res:?}");
 

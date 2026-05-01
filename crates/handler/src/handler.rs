@@ -419,6 +419,8 @@ pub trait Handler {
         let state_gas_spent = gas.state_gas_spent();
         let state_refill = gas.refill_amount();
 
+        //println!("LAST FRAME RESULT GAS: {:?}", gas);
+
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
@@ -466,6 +468,8 @@ pub trait Handler {
         //     // on halt set reservoir at most of original reservoir
         //     //if instruction_result.is_halt() && gas.reservoir() > original_reservoir {}
         // }
+
+        //println!("LAST FRAME RESULT GAS AFTER: {:?}", gas);
 
         Ok(())
     }

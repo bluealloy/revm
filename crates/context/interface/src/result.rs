@@ -79,6 +79,9 @@ pub struct ResultGas {
     /// Zero when state gas is not enabled.
     #[cfg_attr(feature = "serde", serde(default))]
     state_gas_spent: u64,
+    /// EIp-7702 refund amount.
+    #[cfg_attr(feature = "serde", serde(default))]
+    eip7702_state_refund: u64,
     /// Gas refund amount (capped per EIP-3529).
     ///
     /// Note: This is the raw refund before EIP-7623 floor gas adjustment.
@@ -102,6 +105,7 @@ impl ResultGas {
         Self {
             total_gas_spent,
             refunded,
+            eip7702_state_refund: 0,
             floor_gas,
             state_gas_spent: 0,
         }
@@ -119,8 +123,21 @@ impl ResultGas {
             total_gas_spent,
             refunded,
             floor_gas,
+            eip7702_state_refund: 0,
             state_gas_spent,
         }
+    }
+
+    /// Sets the EIP-7702 refund amount.
+    #[inline]
+    pub fn set_eip7702_state_refund(&mut self, eip7702_state_refund: u64) {
+        self.eip7702_state_refund = eip7702_state_refund;
+    }
+
+    /// Returns the EIP-7702 state refund amount.
+    #[inline]
+    pub const fn eip7702_state_refund(&self) -> u64 {
+        self.eip7702_state_refund
     }
 
     /****** Simple getters *****/
@@ -266,9 +283,10 @@ impl ResultGas {
     /// Returns the regular gas used by the block.
     #[inline]
     pub const fn block_regular_gas_used(&self) -> u64 {
-        let execution_gas_spent = self
-            .total_gas_spent()
-            .saturating_sub(self.state_gas_spent());
+        let execution_gas_spent = self.total_gas_spent().saturating_sub(
+            self.state_gas_spent()
+                .saturating_sub(self.eip7702_state_refund()),
+        );
         max(execution_gas_spent, self.floor_gas())
     }
 
