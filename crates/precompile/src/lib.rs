@@ -217,7 +217,7 @@ impl Precompiles {
 
     /// Extends the precompiles with the given precompiles.
     ///
-    /// Other precompiles with overwrite existing precompiles.
+    /// Other precompiles will overwrite existing precompiles.
     pub fn extend(&mut self, other: impl IntoIterator<Item = Precompile>) {
         let iter = other.into_iter();
         let (lower, _) = iter.size_hint();
@@ -393,12 +393,16 @@ impl Precompile {
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum PrecompileSpecId {
-    /// Frontier spec.
+    /// Homestead spec — initial precompile set
+    /// (ECRECOVER, SHA256, RIPEMD160, IDENTITY).
+    ///
+    /// Used for every hardfork from FRONTIER through SPURIOUS_DRAGON; see
+    /// [`PrecompileSpecId::from_spec_id`].
     HOMESTEAD,
     /// Byzantium spec introduced
-    /// * [EIP-198](https://eips.ethereum.org/EIPS/eip-198) a EIP-198: Big integer modular exponentiation (at 0x05 address).
-    /// * [EIP-196](https://eips.ethereum.org/EIPS/eip-196) a bn_add (at 0x06 address) and bn_mul (at 0x07 address) precompile
-    /// * [EIP-197](https://eips.ethereum.org/EIPS/eip-197) a bn_pair (at 0x08 address) precompile
+    /// * [`EIP-198: Big integer modular exponentiation`](https://eips.ethereum.org/EIPS/eip-198) (at 0x05 address).
+    /// * [`EIP-196: Precompiled contracts for addition and scalar multiplication on alt_bn128`](https://eips.ethereum.org/EIPS/eip-196): bn_add (0x06) and bn_mul (0x07).
+    /// * [`EIP-197: Optimal ate pairing check on alt_bn128`](https://eips.ethereum.org/EIPS/eip-197): bn_pair (0x08).
     BYZANTIUM,
     /// Istanbul spec introduced
     /// * [`EIP-152: Add BLAKE2 compression function`](https://eips.ethereum.org/EIPS/eip-152) `F` precompile (at 0x09 address).
