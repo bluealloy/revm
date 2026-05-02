@@ -95,7 +95,7 @@ macro_rules! popn_top {
     };
 }
 
-/// Pushes a `B256` value onto the stack. Fails the instruction if the stack is full.
+/// Pushes a `U256` value onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 #[collapse_debuginfo(yes)]
 macro_rules! push {

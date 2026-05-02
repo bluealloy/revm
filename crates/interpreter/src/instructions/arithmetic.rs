@@ -122,7 +122,7 @@ pub fn exp<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation.
 ///
 /// Similarly, if `b == 0` then the yellow paper says the output should start with all zeros,
-/// then end with bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
+/// then end with bits from `y`; this is equal to `y & mask` where `&` is bitwise `AND`.
 pub fn signextend<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     popn_top!([ext], x, context.interpreter);
     // For 31 we also don't need to do anything.
