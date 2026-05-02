@@ -2,6 +2,7 @@
 //! Benchmarks for the crypto precompiles
 
 pub mod blake2;
+pub mod bls12_381_zero_check;
 pub mod ecrecover;
 pub mod eip1962;
 pub mod eip2537;
@@ -39,6 +40,8 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // Run secp256r1 benchmarks
     secp256r1::add_benches(&mut group);
+
+    bls12_381_zero_check::add_zero_check_benches(&mut group);
 }
 
 criterion_group! {

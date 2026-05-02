@@ -7,6 +7,24 @@
 use crate::PrecompileHalt;
 use std::vec::Vec;
 
+/// Zero-check on a 48-byte field element via 6 `u64` chunks. Faster than a
+/// byte loop because LLVM emits a SIMD load + horizontal reduce on aarch64
+/// and an SSE compare on x86_64 while still short-circuiting at the field
+/// boundary. The `try_into` panics are elided since slice lengths are
+/// statically known.
+#[inline]
+fn fp_is_zero(a: &[u8; 48]) -> bool {
+    let w = [
+        u64::from_ne_bytes(a[0..8].try_into().unwrap()),
+        u64::from_ne_bytes(a[8..16].try_into().unwrap()),
+        u64::from_ne_bytes(a[16..24].try_into().unwrap()),
+        u64::from_ne_bytes(a[24..32].try_into().unwrap()),
+        u64::from_ne_bytes(a[32..40].try_into().unwrap()),
+        u64::from_ne_bytes(a[40..48].try_into().unwrap()),
+    ];
+    w.iter().all(|&x| x == 0)
+}
+
 /// Shared implementation of `pairing_check_bytes`.
 #[inline]
 pub(super) fn pairing_check_bytes_generic<G1, G2, ReadG1, ReadG2, PairingCheck>(
@@ -27,13 +45,11 @@ where
     let mut parsed_pairs = Vec::with_capacity(pairs.len());
     for ((g1_x, g1_y), (g2_x_0, g2_x_1, g2_y_0, g2_y_1)) in pairs {
         // Check if G1 point is zero (point at infinity)
-        let g1_is_zero = g1_x.iter().all(|&b| b == 0) && g1_y.iter().all(|&b| b == 0);
+        let g1_is_zero = fp_is_zero(g1_x) && fp_is_zero(g1_y);
 
         // Check if G2 point is zero (point at infinity)
-        let g2_is_zero = g2_x_0.iter().all(|&b| b == 0)
-            && g2_x_1.iter().all(|&b| b == 0)
-            && g2_y_0.iter().all(|&b| b == 0)
-            && g2_y_1.iter().all(|&b| b == 0);
+        let g2_is_zero =
+            fp_is_zero(g2_x_0) && fp_is_zero(g2_x_1) && fp_is_zero(g2_y_0) && fp_is_zero(g2_y_1);
 
         // Skip this pair if either point is at infinity as it's a no-op
         if g1_is_zero || g2_is_zero {
