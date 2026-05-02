@@ -182,7 +182,7 @@ impl CacheState {
     pub(crate) fn apply_account_state(
         &mut self,
         address: Address,
-        account: Account,
+        mut account: Account,
     ) -> Option<TransitionAccount> {
         // Not touched account are never changed.
         if !account.is_touched() {
@@ -204,10 +204,15 @@ impl CacheState {
         let is_empty = account.is_empty();
 
         // Transform evm storage to storage with previous value.
+        //
+        // Drop unchanged slots in place first so the subsequent collect can use
+        // the post-filter `ExactSizeIterator` length as its capacity hint —
+        // avoiding the rehashes the previous `filter+map+collect` triggered
+        // (its `(0, Some(n))` size hint reserved nothing up front).
+        account.storage.retain(|_, slot| slot.is_changed());
         let changed_storage = account
             .storage
             .into_iter()
-            .filter(|(_, slot)| slot.is_changed())
             .map(|(key, slot)| (key, slot.into()))
             .collect();
 
