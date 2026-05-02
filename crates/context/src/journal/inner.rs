@@ -436,7 +436,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Option<TransferError> {
         if from == to {
-            let from_balance = self.state.get_mut(&to).unwrap().info.balance;
+            let from_balance = self.state.get(&to).unwrap().info.balance;
             // Check if from balance is enough to transfer the balance.
             if balance > from_balance {
                 return Some(TransferError::OutOfFunds);
