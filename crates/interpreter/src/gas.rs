@@ -274,17 +274,6 @@ impl Gas {
     }
 }
 
-/// Result of attempting to extend memory during execution.
-#[derive(Debug)]
-pub enum MemoryExtensionResult {
-    /// Memory was extended.
-    Extended,
-    /// Memory size stayed the same.
-    Same,
-    /// Not enough gas to extend memory.
-    OutOfGas,
-}
-
 /// Utility struct that speeds up calculation of memory expansion
 /// It contains the current memory length and its memory expansion cost.
 ///
