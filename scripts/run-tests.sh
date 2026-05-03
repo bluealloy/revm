@@ -4,7 +4,7 @@ set -eo pipefail
 # Usage: ./scripts/run-tests.sh --help
 
 # Version for the execution spec tests
-MAIN_VERSION="v5.3.0"
+MAIN_VERSION="v5.4.0"
 DEVNET_VERSION="bal%40v5.4.0"
 
 ### Directories ###
