@@ -17,13 +17,20 @@ MAIN_DEVELOP_DIR="$MAIN_DIR/develop"
 DEVNET_DIR="$FIXTURES_DIR/devnet"
 DEVNET_DEVELOP_DIR="$DEVNET_DIR/develop"
 
-LEGACY_DIR="$FIXTURES_DIR/legacytests" 
+LEGACY_DIR="$FIXTURES_DIR/legacytests"
 
 ### URL and filenames ###
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
 
-MAIN_STABLE_TAR="fixtures_stable.tar.gz"
-MAIN_DEVELOP_TAR="fixtures_develop.tar.gz"
+if [[ -n "${REVM_STATETEST_STABLE:-}" && "${REVM_STATETEST_STABLE:-}" != "0" ]]; then
+    MAIN_DIR="$MAIN_STABLE_DIR"
+    MAIN_TAR="fixtures_stable.tar.gz"
+    MAIN_LABEL="main stable"
+else
+    MAIN_DIR="$MAIN_DEVELOP_DIR"
+    MAIN_TAR="fixtures_develop.tar.gz"
+    MAIN_LABEL="main develop"
+fi
 
 DEVNET_TAR="fixtures_bal.tar.gz"
 
@@ -35,6 +42,9 @@ usage() {
     echo ""
     echo "Flags (can be specified before or after 'clean'):"
     echo "  --keep-going  Continue running tests even after failures."
+    echo ""
+    echo "Environment:"
+    echo "  REVM_STATETEST_STABLE=1  Download and run EEST stable fixtures instead of develop."
     echo ""
     echo "Arguments (after optional 'clean' and '--keep-going'):"
     echo "  runner   (Optional) Rust runner command. Must be either 'cargo' or 'cross'. Defaults to 'cargo'."
@@ -78,7 +88,7 @@ clean() {
 
 # Check if all required fixture directories exist
 check_fixtures() {
-    if [ -d "$MAIN_STABLE_DIR" ] && [ -d "$MAIN_DEVELOP_DIR" ] && [ -d "$DEVNET_DIR" ] && [ -d "$LEGACY_DIR" ]; then
+    if [ -d "$MAIN_DIR/state_tests" ] && [ -d "$DEVNET_DIR" ] && [ -d "$LEGACY_DIR" ]; then
         return 0
     else
         return 1
@@ -129,10 +139,9 @@ download_and_extract() {
 # Download all fixtures
 download_fixtures() {
     echo "Creating fixtures directory structure..."
-    mkdir -p "$MAIN_STABLE_DIR" "$MAIN_DEVELOP_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
-    
-    download_and_extract "$MAIN_STABLE_DIR" "$MAIN_STABLE_TAR" "main stable" "$MAIN_VERSION"
-    download_and_extract "$MAIN_DEVELOP_DIR" "$MAIN_DEVELOP_TAR" "main develop" "$MAIN_VERSION"
+    mkdir -p "$MAIN_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
+
+    download_and_extract "$MAIN_DIR" "$MAIN_TAR" "$MAIN_LABEL" "$MAIN_VERSION"
     download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION"
 
     # Clone legacytests repository
@@ -165,11 +174,8 @@ build_cargo_options() {
 
 # Run tests for each set of fixtures using the chosen runner.
 run_tests() {
-    echo "Running main stable statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_STABLE_DIR/state_tests"
-
-    echo "Running main develop statetests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/state_tests"
+    echo "Running $MAIN_LABEL statetests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_DIR/state_tests"
 
     echo "SKIP Running devnet statetests..."
     #$RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$DEVNET_DIR/state_tests"
@@ -180,11 +186,8 @@ run_tests() {
     echo "Running legacy Constantinople tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$LEGACY_DIR/Constantinople/GeneralStateTests"
 
-    echo "Running main develop blockchain tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/blockchain_tests"
-
-    echo "Running main stable blockchain tests..."
-    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_STABLE_DIR/blockchain_tests"
+    echo "Running $MAIN_LABEL blockchain tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_DIR/blockchain_tests"
 
     echo "SKIP Running devnet blockchain tests..."
     #$RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$DEVNET_DIR/blockchain_tests"
