@@ -452,7 +452,7 @@ impl PrecompileSpecId {
         use SpecId::*;
         match spec_id {
             FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => Self::HOMESTEAD,
-            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
+            BYZANTIUM | PETERSBURG => Self::BYZANTIUM,
             ISTANBUL => Self::ISTANBUL,
             BERLIN | LONDON | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,

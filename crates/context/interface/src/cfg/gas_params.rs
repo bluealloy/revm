@@ -145,7 +145,7 @@ impl GasParams {
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // EXP cost was increased in spurious dragon fork.
-            SPURIOUS_DRAGON | BYZANTIUM | CONSTANTINOPLE | PETERSBURG => {
+            SPURIOUS_DRAGON | BYZANTIUM | PETERSBURG => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }

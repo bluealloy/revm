@@ -33,10 +33,6 @@ pub enum SpecId {
     ///
     /// Activated at block 4370000
     BYZANTIUM,
-    /// Constantinople
-    ///
-    /// Activated at block 7280000
-    CONSTANTINOPLE,
     /// Petersburg
     ///
     /// Activated at block 7280000
@@ -135,8 +131,6 @@ pub mod name {
     pub const SPURIOUS_DRAGON: &str = "Spurious";
     /// String identifier for the Byzantium hardfork
     pub const BYZANTIUM: &str = "Byzantium";
-    /// String identifier for the Constantinople hardfork
-    pub const CONSTANTINOPLE: &str = "Constantinople";
     /// String identifier for the Petersburg hardfork
     pub const PETERSBURG: &str = "Petersburg";
     /// String identifier for the Istanbul hardfork
@@ -175,7 +169,6 @@ impl FromStr for SpecId {
             name::TANGERINE => Ok(Self::TANGERINE),
             name::SPURIOUS_DRAGON => Ok(Self::SPURIOUS_DRAGON),
             name::BYZANTIUM => Ok(Self::BYZANTIUM),
-            name::CONSTANTINOPLE => Ok(Self::CONSTANTINOPLE),
             name::PETERSBURG => Ok(Self::PETERSBURG),
             name::ISTANBUL => Ok(Self::ISTANBUL),
             name::BERLIN => Ok(Self::BERLIN),
@@ -199,7 +192,6 @@ impl From<SpecId> for &'static str {
             SpecId::TANGERINE => name::TANGERINE,
             SpecId::SPURIOUS_DRAGON => name::SPURIOUS_DRAGON,
             SpecId::BYZANTIUM => name::BYZANTIUM,
-            SpecId::CONSTANTINOPLE => name::CONSTANTINOPLE,
             SpecId::PETERSBURG => name::PETERSBURG,
             SpecId::ISTANBUL => name::ISTANBUL,
             SpecId::BERLIN => name::BERLIN,

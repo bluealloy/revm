@@ -1064,8 +1064,9 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Byzantium
         | ForkSpec::EIP158ToByzantiumAt5
         | ForkSpec::ByzantiumToConstantinopleFixAt5 => SpecId::BYZANTIUM,
-        ForkSpec::Constantinople | ForkSpec::ByzantiumToConstantinopleAt5 => SpecId::PETERSBURG,
-        ForkSpec::ConstantinopleFix => SpecId::PETERSBURG,
+        ForkSpec::Constantinople
+        | ForkSpec::ByzantiumToConstantinopleAt5
+        | ForkSpec::ConstantinopleFix => SpecId::PETERSBURG,
         ForkSpec::Istanbul => SpecId::ISTANBUL,
         ForkSpec::Berlin => SpecId::BERLIN,
         ForkSpec::London | ForkSpec::BerlinToLondonAt5 => SpecId::LONDON,
