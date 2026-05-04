@@ -451,12 +451,10 @@ impl PrecompileSpecId {
     pub const fn from_spec_id(spec_id: SpecId) -> Self {
         use SpecId::*;
         match spec_id {
-            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
-                Self::HOMESTEAD
-            }
+            FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => Self::HOMESTEAD,
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
-            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            ISTANBUL => Self::ISTANBUL,
+            BERLIN | LONDON | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             PRAGUE => Self::PRAGUE,
             OSAKA | AMSTERDAM => Self::OSAKA,

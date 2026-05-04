@@ -16,15 +16,9 @@ pub enum SpecId {
     /// Frontier hard fork
     /// Activated at block 0
     FRONTIER = 0,
-    /// Frontier Thawing hard fork
-    /// Activated at block 200000
-    FRONTIER_THAWING,
     /// Homestead hard fork
     /// Activated at block 1150000
     HOMESTEAD,
-    /// DAO Fork hard fork
-    /// Activated at block 1920000
-    DAO_FORK,
     /// Tangerine Whistle hard fork
     /// Activated at block 2463000
     TANGERINE,
@@ -43,21 +37,12 @@ pub enum SpecId {
     /// Istanbul hard fork
     /// Activated at block 9069000
     ISTANBUL,
-    /// Muir Glacier hard fork
-    /// Activated at block 9200000
-    MUIR_GLACIER,
     /// Berlin hard fork
     /// Activated at block 12244000
     BERLIN,
     /// London hard fork
     /// Activated at block 12965000
     LONDON,
-    /// Arrow Glacier hard fork
-    /// Activated at block 13773000
-    ARROW_GLACIER,
-    /// Gray Glacier hard fork
-    /// Activated at block 15050000
-    GRAY_GLACIER,
     /// Paris/Merge hard fork
     /// Activated at block 15537394 (TTD: 58750000000000000000000)
     MERGE,
@@ -126,12 +111,8 @@ impl TryFrom<u8> for SpecId {
 pub mod name {
     /// String identifier for the Frontier hardfork
     pub const FRONTIER: &str = "Frontier";
-    /// String identifier for the Frontier Thawing hardfork
-    pub const FRONTIER_THAWING: &str = "Frontier Thawing";
     /// String identifier for the Homestead hardfork
     pub const HOMESTEAD: &str = "Homestead";
-    /// String identifier for the DAO Fork hardfork
-    pub const DAO_FORK: &str = "DAO Fork";
     /// String identifier for the Tangerine Whistle hardfork
     pub const TANGERINE: &str = "Tangerine";
     /// String identifier for the Spurious Dragon hardfork
@@ -144,16 +125,10 @@ pub mod name {
     pub const PETERSBURG: &str = "Petersburg";
     /// String identifier for the Istanbul hardfork
     pub const ISTANBUL: &str = "Istanbul";
-    /// String identifier for the Muir Glacier hardfork
-    pub const MUIR_GLACIER: &str = "MuirGlacier";
     /// String identifier for the Berlin hardfork
     pub const BERLIN: &str = "Berlin";
     /// String identifier for the London hardfork
     pub const LONDON: &str = "London";
-    /// String identifier for the Arrow Glacier hardfork
-    pub const ARROW_GLACIER: &str = "Arrow Glacier";
-    /// String identifier for the Gray Glacier hardfork
-    pub const GRAY_GLACIER: &str = "Gray Glacier";
     /// String identifier for the Paris/Merge hardfork
     pub const MERGE: &str = "Merge";
     /// String identifier for the Shanghai hardfork
@@ -180,20 +155,15 @@ impl FromStr for SpecId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             name::FRONTIER => Ok(Self::FRONTIER),
-            name::FRONTIER_THAWING => Ok(Self::FRONTIER_THAWING),
             name::HOMESTEAD => Ok(Self::HOMESTEAD),
-            name::DAO_FORK => Ok(Self::DAO_FORK),
             name::TANGERINE => Ok(Self::TANGERINE),
             name::SPURIOUS_DRAGON => Ok(Self::SPURIOUS_DRAGON),
             name::BYZANTIUM => Ok(Self::BYZANTIUM),
             name::CONSTANTINOPLE => Ok(Self::CONSTANTINOPLE),
             name::PETERSBURG => Ok(Self::PETERSBURG),
             name::ISTANBUL => Ok(Self::ISTANBUL),
-            name::MUIR_GLACIER => Ok(Self::MUIR_GLACIER),
             name::BERLIN => Ok(Self::BERLIN),
             name::LONDON => Ok(Self::LONDON),
-            name::ARROW_GLACIER => Ok(Self::ARROW_GLACIER),
-            name::GRAY_GLACIER => Ok(Self::GRAY_GLACIER),
             name::MERGE => Ok(Self::MERGE),
             name::SHANGHAI => Ok(Self::SHANGHAI),
             name::CANCUN => Ok(Self::CANCUN),
@@ -209,20 +179,15 @@ impl From<SpecId> for &'static str {
     fn from(spec_id: SpecId) -> Self {
         match spec_id {
             SpecId::FRONTIER => name::FRONTIER,
-            SpecId::FRONTIER_THAWING => name::FRONTIER_THAWING,
             SpecId::HOMESTEAD => name::HOMESTEAD,
-            SpecId::DAO_FORK => name::DAO_FORK,
             SpecId::TANGERINE => name::TANGERINE,
             SpecId::SPURIOUS_DRAGON => name::SPURIOUS_DRAGON,
             SpecId::BYZANTIUM => name::BYZANTIUM,
             SpecId::CONSTANTINOPLE => name::CONSTANTINOPLE,
             SpecId::PETERSBURG => name::PETERSBURG,
             SpecId::ISTANBUL => name::ISTANBUL,
-            SpecId::MUIR_GLACIER => name::MUIR_GLACIER,
             SpecId::BERLIN => name::BERLIN,
             SpecId::LONDON => name::LONDON,
-            SpecId::ARROW_GLACIER => name::ARROW_GLACIER,
-            SpecId::GRAY_GLACIER => name::GRAY_GLACIER,
             SpecId::MERGE => name::MERGE,
             SpecId::SHANGHAI => name::SHANGHAI,
             SpecId::CANCUN => name::CANCUN,
