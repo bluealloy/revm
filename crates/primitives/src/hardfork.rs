@@ -6,60 +6,76 @@ use core::str::FromStr;
 pub use std::string::{String, ToString};
 pub use SpecId::*;
 
-/// Specification IDs and their activation block.
+/// Specification IDs and their activation points.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs).
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
-    /// Frontier hard fork
-    /// Activated at block 0
+    /// Frontier
+    ///
+    /// Activated at block 1
     FRONTIER = 0,
-    /// Homestead hard fork
+    /// Homestead
+    ///
     /// Activated at block 1150000
     HOMESTEAD,
-    /// Tangerine Whistle hard fork
+    /// Tangerine Whistle
+    ///
     /// Activated at block 2463000
     TANGERINE,
-    /// Spurious Dragon hard fork
+    /// Spurious Dragon
+    ///
     /// Activated at block 2675000
     SPURIOUS_DRAGON,
-    /// Byzantium hard fork
+    /// Byzantium
+    ///
     /// Activated at block 4370000
     BYZANTIUM,
-    /// Constantinople hard fork
-    /// Activated at block 7280000 is overwritten with PETERSBURG
+    /// Constantinople
+    ///
+    /// Activated at block 7280000
     CONSTANTINOPLE,
-    /// Petersburg hard fork
+    /// Petersburg
+    ///
     /// Activated at block 7280000
     PETERSBURG,
-    /// Istanbul hard fork
+    /// Istanbul
+    ///
     /// Activated at block 9069000
     ISTANBUL,
-    /// Berlin hard fork
+    /// Berlin
+    ///
     /// Activated at block 12244000
     BERLIN,
-    /// London hard fork
+    /// London
+    ///
     /// Activated at block 12965000
     LONDON,
-    /// Paris/Merge hard fork
-    /// Activated at block 15537394 (TTD: 58750000000000000000000)
+    /// Paris/Merge
+    ///
+    /// Activated at block 15537394
     MERGE,
-    /// Shanghai hard fork
-    /// Activated at block 17034870 (Timestamp: 1681338455)
+    /// Shanghai
+    ///
+    /// Activated at block 17034870 (timestamp 1681338455)
     SHANGHAI,
-    /// Cancun hard fork
-    /// Activated at block 19426587 (Timestamp: 1710338135)
+    /// Cancun
+    ///
+    /// Activated at block 19426587 (timestamp 1710338135)
     CANCUN,
-    /// Prague hard fork
-    /// Activated at block 22431084 (Timestamp: 1746612311)
+    /// Prague
+    ///
+    /// Activated at block 22431084
     PRAGUE,
-    /// Osaka hard fork
-    /// Activated at slot 13164544 (Timestamp: 1764798551)
+    /// Osaka
+    ///
+    /// Activated at block 23935694
     #[default]
     OSAKA,
-    /// Amsterdam hard fork
+    /// Amsterdam
+    ///
     /// Activated at block TBD
     AMSTERDAM,
 }
