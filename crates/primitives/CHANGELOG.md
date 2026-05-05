@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v23.0.0...revm-primitives-v24.0.0) - 2026-05-05
+
+### Other
+
+- remove unused spec ids ([#3649](https://github.com/bluealloy/revm/pull/3649))
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+- *(precompile)* use static OnceLock array for Precompiles init ([#3602](https://github.com/bluealloy/revm/pull/3602))
+- *(primitives)* add SpecId::NEXT, drop num_enum dependency ([#3593](https://github.com/bluealloy/revm/pull/3593))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [23.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v22.1.0...revm-primitives-v23.0.0) - 2026-04-10
 
 ### Added

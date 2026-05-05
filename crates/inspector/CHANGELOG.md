@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v19.0.0...revm-inspector-v20.0.0) - 2026-05-05
+
+### Other
+
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+- backport v107 release notes from branch ([#3617](https://github.com/bluealloy/revm/pull/3617))
+- [**breaking**] return Result from instruction functions ([#3558](https://github.com/bluealloy/revm/pull/3558))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- *(interpreter)* separate instruction and gas tables ([#3561](https://github.com/bluealloy/revm/pull/3561))
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [19.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v18.0.0...revm-inspector-v19.0.0) - 2026-04-17
 
 ### Other
