@@ -449,6 +449,82 @@ mod tests {
     }
 
     #[test]
+    fn test_selfdestruct_self_target_eip6780_noop() {
+        // EIP-6780 no-op SELFDESTRUCT regression test:
+        //
+        // Pre-Cancun, SELFDESTRUCT(self) burned the contract's balance and destroyed the
+        // account at end of tx. Post-Cancun (EIP-6780), if the contract was NOT created in
+        // the current transaction and `target == self`, the operation is a complete no-op
+        // for state — neither balance transfer nor destruction. `JournalInner::selfdestruct`
+        // returns no journal entry for this branch (see crates/context/src/journal/inner.rs,
+        // trailing `else` arm). Before this fix, `inspect_selfdestruct` only matched
+        // `JournalEntry::AccountDestroyed | BalanceTransfer`, so the inspector hook was
+        // silently skipped — yet the SELFDESTRUCT opcode still returned
+        // `InstructionResult::SelfDestruct`, leaving downstream tracers (e.g. Geth
+        // `callTracer` in `revm-inspectors`) to emit synthetic frames with `from=0x0…0`,
+        // missing `to`, missing `value` — see https://github.com/bluealloy/revm/issues/<TBD>.
+        //
+        // Bytecode: PUSH20 BENCH_TARGET; SELFDESTRUCT
+        // BenchmarkDB pre-deploys the bytecode at BENCH_TARGET, so the contract is *not*
+        // same-tx-created when we call into it.
+        let mut code = vec![opcode::PUSH20];
+        code.extend_from_slice(BENCH_TARGET.as_ref());
+        code.push(opcode::SELFDESTRUCT);
+
+        let bytecode = Bytecode::new_raw(Bytes::from(code));
+        let ctx = Context::mainnet().with_db(BenchmarkDB::new_bytecode(bytecode));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let _ = evm.inspect_one_tx(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(BENCH_TARGET))
+                .gas_limit(100_000)
+                .build()
+                .unwrap(),
+        );
+
+        let inspector = &evm.inspector;
+        let events = inspector.get_events();
+
+        let selfdestruct_events: Vec<_> = events
+            .iter()
+            .filter_map(|e| {
+                if let InspectorEvent::Selfdestruct {
+                    address,
+                    beneficiary,
+                    value,
+                } = e
+                {
+                    Some((address, beneficiary, value))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        assert_eq!(
+            selfdestruct_events.len(),
+            1,
+            "Inspector must receive a SELFDESTRUCT event even for the EIP-6780 no-op case",
+        );
+        let (address, beneficiary, value) = selfdestruct_events[0];
+        assert_eq!(
+            *address, BENCH_TARGET,
+            "Selfdestructing contract should be reported as BENCH_TARGET, not the zero address",
+        );
+        assert_eq!(
+            *beneficiary, BENCH_TARGET,
+            "Refund target equals the contract itself in the no-op branch",
+        );
+        assert_eq!(
+            *value,
+            U256::ZERO,
+            "No balance was transferred; reported value should be zero",
+        );
+    }
+
+    #[test]
     fn test_comprehensive_inspector_integration() {
         // Complex contract with multiple operations:
         // 1. PUSH and arithmetic

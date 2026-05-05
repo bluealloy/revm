@@ -6,11 +6,11 @@ use context::{
 use handler::{evm::FrameTr, EvmTr, FrameResult, Handler, ItemOrResult};
 use interpreter::{
     instructions::{GasTable, InstructionTable},
-    interpreter_types::{Jumps, LoopControl},
+    interpreter_types::{InputsTr, Jumps, LoopControl},
     FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
     InterpreterTypes,
 };
-use primitives::hints_util::cold_path;
+use primitives::{hints_util::cold_path, Address, U256};
 use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -271,7 +271,7 @@ where
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            inspect_selfdestruct(context, &mut inspector);
+            inspect_selfdestruct(context, &mut inspector, interpreter.input.target_address());
         }
     }
 
@@ -304,8 +304,11 @@ fn inspect_log<CTX, IT>(
 
 #[inline(never)]
 #[cold]
-fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
-where
+fn inspect_selfdestruct<CTX, IT>(
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+    contract_address: Address,
+) where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
@@ -325,5 +328,18 @@ where
     ) = context.journal_mut().journal().last()
     {
         inspector.selfdestruct(*contract, *to, *balance);
+    } else {
+        // EIP-6780 no-op SELFDESTRUCT: post-Cancun, the contract was not created in the
+        // current transaction, and `target == contract`. State is unchanged so the journal
+        // does not record an `AccountDestroyed` or `BalanceTransfer` entry, but the
+        // SELFDESTRUCT opcode still ran. Inspectors must still be notified for trace
+        // fidelity (e.g. Geth `callTracer` / Parity flat-trace correctness). By
+        // construction in this branch, `target` equals the contract's own address and no
+        // balance was transferred.
+        //
+        // See `JournalInner::selfdestruct` in `crates/context/src/journal/inner.rs`:
+        // the trailing `else` branch returns `None` (no journal entry) precisely for
+        // this case.
+        inspector.selfdestruct(contract_address, contract_address, U256::ZERO);
     }
 }
