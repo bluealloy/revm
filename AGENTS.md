@@ -22,7 +22,7 @@ cargo check --target riscv32imac-unknown-none-elf -p revm-database --no-default-
 cargo check --target riscv64imac-unknown-none-elf -p revm-database --no-default-features
 
 ./scripts/run-tests.sh
-cargo run --release -p revme -- statetest test-fixtures/main/stable/state_tests
+cargo run --release -p revme -- statetest test-fixtures/main/develop/state_tests
 ```
 
 Run `cargo fmt --all` before committing.

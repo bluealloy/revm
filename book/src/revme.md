@@ -27,7 +27,7 @@ Test suites for the latest hardforks can be found in [EEST releases](https://git
 Revm can run statetest type of tests with `revme` using the following command:
 `cargo run --release -p revme -- statetest folder_path`
 
-For running EEST tests, we can use the `./scripts/run-tests.sh`.
+For running EEST tests, we can use the `./scripts/run-tests.sh`. It downloads and runs the develop fixtures by default; set `REVM_STATETEST_STABLE=1` to use stable fixtures instead.
 
 For legacy tests, we need to first download the repo `git clone https://github.com/ethereum/legacytests` and then run it with `cargo run --release -p revme -- statetest legacytests/Cancun/GeneralStateTests`
 All statetest that can be run by revme can be found in the `GeneralStateTests` folder.
