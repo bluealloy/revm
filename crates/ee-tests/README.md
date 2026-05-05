@@ -8,8 +8,8 @@ Shared test utilities and integration tests for **revm**.
 # Run all tests
 cargo test -p revm-ee-tests
 
-# Run a specific test subset (e.g. TIP-1016 state gas tests)
-cargo test -p revm-ee-tests tip1016
+# Run a specific test subset (e.g. EIP-8037 / TIP-1016 state gas tests)
+cargo test -p revm-ee-tests eip8037
 ```
 
 ## Directory Structure
@@ -21,7 +21,7 @@ crates/ee-tests/
 │   └── revm_tests.rs       # Integration tests for mainnet revm
 ├── tests/
 │   └── revm_testdata/      # Golden JSON snapshots for revm tests
-├── tip1016.md              # TIP-1016 State Gas test plan
+├── eip8037.md              # EIP-8037 / TIP-1016 State Gas test plan
 └── Cargo.toml
 ```
 
