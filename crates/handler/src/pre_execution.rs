@@ -36,7 +36,7 @@ pub fn load_accounts<
         // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
         context
             .journal_mut()
-            .warm_precompiles(&precompiles.warm_addresses());
+            .warm_precompiles(precompiles.warm_addresses());
     }
 
     // Load coinbase

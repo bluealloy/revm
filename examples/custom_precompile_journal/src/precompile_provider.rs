@@ -8,7 +8,7 @@ use revm::{
     precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
     primitives::{address, hardfork::SpecId, Address, AddressSet, Bytes, Log, B256, U256},
 };
-use std::{borrow::Cow, string::String};
+use std::string::String;
 
 // Define our custom precompile address
 pub const CUSTOM_PRECOMPILE_ADDRESS: Address = address!("0000000000000000000000000000000000000100");
@@ -72,8 +72,8 @@ where
         self.inner.run(context, inputs)
     }
 
-    fn warm_addresses(&self) -> Cow<'_, AddressSet> {
-        Cow::Borrowed(&self.addresses)
+    fn warm_addresses(&self) -> &AddressSet {
+        &self.addresses
     }
 }
 

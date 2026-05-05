@@ -4,10 +4,7 @@ use context_interface::{ContextTr, JournalTr};
 use interpreter::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use precompile::{PrecompileOutput, PrecompileSpecId, PrecompileStatus, Precompiles};
 use primitives::{hardfork::SpecId, Address, AddressSet, Bytes};
-use std::{
-    borrow::Cow,
-    string::{String, ToString},
-};
+use std::string::{String, ToString};
 
 /// Provider for precompiled contracts in the EVM.
 #[auto_impl(&mut, Box)]
@@ -28,7 +25,7 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     ) -> Result<Option<Self::Output>, String>;
 
     /// Get the warm addresses.
-    fn warm_addresses(&self) -> Cow<'_, AddressSet>;
+    fn warm_addresses(&self) -> &AddressSet;
 
     /// Check if the address is a precompile.
     fn contains(&self, address: &Address) -> bool {
@@ -176,8 +173,8 @@ impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
         Ok(Some(result))
     }
 
-    fn warm_addresses(&self) -> Cow<'_, AddressSet> {
-        Cow::Borrowed(self.warm_addresses())
+    fn warm_addresses(&self) -> &AddressSet {
+        Self::warm_addresses(self)
     }
 
     fn contains(&self, address: &Address) -> bool {
@@ -257,8 +254,8 @@ mod tests {
             <EthPrecompiles as PrecompileProvider<CTX>>::run(&mut self.inner, context, inputs)
         }
 
-        fn warm_addresses(&self) -> Cow<'_, AddressSet> {
-            Cow::Borrowed(&self.warm)
+        fn warm_addresses(&self) -> &AddressSet {
+            &self.warm
         }
     }
 
