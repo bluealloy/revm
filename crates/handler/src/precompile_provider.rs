@@ -257,8 +257,8 @@ mod tests {
             <EthPrecompiles as PrecompileProvider<CTX>>::run(&mut self.inner, context, inputs)
         }
 
-        fn warm_addresses(&self) -> &AddressSet {
-            &self.warm
+        fn warm_addresses(&self) -> Cow<'_, AddressSet> {
+            Cow::Borrowed(&self.warm)
         }
     }
 
