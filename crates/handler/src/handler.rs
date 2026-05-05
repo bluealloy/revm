@@ -1,7 +1,7 @@
 use crate::{
     evm::FrameTr,
     execution,
-    post_execution::{self, build_result_gas},
+    post_execution::{self},
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
@@ -132,7 +132,8 @@ pub trait Handler {
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas = build_result_gas(gas, init_and_floor_gas);
+                let journal_refund = evm.ctx().journal().refund();
+                let result_gas = post_execution::build_result_gas(gas, journal_refund, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,
@@ -247,21 +248,20 @@ pub trait Handler {
         eip7702_gas_refund: i64,
     ) -> Result<ResultGas, Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
-        self.refund(evm, exec_result, eip7702_gas_refund);
-
-        // Build ResultGas from the final gas state
-        // This includes all necessary fields and gas values.
-        let result_gas = post_execution::build_result_gas(exec_result.gas(), init_and_floor_gas);
+        let mut refund = self.refund(evm, exec_result, eip7702_gas_refund);
 
         // Ensure gas floor is met and minimum floor gas is spent.
         // if `cfg.is_eip7623_disabled` is true, floor gas will be set to zero
-        self.eip7623_check_gas_floor(evm, exec_result, init_and_floor_gas);
+        self.eip7623_check_gas_floor(evm, exec_result, &mut refund, init_and_floor_gas);
+
         // Return unused gas to caller
-        self.reimburse_caller(evm, exec_result)?;
+        self.reimburse_caller(evm, exec_result, refund)?;
+
         // Pay transaction fees to beneficiary
-        self.reward_beneficiary(evm, exec_result)?;
+        self.reward_beneficiary(evm, exec_result, refund)?;
+
         // Build ResultGas from the final gas state
-        Ok(result_gas)
+        Ok(self.build_result_gas(evm, exec_result, refund, init_and_floor_gas))
     }
 
     /* VALIDATION */
@@ -367,7 +367,6 @@ pub trait Handler {
         let instruction_result = frame_result.interpreter_result().result;
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
-        let refunded = gas.refunded();
         let reservoir = gas.reservoir();
         let state_gas_spent = gas.state_gas_spent();
 
@@ -379,9 +378,7 @@ pub trait Handler {
             gas.erase_cost(remaining);
         }
 
-        if instruction_result.is_ok() {
-            gas.record_refund(refunded);
-        }
+
 
         // Reservoir handling at the top-level frame:
         // - On success: use the frame's final reservoir as-is, state gas was consumed.
@@ -455,9 +452,10 @@ pub trait Handler {
         &self,
         _evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        refund: &mut i64,
         init_and_floor_gas: InitialAndFloorGas,
     ) {
-        post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), init_and_floor_gas)
+        post_execution::eip7623_check_gas_floor(exec_result.gas_mut(), refund, init_and_floor_gas)
     }
 
     /// Calculates the final gas refund amount, including any EIP-7702 refunds.
@@ -467,9 +465,15 @@ pub trait Handler {
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
-    ) {
+    ) -> i64 {
         let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+        let journal_refund = evm.ctx().journal().refund();
+        post_execution::refund(
+            spec,
+            exec_result.gas(),
+            journal_refund,
+            eip7702_refund,
+        )
     }
 
     /// Returns unused gas costs to the transaction sender's account.
@@ -478,8 +482,9 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        refund: i64,
     ) -> Result<(), Self::Error> {
-        post_execution::reimburse_caller(evm.ctx(), exec_result.gas(), U256::ZERO)
+        post_execution::reimburse_caller(evm.ctx(), exec_result.gas(), refund, U256::ZERO)
             .map_err(From::from)
     }
 
@@ -489,8 +494,21 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        refund: i64,
     ) -> Result<(), Self::Error> {
-        post_execution::reward_beneficiary(evm.ctx(), exec_result.gas()).map_err(From::from)
+        post_execution::reward_beneficiary(evm.ctx(), exec_result.gas(), refund).map_err(From::from)
+    }
+
+    /// Builds a ResultGas from the final gas state.
+    #[inline]
+    fn build_result_gas(
+        &self,
+        _evm: &mut Self::Evm,
+        exec_result: &<<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        refund: i64,
+        init_and_floor_gas: InitialAndFloorGas,
+    ) -> ResultGas {
+        post_execution::build_result_gas(exec_result.gas(), refund, init_and_floor_gas)
     }
 
     /// Processes the final execution output.

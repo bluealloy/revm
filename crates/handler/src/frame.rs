@@ -489,10 +489,6 @@ impl EthFrame<EthInterpreter> {
 
                 // handle reservoir remaining gas
                 handle_reservoir_remaining_gas(&mut interpreter.gas, &out_gas, ins_result);
-
-                if ins_result.is_ok() {
-                    interpreter.gas.record_refund(out_gas.refunded());
-                }
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -524,7 +520,6 @@ impl EthFrame<EthInterpreter> {
                 handle_reservoir_remaining_gas(this_gas, outcome.gas(), instruction_result);
 
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO

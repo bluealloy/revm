@@ -323,6 +323,18 @@ impl JournalTr for Backend {
         self.journaled_state
             .load_account_mut_optional_code(address, load_code)
     }
+
+    fn record_refund(&mut self, refund: i64) {
+        self.journaled_state.record_refund(refund);
+    }
+
+    fn refund(&self) -> i64 {
+        self.journaled_state.refund()
+    }
+
+    fn set_refund(&mut self, refund: i64) {
+        self.journaled_state.set_refund(refund);
+    }
 }
 
 impl JournalExt for Backend {

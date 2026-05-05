@@ -89,6 +89,12 @@ pub struct JournalInner<ENTRY> {
     ///
     /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
     pub selfdestructed_addresses: Vec<Address>,
+    /// Global gas refund counter for the current transaction.
+    ///
+    /// This is accumulated during execution (e.g., SSTORE, SELFDESTRUCT) and
+    /// applied at the end of the transaction. Moved from per-frame Gas to
+    /// eliminate negative refund leaking from child call frames.
+    pub refund: i64,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -113,6 +119,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
             selfdestructed_addresses: Vec::new(),
+            refund: 0,
         }
     }
 
@@ -147,6 +154,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
+            refund,
         } = self;
         // Cfg and state are not changed. They are always set again before execution.
         let _ = cfg;
@@ -164,6 +172,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         logs.clear();
         selfdestructed_addresses.clear();
+        *refund = 0;
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -179,6 +188,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
+            refund,
         } = self;
         let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
@@ -190,6 +200,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         logs.clear();
         selfdestructed_addresses.clear();
         transaction_id.increment();
+        *refund = 0;
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
@@ -213,6 +224,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
+            refund,
         } = self;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
@@ -250,6 +262,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         // reset transaction id.
         *transaction_id = TransactionId::ZERO;
+        // reset refund counter.
+        *refund = 0;
 
         state
     }
@@ -579,6 +593,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
             selfdestructed_i: self.selfdestructed_addresses.len(),
+            refund: self.refund,
         };
         self.depth += 1;
         checkpoint
@@ -601,6 +616,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // EIP-7708: Remove selfdestructed addresses added after checkpoint
         self.selfdestructed_addresses
             .truncate(checkpoint.selfdestructed_i);
+        // Restore refund to checkpoint value
+        self.refund = checkpoint.refund;
 
         // iterate over last N journals sets and revert our global state
         if checkpoint.journal_i < self.journal.len() {
