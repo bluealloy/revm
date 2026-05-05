@@ -1,0 +1,56 @@
+---
+source: crates/ee-tests/src/eip8037.rs
+expression: "&(baseline_result, result)"
+---
+[
+  {
+    "Success": {
+      "reason": "SelfDestruct",
+      "gas": {
+        "gas_spent": 26003,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": [
+        {
+          "address": "0xfffffffffffffffffffffffffffffffffffffffe",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff",
+            "0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+          ],
+          "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000"
+        }
+      ],
+      "output": {
+        "Call": "0x"
+      }
+    }
+  },
+  {
+    "Success": {
+      "reason": "SelfDestruct",
+      "gas": {
+        "gas_spent": 26003,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": [
+        {
+          "address": "0xfffffffffffffffffffffffffffffffffffffffe",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff",
+            "0x000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+          ],
+          "data": "0x000000000000000000000000000000000000000000000000002386f26fc10000"
+        }
+      ],
+      "output": {
+        "Call": "0x"
+      }
+    }
+  }
+]

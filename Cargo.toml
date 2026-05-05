@@ -124,6 +124,7 @@ rstest = "0.26.0"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
 similar-asserts = "2.0"
+insta = { version = "1.43", default-features = false, features = ["json"] }
 
 [workspace.package]
 license = "MIT"
