@@ -495,7 +495,7 @@ fn test_eip8037_sstore_new_slot() {
         result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent(),
         STATE_GAS_SSTORE_SET
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 1.2 Two SSTOREs to same slot: only first charges state gas.
@@ -525,7 +525,7 @@ fn test_eip8037_sstore_overwrite_no_state_gas() {
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 1.3 SSTORE zero→zero: no state gas.
@@ -555,7 +555,7 @@ fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent()
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 1.4 Three SSTOREs to different new slots: 3× sstore_set_state_gas.
@@ -589,7 +589,7 @@ fn test_eip8037_sstore_multiple_new_slots() {
         result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent(),
         expected
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 // ---- Category 2: CREATE State Gas ----
@@ -618,7 +618,7 @@ fn test_eip8037_create_empty_code() {
     assert_eq!(result.gas().state_gas_spent(), expected);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas + expected);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 2.2 CREATE deploying 10-byte contract: new_account + create + code_deposit(10).
@@ -646,7 +646,7 @@ fn test_eip8037_create_with_code() {
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas + expected_delta);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 2.3 CREATE with init code that does SSTORE + returns 1-byte code: all 4 state gas types.
@@ -674,7 +674,7 @@ fn test_eip8037_create_with_sstore() {
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
     assert_eq!(result.gas().inner_refunded(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 2.4 CREATE2 deploying 10-byte contract: same state gas as CREATE.
@@ -712,7 +712,7 @@ fn test_eip8037_create2_with_code() {
         result.gas().state_gas_spent(),
         create_result.gas().state_gas_spent()
     );
-    insta::assert_json_snapshot!(&(baseline_result, result, create_result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result, create_result));
 }
 
 /// 2.5 CREATE deploying code where enough regular gas but insufficient total for code deposit state gas.
@@ -762,7 +762,7 @@ fn test_eip8037_create_code_deposit_state_gas_oog() {
     }
     assert_eq!(result.tx_gas_used(), tight_limit);
     assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, baseline_tight_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, baseline_tight_result, result));
 }
 
 // ---- Category 3: CALL State Gas ----
@@ -792,7 +792,7 @@ fn test_eip8037_call_new_account() {
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent() + STATE_GAS_NEW_ACCOUNT
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 3.2 CALL with value to existing account: no state gas.
@@ -818,7 +818,7 @@ fn test_eip8037_call_existing_account() {
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent()
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 3.3 SELFDESTRUCT sending balance to non-existent account: new_account_state_gas.
@@ -846,7 +846,7 @@ fn test_eip8037_selfdestruct_new_account() {
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent() + STATE_GAS_NEW_ACCOUNT
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 3.4 SELFDESTRUCT sending balance to existing account: no state gas.
@@ -873,7 +873,7 @@ fn test_eip8037_selfdestruct_existing_account() {
         baseline_result.gas().total_gas_spent()
     );
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 // ---- Category 4: Regular Gas Cap Enforcement ----
@@ -913,7 +913,7 @@ fn test_eip8037_regular_gas_cap_causes_oog() {
     }
     assert_eq!(result.tx_gas_used(), 30_000);
     assert_eq!(result.gas().total_gas_spent(), 30_000);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 4.2 Adequate regular gas cap: success.
@@ -950,7 +950,7 @@ fn test_eip8037_regular_gas_cap_sufficient() {
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(result.tx_gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 4.3 Remaining gas insufficient after state gas deduction.
@@ -990,7 +990,7 @@ fn test_eip8037_state_gas_oog_remaining() {
     assert_eq!(result.tx_gas_used(), 50_000);
     assert!(baseline_gas < 50_000);
     assert!(baseline_gas + STATE_GAS_SSTORE_SET > 50_000);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 4.4 tx_gas_limit_cap is NOT enforced as a hard cap when state gas reservoir covers it.
@@ -1029,7 +1029,7 @@ fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
     // Unused reservoir gas (including new account state gas that wasn't consumed)
     // is not counted as gas used.
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 4.5 Block gas limit is still enforced even with state gas enabled.
@@ -1104,7 +1104,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(result_fits.is_success());
-    insta::assert_json_snapshot!(&result_fits);
+    crate::assert_sorted_json_snapshot!(&result_fits);
 }
 
 // ---- Category 5: State Gas Propagation ----
@@ -1134,7 +1134,7 @@ fn test_eip8037_create_child_propagates() {
     assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
@@ -1165,7 +1165,7 @@ fn test_eip8037_reverted_create_child() {
     // state_gas_spent reflects only parent's state gas (child's SSTORE state gas refunded on revert).
     assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent propagates on success.
@@ -1201,7 +1201,7 @@ fn test_eip8037_call_child_sstore_propagates() {
     assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 5.4 CALL to contract that does SSTORE(0,1) then REVERT. Child's state gas is refunded.
@@ -1246,7 +1246,7 @@ fn test_eip8037_call_child_sstore_reverts() {
     let expected_delta = create_state_gas + hash_cost(child_runtime.len());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 5.5 Multi-level nesting: CALL -> CREATE -> SSTORE. State gas propagates through frames.
@@ -1292,7 +1292,7 @@ fn test_eip8037_nested_call_create_sstore() {
     assert!(create_result.is_success());
     let sstore_portion = result.gas().state_gas_spent() - create_result.gas().state_gas_spent();
     assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
-    insta::assert_json_snapshot!(&(baseline_result, result, create_result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result, create_result));
 }
 
 // ---- Category 6: Interactions ----
@@ -1321,7 +1321,7 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     // Refund does NOT undo state gas — gas_used is higher than baseline.
     assert!(result.tx_gas_used() > baseline_gas);
     assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 6.2 State gas does not reduce regular gas budget.
@@ -1352,7 +1352,7 @@ fn test_eip8037_state_gas_does_not_reduce_regular_gas() {
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 6.3 GAS opcode returns remaining (excludes reservoir).
@@ -1401,7 +1401,7 @@ fn test_eip8037_gas_opcode_excludes_reservoir() {
     let expected_reservoir = execution_gas - regular_budget;
     let gas_diff = baseline_gas_value - gas_opcode_value;
     assert_eq!(gas_diff, U256::from(expected_reservoir));
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 6.4 INVALID opcode after SSTORE: spend_all() zeroes remaining but preserves reservoir.
@@ -1451,7 +1451,7 @@ fn test_eip8037_spend_all_preserves_reservoir() {
     );
     // state_gas_spent is zeroed on halt (state changes rolled back).
     assert_eq!(result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 6.5 state_gas_spent field in ResultGas.
@@ -1478,7 +1478,7 @@ fn test_eip8037_state_gas_spent_in_result() {
     assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
     let gas_used_delta = result.tx_gas_used() - baseline_result.tx_gas_used();
     assert_eq!(gas_used_delta, STATE_GAS_SSTORE_SET);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 6.6 CALL to precompile: precompile gas is regular, not state gas.
@@ -1507,7 +1507,7 @@ fn test_eip8037_precompile_no_state_gas() {
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent()
     );
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 // ---- Category 7: Reservoir Refill ----
@@ -1562,7 +1562,7 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
     );
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 7.2 REVERT with state_gas > reservoir (2x SSTORE).
@@ -1604,7 +1604,7 @@ fn test_eip8037_reservoir_refill_revert_state_gas_more() {
     assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 7.3 HALT (OOG) with tight gas limit.
@@ -1645,7 +1645,7 @@ fn test_eip8037_reservoir_refill_halt_state_gas_less() {
     assert_eq!(result.gas().total_gas_spent(), gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// 7.4 HALT (OOG) with tight cap forcing regular gas exhaustion.
@@ -1677,7 +1677,7 @@ fn test_eip8037_reservoir_refill_halt_state_gas_more() {
     assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
-    insta::assert_json_snapshot!(&result);
+    crate::assert_sorted_json_snapshot!(&result);
 }
 
 /// 7.5 HALT vs REVERT: gas accounting difference.
@@ -1720,7 +1720,7 @@ fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
     assert_eq!(result_halt.gas().state_gas_spent(), 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
-    insta::assert_json_snapshot!(&(result_halt, result_revert));
+    crate::assert_sorted_json_snapshot!(&(result_halt, result_revert));
 }
 
 // ---- Gap Tests: Categories A-E from eip8037.md ----
@@ -1835,7 +1835,7 @@ fn test_eip8037_call_new_account_no_value() {
     assert_eq!(result.gas().state_gas_spent(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// E.3: Large code deployment — CREATE deploying 200-byte contract.
@@ -1867,7 +1867,7 @@ fn test_eip8037_create_large_code() {
     let code_deposit_portion = STATE_GAS_CODE_DEPOSIT * 200;
     assert_eq!(code_deposit_portion, 200_000);
     assert_eq!(result.tx_gas_used(), baseline_gas + expected_delta);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
 /// B.2: Parent CREATEs child, CALLs child (child SSTORE + REVERT), then parent SSTORE.
@@ -1911,5 +1911,5 @@ fn test_eip8037_parent_sstore_after_child_revert() {
     assert_eq!(delta, expected_delta);
     assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
     assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    insta::assert_json_snapshot!(&(baseline_result, result));
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
