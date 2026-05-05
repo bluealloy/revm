@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v10.0.0...revm-bytecode-v11.0.0) - 2026-05-05
+
+### Fixed
+
+- opcode struct panics/safety ([#3566](https://github.com/bluealloy/revm/pull/3566))
+- *(bytecode)* mark `Bytecode::new_analyzed` as unsafe ([#3557](https://github.com/bluealloy/revm/pull/3557))
+
+### Other
+
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- no alloc for empty accounts ([#3590](https://github.com/bluealloy/revm/pull/3590))
+- avoid cloning precompiles on warmup ([#3586](https://github.com/bluealloy/revm/pull/3586))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v9.0.0...revm-bytecode-v10.0.0) - 2026-04-10
 
 ### Added

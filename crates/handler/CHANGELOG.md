@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v18.1.0...revm-handler-v19.0.0) - 2026-05-05
+
+### Added
+
+- propagate InitialAndFloorGas to validate_against_state_and_deduct_caller ([#3577](https://github.com/bluealloy/revm/pull/3577))
+
+### Fixed
+
+- re-add PrecompileOutput::gas_refunded ([#3574](https://github.com/bluealloy/revm/pull/3574))
+- *(handler)* skip reimburse_caller and reward_beneficiary when fee charge is disabled ([#3559](https://github.com/bluealloy/revm/pull/3559))
+
+### Other
+
+- reject nonce-max senders before execution ([#3531](https://github.com/bluealloy/revm/pull/3531))
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+- backport v107 release notes from branch ([#3617](https://github.com/bluealloy/revm/pull/3617))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- avoid cloning precompiles on warmup ([#3586](https://github.com/bluealloy/revm/pull/3586))
+- *(interpreter)* separate instruction and gas tables ([#3561](https://github.com/bluealloy/revm/pull/3561))
+- thread reservoir through OOG constructors ([#3580](https://github.com/bluealloy/revm/pull/3580))
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [18.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v18.0.0...revm-handler-v18.1.0) - 2026-04-17
 
 ### Added
