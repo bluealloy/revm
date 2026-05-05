@@ -4,10 +4,7 @@ pub mod account;
 pub mod entry;
 
 use crate::{
-    context::{SStoreResult, SelfDestructResult},
-    host::LoadError,
-    journaled_state::account::JournaledAccountTr,
-    ErasedError,
+    ErasedError, context::{SStoreResult, SelfDestructResult}, host::LoadError, journaled_state::{account::JournaledAccountTr}
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -34,10 +31,30 @@ pub trait JournalTr {
     fn new(database: Self::Database) -> Self;
 
     /// Returns a mutable reference to the database.
-    fn db_mut(&mut self) -> &mut Self::Database;
+    fn db_mut(&mut self) -> &mut Self::Database {
+        self.db_and_state_mut().0
+    }
 
     /// Returns an immutable reference to the database.
-    fn db(&self) -> &Self::Database;
+    fn db(&self) -> &Self::Database {
+        self.db_and_state().0
+    }
+
+    /// Return the mutable current Journaled state.
+    fn evm_state_mut(&mut self) -> &mut Self::State {
+        self.db_and_state_mut().1
+    }
+
+    /// Return the current Journaled state.
+    fn evm_state(&self) -> &Self::State {
+        self.db_and_state().1
+    }
+
+    /// Returns immutable reference to the database and state.
+    fn db_and_state(&self) -> (&Self::Database, &Self::State);
+
+    /// Returns mutable reference to the database and state.
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State);
 
     /// Returns the storage value from Journal state.
     ///
