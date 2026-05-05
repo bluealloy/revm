@@ -6,7 +6,7 @@ use crate::{
 };
 use core::hash::{Hash, Hasher};
 use primitives::{
-    eip7702,
+    eip7702, eip8037,
     hardfork::SpecId::{self},
     OnceLock, U256,
 };
@@ -304,13 +304,16 @@ impl GasParams {
 
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
             table[GasId::tx_floor_cost_base_gas().as_usize()] = 21000;
+            // EIP-7623 floor tokens reuse `tokens_in_calldata`, i.e. zero bytes count as
+            // one token each.
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] = 1;
         }
 
-        // EIP-8037: State creation gas cost increase
+        // EIP-8037: State creation gas cost increase.
+        // State-gas entries store *byte counts* here; the helper methods multiply
+        // by the current `cost_per_state_byte` (CPSB), which is derived from the
+        // block gas limit at charge time via `Cfg::cpsb`.
         if spec.is_enabled_in(SpecId::AMSTERDAM) {
-            // Hardcoded cost_per_state_byte for 100M block gas limit
-            const CPSB: u64 = 1174;
-
             // Regular gas changes
             table[GasId::create().as_usize()] = 9000;
             table[GasId::tx_create_cost().as_usize()] = 9000;
@@ -321,25 +324,49 @@ impl GasParams {
             // sstore_set_without_load_cost = 2900 - WARM_STORAGE_READ_COST(100) = 2800
             table[GasId::sstore_set_without_load_cost().as_usize()] = 2800;
 
-            // State gas values
-            table[GasId::sstore_set_state_gas().as_usize()] = 32 * CPSB;
-            table[GasId::new_account_state_gas().as_usize()] = 112 * CPSB;
-            table[GasId::code_deposit_state_gas().as_usize()] = CPSB;
-            table[GasId::create_state_gas().as_usize()] = 112 * CPSB;
+            // State gas byte counts (multiplied by CPSB at charge time).
+            table[GasId::sstore_set_state_gas().as_usize()] = eip8037::SSTORE_SET_BYTES;
+            table[GasId::new_account_state_gas().as_usize()] = eip8037::NEW_ACCOUNT_BYTES;
+            table[GasId::code_deposit_state_gas().as_usize()] = eip8037::CODE_DEPOSIT_PER_BYTE;
+            table[GasId::create_state_gas().as_usize()] = eip8037::NEW_ACCOUNT_BYTES;
 
-            // SSTORE refund for 0→X→0 restoration: state gas + regular gas
-            table[GasId::sstore_set_refund().as_usize()] = 32 * CPSB + 2800;
+            // SSTORE refund for 0→X→0 restoration: regular gas only.
+            // The state-gas portion (SSTORE_SET_BYTES × CPSB) is restored directly
+            // to the reservoir via `GasParams::sstore_state_gas_refill`.
+            table[GasId::sstore_set_refund().as_usize()] = 2800;
 
-            // EIP-7702 parameter updates under EIP-8037
-            // Total per auth charged pessimistically:
-            //   regular: PER_AUTH_BASE_COST_REGULAR (7500)
-            //   state: (PER_EMPTY_ACCOUNT 112 + PER_AUTH_BASE 23) × CPSB
-            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] = 7500 + (112 + 23) * CPSB;
-            // Refund for existing accounts: PER_EMPTY_ACCOUNT state gas (112 × CPSB)
-            table[GasId::tx_eip7702_auth_refund().as_usize()] = 112 * CPSB;
+            // EIP-7702 under EIP-8037: regular and state-gas components are stored
+            // separately. Helpers combine them using the current CPSB.
+            //   regular per-auth cost: 7500
+            //   state bytes per-auth:  NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES
+            //   regular refund:        0 (refund is entirely state gas)
+            //   state-bytes refund:    NEW_ACCOUNT_BYTES
+            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
+                eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
+            table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
+            table[GasId::tx_eip7702_auth_refund_state_bytes().as_usize()] =
+                eip8037::NEW_ACCOUNT_BYTES;
+            table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] =
+                eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
 
-            // State gas per auth for initial_state_gas tracking
-            table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] = (112 + 23) * CPSB;
+            // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
+            // (zero/nonzero). The per-token constant bumps from 10 to 16, and
+            // `floor_tokens_in_calldata` switches from `zero + nonzero * 4` to
+            // `(zero + nonzero) * 4`, i.e. every byte now costs 16 * 4 = 64 gas in the floor.
+            table[GasId::tx_floor_cost_per_token().as_usize()] = 16;
+            table[GasId::tx_floor_token_zero_byte_multiplier().as_usize()] =
+                table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
+
+            // EIP-7981: Charge access list data at 64 gas per byte, matching
+            // calldata floor pricing. Per-item costs bake in the data charge:
+            //   address: 2400 + 20 * 64 = 3680
+            //   key:     1900 + 32 * 64 = 3948
+            // And every access-list byte contributes 4 floor tokens (16 * 4 = 64 gas).
+            table[GasId::tx_access_list_address_cost().as_usize()] =
+                gas::ACCESS_LIST_ADDRESS + 20 * 64;
+            table[GasId::tx_access_list_storage_key_cost().as_usize()] =
+                gas::ACCESS_LIST_STORAGE_KEY + 32 * 64;
+            table[GasId::tx_access_list_floor_byte_multiplier().as_usize()] = 4;
         }
 
         Self::new(Arc::new(table))
@@ -667,12 +694,29 @@ impl GasParams {
 
     /// State gas for SSTORE: charges for new slot creation (zero → non-zero).
     #[inline]
-    pub fn sstore_state_gas(&self, vals: &SStoreResult) -> u64 {
+    pub fn sstore_state_gas(&self, vals: &SStoreResult, cpsb: u64) -> u64 {
         if vals.new_values_changes_present()
             && vals.is_original_eq_present()
             && vals.is_original_zero()
         {
-            self.get(GasId::sstore_set_state_gas())
+            self.get(GasId::sstore_set_state_gas()).saturating_mul(cpsb)
+        } else {
+            0
+        }
+    }
+
+    /// State gas to refill the reservoir on 0→x→0 storage restoration (EIP-8037).
+    ///
+    /// When a storage slot is restored to its original zero value within the
+    /// same transaction, the state gas originally charged for the 0→x
+    /// transition is returned directly to the reservoir (not via the capped
+    /// refund counter). Returns 0 in any other case.
+    ///
+    /// `cpsb` is the current `cost_per_state_byte` (see [`Cfg::cpsb`]).
+    #[inline]
+    pub fn sstore_state_gas_refill(&self, vals: &SStoreResult, cpsb: u64) -> u64 {
+        if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
+            self.get(GasId::sstore_set_state_gas()).saturating_mul(cpsb)
         } else {
             0
         }
@@ -680,70 +724,78 @@ impl GasParams {
 
     /// State gas for new account creation.
     #[inline]
-    pub fn new_account_state_gas(&self) -> u64 {
+    pub fn new_account_state_gas(&self, cpsb: u64) -> u64 {
         self.get(GasId::new_account_state_gas())
+            .saturating_mul(cpsb)
     }
 
-    /// State gas per byte for code deposit.
+    /// State gas for code deposit of `len` bytes.
     #[inline]
-    pub fn code_deposit_state_gas(&self, len: usize) -> u64 {
+    pub fn code_deposit_state_gas(&self, len: usize, cpsb: u64) -> u64 {
         self.get(GasId::code_deposit_state_gas())
             .saturating_mul(len as u64)
+            .saturating_mul(cpsb)
     }
 
     /// State gas for contract metadata creation.
     #[inline]
-    pub fn create_state_gas(&self) -> u64 {
-        self.get(GasId::create_state_gas())
+    pub fn create_state_gas(&self, cpsb: u64) -> u64 {
+        self.get(GasId::create_state_gas()).saturating_mul(cpsb)
     }
 
-    /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per empty account cost.
+    /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per-auth cost.
+    ///
+    /// Under EIP-8037 this combines a regular portion with a state-bytes portion
+    /// multiplied by `cpsb`. Pre-EIP-8037 the state-bytes portion is zero so this
+    /// returns the legacy `PER_EMPTY_ACCOUNT_COST`.
     #[inline]
-    pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
-        self.get(GasId::tx_eip7702_per_empty_account_cost())
+    pub fn tx_eip7702_per_empty_account_cost(&self, cpsb: u64) -> u64 {
+        let regular = self.get(GasId::tx_eip7702_per_empty_account_cost());
+        let state = self
+            .get(GasId::tx_eip7702_per_auth_state_gas())
+            .saturating_mul(cpsb);
+        regular.saturating_add(state)
     }
 
     /// EIP-7702 authorization refund per existing account.
     ///
-    /// This is the gas refund given when an EIP-7702 authorization is applied
-    /// to an account that already exists in the trie. By default this is
-    /// `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500).
+    /// Pre-Amsterdam this is a fixed regular-gas refund (`PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST`).
+    /// Under EIP-8037 the refund is fully state gas, computed as `NEW_ACCOUNT_BYTES * cpsb`.
     #[inline]
-    pub fn tx_eip7702_auth_refund(&self) -> u64 {
-        self.get(GasId::tx_eip7702_auth_refund())
+    pub fn tx_eip7702_auth_refund(&self, cpsb: u64) -> u64 {
+        let regular = self.get(GasId::tx_eip7702_auth_refund());
+        let state = self
+            .get(GasId::tx_eip7702_auth_refund_state_bytes())
+            .saturating_mul(cpsb);
+        regular.saturating_add(state)
     }
 
     /// EIP-8037: State gas per EIP-7702 authorization (pessimistic).
     ///
     /// Used for `initial_state_gas` tracking. Zero before AMSTERDAM.
     #[inline]
-    pub fn tx_eip7702_per_auth_state_gas(&self) -> u64 {
+    pub fn tx_eip7702_per_auth_state_gas(&self, cpsb: u64) -> u64 {
         self.get(GasId::tx_eip7702_per_auth_state_gas())
+            .saturating_mul(cpsb)
     }
 
-    /// EIP-8037: Splits a total EIP-7702 refund into state gas and regular gas portions.
+    /// EIP-7702 per-auth refund: state-gas portion only.
     ///
-    /// At validation time, `initial_tx_gas` splits each auth cost into state + regular.
-    /// This method is the inverse: it recovers how much of the total refund was state gas.
-    ///
-    /// The state gas portion reduces `initial_state_gas` directly (not subject to refund caps).
-    /// The regular gas portion goes through the standard 1/5 refund cap.
-    ///
-    /// # Returns
-    ///
-    /// `(state_refund, regular_refund)` for the given total refund.
+    /// Pre-Amsterdam this is zero (the refund is entirely regular gas).
+    /// Under EIP-8037 the refund is entirely state gas (`NEW_ACCOUNT_BYTES * cpsb`).
     #[inline]
-    pub fn split_eip7702_refund(&self, total_refund: u64) -> (u64, u64) {
-        let per_auth_refund = self.tx_eip7702_auth_refund();
-        let per_auth_state_gas = self.tx_eip7702_per_auth_state_gas();
-        if per_auth_state_gas > 0 && per_auth_refund > 0 && total_refund > 0 {
-            let state_refund_per_auth = core::cmp::min(per_auth_refund, per_auth_state_gas);
-            let num_refunded = total_refund / per_auth_refund;
-            let state_refund = num_refunded * state_refund_per_auth;
-            (state_refund, total_refund - state_refund)
-        } else {
-            (0, total_refund)
-        }
+    pub fn tx_eip7702_auth_refund_state(&self, cpsb: u64) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund_state_bytes())
+            .saturating_mul(cpsb)
+    }
+
+    /// EIP-7702 per-auth refund: regular-gas portion only.
+    ///
+    /// Pre-Amsterdam this is `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (12500).
+    /// Under EIP-8037 it is zero — the refund is entirely state gas.
+    #[inline]
+    pub fn tx_eip7702_auth_refund_regular(&self) -> u64 {
+        self.get(GasId::tx_eip7702_auth_refund())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
@@ -763,12 +815,42 @@ impl GasParams {
         self.get(GasId::tx_floor_cost_per_token())
     }
 
-    /// Used [GasParams::initial_tx_gas] to calculate the floor gas.
+    /// Multiplier for a zero byte in the floor tokens calculation.
     ///
-    /// Floor gas is introduced in EIP-7623.
+    /// Under EIP-7623 this is `1` (zero bytes count as one token), so the floor
+    /// reuses `tokens_in_calldata`. Under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976)
+    /// it is raised to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// so every calldata byte contributes the same amount (`floor_tokens_in_calldata =
+    /// (zero + nonzero) * 4`).
+    pub fn tx_floor_token_zero_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_floor_token_zero_byte_multiplier())
+    }
+
+    /// Floor gas cost for a transaction with the given calldata.
+    ///
+    /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
+    /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
+    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier
+    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two multipliers match
+    /// (EIP-7976), every byte contributes the same amount, so the zero/nonzero split is
+    /// skipped and `input.len()` is used directly; otherwise (EIP-7623 path, zero
+    /// multiplier = 1) the result matches `get_tokens_in_calldata(input, nonzero)`.
     #[inline]
-    pub fn tx_floor_cost(&self, tokens_in_calldata: u64) -> u64 {
-        self.tx_floor_cost_per_token() * tokens_in_calldata + self.tx_floor_cost_base_gas()
+    pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
+        let zero_multiplier = self.tx_floor_token_zero_byte_multiplier();
+        let non_zero_multiplier = self.tx_token_non_zero_byte_multiplier();
+        let floor_tokens = if zero_multiplier == non_zero_multiplier {
+            input.len() as u64 * non_zero_multiplier
+        } else {
+            get_tokens_in_calldata(input, non_zero_multiplier)
+        };
+        self.tx_floor_cost_with_tokens(floor_tokens)
+    }
+
+    /// Calculate the floor gas cost for a transaction with the given number of tokens.
+    #[inline]
+    pub fn tx_floor_cost_with_tokens(&self, tokens: u64) -> u64 {
+        self.tx_floor_cost_per_token() * tokens + self.tx_floor_cost_base_gas()
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the floor gas base gas.
@@ -810,6 +892,30 @@ impl GasParams {
             .saturating_add(storages.saturating_mul(self.tx_access_list_storage_key_cost()))
     }
 
+    /// Floor tokens contributed per access-list byte ([EIP-7981]).
+    ///
+    /// Zero before AMSTERDAM. From AMSTERDAM onward this is `4`, so each
+    /// access-list byte contributes the same 64 gas to the floor as a calldata
+    /// byte under EIP-7976.
+    ///
+    /// [EIP-7981]: https://eips.ethereum.org/EIPS/eip-7981
+    #[inline]
+    pub fn tx_access_list_floor_byte_multiplier(&self) -> u64 {
+        self.get(GasId::tx_access_list_floor_byte_multiplier())
+    }
+
+    /// Floor tokens contributed by an access list with the given address and
+    /// storage-key counts (EIP-7981). Each address is 20 bytes, each storage
+    /// key is 32 bytes; tokens per byte come from
+    /// [`tx_access_list_floor_byte_multiplier`](Self::tx_access_list_floor_byte_multiplier).
+    #[inline]
+    pub fn tx_floor_tokens_in_access_list(&self, accounts: u64, storages: u64) -> u64 {
+        let bytes = accounts
+            .saturating_mul(20)
+            .saturating_add(storages.saturating_mul(32));
+        bytes.saturating_mul(self.tx_access_list_floor_byte_multiplier())
+    }
+
     /// Used in [GasParams::initial_tx_gas] to calculate the base transaction stipend.
     pub fn tx_base_stipend(&self) -> u64 {
         self.get(GasId::tx_base_stipend())
@@ -833,8 +939,9 @@ impl GasParams {
     /// Initial gas that is deducted for transaction to be included.
     /// Initial gas contains initial stipend gas, gas for access list and input data.
     ///
-    /// Under EIP-8037, state gas is tracked separately in `initial_state_gas` and
-    /// added to `initial_total_gas` at the end. The state gas components are:
+    /// Under EIP-8037, state gas is tracked separately in `initial_state_gas`,
+    /// while regular intrinsic gas accumulates in `initial_regular_gas`. The state
+    /// gas components are:
     /// - EIP-7702 auth list state gas (per-auth account creation + metadata costs)
     /// - For CREATE transactions: `create_state_gas` (account creation + contract metadata)
     ///
@@ -851,21 +958,20 @@ impl GasParams {
         access_list_accounts: u64,
         access_list_storages: u64,
         authorization_list_num: u64,
+        cpsb: u64,
     ) -> InitialAndFloorGas {
-        let mut gas = InitialAndFloorGas::default();
-
         // Initdate stipend
         let tokens_in_calldata =
             get_tokens_in_calldata(input, self.tx_token_non_zero_byte_multiplier());
 
         // EIP-7702: Compute auth list costs.
         // Under EIP-8037, tx_eip7702_per_empty_account_cost bundles regular + state gas.
-        // We split them: regular goes in initial_total_gas, state goes in initial_state_gas.
-        let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost();
-        let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas();
+        // We split them: regular goes in initial_regular_gas, state goes in initial_state_gas.
+        let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost(cpsb);
+        let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas(cpsb);
         let auth_regular_cost = auth_total_cost - auth_state_gas;
 
-        gas.initial_total_gas += tokens_in_calldata * self.tx_token_cost()
+        let mut initial_regular_gas = tokens_in_calldata * self.tx_token_cost()
             // before berlin tx_access_list_address_cost will be zero
             + access_list_accounts * self.tx_access_list_address_cost()
             // before berlin tx_access_list_storage_key_cost will be zero
@@ -875,29 +981,31 @@ impl GasParams {
             + auth_regular_cost;
 
         // EIP-8037: Track auth list state gas separately for reservoir handling.
-        // State gas is added to initial_total_gas at the end of this function.
-        gas.initial_state_gas += auth_state_gas;
+        let mut initial_state_gas = auth_state_gas;
 
         if is_create {
             // EIP-2: Homestead Hard-fork Changes
-            gas.initial_total_gas += self.tx_create_cost();
+            initial_regular_gas += self.tx_create_cost();
 
             // EIP-3860: Limit and meter initcode
-            gas.initial_total_gas += self.tx_initcode_cost(input.len());
+            initial_regular_gas += self.tx_initcode_cost(input.len());
 
             // EIP-8037: State gas for CREATE transactions.
             // create_state_gas covers both account creation and contract metadata.
-            gas.initial_state_gas += self.create_state_gas();
+            initial_state_gas += self.create_state_gas(cpsb);
         }
 
-        // Calculate gas floor for EIP-7623
-        gas.floor_gas = self.tx_floor_cost(tokens_in_calldata);
+        // Calculate gas floor. Introduced by EIP-7623, updated by EIP-7976, and
+        // extended by EIP-7981 to include access-list data alongside calldata.
+        let access_list_floor_tokens =
+            self.tx_floor_tokens_in_access_list(access_list_accounts, access_list_storages);
+        let floor_gas =
+            self.tx_floor_cost(input) + access_list_floor_tokens * self.tx_floor_cost_per_token();
 
-        // EIP-8037: Include state gas in total initial gas.
-        // State gas is a subset of initial_total_gas, deducted before execution starts.
-        gas.initial_total_gas += gas.initial_state_gas;
-
-        gas
+        InitialAndFloorGas::default()
+            .with_initial_regular_gas(initial_regular_gas)
+            .with_initial_state_gas(initial_state_gas)
+            .with_floor_gas(floor_gas)
     }
 }
 
@@ -1004,6 +1112,15 @@ impl GasId {
             x if x == Self::tx_eip7702_per_auth_state_gas().as_u8() => {
                 "tx_eip7702_per_auth_state_gas"
             }
+            x if x == Self::tx_eip7702_auth_refund_state_bytes().as_u8() => {
+                "tx_eip7702_auth_refund_state_bytes"
+            }
+            x if x == Self::tx_floor_token_zero_byte_multiplier().as_u8() => {
+                "tx_floor_token_zero_byte_multiplier"
+            }
+            x if x == Self::tx_access_list_floor_byte_multiplier().as_u8() => {
+                "tx_access_list_floor_byte_multiplier"
+            }
             _ => "unknown",
         }
     }
@@ -1069,6 +1186,15 @@ impl GasId {
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
             "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
+            "tx_eip7702_auth_refund_state_bytes" => {
+                Some(Self::tx_eip7702_auth_refund_state_bytes())
+            }
+            "tx_floor_token_zero_byte_multiplier" => {
+                Some(Self::tx_floor_token_zero_byte_multiplier())
+            }
+            "tx_access_list_floor_byte_multiplier" => {
+                Some(Self::tx_access_list_floor_byte_multiplier())
+            }
             _ => None,
         }
     }
@@ -1293,11 +1419,36 @@ impl GasId {
         Self::new(43)
     }
 
-    /// EIP-8037: State gas per EIP-7702 authorization (pessimistic).
-    /// Includes both PER_EMPTY_ACCOUNT (112 × cpsb) and PER_AUTH_BASE (23 × cpsb).
-    /// Zero before AMSTERDAM.
+    /// EIP-8037: State bytes per EIP-7702 authorization (pessimistic).
+    /// Includes both PER_EMPTY_ACCOUNT (112) and PER_AUTH_BASE (23) bytes.
+    /// Multiplied by CPSB at charge time. Zero before AMSTERDAM.
     pub const fn tx_eip7702_per_auth_state_gas() -> GasId {
         Self::new(44)
+    }
+
+    /// EIP-8037: State bytes of the EIP-7702 per-auth refund for existing accounts.
+    /// Multiplied by CPSB at charge time. Zero before AMSTERDAM.
+    pub const fn tx_eip7702_auth_refund_state_bytes() -> GasId {
+        Self::new(45)
+    }
+
+    /// Multiplier for a zero byte in `floor_tokens_in_calldata`.
+    ///
+    /// `1` under [EIP-7623](https://eips.ethereum.org/EIPS/eip-7623) and raised
+    /// to [`tx_token_non_zero_byte_multiplier`](Self::tx_token_non_zero_byte_multiplier)
+    /// under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976), which makes the
+    /// floor cost uniform across zero and nonzero calldata bytes. Zero before PRAGUE.
+    pub const fn tx_floor_token_zero_byte_multiplier() -> GasId {
+        Self::new(46)
+    }
+
+    /// Floor tokens contributed per byte of access-list data (EIP-7981).
+    ///
+    /// Zero before AMSTERDAM. From AMSTERDAM onward, set to `4` so every
+    /// access-list byte contributes the same 16 × 4 = 64 gas as a calldata byte
+    /// under EIP-7976.
+    pub const fn tx_access_list_floor_byte_multiplier() -> GasId {
+        Self::new(47)
     }
 }
 
@@ -1369,11 +1520,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 44 known GasIds (based on the indices 1-44 used)
+        // We should have exactly 47 known GasIds (based on the indices 1-47 used)
         assert_eq!(
             unique_names.len(),
-            44,
-            "Expected 44 unique GasIds, found {}",
+            47,
+            "Expected 47 unique GasIds, found {}",
             unique_names.len()
         );
     }
@@ -1419,28 +1570,63 @@ mod tests {
 
     #[test]
     fn test_initial_state_gas_for_create() {
-        // Use AMSTERDAM spec since EIP-8037 state gas is only enabled starting from Amsterdam
+        // Use AMSTERDAM spec since EIP-8037 state gas is only enabled starting from Amsterdam.
+        // CPSB = 1174 corresponds to a 100M block gas limit (canonical test reference).
         let gas_params = GasParams::new_spec(SpecId::AMSTERDAM);
+        let cpsb = eip8037::cost_per_state_byte(100_000_000);
 
         // Test CREATE transaction (is_create = true)
-        let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0);
-        let expected_state_gas = gas_params.create_state_gas();
+        let create_gas = gas_params.initial_tx_gas(b"", true, 0, 0, 0, cpsb);
+        let expected_state_gas = gas_params.create_state_gas(cpsb);
 
-        assert_eq!(create_gas.initial_state_gas, expected_state_gas);
-        assert_eq!(create_gas.initial_state_gas, 131488);
+        assert_eq!(create_gas.initial_state_gas_final(), expected_state_gas);
+        assert_eq!(create_gas.initial_state_gas_final(), 131488);
 
-        // initial_total_gas includes both regular and state gas
+        // initial_total_gas() returns both regular and state gas combined
         let create_cost = gas_params.tx_create_cost();
         let initcode_cost = gas_params.tx_initcode_cost(0);
         assert_eq!(
-            create_gas.initial_total_gas,
+            create_gas.initial_total_gas(),
             gas_params.tx_base_stipend() + create_cost + initcode_cost + expected_state_gas
         );
 
         // Test CALL transaction (is_create = false)
-        let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0);
-        assert_eq!(call_gas.initial_state_gas, 0);
+        let call_gas = gas_params.initial_tx_gas(b"", false, 0, 0, 0, cpsb);
+        assert_eq!(call_gas.initial_state_gas_final(), 0);
         // initial_gas should be unchanged for calls
-        assert_eq!(call_gas.initial_total_gas, gas_params.tx_base_stipend());
+        assert_eq!(call_gas.initial_total_gas(), gas_params.tx_base_stipend());
+    }
+
+    #[test]
+    fn test_eip7981_access_list_cost_amsterdam() {
+        // EIP-7981 folds a 64 gas/byte data charge into the per-item access-list cost
+        // and adds 4 floor tokens per access-list byte on top of the EIP-7976 floor.
+        let params = GasParams::new_spec(SpecId::AMSTERDAM);
+
+        // Per-item intrinsic cost: base + bytes * 64
+        assert_eq!(params.tx_access_list_address_cost(), 2400 + 20 * 64);
+        assert_eq!(params.tx_access_list_storage_key_cost(), 1900 + 32 * 64);
+        assert_eq!(params.tx_access_list_cost(1, 0), 2400 + 20 * 64);
+        assert_eq!(params.tx_access_list_cost(0, 1), 1900 + 32 * 64);
+
+        // Floor multiplier activates at AMSTERDAM.
+        assert_eq!(params.tx_access_list_floor_byte_multiplier(), 4);
+        // 2 addresses (40 bytes) + 3 keys (96 bytes) = 136 bytes => 544 floor tokens.
+        assert_eq!(params.tx_floor_tokens_in_access_list(2, 3), (40 + 96) * 4);
+
+        // Floor gas includes both calldata (empty here) and access-list contribution.
+        let gas = params.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        let expected_al_floor = (40 + 96) * 4 * params.tx_floor_cost_per_token();
+        assert_eq!(
+            gas.floor_gas(),
+            params.tx_floor_cost_base_gas() + expected_al_floor,
+        );
+
+        // Pre-AMSTERDAM the access-list floor contribution is zero.
+        let prague = GasParams::new_spec(SpecId::PRAGUE);
+        assert_eq!(prague.tx_access_list_floor_byte_multiplier(), 0);
+        assert_eq!(prague.tx_floor_tokens_in_access_list(2, 3), 0);
+        let prague_gas = prague.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        assert_eq!(prague_gas.floor_gas(), prague.tx_floor_cost_base_gas());
     }
 }

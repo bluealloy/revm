@@ -10,6 +10,7 @@ pub use inner::{JournalCfg, JournalInner};
 
 use bytecode::Bytecode;
 use context_interface::{
+    cfg::GasParams,
     context::{SStoreResult, SelfDestructResult, StateLoad},
     journaled_state::{
         account::JournaledAccount, AccountInfoLoad, AccountLoad, JournalCheckpoint,
@@ -207,6 +208,17 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
         self.inner
             .set_eip7708_config(disabled, delayed_burn_disabled);
+    }
+
+    #[inline]
+    fn eip8037_selfdestruct_state_gas_refund(
+        &self,
+        gas_params: &GasParams,
+        cpsb: u64,
+        skip_address: Option<Address>,
+    ) -> u64 {
+        self.inner
+            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, skip_address)
     }
 
     #[inline]

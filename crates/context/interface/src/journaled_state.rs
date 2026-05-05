@@ -4,6 +4,7 @@ pub mod account;
 pub mod entry;
 
 use crate::{
+    cfg::GasParams,
     context::{SStoreResult, SelfDestructResult},
     host::LoadError,
     journaled_state::account::JournaledAccountTr,
@@ -129,6 +130,24 @@ pub trait JournalTr {
     ///   accounts. When disabled, the logging can be done outside of revm when applying
     ///   accounts to database state.
     fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool);
+
+    /// EIP-8037: Returns the total state gas to refund at end of tx for accounts
+    /// that were both created and self-destructed in this transaction.
+    ///
+    /// Per EIP-6780 such accounts are erased at tx end — the state gas charged
+    /// during execution for account creation, code deposit, and storage slot
+    /// sets must be returned to the reservoir. `skip_address` (when present)
+    /// is excluded: callers pass the CREATE transaction's target contract here
+    /// because its creation state gas was charged via the intrinsic
+    /// `initial_state_gas` rather than an execution-time reservoir draw, and
+    /// is therefore not eligible for this refund path. Returns zero when
+    /// EIP-8037 is not enabled for the current spec.
+    fn eip8037_selfdestruct_state_gas_refund(
+        &self,
+        gas_params: &GasParams,
+        cpsb: u64,
+        skip_address: Option<Address>,
+    ) -> u64;
 
     /// Touches the account.
     fn touch_account(&mut self, address: Address);

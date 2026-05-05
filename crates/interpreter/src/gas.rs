@@ -153,15 +153,39 @@ impl Gas {
     }
 
     /// Returns total state gas spent so far.
+    ///
+    /// Can be negative within a call frame when 0→x→0 storage restoration
+    /// refills more state gas than this frame charged (see
+    /// [`GasTracker::refill_reservoir`]).
     #[inline]
-    pub const fn state_gas_spent(&self) -> u64 {
+    pub const fn state_gas_spent(&self) -> i64 {
         self.tracker.state_gas_spent()
     }
 
     /// Sets the total state gas spent (used when propagating from child frame).
     #[inline]
-    pub const fn set_state_gas_spent(&mut self, val: u64) {
+    pub fn set_state_gas_spent(&mut self, val: i64) {
         self.tracker.set_state_gas_spent(val);
+    }
+
+    /// Refills the reservoir with state gas returned by 0→x→0 storage restoration.
+    ///
+    /// See [`GasTracker::refill_reservoir`].
+    #[inline]
+    pub fn refill_reservoir(&mut self, amount: u64) {
+        self.tracker.refill_reservoir(amount);
+    }
+
+    /// Returns the cumulative reservoir refill amount in this frame.
+    #[inline]
+    pub const fn refill_amount(&self) -> u64 {
+        self.tracker.refill_amount()
+    }
+
+    /// Sets the cumulative refill amount.
+    #[inline]
+    pub fn set_refill_amount(&mut self, val: u64) {
+        self.tracker.set_refill_amount(val);
     }
 
     /// Erases a gas cost from remaining (returns gas from child frame).
@@ -399,6 +423,35 @@ mod tests {
         // On OOG, state_gas_spent is NOT incremented and reservoir is unchanged
         assert_eq!(gas.state_gas_spent(), 0);
         assert_eq!(gas.reservoir(), 20);
+    }
+
+    /// Refill reservoir restores state gas in-place (EIP-8037 0→x→0 restoration).
+    ///
+    /// The refill decrements `state_gas_spent` and may drive it negative if the
+    /// matching charge was made by a parent frame.
+    #[test]
+    fn test_refill_reservoir() {
+        // Simple case: charge then refill within the same frame.
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 500);
+        assert!(gas.record_state_cost(200));
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (300, 1000, 200)
+        );
+        gas.refill_reservoir(200);
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (500, 1000, 0)
+        );
+
+        // Child-frame case: refill without a prior charge makes state_gas_spent
+        // negative. The parent's matching +charge is reconciled on return.
+        let mut gas = Gas::new_with_regular_gas_and_reservoir(1000, 100);
+        gas.refill_reservoir(300);
+        assert_eq!(
+            (gas.reservoir(), gas.remaining(), gas.state_gas_spent()),
+            (400, 1000, -300)
+        );
     }
 
     /// A.3: State gas with zero regular remaining but non-zero reservoir.

@@ -6,7 +6,7 @@ use interpreter::{CallOutcome, CreateOutcome, Gas};
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
-    state_gas_spent: u64,
+    state_gas_spent: i64,
     reservoir: u64,
 }
 
@@ -30,8 +30,12 @@ impl GasInspector {
     }
 
     /// Returns the state gas spent.
+    ///
+    /// Can be negative within a call frame (EIP-8037 issue #2): a child that
+    /// restores a slot set by its parent via 0→x→0 goes negative until the
+    /// frame returns and the parent's charge is reconciled.
     #[inline]
-    pub const fn state_gas_spent(&self) -> u64 {
+    pub fn state_gas_spent(&self) -> i64 {
         self.state_gas_spent
     }
 
@@ -80,7 +84,7 @@ impl GasInspector {
     /// Spend all gas if call failed.
     #[inline]
     pub const fn call_end(&mut self, outcome: &mut CallOutcome) {
-        if outcome.result.result.is_error() {
+        if outcome.result.result.is_halt() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
@@ -91,7 +95,7 @@ impl GasInspector {
     /// Spend all gas if create failed.
     #[inline]
     pub const fn create_end(&mut self, outcome: &mut CreateOutcome) {
-        if outcome.result.result.is_error() {
+        if outcome.result.result.is_halt() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }

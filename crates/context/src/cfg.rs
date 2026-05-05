@@ -2,7 +2,7 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::GasParams;
-use primitives::{eip170, eip3860, eip7825, eip7954, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, eip7954, eip8037, hardfork::SpecId};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -67,6 +67,12 @@ pub struct CfgEnv<SPEC = SpecId> {
     /// Introduced in Osaka in [EIP-7825: Transaction Gas Limit Cap](https://eips.ethereum.org/EIPS/eip-7825)
     /// with initials cap of 30M.
     pub tx_gas_limit_cap: Option<u64>,
+    /// Overrides the EIP-8037 `cost_per_state_byte` (CPSB).
+    ///
+    /// If `None`, CPSB is derived from `block.gas_limit` via
+    /// [`primitives::eip8037::cost_per_state_byte`] when EIP-8037 is enabled.
+    /// If `Some`, the provided value is used verbatim (useful for tests and replay).
+    pub cpsb_override: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -245,6 +251,7 @@ impl<SPEC> CfgEnv<SPEC> {
             spec,
             disable_nonce_check: self.disable_nonce_check,
             tx_gas_limit_cap: self.tx_gas_limit_cap,
+            cpsb_override: self.cpsb_override,
             max_blobs_per_tx: self.max_blobs_per_tx,
             blob_base_fee_update_fraction: self.blob_base_fee_update_fraction,
             gas_params,
@@ -329,6 +336,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             disable_nonce_check: false,
             max_blobs_per_tx: None,
             tx_gas_limit_cap: None,
+            cpsb_override: None,
             blob_base_fee_update_fraction: None,
             gas_params,
             #[cfg(feature = "memory_limit")]
@@ -570,6 +578,15 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         self.enable_amsterdam_eip8037
+    }
+
+    #[inline]
+    fn cpsb(&self) -> u64 {
+        if !self.enable_amsterdam_eip8037 {
+            return 0;
+        }
+        self.cpsb_override
+            .unwrap_or_else(|| eip8037::CPSB_GLAMSTERDAM)
     }
 }
 

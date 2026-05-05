@@ -118,6 +118,9 @@ pub struct PrecompileOutput {
     pub state_gas_used: u64,
     /// Reservoir gas for EIP-8037.
     pub reservoir: u64,
+    /// Cumulative reservoir refill amount from 0→x→0 storage restorations
+    /// performed during precompile execution (EIP-8037).
+    pub refill_amount: u64,
     /// Output bytes.
     pub bytes: Bytes,
 }
@@ -138,6 +141,7 @@ impl PrecompileOutput {
             gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
+            refill_amount: 0,
             bytes,
         }
     }
@@ -150,6 +154,7 @@ impl PrecompileOutput {
             gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
+            refill_amount: 0,
             bytes: Bytes::new(),
         }
     }
@@ -162,6 +167,7 @@ impl PrecompileOutput {
             gas_refunded: 0,
             state_gas_used: 0,
             reservoir,
+            refill_amount: 0,
             bytes,
         }
     }

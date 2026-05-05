@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.3.0"
-DEVNET_VERSION="bal%40v5.4.0"
+DEVNET_VERSION="bal%40v5.7.0"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"
@@ -171,8 +171,8 @@ run_tests() {
     echo "Running main develop statetests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$MAIN_DEVELOP_DIR/state_tests"
 
-    echo "SKIP Running devnet statetests..."
-    #$RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$DEVNET_DIR/state_tests"
+    echo "Running devnet statetests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$DEVNET_DIR/state_tests"
 
     echo "Running legacy Cancun tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- statetest $KEEP_GOING_FLAG "$LEGACY_DIR/Cancun/GeneralStateTests"
