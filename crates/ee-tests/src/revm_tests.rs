@@ -54,7 +54,7 @@ fn test_selfdestruct_multi_tx() {
 
     let output = evm.finalize();
 
-    insta::assert_json_snapshot!(&(result1, result2, output));
+    crate::assert_sorted_json_snapshot!(&(result1, result2, output));
 }
 
 /// Tests multiple transactions with contract creation.
@@ -162,7 +162,7 @@ fn test_multi_tx_create() {
     );
     let output = evm.finalize();
 
-    insta::assert_json_snapshot!(&(result1, result2, result3, output));
+    crate::assert_sorted_json_snapshot!(&(result1, result2, result3, output));
 }
 
 /// Creates deployment bytecode for a contract.
@@ -209,7 +209,7 @@ fn test_frame_stack_index() {
         .unwrap();
 
     assert_eq!(evm.frame_stack.index(), None);
-    insta::assert_json_snapshot!(&result1);
+    crate::assert_sorted_json_snapshot!(&result1);
 }
 
 #[test]
