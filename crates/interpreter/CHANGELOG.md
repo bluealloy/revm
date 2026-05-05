@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [36.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v35.0.1...revm-interpreter-v36.0.0) - 2026-05-05
+
+### Fixed
+
+- *(bytecode)* mark `Bytecode::new_analyzed` as unsafe ([#3557](https://github.com/bluealloy/revm/pull/3557))
+
+### Other
+
+- *(interpreter)* unify call handlers ([#3626](https://github.com/bluealloy/revm/pull/3626))
+- rm unused MemoryExtensionResult ([#3646](https://github.com/bluealloy/revm/pull/3646))
+- remove unused spec ids ([#3649](https://github.com/bluealloy/revm/pull/3649))
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+- backport v107 release notes from branch ([#3617](https://github.com/bluealloy/revm/pull/3617))
+- move memory_limit check into cold resize path ([#3599](https://github.com/bluealloy/revm/pull/3599))
+- [**breaking**] return Result from instruction functions ([#3558](https://github.com/bluealloy/revm/pull/3558))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- *(interpreter)* separate instruction and gas tables ([#3561](https://github.com/bluealloy/revm/pull/3561))
+- thread reservoir through OOG constructors ([#3580](https://github.com/bluealloy/revm/pull/3580))
+- pass reservoir into `first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578))
+- *(interpreter)* dedup account loading across host instructions ([#3562](https://github.com/bluealloy/revm/pull/3562))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+- *(interpreter)* remove unused loop_control module ([#3555](https://github.com/bluealloy/revm/pull/3555))
+
 ## [35.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v35.0.0...revm-interpreter-v35.0.1) - 2026-04-17
 
 ### Other
