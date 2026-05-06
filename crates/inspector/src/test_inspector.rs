@@ -199,7 +199,7 @@ where
     }
 }
 
-/// Default tests for EVM implementations.
+/// Default tests for EVM implementations that extend revm.
 #[cfg(feature = "std")]
 pub mod default_tests {
     use super::*;
@@ -207,8 +207,9 @@ pub mod default_tests {
     use primitives::Bytes;
     use state::bytecode::opcode;
 
-    /// Run default test suite on an EVM implementation.
-    /// The execute function should set up the EVM, run the bytecode, and return the TestInspector.
+    /// Run basic test suite covering stack operations, jumps, and logs.
+    ///
+    /// Returns `Ok(())` if all tests pass, or `Err(Vec<(test_name, error_message)>)`.
     pub fn run_tests<F>(mut execute: F) -> Result<(), Vec<(&'static str, String)>>
     where
         F: FnMut(Bytes) -> Result<TestInspector, String>,
@@ -232,6 +233,17 @@ pub mod default_tests {
             Ok(inspector) => {
                 if inspector.step_count < 5 {
                     failures.push(("stack_operations", "Not enough steps recorded".to_string()));
+                }
+                // Verify step and step_end were both called
+                let has_step_with_after = inspector
+                    .events
+                    .iter()
+                    .any(|e| matches!(e, InspectorEvent::Step(s) if s.after.is_some()));
+                if !has_step_with_after {
+                    failures.push((
+                        "stack_operations",
+                        "step_end not called (no after state)".to_string(),
+                    ));
                 }
             }
             Err(e) => failures.push(("stack_operations", e)),
@@ -289,5 +301,288 @@ pub mod default_tests {
         } else {
             Err(failures)
         }
+    }
+
+    /// Run extended test suite covering CALL, CREATE, and precompile operations.
+    ///
+    /// Returns `Ok(())` if all tests pass, or `Err(Vec<(test_name, error_message)>)`.
+    pub fn run_extended_tests<F>(
+        mut execute_with_setup: F,
+    ) -> Result<(), Vec<(&'static str, String)>>
+    where
+        F: FnMut(TestSetup) -> Result<TestInspector, String>,
+    {
+        let mut failures = Vec::new();
+
+        // Test CALL operation
+        let call_test = TestSetup {
+            main_bytecode: Bytes::from(vec![
+                // CALL parameters: gas, address, value, argsOffset, argsSize, retOffset, retSize
+                opcode::PUSH1,
+                0x20, // retSize
+                opcode::PUSH1,
+                0x00, // retOffset
+                opcode::PUSH1,
+                0x00, // argsSize
+                opcode::PUSH1,
+                0x00, // argsOffset
+                opcode::PUSH1,
+                0x00, // value
+                opcode::PUSH20,
+                // Precompile identity at 0x04
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x04,
+                opcode::PUSH2,
+                0xFF,
+                0xFF, // gas
+                opcode::CALL,
+                opcode::STOP,
+            ]),
+            auxiliary_contracts: vec![],
+            description: "CALL to precompile",
+        };
+
+        match execute_with_setup(call_test) {
+            Ok(inspector) => {
+                let has_call = inspector.events.iter().any(|e| {
+                    matches!(e, InspectorEvent::Call { inputs: _, outcome }
+                        if outcome.is_some())
+                });
+                if !has_call {
+                    failures.push((
+                        "call",
+                        "CALL event not recorded or call_end not called".to_string(),
+                    ));
+                }
+            }
+            Err(e) => failures.push(("call", e)),
+        }
+
+        // Test CREATE operation
+        let init_code = vec![
+            opcode::PUSH1,
+            0x60, // Push runtime code length
+            opcode::PUSH1,
+            0x0C, // Push code offset (after PUSH1 PUSH1 RETURN)
+            opcode::PUSH1,
+            0x00, // Push memory offset
+            opcode::CODECOPY,
+            opcode::PUSH1,
+            0x60, // Push size
+            opcode::PUSH1,
+            0x00, // Push offset
+            opcode::RETURN,
+            // Runtime code (simple contract that returns)
+            opcode::PUSH1,
+            0x42,
+            opcode::PUSH1,
+            0x00,
+            opcode::MSTORE,
+            opcode::PUSH1,
+            0x20,
+            opcode::PUSH1,
+            0x00,
+            opcode::RETURN,
+        ];
+
+        let mut create_code = vec![
+            // Store init code in memory
+            opcode::PUSH1,
+            init_code.len() as u8, // size
+            opcode::PUSH1,
+            0x0C, // code offset (after CREATE params)
+            opcode::PUSH1,
+            0x00, // memory offset
+            opcode::CODECOPY,
+            // CREATE parameters
+            opcode::PUSH1,
+            init_code.len() as u8, // size
+            opcode::PUSH1,
+            0x00, // offset
+            opcode::PUSH1,
+            0x00, // value
+            opcode::CREATE,
+            opcode::STOP,
+        ];
+        create_code.extend_from_slice(&init_code);
+
+        let create_test = TestSetup {
+            main_bytecode: Bytes::from(create_code),
+            auxiliary_contracts: vec![],
+            description: "CREATE operation",
+        };
+
+        match execute_with_setup(create_test) {
+            Ok(inspector) => {
+                let has_create = inspector.events.iter().any(|e| {
+                    matches!(e, InspectorEvent::Create { inputs: _, outcome }
+                        if outcome.is_some())
+                });
+                if !has_create {
+                    failures.push((
+                        "create",
+                        "CREATE event not recorded or create_end not called".to_string(),
+                    ));
+                }
+            }
+            Err(e) => failures.push(("create", e)),
+        }
+
+        // Test precompile call (identity precompile at 0x04)
+        let precompile_test = TestSetup {
+            main_bytecode: Bytes::from(vec![
+                // Store some data to send to precompile
+                opcode::PUSH1,
+                0x42,
+                opcode::PUSH1,
+                0x00,
+                opcode::MSTORE,
+                // CALL to identity precompile
+                opcode::PUSH1,
+                0x20, // retSize
+                opcode::PUSH1,
+                0x20, // retOffset
+                opcode::PUSH1,
+                0x20, // argsSize
+                opcode::PUSH1,
+                0x00, // argsOffset
+                opcode::PUSH1,
+                0x00, // value
+                opcode::PUSH20,
+                // Identity precompile address 0x04
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x04,
+                opcode::PUSH2,
+                0xFF,
+                0xFF, // gas
+                opcode::CALL,
+                opcode::STOP,
+            ]),
+            auxiliary_contracts: vec![],
+            description: "Precompile call",
+        };
+
+        match execute_with_setup(precompile_test) {
+            Ok(inspector) => {
+                let has_precompile_call = inspector.events.iter().any(|e| {
+                    matches!(e, InspectorEvent::Call { inputs: _, outcome }
+                        if outcome.is_some())
+                });
+                if !has_precompile_call {
+                    failures.push(("precompile", "Precompile CALL not recorded".to_string()));
+                }
+            }
+            Err(e) => failures.push(("precompile", e)),
+        }
+
+        // Test JUMPI conditional flow
+        let jumpi_test = TestSetup {
+            main_bytecode: Bytes::from(vec![
+                opcode::PUSH1,
+                0x01, // condition (true)
+                opcode::PUSH1,
+                0x08, // destination
+                opcode::JUMPI,
+                opcode::INVALID,
+                opcode::INVALID,
+                opcode::INVALID,
+                opcode::JUMPDEST, // offset 0x08
+                opcode::STOP,
+            ]),
+            auxiliary_contracts: vec![],
+            description: "JUMPI conditional",
+        };
+
+        match execute_with_setup(jumpi_test) {
+            Ok(inspector) => {
+                let has_jumpi = inspector
+                    .events
+                    .iter()
+                    .any(|e| matches!(e, InspectorEvent::Step(s) if s.opcode_name == "JUMPI"));
+                if !has_jumpi {
+                    failures.push(("jumpi", "JUMPI not recorded".to_string()));
+                }
+            }
+            Err(e) => failures.push(("jumpi", e)),
+        }
+
+        if failures.is_empty() {
+            Ok(())
+        } else {
+            Err(failures)
+        }
+    }
+
+    /// Test setup configuration for extended tests.
+    #[derive(Debug, Clone)]
+    pub struct TestSetup {
+        /// The main bytecode to execute.
+        pub main_bytecode: Bytes,
+        /// Optional auxiliary contracts (address, bytecode pairs).
+        pub auxiliary_contracts: Vec<(primitives::Address, Bytes)>,
+        /// Description of what this test is checking.
+        pub description: &'static str,
+    }
+
+    /// Verify that inspector callbacks were invoked.
+    /// Returns a list of missing callback names.
+    pub fn verify_callbacks(inspector: &TestInspector) -> Vec<&'static str> {
+        let mut missing = Vec::new();
+
+        // Check if step was called
+        let has_step = inspector
+            .events
+            .iter()
+            .any(|e| matches!(e, InspectorEvent::Step(_)));
+        if !has_step {
+            missing.push("step");
+        }
+
+        // Check if step_end was called (indicated by after state being present)
+        let has_step_end = inspector
+            .events
+            .iter()
+            .any(|e| matches!(e, InspectorEvent::Step(s) if s.after.is_some()));
+        if !has_step_end {
+            missing.push("step_end");
+        }
+
+        missing
     }
 }
