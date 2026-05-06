@@ -24,7 +24,7 @@ jobs:
         with:
           cache-on-failure: true
       - name: Install cargo-codspeed
-        uses: taiki-e/install-action@5f57d6cb7cd20b14a8a27f522884c4bc8a187458 # v2.75.19
+        uses: taiki-e/install-action@b651345a718c8f44efa2460560b3dbf29cbd7ee1 # v2.75.26
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
