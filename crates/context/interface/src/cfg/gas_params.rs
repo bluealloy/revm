@@ -90,6 +90,15 @@ impl Default for GasParams {
 }
 
 impl GasParams {
+    #[inline]
+    fn sync_sstore_refund_from_load_costs(table: &mut [u64; 256]) {
+        // Keep refund entries aligned with their corresponding SSTORE cost slots.
+        table[GasId::sstore_set_refund().as_usize()] =
+            table[GasId::sstore_set_without_load_cost().as_usize()];
+        table[GasId::sstore_reset_refund().as_usize()] =
+            table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
+    }
+
     /// Creates a new `GasParams` with the given table.
     #[inline]
     pub const fn new(table: Arc<[u64; 256]>) -> Self {
@@ -211,12 +220,7 @@ impl GasParams {
             gas::SSTORE_SET - gas::SSTORE_RESET;
         // SSTORE RESET Is covered in SSTORE_STATIC.
         table[GasId::sstore_reset_without_cold_load_cost().as_usize()] = 0;
-        // SSTORE SET REFUND (same as sstore_set_without_load_cost but used only in sstore_refund)
-        table[GasId::sstore_set_refund().as_usize()] =
-            table[GasId::sstore_set_without_load_cost().as_usize()];
-        // SSTORE RESET REFUND (same as sstore_reset_without_cold_load_cost but used only in sstore_refund)
-        table[GasId::sstore_reset_refund().as_usize()] =
-            table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
+        Self::sync_sstore_refund_from_load_costs(&mut table);
         // SSTORE CLEARING SLOT REFUND
         table[GasId::sstore_clearing_slot_refund().as_usize()] = 15000;
         table[GasId::selfdestruct_refund().as_usize()] = 24000;
@@ -248,10 +252,7 @@ impl GasParams {
                 gas::SSTORE_SET - gas::ISTANBUL_SLOAD_GAS;
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
                 gas::SSTORE_RESET - gas::ISTANBUL_SLOAD_GAS;
-            table[GasId::sstore_set_refund().as_usize()] =
-                table[GasId::sstore_set_without_load_cost().as_usize()];
-            table[GasId::sstore_reset_refund().as_usize()] =
-                table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
+            Self::sync_sstore_refund_from_load_costs(&mut table);
             table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
                 gas::NON_ZERO_BYTE_MULTIPLIER_ISTANBUL;
         }
@@ -269,10 +270,7 @@ impl GasParams {
                 gas::WARM_SSTORE_RESET - gas::WARM_STORAGE_READ_COST;
             table[GasId::sstore_set_without_load_cost().as_usize()] =
                 gas::SSTORE_SET - gas::WARM_STORAGE_READ_COST;
-            table[GasId::sstore_set_refund().as_usize()] =
-                table[GasId::sstore_set_without_load_cost().as_usize()];
-            table[GasId::sstore_reset_refund().as_usize()] =
-                table[GasId::sstore_reset_without_cold_load_cost().as_usize()];
+            Self::sync_sstore_refund_from_load_costs(&mut table);
 
             table[GasId::tx_access_list_address_cost().as_usize()] = gas::ACCESS_LIST_ADDRESS;
             table[GasId::tx_access_list_storage_key_cost().as_usize()] =
