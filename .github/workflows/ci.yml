@@ -43,7 +43,7 @@ jobs:
 
   ethereum-tests:
     name: eth ${{ matrix.profile }} ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.repository == 'bluealloy/revm' && 'depot-ubuntu-latest-8' || 'ubuntu-latest' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
