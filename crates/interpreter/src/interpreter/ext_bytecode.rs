@@ -127,34 +127,77 @@ impl LoopControl for ExtBytecode {
     }
 }
 
+impl ExtBytecode {
+    /// Returns the bytecode bounds as `(base_ptr, end_ptr)` for use in debug assertions.
+    #[inline]
+    fn bytecode_bounds(&self) -> (*const u8, *const u8) {
+        let bytes = self.base.bytes_ref();
+        let base = bytes.as_ptr();
+        (base, base.wrapping_add(bytes.len()))
+    }
+
+    /// Returns the current program counter without any bounds assertions,
+    /// for use in debug assertion messages to avoid recursive panics.
+    #[inline]
+    fn pc_unchecked(&self) -> usize {
+        // wrapping_sub avoids UB even if instruction_pointer is out of bounds.
+        (self.instruction_pointer as usize).wrapping_sub(self.base.bytes_ref().as_ptr() as usize)
+    }
+}
+
 impl Jumps for ExtBytecode {
     #[inline]
     fn relative_jump(&mut self, offset: isize) {
+        let new_ptr = self.instruction_pointer.wrapping_offset(offset);
+        let (base, end) = self.bytecode_bounds();
+        debug_assert!(
+            new_ptr >= base && new_ptr <= end,
+            "relative_jump offset {offset} out of bounds (pc: {}, len: {})",
+            self.pc_unchecked(),
+            self.base.bytes_ref().len(),
+        );
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
     }
 
     #[inline]
     fn absolute_jump(&mut self, offset: usize) {
+        debug_assert!(
+            offset <= self.base.bytes_ref().len(),
+            "absolute_jump offset {offset} out of bounds (len: {})",
+            self.base.bytes_ref().len(),
+        );
         self.instruction_pointer = unsafe { self.base.bytes_ref().as_ptr().add(offset) };
     }
 
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
         let jt = self.base.legacy_jump_table();
-        // SAFETY: Only called by legacy bytecode. Panics in debug mode.
+        debug_assert!(jt.is_some(), "is_valid_legacy_jump called on non-legacy bytecode");
+        // SAFETY: Only called by legacy bytecode. Asserted above in debug mode.
         unsafe { jt.unwrap_unchecked() }.is_valid(offset)
     }
 
     #[inline]
     fn opcode(&self) -> u8 {
-        // SAFETY: `instruction_pointer` always points to bytecode.
+        let (base, end) = self.bytecode_bounds();
+        debug_assert!(
+            self.instruction_pointer >= base && self.instruction_pointer < end,
+            "opcode: instruction_pointer out of bounds (pc: {}, len: {})",
+            self.pc_unchecked(),
+            self.base.bytes_ref().len(),
+        );
+        // SAFETY: Bounds checked in debug mode above.
         unsafe { *self.instruction_pointer }
     }
 
     #[inline]
     fn pc(&self) -> usize {
-        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytes.
-        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
+        let (base, end) = self.bytecode_bounds();
+        debug_assert!(
+            self.instruction_pointer >= base && self.instruction_pointer <= end,
+            "pc: instruction_pointer out of bounds",
+        );
+        // SAFETY: `instruction_pointer` is at an offset from the start of the bytes.
         unsafe {
             self.instruction_pointer
                 .offset_from_unsigned(self.base.bytes_ref().as_ptr())
@@ -165,21 +208,50 @@ impl Jumps for ExtBytecode {
 impl Immediates for ExtBytecode {
     #[inline]
     fn read_u16(&self) -> u16 {
+        debug_assert!(
+            self.pc_unchecked() + 2 <= self.base.bytes_ref().len(),
+            "read_u16: not enough bytes remaining (pc: {}, len: {})",
+            self.pc_unchecked(),
+            self.base.bytes_ref().len(),
+        );
         unsafe { read_u16(self.instruction_pointer) }
     }
 
     #[inline]
     fn read_u8(&self) -> u8 {
+        debug_assert!(
+            self.pc_unchecked() < self.base.bytes_ref().len(),
+            "read_u8: instruction_pointer out of bounds (pc: {}, len: {})",
+            self.pc_unchecked(),
+            self.base.bytes_ref().len(),
+        );
         unsafe { *self.instruction_pointer }
     }
 
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
+        debug_assert!(
+            self.pc_unchecked() + len <= self.base.bytes_ref().len(),
+            "read_slice: not enough bytes remaining (pc: {}, len: {}, bytecode_len: {})",
+            self.pc_unchecked(),
+            len,
+            self.base.bytes_ref().len(),
+        );
         unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
     }
 
     #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
+        debug_assert!(
+            {
+                let new_ptr = self.instruction_pointer.wrapping_offset(offset);
+                let (base, end) = self.bytecode_bounds();
+                new_ptr >= base && new_ptr.wrapping_add(2) <= end
+            },
+            "read_offset_u16: offset {offset} out of bounds (pc: {}, len: {})",
+            self.pc_unchecked(),
+            self.base.bytes_ref().len(),
+        );
         unsafe {
             read_u16(
                 self.instruction_pointer
