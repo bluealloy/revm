@@ -356,7 +356,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(&mut self.journal, address, account);
 
-        self.journal.push(ENTRY::code_changed(address));
+        let prev_code_hash = account.info.code_hash;
+        let prev_code = account.info.code.take();
+        self.journal
+            .push(ENTRY::code_changed(address, prev_code_hash, prev_code));
 
         account.info.code_hash = hash;
         account.info.code = Some(code);
@@ -1180,5 +1183,58 @@ mod tests {
         let state_load = result.unwrap();
         assert!(!state_load.is_cold); // Should be warm
         assert_eq!(state_load.data, U256::ZERO); // Empty slot
+    }
+
+    /// Regression test for: `JournalEntry::CodeChange` revert must restore the
+    /// previous code/hash, not unconditionally clear them.
+    ///
+    /// Scenario: an EIP-7702 EOA that is already delegated to Y is re-delegated
+    /// to Z inside a checkpoint, and that checkpoint is then reverted. The
+    /// account must end up delegated to Y again — not with empty code.
+    #[test]
+    fn test_code_change_revert_restores_prior_code() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let eoa = address!("1000000000000000000000000000000000000000");
+        let delegate_y = address!("00000000000000000000000000000000000000aa");
+        let delegate_z = address!("00000000000000000000000000000000000000bb");
+
+        // Account already delegated to Y (EIP-7702).
+        let prior_code = Bytecode::new_eip7702(delegate_y);
+        let prior_hash = prior_code.hash_slow();
+        let account_info = AccountInfo {
+            balance: U256::from(1000),
+            nonce: 1,
+            code_hash: prior_hash,
+            code: Some(prior_code.clone()),
+            account_id: None,
+        };
+        journal.state.insert(eoa, Account::from(account_info));
+
+        // Snapshot before re-delegation, then re-delegate to Z.
+        let checkpoint = journal.checkpoint();
+        let new_code = Bytecode::new_eip7702(delegate_z);
+        journal.set_code(eoa, new_code.clone());
+
+        // Sanity check: the new delegation is in place.
+        let acc = journal.state.get(&eoa).unwrap();
+        assert_eq!(acc.info.code_hash, new_code.hash_slow());
+        assert_eq!(
+            acc.info.code.as_ref().unwrap().eip7702_address(),
+            Some(delegate_z)
+        );
+
+        // Revert the checkpoint — prior delegation must be restored.
+        journal.checkpoint_revert(checkpoint);
+
+        let acc = journal.state.get(&eoa).unwrap();
+        assert_eq!(
+            acc.info.code_hash, prior_hash,
+            "code_hash must be restored to the prior delegation hash, not KECCAK_EMPTY",
+        );
+        assert_eq!(
+            acc.info.code.as_ref().and_then(|c| c.eip7702_address()),
+            Some(delegate_y),
+            "code must be restored to the prior delegation, not None",
+        );
     }
 }
