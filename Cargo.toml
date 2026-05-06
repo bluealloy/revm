@@ -35,6 +35,7 @@ members = [
     "examples/custom_opcodes",
     "examples/custom_precompile_journal",
     "examples/bal_example",
+    "examples/multi_tx_block_sim",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

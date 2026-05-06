@@ -8,3 +8,4 @@
 * `block_traces`: Uses Alloy to fetch blocks transaction and state from provider to execute full block. It uses Eip3155 opcode tracer and saves output to the file.
 * `custom_opcodes`: Example of introducing a custom instruction to the mainnet Evm.
 * `database_components`: Example of decoupled Database in `State` and `BlockHash` and how to use it inside Revm.
+* `multi_tx_block_sim`: Simulates an entire block with multiple transactions - deploys a contract, has multiple accounts interact with it, tracks gas, and shows both per-tx and batch commit strategies.

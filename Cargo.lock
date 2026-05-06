@@ -1965,6 +1965,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-multi-tx-block-sim"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "revm",
+]
+
+[[package]]
 name = "example-my-evm"
 version = "0.0.0"
 dependencies = [
