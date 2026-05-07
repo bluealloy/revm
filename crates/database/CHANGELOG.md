@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.1.0](https://github.com/bluealloy/revm/compare/revm-database-v13.0.1...revm-database-v13.1.0) - 2026-05-07
+
+### Added
+
+- show address or slot in BAL error ([#3619](https://github.com/bluealloy/revm/pull/3619))
+- *(state)* Optimized index type for transaction ID using non-max ([#3610](https://github.com/bluealloy/revm/pull/3610))
+- *(account)* Optimized index type for account ID using `non-max` ([#3605](https://github.com/bluealloy/revm/pull/3605))
+- *(database)* add State::has_bal helper ([#3604](https://github.com/bluealloy/revm/pull/3604))
+
+### Fixed
+
+- gracefully handle commits of non-cached accounts ([#3657](https://github.com/bluealloy/revm/pull/3657))
+
+### Other
+
+- update alloy-eip7928 to newer version ([#3627](https://github.com/bluealloy/revm/pull/3627))
+- backport v107 release notes from branch ([#3617](https://github.com/bluealloy/revm/pull/3617))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [13.0.1](https://github.com/bluealloy/revm/compare/revm-database-v13.0.0...revm-database-v13.0.1) - 2026-04-17
 
 ### Other
