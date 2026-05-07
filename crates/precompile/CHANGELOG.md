@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v34.0.0...revm-precompile-v35.0.0) - 2026-05-07
+
+### Fixed
+
+- *(precompile)* tighten cfg on blake2 avx2 module ([#3613](https://github.com/bluealloy/revm/pull/3613))
+- *(precompile)* use SIGMA period 10 in blake2 portable path ([#3616](https://github.com/bluealloy/revm/pull/3616))
+- re-add PrecompileOutput::gas_refunded ([#3574](https://github.com/bluealloy/revm/pull/3574))
+
+### Other
+
+- remove unused spec ids ([#3649](https://github.com/bluealloy/revm/pull/3649))
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+- backport v107 release notes from branch ([#3617](https://github.com/bluealloy/revm/pull/3617))
+- *(precompile)* vendor blake2b_simd for BLAKE2 compression ([#3609](https://github.com/bluealloy/revm/pull/3609))
+- *(precompile)* use static OnceLock array for Precompiles init ([#3602](https://github.com/bluealloy/revm/pull/3602))
+- enable and fix clippy::missing_const_for_fn ([#3592](https://github.com/bluealloy/revm/pull/3592))
+- rm op-revm (migrated to ethereum-optimism/optimism) ([#3568](https://github.com/bluealloy/revm/pull/3568))
+
 ## [34.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v33.0.0...revm-precompile-v34.0.0) - 2026-04-17
 
 ### Fixed

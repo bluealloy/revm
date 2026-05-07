@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.1](https://github.com/bluealloy/revm/compare/revme-v15.0.0...revme-v15.0.1) - 2026-05-07
+
+### Other
+
+- remove unused spec ids ([#3649](https://github.com/bluealloy/revm/pull/3649))
+- reject nonce-max senders before execution ([#3531](https://github.com/bluealloy/revm/pull/3531))
+- audit #[allow] attributes ([#3611](https://github.com/bluealloy/revm/pull/3611))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revme-v14.0.0...revme-v15.0.0) - 2026-04-17
 
 ### Other
