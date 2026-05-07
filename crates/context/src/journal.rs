@@ -106,14 +106,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    #[inline]
-    fn db(&self) -> &Self::Database {
-        &self.database
+    fn db_and_state(&self) -> (&Self::Database, &Self::State) {
+        (&self.database, &self.inner.state)
     }
 
     #[inline]
-    fn db_mut(&mut self) -> &mut Self::Database {
-        &mut self.database
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State) {
+        (&mut self.database, &mut self.inner.state)
     }
 
     fn sload(
