@@ -15,9 +15,9 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
-    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, FrameInput, Gas,
-    InputsImpl, InstructionResult, Interpreter, InterpreterAction, InterpreterResult,
-    InterpreterTypes, SharedMemory,
+    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
+    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
@@ -300,6 +300,8 @@ impl EthFrame<EthInterpreter> {
         // Create address — uses OnceCell cache so that if an inspector already called
         // `created_address`, the expensive keccak256 is not recomputed.
         let created_address = inputs.created_address(old_nonce);
+        let init_code_hash = matches!(inputs.scheme(), CreateScheme::Create2 { .. })
+            .then(|| inputs.init_code_hash());
 
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
@@ -317,7 +319,10 @@ impl EthFrame<EthInterpreter> {
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = ExtBytecode::new(Bytecode::new_legacy(inputs.init_code().clone()));
+        let bytecode = ExtBytecode::new_with_optional_hash(
+            Bytecode::new_legacy(inputs.init_code().clone()),
+            init_code_hash,
+        );
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
