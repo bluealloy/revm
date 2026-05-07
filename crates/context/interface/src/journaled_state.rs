@@ -4,7 +4,10 @@ pub mod account;
 pub mod entry;
 
 use crate::{
-    ErasedError, context::{SStoreResult, SelfDestructResult}, host::LoadError, journaled_state::{account::JournaledAccountTr}
+    context::{SStoreResult, SelfDestructResult},
+    host::LoadError,
+    journaled_state::account::JournaledAccountTr,
+    ErasedError,
 };
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
