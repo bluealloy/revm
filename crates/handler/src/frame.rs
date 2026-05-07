@@ -15,14 +15,14 @@ use interpreter::{
     interpreter::{EthInterpreter, ExtBytecode},
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
-    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterResult, InterpreterTypes, SharedMemory,
+    CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, FrameInput, Gas,
+    InputsImpl, InstructionResult, Interpreter, InterpreterAction, InterpreterResult,
+    InterpreterTypes, SharedMemory,
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-    keccak256, Address, Bytes, U256,
+    Address, Bytes, U256,
 };
 use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
@@ -297,16 +297,9 @@ impl EthFrame<EthInterpreter> {
             return return_error(InstructionResult::Return);
         };
 
-        // Create address
-        let mut init_code_hash = None;
-        let created_address = match inputs.scheme() {
-            CreateScheme::Create => inputs.caller().create(old_nonce),
-            CreateScheme::Create2 { salt } => {
-                let init_code_hash = *init_code_hash.insert(keccak256(inputs.init_code()));
-                inputs.caller().create2(salt.to_be_bytes(), init_code_hash)
-            }
-            CreateScheme::Custom { address } => address,
-        };
+        // Create address — uses OnceCell cache so that if an inspector already called
+        // `created_address`, the expensive keccak256 is not recomputed.
+        let created_address = inputs.created_address(old_nonce);
 
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
@@ -324,10 +317,7 @@ impl EthFrame<EthInterpreter> {
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = ExtBytecode::new_with_optional_hash(
-            Bytecode::new_legacy(inputs.init_code().clone()),
-            init_code_hash,
-        );
+        let bytecode = ExtBytecode::new(Bytecode::new_legacy(inputs.init_code().clone()));
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
