@@ -9,7 +9,7 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountInfo, Bytecode};
+use state::{Account, AccountId, AccountInfo, Bytecode, TransactionId};
 use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
@@ -75,7 +75,7 @@ pub trait Database {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         let _ = account_id;
@@ -157,7 +157,7 @@ pub trait DatabaseRef {
     fn storage_by_account_id_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         let _ = account_id;
@@ -205,7 +205,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.0
@@ -251,7 +251,7 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     fn storage_by_account_id_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.0
@@ -283,7 +283,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             .map(|(address, balance)| {
                 let mut original_account = match self.basic(address)? {
                     Some(acc_info) => Account::from(acc_info),
-                    None => Account::new_not_existing(0),
+                    None => Account::new_not_existing(TransactionId::ZERO),
                 };
                 original_account.info.balance = original_account
                     .info
@@ -314,7 +314,7 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
             .map(|address| {
                 let mut original_account = match self.basic(address)? {
                     Some(acc_info) => Account::from(acc_info),
-                    None => Account::new_not_existing(0),
+                    None => Account::new_not_existing(TransactionId::ZERO),
                 };
                 let balance = core::mem::take(&mut original_account.info.balance);
                 original_account.mark_touch();

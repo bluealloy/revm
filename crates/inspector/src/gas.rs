@@ -2,7 +2,6 @@
 use interpreter::{CallOutcome, CreateOutcome, Gas};
 
 /// Helper that keeps track of gas.
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct GasInspector {
     gas_remaining: u64,

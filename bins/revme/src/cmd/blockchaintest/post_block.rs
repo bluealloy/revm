@@ -69,7 +69,7 @@ pub const fn block_reward(spec: SpecId, ommers: usize) -> u128 {
         return 0;
     }
 
-    let reward = if spec.is_enabled_in(SpecId::CONSTANTINOPLE) {
+    let reward = if spec.is_enabled_in(SpecId::PETERSBURG) {
         ONE_ETHER * 2
     } else if spec.is_enabled_in(SpecId::BYZANTIUM) {
         ONE_ETHER * 3

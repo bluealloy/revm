@@ -1,0 +1,19 @@
+---
+source: crates/ee-tests/src/revm_tests.rs
+expression: "&result1"
+---
+{
+  "Success": {
+    "reason": "Stop",
+    "gas": {
+      "gas_spent": 21000,
+      "state_gas_spent": 0,
+      "gas_refunded": 0,
+      "floor_gas": 0
+    },
+    "logs": [],
+    "output": {
+      "Call": "0x"
+    }
+  }
+}

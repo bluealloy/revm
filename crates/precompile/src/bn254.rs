@@ -6,7 +6,7 @@ use crate::{
 };
 use std::vec::Vec;
 
-#[allow(dead_code)]
+#[cfg_attr(feature = "bn", expect(dead_code))]
 pub mod arkworks;
 
 cfg_if::cfg_if! {

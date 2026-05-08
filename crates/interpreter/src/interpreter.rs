@@ -90,7 +90,6 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
         )
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn new_inner(
         stack: Stack,
         memory: SharedMemory,
@@ -113,7 +112,7 @@ impl<EXT: Default> Interpreter<EthInterpreter<EXT>> {
     }
 
     /// Clears and reinitializes the interpreter with new parameters.
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     #[inline(always)]
     pub fn clear(
         &mut self,

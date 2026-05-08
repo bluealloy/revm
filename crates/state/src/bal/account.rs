@@ -1,7 +1,7 @@
 //! BAL builder module
 
 use crate::{
-    bal::{writes::BalWrites, BalError, BalIndex},
+    bal::{writes::BalWrites, BalError, BlockAccessIndex},
     Account, AccountInfo, EvmStorage,
 };
 use alloy_eip7928::{
@@ -43,13 +43,17 @@ impl DerefMut for AccountBal {
 
 impl AccountBal {
     /// Populate account from BAL. Return true if account info got changed
-    pub fn populate_account_info(&self, bal_index: BalIndex, account: &mut AccountInfo) -> bool {
+    pub fn populate_account_info(
+        &self,
+        bal_index: BlockAccessIndex,
+        account: &mut AccountInfo,
+    ) -> bool {
         self.account_info.populate_account_info(bal_index, account)
     }
 
     /// Extend account from another account.
     #[inline]
-    pub fn update(&mut self, bal_index: BalIndex, account: &Account) {
+    pub fn update(&mut self, bal_index: BlockAccessIndex, account: &Account) {
         if account.is_selfdestructed_locally() {
             let empty_info = AccountInfo::default();
             self.account_info
@@ -66,7 +70,14 @@ impl AccountBal {
         self.storage.update(bal_index, &account.storage);
     }
 
-    /// Create account from alloy account changes.
+    /// Create an account BAL from EIP-7928 [`AlloyAccountChanges`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BytecodeDecodeError`] if any code change contains bytecode rejected by
+    /// [`Bytecode::new_raw_checked`]. This currently happens for malformed EIP-7702
+    /// bytecode, such as bytes with the EIP-7702 magic prefix but an invalid length or
+    /// unsupported version.
     #[inline]
     pub fn try_from_alloy(
         alloy_account: AlloyAccountChanges,
@@ -95,7 +106,16 @@ impl AccountBal {
         ))
     }
 
-    /// Consumes AccountBal and converts it into [`AlloyAccountChanges`].
+    /// Consumes `AccountBal` and converts it into canonical EIP-7928
+    /// [`AlloyAccountChanges`].
+    ///
+    /// The returned account changes are ordered deterministically: storage reads
+    /// and storage changes are sorted lexicographically by slot key, changes
+    /// within each storage slot are sorted by block access index, and balance,
+    /// nonce, and code changes are sorted by block access index.
+    ///
+    /// This matches the EIP-7928 ordering requirements:
+    /// <https://eips.ethereum.org/EIPS/eip-7928#ordering-uniqueness-and-determinism>.
     #[inline]
     pub fn into_alloy_account(self, address: Address) -> AlloyAccountChanges {
         let storage_len = self.storage.storage.len();
@@ -105,42 +125,51 @@ impl AccountBal {
             if value.writes.is_empty() {
                 storage_reads.push(key);
             } else {
-                storage_changes.push(AlloySlotChanges::new(
-                    key,
-                    value
-                        .writes
-                        .into_iter()
-                        .map(|(index, value)| AlloyStorageChange::new(index, value))
-                        .collect(),
-                ));
+                let mut changes = value
+                    .writes
+                    .into_iter()
+                    .map(|(index, value)| AlloyStorageChange::new(index, value))
+                    .collect::<Vec<_>>();
+                changes.sort_unstable_by_key(|change| change.block_access_index);
+
+                storage_changes.push(AlloySlotChanges::new(key, changes));
             }
         }
+
+        let mut balance_changes = self
+            .account_info
+            .balance
+            .writes
+            .into_iter()
+            .map(|(index, value)| AlloyBalanceChange::new(index, value))
+            .collect::<Vec<_>>();
+        balance_changes.sort_unstable_by_key(|change| change.block_access_index);
+
+        let mut nonce_changes = self
+            .account_info
+            .nonce
+            .writes
+            .into_iter()
+            .map(|(index, value)| AlloyNonceChange::new(index, value))
+            .collect::<Vec<_>>();
+        nonce_changes.sort_unstable_by_key(|change| change.block_access_index);
+
+        let mut code_changes = self
+            .account_info
+            .code
+            .writes
+            .into_iter()
+            .map(|(index, (_, value))| AlloyCodeChange::new(index, value.original_bytes()))
+            .collect::<Vec<_>>();
+        code_changes.sort_unstable_by_key(|change| change.block_access_index);
 
         AlloyAccountChanges {
             address,
             storage_changes,
             storage_reads,
-            balance_changes: self
-                .account_info
-                .balance
-                .writes
-                .into_iter()
-                .map(|(index, value)| AlloyBalanceChange::new(index, value))
-                .collect(),
-            nonce_changes: self
-                .account_info
-                .nonce
-                .writes
-                .into_iter()
-                .map(|(index, value)| AlloyNonceChange::new(index, value))
-                .collect(),
-            code_changes: self
-                .account_info
-                .code
-                .writes
-                .into_iter()
-                .map(|(index, (_, value))| AlloyCodeChange::new(index, value.original_bytes()))
-                .collect(),
+            balance_changes,
+            nonce_changes,
+            code_changes,
         }
     }
 }
@@ -159,7 +188,11 @@ pub struct AccountInfoBal {
 
 impl AccountInfoBal {
     /// Populate account info from BAL. Return true if account info got changed
-    pub fn populate_account_info(&self, bal_index: BalIndex, account: &mut AccountInfo) -> bool {
+    pub fn populate_account_info(
+        &self,
+        bal_index: BlockAccessIndex,
+        account: &mut AccountInfo,
+    ) -> bool {
         let mut changed = false;
         if let Some(nonce) = self.nonce.get(bal_index) {
             account.nonce = nonce;
@@ -179,7 +212,12 @@ impl AccountInfoBal {
 
     /// Extend account info from another account info.
     #[inline]
-    pub fn update(&mut self, index: BalIndex, original: &AccountInfo, present: &AccountInfo) {
+    pub fn update(
+        &mut self,
+        index: BlockAccessIndex,
+        original: &AccountInfo,
+        present: &AccountInfo,
+    ) {
         self.nonce.update(index, &original.nonce, present.nonce);
         self.balance
             .update(index, &original.balance, present.balance);
@@ -203,13 +241,18 @@ impl AccountInfoBal {
 
     /// Update account balance in BAL.
     #[inline]
-    pub fn balance_update(&mut self, bal_index: BalIndex, original_balance: &U256, balance: U256) {
+    pub fn balance_update(
+        &mut self,
+        bal_index: BlockAccessIndex,
+        original_balance: &U256,
+        balance: U256,
+    ) {
         self.balance.update(bal_index, original_balance, balance);
     }
 
     /// Update account nonce in BAL.
     #[inline]
-    pub fn nonce_update(&mut self, bal_index: BalIndex, original_nonce: &u64, nonce: u64) {
+    pub fn nonce_update(&mut self, bal_index: BlockAccessIndex, original_nonce: &u64, nonce: u64) {
         self.nonce.update(bal_index, original_nonce, nonce);
     }
 
@@ -217,7 +260,7 @@ impl AccountInfoBal {
     #[inline]
     pub fn code_update(
         &mut self,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
         original_code_hash: &B256,
         code_hash: B256,
         code: Bytecode,
@@ -240,16 +283,26 @@ impl StorageBal {
     #[inline]
     pub fn get(
         &self,
+        address: &Address,
         key: StorageKey,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
     ) -> Result<Option<StorageValue>, BalError> {
-        Ok(self.get_bal_writes(key)?.get(bal_index))
+        Ok(self.get_bal_writes(address, key)?.get(bal_index))
     }
 
     /// Get storage writes from the builder.
+    ///
+    /// `address` is only needed in case of an error to propagate the address.
     #[inline]
-    pub fn get_bal_writes(&self, key: StorageKey) -> Result<&BalWrites<StorageValue>, BalError> {
-        self.storage.get(&key).ok_or(BalError::SlotNotFound)
+    pub fn get_bal_writes(
+        &self,
+        address: &Address,
+        key: StorageKey,
+    ) -> Result<&BalWrites<StorageValue>, BalError> {
+        self.storage.get(&key).ok_or(BalError::SlotNotFound {
+            address: *address,
+            slot: key,
+        })
     }
 
     /// Extend storage from another storage.
@@ -269,7 +322,7 @@ impl StorageBal {
 
     /// Update storage from [`EvmStorage`].
     #[inline]
-    pub fn update(&mut self, bal_index: BalIndex, storage: &EvmStorage) {
+    pub fn update(&mut self, bal_index: BlockAccessIndex, storage: &EvmStorage) {
         for (key, value) in storage {
             self.storage.entry(*key).or_default().update(
                 bal_index,
@@ -283,7 +336,7 @@ impl StorageBal {
     ///
     /// All accessed slots are recorded as written to zero since selfdestruct wipes storage.
     #[inline]
-    pub fn update_selfdestruct(&mut self, bal_index: BalIndex, storage: &EvmStorage) {
+    pub fn update_selfdestruct(&mut self, bal_index: BlockAccessIndex, storage: &EvmStorage) {
         for (key, value) in storage {
             self.storage.entry(*key).or_default().update(
                 bal_index,

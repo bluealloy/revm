@@ -59,7 +59,7 @@ ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "0.2
 # alloy
 alloy-eip2930 = { version = "0.2.3", default-features = false }
 alloy-eip7702 = { version = "0.6.3", default-features = false }
-alloy-eip7928 = { version = "0.3.0", default-features = false }
+alloy-eip7928 = { version = "0.4.0", default-features = false }
 alloy-primitives = { version = "1.5.2", default-features = false }
 
 # alloy in examples, revme or feature flagged.
@@ -124,6 +124,7 @@ rstest = "0.26.0"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
 similar-asserts = "2.0"
+insta = { version = "1.43", default-features = false, features = ["json"] }
 
 [workspace.package]
 license = "MIT"

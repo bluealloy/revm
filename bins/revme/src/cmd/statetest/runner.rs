@@ -76,11 +76,8 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-        | "CreateTransactionHighNonce.json"
-
         // Test with some storage check.
-        | "RevertInCreateInInit_Paris.json"
+        "RevertInCreateInInit_Paris.json"
         | "RevertInCreateInInit.json"
         | "dynamicAccountOverwriteEmpty.json"
         | "dynamicAccountOverwriteEmpty_Paris.json"

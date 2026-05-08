@@ -2,7 +2,7 @@
 //! For more details check modules for each precompile.
 use crate::Precompile;
 
-#[allow(dead_code)]
+#[cfg_attr(feature = "blst", expect(dead_code))]
 pub(crate) mod arkworks;
 
 cfg_if::cfg_if! {

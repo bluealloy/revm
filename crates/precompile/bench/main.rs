@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![expect(missing_docs)]
 //! Benchmarks for the crypto precompiles
 
 pub mod blake2;

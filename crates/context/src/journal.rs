@@ -107,14 +107,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    #[inline]
-    fn db(&self) -> &Self::Database {
-        &self.database
+    fn db_and_state(&self) -> (&Self::Database, &Self::State) {
+        (&self.database, &self.inner.state)
     }
 
     #[inline]
-    fn db_mut(&mut self) -> &mut Self::Database {
-        &mut self.database
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State) {
+        (&mut self.database, &mut self.inner.state)
     }
 
     fn sload(
@@ -247,7 +246,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -271,7 +270,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     /// Increments the nonce of the account.
     #[inline]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.inner.nonce_bump_journal_entry(address)
     }

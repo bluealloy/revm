@@ -8,7 +8,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-#[allow(unreachable_code)]
+#[cfg_attr(
+    all(
+        any(target_arch = "x86", target_arch = "x86_64"),
+        target_feature = "avx2"
+    ),
+    expect(unreachable_code)
+)]
 pub mod blake2;
 pub mod bls12_381;
 pub mod bls12_381_const;
@@ -445,12 +451,10 @@ impl PrecompileSpecId {
     pub const fn from_spec_id(spec_id: SpecId) -> Self {
         use SpecId::*;
         match spec_id {
-            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
-                Self::HOMESTEAD
-            }
-            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
-            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => Self::HOMESTEAD,
+            BYZANTIUM | PETERSBURG => Self::BYZANTIUM,
+            ISTANBUL => Self::ISTANBUL,
+            BERLIN | LONDON | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             PRAGUE => Self::PRAGUE,
             OSAKA | AMSTERDAM => Self::OSAKA,

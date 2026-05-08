@@ -67,7 +67,7 @@ pub fn extcodesize<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Resul
 
 /// EIP-1052: EXTCODEHASH opcode
 pub fn extcodehash<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, CONSTANTINOPLE);
+    check!(context.interpreter, PETERSBURG);
     popn_top!([], top, context.interpreter);
     let address = top.into_address();
     let account = load_account(&mut context.interpreter.gas, context.host, address, false)?;

@@ -130,12 +130,12 @@ impl GasParams {
     pub fn new_spec(spec: SpecId) -> Self {
         use SpecId::*;
         let gas_params = match spec {
-            FRONTIER | FRONTIER_THAWING => {
+            FRONTIER => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // Transaction creation cost was added in homestead fork.
-            HOMESTEAD | DAO_FORK => {
+            HOMESTEAD => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
@@ -145,12 +145,12 @@ impl GasParams {
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // EXP cost was increased in spurious dragon fork.
-            SPURIOUS_DRAGON | BYZANTIUM | CONSTANTINOPLE | PETERSBURG => {
+            SPURIOUS_DRAGON | BYZANTIUM | PETERSBURG => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // SSTORE gas calculation changed in istanbul fork.
-            ISTANBUL | MUIR_GLACIER => {
+            ISTANBUL => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
@@ -160,7 +160,7 @@ impl GasParams {
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // Refund reduction in london fork.
-            LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE => {
+            LONDON | MERGE => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
@@ -1010,14 +1010,8 @@ impl GasParams {
 }
 
 #[inline]
-pub(crate) fn log2floor(value: U256) -> u64 {
-    for i in (0..4).rev() {
-        let limb = value.as_limbs()[i];
-        if limb != 0 {
-            return i as u64 * 64 + 63 - limb.leading_zeros() as u64;
-        }
-    }
-    0
+pub(crate) const fn log2floor(value: U256) -> u64 {
+    255u64.saturating_sub(value.leading_zeros() as u64)
 }
 
 /// Gas identifier that maps onto index in gas table.

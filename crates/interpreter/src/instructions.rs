@@ -287,14 +287,14 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> Instructio
     table[LOG3 as usize] = Instruction::new(host::log::<3, _>);
     table[LOG4 as usize] = Instruction::new(host::log::<4, _>);
 
-    table[CREATE as usize] = Instruction::new(contract::create::<_, false, _>);
-    table[CALL as usize] = Instruction::new(contract::call);
-    table[CALLCODE as usize] = Instruction::new(contract::call_code);
+    table[CREATE as usize] = Instruction::new(contract::create::<false, _, _>);
+    table[CALL as usize] = Instruction::new(contract::call::<CALL, _, _>);
+    table[CALLCODE as usize] = Instruction::new(contract::call::<CALLCODE, _, _>);
     table[RETURN as usize] = Instruction::new(control::ret);
-    table[DELEGATECALL as usize] = Instruction::new(contract::delegate_call);
-    table[CREATE2 as usize] = Instruction::new(contract::create::<_, true, _>);
+    table[DELEGATECALL as usize] = Instruction::new(contract::call::<DELEGATECALL, _, _>);
+    table[CREATE2 as usize] = Instruction::new(contract::create::<true, _, _>);
 
-    table[STATICCALL as usize] = Instruction::new(contract::static_call);
+    table[STATICCALL as usize] = Instruction::new(contract::call::<STATICCALL, _, _>);
     table[REVERT as usize] = Instruction::new(control::revert);
     table[INVALID as usize] = Instruction::new(control::invalid);
     table[SELFDESTRUCT as usize] = Instruction::new(host::selfdestruct);

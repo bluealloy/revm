@@ -133,7 +133,7 @@ impl<T> FrameStack<T> {
 }
 
 /// A potentially initialized frame. Used when initializing a new frame in the main loop.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct OutFrame<'a, T> {
     ptr: *mut T,
     init: bool,
@@ -200,7 +200,7 @@ impl<'a, T> OutFrame<'a, T> {
 }
 
 /// Used to guarantee that a frame is initialized before use.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct FrameToken(bool);
 
 impl FrameToken {

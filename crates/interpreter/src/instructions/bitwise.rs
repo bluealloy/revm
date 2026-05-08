@@ -118,7 +118,7 @@ pub fn byte<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shl<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, CONSTANTINOPLE);
+    check!(context.interpreter, PETERSBURG);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
@@ -131,7 +131,7 @@ pub fn shl<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn shr<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, CONSTANTINOPLE);
+    check!(context.interpreter, PETERSBURG);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
@@ -144,7 +144,7 @@ pub fn shr<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 
 /// EIP-145: Bitwise shifting instructions in EVM
 pub fn sar<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, CONSTANTINOPLE);
+    check!(context.interpreter, PETERSBURG);
     popn_top!([op1], op2, context.interpreter);
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {

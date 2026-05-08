@@ -1,0 +1,32 @@
+---
+source: crates/ee-tests/src/eip8037.rs
+expression: "&(result_halt, result_revert)"
+---
+[
+  {
+    "Halt": {
+      "reason": {
+        "OutOfGas": "Basic"
+      },
+      "gas": {
+        "gas_spent": 25000,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": []
+    }
+  },
+  {
+    "Revert": {
+      "gas": {
+        "gas_spent": 26012,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": [],
+      "output": "0x"
+    }
+  }
+]

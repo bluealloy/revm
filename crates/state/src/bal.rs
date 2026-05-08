@@ -5,7 +5,7 @@
 //!
 //! ## Key Types
 //!
-//! - **`BalIndex`**: Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
+//! - [`BlockAccessIndex`]: block access index
 //! - **`Bal`**: Main BAL structure containing a map of accounts
 //! - **`BalWrites<T>`**: Array of (index, value) pairs representing sequential writes to a state item
 //! - **`AccountBal`**: Complete BAL structure for an account (balance, nonce, code, and storage)
@@ -17,14 +17,12 @@ pub mod alloy;
 pub mod writes;
 
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
+pub use alloy_eip7928::BlockAccessIndex;
 pub use writes::BalWrites;
 
-use crate::{Account, AccountInfo};
+use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
-
-/// Block access index (0 for pre-execution, 1..n for transactions, n+1 for post-execution)
-pub type BalIndex = u64;
 
 /// BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -64,7 +62,7 @@ impl Bal {
 
         // Sort accounts by address before printing
         let mut sorted_accounts: Vec<_> = self.accounts.iter().collect();
-        sorted_accounts.sort_by_key(|(address, _)| *address);
+        sorted_accounts.sort_unstable_by_key(|(address, _)| *address);
 
         for (idx, (address, account)) in sorted_accounts.into_iter().enumerate() {
             println!("Account #{idx} - Address: {address:?}");
@@ -131,20 +129,25 @@ impl Bal {
 
     #[inline]
     /// Extend BAL with account.
-    pub fn update_account(&mut self, bal_index: BalIndex, address: Address, account: &Account) {
+    pub fn update_account(
+        &mut self,
+        bal_index: BlockAccessIndex,
+        address: Address,
+        account: &Account,
+    ) {
         let bal_account = self.accounts.entry(address).or_default();
         bal_account.update(bal_index, account);
     }
 
-    /// Populate account from BAL. Return true if account info got changed
+    /// Populate account from BAL. Return true if account info got changed.
     pub fn populate_account_info(
         &self,
-        account_id: usize,
-        bal_index: BalIndex,
+        account_id: AccountId,
+        bal_index: BlockAccessIndex,
         account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_id) else {
-            return Err(BalError::AccountNotFound);
+        let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
         account.account_id = Some(account_id);
 
@@ -157,16 +160,16 @@ impl Bal {
     #[inline]
     pub fn populate_storage_slot_by_account_id(
         &self,
-        account_index: usize,
-        bal_index: BalIndex,
+        account_id: AccountId,
+        bal_index: BlockAccessIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = self.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
-        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+        if let Some(bal_value) = bal_account.storage.get(address, key, bal_index)? {
             *value = bal_value;
         };
 
@@ -178,15 +181,17 @@ impl Bal {
     pub fn populate_storage_slot(
         &self,
         account_address: Address,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
         key: StorageKey,
         value: &mut StorageValue,
     ) -> Result<(), BalError> {
         let Some(bal_account) = self.accounts.get(&account_address) else {
-            return Err(BalError::AccountNotFound);
+            return Err(BalError::AccountNotFound {
+                address: account_address,
+            });
         };
 
-        if let Some(bal_value) = bal_account.storage.get(key, bal_index)? {
+        if let Some(bal_value) = bal_account.storage.get(&account_address, key, bal_index)? {
             *value = bal_value;
         };
         Ok(())
@@ -195,29 +200,39 @@ impl Bal {
     /// Get storage from BAL.
     pub fn account_storage(
         &self,
-        account_index: usize,
+        account_id: AccountId,
         key: StorageKey,
-        bal_index: BalIndex,
+        bal_index: BlockAccessIndex,
     ) -> Result<StorageValue, BalError> {
-        let Some((_, bal_account)) = self.accounts.get_index(account_index) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = self.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
-        let Some(storage_value) = bal_account.storage.get(key, bal_index)? else {
-            return Err(BalError::SlotNotFound);
+        let Some(storage_value) = bal_account.storage.get(address, key, bal_index)? else {
+            return Err(BalError::SlotNotFound {
+                address: *address,
+                slot: key,
+            });
         };
 
         Ok(storage_value)
     }
 
-    /// Consume Bal and create [`AlloyBal`]
+    /// Consume `Bal` and create a canonical EIP-7928 [`AlloyBal`].
+    ///
+    /// The returned access list is ordered deterministically: accounts are
+    /// sorted lexicographically by address, and each account's nested reads and
+    /// changes are sorted by [`AccountBal::into_alloy_account`].
+    ///
+    /// This matches the EIP-7928 ordering requirements:
+    /// <https://eips.ethereum.org/EIPS/eip-7928#ordering-uniqueness-and-determinism>.
     pub fn into_alloy_bal(self) -> AlloyBal {
         let mut alloy_bal = AlloyBal::from_iter(
             self.accounts
                 .into_iter()
                 .map(|(address, account)| account.into_alloy_account(address)),
         );
-        alloy_bal.sort_by_key(|a| a.address);
+        alloy_bal.sort_unstable_by_key(|a| a.address);
         alloy_bal
     }
 }
@@ -226,19 +241,191 @@ impl Bal {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BalError {
-    /// Account not found in BAL.
-    AccountNotFound,
-    /// Slot not found in BAL.
-    SlotNotFound,
+    /// Account not found in BAL by address.
+    AccountNotFound {
+        /// Address that was not found.
+        address: Address,
+    },
+    /// Account id does not point at a valid entry in the BAL accounts map.
+    ///
+    /// Signals that a stale or mismatched id was supplied — the id is expected to come
+    /// from a prior BAL lookup against the same BAL.
+    InvalidAccountId {
+        /// Account id that was supplied.
+        account_id: AccountId,
+    },
+    /// Slot not found in BAL for a given account.
+    SlotNotFound {
+        /// Address of the account whose slot was missing.
+        address: Address,
+        /// Storage slot that was not found.
+        slot: StorageKey,
+    },
 }
 
 impl core::fmt::Display for BalError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::AccountNotFound => write!(f, "Account not found in BAL"),
-            Self::SlotNotFound => write!(f, "Slot not found in BAL"),
+            Self::AccountNotFound { address } => {
+                write!(f, "Account {address} not found in BAL")
+            }
+            Self::InvalidAccountId { account_id } => {
+                write!(f, "Invalid BAL account id {}", account_id.get())
+            }
+            Self::SlotNotFound { address, slot } => {
+                write!(f, "Slot {slot:#x} not found in BAL for account {address}")
+            }
         }
     }
 }
 
 impl core::error::Error for BalError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloy_eip7928::{AccountChanges as AlloyAccountChanges, CodeChange as AlloyCodeChange};
+    use bytecode::Bytecode;
+    use primitives::{Bytes, B256, U256};
+    use std::collections::BTreeMap;
+
+    fn code(byte: u8) -> (B256, Bytecode) {
+        let bytecode = Bytecode::new_raw(vec![byte].into());
+        (bytecode.hash_slow(), bytecode)
+    }
+
+    const fn idx(index: u64) -> BlockAccessIndex {
+        BlockAccessIndex::new(index)
+    }
+
+    #[test]
+    fn into_alloy_bal_canonicalizes_eip_7928_ordering() {
+        let low_address = Address::with_last_byte(1);
+        let high_address = Address::with_last_byte(2);
+
+        let unordered_account = AccountBal {
+            account_info: AccountInfoBal {
+                nonce: BalWrites {
+                    writes: vec![(idx(9), 90), (idx(4), 40)],
+                },
+                balance: BalWrites {
+                    writes: vec![(idx(5), U256::from(50)), (idx(2), U256::from(20))],
+                },
+                code: BalWrites {
+                    writes: vec![(idx(7), code(7)), (idx(3), code(3))],
+                },
+            },
+            storage: StorageBal {
+                storage: BTreeMap::from([
+                    (
+                        U256::from(4),
+                        BalWrites {
+                            writes: vec![(idx(8), U256::from(80)), (idx(6), U256::from(60))],
+                        },
+                    ),
+                    (U256::from(1), BalWrites { writes: vec![] }),
+                    (
+                        U256::from(2),
+                        BalWrites {
+                            writes: vec![(idx(3), U256::from(30)), (idx(1), U256::from(10))],
+                        },
+                    ),
+                    (U256::from(3), BalWrites { writes: vec![] }),
+                ]),
+            },
+        };
+
+        let alloy_bal = Bal::from_iter([
+            (high_address, AccountBal::default()),
+            (low_address, unordered_account),
+        ])
+        .into_alloy_bal();
+
+        assert_eq!(
+            alloy_bal
+                .iter()
+                .map(|account| account.address)
+                .collect::<Vec<_>>(),
+            vec![low_address, high_address]
+        );
+
+        let account = &alloy_bal[0];
+        assert_eq!(account.storage_reads, vec![U256::from(1), U256::from(3)]);
+        assert_eq!(
+            account
+                .storage_changes
+                .iter()
+                .map(|slot| slot.slot)
+                .collect::<Vec<_>>(),
+            vec![U256::from(2), U256::from(4)]
+        );
+        assert_eq!(
+            account.storage_changes[0]
+                .changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![idx(1), idx(3)]
+        );
+        assert_eq!(
+            account.storage_changes[1]
+                .changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![idx(6), idx(8)]
+        );
+        assert_eq!(
+            account
+                .balance_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![idx(2), idx(5)]
+        );
+        assert_eq!(
+            account
+                .nonce_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![idx(4), idx(9)]
+        );
+        assert_eq!(
+            account
+                .code_changes
+                .iter()
+                .map(|change| change.block_access_index)
+                .collect::<Vec<_>>(),
+            vec![idx(3), idx(7)]
+        );
+    }
+
+    #[test]
+    fn try_from_alloy_decodes_block_access_list() {
+        let address = Address::with_last_byte(1);
+        let code_bytes = Bytes::from_static(&[0x60, 0x00]);
+        let alloy_bal = vec![AlloyAccountChanges {
+            address,
+            code_changes: vec![AlloyCodeChange::new(idx(1), code_bytes.clone())],
+            ..Default::default()
+        }];
+
+        let bal = Bal::try_from_alloy(alloy_bal).unwrap();
+        let account = bal.accounts.get(&address).unwrap();
+        let (_, bytecode) = &account.account_info.code.writes[0].1;
+
+        assert_eq!(bytecode.original_bytes(), code_bytes);
+    }
+
+    #[test]
+    fn try_from_alloy_errors_on_invalid_code_change() {
+        let alloy_bal = vec![AlloyAccountChanges {
+            address: Address::with_last_byte(1),
+            code_changes: vec![AlloyCodeChange::new(idx(1), vec![0xef, 0x01, 0xde].into())],
+            ..Default::default()
+        }];
+
+        assert!(Bal::try_from_alloy(alloy_bal).is_err());
+    }
+}

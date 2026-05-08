@@ -24,13 +24,13 @@ jobs:
         with:
           cache-on-failure: true
       - name: Install cargo-codspeed
-        uses: taiki-e/install-action@0c7a94999971db56e9df89df226240aab222e776 # v2.75.14
+        uses: taiki-e/install-action@b651345a718c8f44efa2460560b3dbf29cbd7ee1 # v2.75.26
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
         run: cargo codspeed build --profile profiling --workspace --exclude '*example*'
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@db35df748deb45fdef0960669f57d627c1956c30 # v4.13.1
+        uses: CodSpeedHQ/action@c381be0bfd20e844fb45594f6aa182ffcd94545c # v4.15.0
         with:
           run: cargo codspeed run --workspace
           token: ${{ secrets.CODSPEED_TOKEN }}

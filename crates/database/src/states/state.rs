@@ -11,8 +11,8 @@ use database_interface::{
 };
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal},
-    Account, AccountInfo,
+    bal::{alloy::AlloyBal, Bal, BlockAccessIndex},
+    Account, AccountId, AccountInfo,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -218,7 +218,7 @@ impl<DB: Database> State<DB> {
 
     /// Set BAL index.
     #[inline]
-    pub const fn set_bal_index(&mut self, index: u64) {
+    pub const fn set_bal_index(&mut self, index: BlockAccessIndex) {
         self.bal_state.bal_index = index;
     }
 
@@ -293,7 +293,9 @@ impl<DB: Database> Database for State<DB> {
         // will populate account code if there was a bal change to it. If there is no change
         // it will be fetched in code_by_hash.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut basic);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut basic)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(basic)
     }
@@ -340,7 +342,7 @@ impl<DB: Database> Database for State<DB> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         if let Some(storage) = self.bal_state.storage_by_account_id(account_id, key)? {
@@ -431,7 +433,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
         // if it is inside bal, overwrite the account with the bal changes.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut account)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(account)
     }

@@ -314,7 +314,7 @@ fn validate_post_state(
     debug_info: &DebugInfo,
     print_env_on_error: bool,
 ) -> Result<(), TestExecutionError> {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn make_failure(
         state: &mut State<EmptyDB>,
         debug_info: &DebugInfo,
@@ -1064,8 +1064,9 @@ fn fork_to_spec_id(fork: ForkSpec) -> SpecId {
         ForkSpec::Byzantium
         | ForkSpec::EIP158ToByzantiumAt5
         | ForkSpec::ByzantiumToConstantinopleFixAt5 => SpecId::BYZANTIUM,
-        ForkSpec::Constantinople | ForkSpec::ByzantiumToConstantinopleAt5 => SpecId::PETERSBURG,
-        ForkSpec::ConstantinopleFix => SpecId::PETERSBURG,
+        ForkSpec::Constantinople
+        | ForkSpec::ByzantiumToConstantinopleAt5
+        | ForkSpec::ConstantinopleFix => SpecId::PETERSBURG,
         ForkSpec::Istanbul => SpecId::ISTANBUL,
         ForkSpec::Berlin => SpecId::BERLIN,
         ForkSpec::London | ForkSpec::BerlinToLondonAt5 => SpecId::LONDON,
@@ -1097,11 +1098,8 @@ fn skip_test(path: &Path) -> bool {
     // Add any problematic tests here that should be skipped
     matches!(
         name,
-        // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-        "CreateTransactionHighNonce.json"
-
         // Test with some storage check.
-        | "RevertInCreateInInit_Paris.json"
+        "RevertInCreateInInit_Paris.json"
         | "RevertInCreateInInit.json"
         | "dynamicAccountOverwriteEmpty.json"
         | "dynamicAccountOverwriteEmpty_Paris.json"

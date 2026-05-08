@@ -40,7 +40,7 @@ pub trait EvmTr {
     type Frame: FrameTr;
 
     /// Returns a tuple of references to the context, the frame and the instructions.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all(
         &self,
     ) -> (
@@ -51,7 +51,7 @@ pub trait EvmTr {
     );
 
     /// Returns a tuple of mutable references to the context, the frame and the instructions.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all_mut(
         &mut self,
     ) -> (
