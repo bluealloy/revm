@@ -397,20 +397,18 @@ pub trait Handler {
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
 
-        // // Detect a failed top-level CREATE for the EIP-8037 state-gas refund
-        // // applied below. Mirrors the `create_failed` condition used in
-        // // `EthFrame::return_result` for nested creates, with one twist for the
-        // // top-level case: a `SelfDestruct` result counts as failure too. Per
-        // // EIP-6780, a contract that self-destructs in the same transaction it
-        // // was created in is erased at tx end, so the intrinsic
-        // // `create_state_gas` (which `eip8037_selfdestruct_state_gas_refund`
-        // // skips for the CREATE-tx target) must be unwound here.
-        // let create_failed = match frame_result {
-        //     FrameResult::Create(outcome) => {
-        //         outcome.address.is_none() || !instruction_result.is_ok_without_selfdestruct()
-        //     }
-        //     FrameResult::Call(_) => false,
-        // };
+        // Detect a failed top-level CREATE for the EIP-8037 state-gas refund
+        // applied below. Mirrors the `create_failed` condition used in
+        // `EthFrame::return_result` for nested creates, with one twist for the
+        // top-level case: a `SelfDestruct` result counts as failure too. Per
+        // EIP-6780, a contract that self-destructs in the same transaction it
+        // was created in is erased at tx end, so the intrinsic
+        // `create_state_gas` (which `eip8037_selfdestruct_state_gas_refund`
+        // skips for the CREATE-tx target) must be unwound here.
+        let create_failed = match frame_result {
+            FrameResult::Create(outcome) => instruction_result.is_ok_without_selfdestruct(),
+            FrameResult::Call(_) => false,
+        };
 
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
@@ -418,8 +416,6 @@ pub trait Handler {
         let reservoir = gas.reservoir();
         let state_gas_spent = gas.state_gas_spent();
         let state_refill = gas.refill_amount();
-
-        //println!("LAST FRAME RESULT GAS: {:?}", gas);
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
@@ -436,40 +432,43 @@ pub trait Handler {
         // return zero state gas on halt/revert.
         if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
-            //gas.set_refill_amount(gas.refill_amount() + state_refill);
+            gas.set_refill_amount(gas.refill_amount() + state_refill);
         } else {
             gas.set_state_gas_spent(0);
         }
 
-        if instruction_result.is_revert() {
-            // State changes rolled back, so no execution state gas was consumed.
+        if !instruction_result.is_ok() {
+            // State changes rolled back (revert or halt), so execution state
+            // gas was not consumed — refund it to the reservoir.
             // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
             // frame refilled more than it charged; clamp to zero for reservoir
             // recovery since the combined value cannot go below zero.
             let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
-            gas.set_reservoir(combined);
-        } else if instruction_result.is_halt() {
-            gas.set_reservoir(original_reservoir);
+            // On halt, cap the reservoir at the pre-execution value plus any
+            // recovered state gas, mirroring the child-frame rule that strips
+            // 0→x→0 refill inflation on halt/revert.
+            let capped = if instruction_result.is_halt() {
+                let recovered = combined.saturating_sub(reservoir);
+                original_reservoir.saturating_add(recovered)
+            } else {
+                combined
+            };
+            gas.set_reservoir(capped);
         }
 
-        // // EIP-8037: for a failed top-level CREATE (or one that self-destructs
-        // // in init code, see EIP-6780), refund the intrinsic `create_state_gas`
-        // // to the reservoir. The nested-create equivalent is
-        // // `EthFrame::return_result`'s `refill_reservoir(create_state_gas)`; at
-        // // the top level the same charge is deducted in
-        // // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
-        // // it would otherwise stay consumed when the deployment is rolled back
-        // // or erased.
-        // if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
-        //     let ctx = evm.ctx();
-        //     let state_gas_charged = ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
-        //     gas.refill_reservoir(state_gas_charged);
-        //     //gas.set_reservoir(original_reservoir);
-        //     // on halt set reservoir at most of original reservoir
-        //     //if instruction_result.is_halt() && gas.reservoir() > original_reservoir {}
-        // }
-
-        //println!("LAST FRAME RESULT GAS AFTER: {:?}", gas);
+        // EIP-8037: for a failed top-level CREATE (or one that self-destructs
+        // in init code, see EIP-6780), refund the intrinsic `create_state_gas`
+        // to the reservoir. The nested-create equivalent is
+        // `EthFrame::return_result`'s `refill_reservoir(create_state_gas)`; at
+        // the top level the same charge is deducted in
+        // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
+        // it would otherwise stay consumed when the deployment is rolled back
+        // or erased.
+        if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
+            let ctx = evm.ctx();
+            let state_gas_charged = ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
+            gas.refill_reservoir(state_gas_charged);
+        }
 
         Ok(())
     }

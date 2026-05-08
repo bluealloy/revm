@@ -8,6 +8,7 @@ expression: "&result_fits"
     "gas": {
       "gas_spent": 226006,
       "state_gas_spent": 200000,
+      "eip7702_state_refund": 0,
       "gas_refunded": 0,
       "floor_gas": 21000
     },
