@@ -405,10 +405,8 @@ pub trait Handler {
         // was created in is erased at tx end, so the intrinsic
         // `create_state_gas` (which `eip8037_selfdestruct_state_gas_refund`
         // skips for the CREATE-tx target) must be unwound here.
-        let create_failed = match frame_result {
-            FrameResult::Create(outcome) => instruction_result.is_ok_without_selfdestruct(),
-            FrameResult::Call(_) => false,
-        };
+        let create_failed = matches!(frame_result, FrameResult::Create(_))
+            && !instruction_result.is_ok_without_selfdestruct();
 
         let gas = frame_result.gas_mut();
         let remaining = gas.remaining();
