@@ -284,8 +284,9 @@ impl core::error::Error for BalError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloy_eip7928::{AccountChanges as AlloyAccountChanges, CodeChange as AlloyCodeChange};
     use bytecode::Bytecode;
-    use primitives::{B256, U256};
+    use primitives::{Bytes, B256, U256};
     use std::collections::BTreeMap;
 
     fn code(byte: u8) -> (B256, Bytecode) {
@@ -398,5 +399,33 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![idx(3), idx(7)]
         );
+    }
+
+    #[test]
+    fn try_from_alloy_decodes_block_access_list() {
+        let address = Address::with_last_byte(1);
+        let code_bytes = Bytes::from_static(&[0x60, 0x00]);
+        let alloy_bal = vec![AlloyAccountChanges {
+            address,
+            code_changes: vec![AlloyCodeChange::new(idx(1), code_bytes.clone())],
+            ..Default::default()
+        }];
+
+        let bal = Bal::try_from_alloy(alloy_bal).unwrap();
+        let account = bal.accounts.get(&address).unwrap();
+        let (_, bytecode) = &account.account_info.code.writes[0].1;
+
+        assert_eq!(bytecode.original_bytes(), code_bytes);
+    }
+
+    #[test]
+    fn try_from_alloy_errors_on_invalid_code_change() {
+        let alloy_bal = vec![AlloyAccountChanges {
+            address: Address::with_last_byte(1),
+            code_changes: vec![AlloyCodeChange::new(idx(1), vec![0xef, 0x01, 0xde].into())],
+            ..Default::default()
+        }];
+
+        assert!(Bal::try_from_alloy(alloy_bal).is_err());
     }
 }

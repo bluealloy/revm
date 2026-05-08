@@ -70,7 +70,14 @@ impl AccountBal {
         self.storage.update(bal_index, &account.storage);
     }
 
-    /// Create account from alloy account changes.
+    /// Create an account BAL from EIP-7928 [`AlloyAccountChanges`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BytecodeDecodeError`] if any code change contains bytecode rejected by
+    /// [`Bytecode::new_raw_checked`]. This currently happens for malformed EIP-7702
+    /// bytecode, such as bytes with the EIP-7702 magic prefix but an invalid length or
+    /// unsupported version.
     #[inline]
     pub fn try_from_alloy(
         alloy_account: AlloyAccountChanges,
