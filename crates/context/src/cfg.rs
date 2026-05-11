@@ -361,7 +361,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
     ///
     /// Default values for Cancun is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN`]
     /// and for Prague is [`primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE`].
-    pub fn blob_base_fee_update_fraction(&mut self) -> u64 {
+    pub fn blob_base_fee_update_fraction(&self) -> u64 {
         self.blob_base_fee_update_fraction.unwrap_or_else(|| {
             let spec: SpecId = self.spec.clone().into();
             if spec.is_enabled_in(SpecId::PRAGUE) {

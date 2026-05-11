@@ -80,7 +80,7 @@ impl ExtBytecode {
 
     /// Returns the bytecode hash.
     #[inline]
-    pub const fn hash(&mut self) -> Option<B256> {
+    pub const fn hash(&self) -> Option<B256> {
         self.bytecode_hash
     }
 
