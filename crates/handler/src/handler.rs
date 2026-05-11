@@ -437,21 +437,29 @@ pub trait Handler {
 
         if !instruction_result.is_ok() {
             // State changes rolled back (revert or halt), so execution state
-            // gas was not consumed — refund it to the reservoir.
-            // `state_gas_spent` can be negative (EIP-8037 issue #2) if the top
-            // frame refilled more than it charged; clamp to zero for reservoir
-            // recovery since the combined value cannot go below zero.
-            let combined = state_gas_spent.saturating_add_unsigned(reservoir).max(0) as u64;
-            // On halt, cap the reservoir at the pre-execution value plus any
-            // recovered state gas, mirroring the child-frame rule that strips
-            // 0→x→0 refill inflation on halt/revert.
-            let capped = if instruction_result.is_halt() {
-                let recovered = combined.saturating_sub(reservoir);
-                original_reservoir.saturating_add(recovered)
-            } else {
-                combined
-            };
-            gas.set_reservoir(capped);
+            // gas was not consumed — compute the reservoir refund using the
+            // same formula as `handle_reservoir_remaining_gas` for child
+            // frames, treating `original_reservoir` as the parent's pre-call
+            // reservoir:
+            //
+            //   excess = max(0, reservoir + max(0, state_gas_spent)
+            //                  - original_reservoir - state_refill)
+            //   reservoir = original_reservoir + excess
+            //
+            // This recovers state gas that spilled into regular gas (when the
+            // reservoir was empty) while stripping any 0→x→0 refill inflation
+            // — both the in-frame refills (`state_refill`) and the ones
+            // propagated up from children (already folded into
+            // `state_gas_spent`/`reservoir` via the cross-frame accumulator).
+            //
+            // `state_gas_spent` can be negative if children refilled more
+            // than this frame charged; the `.max(0)` guard treats that
+            // negative contribution as a parent's matching charge flowing
+            // back out (already counted in `state_refill`).
+            let logical_refund = reservoir.saturating_add(state_gas_spent.max(0) as u64);
+            let baseline = original_reservoir.saturating_add(state_refill);
+            let excess = logical_refund.saturating_sub(baseline);
+            gas.set_reservoir(original_reservoir.saturating_add(excess));
         }
 
         // EIP-8037: for a failed top-level CREATE (or one that self-destructs

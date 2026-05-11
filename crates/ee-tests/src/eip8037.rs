@@ -9,7 +9,7 @@ use revm::{
     context_interface::{cfg::GasId, result::HaltReason},
     database::{BenchmarkDB, BENCH_CALLER},
     handler::{MainnetContext, MainnetEvm},
-    primitives::{address, hardfork::SpecId, TxKind, U256},
+    primitives::{address, eip7825::TX_GAS_LIMIT_CAP, hardfork::SpecId, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -1297,7 +1297,8 @@ fn test_eip8037_nested_call_create_sstore() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(create_result.is_success());
-    let sstore_portion = result.gas().state_gas_spent_final() - create_result.gas().state_gas_spent_final();
+    let sstore_portion =
+        result.gas().state_gas_spent_final() - create_result.gas().state_gas_spent_final();
     assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result, create_result));
 }
@@ -2199,4 +2200,177 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     );
 
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+/// Tx-kind Create whose destination address already holds a non-empty account,
+/// triggering a `CreateCollision` halt in `create_account_checkpoint` before
+/// any initcode runs.
+///
+/// Verifies the failure path through `return_error` (frame.rs `make_create_frame`)
+/// into `last_frame_result`:
+/// - The halt fully consumes regular gas: `erase_cost(remaining)` is gated on
+///   `is_ok_or_revert()` and is skipped, so `gas.remaining == 0`.
+/// - `create_failed` matches (Create + not `is_ok_without_selfdestruct`), so
+///   the intrinsic `create_state_gas` is refilled to the reservoir.
+/// - `state_gas_spent` is reset to 0 (halt branch).
+///
+/// Net: the EIP-8037 variant pays exactly `STATE_GAS_CREATE` less than the
+/// baseline.
+#[test]
+fn test_eip8037_tx_create_collision() {
+    use revm::{
+        database::{CacheDB, EmptyDB},
+        state::AccountInfo,
+    };
+
+    // tx-Create from BENCH_CALLER (nonce=0) deploys to BENCH_CALLER.create(0).
+    let collision_addr = BENCH_CALLER.create(0);
+
+    // Build a DB with the caller funded and a non-empty account pre-existing
+    // at the create-address. `create_account_checkpoint` errors with
+    // `CreateCollision` when the target has nonce != 0 or non-empty code.
+    let build_db = || {
+        let mut db: CacheDB<EmptyDB> = CacheDB::new(EmptyDB::default());
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(u64::MAX),
+                nonce: 0,
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            collision_addr,
+            AccountInfo {
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        db
+    };
+
+    let init = init_code_sstore_and_invalid();
+    let build_tx = |gas_limit: u64| {
+        TxEnv::builder_for_bench()
+            .kind(TxKind::Create)
+            .data(init.clone().into())
+            .gas_price(0)
+            .gas_limit(gas_limit)
+            .build_fill()
+    };
+
+    // Baseline: EIP-8037 disabled.
+    let mut baseline = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip8037 = false;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let baseline_result = baseline.transact_one(build_tx(TX_GAS_LIMIT_CAP)).unwrap();
+
+    // State-gas variant: EIP-8037 enabled with cpsb_override = 1 so the
+    // gas-table overrides are interpreted as final amounts.
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.cpsb_override = Some(1);
+            cfg.gas_params.override_gas([
+                (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
+                (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
+                (GasId::code_deposit_state_gas(), STATE_GAS_CODE_DEPOSIT),
+                (GasId::create_state_gas(), STATE_GAS_CREATE),
+            ]);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let result = evm.transact_one(build_tx(TX_GAS_LIMIT_CAP + 10)).unwrap();
+
+    // Both halt with CreateCollision before any initcode runs.
+    assert!(baseline_result.is_halt());
+    assert!(result.is_halt());
+    match &baseline_result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::CreateCollision));
+        }
+        _ => panic!("Expected Halt variant for baseline"),
+    }
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::CreateCollision));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+
+    // No execution state gas accrued (initcode never ran), and on halt
+    // `last_frame_result` zeros `state_gas_spent` for both variants.
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+
+    // Halt consumes the regular gas budget in full. With cpsb_override = 1 the
+    // intrinsic create_state_gas equals STATE_GAS_CREATE, and the state-gas
+    // variant's total gas spent is exactly that much less than the baseline,
+    // because the create_failed branch refills the reservoir with it.
+    //
+    // -10 as additional gas was added to tx.gas_limit to cover reservoir handling.
+    assert_eq!(
+        baseline_result.gas().total_gas_spent() - result.gas().total_gas_spent(),
+        STATE_GAS_CREATE - 10,
+    );
+
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+/// Regression test for the `last_frame_result` revert/halt branch:
+/// state gas charged purely against the reservoir must not be over-refunded
+/// when the top frame halts.
+///
+/// Setup chosen so the state cost stays in the reservoir (no spill into
+/// regular gas) and the SSTORE has enough regular gas to complete:
+/// - `gas_limit = 1_000_000`, `tx_gas_limit_cap = 50_000`.
+/// - Intrinsic regular = `TX_BASE` (21_000). Regular budget = 29_000.
+/// - Reservoir = `gas_limit - cap` = 950_000, ample for STATE_GAS_SSTORE_SET.
+///
+/// Flow: SSTORE(0,1) consumes 22_100 regular + STATE_GAS_SSTORE_SET (200_000)
+/// state from the reservoir, then INVALID halts. State changes roll back, so
+/// the state gas must come back to the reservoir, leaving regular consumption
+/// at exactly the cap (50_000 = intrinsic + budget).
+///
+/// Pre-fix bug: the halt branch computed `reservoir = original + recovered =
+/// 950_000 + 200_000 = 1_150_000`, exceeding the original budget. That
+/// underflowed `total_gas_spent` to 0, the EIP-7623 floor took over, and the
+/// test would have observed `tx_gas_used == 21_000` instead of 50_000.
+#[test]
+fn test_eip8037_halt_no_overrefund_when_state_in_reservoir() {
+    let bytecode = sstore_then_invalid_bytecode();
+    let gas_limit = 1_000_000u64;
+    let cap = 50_000u64;
+
+    let mut evm = state_gas_evm(bytecode, cap);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::InvalidFEOpcode));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+
+    // State changes rolled back on halt, so reported state gas is zero.
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+
+    // Regular gas is fully consumed (cap = 50_000) but the reservoir is
+    // refunded in full. tx_gas_used must equal exactly the cap — not the
+    // EIP-7623 floor, which is what the pre-fix code would have produced.
+    assert_eq!(result.tx_gas_used(), cap);
+    assert!(result.tx_gas_used() > result.gas().floor_gas());
 }
