@@ -47,7 +47,7 @@ pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, 
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(
-    is_halt: bool,
+    _is_halt: bool,
     gas: &Gas,
     init_and_floor_gas: InitialAndFloorGas,
 ) -> ResultGas {

@@ -164,7 +164,7 @@ impl Gas {
 
     /// Sets the total state gas spent (used when propagating from child frame).
     #[inline]
-    pub fn set_state_gas_spent(&mut self, val: i64) {
+    pub const fn set_state_gas_spent(&mut self, val: i64) {
         self.tracker.set_state_gas_spent(val);
     }
 
@@ -172,7 +172,7 @@ impl Gas {
     ///
     /// See [`GasTracker::refill_reservoir`].
     #[inline]
-    pub fn refill_reservoir(&mut self, amount: u64) {
+    pub const fn refill_reservoir(&mut self, amount: u64) {
         self.tracker.refill_reservoir(amount);
     }
 
@@ -184,7 +184,7 @@ impl Gas {
 
     /// Sets the cumulative refill amount.
     #[inline]
-    pub fn set_refill_amount(&mut self, val: u64) {
+    pub const fn set_refill_amount(&mut self, val: u64) {
         self.tracker.set_refill_amount(val);
     }
 

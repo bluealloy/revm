@@ -169,6 +169,11 @@ pub struct CallInputs {
     pub scheme: CallScheme,
     /// Whether the call is a static call, or is initiated inside a static call.
     pub is_static: bool,
+    /// EIP-8037: set when the CALL opcode upfront-charged `new_account_state_gas`
+    /// for creating an empty account at `target_address` via value transfer.
+    /// On revert/halt of the resulting frame the parent must refund this charge
+    /// to the reservoir, matching the CREATE pattern.
+    pub charged_new_account_state_gas: bool,
 }
 
 impl CallInputs {

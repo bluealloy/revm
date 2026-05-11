@@ -51,6 +51,12 @@ pub fn resize_memory(
 }
 
 /// Calculates gas cost and limit for call instructions.
+///
+/// The trailing bool in the returned tuple is `charged_new_account_state_gas`:
+/// `true` iff this call upfront-charged EIP-8037 `new_account_state_gas`
+/// (transfers value into a previously-empty account). Callers should propagate
+/// it onto `CallInputs` so the parent can refund the charge if the resulting
+/// frame reverts/halts.
 #[inline(never)]
 pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     context: &mut Ictx<'_, H, impl ITy>,
@@ -58,7 +64,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     transfers_value: bool,
     create_empty_account: bool,
     stack_gas_limit: u64,
-) -> Result<(u64, Bytecode, B256), InstructionResult> {
+) -> Result<(u64, Bytecode, B256, bool), InstructionResult> {
     // Transfer value cost
     if transfers_value {
         gas!(
@@ -70,6 +76,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     // load account delegated and deduct dynamic gas.
     let (gas, state_gas_cost, bytecode, code_hash) =
         load_account_delegated_handle_error(context, to, transfers_value, create_empty_account)?;
+    let charged_new_account_state_gas = state_gas_cost > 0;
     let interpreter = &mut context.interpreter;
 
     // deduct dynamic gas.
@@ -98,7 +105,12 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
         gas_limit = gas_limit.saturating_add(host.gas_params().call_stipend());
     }
 
-    Ok((gas_limit, bytecode, code_hash))
+    Ok((
+        gas_limit,
+        bytecode,
+        code_hash,
+        charged_new_account_state_gas,
+    ))
 }
 
 /// Loads accounts and its delegate account.

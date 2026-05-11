@@ -96,7 +96,7 @@ impl GasTracker {
 
     /// Sets the state gas spent.
     #[inline]
-    pub fn set_state_gas_spent(&mut self, val: i64) {
+    pub const fn set_state_gas_spent(&mut self, val: i64) {
         self.state_gas_spent = val;
     }
 
@@ -163,7 +163,7 @@ impl GasTracker {
     /// negative if the matching 0→x charge was made by a parent frame. The
     /// parent's total is reconciled on frame return.
     #[inline]
-    pub fn refill_reservoir(&mut self, amount: u64) {
+    pub const fn refill_reservoir(&mut self, amount: u64) {
         self.reservoir = self.reservoir.saturating_add(amount);
         self.state_gas_spent = self.state_gas_spent.saturating_sub(amount as i64);
         self.refill_amount = self.refill_amount.saturating_add(amount);
@@ -178,7 +178,7 @@ impl GasTracker {
 
     /// Sets the refill amount.
     #[inline]
-    pub fn set_refill_amount(&mut self, val: u64) {
+    pub const fn set_refill_amount(&mut self, val: u64) {
         self.refill_amount = val;
     }
 

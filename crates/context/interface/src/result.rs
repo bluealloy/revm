@@ -130,7 +130,7 @@ impl ResultGas {
 
     /// Sets the EIP-7702 refund amount.
     #[inline]
-    pub fn set_eip7702_state_refund(&mut self, eip7702_state_refund: u64) {
+    pub const fn set_eip7702_state_refund(&mut self, eip7702_state_refund: u64) {
         self.eip7702_state_refund = eip7702_state_refund;
     }
 
@@ -150,12 +150,15 @@ impl ResultGas {
         self.total_gas_spent
     }
 
-    /// Returns the state gas spent during execution (EIP-8037).
+    /// Returns the final state gas spent during execution (EIP-8037).
+    ///
+    /// This is the final state gas spent after EIP-7702 refund.
     ///
     /// This is same as [`ResultGas::block_state_gas_used`] for the transaction.
     #[inline]
-    pub const fn state_gas_spent(&self) -> u64 {
+    pub const fn state_gas_spent_final(&self) -> u64 {
         self.state_gas_spent
+            .saturating_sub(self.eip7702_state_refund())
     }
 
     /// Returns the EIP-7623 floor gas.
@@ -283,10 +286,9 @@ impl ResultGas {
     /// Returns the regular gas used by the block.
     #[inline]
     pub const fn block_regular_gas_used(&self) -> u64 {
-        let execution_gas_spent = self.total_gas_spent().saturating_sub(
-            self.state_gas_spent()
-                .saturating_sub(self.eip7702_state_refund()),
-        );
+        let execution_gas_spent = self
+            .total_gas_spent()
+            .saturating_sub(self.state_gas_spent_final());
         max(execution_gas_spent, self.floor_gas())
     }
 
@@ -295,7 +297,7 @@ impl ResultGas {
     /// This is same as [`ResultGas::state_gas_spent`] for the block.
     #[inline]
     pub const fn block_state_gas_used(&self) -> u64 {
-        self.state_gas_spent()
+        self.state_gas_spent_final()
     }
 
     /// Returns the final gas used: `max(spent - refunded, floor_gas)`.

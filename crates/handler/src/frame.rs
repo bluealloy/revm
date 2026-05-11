@@ -154,6 +154,7 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
+        let charged_new_account_state_gas = inputs.charged_new_account_state_gas;
         let gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
         let return_result = |instruction_result: InstructionResult| {
@@ -166,6 +167,7 @@ impl EthFrame<EthInterpreter> {
                 memory_offset: inputs.return_memory_offset.clone(),
                 was_precompile_called: false,
                 precompile_call_logs: Vec::new(),
+                charged_new_account_state_gas,
             })))
         };
 
@@ -217,6 +219,7 @@ impl EthFrame<EthInterpreter> {
                 memory_offset: inputs.return_memory_offset.clone(),
                 was_precompile_called: true,
                 precompile_call_logs: logs,
+                charged_new_account_state_gas,
             })));
         }
 
@@ -423,10 +426,17 @@ impl EthFrame<EthInterpreter> {
                 } else {
                     context.journal_mut().checkpoint_revert(self.checkpoint);
                 }
-                ItemOrResult::Result(FrameResult::Call(CallOutcome::new(
-                    interpreter_result,
-                    frame.return_memory_range.clone(),
-                )))
+                // Propagate EIP-8037 new-account state-gas flag from the frame
+                // input so the parent can refund the upfront charge if the call
+                // ends in revert/halt.
+                let charged_new_account_state_gas = match &self.input {
+                    FrameInput::Call(inputs) => inputs.charged_new_account_state_gas,
+                    _ => false,
+                };
+                let mut outcome =
+                    CallOutcome::new(interpreter_result, frame.return_memory_range.clone());
+                outcome.charged_new_account_state_gas = charged_new_account_state_gas;
+                ItemOrResult::Result(FrameResult::Call(outcome))
             }
             FrameData::Create(frame) => {
                 return_create(
@@ -620,7 +630,6 @@ pub fn handle_reservoir_remaining_gas(
             .saturating_add(child_gas.refill_amount());
         let excess = logical_refund.saturating_sub(baseline);
         parent_gas.set_reservoir(parent_gas.reservoir().saturating_add(excess));
-    } else {
     }
 }
 

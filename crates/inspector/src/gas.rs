@@ -35,7 +35,7 @@ impl GasInspector {
     /// restores a slot set by its parent via 0→x→0 goes negative until the
     /// frame returns and the parent's charge is reconciled.
     #[inline]
-    pub fn state_gas_spent(&self) -> i64 {
+    pub const fn state_gas_spent(&self) -> i64 {
         self.state_gas_spent
     }
 
