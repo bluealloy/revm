@@ -284,7 +284,11 @@ impl core::error::Error for BalError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloy_eip7928::{AccountChanges as AlloyAccountChanges, CodeChange as AlloyCodeChange};
+    use alloy_eip7928::{
+        AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
+        CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+        SlotChanges as AlloySlotChanges, StorageChange as AlloyStorageChange,
+    };
     use bytecode::Bytecode;
     use primitives::{Bytes, B256, U256};
     use std::collections::BTreeMap;
@@ -419,6 +423,29 @@ mod tests {
     }
 
     #[test]
+    fn clone_from_alloy_matches_owned_conversion() {
+        let address = Address::with_last_byte(1);
+        let code_bytes = Bytes::from_static(&[0x60, 0x00]);
+        let alloy_bal = vec![AlloyAccountChanges {
+            address,
+            storage_changes: vec![AlloySlotChanges::new(
+                U256::from(1),
+                vec![AlloyStorageChange::new(idx(1), U256::from(10))],
+            )],
+            storage_reads: vec![U256::from(2)],
+            balance_changes: vec![AlloyBalanceChange::new(idx(2), U256::from(20))],
+            nonce_changes: vec![AlloyNonceChange::new(idx(3), 30)],
+            code_changes: vec![AlloyCodeChange::new(idx(4), code_bytes.clone())],
+        }];
+
+        let borrowed = Bal::clone_from_alloy(&alloy_bal).unwrap();
+        let owned = Bal::try_from_alloy(alloy_bal.clone()).unwrap();
+
+        assert_eq!(borrowed, owned);
+        assert_eq!(alloy_bal[0].code_changes[0].new_code(), &code_bytes);
+    }
+
+    #[test]
     fn try_from_alloy_errors_on_invalid_code_change() {
         let alloy_bal = vec![AlloyAccountChanges {
             address: Address::with_last_byte(1),
@@ -427,5 +454,16 @@ mod tests {
         }];
 
         assert!(Bal::try_from_alloy(alloy_bal).is_err());
+    }
+
+    #[test]
+    fn clone_from_alloy_errors_on_invalid_code_change() {
+        let alloy_bal = vec![AlloyAccountChanges {
+            address: Address::with_last_byte(1),
+            code_changes: vec![AlloyCodeChange::new(idx(1), vec![0xef, 0x01, 0xde].into())],
+            ..Default::default()
+        }];
+
+        assert!(Bal::clone_from_alloy(&alloy_bal).is_err());
     }
 }
