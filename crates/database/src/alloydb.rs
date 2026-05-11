@@ -8,7 +8,7 @@ use alloy_provider::{
 use alloy_transport::TransportError;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{Address, StorageKey, StorageValue, B256, KECCAK_EMPTY};
 use state::{AccountInfo, Bytecode};
 use std::fmt::Display;
 
@@ -83,27 +83,51 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
     type Error = AlloyDBError;
 
     async fn basic_async_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        let nonce = self
+        // Use `eth_getProof` instead of the legacy `eth_getBalance` + `eth_getNonce` +
+        // `eth_getCode` trio. The proof response returns `code_hash` as its own field, which
+        // is the only RPC signal that distinguishes a non-existent account from an
+        // existent-but-empty one (post Spurious Dragon, EIP-161):
+        //
+        //   * non-existent account: `code_hash == B256::ZERO`
+        //   * existent, empty:      `code_hash == KECCAK_EMPTY`
+        //   * existent, non-empty:  `code_hash == keccak(code)`
+        //
+        // See the discussion at https://github.com/ethereum/go-ethereum/issues/28441 and the
+        // reference fix in helios at https://github.com/a16z/helios/pull/714. Previously,
+        // `eth_getBalance`/`eth_getCode` returned zero values for both empty and missing
+        // accounts, so AlloyDB always wrapped them in `Some(AccountInfo)`, which leaks the
+        // wrong existence verdict into revm's EIP-161 state-clear check
+        // (`crates/state/src/lib.rs:43+`).
+        let proof = self
             .provider
-            .get_transaction_count(address)
-            .block_id(self.block_number);
-        let balance = self
-            .provider
-            .get_balance(address)
-            .block_id(self.block_number);
-        let code = self
-            .provider
-            .get_code_at(address)
-            .block_id(self.block_number);
+            .get_proof(address, Vec::new())
+            .block_id(self.block_number)
+            .await?;
 
-        let (nonce, balance, code) = tokio::join!(nonce, balance, code,);
+        if proof.code_hash == B256::ZERO {
+            // RPC providers send all-zero code_hash for accounts that don't exist in state.
+            return Ok(None);
+        }
 
-        let balance = balance?;
-        let code = Bytecode::new_raw(code?.0.into());
-        let code_hash = code.hash_slow();
-        let nonce = nonce?;
+        // Skip the extra `eth_getCode` round-trip when the account has no code: the proof
+        // already told us so via `KECCAK_EMPTY`.
+        let code = if proof.code_hash == KECCAK_EMPTY {
+            Bytecode::new()
+        } else {
+            let code_bytes = self
+                .provider
+                .get_code_at(address)
+                .block_id(self.block_number)
+                .await?;
+            Bytecode::new_raw(code_bytes.0.into())
+        };
 
-        Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
+        Ok(Some(AccountInfo::new(
+            proof.balance,
+            proof.nonce,
+            proof.code_hash,
+            code,
+        )))
     }
 
     async fn block_hash_async_ref(&self, number: u64) -> Result<B256, Self::Error> {
