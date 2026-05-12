@@ -11,8 +11,8 @@ use database_interface::{
 };
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal},
-    Account, AccountInfo,
+    bal::{alloy::AlloyBal, Bal, BlockAccessIndex},
+    Account, AccountId, AccountInfo,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -200,7 +200,7 @@ impl<DB: Database> State<DB> {
 
     /// Takes build bal from bal state.
     #[inline]
-    pub fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.bal_state.take_built_bal()
     }
 
@@ -212,19 +212,19 @@ impl<DB: Database> State<DB> {
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_state.bump_bal_index();
     }
 
     /// Set BAL index.
     #[inline]
-    pub fn set_bal_index(&mut self, index: u64) {
+    pub const fn set_bal_index(&mut self, index: BlockAccessIndex) {
         self.bal_state.bal_index = index;
     }
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(&mut self) {
+    pub const fn reset_bal_index(&mut self) {
         self.bal_state.reset_bal_index();
     }
 
@@ -232,6 +232,12 @@ impl<DB: Database> State<DB> {
     #[inline]
     pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
         self.bal_state.bal = bal;
+    }
+
+    /// Returns whether the state has a BAL configured.
+    #[inline]
+    pub const fn has_bal(&self) -> bool {
+        self.bal_state.bal.is_some()
     }
 
     /// Gets storage value of address at index.
@@ -287,7 +293,9 @@ impl<DB: Database> Database for State<DB> {
         // will populate account code if there was a bal change to it. If there is no change
         // it will be fetched in code_by_hash.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut basic);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut basic)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(basic)
     }
@@ -334,7 +342,7 @@ impl<DB: Database> Database for State<DB> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         if let Some(storage) = self.bal_state.storage_by_account_id(account_id, key)? {
@@ -425,7 +433,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
         // if it is inside bal, overwrite the account with the bal changes.
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut account)
+                .map_err(EvmDatabaseError::Bal)?;
         }
         Ok(account)
     }
@@ -497,6 +507,15 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
     use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
+    #[test]
+    fn has_bal_helper() {
+        let state = State::builder().build();
+        assert!(!state.has_bal());
+
+        let state = State::builder().with_bal(Arc::new(Bal::new())).build();
+        assert!(state.has_bal());
+    }
+
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();

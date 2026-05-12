@@ -66,12 +66,12 @@ impl JournalTr for Backend {
         Self::new(SpecId::default(), database)
     }
 
-    fn db(&self) -> &Self::Database {
-        self.journaled_state.db()
+    fn db_and_state(&self) -> (&Self::Database, &Self::State) {
+        self.journaled_state.db_and_state()
     }
 
-    fn db_mut(&mut self) -> &mut Self::Database {
-        self.journaled_state.db_mut()
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State) {
+        self.journaled_state.db_and_state_mut()
     }
 
     fn sload(
@@ -125,7 +125,7 @@ impl JournalTr for Backend {
         self.journaled_state.warm_coinbase_account(address)
     }
 
-    fn warm_precompiles(&mut self, addresses: AddressSet) {
+    fn warm_precompiles(&mut self, addresses: &AddressSet) {
         self.journaled_state.warm_precompiles(addresses)
     }
 
@@ -237,14 +237,13 @@ impl JournalTr for Backend {
         self.journaled_state.finalize()
     }
 
-    #[allow(deprecated)]
     fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
         old_balance: U256,
         bump_nonce: bool,
     ) {
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         self.journaled_state
             .caller_accounting_journal_entry(address, old_balance, bump_nonce)
     }
@@ -257,9 +256,8 @@ impl JournalTr for Backend {
         self.journaled_state.balance_incr(address, balance)
     }
 
-    #[allow(deprecated)]
     fn nonce_bump_journal_entry(&mut self, address: Address) {
-        #[allow(deprecated)]
+        #[expect(deprecated)]
         self.journaled_state.nonce_bump_journal_entry(address)
     }
 
@@ -330,14 +328,6 @@ impl JournalTr for Backend {
 impl JournalExt for Backend {
     fn journal(&self) -> &[JournalEntry] {
         self.journaled_state.journal()
-    }
-
-    fn evm_state(&self) -> &EvmState {
-        self.journaled_state.evm_state()
-    }
-
-    fn evm_state_mut(&mut self) -> &mut EvmState {
-        self.journaled_state.evm_state_mut()
     }
 }
 

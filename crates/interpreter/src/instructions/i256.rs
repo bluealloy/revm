@@ -10,7 +10,6 @@ pub enum Sign {
     Minus = -1,
     /// Zero value sign  
     Zero = 0,
-    #[allow(dead_code)] // "constructed" with `mem::transmute` in `i256_sign` below
     /// Positive value sign
     Plus = 1,
 }
@@ -55,7 +54,7 @@ pub fn i256_sign_compl(val: &mut U256) -> Sign {
 }
 
 #[inline]
-fn u256_remove_sign(val: &mut U256) {
+const fn u256_remove_sign(val: &mut U256) {
     // SAFETY: U256 does not have any padding bytes
     unsafe {
         val.as_limbs_mut()[3] &= FLIPH_BITMASK_U64;
@@ -64,13 +63,13 @@ fn u256_remove_sign(val: &mut U256) {
 
 /// Computes the two's complement of a U256 value in place.
 #[inline]
-pub fn two_compl_mut(op: &mut U256) {
+pub const fn two_compl_mut(op: &mut U256) {
     *op = two_compl(*op);
 }
 
 /// Computes the two's complement of a U256 value.
 #[inline]
-pub fn two_compl(op: U256) -> U256 {
+pub const fn two_compl(op: U256) -> U256 {
     op.wrapping_neg()
 }
 

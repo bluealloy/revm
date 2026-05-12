@@ -2,7 +2,7 @@
 use crate::{DBErrorMarker, Database, DatabaseRef};
 use core::future::Future;
 use primitives::{Address, StorageKey, StorageValue, B256};
-use state::{AccountInfo, Bytecode};
+use state::{AccountId, AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
 
 /// The async EVM database interface
@@ -40,7 +40,7 @@ pub trait DatabaseAsync {
     fn storage_by_account_id_async(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
         let _ = account_id;
@@ -89,7 +89,7 @@ pub trait DatabaseAsyncRef {
     fn storage_by_account_id_async_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> impl Future<Output = Result<StorageValue, Self::Error>> + Send {
         let _ = account_id;
@@ -130,7 +130,7 @@ impl<T> WrapDatabaseAsync<T> {
     /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
     ///
     /// If you are already using something like [tokio::main], call [`WrapDatabaseAsync::new`] instead.
-    pub fn with_runtime(db: T, runtime: Runtime) -> Self {
+    pub const fn with_runtime(db: T, runtime: Runtime) -> Self {
         let rt = HandleOrRuntime::Runtime(runtime);
         Self { db, rt }
     }
@@ -141,7 +141,7 @@ impl<T> WrapDatabaseAsync<T> {
     /// to obtain a handle.
     ///
     /// If you are already in asynchronous world, like [tokio::main], use [`WrapDatabaseAsync::new`] instead.
-    pub fn with_handle(db: T, handle: Handle) -> Self {
+    pub const fn with_handle(db: T, handle: Handle) -> Self {
         let rt = HandleOrRuntime::Handle(handle);
         Self { db, rt }
     }
@@ -176,7 +176,7 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.rt.block_on(
@@ -217,7 +217,7 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     fn storage_by_account_id_ref(
         &self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         self.rt.block_on(

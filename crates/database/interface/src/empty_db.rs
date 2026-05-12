@@ -47,7 +47,7 @@ impl<E> Eq for EmptyDBTyped<E> {}
 
 impl<E> EmptyDBTyped<E> {
     /// Create a new empty database.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             _phantom: PhantomData,
         }

@@ -38,7 +38,7 @@ pub enum AccountStatus {
 
 impl AccountStatus {
     /// Account is not modified and just loaded from database.
-    pub fn is_not_modified(&self) -> bool {
+    pub const fn is_not_modified(&self) -> bool {
         matches!(
             self,
             Self::LoadedNotExisting | Self::Loaded | Self::LoadedEmptyEIP161
@@ -47,7 +47,7 @@ impl AccountStatus {
 
     /// Account was destroyed by calling SELFDESTRUCT.
     /// This means that full account and storage are inside memory.
-    pub fn was_destroyed(&self) -> bool {
+    pub const fn was_destroyed(&self) -> bool {
         matches!(
             self,
             Self::Destroyed | Self::DestroyedChanged | Self::DestroyedAgain
@@ -55,7 +55,7 @@ impl AccountStatus {
     }
 
     /// This means storage is known, it can be newly created or storage got destroyed.
-    pub fn is_storage_known(&self) -> bool {
+    pub const fn is_storage_known(&self) -> bool {
         matches!(
             self,
             Self::LoadedNotExisting
@@ -69,12 +69,12 @@ impl AccountStatus {
     /// Account is modified but not destroyed.
     /// This means that some storage values can be found in both
     /// memory and database.
-    pub fn is_modified_and_not_destroyed(&self) -> bool {
+    pub const fn is_modified_and_not_destroyed(&self) -> bool {
         matches!(self, Self::Changed | Self::InMemoryChange)
     }
 
     /// Returns the next account status on creation.
-    pub fn on_created(&self) -> Self {
+    pub const fn on_created(&self) -> Self {
         match self {
             // If account was destroyed previously just copy new info to it.
             Self::DestroyedAgain
@@ -96,7 +96,7 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on touched empty account post state clear EIP (EIP-161).
-    pub fn on_touched_empty_post_eip161(&self) -> Self {
+    pub const fn on_touched_empty_post_eip161(&self) -> Self {
         match self {
             // Account can be touched but not existing. The status should remain the same.
             Self::LoadedNotExisting => Self::LoadedNotExisting,
@@ -110,7 +110,7 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on change.
-    pub fn on_changed(&self, had_no_nonce_and_code: bool) -> Self {
+    pub const fn on_changed(&self, had_no_nonce_and_code: bool) -> Self {
         match self {
             // If the account was loaded as not existing, promote it to changed.
             // This account was likely created by a balance transfer.
@@ -143,7 +143,7 @@ impl AccountStatus {
     }
 
     /// Returns the next account status on selfdestruct.
-    pub fn on_selfdestructed(&self) -> Self {
+    pub const fn on_selfdestructed(&self) -> Self {
         match self {
             // Non existing account can't be destroyed.
             Self::LoadedNotExisting => Self::LoadedNotExisting,

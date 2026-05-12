@@ -11,6 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
+use interpreter::InitialAndFloorGas;
 use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
@@ -35,7 +36,7 @@ pub fn load_accounts<
         // When precompiles addresses are changed we reset the warmed hashmap to those new addresses.
         context
             .journal_mut()
-            .warm_precompiles(precompiles.warm_addresses().collect());
+            .warm_precompiles(precompiles.warm_addresses());
     }
 
     // Load coinbase
@@ -105,6 +106,9 @@ pub fn validate_account_nonce_and_code(
     if !is_nonce_check_disabled {
         let tx = tx_nonce;
         let state = caller_info.nonce;
+        if tx == u64::MAX && state == u64::MAX {
+            return Err(InvalidTransaction::NonceOverflowInTransaction);
+        }
         match tx.cmp(&state) {
             Ordering::Greater => {
                 return Err(InvalidTransaction::NonceTooHigh { tx, state });
@@ -195,6 +199,7 @@ pub fn apply_eip7702_auth_list<
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
+    init_and_floor_gas: &mut InitialAndFloorGas,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
     let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund();
@@ -204,7 +209,24 @@ pub fn apply_eip7702_auth_list<
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
-    apply_auth_list(chain_id, refund_per_auth, tx.authorization_list(), journal)
+    let eip7702_refund =
+        apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
+
+    // EIP-8037: Split auth list refund into state gas and regular gas portions.
+    // The state gas portion is added to the reservoir after initial_state_gas deduction,
+    // matching the Python spec where set_delegation adds state refund directly to
+    // state_gas_reservoir. This ensures refunded state gas stays as reservoir gas
+    // (not regular gas), so it's not consumed on frame halt.
+    // The regular gas portion goes through the normal refund mechanism.
+    let (eip7702_state_refund, eip7702_regular_refund_raw) = context
+        .cfg()
+        .gas_params()
+        .split_eip7702_refund(eip7702_refund);
+    if eip7702_state_refund > 0 {
+        init_and_floor_gas.eip7702_reservoir_refund = eip7702_state_refund;
+    }
+
+    Ok(eip7702_regular_refund_raw)
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.
@@ -280,4 +302,34 @@ pub fn apply_auth_list<
     let refunded_gas = refunded_accounts * refund_per_auth;
 
     Ok(refunded_gas)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_account_nonce_and_code;
+    use context_interface::result::InvalidTransaction;
+    use state::AccountInfo;
+
+    #[test]
+    fn rejects_transactions_when_sender_nonce_is_max() {
+        let caller_info = AccountInfo {
+            nonce: u64::MAX,
+            ..AccountInfo::default()
+        };
+
+        let err = validate_account_nonce_and_code(&caller_info, u64::MAX, false, false)
+            .expect_err("nonce-max sender should be rejected before execution");
+
+        assert_eq!(err, InvalidTransaction::NonceOverflowInTransaction);
+    }
+
+    #[test]
+    fn allows_matching_non_max_nonce() {
+        let caller_info = AccountInfo {
+            nonce: 7,
+            ..AccountInfo::default()
+        };
+
+        assert!(validate_account_nonce_and_code(&caller_info, 7, false, false).is_ok());
+    }
 }

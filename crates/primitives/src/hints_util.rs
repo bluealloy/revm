@@ -7,11 +7,11 @@
 /// Cold path function.
 #[inline(always)]
 #[cold]
-pub fn cold_path() {}
+pub const fn cold_path() {}
 
 /// Returns `b` but mark `false` path as cold
 #[inline(always)]
-pub fn likely(b: bool) -> bool {
+pub const fn likely(b: bool) -> bool {
     if b {
         true
     } else {
@@ -22,7 +22,7 @@ pub fn likely(b: bool) -> bool {
 
 /// Returns `b` but mark `true` path as cold
 #[inline(always)]
-pub fn unlikely(b: bool) -> bool {
+pub const fn unlikely(b: bool) -> bool {
     if b {
         cold_path();
         true

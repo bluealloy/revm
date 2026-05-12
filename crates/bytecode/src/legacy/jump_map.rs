@@ -158,13 +158,13 @@ impl JumpTable {
 
     /// Gets the bit length of the jump map.
     #[inline]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.bit_len
     }
 
     /// Returns true if the jump map is empty.
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
 

@@ -66,7 +66,7 @@ impl<DB, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     /// Creates a new JournaledState by copying state data from a JournalInit and provided database.
     /// This allows reusing the state, logs, and other data from a previous execution context while
     /// connecting it to a different database backend.
-    pub fn new_with_inner(database: DB, inner: JournalInner<ENTRY>) -> Self {
+    pub const fn new_with_inner(database: DB, inner: JournalInner<ENTRY>) -> Self {
         Self { database, inner }
     }
 
@@ -106,12 +106,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         }
     }
 
-    fn db(&self) -> &Self::Database {
-        &self.database
+    fn db_and_state(&self) -> (&Self::Database, &Self::State) {
+        (&self.database, &self.inner.state)
     }
 
-    fn db_mut(&mut self) -> &mut Self::Database {
-        &mut self.database
+    #[inline]
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State) {
+        (&mut self.database, &mut self.inner.state)
     }
 
     fn sload(
@@ -173,11 +174,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.warm_addresses.set_access_list(access_list);
     }
 
+    #[inline]
     fn warm_coinbase_account(&mut self, address: Address) {
         self.inner.warm_addresses.set_coinbase(address);
     }
 
-    fn warm_precompiles(&mut self, precompiles: AddressSet) {
+    #[inline]
+    fn warm_precompiles(&mut self, precompiles: &AddressSet) {
         self.inner
             .warm_addresses
             .set_precompile_addresses(precompiles);
@@ -231,7 +234,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn caller_accounting_journal_entry(
         &mut self,
         address: Address,
@@ -255,7 +258,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
 
     /// Increments the nonce of the account.
     #[inline]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     fn nonce_bump_journal_entry(&mut self, address: Address) {
         self.inner.nonce_bump_journal_entry(address)
     }

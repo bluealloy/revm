@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use bytecode::Bytecode;
-use primitives::{Address, AddressMap, B256Map, HashMap};
+use primitives::{hash_map, Address, AddressMap, B256Map, HashMap};
 use state::{Account, AccountInfo};
 use std::vec::Vec;
 
@@ -189,10 +189,24 @@ impl CacheState {
             return None;
         }
 
-        let this_account = self
-            .accounts
-            .get_mut(&address)
-            .expect("All accounts should be present inside cache");
+        // The account may not be present in the cache when execution happened on top
+        // of a different database. In that case, we insert account into the cache as if it was just loaded.
+        let this_account = match self.accounts.entry(address) {
+            hash_map::Entry::Occupied(entry) => entry.into_mut(),
+            hash_map::Entry::Vacant(entry) => {
+                let cache_account = if account.is_loaded_as_not_existing() {
+                    CacheAccount::new_loaded_not_existing()
+                } else {
+                    let original = account.original_info();
+                    if original.is_empty() {
+                        CacheAccount::new_loaded_empty_eip161(HashMap::default())
+                    } else {
+                        CacheAccount::new_loaded(original, HashMap::default())
+                    }
+                };
+                entry.insert(cache_account)
+            }
+        };
 
         // If it is marked as selfdestructed inside revm
         // we need to changed state to destroyed.

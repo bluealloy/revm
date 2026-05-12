@@ -476,7 +476,7 @@ impl DbAccount {
 
     /// Updates the account state.
     #[inline(always)]
-    pub fn update_account_state(&mut self, account_state: AccountState) {
+    pub const fn update_account_state(&mut self, account_state: AccountState) {
         self.account_state = account_state;
     }
 }
@@ -516,7 +516,7 @@ pub enum AccountState {
 
 impl AccountState {
     /// Returns `true` if EVM cleared storage of this account
-    pub fn is_storage_cleared(&self) -> bool {
+    pub const fn is_storage_cleared(&self) -> bool {
         matches!(self, AccountState::StorageCleared)
     }
 }

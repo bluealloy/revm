@@ -1,6 +1,6 @@
 use context_interface::CreateScheme;
 use core::cell::OnceCell;
-use primitives::{Address, Bytes, U256};
+use primitives::{keccak256, Address, Bytes, B256, U256};
 
 /// Inputs for a create call
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -16,20 +16,28 @@ pub struct CreateInputs {
     init_code: Bytes,
     /// The gas limit of the call
     gas_limit: u64,
+    /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
+    reservoir: u64,
     /// Cached created address. This is computed lazily and cached to avoid
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
     cached_address: OnceCell<Address>,
+    /// Cached init code hash. Shared between `created_address()` (for CREATE2)
+    /// and frame initialization (for `ExtBytecode`), ensuring keccak256 of the
+    /// init code is computed at most once.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    cached_init_code_hash: OnceCell<B256>,
 }
 
 impl CreateInputs {
     /// Creates a new `CreateInputs` instance.
-    pub fn new(
+    pub const fn new(
         caller: Address,
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
         gas_limit: u64,
+        reservoir: u64,
     ) -> Self {
         Self {
             caller,
@@ -37,7 +45,9 @@ impl CreateInputs {
             value,
             init_code,
             gas_limit,
+            reservoir,
             cached_address: OnceCell::new(),
+            cached_init_code_hash: OnceCell::new(),
         }
     }
 
@@ -49,50 +59,60 @@ impl CreateInputs {
             CreateScheme::Create => self.caller.create(nonce),
             CreateScheme::Create2 { salt } => self
                 .caller
-                .create2_from_code(salt.to_be_bytes(), &self.init_code),
+                .create2(salt.to_be_bytes(), self.init_code_hash()),
             CreateScheme::Custom { address } => address,
         })
     }
 
+    /// Returns the keccak256 hash of the init code.
+    ///
+    /// The result is cached so that `created_address()` and frame initialization
+    /// share a single hash computation.
+    pub fn init_code_hash(&self) -> B256 {
+        *self
+            .cached_init_code_hash
+            .get_or_init(|| keccak256(self.init_code.as_ref()))
+    }
+
     /// Returns the caller address of the EVM.
-    pub fn caller(&self) -> Address {
+    pub const fn caller(&self) -> Address {
         self.caller
     }
 
     /// Returns the create scheme of the EVM.
-    pub fn scheme(&self) -> CreateScheme {
+    pub const fn scheme(&self) -> CreateScheme {
         self.scheme
     }
 
     /// Returns the value to transfer.
-    pub fn value(&self) -> U256 {
+    pub const fn value(&self) -> U256 {
         self.value
     }
 
     /// Returns the init code of the contract.
-    pub fn init_code(&self) -> &Bytes {
+    pub const fn init_code(&self) -> &Bytes {
         &self.init_code
     }
 
     /// Returns the gas limit of the call.
-    pub fn gas_limit(&self) -> u64 {
+    pub const fn gas_limit(&self) -> u64 {
         self.gas_limit
     }
 
     /// Set call
-    pub fn set_call(&mut self, caller: Address) {
+    pub const fn set_call(&mut self, caller: Address) {
         self.caller = caller;
         self.cached_address = OnceCell::new();
     }
 
     /// Set scheme
-    pub fn set_scheme(&mut self, scheme: CreateScheme) {
+    pub const fn set_scheme(&mut self, scheme: CreateScheme) {
         self.scheme = scheme;
         self.cached_address = OnceCell::new();
     }
 
     /// Set value
-    pub fn set_value(&mut self, value: U256) {
+    pub const fn set_value(&mut self, value: U256) {
         self.value = value;
     }
 
@@ -100,10 +120,21 @@ impl CreateInputs {
     pub fn set_init_code(&mut self, init_code: Bytes) {
         self.init_code = init_code;
         self.cached_address = OnceCell::new();
+        self.cached_init_code_hash = OnceCell::new();
     }
 
     /// Set gas limit
-    pub fn set_gas_limit(&mut self, gas_limit: u64) {
+    pub const fn set_gas_limit(&mut self, gas_limit: u64) {
         self.gas_limit = gas_limit;
+    }
+
+    /// Returns the state gas reservoir (EIP-8037).
+    pub const fn reservoir(&self) -> u64 {
+        self.reservoir
+    }
+
+    /// Set the state gas reservoir (EIP-8037).
+    pub const fn set_reservoir(&mut self, reservoir: u64) {
+        self.reservoir = reservoir;
     }
 }

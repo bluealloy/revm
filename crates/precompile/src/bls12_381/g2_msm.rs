@@ -6,12 +6,15 @@ use crate::{
         PADDED_G2_LENGTH, SCALAR_LENGTH,
     },
     bls12_381_utils::msm_required_gas,
-    crypto, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
+
+eth_precompile_fn!(g2_msm_precompile, g2_msm);
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: Precompile =
-    Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, g2_msm);
+    Precompile::new(PrecompileId::Bls12G2Msm, G2_MSM_ADDRESS, g2_msm_precompile);
 
 /// Implements EIP-2537 G2MSM precompile.
 /// G2 multi-scalar-multiplication call expects `288*k` bytes as an input that is interpreted
@@ -21,16 +24,16 @@ pub const PRECOMPILE: Precompile =
 /// Output is an encoding of multi-scalar-multiplication operation result - single G2
 /// point (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
-pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn g2_msm(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     let input_len = input.len();
     if input_len == 0 || !input_len.is_multiple_of(G2_MSM_INPUT_LENGTH) {
-        return Err(PrecompileError::Bls12381G2MsmInputLength);
+        return Err(PrecompileHalt::Bls12381G2MsmInputLength);
     }
 
     let k = input_len / G2_MSM_INPUT_LENGTH;
     let required_gas = msm_required_gas(k, &DISCOUNT_TABLE_G2_MSM, G2_MSM_BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     let mut valid_pairs_iter = (0..k).map(|i| {
@@ -50,5 +53,5 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // Pad the result for EVM compatibility
     let padded_result = pad_g2_point(&unpadded_result);
 
-    Ok(PrecompileOutput::new(required_gas, padded_result.into()))
+    Ok(EthPrecompileOutput::new(required_gas, padded_result.into()))
 }

@@ -18,26 +18,26 @@ impl<T> Default for FrameStack<T> {
     }
 }
 
-impl<T: Default> FrameStack<T> {
-    /// Creates a new stack with preallocated items by calling `T::default()` `len` times.
-    /// Index will still be `None` until `end_init` is called.
-    pub fn new_prealloc(len: usize) -> Self {
-        let mut stack = Vec::with_capacity(len);
-        for _ in 0..len {
-            stack.push(T::default());
-        }
-        Self { stack, index: None }
-    }
-}
-
 impl<T> FrameStack<T> {
     /// Creates a new, empty stack. It must be initialized with init before use.
     pub fn new() -> Self {
-        // Init N amount of frames to allocate the stack.
+        // p99.9 of call frame depth is 8,
+        // per: https://ethresear.ch/t/evm-stack-and-memory-usage-statistics-report/24209
         Self {
             stack: Vec::with_capacity(8),
             index: None,
         }
+    }
+
+    /// Creates a new stack with preallocated items by calling `T::default()` `len` times.
+    /// Index will still be `None` until `end_init` is called.
+    pub fn new_prealloc(len: usize) -> Self
+    where
+        T: Default,
+    {
+        let mut stack = Vec::with_capacity(len);
+        stack.resize_with(len, T::default);
+        Self { stack, index: None }
     }
 
     /// Initializes the stack with a single item.
@@ -66,7 +66,7 @@ impl<T> FrameStack<T> {
 
     /// Returns the current index of the stack.
     #[inline]
-    pub fn index(&self) -> Option<usize> {
+    pub const fn index(&self) -> Option<usize> {
         self.index
     }
 
@@ -95,7 +95,7 @@ impl<T> FrameStack<T> {
     /// Clears the stack by setting the index to 0.
     /// It does not destroy the stack.
     #[inline]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.index = None;
     }
 
@@ -133,7 +133,7 @@ impl<T> FrameStack<T> {
 }
 
 /// A potentially initialized frame. Used when initializing a new frame in the main loop.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct OutFrame<'a, T> {
     ptr: *mut T,
     init: bool,
@@ -194,13 +194,13 @@ impl<'a, T> OutFrame<'a, T> {
     }
 
     /// Consumes the `OutFrame`, returning a `FrameToken` that indicates the frame has been initialized.
-    pub fn consume(self) -> FrameToken {
+    pub const fn consume(self) -> FrameToken {
         FrameToken(self.init)
     }
 }
 
 /// Used to guarantee that a frame is initialized before use.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct FrameToken(bool);
 
 impl FrameToken {
@@ -218,11 +218,7 @@ pub trait LocalContextTr {
 
     /// Slice of the shared memory buffer returns None if range is not valid or buffer can't be borrowed.
     fn shared_memory_buffer_slice(&self, range: Range<usize>) -> Option<Ref<'_, [u8]>> {
-        let buffer = self.shared_memory_buffer();
-        buffer.borrow().get(range.clone())?;
-        Some(Ref::map(buffer.borrow(), |b| {
-            b.get(range).unwrap_or_default()
-        }))
+        Ref::filter_map(self.shared_memory_buffer().borrow(), |b| b.get(range)).ok()
     }
 
     /// Clear the local context.

@@ -52,12 +52,12 @@ impl CountInspector {
     }
 
     /// Get the count for a specific opcode.
-    pub fn get_count(&self, opcode: u8) -> u64 {
+    pub const fn get_count(&self, opcode: u8) -> u64 {
         self.opcode_counts[opcode as usize]
     }
 
     /// Get a reference to all opcode counts.
-    pub fn opcode_counts(&self) -> &[u64; 256] {
+    pub const fn opcode_counts(&self) -> &[u64; 256] {
         &self.opcode_counts
     }
 
@@ -75,7 +75,7 @@ impl CountInspector {
     }
 
     /// Clear all counts.
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.opcode_counts = [0; 256];
         self.initialize_interp_count = 0;
         self.step_count = 0;
@@ -89,47 +89,47 @@ impl CountInspector {
     }
 
     /// Get the count of initialize_interp calls.
-    pub fn initialize_interp_count(&self) -> u64 {
+    pub const fn initialize_interp_count(&self) -> u64 {
         self.initialize_interp_count
     }
 
     /// Get the count of step calls.
-    pub fn step_count(&self) -> u64 {
+    pub const fn step_count(&self) -> u64 {
         self.step_count
     }
 
     /// Get the count of step_end calls.
-    pub fn step_end_count(&self) -> u64 {
+    pub const fn step_end_count(&self) -> u64 {
         self.step_end_count
     }
 
     /// Get the count of log calls.
-    pub fn log_count(&self) -> u64 {
+    pub const fn log_count(&self) -> u64 {
         self.log_count
     }
 
     /// Get the count of call calls.
-    pub fn call_count(&self) -> u64 {
+    pub const fn call_count(&self) -> u64 {
         self.call_count
     }
 
     /// Get the count of call_end calls.
-    pub fn call_end_count(&self) -> u64 {
+    pub const fn call_end_count(&self) -> u64 {
         self.call_end_count
     }
 
     /// Get the count of create calls.
-    pub fn create_count(&self) -> u64 {
+    pub const fn create_count(&self) -> u64 {
         self.create_count
     }
 
     /// Get the count of create_end calls.
-    pub fn create_end_count(&self) -> u64 {
+    pub const fn create_end_count(&self) -> u64 {
         self.create_end_count
     }
 
     /// Get the count of selfdestruct calls.
-    pub fn selfdestruct_count(&self) -> u64 {
+    pub const fn selfdestruct_count(&self) -> u64 {
         self.selfdestruct_count
     }
 }

@@ -18,7 +18,7 @@ use primitives::{
     hints_util::unlikely,
     Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, EvmState, TransientStorage};
+use state::{Account, EvmState, TransactionId, TransientStorage};
 use std::vec::Vec;
 
 /// Configuration for the journal that affects EVM execution behavior.
@@ -74,7 +74,7 @@ pub struct JournalInner<ENTRY> {
     /// reverted or had a error on execution.
     ///
     /// This ID is used in `Self::state` to determine if account/storage is touched/warm/cold.
-    pub transaction_id: usize,
+    pub transaction_id: TransactionId,
     /// Journal configuration containing spec ID and EIP-7708 flags.
     pub cfg: JournalCfg,
     /// Warm addresses containing both coinbase and current precompiles.
@@ -108,7 +108,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: Vec::default(),
-            transaction_id: 0,
+            transaction_id: TransactionId::ZERO,
             depth: 0,
             cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
@@ -160,7 +160,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
         // increment transaction id.
-        *transaction_id += 1;
+        transaction_id.increment();
 
         logs.clear();
         selfdestructed_addresses.clear();
@@ -189,7 +189,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         *depth = 0;
         logs.clear();
         selfdestructed_addresses.clear();
-        *transaction_id += 1;
+        transaction_id.increment();
 
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
@@ -249,7 +249,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         journal.clear();
         *depth = 0;
         // reset transaction id.
-        *transaction_id = 0;
+        *transaction_id = TransactionId::ZERO;
 
         state
     }
@@ -298,19 +298,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut EvmState {
+    pub const fn state(&mut self) -> &mut EvmState {
         &mut self.state
     }
 
     /// Sets SpecId.
     #[inline]
-    pub fn set_spec_id(&mut self, spec: SpecId) {
+    pub const fn set_spec_id(&mut self, spec: SpecId) {
         self.cfg.spec = spec;
     }
 
     /// Sets EIP-7708 configuration flags.
     #[inline]
-    pub fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+    pub const fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
         self.cfg.eip7708_disabled = disabled;
         self.cfg.eip7708_delayed_burn_disabled = delayed_burn_disabled;
     }
@@ -436,7 +436,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         balance: U256,
     ) -> Option<TransferError> {
         if from == to {
-            let from_balance = self.state.get_mut(&to).unwrap().info.balance;
+            let from_balance = self.state.get(&to).unwrap().info.balance;
             // Check if from balance is enough to transfer the balance.
             if balance > from_balance {
                 return Some(TransferError::OutOfFunds);
@@ -574,7 +574,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Makes a checkpoint that in case of Revert can bring back state to this point.
     #[inline]
-    pub fn checkpoint(&mut self) -> JournalCheckpoint {
+    pub const fn checkpoint(&mut self) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
@@ -586,7 +586,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Commits the checkpoint.
     #[inline]
-    pub fn checkpoint_commit(&mut self) {
+    pub const fn checkpoint_commit(&mut self) {
         self.depth = self.depth.saturating_sub(1);
     }
 
@@ -906,8 +906,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                         account.selfdestruct();
                         account.unmark_selfdestructed_locally();
                     }
-                    // set original info to current info.
-                    *account.original_info = account.info.clone();
+                    account.set_current_info_as_original();
 
                     // unmark locally created
                     account.unmark_created_locally();

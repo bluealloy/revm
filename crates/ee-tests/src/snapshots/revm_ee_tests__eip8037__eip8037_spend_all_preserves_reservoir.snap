@@ -1,0 +1,30 @@
+---
+source: crates/ee-tests/src/eip8037.rs
+expression: "&(baseline_result, result)"
+---
+[
+  {
+    "Halt": {
+      "reason": "InvalidFEOpcode",
+      "gas": {
+        "gas_spent": 500000,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": []
+    }
+  },
+  {
+    "Halt": {
+      "reason": "InvalidFEOpcode",
+      "gas": {
+        "gas_spent": 300000,
+        "state_gas_spent": 0,
+        "gas_refunded": 0,
+        "floor_gas": 21000
+      },
+      "logs": []
+    }
+  }
+]

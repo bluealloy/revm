@@ -42,13 +42,12 @@ pub fn main() {
     // insert our custom opcode
     instructions.insert_instruction(
         MY_STATIC_JUMP,
-        Instruction::new(
-            |ctx: InstructionContext<'_, _, EthInterpreter>| {
-                let offset = ctx.interpreter.bytecode.read_i16();
-                ctx.interpreter.bytecode.relative_jump(offset as isize);
-            },
-            0,
-        ),
+        Instruction::new(|ctx: InstructionContext<'_, _, EthInterpreter>| {
+            let offset = ctx.interpreter.bytecode.read_i16();
+            ctx.interpreter.bytecode.relative_jump(offset as isize);
+            Ok(())
+        }),
+        0,
     );
 
     // Create a new EVM instance.

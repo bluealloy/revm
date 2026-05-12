@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/revm-state-v11.0.0...revm-state-v11.0.1) - 2026-04-17
+
+### Fixed
+
+- *(bal)* record storage writes to zero for selfdestructed accounts ([#3573](https://github.com/bluealloy/revm/pull/3573))
+
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-state-v10.0.0...revm-state-v11.0.0) - 2026-04-10
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-state-v9.0.0...revm-state-v10.0.0) - 2026-03-02
 
 ### Fixed

@@ -34,10 +34,30 @@ pub trait JournalTr {
     fn new(database: Self::Database) -> Self;
 
     /// Returns a mutable reference to the database.
-    fn db_mut(&mut self) -> &mut Self::Database;
+    fn db_mut(&mut self) -> &mut Self::Database {
+        self.db_and_state_mut().0
+    }
 
     /// Returns an immutable reference to the database.
-    fn db(&self) -> &Self::Database;
+    fn db(&self) -> &Self::Database {
+        self.db_and_state().0
+    }
+
+    /// Return the mutable current Journaled state.
+    fn evm_state_mut(&mut self) -> &mut Self::State {
+        self.db_and_state_mut().1
+    }
+
+    /// Return the current Journaled state.
+    fn evm_state(&self) -> &Self::State {
+        self.db_and_state().1
+    }
+
+    /// Returns immutable reference to the database and state.
+    fn db_and_state(&self) -> (&Self::Database, &Self::State);
+
+    /// Returns mutable reference to the database and state.
+    fn db_and_state_mut(&mut self) -> (&mut Self::Database, &mut Self::State);
 
     /// Returns the storage value from Journal state.
     ///
@@ -111,7 +131,7 @@ pub trait JournalTr {
     fn warm_coinbase_account(&mut self, address: Address);
 
     /// Warms the precompiles.
-    fn warm_precompiles(&mut self, addresses: AddressSet);
+    fn warm_precompiles(&mut self, addresses: &AddressSet);
 
     /// Returns the addresses of the precompiles.
     fn precompile_addresses(&self) -> &AddressSet;
@@ -335,13 +355,13 @@ pub type JournalLoadErasedError = JournalLoadError<ErasedError>;
 impl<E> JournalLoadError<E> {
     /// Returns true if the error is a database error.
     #[inline]
-    pub fn is_db_error(&self) -> bool {
+    pub const fn is_db_error(&self) -> bool {
         matches!(self, JournalLoadError::DBError(_))
     }
 
     /// Returns true if the error is a cold load skipped.
     #[inline]
-    pub fn is_cold_load_skipped(&self) -> bool {
+    pub const fn is_cold_load_skipped(&self) -> bool {
         matches!(self, JournalLoadError::ColdLoadSkipped)
     }
 
@@ -452,7 +472,7 @@ impl<T> DerefMut for StateLoad<T> {
 impl<T> StateLoad<T> {
     /// Returns a new [`StateLoad`] with the given data and cold load status.
     #[inline]
-    pub fn new(data: T, is_cold: bool) -> Self {
+    pub const fn new(data: T, is_cold: bool) -> Self {
         Self { data, is_cold }
     }
 
@@ -493,7 +513,7 @@ pub struct AccountInfoLoad<'a> {
 impl<'a> AccountInfoLoad<'a> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
     #[inline]
-    pub fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
+    pub const fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
         Self {
             account: Cow::Borrowed(account),
             is_cold,

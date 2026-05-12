@@ -12,10 +12,17 @@ use bytecode::{Bytecode, BytecodeDecodeError};
 use primitives::{AddressIndexMap, B256, U256};
 use std::vec::Vec;
 
-impl TryFrom<AlloyBal> for Bal {
-    type Error = BytecodeDecodeError;
-
-    fn try_from(alloy_bal: AlloyBal) -> Result<Self, Self::Error> {
+impl Bal {
+    /// Convert an EIP-7928 [`AlloyBal`] into a [`Bal`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BytecodeDecodeError`] if any account code change contains bytecode
+    /// rejected by [`Bytecode::new_raw_checked`]. This currently happens for malformed
+    /// EIP-7702 bytecode, such as bytes with the EIP-7702 magic prefix but an invalid
+    /// length or unsupported version.
+    #[inline]
+    pub fn try_from_alloy(alloy_bal: AlloyBal) -> Result<Self, BytecodeDecodeError> {
         let accounts = AddressIndexMap::from_iter(
             alloy_bal
                 .into_iter()
@@ -25,6 +32,35 @@ impl TryFrom<AlloyBal> for Bal {
 
         Ok(Self { accounts })
     }
+
+    /// Clone an EIP-7928 [`AlloyBal`] into a [`Bal`] without consuming the source.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BytecodeDecodeError`] if any account code change contains bytecode
+    /// rejected by [`Bytecode::new_raw_checked`]. This currently happens for malformed
+    /// EIP-7702 bytecode, such as bytes with the EIP-7702 magic prefix but an invalid
+    /// length or unsupported version.
+    #[inline]
+    pub fn clone_from_alloy(alloy_bal: &AlloyBal) -> Result<Self, BytecodeDecodeError> {
+        let accounts = AddressIndexMap::from_iter(
+            alloy_bal
+                .iter()
+                .map(AccountBal::clone_from_alloy)
+                .collect::<Result<Vec<_>, _>>()?,
+        );
+
+        Ok(Self { accounts })
+    }
+}
+
+impl TryFrom<AlloyBal> for Bal {
+    type Error = BytecodeDecodeError;
+
+    #[inline]
+    fn try_from(alloy_bal: AlloyBal) -> Result<Self, Self::Error> {
+        Self::try_from_alloy(alloy_bal)
+    }
 }
 
 impl From<Vec<AlloyBalanceChange>> for BalWrites<U256> {
@@ -32,6 +68,17 @@ impl From<Vec<AlloyBalanceChange>> for BalWrites<U256> {
         Self {
             writes: value
                 .into_iter()
+                .map(|change| (change.block_access_index, change.post_balance))
+                .collect(),
+        }
+    }
+}
+
+impl From<&[AlloyBalanceChange]> for BalWrites<U256> {
+    fn from(value: &[AlloyBalanceChange]) -> Self {
+        Self {
+            writes: value
+                .iter()
                 .map(|change| (change.block_access_index, change.post_balance))
                 .collect(),
         }
@@ -49,11 +96,33 @@ impl From<Vec<AlloyNonceChange>> for BalWrites<u64> {
     }
 }
 
+impl From<&[AlloyNonceChange]> for BalWrites<u64> {
+    fn from(value: &[AlloyNonceChange]) -> Self {
+        Self {
+            writes: value
+                .iter()
+                .map(|change| (change.block_access_index, change.new_nonce))
+                .collect(),
+        }
+    }
+}
+
 impl From<Vec<AlloyStorageChange>> for BalWrites<U256> {
     fn from(value: Vec<AlloyStorageChange>) -> Self {
         Self {
             writes: value
                 .into_iter()
+                .map(|change| (change.block_access_index, change.new_value))
+                .collect(),
+        }
+    }
+}
+
+impl From<&[AlloyStorageChange]> for BalWrites<U256> {
+    fn from(value: &[AlloyStorageChange]) -> Self {
+        Self {
+            writes: value
+                .iter()
                 .map(|change| (change.block_access_index, change.new_value))
                 .collect(),
         }
@@ -70,6 +139,24 @@ impl TryFrom<Vec<AlloyCodeChange>> for BalWrites<(B256, Bytecode)> {
                 .map(|change| {
                     // convert bytes to bytecode.
                     Bytecode::new_raw_checked(change.new_code).map(|bytecode| {
+                        let hash = bytecode.hash_slow();
+                        (change.block_access_index, (hash, bytecode))
+                    })
+                })
+                .collect::<Result<Vec<_>, Self::Error>>()?,
+        })
+    }
+}
+
+impl TryFrom<&[AlloyCodeChange]> for BalWrites<(B256, Bytecode)> {
+    type Error = BytecodeDecodeError;
+
+    fn try_from(value: &[AlloyCodeChange]) -> Result<Self, Self::Error> {
+        Ok(Self {
+            writes: value
+                .iter()
+                .map(|change| {
+                    Bytecode::new_raw_checked(change.new_code.clone()).map(|bytecode| {
                         let hash = bytecode.hash_slow();
                         (change.block_access_index, (hash, bytecode))
                     })

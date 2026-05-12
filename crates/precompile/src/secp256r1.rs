@@ -7,8 +7,8 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    crypto, u64_to_address, Precompile, PrecompileError, PrecompileId, PrecompileOutput,
-    PrecompileResult,
+    crypto, eth_precompile_fn, u64_to_address, EthPrecompileOutput, EthPrecompileResult,
+    Precompile, PrecompileHalt, PrecompileId,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
@@ -26,18 +26,21 @@ pub fn precompiles() -> impl Iterator<Item = Precompile> {
     [P256VERIFY].into_iter()
 }
 
+eth_precompile_fn!(p256verify_precompile, p256_verify);
+eth_precompile_fn!(p256verify_osaka_precompile, p256_verify_osaka);
+
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY: Precompile = Precompile::new(
     PrecompileId::P256Verify,
     u64_to_address(P256VERIFY_ADDRESS),
-    p256_verify,
+    p256verify_precompile,
 );
 
 /// [RIP-7212](https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md#specification) secp256r1 precompile.
 pub const P256VERIFY_OSAKA: Precompile = Precompile::new(
     PrecompileId::P256Verify,
     u64_to_address(P256VERIFY_ADDRESS),
-    p256_verify_osaka,
+    p256verify_osaka_precompile,
 );
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
@@ -49,7 +52,7 @@ pub const P256VERIFY_OSAKA: Precompile = Precompile::new(
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn p256_verify(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE)
 }
 
@@ -62,20 +65,20 @@ pub fn p256_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn p256_verify_osaka(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     p256_verify_inner(input, gas_limit, P256VERIFY_BASE_GAS_FEE_OSAKA)
 }
 
-fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> PrecompileResult {
+fn p256_verify_inner(input: &[u8], gas_limit: u64, gas_cost: u64) -> EthPrecompileResult {
     if gas_cost > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
     let result = if verify_impl(input) {
         B256::with_last_byte(1).into()
     } else {
         Bytes::new()
     };
-    Ok(PrecompileOutput::new(gas_cost, result))
+    Ok(EthPrecompileOutput::new(gas_cost, result))
 }
 
 /// Returns `Some(())` if the signature included in the input byte slice is
@@ -95,22 +98,22 @@ pub fn verify_impl(input: &[u8]) -> bool {
     crypto().secp256r1_verify_signature(&msg.0, &sig.0, &pk.0)
 }
 
-pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Option<()> {
+pub(crate) fn verify_signature(msg: &[u8; 32], sig: &[u8; 64], pk: &[u8; 64]) -> Option<()> {
     cfg_if::cfg_if! {
         if #[cfg(feature = "p256-aws-lc-rs")] {
             use aws_lc_rs::{digest, signature::{self, UnparsedPublicKey}};
 
             // Construct a Digest from the raw prehashed message bytes.
-            let digest = digest::Digest::import_less_safe(&msg, &digest::SHA256).ok()?;
+            let digest = digest::Digest::import_less_safe(msg, &digest::SHA256).ok()?;
 
             // Build uncompressed public key: 0x04 || x || y
             let mut pubkey_bytes = [0u8; 65];
             pubkey_bytes[0] = 0x04;
-            pubkey_bytes[1..].copy_from_slice(&pk);
+            pubkey_bytes[1..].copy_from_slice(pk);
 
             let public_key = UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_FIXED, &pubkey_bytes);
 
-            public_key.verify_digest(&digest, &sig).ok()
+            public_key.verify_digest(&digest, sig).ok()
         } else {
             use p256::{
                 ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey},
@@ -118,13 +121,13 @@ pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Op
             };
 
             // Can fail only if the input is not exact length.
-            let signature = Signature::from_slice(&sig).ok()?;
+            let signature = Signature::from_slice(sig).ok()?;
             // Decode the public key bytes (x,y coordinates) using EncodedPoint
-            let encoded_point = EncodedPoint::from_untagged_bytes(&pk.into());
+            let encoded_point = EncodedPoint::from_untagged_bytes(&(*pk).into());
             // Create VerifyingKey from the encoded point
             let public_key = VerifyingKey::from_encoded_point(&encoded_point).ok()?;
 
-            public_key.verify_prehash(&msg, &signature).ok()
+            public_key.verify_prehash(msg, &signature).ok()
         }
     }
 }
@@ -132,7 +135,7 @@ pub(crate) fn verify_signature(msg: [u8; 32], sig: [u8; 64], pk: [u8; 64]) -> Op
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::PrecompileError;
+    use crate::PrecompileHalt;
     use primitives::hex::FromHex;
     use rstest::rstest;
 
@@ -173,7 +176,7 @@ mod test {
         let result = p256_verify(&input, target_gas);
 
         assert!(result.is_err());
-        assert_eq!(result.err(), Some(PrecompileError::OutOfGas));
+        assert_eq!(result.err(), Some(PrecompileHalt::OutOfGas));
     }
 
     #[rstest]

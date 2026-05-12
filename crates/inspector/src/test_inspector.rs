@@ -102,7 +102,7 @@ impl TestInspector {
     }
 
     /// Get the total step count.
-    pub fn get_step_count(&self) -> usize {
+    pub const fn get_step_count(&self) -> usize {
         self.step_count
     }
 }

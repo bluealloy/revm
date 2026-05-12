@@ -31,7 +31,7 @@ impl DerefMut for Reverts {
 
 impl Reverts {
     /// Creates new reverts.
-    pub fn new(reverts: Vec<Vec<(Address, AccountRevert)>>) -> Self {
+    pub const fn new(reverts: Vec<Vec<(Address, AccountRevert)>>) -> Self {
         Self(reverts)
     }
 
@@ -325,7 +325,7 @@ pub enum RevertToSlot {
 
 impl RevertToSlot {
     /// Returns the previous value to set on revert.
-    pub fn to_previous_value(self) -> StorageValue {
+    pub const fn to_previous_value(self) -> StorageValue {
         match self {
             RevertToSlot::Some(value) => value,
             RevertToSlot::Destroyed => StorageValue::ZERO,

@@ -6,8 +6,8 @@ use core::{
 };
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError},
-    Account, AccountInfo, Bytecode, EvmState,
+    bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
+    Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
 
@@ -24,7 +24,7 @@ pub struct BalState {
     pub bal_builder: Option<Bal>,
     /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
     /// to submit changes.
-    pub bal_index: u64,
+    pub bal_index: BlockAccessIndex,
 }
 
 impl BalState {
@@ -34,21 +34,21 @@ impl BalState {
         Self::default()
     }
 
-    /// Reset BAL index.
+    /// Reset BAL index to pre-execution.
     #[inline]
-    pub fn reset_bal_index(&mut self) {
-        self.bal_index = 0;
+    pub const fn reset_bal_index(&mut self) {
+        self.bal_index = BlockAccessIndex::PRE_EXECUTION;
     }
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
-        self.bal_index += 1;
+    pub const fn bump_bal_index(&mut self) {
+        self.bal_index.increment();
     }
 
     /// Get BAL index.
     #[inline]
-    pub fn bal_index(&self) -> u64 {
+    pub const fn bal_index(&self) -> BlockAccessIndex {
         self.bal_index
     }
 
@@ -80,7 +80,7 @@ impl BalState {
 
     /// Take BAL builder.
     #[inline]
-    pub fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.reset_bal_index();
         self.bal_builder.take()
     }
@@ -95,14 +95,14 @@ impl BalState {
     ///
     /// Return Error if BAL is not found and Account is not
     #[inline]
-    pub fn get_account_id(&self, address: &Address) -> Result<Option<usize>, BalError> {
+    pub fn get_account_id(&self, address: &Address) -> Result<Option<AccountId>, BalError> {
         self.bal
             .as_ref()
             .map(|bal| {
                 bal.accounts
                     .get_full(address)
-                    .map(|i| i.0)
-                    .ok_or(BalError::AccountNotFound)
+                    .map(|i| AccountId::new(i.0).expect("too many bals"))
+                    .ok_or(BalError::AccountNotFound { address: *address })
             })
             .transpose()
     }
@@ -121,30 +121,30 @@ impl BalState {
         let Some(account_id) = self.get_account_id(&address)? else {
             return Ok(false);
         };
-        Ok(self.basic_by_account_id(account_id, basic))
+        self.basic_by_account_id(account_id, basic)
     }
 
     /// Fetch account from database and apply bal changes to it by account id.
-    ///
-    /// Panics if account_id is invalid
     #[inline]
-    pub fn basic_by_account_id(&self, account_id: usize, basic: &mut Option<AccountInfo>) -> bool {
-        if let Some(bal) = &self.bal {
-            let is_none = basic.is_none();
-            let mut bal_basic = core::mem::take(basic).unwrap_or_default();
-            let changed = bal
-                .populate_account_info(account_id, self.bal_index, &mut bal_basic)
-                .expect("Invalid account id");
+    pub fn basic_by_account_id(
+        &self,
+        account_id: AccountId,
+        basic: &mut Option<AccountInfo>,
+    ) -> Result<bool, BalError> {
+        let Some(bal) = &self.bal else {
+            return Ok(false);
+        };
+        let is_none = basic.is_none();
+        let mut bal_basic = core::mem::take(basic).unwrap_or_default();
+        let changed = bal.populate_account_info(account_id, self.bal_index, &mut bal_basic)?;
 
-            // If account was not in DB and BAL has no changes, keep it as None.
-            if !changed && is_none {
-                return true;
-            }
-
-            *basic = Some(bal_basic);
-            return true;
+        // If account was not in DB and BAL has no changes, keep it as None.
+        if !changed && is_none {
+            return Ok(true);
         }
-        false
+
+        *basic = Some(bal_basic);
+        Ok(true)
     }
 
     /// Get storage value from BAL.
@@ -161,37 +161,35 @@ impl BalState {
         };
 
         let Some(bal_account) = bal.accounts.get(account) else {
-            return Err(BalError::AccountNotFound);
+            return Err(BalError::AccountNotFound { address: *account });
         };
 
         Ok(bal_account
             .storage
-            .get_bal_writes(storage_key)?
+            .get_bal_writes(account, storage_key)?
             .get(self.bal_index))
     }
 
     /// Get the storage value by account id.
     ///
     /// Return Err if bal is present but account or storage is not found inside BAL.
-    ///
-    ///
     #[inline]
     pub fn storage_by_account_id(
         &self,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<Option<StorageValue>, BalError> {
         let Some(bal) = &self.bal else {
             return Ok(None);
         };
 
-        let Some((_, bal_account)) = bal.accounts.get_index(account_id) else {
-            return Err(BalError::AccountNotFound);
+        let Some((address, bal_account)) = bal.accounts.get_index(account_id.get()) else {
+            return Err(BalError::InvalidAccountId { account_id });
         };
 
         Ok(bal_account
             .storage
-            .get_bal_writes(storage_key)?
+            .get_bal_writes(address, storage_key)?
             .get(self.bal_index))
     }
 
@@ -271,14 +269,14 @@ impl<DB> BalDatabase<DB> {
 
     /// Reset BAL index.
     #[inline]
-    pub fn reset_bal_index(mut self) -> Self {
+    pub const fn reset_bal_index(mut self) -> Self {
         self.bal_state.reset_bal_index();
         self
     }
 
     /// Bump BAL index.
     #[inline]
-    pub fn bump_bal_index(&mut self) {
+    pub const fn bump_bal_index(&mut self) {
         self.bal_state.bump_bal_index();
     }
 }
@@ -334,7 +332,8 @@ impl<DB: Database> Database for BalDatabase<DB> {
         let mut account = self.db.basic(address).map_err(EvmDatabaseError::Database)?;
 
         if let Some(account_id) = account_id {
-            self.bal_state.basic_by_account_id(account_id, &mut account);
+            self.bal_state
+                .basic_by_account_id(account_id, &mut account)?;
         }
 
         Ok(account)
@@ -362,7 +361,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
     fn storage_by_account_id(
         &mut self,
         address: Address,
-        account_id: usize,
+        account_id: AccountId,
         storage_key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
         if let Some(value) = self

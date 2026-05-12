@@ -10,7 +10,7 @@ pub struct InstructionContext<'a, H: ?Sized, ITy: InterpreterTypes> {
     pub host: &'a mut H,
 }
 
-impl<H: ?Sized, ITy: InterpreterTypes> std::fmt::Debug for InstructionContext<'_, H, ITy> {
+impl<H: ?Sized, IT: InterpreterTypes> std::fmt::Debug for InstructionContext<'_, H, IT> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("InstructionContext")
             .field("host", &"<host>")

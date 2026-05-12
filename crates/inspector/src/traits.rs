@@ -5,7 +5,8 @@ use handler::{
     EthFrame, EvmTr, FrameInitOrResult, FrameResult, ItemOrResult,
 };
 use interpreter::{
-    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, InterpreterTypes,
+    interpreter::EthInterpreter, interpreter_action::FrameInit, CallOutcome, FrameInput,
+    InterpreterTypes,
 };
 
 use crate::{
@@ -26,12 +27,12 @@ pub trait InspectorEvmTr:
 >
 {
     /// The inspector type used for EVM execution inspection.
-    type Inspector: Inspector<Self::Context, EthInterpreter>;
+    type Inspector: Inspector<Self::Context, EthInterpreter, FrameInput, FrameResult>;
 
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all_inspector(
         &self,
     ) -> (
@@ -45,7 +46,7 @@ pub trait InspectorEvmTr:
     /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
     ///
     /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn all_mut_inspector(
         &mut self,
     ) -> (
@@ -118,7 +119,7 @@ pub trait InspectorEvmTr:
             {
                 if *was_precompile_called {
                     let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
-                    for log in logs.iter().chain(precompile_call_logs.iter()).cloned() {
+                    for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
                         inspector.log(ctx, log);
                     }
                 }
@@ -154,6 +155,7 @@ pub trait InspectorEvmTr:
             &mut frame.interpreter,
             inspector,
             instructions.instruction_table(),
+            instructions.gas_table(),
         );
         let mut result = frame.process_next_action(ctx, next_action);
 

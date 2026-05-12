@@ -34,7 +34,7 @@ pub struct BundleAccount {
 
 impl BundleAccount {
     /// Create new BundleAccount.
-    pub fn new(
+    pub const fn new(
         original_info: Option<AccountInfo>,
         present_info: Option<AccountInfo>,
         storage: StorageWithOriginalValues,
@@ -75,7 +75,7 @@ impl BundleAccount {
     }
 
     /// Was this account destroyed.
-    pub fn was_destroyed(&self) -> bool {
+    pub const fn was_destroyed(&self) -> bool {
         self.status.was_destroyed()
     }
 

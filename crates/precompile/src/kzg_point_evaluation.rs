@@ -1,7 +1,8 @@
 //! KZG point evaluation precompile added in [`EIP-4844`](https://eips.ethereum.org/EIPS/eip-4844)
 //! For more details check [`run`] function.
 use crate::{
-    crypto, Address, Precompile, PrecompileError, PrecompileId, PrecompileOutput, PrecompileResult,
+    crypto, eth_precompile_fn, Address, EthPrecompileOutput, EthPrecompileResult, Precompile,
+    PrecompileHalt, PrecompileId,
 };
 pub mod arkworks;
 
@@ -10,9 +11,11 @@ pub mod blst;
 
 use primitives::hex_literal::hex;
 
+eth_precompile_fn!(kzg_precompile, run);
+
 /// KZG point evaluation precompile, containing address and function to run.
 pub const POINT_EVALUATION: Precompile =
-    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, run);
+    Precompile::new(PrecompileId::KzgPointEvaluation, ADDRESS, kzg_precompile);
 
 /// Address of the KZG point evaluation precompile.
 pub const ADDRESS: Address = crate::u64_to_address(0x0A);
@@ -37,21 +40,21 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     if gas_limit < GAS_COST {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileHalt::OutOfGas);
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(PrecompileError::BlobInvalidInputLength);
+        return Err(PrecompileHalt::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(PrecompileError::BlobMismatchedVersion);
+        return Err(PrecompileHalt::BlobMismatchedVersion);
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -62,7 +65,7 @@ pub fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     crypto().verify_kzg_proof(z, y, commitment, proof)?;
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
+    Ok(EthPrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`

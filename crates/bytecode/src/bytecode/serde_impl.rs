@@ -1,4 +1,4 @@
-use super::{Arc, Bytecode, BytecodeInner, BytecodeKind, JumpTable, OnceLock};
+use super::{Bytecode, BytecodeKind, JumpTable};
 use primitives::{Address, Bytes};
 use serde::{Deserialize, Serialize};
 
@@ -36,14 +36,17 @@ impl<'de> Deserialize<'de> for Bytecode {
             BytecodeSerde::LegacyAnalyzed {
                 bytecode,
                 original_len,
-                jump_table,
-            } => Ok(Self(Arc::new(BytecodeInner {
-                kind: BytecodeKind::LegacyAnalyzed,
-                bytecode,
-                original_len,
-                jump_table,
-                hash: OnceLock::new(),
-            }))),
+                ..
+            } => {
+                if original_len > bytecode.len() {
+                    return Err(serde::de::Error::custom(
+                        "original_len is greater than bytecode length",
+                    ));
+                }
+                // Re-analyze from original bytes to ensure padding invariants
+                // are satisfied, rather than trusting the serialized form.
+                Ok(Self::new_legacy(bytecode.slice(..original_len)))
+            }
             BytecodeSerde::Eip7702 { delegated_address } => {
                 Ok(Self::new_eip7702(delegated_address))
             }

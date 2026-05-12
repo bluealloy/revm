@@ -76,11 +76,8 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-        | "CreateTransactionHighNonce.json"
-
         // Test with some storage check.
-        | "RevertInCreateInInit_Paris.json"
+        "RevertInCreateInInit_Paris.json"
         | "RevertInCreateInInit.json"
         | "dynamicAccountOverwriteEmpty.json"
         | "dynamicAccountOverwriteEmpty_Paris.json"
@@ -144,7 +141,7 @@ fn build_json_output(
         "stateRoot": validation.state_root,
         "logsRoot": validation.logs_root,
         "output": exec_result.as_ref().ok().and_then(|r| r.output().cloned()).unwrap_or_default(),
-        "gasUsed": exec_result.as_ref().ok().map(|r| r.gas_used()).unwrap_or_default(),
+        "gasUsed": exec_result.as_ref().ok().map(|r| r.tx_gas_used()).unwrap_or_default(),
         "pass": error.is_none(),
         "errorMsg": error.unwrap_or_default(),
         "evmResult": format_evm_result(exec_result),

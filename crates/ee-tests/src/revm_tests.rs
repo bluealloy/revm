@@ -1,31 +1,13 @@
 //! Integration tests for the `revm` crate.
 
-use crate::TestdataConfig;
 use revm::{
     bytecode::opcode,
     context::{CfgEnv, ContextTr, TxEnv},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
     primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
     state::{AccountStatus, Bytecode},
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
-use std::path::PathBuf;
-
-// Re-export the constant for testdata directory path
-const TESTS_TESTDATA: &str = "tests/revm_testdata";
-
-fn revm_testdata_config() -> TestdataConfig {
-    TestdataConfig {
-        testdata_dir: PathBuf::from(TESTS_TESTDATA),
-    }
-}
-
-fn compare_or_save_revm_testdata<T>(filename: &str, output: &T)
-where
-    T: serde::Serialize + for<'a> serde::Deserialize<'a> + PartialEq + std::fmt::Debug,
-{
-    crate::compare_or_save_testdata_with_config(filename, output, revm_testdata_config());
-}
 
 const SELFDESTRUCT_BYTECODE: &[u8] = &[
     opcode::PUSH2,
@@ -72,10 +54,7 @@ fn test_selfdestruct_multi_tx() {
 
     let output = evm.finalize();
 
-    compare_or_save_revm_testdata(
-        "test_selfdestruct_multi_tx.json",
-        &(result1, result2, output),
-    );
+    crate::assert_sorted_json_snapshot!(&(result1, result2, output));
 }
 
 /// Tests multiple transactions with contract creation.
@@ -183,10 +162,7 @@ fn test_multi_tx_create() {
     );
     let output = evm.finalize();
 
-    compare_or_save_revm_testdata(
-        "test_multi_tx_create.json",
-        &(result1, result2, result3, output),
-    );
+    crate::assert_sorted_json_snapshot!(&(result1, result2, result3, output));
 }
 
 /// Creates deployment bytecode for a contract.
@@ -233,7 +209,7 @@ fn test_frame_stack_index() {
         .unwrap();
 
     assert_eq!(evm.frame_stack.index(), None);
-    compare_or_save_revm_testdata("test_frame_stack_index.json", &result1);
+    crate::assert_sorted_json_snapshot!(&result1);
 }
 
 #[test]
@@ -475,7 +451,7 @@ fn test_eip7708_selfdestruct_to_self() {
                 .kind(TxKind::Create)
                 .data(SELFDESTRUCT_TO_SELF_INIT_CODE.into())
                 .value(create_value)
-                .gas_limit(100_000)
+                .gas_limit(200_000)
                 .gas_price(0)
                 .build_fill(),
         )
@@ -501,7 +477,7 @@ fn test_eip7708_selfdestruct_to_self() {
 }
 
 /// Bytecode that performs a CALL with value to a specific address
-#[allow(clippy::vec_init_then_push)]
+#[expect(clippy::vec_init_then_push)]
 fn call_with_value_bytecode(target: [u8; 20], value: U256) -> Bytecode {
     // CALL(gas, addr, value, argsOffset, argsSize, retOffset, retSize)
     let mut bytecode = Vec::new();
@@ -593,7 +569,6 @@ fn test_eip7708_call_with_value() {
 }
 
 /// Bytecode that creates a contract with initial value
-#[allow(clippy::vec_init_then_push)]
 fn create_with_value_bytecode(init_code: &[u8], value: U256) -> Bytecode {
     // CREATE(value, offset, length)
     let mut bytecode = Vec::new();
@@ -685,4 +660,124 @@ fn test_eip7708_create_with_value() {
     let log = create_log.unwrap();
     assert_eq!(log.address, ETH_TRANSFER_LOG_ADDRESS);
     assert_eq!(log.data.data.as_ref(), &create_value.to_be_bytes::<32>());
+}
+
+/// Test that demonstrates using the full EVM API with a custom opcode.
+///
+/// Deploys a contract with a custom opcode (0x0C) that doubles the top stack value,
+/// then calls the contract and verifies the result via SSTORE + state inspection.
+#[test]
+fn test_custom_opcode_transaction() {
+    use revm::{
+        context::Evm,
+        database::InMemoryDB,
+        handler::{instructions::EthInstructions, EthPrecompiles},
+        interpreter::{interpreter::EthInterpreter, Instruction, InstructionContext},
+        state::AccountInfo,
+    };
+
+    // Custom opcode 0x0C: pops top value, pushes it doubled.
+    const DOUBLE: u8 = 0x0C;
+
+    // Runtime bytecode:
+    //   PUSH1 0x07      ; push value 7
+    //   DOUBLE (0x0C)   ; custom opcode: doubles top -> 14
+    //   PUSH0           ; storage slot 0
+    //   SSTORE          ; store result at slot 0
+    //   STOP
+    let runtime_bytecode: Bytes = [
+        opcode::PUSH1,
+        0x07,
+        DOUBLE,
+        opcode::PUSH0,
+        opcode::SSTORE,
+        opcode::STOP,
+    ]
+    .into();
+
+    let deploy_bytecode = deployment_contract(&runtime_bytecode);
+
+    let caller = address!("0x1000000000000000000000000000000000000001");
+
+    // Setup in-memory database with funded caller
+    let mut db = InMemoryDB::default();
+    db.insert_account_info(
+        caller,
+        AccountInfo {
+            balance: U256::from(1_000_000_000_000_000_000u128),
+            ..Default::default()
+        },
+    );
+
+    // Build EVM with custom instruction set
+    let ctx = Context::mainnet()
+        .with_cfg(CfgEnv::new_with_spec(SpecId::CANCUN))
+        .with_db(db);
+
+    let mut instructions = EthInstructions::new_mainnet_with_spec(SpecId::CANCUN);
+    instructions.insert_instruction(
+        DOUBLE,
+        Instruction::new(|ctx: InstructionContext<'_, _, EthInterpreter>| {
+            revm::interpreter::popn_top!([], val, ctx.interpreter);
+            *val = val.wrapping_mul(U256::from(2));
+            Ok(())
+        }),
+        3, // static gas cost (same as ADD)
+    );
+
+    let mut evm = Evm::new(ctx, instructions, EthPrecompiles::new(SpecId::CANCUN));
+
+    // Step 1: Deploy the contract (commit state so nonce and contract persist)
+    let deploy_result = evm
+        .transact_commit(
+            TxEnv::builder()
+                .caller(caller)
+                .kind(TxKind::Create)
+                .data(deploy_bytecode)
+                .gas_limit(1_000_000)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
+
+    assert!(
+        deploy_result.is_success(),
+        "deploy should succeed: {deploy_result:?}"
+    );
+    let contract_address = deploy_result
+        .created_address()
+        .expect("contract should be created");
+
+    // Step 2: Call the deployed contract (triggers PUSH1 7 -> DOUBLE -> SSTORE)
+    let call_result = evm
+        .transact(
+            TxEnv::builder()
+                .caller(caller)
+                .kind(TxKind::Call(contract_address))
+                .gas_limit(1_000_000)
+                .nonce(1)
+                .build()
+                .unwrap(),
+        )
+        .unwrap();
+
+    assert!(
+        call_result.result.is_success(),
+        "call should succeed: {call_result:?}"
+    );
+
+    // Verify: storage slot 0 should contain 14 (7 * 2)
+    let contract_state = call_result
+        .state
+        .get(&contract_address)
+        .expect("contract should be in state");
+    let slot0 = contract_state
+        .storage
+        .get::<U256>(&U256::ZERO)
+        .expect("slot 0 should be written");
+    assert_eq!(
+        slot0.present_value(),
+        U256::from(14),
+        "DOUBLE(7) should store 14 in slot 0"
+    );
 }

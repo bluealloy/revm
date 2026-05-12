@@ -21,12 +21,6 @@ pub struct StateBuilder<DB> {
     ///
     /// Default is false.
     with_bundle_update: bool,
-    /// Do we want to merge transitions in background?
-    ///
-    /// This will allow evm to continue executing.
-    ///
-    /// Default is false.
-    with_background_transition_merge: bool,
     /// If we want to set different block hashes,
     with_block_hashes: BlockHashCache,
     /// BAL state.
@@ -57,7 +51,6 @@ impl<DB: Database> StateBuilder<DB> {
             with_cache_prestate: None,
             with_bundle_prestate: None,
             with_bundle_update: false,
-            with_background_transition_merge: false,
             with_block_hashes: BlockHashCache::new(),
             bal_state: BalState::default(),
         }
@@ -72,7 +65,6 @@ impl<DB: Database> StateBuilder<DB> {
             with_cache_prestate: self.with_cache_prestate,
             with_bundle_prestate: self.with_bundle_prestate,
             with_bundle_update: self.with_bundle_update,
-            with_background_transition_merge: self.with_background_transition_merge,
             with_block_hashes: self.with_block_hashes,
             bal_state: self.bal_state,
         }
@@ -128,15 +120,6 @@ impl<DB: Database> StateBuilder<DB> {
     pub fn with_cached_prestate(self, cache: CacheState) -> Self {
         Self {
             with_cache_prestate: Some(cache),
-            ..self
-        }
-    }
-
-    /// Starts the thread that will take transitions and do merge to the bundle state
-    /// in the background.
-    pub fn with_background_transition_merge(self) -> Self {
-        Self {
-            with_background_transition_merge: true,
             ..self
         }
     }
