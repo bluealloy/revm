@@ -37,9 +37,16 @@ pub use interface::*;
 
 use core::fmt::{self, Debug};
 
-// silence arkworks lint as bn impl will be used as default if both are enabled.
+// Silence unused backend lints when an alternative BN254 implementation is selected.
 cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
+    if #[cfg(feature = "matter-labs-eip1962")] {
+        #[cfg(feature = "bn")]
+        use bn as _;
+        use ark_bn254 as _;
+        use ark_ff as _;
+        use ark_ec as _;
+        use ark_serialize as _;
+    } else if #[cfg(feature = "bn")] {
         use ark_bn254 as _;
         use ark_ff as _;
         use ark_ec as _;

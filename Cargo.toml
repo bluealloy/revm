@@ -80,6 +80,7 @@ ark-ec = { version = "0.5", default-features = false }
 ark-ff = { version = "0.5", default-features = false }
 ark-serialize = { version = "0.5", default-features = false }
 ark-std = { version = "0.5", default-features = false }
+eth_pairings = { git = "https://github.com/matter-labs/eip1962", rev = "17ba98bdbdd7bdf239c09cd88ca46a486124f5e7", default-features = false }
 aurora-engine-modexp = { version = "1.2", default-features = false }
 gmp-mpfr-sys = { version = "1.6", default-features = false }
 blst = "0.3.15"

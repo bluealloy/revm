@@ -6,11 +6,17 @@ use crate::{
 };
 use std::vec::Vec;
 
-#[cfg_attr(feature = "bn", expect(dead_code))]
+#[cfg_attr(
+    any(feature = "bn", feature = "matter-labs-eip1962"),
+    expect(dead_code)
+)]
 pub mod arkworks;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "bn")]{
+    if #[cfg(feature = "matter-labs-eip1962")] {
+        pub(crate) mod matter_labs;
+        pub(crate) use matter_labs as crypto_backend;
+    } else if #[cfg(feature = "bn")] {
         pub(crate) mod substrate;
         pub(crate) use substrate as crypto_backend;
     } else {

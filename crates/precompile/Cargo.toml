@@ -43,6 +43,9 @@ ripemd.workspace = true
 # Optionally use substrate implementation for eip1962
 bn = { workspace = true, optional = true }
 
+# Use matter-labs implementation for eip1962
+eth_pairings = { workspace = true, features = ["eip_196"], optional = true }
+
 # Use arkworks implementation for eip1962
 ark-bn254 = { workspace = true, features = ["curve"] }
 ark-ec = { workspace = true }
@@ -77,7 +80,7 @@ rstest.workspace = true
 p256 = { workspace = true, features = ["ecdsa"] }
 
 [features]
-default = ["std", "secp256k1", "blst", "c-kzg", "portable"]
+default = ["std", "secp256k1", "blst", "c-kzg", "portable", "matter-labs-eip1962"]
 
 std = [
 	"primitives/std",
@@ -115,6 +118,9 @@ secp256k1 = ["dep:secp256k1"]
 
 # Enables the blst implementation of the BLS12-381 precompile.
 blst = ["dep:blst"]
+
+# Enables the matter-labs implementation of eip1962.
+matter-labs-eip1962 = ["dep:eth_pairings"]
 
 # Enables the substrate implementation of eip1962
 bn = ["dep:bn"]
