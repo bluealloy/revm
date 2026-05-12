@@ -3,8 +3,7 @@
 //! Introduces a reservoir model that separates *state gas* (storage/code/account
 //! creation) from *regular* execution gas. State-gas charges are expressed as
 //! a number of "state bytes" that get multiplied by `cost_per_state_byte` (CPSB).
-//! CPSB itself is derived from the current block's gas limit so that the state
-//! growth target scales with block capacity.
+//! In `bal-devnet-7` / Glamsterdam, CPSB is fixed at `1530`.
 
 /// Blocks per year at a 12-second block time (used by the CPSB formula).
 pub const BLOCKS_PER_YEAR: u64 = 2_628_000;

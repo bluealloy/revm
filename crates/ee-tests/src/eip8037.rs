@@ -1525,10 +1525,12 @@ fn test_eip8037_precompile_no_state_gas() {
 
 // ---- Category 7: Reservoir Refill ----
 //
-// The reservoir refill logic (handler_reservoir_refill) is invoked on HALT or REVERT:
-// `new_reservoir = reservoir + max(0, state_gas_spent_final - reservoir)`
+// The reservoir refill logic is invoked on HALT or REVERT using the conserved
+// `reservoir + state_gas_spent` invariant:
+// `new_reservoir = reservoir + state_gas_spent_final`
 //
-// This accounts for state gas that had to be drawn from regular gas.
+// This accounts for both state gas borrowed from regular gas and nested refill
+// unwinds that can make `state_gas_spent_final` temporarily negative.
 // On OK: reservoir stays unchanged (no refill needed).
 // On REVERT: remaining is reimbursed, then refill applied.
 // On HALT: remaining is NOT reimbursed, refill applied to final gas accounting.
