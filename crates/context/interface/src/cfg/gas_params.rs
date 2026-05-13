@@ -347,7 +347,7 @@ impl GasParams {
                 eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
             table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
             table[GasId::tx_eip7702_auth_refund_state_bytes().as_usize()] =
-                eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
+                eip8037::NEW_ACCOUNT_BYTES;
             table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] =
                 eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
 
@@ -786,9 +786,7 @@ impl GasParams {
     /// EIP-7702 per-auth refund: state-gas portion only.
     ///
     /// Pre-Amsterdam this is zero (the refund is entirely regular gas).
-    /// Under EIP-8037 the refund is entirely state gas
-    /// (`(NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES) * cpsb`), matching the per-auth
-    /// state-gas charge so existing-account authorizations fully recover it.
+    /// Under EIP-8037 the refund is entirely state gas (`NEW_ACCOUNT_BYTES * cpsb`).
     #[inline]
     pub fn tx_eip7702_auth_refund_state(&self, cpsb: u64) -> u64 {
         self.get(GasId::tx_eip7702_auth_refund_state_bytes())
@@ -975,6 +973,7 @@ impl GasParams {
         // We split them: regular goes in initial_regular_gas, state goes in initial_state_gas.
         let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost(cpsb);
         let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas(cpsb);
+
         let auth_regular_cost = auth_total_cost - auth_state_gas;
 
         let mut initial_regular_gas = tokens_in_calldata * self.tx_token_cost()

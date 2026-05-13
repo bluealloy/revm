@@ -271,8 +271,7 @@ impl AccountInfo {
     /// - nonce is zero
     #[inline]
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
-        code_empty && self.balance.is_zero() && self.nonce == 0
+        self.is_code_hash_empty_or_zero() && self.balance.is_zero() && self.nonce == 0
     }
 
     /// Optimization hint.
@@ -305,6 +304,12 @@ impl AccountInfo {
     #[inline]
     pub fn is_empty_code_hash(&self) -> bool {
         self.code_hash == KECCAK_EMPTY
+    }
+
+    /// Returns true if the code hash is the Keccak256 hash of the empty string `""` or is zero.
+    #[inline]
+    pub fn is_code_hash_empty_or_zero(&self) -> bool {
+        self.is_empty_code_hash() || self.code_hash.is_zero()
     }
 
     /// Takes bytecode from account.

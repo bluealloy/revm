@@ -12,7 +12,7 @@ use context_interface::{
 };
 use core::cmp::Ordering;
 use interpreter::InitialAndFloorGas;
-use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
+use primitives::{eip8037, hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -203,38 +203,39 @@ pub fn apply_eip7702_auth_list<
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
     let cpsb = context.cfg().cpsb();
-    let refund_per_auth = context.cfg().gas_params().tx_eip7702_auth_refund(cpsb);
+    let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
     let (tx, journal) = context.tx_journal_mut();
 
     // Return if not EIP-7702 transaction.
     if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
-    let eip7702_refund =
-        apply_auth_list::<_, ERROR>(chain_id, refund_per_auth, tx.authorization_list(), journal)?;
-
-    if refund_per_auth == 0 {
-        return Ok(0);
-    }
-    let num_refunded_accounts = eip7702_refund / refund_per_auth;
+    let (number_of_refunded_accounts, number_of_refunded_bytecodes) =
+        apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
 
     let params = context.cfg().gas_params();
+    let mut regular_gas_refund = 0;
 
     // EIP-8037: Split per-auth refund into state and regular components. The
     // state portion is credited back to the reservoir by reducing
     // `initial_state_gas` (which is what `initial_gas_and_reservoir` deducts
     // from the reservoir). The regular portion is returned and routed through
     // the standard refund counter, subject to the 1/5 cap.
-    let state_refund = params
-        .tx_eip7702_auth_refund_state(cpsb)
-        .saturating_mul(num_refunded_accounts);
-    init_and_floor_gas.state_refund = state_refund;
+    if is_eip8037 {
+        init_and_floor_gas.state_refund += params
+            .tx_eip7702_auth_refund_state(cpsb)
+            .saturating_mul(number_of_refunded_accounts);
 
-    let eip7702_regular_refund_raw = params
-        .tx_eip7702_auth_refund_regular()
-        .saturating_mul(num_refunded_accounts);
+        // Code deposit state gas is also refunded.
+        init_and_floor_gas.state_refund +=
+            (eip8037::AUTH_BASE_BYTES * cpsb).saturating_mul(number_of_refunded_bytecodes);
+    } else {
+        regular_gas_refund = params
+            .tx_eip7702_auth_refund_regular()
+            .saturating_mul(number_of_refunded_accounts);
+    }
 
-    Ok(eip7702_regular_refund_raw)
+    Ok(regular_gas_refund)
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.
@@ -244,17 +245,19 @@ pub fn apply_eip7702_auth_list<
 /// The `refund_per_auth` parameter specifies the gas refund per existing account authorization.
 /// By default this is `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500),
 /// but can be configured via [`GasParams::tx_eip7702_auth_refund`](context_interface::cfg::gas_params::GasParams::tx_eip7702_auth_refund).
+///
+/// Return number of refunded account and number of refunded bytecodes (Delegation lenght is already fixed).
 #[inline]
 pub fn apply_auth_list<
     JOURNAL: JournalTr,
     ERROR: From<InvalidTransaction> + From<<JOURNAL::Database as Database>::Error>,
 >(
     chain_id: u64,
-    refund_per_auth: u64,
     auth_list: impl Iterator<Item = impl AuthorizationTr>,
     journal: &mut JOURNAL,
-) -> Result<u64, ERROR> {
+) -> Result<(u64, u64), ERROR> {
     let mut refunded_accounts = 0;
+    let mut refunded_bytecodes = 0;
     for authorization in auth_list {
         // 1. Verify the chain id is either 0 or the chain's current ID.
         let auth_chain_id = authorization.chain_id();
@@ -300,6 +303,10 @@ pub fn apply_auth_list<
             refunded_accounts += 1;
         }
 
+        if !authority_acc_info.is_code_hash_empty_or_zero() || authorization.address().is_zero() {
+            refunded_bytecodes += 1;
+        }
+
         // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
         //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation.
         //    Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
@@ -307,9 +314,7 @@ pub fn apply_auth_list<
         authority_acc.delegate(authorization.address());
     }
 
-    let refunded_gas = refunded_accounts * refund_per_auth;
-
-    Ok(refunded_gas)
+    Ok((refunded_accounts, refunded_bytecodes))
 }
 
 #[cfg(test)]
