@@ -8,43 +8,6 @@ use context_interface::{
 use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 
-/// EIP-8037: Refunds state gas for accounts that were both created and
-/// self-destructed in this transaction.
-///
-/// Per EIP-6780 those accounts are erased at tx end; the state gas charged
-/// during execution for creating the account, depositing its code, and setting
-/// its storage slots is returned directly to the reservoir (not routed through
-/// the capped refund counter). Must run before [`refund`] / [`build_result_gas`]
-/// so the updated reservoir is reflected in reimbursement and beneficiary
-/// reward.
-///
-/// For a tx-kind `Create`, the contract's new-account state gas was charged
-/// via intrinsic `initial_state_gas` (not via a reservoir-side
-/// `record_state_cost`), so when that contract self-destructs the journal's
-/// per-address refund must not be returned to the reservoir — it was never
-/// reservoir-backed. Pass the CREATE-tx target as `skip_address` to exclude it.
-#[inline]
-pub fn eip8037_selfdestruct_state_gas_refund<CTX: ContextTr>(context: &mut CTX, gas: &mut Gas) {
-    if !context.cfg().is_amsterdam_eip8037_enabled() {
-        return;
-    }
-    let cpsb = context.local().cpsb();
-
-    let amount = {
-        let cfg = context.cfg();
-        let gas_params = cfg.gas_params();
-        context
-            .journal_ref()
-            .eip8037_selfdestruct_state_gas_refund(gas_params, cpsb, None)
-    };
-    // cap the refund to the state gas spent
-    let amount = amount.min(gas.state_gas_spent() as u64);
-
-    if amount != 0 {
-        gas.refill_reservoir(amount);
-    }
-}
-
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
 pub fn build_result_gas(
     _is_halt: bool,
@@ -63,7 +26,7 @@ pub fn build_result_gas(
         .state_gas_spent()
         .saturating_add_unsigned(init_and_floor_gas.initial_state_gas)
         .max(0) as u64;
-    let state_gas = state_gas.saturating_sub(init_and_floor_gas.initial_eip7702_refund);
+    let state_gas = state_gas.saturating_sub(init_and_floor_gas.state_refund);
 
     ResultGas::default()
         .with_total_gas_spent(
