@@ -340,12 +340,14 @@ impl GasParams {
             //   regular per-auth cost: 7500
             //   state bytes per-auth:  NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES
             //   regular refund:        0 (refund is entirely state gas)
-            //   state-bytes refund:    NEW_ACCOUNT_BYTES
+            //   state-bytes refund:    NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES
+            //     — matches the per-auth state-gas charge, so existing-account
+            //     authorizations fully recover their pessimistic state gas.
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
                 eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
             table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
             table[GasId::tx_eip7702_auth_refund_state_bytes().as_usize()] =
-                eip8037::NEW_ACCOUNT_BYTES;
+                eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
             table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] =
                 eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
 
@@ -760,7 +762,9 @@ impl GasParams {
     /// EIP-7702 authorization refund per existing account.
     ///
     /// Pre-Amsterdam this is a fixed regular-gas refund (`PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST`).
-    /// Under EIP-8037 the refund is fully state gas, computed as `NEW_ACCOUNT_BYTES * cpsb`.
+    /// Under EIP-8037 the refund is fully state gas, computed as
+    /// `(NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES) * cpsb` — matching the per-auth
+    /// state-gas charge so existing-account authorizations fully recover it.
     #[inline]
     pub fn tx_eip7702_auth_refund(&self, cpsb: u64) -> u64 {
         let regular = self.get(GasId::tx_eip7702_auth_refund());
@@ -782,7 +786,9 @@ impl GasParams {
     /// EIP-7702 per-auth refund: state-gas portion only.
     ///
     /// Pre-Amsterdam this is zero (the refund is entirely regular gas).
-    /// Under EIP-8037 the refund is entirely state gas (`NEW_ACCOUNT_BYTES * cpsb`).
+    /// Under EIP-8037 the refund is entirely state gas
+    /// (`(NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES) * cpsb`), matching the per-auth
+    /// state-gas charge so existing-account authorizations fully recover it.
     #[inline]
     pub fn tx_eip7702_auth_refund_state(&self, cpsb: u64) -> u64 {
         self.get(GasId::tx_eip7702_auth_refund_state_bytes())
