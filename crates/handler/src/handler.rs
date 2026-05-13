@@ -390,14 +390,9 @@ pub trait Handler {
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
 
-        // Detect a failed top-level CREATE for the EIP-8037 state-gas refund
-        // applied below. Mirrors the `create_failed` condition used in
-        // `EthFrame::return_result` for nested creates, with one twist for the
-        // top-level case: a `SelfDestruct` result counts as failure too. Per
-        // EIP-6780, a contract that self-destructs in the same transaction it
-        // was created in is erased at tx end, so the intrinsic
-        // `create_state_gas` (which `eip8037_selfdestruct_state_gas_refund`
-        // skips for the CREATE-tx target) must be unwound here.
+        // Detect a failed top-level CREATE so the intrinsic `create_state_gas`
+        // charged at tx entry can be unwound below. Mirrors the `create_failed`
+        // condition used in `EthFrame::return_result` for nested creates.
         let create_failed =
             matches!(frame_result, FrameResult::Create(_)) && !instruction_result.is_ok();
 
