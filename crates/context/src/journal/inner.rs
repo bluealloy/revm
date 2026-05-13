@@ -735,8 +735,8 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     ///
     /// It will mark both this and delegated account as warm loaded.
     ///
-    /// Returns information about the account (If it is empty or cold loaded) and if present the information
-    /// about the delegated account (If it is cold loaded).
+    /// Returns information about the requested account (empty/cold state), and if present information
+    /// about the delegated account (cold state).
     #[inline]
     pub fn load_account_delegated<DB: Database>(
         &mut self,

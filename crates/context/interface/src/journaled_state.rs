@@ -494,7 +494,8 @@ impl<T> StateLoad<T> {
 pub struct AccountLoad {
     /// Does account have delegate code and delegated account is cold loaded
     pub is_delegate_account_cold: Option<bool>,
-    /// Is account empty, if `true` account is not created
+    /// Is the originally requested account empty, if `true` account is not created.
+    /// This does not change based on delegated account state.
     pub is_empty: bool,
 }
 

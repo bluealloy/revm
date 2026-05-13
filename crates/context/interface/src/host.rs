@@ -158,6 +158,7 @@ pub trait Host {
         let mut account_load = StateLoad::new(
             AccountLoad {
                 is_delegate_account_cold: None,
+                // Keep `is_empty` bound to the originally requested account.
                 is_empty: account.is_empty,
             },
             account.is_cold,
@@ -169,7 +170,6 @@ pub trait Host {
                 .load_account_info_skip_cold_load(address, true, false)
                 .ok()?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
-            account_load.data.is_empty = delegate_account.is_empty;
         }
 
         Some(account_load)
