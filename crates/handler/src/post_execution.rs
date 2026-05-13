@@ -56,26 +56,16 @@ pub fn build_result_gas(
     // is expected to be >= 0 and is clamped defensively before combining with
     // intrinsic state gas.
     //
-    // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas.
-    // The EIP-7702 reservoir refund is added back to the reservoir budget at
-    // tx start; it does not reduce the gross state gas spent reported here.
+    // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas,
+    // then reduced by the EIP-7702 per-authorization state-gas refund (which
+    // was also added back to the reservoir budget at tx start).
     let state_gas = gas
         .state_gas_spent()
         .saturating_add_unsigned(init_and_floor_gas.initial_state_gas)
         .max(0) as u64;
+    let state_gas = state_gas.saturating_sub(init_and_floor_gas.initial_eip7702_refund);
 
-    // println!("NEW:");
-    // println!("  SSS GAS: {:?}", gas);
-    // println!("  SSS exec state gas: {:?}", gas.state_gas_spent());
-    // println!("  SSS init_and_floor_gas: {init_and_floor_gas:?}");
-    // println!(
-    //     "  SSS state_refund {}",
-    //     init_and_floor_gas.initial_eip7702_refund
-    // );
-    // println!("  SSS state_gas: {state_gas}");
-    // println!("  SSS gas: {:?}", gas.refunded());
-
-    let mut res = ResultGas::default()
+    ResultGas::default()
         .with_total_gas_spent(
             gas.limit()
                 .saturating_sub(gas.remaining())
@@ -83,13 +73,7 @@ pub fn build_result_gas(
         )
         .with_refunded(gas.refunded() as u64)
         .with_floor_gas(init_and_floor_gas.floor_gas())
-        .with_state_gas_spent(state_gas);
-
-    res.set_eip7702_state_refund(init_and_floor_gas.initial_eip7702_refund);
-
-    //println!("  SSS res: {res:?}");
-
-    res
+        .with_state_gas_spent(state_gas)
 }
 
 /// Ensures minimum gas floor is spent according to EIP-7623.

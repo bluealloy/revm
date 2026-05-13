@@ -9,7 +9,6 @@ expression: "&(result1, result2, result3, output)"
       "gas": {
         "gas_spent": 54260,
         "state_gas_spent": 0,
-        "eip7702_state_refund": 0,
         "gas_refunded": 0,
         "floor_gas": 0
       },
@@ -28,7 +27,6 @@ expression: "&(result1, result2, result3, output)"
       "gas": {
         "gas_spent": 28603,
         "state_gas_spent": 0,
-        "eip7702_state_refund": 0,
         "gas_refunded": 14301,
         "floor_gas": 0
       },
@@ -44,7 +42,6 @@ expression: "&(result1, result2, result3, output)"
       "gas": {
         "gas_spent": 54260,
         "state_gas_spent": 0,
-        "eip7702_state_refund": 0,
         "gas_refunded": 0,
         "floor_gas": 0
       },

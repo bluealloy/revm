@@ -74,14 +74,12 @@ pub struct ResultGas {
     /// For actual gas used, use [`used()`](ResultGas::used).
     #[cfg_attr(feature = "serde", serde(rename = "gas_spent"))]
     total_gas_spent: u64,
-    /// State gas consumed during execution (EIP-8037).
+    /// State gas consumed during execution (EIP-8037), net of the EIP-7702
+    /// per-authorization state-gas refund applied at result-build time.
     /// Tracks gas for storage creation, account creation, and code deposit.
     /// Zero when state gas is not enabled.
     #[cfg_attr(feature = "serde", serde(default))]
     state_gas_spent: u64,
-    /// EIp-7702 refund amount.
-    #[cfg_attr(feature = "serde", serde(default))]
-    eip7702_state_refund: u64,
     /// Gas refund amount (capped per EIP-3529).
     ///
     /// Note: This is the raw refund before EIP-7623 floor gas adjustment.
@@ -105,7 +103,6 @@ impl ResultGas {
         Self {
             total_gas_spent,
             refunded,
-            eip7702_state_refund: 0,
             floor_gas,
             state_gas_spent: 0,
         }
@@ -123,21 +120,8 @@ impl ResultGas {
             total_gas_spent,
             refunded,
             floor_gas,
-            eip7702_state_refund: 0,
             state_gas_spent,
         }
-    }
-
-    /// Sets the EIP-7702 refund amount.
-    #[inline]
-    pub const fn set_eip7702_state_refund(&mut self, eip7702_state_refund: u64) {
-        self.eip7702_state_refund = eip7702_state_refund;
-    }
-
-    /// Returns the EIP-7702 state refund amount.
-    #[inline]
-    pub const fn eip7702_state_refund(&self) -> u64 {
-        self.eip7702_state_refund
     }
 
     /****** Simple getters *****/
@@ -152,13 +136,13 @@ impl ResultGas {
 
     /// Returns the final state gas spent during execution (EIP-8037).
     ///
-    /// This is the final state gas spent after EIP-7702 refund.
+    /// The stored value is already net of the EIP-7702 per-authorization
+    /// state-gas refund (subtracted when the result is built).
     ///
     /// This is same as [`ResultGas::block_state_gas_used`] for the transaction.
     #[inline]
     pub const fn state_gas_spent_final(&self) -> u64 {
         self.state_gas_spent
-            .saturating_sub(self.eip7702_state_refund())
     }
 
     /// Returns the EIP-7623 floor gas.

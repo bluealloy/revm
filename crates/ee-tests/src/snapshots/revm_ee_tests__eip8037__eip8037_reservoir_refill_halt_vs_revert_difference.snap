@@ -11,7 +11,6 @@ expression: "&(result_halt, result_revert)"
       "gas": {
         "gas_spent": 25000,
         "state_gas_spent": 0,
-        "eip7702_state_refund": 0,
         "gas_refunded": 0,
         "floor_gas": 21000
       },
@@ -23,7 +22,6 @@ expression: "&(result_halt, result_revert)"
       "gas": {
         "gas_spent": 26012,
         "state_gas_spent": 0,
-        "eip7702_state_refund": 0,
         "gas_refunded": 0,
         "floor_gas": 21000
       },
