@@ -243,7 +243,7 @@ pub fn apply_eip7702_auth_list<
 /// By default this is `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` (25000 - 12500 = 12500),
 /// but can be configured via [`GasParams::tx_eip7702_auth_refund`](context_interface::cfg::gas_params::GasParams::tx_eip7702_auth_refund).
 ///
-/// Return number of refunded account and number of refunded bytecodes (Delegation lenght is already fixed).
+/// Return number of refunded account and number of refunded bytecodes (Delegation length is already fixed).
 #[inline]
 pub fn apply_auth_list<
     JOURNAL: JournalTr,
