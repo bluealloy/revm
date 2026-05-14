@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.4.0"
-DEVNET_VERSION="bal%40v5.7.0"
+DEVNET_VERSION="tests-bal%40v7.1.1"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"
@@ -21,6 +21,7 @@ LEGACY_DIR="$FIXTURES_DIR/legacytests"
 
 ### URL and filenames ###
 FIXTURES_URL="https://github.com/ethereum/execution-spec-tests/releases/download"
+DEVNET_FIXTURES_URL="https://github.com/ethereum/execution-specs/releases/download"
 
 if [[ -n "${REVM_STATETEST_STABLE:-}" && "${REVM_STATETEST_STABLE:-}" != "0" ]]; then
     MAIN_DIR="$MAIN_STABLE_DIR"
@@ -118,9 +119,10 @@ download_and_extract() {
     local tar_file="$2"
     local label="$3"
     local version="$4"
+    local base_url="${5:-$FIXTURES_URL}"
 
     echo "Downloading ${label} fixtures..."
-    retry curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "${FIXTURES_URL}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
+    retry curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors "${base_url}/${version}/${tar_file}" -o "${FIXTURES_DIR}/${tar_file}"
     echo "Extracting ${label} fixtures..."
      # strip-components=1 removes the first top level directory from the flepath
      # This is needed because when we extract the tar, it is placed under an
@@ -142,7 +144,7 @@ download_fixtures() {
     mkdir -p "$MAIN_DIR" "$DEVNET_DIR" "$LEGACY_DIR"
 
     download_and_extract "$MAIN_DIR" "$MAIN_TAR" "$MAIN_LABEL" "$MAIN_VERSION"
-    download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION"
+    download_and_extract "$DEVNET_DIR" "$DEVNET_TAR" "devnet" "$DEVNET_VERSION" "$DEVNET_FIXTURES_URL"
 
     # Clone legacytests repository
     echo "Cloning legacytests repository..."

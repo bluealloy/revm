@@ -2148,16 +2148,17 @@ fn test_eip8037_tx_create_initcode_halts() {
 /// Per EIP-6780 the contract is erased at tx end (created and self-destructed
 /// in the same transaction). Per EIP-8037 the state gas charged for that
 /// account — both the intrinsic `create_state_gas` and the execution-time
-/// SSTORE — must be refunded to the reservoir, so the caller is not billed
-/// for state gas.
+/// SSTORE — should ideally be refunded to the reservoir, so the caller is not
+/// billed for state gas.
 ///
-/// The SSTORE charge is refunded by `eip8037_selfdestruct_state_gas_refund`
-/// (it draws on the journal's destroyed-accounts list), but the intrinsic
-/// `create_state_gas` is currently NOT refunded: `return_create` rewrites the
-/// frame's `SelfDestruct` result to `Return` before `last_frame_result` runs,
-/// so `create_failed` evaluates to false and the `create_failed` branch that
-/// would refill `create_state_gas` never fires. The caller therefore pays for
-/// the intrinsic state gas even though the contract was erased.
+/// However, the journal-based selfdestruct state-gas refund was removed (it
+/// drew on the journal's destroyed-accounts list), so the SSTORE state gas
+/// is no longer refunded. The intrinsic `create_state_gas` is also not
+/// refunded: `return_create` rewrites the frame's `SelfDestruct` result to
+/// `Return` before `last_frame_result` runs, so `create_failed` evaluates to
+/// false and the `create_failed` branch that would refill `create_state_gas`
+/// never fires. The caller therefore pays both the intrinsic state gas and
+/// the SSTORE state gas even though the contract was erased.
 #[test]
 fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     // Use BENCH_CALLER as beneficiary so we don't trigger new_account_state_gas.
@@ -2190,15 +2191,14 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     assert!(baseline_result.is_success());
     assert!(result.is_success());
 
-    // Per EIP-8037 + EIP-6780 the user expects state_gas_spent_final == 0 here, but
-    // currently the intrinsic `create_state_gas` is not refunded for a
-    // selfdestructing-during-initcode tx-Create — see the doc comment above.
-    // The reported value equals the intrinsic `create_state_gas` charged on
-    // `initial_state_gas` (NEW_ACCOUNT_BYTES * cpsb, with cpsb_override = 1).
+    // Per EIP-8037 + EIP-6780 the user expects state_gas_spent_final == 0 here,
+    // but the journal-based selfdestruct refund was removed, so the SSTORE state
+    // gas is now also retained alongside the intrinsic `create_state_gas` —
+    // see the doc comment above.
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(
         result.gas().state_gas_spent_final(),
-        revm::primitives::eip8037::NEW_ACCOUNT_BYTES
+        STATE_GAS_SSTORE_SET + revm::primitives::eip8037::NEW_ACCOUNT_BYTES
     );
 
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
