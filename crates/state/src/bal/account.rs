@@ -106,6 +106,42 @@ impl AccountBal {
         ))
     }
 
+    /// Clone an account BAL from EIP-7928 [`AlloyAccountChanges`] without consuming the source.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`BytecodeDecodeError`] if any code change contains bytecode rejected by
+    /// [`Bytecode::new_raw_checked`]. This currently happens for malformed EIP-7702
+    /// bytecode, such as bytes with the EIP-7702 magic prefix but an invalid length or
+    /// unsupported version.
+    #[inline]
+    pub fn clone_from_alloy(
+        alloy_account: &AlloyAccountChanges,
+    ) -> Result<(Address, Self), BytecodeDecodeError> {
+        Ok((
+            alloy_account.address,
+            AccountBal {
+                account_info: AccountInfoBal {
+                    nonce: BalWrites::from(alloy_account.nonce_changes.as_slice()),
+                    balance: BalWrites::from(alloy_account.balance_changes.as_slice()),
+                    code: BalWrites::try_from(alloy_account.code_changes.as_slice())?,
+                },
+                storage: StorageBal::from_iter(
+                    alloy_account
+                        .storage_changes
+                        .iter()
+                        .map(|slot| (slot.slot, BalWrites::from(slot.changes.as_slice())))
+                        .chain(
+                            alloy_account
+                                .storage_reads
+                                .iter()
+                                .map(|key| (*key, BalWrites::default())),
+                        ),
+                ),
+            },
+        ))
+    }
+
     /// Consumes `AccountBal` and converts it into canonical EIP-7928
     /// [`AlloyAccountChanges`].
     ///

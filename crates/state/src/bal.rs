@@ -237,24 +237,53 @@ impl Bal {
     }
 }
 
-/// BAL error.
+/// Error returned when a BAL (Block Access List, [EIP-7928]) lookup
+/// cannot find data the caller expected to be present.
+///
+/// A BAL is supposed to enumerate every account and storage slot a block
+/// will touch, so when execution queries the BAL for an entry that is
+/// missing, the BAL is either malformed or being consulted for state that
+/// it does not cover. Each variant identifies which kind of lookup failed
+/// and carries the key that was queried so callers can report it.
+///
+/// Produced by [`Bal`] read paths ([`Bal::populate_account_info`],
+/// [`Bal::populate_storage_slot`], [`Bal::populate_storage_slot_by_account_id`],
+/// [`Bal::account_storage`], [`StorageBal::get`], [`StorageBal::get_bal_writes`])
+/// and surfaced through `BalState` / `BalDatabase` in `revm-database-interface`,
+/// where it is wrapped into `EvmDatabaseError::Bal` before reaching the EVM.
+///
+/// [EIP-7928]: https://eips.ethereum.org/EIPS/eip-7928
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BalError {
-    /// Account not found in BAL by address.
+    /// The address was not present in the BAL's accounts map.
+    ///
+    /// Returned by address-keyed lookups (e.g. `BalState::get_account_id`,
+    /// `BalState::storage`, `Bal::populate_storage_slot`) when the BAL is
+    /// attached but does not list this account. Means the BAL is
+    /// incomplete for the access being attempted.
     AccountNotFound {
         /// Address that was not found.
         address: Address,
     },
-    /// Account id does not point at a valid entry in the BAL accounts map.
+    /// The supplied [`AccountId`] index is out of range for the BAL's
+    /// accounts map.
     ///
-    /// Signals that a stale or mismatched id was supplied — the id is expected to come
-    /// from a prior BAL lookup against the same BAL.
+    /// `AccountId`s are positional indices into the BAL — they are only
+    /// valid for the same BAL they were obtained from. This variant
+    /// indicates a stale or mismatched id was used (e.g. an id from a
+    /// different BAL, or one created before the current BAL was built).
     InvalidAccountId {
         /// Account id that was supplied.
         account_id: AccountId,
     },
-    /// Slot not found in BAL for a given account.
+    /// The account exists in the BAL but the requested storage slot is not
+    /// listed under it.
+    ///
+    /// Returned by storage lookups when the account is covered by the BAL
+    /// yet this particular slot was not declared. As with
+    /// [`BalError::AccountNotFound`], this indicates the BAL is incomplete
+    /// for the access being attempted.
     SlotNotFound {
         /// Address of the account whose slot was missing.
         address: Address,
@@ -284,7 +313,11 @@ impl core::error::Error for BalError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloy_eip7928::{AccountChanges as AlloyAccountChanges, CodeChange as AlloyCodeChange};
+    use alloy_eip7928::{
+        AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
+        CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+        SlotChanges as AlloySlotChanges, StorageChange as AlloyStorageChange,
+    };
     use bytecode::Bytecode;
     use primitives::{Bytes, B256, U256};
     use std::collections::BTreeMap;
@@ -419,6 +452,29 @@ mod tests {
     }
 
     #[test]
+    fn clone_from_alloy_matches_owned_conversion() {
+        let address = Address::with_last_byte(1);
+        let code_bytes = Bytes::from_static(&[0x60, 0x00]);
+        let alloy_bal = vec![AlloyAccountChanges {
+            address,
+            storage_changes: vec![AlloySlotChanges::new(
+                U256::from(1),
+                vec![AlloyStorageChange::new(idx(1), U256::from(10))],
+            )],
+            storage_reads: vec![U256::from(2)],
+            balance_changes: vec![AlloyBalanceChange::new(idx(2), U256::from(20))],
+            nonce_changes: vec![AlloyNonceChange::new(idx(3), 30)],
+            code_changes: vec![AlloyCodeChange::new(idx(4), code_bytes.clone())],
+        }];
+
+        let borrowed = Bal::clone_from_alloy(&alloy_bal).unwrap();
+        let owned = Bal::try_from_alloy(alloy_bal.clone()).unwrap();
+
+        assert_eq!(borrowed, owned);
+        assert_eq!(alloy_bal[0].code_changes[0].new_code(), &code_bytes);
+    }
+
+    #[test]
     fn try_from_alloy_errors_on_invalid_code_change() {
         let alloy_bal = vec![AlloyAccountChanges {
             address: Address::with_last_byte(1),
@@ -427,5 +483,16 @@ mod tests {
         }];
 
         assert!(Bal::try_from_alloy(alloy_bal).is_err());
+    }
+
+    #[test]
+    fn clone_from_alloy_errors_on_invalid_code_change() {
+        let alloy_bal = vec![AlloyAccountChanges {
+            address: Address::with_last_byte(1),
+            code_changes: vec![AlloyCodeChange::new(idx(1), vec![0xef, 0x01, 0xde].into())],
+            ..Default::default()
+        }];
+
+        assert!(Bal::clone_from_alloy(&alloy_bal).is_err());
     }
 }

@@ -1,6 +1,6 @@
 use context_interface::CreateScheme;
 use core::cell::OnceCell;
-use primitives::{Address, Bytes, U256};
+use primitives::{keccak256, Address, Bytes, B256, U256};
 
 /// Inputs for a create call
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -22,6 +22,11 @@ pub struct CreateInputs {
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
     cached_address: OnceCell<Address>,
+    /// Cached init code hash. Shared between `created_address()` (for CREATE2)
+    /// and frame initialization (for `ExtBytecode`), ensuring keccak256 of the
+    /// init code is computed at most once.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    cached_init_code_hash: OnceCell<B256>,
 }
 
 impl CreateInputs {
@@ -42,6 +47,7 @@ impl CreateInputs {
             gas_limit,
             reservoir,
             cached_address: OnceCell::new(),
+            cached_init_code_hash: OnceCell::new(),
         }
     }
 
@@ -53,9 +59,19 @@ impl CreateInputs {
             CreateScheme::Create => self.caller.create(nonce),
             CreateScheme::Create2 { salt } => self
                 .caller
-                .create2_from_code(salt.to_be_bytes(), &self.init_code),
+                .create2(salt.to_be_bytes(), self.init_code_hash()),
             CreateScheme::Custom { address } => address,
         })
+    }
+
+    /// Returns the keccak256 hash of the init code.
+    ///
+    /// The result is cached so that `created_address()` and frame initialization
+    /// share a single hash computation.
+    pub fn init_code_hash(&self) -> B256 {
+        *self
+            .cached_init_code_hash
+            .get_or_init(|| keccak256(self.init_code.as_ref()))
     }
 
     /// Returns the caller address of the EVM.
@@ -104,6 +120,7 @@ impl CreateInputs {
     pub fn set_init_code(&mut self, init_code: Bytes) {
         self.init_code = init_code;
         self.cached_address = OnceCell::new();
+        self.cached_init_code_hash = OnceCell::new();
     }
 
     /// Set gas limit
