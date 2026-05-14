@@ -1,10 +1,11 @@
 use context_interface::{
+    cfg::GasParams,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
+use interpreter::InitialAndFloorGas;
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
@@ -236,14 +237,17 @@ pub fn validate_tx_env<CTX: ContextTr>(
 }
 
 /// Validate initial transaction gas.
+///
+/// Uses the provided `GasParams` for gas calculation, which should come from
+/// `cfg.gas_params()` to respect any custom gas parameter overrides.
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
-    spec: SpecId,
+    gas_params: &GasParams,
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
+    let mut gas = calculate_initial_tx_gas_for_tx_with_gas_params(&tx, gas_params);
 
     if is_eip7623_disabled {
         gas.floor_gas = 0
@@ -259,7 +263,7 @@ pub fn validate_initial_tx_gas(
 
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
-    if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
+    if gas_params.tx_floor_cost_per_token() > 0 && gas.floor_gas > tx.gas_limit() {
         return Err(InvalidTransaction::GasFloorMoreThanGasLimit {
             gas_floor: gas.floor_gas,
             gas_limit: tx.gas_limit(),
@@ -280,6 +284,41 @@ pub fn validate_initial_tx_gas(
     }
 
     Ok(gas)
+}
+
+/// Calculate initial transaction gas using the provided `GasParams`.
+fn calculate_initial_tx_gas_for_tx_with_gas_params(
+    tx: &impl Transaction,
+    gas_params: &GasParams,
+) -> InitialAndFloorGas {
+    use context_interface::transaction::AccessListItemTr as _;
+
+    let mut accounts = 0u64;
+    let mut storages = 0u64;
+    // legacy is only tx type that does not have access list.
+    if tx.tx_type() != TransactionType::Legacy {
+        let (a, s) = tx
+            .access_list()
+            .map(|al| {
+                al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                    num_accounts += 1;
+                    num_storage_slots += item.storage_slots().count();
+
+                    (num_accounts, num_storage_slots)
+                })
+            })
+            .unwrap_or_default();
+        accounts = a as u64;
+        storages = s as u64;
+    }
+
+    gas_params.initial_tx_gas(
+        tx.input(),
+        tx.kind().is_create(),
+        accounts,
+        storages,
+        tx.authorization_list_len() as u64,
+    )
 }
 
 #[cfg(test)]
