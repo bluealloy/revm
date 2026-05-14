@@ -69,9 +69,9 @@ pub struct CfgEnv<SPEC = SpecId> {
     pub tx_gas_limit_cap: Option<u64>,
     /// Overrides the EIP-8037 `cost_per_state_byte` (CPSB).
     ///
-    /// If `None`, CPSB is derived from `block.gas_limit` via
-    /// [`primitives::eip8037::cost_per_state_byte`] when EIP-8037 is enabled.
-    /// If `Some`, the provided value is used verbatim (useful for tests and replay).
+    /// If `None`, CPSB defaults to [`primitives::eip8037::CPSB_GLAMSTERDAM`]
+    /// when EIP-8037 is enabled. If `Some`, the provided value is used
+    /// verbatim (useful for tests and replay).
     pub cpsb_override: Option<u64>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.

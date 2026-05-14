@@ -709,7 +709,7 @@ impl GasParams {
     /// transition is returned directly to the reservoir (not via the capped
     /// refund counter). Returns 0 in any other case.
     ///
-    /// `cpsb` is the current `cost_per_state_byte` (see [`Cfg::cpsb`]).
+    /// `cpsb` is the current `cost_per_state_byte` (see [`super::Cfg::cpsb`]).
     #[inline]
     pub fn sstore_state_gas_refill(&self, vals: &SStoreResult, cpsb: u64) -> u64 {
         if !vals.is_new_eq_present() && vals.is_original_eq_new() && vals.is_original_zero() {
@@ -841,11 +841,12 @@ impl GasParams {
     ///
     /// Introduced by EIP-7623 and further updated by EIP-7976. Computes
     /// `tx_floor_cost_per_token * floor_tokens_in_calldata + tx_floor_cost_base_gas`,
-    /// where `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier
-    /// + nonzero * tx_token_non_zero_byte_multiplier`. When the two multipliers match
-    /// (EIP-7976), every byte contributes the same amount, so the zero/nonzero split is
-    /// skipped and `input.len()` is used directly; otherwise (EIP-7623 path, zero
-    /// multiplier = 1) the result matches `get_tokens_in_calldata(input, nonzero)`.
+    /// where
+    /// `floor_tokens_in_calldata = zero * tx_floor_token_zero_byte_multiplier + nonzero * tx_token_non_zero_byte_multiplier`.
+    /// When the two multipliers match (EIP-7976), every byte contributes the
+    /// same amount, so the zero/nonzero split is skipped and `input.len()` is
+    /// used directly; otherwise (EIP-7623 path, zero multiplier = 1) the result
+    /// matches `get_tokens_in_calldata(input, nonzero)`.
     #[inline]
     pub fn tx_floor_cost(&self, input: &[u8]) -> u64 {
         let zero_multiplier = self.tx_floor_token_zero_byte_multiplier();

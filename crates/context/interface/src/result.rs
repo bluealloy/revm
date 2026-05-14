@@ -53,12 +53,12 @@ impl<R, S> ExecResultAndState<R, S> {
 /// | [`total_gas_spent()`]  | `Gas::spent()` = limit − remaining | Total gas consumed before refund               |
 /// | [`inner_refunded()`]   | `Gas::refunded()` as u64           | Gas refunded (capped per EIP-3529)             |
 /// | [`floor_gas()`]        | `InitialAndFloorGas::floor_gas`    | EIP-7623 floor gas (0 if not applicable)       |
-/// | [`state_gas_spent()`]  | `Gas::state_gas_spent`             | State gas consumed during execution (EIP-8037) |
+/// | [`state_gas_spent_final()`] | `Gas::state_gas_spent`        | State gas consumed during execution (EIP-8037) |
 ///
 /// [`total_gas_spent()`]: ResultGas::total_gas_spent
 /// [`inner_refunded()`]: ResultGas::inner_refunded
 /// [`floor_gas()`]: ResultGas::floor_gas
-/// [`state_gas_spent()`]: ResultGas::state_gas_spent
+/// [`state_gas_spent_final()`]: ResultGas::state_gas_spent_final
 ///
 /// ## Derived values
 ///
@@ -278,7 +278,7 @@ impl ResultGas {
 
     /// Returns the state gas used by the block.
     ///
-    /// This is same as [`ResultGas::state_gas_spent`] for the block.
+    /// This is same as [`ResultGas::state_gas_spent_final`] for the block.
     #[inline]
     pub const fn block_state_gas_used(&self) -> u64 {
         self.state_gas_spent_final()
