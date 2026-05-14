@@ -6,7 +6,7 @@ expression: "&(baseline_result, result)"
   {
     "Revert": {
       "gas": {
-        "gas_spent": 31018,
+        "gas_spent": 31024,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 21000
@@ -18,7 +18,7 @@ expression: "&(baseline_result, result)"
   {
     "Revert": {
       "gas": {
-        "gas_spent": 31018,
+        "gas_spent": 31024,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 21000

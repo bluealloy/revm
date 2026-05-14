@@ -125,6 +125,25 @@ pub const fn gas_table_spec(spec: SpecId) -> GasTable {
         table[STATICCALL as usize] = gas::WARM_STORAGE_READ_COST as u16;
     }
 
+    if spec.is_enabled_in(AMSTERDAM) {
+        // EIP-8038: bump every warm/cold access base from 100 to 101.
+        // SLOAD / *CALL / BALANCE / EXTCODEHASH: a single WARM_ACCESS.
+        let warm = primitives::eip8038::WARM_ACCESS as u16;
+        table[SLOAD as usize] = warm;
+        table[BALANCE as usize] = warm;
+        table[EXTCODEHASH as usize] = warm;
+        table[CALL as usize] = warm;
+        table[CALLCODE as usize] = warm;
+        table[DELEGATECALL as usize] = warm;
+        table[STATICCALL as usize] = warm;
+        // EIP-8038 §"EXT* family update": EXTCODESIZE and EXTCODECOPY do two
+        // database reads, so the per-call access cost is `WARM_ACCESS` above
+        // the regular access cost. Bake the extra WARM_ACCESS into the static
+        // base; the dynamic cold premium is still added by `load_account`.
+        table[EXTCODESIZE as usize] = warm + warm;
+        table[EXTCODECOPY as usize] = warm + warm;
+    }
+
     table
 }
 

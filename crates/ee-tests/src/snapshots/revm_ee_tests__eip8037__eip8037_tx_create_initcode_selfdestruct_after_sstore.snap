@@ -7,7 +7,7 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Return",
       "gas": {
-        "gas_spent": 40431,
+        "gas_spent": 38435,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 22728
@@ -25,7 +25,7 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Return",
       "gas": {
-        "gas_spent": 240551,
+        "gas_spent": 238555,
         "state_gas_spent": 200120,
         "gas_refunded": 0,
         "floor_gas": 22728

@@ -26,6 +26,7 @@ pub mod eip7825;
 pub mod eip7907;
 pub mod eip7954;
 pub mod eip8037;
+pub mod eip8038;
 pub mod hardfork;
 pub mod hints_util;
 mod once_lock;
