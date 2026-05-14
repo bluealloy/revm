@@ -448,32 +448,28 @@ impl InitialAndFloorGas {
         &self,
         tx_gas_limit: u64,
         tx_gas_limit_cap: u64,
-        is_eip8037: bool,
     ) -> (u64, u64) {
         let execution_gas = tx_gas_limit - self.initial_regular_gas();
 
         // System calls pass InitialAndFloorGas with all zeros and should not be
         // subject to the TX_MAX_GAS_LIMIT cap.
-        let regular_gas_cap = if self.initial_total_gas() == 0 {
+        let tx_gas_limit_cap = if self.initial_total_gas() == 0 {
             u64::MAX
-        } else if is_eip8037 {
-            tx_gas_limit_cap.saturating_sub(self.initial_regular_gas)
         } else {
             tx_gas_limit_cap
         };
 
-        let mut gas_limit = core::cmp::min(execution_gas, regular_gas_cap);
-        let mut reservoir = execution_gas - gas_limit;
+        let mut regular_gas_limit = core::cmp::min(tx_gas_limit, tx_gas_limit_cap)
+            .saturating_sub(self.initial_regular_gas());
+        let mut reservoir = execution_gas - regular_gas_limit;
 
         // Deduct initial state gas from the reservoir. When the reservoir is
         // insufficient, the deficit is charged from the regular gas budget.
-        if self.initial_state_gas > 0 {
-            if reservoir >= self.initial_state_gas {
-                reservoir -= self.initial_state_gas;
-            } else {
-                gas_limit -= self.initial_state_gas - reservoir;
-                reservoir = 0;
-            }
+        if reservoir >= self.initial_state_gas {
+            reservoir -= self.initial_state_gas;
+        } else {
+            regular_gas_limit -= self.initial_state_gas - reservoir;
+            reservoir = 0;
         }
 
         // EIP-7702 state gas refund for existing authorities goes directly to
@@ -481,7 +477,7 @@ impl InitialAndFloorGas {
         // state_gas_reservoir so it stays as state gas (not regular gas).
         reservoir += self.state_refund;
 
-        (gas_limit, reservoir)
+        (regular_gas_limit, reservoir)
     }
 }
 

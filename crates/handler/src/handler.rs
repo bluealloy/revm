@@ -231,7 +231,6 @@ pub trait Handler {
         let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
             evm.ctx().cfg().tx_gas_limit_cap(),
-            evm.ctx().cfg().is_amsterdam_eip8037_enabled(),
         );
 
         // Create first frame action
