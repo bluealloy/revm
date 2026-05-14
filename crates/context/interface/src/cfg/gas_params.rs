@@ -329,27 +329,22 @@ impl GasParams {
             table[GasId::new_account_state_gas().as_usize()] = eip8037::NEW_ACCOUNT_BYTES;
             table[GasId::code_deposit_state_gas().as_usize()] = eip8037::CODE_DEPOSIT_PER_BYTE;
             table[GasId::create_state_gas().as_usize()] = eip8037::NEW_ACCOUNT_BYTES;
+            table[GasId::tx_eip7702_state_gas_bytecode().as_usize()] = eip8037::AUTH_BASE_BYTES;
 
             // SSTORE refund for 0→X→0 restoration: regular gas only.
             // The state-gas portion (SSTORE_SET_BYTES × CPSB) is restored directly
             // to the reservoir via `GasParams::sstore_state_gas_refill`.
             table[GasId::sstore_set_refund().as_usize()] = 2800;
 
-            // EIP-7702 under EIP-8037: regular and state-gas components are stored
-            // separately. Helpers combine them using the current CPSB.
-            //   regular per-auth cost: 7500
-            //   state bytes per-auth:  NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES
-            //   regular refund:        0 (refund is entirely state gas)
-            //   state-bytes refund:    NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES
-            //     — matches the per-auth state-gas charge, so existing-account
-            //     authorizations fully recover their pessimistic state gas.
+            // EIP-7702 under EIP-8037: only the regular-gas slots live here.
+            // The state-gas portions are sourced from `new_account_state_gas`
+            // (per-account) and `tx_eip7702_state_gas_bytecode` (per-bytecode);
+            // helpers in `GasParams` combine them with the current CPSB.
+            //   regular per-auth cost: 7500 (state bytes added pessimistically in `initial_tx_gas`)
+            //   regular refund:        0   (per-auth refund is entirely state gas)
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
                 eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
             table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
-            table[GasId::tx_eip7702_auth_refund_state_bytes().as_usize()] =
-                eip8037::NEW_ACCOUNT_BYTES;
-            table[GasId::tx_eip7702_per_auth_state_gas().as_usize()] =
-                eip8037::NEW_ACCOUNT_BYTES + eip8037::AUTH_BASE_BYTES;
 
             // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
             // (zero/nonzero). The per-token constant bumps from 10 to 16, and
@@ -748,48 +743,60 @@ impl GasParams {
     /// Used in [GasParams::initial_tx_gas] to calculate the eip7702 per-auth cost.
     ///
     /// Under EIP-8037 this combines a regular portion with a state-bytes portion
-    /// multiplied by `cpsb`. Pre-EIP-8037 the state-bytes portion is zero so this
-    /// returns the legacy `PER_EMPTY_ACCOUNT_COST`.
+    /// (new-account + bytecode) multiplied by `cpsb`. Pre-EIP-8037 the state-bytes
+    /// portion is zero so this returns the legacy `PER_EMPTY_ACCOUNT_COST`.
     #[inline]
     pub fn tx_eip7702_per_empty_account_cost(&self, cpsb: u64) -> u64 {
         let regular = self.get(GasId::tx_eip7702_per_empty_account_cost());
-        let state = self
-            .get(GasId::tx_eip7702_per_auth_state_gas())
-            .saturating_mul(cpsb);
+        let state = self.tx_eip7702_state_gas(cpsb);
         regular.saturating_add(state)
     }
 
     /// EIP-7702 authorization refund per existing account.
     ///
     /// Pre-Amsterdam this is a fixed regular-gas refund (`PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST`).
-    /// Under EIP-8037 the refund is fully state gas, computed as
-    /// `(NEW_ACCOUNT_BYTES + AUTH_BASE_BYTES) * cpsb` — matching the per-auth
-    /// state-gas charge so existing-account authorizations fully recover it.
+    /// Under EIP-8037 the refund is fully state gas, equal to the per-account
+    /// state-gas portion (`NEW_ACCOUNT_BYTES * cpsb`).
     #[inline]
     pub fn tx_eip7702_auth_refund(&self, cpsb: u64) -> u64 {
         let regular = self.get(GasId::tx_eip7702_auth_refund());
-        let state = self
-            .get(GasId::tx_eip7702_auth_refund_state_bytes())
-            .saturating_mul(cpsb);
+        let state = self.new_account_state_gas(cpsb);
         regular.saturating_add(state)
     }
 
     /// EIP-8037: State gas per EIP-7702 authorization (pessimistic).
     ///
-    /// Used for `initial_state_gas` tracking. Zero before AMSTERDAM.
+    /// Sums the new-account and bytecode state-bytes portions and multiplies by
+    /// `cpsb`. Used for `initial_state_gas` tracking. Zero before AMSTERDAM.
     #[inline]
-    pub fn tx_eip7702_per_auth_state_gas(&self, cpsb: u64) -> u64 {
-        self.get(GasId::tx_eip7702_per_auth_state_gas())
-            .saturating_mul(cpsb)
+    pub fn tx_eip7702_state_gas(&self, cpsb: u64) -> u64 {
+        let new_account = self.get(GasId::new_account_state_gas());
+        let bytecode = self.get(GasId::tx_eip7702_state_gas_bytecode());
+        new_account.saturating_add(bytecode).saturating_mul(cpsb)
     }
 
-    /// EIP-7702 per-auth refund: state-gas portion only.
+    /// EIP-7702 total state-gas refund for a transaction.
     ///
-    /// Pre-Amsterdam this is zero (the refund is entirely regular gas).
-    /// Under EIP-8037 the refund is entirely state gas (`NEW_ACCOUNT_BYTES * cpsb`).
+    /// Combines the per-account refund (`NEW_ACCOUNT_BYTES * cpsb` per refunded
+    /// account, when the authorization targets an account that already exists)
+    /// with the per-bytecode refund (`AUTH_BASE_BYTES * cpsb` per refunded
+    /// bytecode, when the delegation target is already deployed). Returns zero
+    /// before AMSTERDAM.
     #[inline]
-    pub fn tx_eip7702_auth_refund_state(&self, cpsb: u64) -> u64 {
-        self.get(GasId::tx_eip7702_auth_refund_state_bytes())
+    pub fn tx_eip7702_state_refund(
+        &self,
+        refunded_accounts: u64,
+        refunded_bytecodes: u64,
+        cpsb: u64,
+    ) -> u64 {
+        let per_account = self
+            .get(GasId::new_account_state_gas())
+            .saturating_mul(refunded_accounts);
+        let per_bytecode = self
+            .get(GasId::tx_eip7702_state_gas_bytecode())
+            .saturating_mul(refunded_bytecodes);
+        per_account
+            .saturating_add(per_bytecode)
             .saturating_mul(cpsb)
     }
 
@@ -972,7 +979,7 @@ impl GasParams {
         // Under EIP-8037, tx_eip7702_per_empty_account_cost bundles regular + state gas.
         // We split them: regular goes in initial_regular_gas, state goes in initial_state_gas.
         let auth_total_cost = authorization_list_num * self.tx_eip7702_per_empty_account_cost(cpsb);
-        let auth_state_gas = authorization_list_num * self.tx_eip7702_per_auth_state_gas(cpsb);
+        let auth_state_gas = authorization_list_num * self.tx_eip7702_state_gas(cpsb);
 
         let auth_regular_cost = auth_total_cost - auth_state_gas;
 
@@ -1114,11 +1121,8 @@ impl GasId {
             x if x == Self::new_account_state_gas().as_u8() => "new_account_state_gas",
             x if x == Self::code_deposit_state_gas().as_u8() => "code_deposit_state_gas",
             x if x == Self::create_state_gas().as_u8() => "create_state_gas",
-            x if x == Self::tx_eip7702_per_auth_state_gas().as_u8() => {
-                "tx_eip7702_per_auth_state_gas"
-            }
-            x if x == Self::tx_eip7702_auth_refund_state_bytes().as_u8() => {
-                "tx_eip7702_auth_refund_state_bytes"
+            x if x == Self::tx_eip7702_state_gas_bytecode().as_u8() => {
+                "tx_eip7702_state_gas_bytecode"
             }
             x if x == Self::tx_floor_token_zero_byte_multiplier().as_u8() => {
                 "tx_floor_token_zero_byte_multiplier"
@@ -1190,10 +1194,7 @@ impl GasId {
             "new_account_state_gas" => Some(Self::new_account_state_gas()),
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
             "create_state_gas" => Some(Self::create_state_gas()),
-            "tx_eip7702_per_auth_state_gas" => Some(Self::tx_eip7702_per_auth_state_gas()),
-            "tx_eip7702_auth_refund_state_bytes" => {
-                Some(Self::tx_eip7702_auth_refund_state_bytes())
-            }
+            "tx_eip7702_state_gas_bytecode" => Some(Self::tx_eip7702_state_gas_bytecode()),
             "tx_floor_token_zero_byte_multiplier" => {
                 Some(Self::tx_floor_token_zero_byte_multiplier())
             }
@@ -1424,17 +1425,11 @@ impl GasId {
         Self::new(43)
     }
 
-    /// EIP-8037: State bytes per EIP-7702 authorization (pessimistic).
-    /// Includes both PER_EMPTY_ACCOUNT (112) and PER_AUTH_BASE (23) bytes.
-    /// Multiplied by CPSB at charge time. Zero before AMSTERDAM.
-    pub const fn tx_eip7702_per_auth_state_gas() -> GasId {
+    /// EIP-8037: State bytes for the bytecode (delegation) portion of an EIP-7702 authorization.
+    /// Equals `eip8037::AUTH_BASE_BYTES`. Multiplied by CPSB at charge time.
+    /// Zero before AMSTERDAM.
+    pub const fn tx_eip7702_state_gas_bytecode() -> GasId {
         Self::new(44)
-    }
-
-    /// EIP-8037: State bytes of the EIP-7702 per-auth refund for existing accounts.
-    /// Multiplied by CPSB at charge time. Zero before AMSTERDAM.
-    pub const fn tx_eip7702_auth_refund_state_bytes() -> GasId {
-        Self::new(45)
     }
 
     /// Multiplier for a zero byte in `floor_tokens_in_calldata`.
@@ -1444,7 +1439,7 @@ impl GasId {
     /// under [EIP-7976](https://eips.ethereum.org/EIPS/eip-7976), which makes the
     /// floor cost uniform across zero and nonzero calldata bytes. Zero before PRAGUE.
     pub const fn tx_floor_token_zero_byte_multiplier() -> GasId {
-        Self::new(46)
+        Self::new(45)
     }
 
     /// Floor tokens contributed per byte of access-list data (EIP-7981).
@@ -1453,7 +1448,7 @@ impl GasId {
     /// access-list byte contributes the same 16 × 4 = 64 gas as a calldata byte
     /// under EIP-7976.
     pub const fn tx_access_list_floor_byte_multiplier() -> GasId {
-        Self::new(47)
+        Self::new(46)
     }
 }
 
@@ -1525,11 +1520,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 47 known GasIds (based on the indices 1-47 used)
+        // We should have exactly 46 known GasIds (based on the indices 1-46 used)
         assert_eq!(
             unique_names.len(),
-            47,
-            "Expected 47 unique GasIds, found {}",
+            46,
+            "Expected 46 unique GasIds, found {}",
             unique_names.len()
         );
     }

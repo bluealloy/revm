@@ -479,9 +479,7 @@ impl InitialAndFloorGas {
         // EIP-7702 state gas refund for existing authorities goes directly to
         // the reservoir. In the Python spec, set_delegation adds this refund to
         // state_gas_reservoir so it stays as state gas (not regular gas).
-        if self.state_refund > 0 {
-            reservoir += self.state_refund;
-        }
+        reservoir += self.state_refund;
 
         (gas_limit, reservoir)
     }

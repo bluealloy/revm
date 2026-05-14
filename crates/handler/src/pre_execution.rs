@@ -12,7 +12,7 @@ use context_interface::{
 };
 use core::cmp::Ordering;
 use interpreter::InitialAndFloorGas;
-use primitives::{eip8037, hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
+use primitives::{hardfork::SpecId, AddressMap, HashSet, StorageKey, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -214,7 +214,6 @@ pub fn apply_eip7702_auth_list<
         apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
 
     let params = context.cfg().gas_params();
-    let mut regular_gas_refund = 0;
 
     // EIP-8037: Split per-auth refund into state and regular components. The
     // state portion is credited back to the reservoir by reducing
@@ -222,18 +221,16 @@ pub fn apply_eip7702_auth_list<
     // from the reservoir). The regular portion is returned and routed through
     // the standard refund counter, subject to the 1/5 cap.
     if is_eip8037 {
-        init_and_floor_gas.state_refund += params
-            .tx_eip7702_auth_refund_state(cpsb)
-            .saturating_mul(number_of_refunded_accounts);
-
-        // Code deposit state gas is also refunded.
-        init_and_floor_gas.state_refund +=
-            (eip8037::AUTH_BASE_BYTES * cpsb).saturating_mul(number_of_refunded_bytecodes);
-    } else {
-        regular_gas_refund = params
-            .tx_eip7702_auth_refund_regular()
-            .saturating_mul(number_of_refunded_accounts);
+        init_and_floor_gas.state_refund += params.tx_eip7702_state_refund(
+            number_of_refunded_accounts,
+            number_of_refunded_bytecodes,
+            cpsb,
+        );
     }
+
+    let regular_gas_refund = params
+        .tx_eip7702_auth_refund_regular()
+        .saturating_mul(number_of_refunded_accounts);
 
     Ok(regular_gas_refund)
 }
