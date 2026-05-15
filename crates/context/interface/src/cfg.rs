@@ -95,6 +95,15 @@ pub trait Cfg {
     /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
+    /// Returns whether EIP-2780 (Amsterdam) reduced intrinsic transaction gas
+    /// is enabled.
+    ///
+    /// When enabled, the legacy `21,000` intrinsic base is replaced with the
+    /// decomposed `TX_BASE_COST + to-based + value-based` model and top-level
+    /// execution charges are applied for empty recipients with value and
+    /// EIP-7702-delegated recipients.
+    fn is_amsterdam_eip2780_enabled(&self) -> bool;
+
     /// Returns the EIP-8037 `cost_per_state_byte` (CPSB).
     ///
     /// When [`Cfg::is_amsterdam_eip8037_enabled`] is `false` this returns `0`.
