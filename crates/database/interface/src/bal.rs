@@ -388,4 +388,13 @@ impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
         self.bal_state.commit(&changes);
         self.db.commit(changes);
     }
+
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        let bal_state = &mut self.bal_state;
+        let mut changes = changes.map(|(address, account)| {
+            bal_state.commit_one(address, &account);
+            (address, account)
+        });
+        self.db.commit_iter(&mut changes);
+    }
 }
