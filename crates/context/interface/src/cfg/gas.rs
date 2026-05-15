@@ -1,6 +1,10 @@
 //! Gas constants and functions for gas calculation.
 
-use crate::{cfg::GasParams, transaction::AccessListItemTr as _, Transaction, TransactionType};
+use crate::{
+    cfg::{gas_params, GasParams},
+    transaction::AccessListItemTr as _,
+    Transaction, TransactionType,
+};
 use primitives::hardfork::SpecId;
 
 /// Tracker for gas during execution.
@@ -488,6 +492,7 @@ impl InitialAndFloorGas {
 ///
 /// - Intrinsic gas
 /// - Number of tokens in calldata
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
@@ -496,6 +501,7 @@ pub fn calculate_initial_tx_gas(
     access_list_storages: u64,
     authorization_list_num: u64,
     cpsb: u64,
+    eip2780: Option<gas_params::Eip2780TxInfo>,
 ) -> InitialAndFloorGas {
     GasParams::new_spec(spec_id).initial_tx_gas(
         input,
@@ -504,6 +510,7 @@ pub fn calculate_initial_tx_gas(
         access_list_storages,
         authorization_list_num,
         cpsb,
+        eip2780,
     )
 }
 
@@ -518,6 +525,7 @@ pub fn calculate_initial_tx_gas_for_tx(
     tx: impl Transaction,
     spec: SpecId,
     cpsb: u64,
+    eip2780: Option<gas_params::Eip2780TxInfo>,
 ) -> InitialAndFloorGas {
     let mut accounts = 0;
     let mut storages = 0;
@@ -544,6 +552,7 @@ pub fn calculate_initial_tx_gas_for_tx(
         storages as u64,
         tx.authorization_list_len() as u64,
         cpsb,
+        eip2780,
     )
 }
 

@@ -21,6 +21,7 @@ use interpreter::{
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
+    eip8038,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     Address, Bytes, U256,
 };
@@ -154,9 +155,54 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
-        let charged_new_account_state_gas = inputs.charged_new_account_state_gas;
-        let gas =
+        let mut charged_new_account_state_gas = inputs.charged_new_account_state_gas;
+        let mut gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
+
+        // EIP-2780 top-level execution charges. Applied before any state changes
+        // so the recipient's pre-call state determines the charge.
+        let mut early_halt: Option<InstructionResult> = None;
+        if depth == 0
+            && ctx.cfg().is_amsterdam_eip2780_enabled()
+            && !precompiles.contains(&inputs.target_address)
+        {
+            // Load the (already-cached) recipient account.
+            let acc_info = ctx
+                .journal_mut()
+                .load_account(inputs.target_address)
+                .ok()
+                .map(|a| a.info.clone());
+
+            if let Some(info) = acc_info {
+                // 7702 delegation: additional COLD_ACCOUNT_ACCESS regular gas.
+                let is_7702_delegated = info
+                    .code
+                    .as_ref()
+                    .and_then(Bytecode::eip7702_address)
+                    .is_some();
+                if is_7702_delegated && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS) {
+                    early_halt = Some(InstructionResult::OutOfGas);
+                }
+
+                // Empty recipient + nonzero value: charge `new_account_state_gas`.
+                // Refunded on revert via the existing `state_gas_spent`/reservoir
+                // reconciliation in `last_frame_result`.
+                if early_halt.is_none() {
+                    if let CallValue::Transfer(value) = inputs.value {
+                        if !value.is_zero() && info.is_empty() {
+                            let cpsb = ctx.cfg().cpsb();
+                            let charge = ctx.cfg().gas_params().new_account_state_gas(cpsb);
+                            if !gas.record_state_cost(charge) {
+                                early_halt = Some(InstructionResult::OutOfGas);
+                            } else {
+                                charged_new_account_state_gas = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -170,6 +216,10 @@ impl EthFrame<EthInterpreter> {
                 charged_new_account_state_gas,
             })))
         };
+
+        if let Some(halt) = early_halt {
+            return return_result(halt);
+        }
 
         // Check depth
         if depth > CALL_STACK_LIMIT as usize {

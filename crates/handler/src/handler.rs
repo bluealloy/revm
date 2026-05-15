@@ -3,19 +3,20 @@ use crate::{
     execution,
     post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list},
-    validation, EvmTr, FrameResult, ItemOrResult,
+    validation, EvmTr, FrameResult, ItemOrResult, PrecompileProvider,
 };
 use context::{
     result::{ExecutionResult, FromStringError},
     LocalContextTr,
 };
 use context_interface::{
+    cfg::gas_params,
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use primitives::{hardfork::SpecId, TxKind, U256};
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -306,14 +307,37 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
-        let ctx = evm.ctx_ref();
+        let (ctx, _, precompiles, _) = evm.all();
+        let cfg = ctx.cfg();
+        let spec: SpecId = cfg.spec().into();
+        let is_eip7623_disabled = cfg.is_eip7623_disabled();
+        let is_amsterdam_eip8037_enabled = cfg.is_amsterdam_eip8037_enabled();
+        let is_amsterdam_eip2780_enabled = cfg.is_amsterdam_eip2780_enabled();
+        let tx_gas_limit_cap = cfg.tx_gas_limit_cap();
+        let cpsb = cfg.cpsb();
+        let tx = ctx.tx();
+        let eip2780 = if is_amsterdam_eip2780_enabled {
+            let (to, to_is_precompile) = match tx.kind() {
+                TxKind::Create => (None, false),
+                TxKind::Call(addr) => (Some(addr), precompiles.contains(&addr)),
+            };
+            Some(gas_params::Eip2780TxInfo {
+                sender: tx.caller(),
+                to,
+                value: tx.value(),
+                to_is_precompile,
+            })
+        } else {
+            None
+        };
         let gas = validation::validate_initial_tx_gas(
-            ctx.tx(),
-            ctx.cfg().spec().into(),
-            ctx.cfg().is_eip7623_disabled(),
-            ctx.cfg().is_amsterdam_eip8037_enabled(),
-            ctx.cfg().tx_gas_limit_cap(),
-            ctx.cfg().cpsb(),
+            tx,
+            spec,
+            is_eip7623_disabled,
+            is_amsterdam_eip8037_enabled,
+            tx_gas_limit_cap,
+            cpsb,
+            eip2780,
         )?;
 
         Ok(gas)
