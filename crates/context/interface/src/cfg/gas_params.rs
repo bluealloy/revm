@@ -1138,6 +1138,9 @@ impl GasParams {
             self.tx_create_access_cost()
         } else if to_is_self || info.to_is_precompile {
             0
+        } else if info.to_is_warm {
+            // EIP-2780: warmth from the access list overrides the cold cost.
+            self.warm_storage_read_cost()
         } else {
             eip8038::COLD_ACCOUNT_ACCESS
         };
@@ -1160,7 +1163,9 @@ impl GasParams {
 /// Carries the additional state needed to apply the decomposed intrinsic
 /// gas model: the sender address (for self-transfer detection), the `to`
 /// address (`None` for contract-creation transactions), the transferred
-/// value, and a flag indicating whether `to` resolves to a precompile.
+/// value, a flag indicating whether `to` resolves to a precompile, and a
+/// flag indicating whether `to` is already warm via the transaction access
+/// list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Eip2780TxInfo {
     /// Transaction sender.
@@ -1171,6 +1176,12 @@ pub struct Eip2780TxInfo {
     pub value: U256,
     /// Whether `to` is a precompile under the active spec.
     pub to_is_precompile: bool,
+    /// Whether `to` appears in the transaction access list.
+    ///
+    /// Per EIP-2780, access-list warmth overrides the cold account cost:
+    /// the recipient is charged `WARM_STATE_READ` instead of
+    /// `COLD_ACCOUNT_ACCESS` when this flag is set.
+    pub to_is_warm: bool,
 }
 
 #[inline]

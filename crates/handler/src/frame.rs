@@ -7,7 +7,8 @@ use context_interface::{
     context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     local::{FrameToken, OutFrame},
-    Cfg, ContextTr, Database,
+    transaction::{AccessListItemTr, TransactionType},
+    Cfg, ContextTr, Database, Transaction,
 };
 use core::cmp::min;
 use derive_where::derive_where;
@@ -174,14 +175,32 @@ impl EthFrame<EthInterpreter> {
                 .map(|a| a.info.clone());
 
             if let Some(info) = acc_info {
-                // 7702 delegation: additional COLD_ACCOUNT_ACCESS regular gas.
-                let is_7702_delegated = info
-                    .code
-                    .as_ref()
-                    .and_then(Bytecode::eip7702_address)
-                    .is_some();
-                if is_7702_delegated && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS) {
-                    early_halt = Some(InstructionResult::OutOfGas);
+                // 7702 delegation: additional access cost for the delegation target.
+                // Charge COLD_ACCOUNT_ACCESS if the target is cold, WARM_ACCESS if
+                // it was already warmed (e.g. via the transaction access list or a
+                // prior auth-list load during pre-execution).
+                if let Some(delegation_target) =
+                    info.code.as_ref().and_then(Bytecode::eip7702_address)
+                {
+                    // Warmth is based on whether the delegation target was pre-warmed
+                    // by the transaction access list. We cannot rely on journal warmth
+                    // because create_init_frame already loads the delegation target
+                    // before this depth-0 check runs.
+                    let tx = ctx.tx();
+                    let is_warm = tx.tx_type() != TransactionType::Legacy as u8
+                        && tx
+                            .access_list()
+                            .into_iter()
+                            .flatten()
+                            .any(|item| *item.address() == delegation_target);
+                    let charge = if is_warm {
+                        eip8038::WARM_ACCESS
+                    } else {
+                        eip8038::COLD_ACCOUNT_ACCESS
+                    };
+                    if !gas.record_regular_cost(charge) {
+                        early_halt = Some(InstructionResult::OutOfGas);
+                    }
                 }
 
                 // Empty recipient + nonzero value: charge `new_account_state_gas`.

@@ -11,11 +11,12 @@
 
 use revm::{
     context::TxEnv,
-    database::{BenchmarkDB, BENCH_CALLER},
+    context_interface::transaction::{AccessList, AccessListItem},
+    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
     handler::{MainnetContext, MainnetEvm},
     primitives::{
-        address, eip2780, eip8037, eip8037::CPSB_GLAMSTERDAM, eip8038, hardfork::SpecId, TxKind,
-        U256,
+        self as primitives, address, eip2780, eip8037, eip8037::CPSB_GLAMSTERDAM, eip8038,
+        hardfork::SpecId, TxKind, U256,
     },
     state::Bytecode,
     Context, ExecuteEvm, MainBuilder, MainContext,
@@ -39,6 +40,20 @@ fn evm() -> MainEvm {
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
+        .build_mainnet()
+}
+
+/// Builds an EVM at AMSTERDAM where BENCH_TARGET has EIP-7702 delegation to
+/// `delegation_target`. Used to test warm/cold charging of the delegation target.
+fn evm_with_7702_target(delegation_target: primitives::Address) -> MainEvm {
+    Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new_eip7702(
+            delegation_target,
+        )))
         .build_mainnet()
 }
 
@@ -171,4 +186,89 @@ fn test_eip2780_call_precompile_delta_vs_legacy() {
         g0.total_gas_spent() - g1.total_gas_spent(),
         LEGACY_BASE - eip2780::TX_BASE_COST,
     );
+}
+
+/// Per-address access-list cost at AMSTERDAM: base (2401) + data bytes (20 × 64).
+const ACCESS_LIST_ADDR_COST: u64 = eip8038::ACCESS_LIST_ADDRESS_COST + 20 * 64;
+
+#[test]
+fn test_eip2780_to_in_access_list_uses_warm_cost() {
+    // When tx.to is listed in the transaction access list, EIP-2780 must charge
+    // WARM_ACCESS instead of COLD_ACCOUNT_ACCESS for the recipient.
+    let to = address!("0x00000000000000000000000000000000000000cc");
+
+    let warm_tx = TxEnv::builder_for_bench()
+        .tx_type(None)
+        .kind(TxKind::Call(to))
+        .value(U256::ZERO)
+        .gas_price(0)
+        .gas_limit(TX_GAS_LIMIT)
+        .access_list(AccessList(vec![AccessListItem {
+            address: to,
+            storage_keys: vec![],
+        }]))
+        .build_fill();
+
+    let mut warm_evm = evm();
+    let warm_gas = *warm_evm.transact_one(warm_tx).unwrap().gas();
+
+    // to_cost = WARM_ACCESS; access-list entry itself costs ACCESS_LIST_ADDR_COST.
+    let expected = eip2780::TX_BASE_COST + eip8038::WARM_ACCESS + ACCESS_LIST_ADDR_COST;
+    assert_eq!(warm_gas.total_gas_spent(), expected);
+
+    // Cold baseline (fresh EVM, no access list): to_cost = COLD_ACCOUNT_ACCESS.
+    let mut cold_evm = evm();
+    let cold_gas = run(&mut cold_evm, TxKind::Call(to), U256::ZERO);
+    assert_eq!(
+        cold_gas.total_gas_spent(),
+        eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS
+    );
+}
+
+#[test]
+fn test_eip2780_7702_delegation_target_warm_vs_cold() {
+    // At depth 0, a 7702-delegated recipient causes an extra access charge for
+    // its delegation target.  The charge must be COLD_ACCOUNT_ACCESS when the
+    // target is cold, and WARM_ACCESS when it has been pre-warmed via the
+    // access list.
+    let delegation_target = address!("0x00000000000000000000000000000000000000dd");
+
+    // BENCH_TARGET carries EIP-7702 bytecode delegating to `delegation_target`.
+    let mut evm = evm_with_7702_target(delegation_target);
+
+    // Cold case: delegation target not in access list.
+    let cold_tx = TxEnv::builder_for_bench()
+        .kind(TxKind::Call(BENCH_TARGET))
+        .value(U256::ZERO)
+        .gas_price(0)
+        .gas_limit(TX_GAS_LIMIT)
+        .build_fill();
+    let cold_gas = *evm.transact_one(cold_tx).unwrap().gas();
+    // Intrinsic: TX_BASE_COST + COLD_ACCOUNT_ACCESS (for BENCH_TARGET)
+    // Depth-0 charge: COLD_ACCOUNT_ACCESS (cold delegation target)
+    let cold_expected =
+        eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip8038::COLD_ACCOUNT_ACCESS;
+    assert_eq!(cold_gas.total_gas_spent(), cold_expected);
+
+    // Warm case: delegation target in access list.
+    let warm_tx = TxEnv::builder_for_bench()
+        .tx_type(None)
+        .kind(TxKind::Call(BENCH_TARGET))
+        .value(U256::ZERO)
+        .gas_price(0)
+        .gas_limit(TX_GAS_LIMIT)
+        .access_list(AccessList(vec![AccessListItem {
+            address: delegation_target,
+            storage_keys: vec![],
+        }]))
+        .build_fill();
+    let mut evm2 = evm_with_7702_target(delegation_target);
+    let warm_gas = *evm2.transact_one(warm_tx).unwrap().gas();
+    // Intrinsic: TX_BASE_COST + COLD_ACCOUNT_ACCESS (for BENCH_TARGET) + ACCESS_LIST_ADDR_COST
+    // Depth-0 charge: WARM_ACCESS (warm delegation target)
+    let warm_expected = eip2780::TX_BASE_COST
+        + eip8038::COLD_ACCOUNT_ACCESS
+        + ACCESS_LIST_ADDR_COST
+        + eip8038::WARM_ACCESS;
+    assert_eq!(warm_gas.total_gas_spent(), warm_expected);
 }

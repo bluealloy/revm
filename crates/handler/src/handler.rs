@@ -13,6 +13,7 @@ use context_interface::{
     cfg::gas_params,
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
+    transaction::AccessListItemTr,
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
@@ -321,11 +322,18 @@ pub trait Handler {
                 TxKind::Create => (None, false),
                 TxKind::Call(addr) => (Some(addr), precompiles.contains(&addr)),
             };
+            let to_is_warm = to.is_some_and(|addr| {
+                tx.access_list()
+                    .into_iter()
+                    .flatten()
+                    .any(|item| *item.address() == addr)
+            });
             Some(gas_params::Eip2780TxInfo {
                 sender: tx.caller(),
                 to,
                 value: tx.value(),
                 to_is_precompile,
+                to_is_warm,
             })
         } else {
             None
