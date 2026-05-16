@@ -1093,7 +1093,7 @@ mod tests {
         b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
         b1.extend(b2);
         assert_eq!(
-            b1.state.get_mut(&account1()).unwrap().status,
+            b1.state.get(&account1()).unwrap().status,
             AccountStatus::DestroyedChanged
         );
 
@@ -1108,7 +1108,7 @@ mod tests {
         b2.reverts[0][0].1.wipe_storage = true;
         b1.extend(b2);
         assert_eq!(
-            b1.state.get_mut(&account1()).unwrap().status,
+            b1.state.get(&account1()).unwrap().status,
             AccountStatus::Destroyed
         );
 
@@ -1137,7 +1137,7 @@ mod tests {
         b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
         b1.extend(b2);
         assert_eq!(
-            b1.state.get_mut(&account1()).unwrap().status,
+            b1.state.get(&account1()).unwrap().status,
             AccountStatus::InMemoryChange
         );
     }
