@@ -7,7 +7,15 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 
 use nonmax::NonMaxU32;
 
-/// Account ID is a custom type that wraps a `NonMaxU32`
+/// Opaque account handle returned by database and BAL lookups.
+///
+/// `AccountId` is a positional index into the account collection that produced
+/// it. It is intended as a fast path for repeated storage access through
+/// `storage_by_account_id` methods, and is only meaningful for the same
+/// database or BAL instance that issued it.
+///
+/// Wraps a [`NonMaxU32`] so that `Option<AccountId>` benefits from niche
+/// optimization.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountId(NonMaxU32);

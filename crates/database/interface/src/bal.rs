@@ -281,13 +281,19 @@ impl<DB> BalDatabase<DB> {
     }
 }
 
-/// Error type from database.
+/// Error returned by [`BalDatabase`] when a lookup can fail either in the BAL
+/// layer or in the wrapped database.
+///
+/// BAL misses are reported as [`EvmDatabaseError::Bal`] when the configured
+/// [`Bal`] is missing an account, storage slot, or positional account id that
+/// execution expected to be available. Errors from the underlying database are
+/// preserved as [`EvmDatabaseError::Database`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EvmDatabaseError<ERROR> {
-    /// BAL error.
+    /// The configured BAL did not contain data needed by the current lookup.
     Bal(BalError),
-    /// External database error.
+    /// Error returned by the wrapped external database.
     Database(ERROR),
 }
 
@@ -311,9 +317,13 @@ impl<ERROR: Display> Display for EvmDatabaseError<ERROR> {
 impl<ERROR: Error> Error for EvmDatabaseError<ERROR> {}
 
 impl<ERROR> EvmDatabaseError<ERROR> {
-    /// Convert BAL database error to database error.
+    /// Convert this wrapper into the external database error.
     ///
-    /// Panics if BAL error is present.
+    /// # Panics
+    ///
+    /// Panics if this value is [`EvmDatabaseError::Bal`], because BAL lookup
+    /// failures are produced by the wrapper layer and cannot be converted back
+    /// into the wrapped database's error type.
     pub fn into_external_error(self) -> ERROR {
         match self {
             Self::Bal(_) => panic!("Expected database error, got BAL error"),
