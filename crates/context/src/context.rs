@@ -40,6 +40,15 @@ pub struct Context<
     pub error: Result<(), ContextError<DB::Error>>,
 }
 
+#[inline]
+fn sync_cfg_to_journal<CFG: Cfg, JOURNAL: JournalTr>(cfg: &CFG, journal: &mut JOURNAL) {
+    journal.set_spec_id(cfg.spec().into());
+    journal.set_eip7708_config(
+        cfg.is_eip7708_disabled(),
+        cfg.is_eip7708_delayed_burn_disabled(),
+    );
+}
+
 impl<
         BLOCK: Block,
         TX: Transaction,
@@ -143,11 +152,7 @@ impl<
     pub fn new(db: DB, spec: SPEC) -> Self {
         let cfg = CfgEnv::new_with_spec(spec);
         let mut journaled_state = JOURNAL::new(db);
-        journaled_state.set_spec_id(cfg.spec.clone().into());
-        journaled_state.set_eip7708_config(
-            cfg.amsterdam_eip7708_disabled,
-            cfg.amsterdam_eip7708_delayed_burn_disabled,
-        );
+        sync_cfg_to_journal(&cfg, &mut journaled_state);
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
@@ -174,11 +179,7 @@ where
         self,
         mut journal: OJOURNAL,
     ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN, LOCAL> {
-        journal.set_spec_id(self.cfg.spec().into());
-        journal.set_eip7708_config(
-            self.cfg.is_eip7708_disabled(),
-            self.cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&self.cfg, &mut journal);
         Context {
             tx: self.tx,
             block: self.block,
@@ -198,11 +199,7 @@ where
         db: ODB,
     ) -> Context<BLOCK, TX, CFG, ODB, Journal<ODB>, CHAIN, LOCAL> {
         let mut journaled_state = Journal::new(db);
-        journaled_state.set_spec_id(self.cfg.spec().into());
-        journaled_state.set_eip7708_config(
-            self.cfg.is_eip7708_disabled(),
-            self.cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&self.cfg, &mut journaled_state);
         Context {
             tx: self.tx,
             block: self.block,
@@ -221,11 +218,7 @@ where
     ) -> Context<BLOCK, TX, CFG, WrapDatabaseRef<ODB>, Journal<WrapDatabaseRef<ODB>>, CHAIN, LOCAL>
     {
         let mut journaled_state = Journal::new(WrapDatabaseRef(db));
-        journaled_state.set_spec_id(self.cfg.spec().into());
-        journaled_state.set_eip7708_config(
-            self.cfg.is_eip7708_disabled(),
-            self.cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&self.cfg, &mut journaled_state);
         Context {
             tx: self.tx,
             block: self.block,
@@ -286,11 +279,7 @@ where
         mut self,
         cfg: OCFG,
     ) -> Context<BLOCK, TX, OCFG, DB, JOURNAL, CHAIN, LOCAL> {
-        self.journaled_state.set_spec_id(cfg.spec().into());
-        self.journaled_state.set_eip7708_config(
-            cfg.is_eip7708_disabled(),
-            cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&cfg, &mut self.journaled_state);
         Context {
             tx: self.tx,
             block: self.block,
@@ -325,11 +314,7 @@ where
         F: FnOnce(&mut CFG),
     {
         f(&mut self.cfg);
-        self.journaled_state.set_spec_id(self.cfg.spec().into());
-        self.journaled_state.set_eip7708_config(
-            self.cfg.is_eip7708_disabled(),
-            self.cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&self.cfg, &mut self.journaled_state);
         self
     }
 
@@ -405,11 +390,7 @@ where
         F: FnOnce(&mut CFG),
     {
         f(&mut self.cfg);
-        self.journaled_state.set_spec_id(self.cfg.spec().into());
-        self.journaled_state.set_eip7708_config(
-            self.cfg.is_eip7708_disabled(),
-            self.cfg.is_eip7708_delayed_burn_disabled(),
-        );
+        sync_cfg_to_journal(&self.cfg, &mut self.journaled_state);
     }
 
     /// Modifies the context chain.
