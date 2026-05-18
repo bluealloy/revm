@@ -223,6 +223,11 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     fn commit(&mut self, changes: AddressMap<Account>) {
         self.0.commit(changes)
     }
+
+    #[inline]
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        self.0.commit_iter(changes)
+    }
 }
 
 impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
@@ -380,5 +385,83 @@ mod tests {
             db_dyn.commit_from_iter(vec![]);
         }
         assert_eq!(db.commits.len(), 4);
+    }
+
+    #[test]
+    fn wrappers_forward_commit_iter() {
+        #[derive(Default)]
+        struct MockDb {
+            commits: usize,
+            commit_iters: usize,
+            committed_accounts: usize,
+        }
+
+        impl DatabaseCommit for MockDb {
+            fn commit(&mut self, changes: AddressMap<Account>) {
+                self.commits += 1;
+                self.committed_accounts += changes.len();
+            }
+
+            fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+                self.commit_iters += 1;
+                self.committed_accounts += changes.count();
+            }
+        }
+
+        impl DatabaseRef for MockDb {
+            type Error = Infallible;
+
+            fn basic_ref(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+                Ok(None)
+            }
+
+            fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+                Ok(Bytecode::default())
+            }
+
+            fn storage_ref(
+                &self,
+                _address: Address,
+                _index: StorageKey,
+            ) -> Result<StorageValue, Self::Error> {
+                Ok(StorageValue::ZERO)
+            }
+
+            fn block_hash_ref(&self, _number: u64) -> Result<B256, Self::Error> {
+                Ok(B256::ZERO)
+            }
+        }
+
+        fn changes() -> Vec<(Address, Account)> {
+            vec![(Address::with_last_byte(1), Account::default())]
+        }
+
+        let mut db = WrapDatabaseRef(MockDb::default());
+        db.commit_iter(&mut changes().into_iter());
+        assert_eq!(db.0.commits, 0);
+        assert_eq!(db.0.commit_iters, 1);
+        assert_eq!(db.0.committed_accounts, 1);
+
+        let mut db: ::either::Either<MockDb, MockDb> = ::either::Either::Left(MockDb::default());
+        db.commit_iter(&mut changes().into_iter());
+        let ::either::Either::Left(db) = db else {
+            unreachable!()
+        };
+        assert_eq!(db.commits, 0);
+        assert_eq!(db.commit_iters, 1);
+        assert_eq!(db.committed_accounts, 1);
+
+        let address = Address::with_last_byte(2);
+        let mut account = Account::default();
+        account.mark_touch();
+
+        let mut db = bal::BalDatabase::new(MockDb::default()).with_bal_builder();
+        db.commit_iter(&mut [(address, account)].into_iter());
+        assert_eq!(db.db.commits, 0);
+        assert_eq!(db.db.commit_iters, 1);
+        assert_eq!(db.db.committed_accounts, 1);
+
+        let bal = db.bal_state.take_built_bal().expect("BAL should be built");
+        assert!(bal.accounts.get(&address).is_some());
     }
 }

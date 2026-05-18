@@ -142,6 +142,40 @@ impl<ExtDB> CacheDB<ExtDB> {
         }
     }
 
+    fn commit_account(&mut self, address: Address, mut account: Account) {
+        if !account.is_touched() {
+            return;
+        }
+        if account.is_selfdestructed() {
+            let db_account = self.cache.accounts.entry(address).or_default();
+            db_account.storage.clear();
+            db_account.account_state = AccountState::NotExisting;
+            db_account.info = AccountInfo::default();
+            return;
+        }
+        let is_newly_created = account.is_created();
+        self.insert_contract(&mut account.info);
+
+        let db_account = self.cache.accounts.entry(address).or_default();
+        db_account.info = account.info;
+
+        db_account.account_state = if is_newly_created {
+            db_account.storage.clear();
+            AccountState::StorageCleared
+        } else if db_account.account_state.is_storage_cleared() {
+            // Preserve old account state if it already exists
+            AccountState::StorageCleared
+        } else {
+            AccountState::Touched
+        };
+        db_account.storage.extend(
+            account
+                .storage
+                .into_iter()
+                .map(|(key, value)| (key, value.present_value())),
+        );
+    }
+
     /// Wraps the cache in a [CacheDB], creating a nested cache.
     pub fn nest(self) -> CacheDB<Self> {
         CacheDB::new(self)
@@ -281,38 +315,14 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: AddressMap<Account>) {
-        for (address, mut account) in changes {
-            if !account.is_touched() {
-                continue;
-            }
-            if account.is_selfdestructed() {
-                let db_account = self.cache.accounts.entry(address).or_default();
-                db_account.storage.clear();
-                db_account.account_state = AccountState::NotExisting;
-                db_account.info = AccountInfo::default();
-                continue;
-            }
-            let is_newly_created = account.is_created();
-            self.insert_contract(&mut account.info);
+        for (address, account) in changes {
+            self.commit_account(address, account);
+        }
+    }
 
-            let db_account = self.cache.accounts.entry(address).or_default();
-            db_account.info = account.info;
-
-            db_account.account_state = if is_newly_created {
-                db_account.storage.clear();
-                AccountState::StorageCleared
-            } else if db_account.account_state.is_storage_cleared() {
-                // Preserve old account state if it already exists
-                AccountState::StorageCleared
-            } else {
-                AccountState::Touched
-            };
-            db_account.storage.extend(
-                account
-                    .storage
-                    .into_iter()
-                    .map(|(key, value)| (key, value.present_value())),
-            );
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        for (address, account) in changes {
+            self.commit_account(address, account);
         }
     }
 }
@@ -587,9 +597,9 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use database_interface::Database;
+    use database_interface::{Database, DatabaseCommit};
     use primitives::{Address, HashMap, StorageKey, StorageValue};
-    use state::AccountInfo;
+    use state::{Account, AccountInfo, EvmStorageSlot, TransactionId};
 
     #[test]
     fn test_insert_account_storage() {
@@ -641,6 +651,37 @@ mod tests {
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(StorageValue::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
+    }
+
+    #[test]
+    fn commit_iter_applies_repeated_account_updates_in_order() {
+        let address = Address::with_last_byte(42);
+        let key = StorageKey::from(123);
+        let value = StorageValue::from(456);
+        let mut db = CacheDB::new(EmptyDB::default());
+
+        let first = Account::from(AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        })
+        .with_touched_mark()
+        .with_storage(
+            [(
+                key,
+                EvmStorageSlot::new_changed(StorageValue::ZERO, value, TransactionId::ZERO),
+            )]
+            .into_iter(),
+        );
+        let second = Account::from(AccountInfo {
+            nonce: 2,
+            ..Default::default()
+        })
+        .with_touched_mark();
+
+        db.commit_iter(&mut [(address, first), (address, second)].into_iter());
+
+        assert_eq!(db.basic(address).unwrap().unwrap().nonce, 2);
+        assert_eq!(db.storage(address, key), Ok(value));
     }
 
     #[cfg(feature = "std")]

@@ -68,6 +68,13 @@ where
             Self::Right(db) => db.commit(changes),
         }
     }
+
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        match self {
+            Self::Left(db) => db.commit_iter(changes),
+            Self::Right(db) => db.commit_iter(changes),
+        }
+    }
 }
 
 impl<L, R> DatabaseRef for Either<L, R>

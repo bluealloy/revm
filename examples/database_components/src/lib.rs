@@ -118,4 +118,8 @@ impl<S: DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<
     fn commit(&mut self, changes: AddressMap<Account>) {
         self.state.commit(changes);
     }
+
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+        self.state.commit_iter(changes);
+    }
 }
