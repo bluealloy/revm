@@ -23,6 +23,11 @@ pub enum AlloyDBError {
     /// - The node has pruned the block data
     /// - Using a light client that doesn't have the block
     BlockNotFound(u64),
+    /// Code lookup by hash is unsupported for this database.
+    ///
+    /// `AlloyDB` fetches code through account loading (`basic_*`) and does not
+    /// maintain a code-hash lookup source.
+    CodeByHashUnsupported(B256),
 }
 
 impl DBErrorMarker for AlloyDBError {}
@@ -32,6 +37,12 @@ impl Display for AlloyDBError {
         match self {
             Self::Transport(err) => write!(f, "Transport error: {err}"),
             Self::BlockNotFound(number) => write!(f, "Block not found: {number}"),
+            Self::CodeByHashUnsupported(code_hash) => {
+                write!(
+                    f,
+                    "Code lookup by hash is unsupported in AlloyDB: {code_hash}"
+                )
+            }
         }
     }
 }
@@ -41,6 +52,7 @@ impl Error for AlloyDBError {
         match self {
             Self::Transport(err) => Some(err),
             Self::BlockNotFound(_) => None,
+            Self::CodeByHashUnsupported(_) => None,
         }
     }
 }
@@ -119,9 +131,8 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         }
     }
 
-    async fn code_by_hash_async_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
-        panic!("This should not be called, as the code is already loaded");
-        // This is not needed, as the code is already loaded with basic_ref
+    async fn code_by_hash_async_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        Err(AlloyDBError::CodeByHashUnsupported(code_hash))
     }
 
     async fn storage_async_ref(
@@ -142,6 +153,16 @@ mod tests {
     use super::*;
     use alloy_provider::ProviderBuilder;
     use database_interface::{DatabaseRef, WrapDatabaseAsync};
+
+    #[test]
+    fn code_by_hash_error_is_structured() {
+        let code_hash = B256::with_last_byte(1);
+        let err = AlloyDBError::CodeByHashUnsupported(code_hash);
+        let display = err.to_string();
+        assert!(display.contains("Code lookup by hash is unsupported in AlloyDB"));
+        assert!(display.contains("0x"));
+        assert!(err.source().is_none());
+    }
 
     #[tokio::test]
     #[ignore = "flaky RPC"]
