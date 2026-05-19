@@ -25,6 +25,11 @@ pub struct CallOutcome {
     /// Precompile call logs. Needs as revert/halt would delete them from Journal.
     /// So they can't be accessed by inspector.
     pub precompile_call_logs: Vec<Log>,
+    /// EIP-8037: copied from `CallInputs::charged_new_account_state_gas`. Tells
+    /// the parent frame whether `new_account_state_gas` was upfront-charged on
+    /// the parent's tracker for this call, so the parent can refund it when
+    /// the call reverts/halts.
+    pub charged_new_account_state_gas: bool,
 }
 
 impl CallOutcome {
@@ -42,6 +47,7 @@ impl CallOutcome {
             memory_offset,
             was_precompile_called: false,
             precompile_call_logs: Vec::new(),
+            charged_new_account_state_gas: false,
         }
     }
 

@@ -9,11 +9,24 @@ use interpreter::{Gas, InitialAndFloorGas, SuccessOrHalt};
 use primitives::{hardfork::SpecId, U256};
 
 /// Builds a [`ResultGas`] from the execution [`Gas`] struct and [`InitialAndFloorGas`].
-pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> ResultGas {
+pub fn build_result_gas(
+    _is_halt: bool,
+    gas: &Gas,
+    init_and_floor_gas: InitialAndFloorGas,
+) -> ResultGas {
+    // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
+    // negative on 0→x→0 restoration; at the top level, post-reconciliation it
+    // is expected to be >= 0 and is clamped defensively before combining with
+    // intrinsic state gas.
+    //
+    // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas,
+    // then reduced by the EIP-7702 per-authorization state-gas refund (which
+    // was also added back to the reservoir budget at tx start).
     let state_gas = gas
         .state_gas_spent()
-        .saturating_add(init_and_floor_gas.initial_state_gas)
-        .saturating_sub(init_and_floor_gas.eip7702_reservoir_refund);
+        .saturating_add_unsigned(init_and_floor_gas.initial_state_gas)
+        .max(0) as u64;
+    let state_gas = state_gas.saturating_sub(init_and_floor_gas.state_refund);
 
     ResultGas::default()
         .with_total_gas_spent(
@@ -22,7 +35,7 @@ pub fn build_result_gas(gas: &Gas, init_and_floor_gas: InitialAndFloorGas) -> Re
                 .saturating_sub(gas.reservoir()),
         )
         .with_refunded(gas.refunded() as u64)
-        .with_floor_gas(init_and_floor_gas.floor_gas)
+        .with_floor_gas(init_and_floor_gas.floor_gas())
         .with_state_gas_spent(state_gas)
 }
 
@@ -36,11 +49,13 @@ pub const fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialA
     // The floor must apply to this combined value, not just (limit - remaining).
     let gas_used_before_refund = gas.total_gas_spent().saturating_sub(gas.reservoir());
     let gas_used_after_refund = gas_used_before_refund.saturating_sub(gas.refunded() as u64);
-    if gas_used_after_refund < init_and_floor_gas.floor_gas {
-        // Set spent so that (limit - remaining - reservoir) = floor_gas
-        // i.e. remaining = limit - floor_gas - reservoir
-        gas.set_spent(init_and_floor_gas.floor_gas + gas.reservoir());
-        // clear refund
+    if gas_used_after_refund < init_and_floor_gas.floor_gas() {
+        // Match execution-specs: when the floor wins, the unused state gas
+        // (reservoir) is absorbed into the floor cost rather than reimbursed
+        // separately. Zeroing it keeps `reimburse_caller`'s
+        // `remaining + reservoir + refunded` sum equal to `limit - floor`.
+        gas.set_spent(init_and_floor_gas.floor_gas());
+        gas.set_reservoir(0);
         gas.set_refund(0);
     }
 }

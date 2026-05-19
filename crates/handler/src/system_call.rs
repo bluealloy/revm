@@ -26,11 +26,21 @@ use crate::{
 use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
-use primitives::{address, Address, Bytes, TxKind};
+use primitives::{address, eip8037, Address, Bytes, TxKind};
 use state::EvmState;
 
 /// The system address used for system calls.
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
+
+/// Maximum number of SSTOREs a bal-devnet-7 system call reserves state gas for.
+pub const SYSTEM_MAX_SSTORES_PER_CALL: u64 = 16;
+
+/// Gas limit for system calls under bal-devnet-7.
+///
+/// Per `tests-bal@v7.0.0`, system calls get the base 30M regular-gas budget plus
+/// a state-gas reservoir sized for `SYSTEM_MAX_SSTORES_PER_CALL` storage writes.
+pub const SYSTEM_CALL_GAS_LIMIT: u64 = 30_000_000
+    + eip8037::SSTORE_SET_BYTES * eip8037::CPSB_GLAMSTERDAM * SYSTEM_MAX_SSTORES_PER_CALL;
 
 /// Creates the system transaction with default values and set data and tx call target to system contract address
 /// that is going to be called.
@@ -62,7 +72,7 @@ impl SystemCallTx for TxEnv {
             .caller(caller)
             .data(data)
             .kind(TxKind::Call(system_contract_address))
-            .gas_limit(30_000_000)
+            .gas_limit(SYSTEM_CALL_GAS_LIMIT)
             .build()
             .unwrap()
     }
@@ -299,8 +309,8 @@ mod tests {
             .system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
-        // system call gas limit is 30M
-        assert_eq!(evm.ctx.tx().gas_limit(), 30_000_000);
+        // bal-devnet-7 adds a state-gas reservoir on top of the 30M base limit.
+        assert_eq!(evm.ctx.tx().gas_limit(), SYSTEM_CALL_GAS_LIMIT);
 
         assert_eq!(
             output.result,

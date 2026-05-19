@@ -69,6 +69,13 @@ pub trait Host {
     /// Returns whether state gas (EIP-8037) is enabled.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
+    /// Returns the EIP-8037 `cost_per_state_byte` for the current transaction.
+    ///
+    /// Reads the cached value set on the local context at transaction start
+    /// (via `cfg.cpsb()`, honoring `cpsb_override`). Returns
+    /// `0` when EIP-8037 is not enabled.
+    fn cpsb(&self) -> u64;
+
     /* Database */
 
     /// Block hash, calls `ContextTr::journal_mut().db().block_hash(number)`
@@ -241,6 +248,10 @@ impl Host for DummyHost {
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         false
+    }
+
+    fn cpsb(&self) -> u64 {
+        0
     }
 
     fn difficulty(&self) -> U256 {

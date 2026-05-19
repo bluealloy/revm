@@ -767,8 +767,8 @@ mod tests {
 
         // Sanity check: state_gas_spent should also agree.
         assert_eq!(
-            result_plain.gas().state_gas_spent(),
-            result_inspect.gas().state_gas_spent(),
+            result_plain.gas().state_gas_spent_final(),
+            result_inspect.gas().state_gas_spent_final(),
             "system_call state_gas_spent must match between inspect and non-inspect paths",
         );
     }

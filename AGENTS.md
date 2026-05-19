@@ -15,6 +15,7 @@ cargo nextest run --workspace --no-default-features
 cargo nextest run --workspace --all-features
 cargo clippy --workspace --all-targets --all-features
 cargo fmt --all --check
+typos
 
 cargo check --target riscv32imac-unknown-none-elf --no-default-features
 cargo check --target riscv64imac-unknown-none-elf --no-default-features

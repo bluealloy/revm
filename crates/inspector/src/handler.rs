@@ -1,7 +1,8 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{result::ExecutionResult, Cfg, ContextTr, JournalEntry, JournalTr, Transaction};
 use handler::{
-    evm::FrameTr, post_execution::build_result_gas, EvmTr, FrameResult, Handler, ItemOrResult,
+    cache_cpsb_on_local, evm::FrameTr, post_execution::build_result_gas, EvmTr, FrameResult,
+    Handler, ItemOrResult,
 };
 use interpreter::{
     instructions::{GasTable, InstructionTable},
@@ -45,6 +46,9 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
+        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
+        cache_cpsb_on_local(evm.ctx_mut());
         match self.inspect_run_without_catch_error(evm) {
             Ok(output) => Ok(output),
             Err(e) => self.catch_error(evm, e),
@@ -85,7 +89,6 @@ where
         let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
             evm.ctx().cfg().tx_gas_limit_cap(),
-            evm.ctx().cfg().is_amsterdam_eip8037_enabled(),
         );
         let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
 
@@ -93,7 +96,7 @@ where
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, reservoir, &mut frame_result)?;
         Ok(frame_result)
     }
 
@@ -149,6 +152,10 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // Cache EIP-8037 cost_per_state_byte on the local context. Inspector
+        // system calls skip validation/pre-execution but still execute
+        // interpreter code that reads Host::cpsb.
+        cache_cpsb_on_local(evm.ctx_mut());
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution with inspection and then output.
@@ -157,7 +164,7 @@ where
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
-                let result_gas = build_result_gas(gas, init_and_floor_gas);
+                let result_gas = build_result_gas(false, gas, init_and_floor_gas);
                 self.execution_result(evm, exec_result, result_gas)
             }) {
             out @ Ok(_) => out,

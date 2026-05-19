@@ -234,6 +234,20 @@ pub trait LocalContextTr {
     ///
     /// Returns `Some(String)` if a precompile error message was recorded.
     fn take_precompile_error_context(&mut self) -> Option<String>;
+
+    /// EIP-8037 `cost_per_state_byte` cached for the current transaction.
+    ///
+    /// Populated by [`LocalContextTr::set_cpsb`] at transaction start so that
+    /// the hot-path `Host::cpsb` is a single field read instead of recomputing
+    /// `cfg.cpsb()`.
+    fn cpsb(&self) -> u64;
+
+    /// Caches the EIP-8037 `cost_per_state_byte` for the current transaction.
+    ///
+    /// Called at the start of every execution entry point (regular transaction,
+    /// system call, and their inspector variants). The value must be derived via
+    /// `cfg.cpsb()` so that `cpsb_override` is honored.
+    fn set_cpsb(&mut self, cpsb: u64);
 }
 
 #[cfg(test)]

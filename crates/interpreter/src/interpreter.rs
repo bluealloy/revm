@@ -399,9 +399,16 @@ impl InterpreterResult {
     }
 
     /// Returns whether the instruction result is an error.
+    #[deprecated(note = "use `is_halt` instead")]
     #[inline]
     pub const fn is_error(&self) -> bool {
-        self.result.is_error()
+        self.result.is_halt()
+    }
+
+    /// Returns whether the instruction result is a halt (error).
+    #[inline]
+    pub const fn is_halt(&self) -> bool {
+        self.result.is_halt()
     }
 }
 

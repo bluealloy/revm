@@ -9,7 +9,7 @@ use revm::{
     context_interface::{cfg::GasId, result::HaltReason},
     database::{BenchmarkDB, BENCH_CALLER},
     handler::{MainnetContext, MainnetEvm},
-    primitives::{address, hardfork::SpecId, U256},
+    primitives::{address, eip7825::TX_GAS_LIMIT_CAP, hardfork::SpecId, TxKind, U256},
     state::Bytecode,
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -29,11 +29,15 @@ const fn hash_cost(len: usize) -> u64 {
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
 
 /// Builds an EVM with state gas enabled and custom gas params.
+///
+/// Sets `cpsb_override = Some(1)` so the overridden gas-table values are
+/// interpreted as final gas amounts (the CPSB multiplier becomes a no-op).
 fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(cap);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -487,8 +491,8 @@ fn test_eip8037_sstore_new_slot() {
         delta, STATE_GAS_SSTORE_SET,
         "SSTORE new slot should add exactly {STATE_GAS_SSTORE_SET} state gas, got delta {delta}"
     );
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     assert_eq!(
@@ -521,8 +525,8 @@ fn test_eip8037_sstore_overwrite_no_state_gas() {
         delta, STATE_GAS_SSTORE_SET,
         "Only the first SSTORE (0->1) should charge state gas, got delta {delta}"
     );
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
@@ -548,7 +552,7 @@ fn test_eip8037_sstore_zero_to_zero_no_state_gas() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, 0, "SSTORE zero→zero should add no state gas");
-    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(
@@ -582,8 +586,8 @@ fn test_eip8037_sstore_multiple_new_slots() {
         delta, expected,
         "3 new slots should add {expected} state gas, got delta {delta}"
     );
-    assert_eq!(result.gas().state_gas_spent(), expected);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert_eq!(
         result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent(),
@@ -615,8 +619,8 @@ fn test_eip8037_create_empty_code() {
     let expected = STATE_GAS_CREATE;
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected);
-    assert_eq!(result.gas().state_gas_spent(), expected);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas + expected);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
@@ -643,8 +647,8 @@ fn test_eip8037_create_with_code() {
     let expected_delta = expected_state_gas + hash_cost(10);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas + expected_delta);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
@@ -671,8 +675,8 @@ fn test_eip8037_create_with_sstore() {
     let expected_delta = expected_state_gas + hash_cost(1);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().inner_refunded(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
@@ -700,8 +704,8 @@ fn test_eip8037_create2_with_code() {
     let expected_delta = expected_state_gas + hash_cost(10);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     // CREATE2 uses more regular gas than CREATE (hashing) but same state gas
     let create_init = return_n_bytes_init_code(10);
     let mut create_evm = state_gas_evm(create_bytecode(&create_init), u64::MAX);
@@ -709,8 +713,8 @@ fn test_eip8037_create2_with_code() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert_eq!(
-        result.gas().state_gas_spent(),
-        create_result.gas().state_gas_spent()
+        result.gas().state_gas_spent_final(),
+        create_result.gas().state_gas_spent_final()
     );
     crate::assert_sorted_json_snapshot!(&(baseline_result, result, create_result));
 }
@@ -761,7 +765,7 @@ fn test_eip8037_create_code_deposit_state_gas_oog() {
         _ => panic!("Expected Halt variant"),
     }
     assert_eq!(result.tx_gas_used(), tight_limit);
-    assert_eq!(baseline_tight_result.gas().state_gas_spent(), 0);
+    assert_eq!(baseline_tight_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, baseline_tight_result, result));
 }
 
@@ -785,7 +789,7 @@ fn test_eip8037_call_new_account() {
         .unwrap();
 
     assert!(result.is_success());
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_NEW_ACCOUNT);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
@@ -812,7 +816,7 @@ fn test_eip8037_call_existing_account() {
         .unwrap();
 
     assert!(result.is_success());
-    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(
         result.gas().total_gas_spent(),
@@ -839,7 +843,7 @@ fn test_eip8037_selfdestruct_new_account() {
         .unwrap();
 
     assert!(result.is_success());
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_NEW_ACCOUNT);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_NEW_ACCOUNT);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_NEW_ACCOUNT);
     assert_eq!(
@@ -866,7 +870,7 @@ fn test_eip8037_selfdestruct_existing_account() {
         .unwrap();
 
     assert!(result.is_success());
-    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
     assert_eq!(
         result.gas().total_gas_spent(),
@@ -948,7 +952,7 @@ fn test_eip8037_regular_gas_cap_sufficient() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
     assert_eq!(result.tx_gas_used(), baseline_gas + STATE_GAS_SSTORE_SET);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
@@ -1023,7 +1027,7 @@ fn test_eip8037_tx_limit_cap_not_enforced_with_state_gas() {
 
     assert!(result.is_success());
     assert!(result.tx_gas_used() > 50_000, "gas_used exceeds cap");
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
     let delta = result.tx_gas_used() - baseline_gas;
     // EIP-8037: tx_gas_used = tx.gas - gas_left - state_gas_left
     // Unused reservoir gas (including new account state gas that wasn't consumed)
@@ -1044,6 +1048,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.tx_gas_limit_cap = Some(u64::MAX);
+            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -1132,12 +1137,13 @@ fn test_eip8037_create_child_propagates() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
-/// 5.2 Reverted CREATE: child's SSTORE state gas is refunded on revert.
+/// 5.2 Reverted CREATE: both the parent's upfront CREATE state gas and the child's
+/// SSTORE state gas are refunded on revert (state changes are rolled back).
 #[test]
 fn test_eip8037_reverted_create_child() {
     let init = init_code_sstore_and_revert();
@@ -1154,21 +1160,22 @@ fn test_eip8037_reverted_create_child() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
 
-    // On child revert, state gas is returned to parent's reservoir (matching Python spec).
-    // Only CREATE state gas contributes to the delta (SSTORE state gas is refunded).
-    let expected_delta = STATE_GAS_CREATE;
-    let parent_state_gas = STATE_GAS_CREATE;
+    // On child revert, ALL state gas is returned to the parent's reservoir:
+    // the child's SSTORE state gas via handle_reservoir_remaining_gas, and the
+    // parent's upfront CREATE state gas via the refill_reservoir refund in return_result.
+    let expected_delta = 0;
+    let parent_state_gas = 0;
 
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    // state_gas_spent reflects only parent's state gas (child's SSTORE state gas refunded on revert).
-    assert_eq!(result.gas().state_gas_spent(), parent_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    // state_gas_spent_final is fully refunded (CREATE charge undone, SSTORE charge undone).
+    assert_eq!(result.gas().state_gas_spent_final(), parent_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
-/// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent propagates on success.
+/// 5.3 CALL to contract that does SSTORE(0,1). Child's state_gas_spent_final propagates on success.
 #[test]
 fn test_eip8037_call_child_sstore_propagates() {
     let child_runtime: Vec<u8> = vec![
@@ -1199,8 +1206,8 @@ fn test_eip8037_call_child_sstore_propagates() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
@@ -1238,8 +1245,8 @@ fn test_eip8037_call_child_sstore_reverts() {
     let create_state_gas = STATE_GAS_CREATE + code_deposit_gas;
 
     assert!(result.is_success());
-    // state_gas_spent reflects only CREATE costs (child SSTORE refunded on revert).
-    assert_eq!(result.gas().state_gas_spent(), create_state_gas);
+    // state_gas_spent_final reflects only CREATE costs (child SSTORE refunded on revert).
+    assert_eq!(result.gas().state_gas_spent_final(), create_state_gas);
     // On child revert, state changes are rolled back and state gas is returned
     // to the parent's reservoir (matching Python spec's incorporate_child_on_error).
     // So only CREATE state gas and hash cost contribute to the delta.
@@ -1280,8 +1287,8 @@ fn test_eip8037_nested_call_create_sstore() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
 
     // Cross-validate: CREATE-only run (no CALL child SSTORE).
     let init = return_n_bytes_init_code(child_runtime.len() as u8);
@@ -1290,14 +1297,21 @@ fn test_eip8037_nested_call_create_sstore() {
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
     assert!(create_result.is_success());
-    let sstore_portion = result.gas().state_gas_spent() - create_result.gas().state_gas_spent();
+    let sstore_portion =
+        result.gas().state_gas_spent_final() - create_result.gas().state_gas_spent_final();
     assert_eq!(sstore_portion, STATE_GAS_SSTORE_SET);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result, create_result));
 }
 
 // ---- Category 6: Interactions ----
 
-/// 6.1 SSTORE 0→1 (state gas), then 1→0 (refund). Refund does NOT undo state gas.
+/// 6.1 SSTORE 0→1 (state gas), then 1→0 restoration.
+///
+/// EIP-8037 issue #2: 0→x→0 storage restoration directly refills the reservoir
+/// with the state gas originally charged for the 0→x transition, rather than
+/// routing it through the capped refund counter. The state gas net-out means
+/// `state_gas_spent_final == 0` after the full set+clear cycle, and no net state
+/// gas shows up in `total_gas_spent`.
 #[test]
 fn test_eip8037_sstore_set_then_clear_refund() {
     let bytecode = sstore_set_then_clear_bytecode();
@@ -1306,7 +1320,6 @@ fn test_eip8037_sstore_set_then_clear_refund() {
     let baseline_result = baseline
         .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
         .unwrap();
-    let baseline_gas = baseline_result.tx_gas_used();
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1314,13 +1327,13 @@ fn test_eip8037_sstore_set_then_clear_refund() {
         .unwrap();
 
     assert!(result.is_success());
-    // State gas increases spent by exactly STATE_GAS_SSTORE_SET.
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
-    assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
-    // Refund does NOT undo state gas — gas_used is higher than baseline.
-    assert!(result.tx_gas_used() > baseline_gas);
-    assert!(result.gas().total_gas_spent() > baseline_result.gas().total_gas_spent());
+    // State gas originally charged for 0→1 is refilled by the 1→0 restoration.
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+    // Total gas spent matches baseline — reservoir ends where it started.
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        baseline_result.gas().total_gas_spent()
+    );
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
@@ -1350,8 +1363,8 @@ fn test_eip8037_state_gas_does_not_reduce_regular_gas() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, STATE_GAS_SSTORE_SET);
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
@@ -1449,14 +1462,14 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         gas_limit - STATE_GAS_SSTORE_SET,
         "Halt refunds state gas via reservoir"
     );
-    // state_gas_spent is zeroed on halt (state changes rolled back).
-    assert_eq!(result.gas().state_gas_spent(), 0);
+    // state_gas_spent_final is zeroed on halt (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
-/// 6.5 state_gas_spent field in ResultGas.
+/// 6.5 state_gas_spent_final field in ResultGas.
 #[test]
-fn test_eip8037_state_gas_spent_in_result() {
+fn test_eip8037_state_gas_spent_final_in_result() {
     let bytecode = sstore_bytecode(0, 1);
 
     let mut baseline = baseline_evm(bytecode.clone());
@@ -1465,7 +1478,7 @@ fn test_eip8037_state_gas_spent_in_result() {
         .unwrap();
 
     assert!(baseline_result.is_success());
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
 
     let mut evm = state_gas_evm(bytecode, u64::MAX);
     let result = evm
@@ -1473,7 +1486,7 @@ fn test_eip8037_state_gas_spent_in_result() {
         .unwrap();
 
     assert!(result.is_success());
-    assert_eq!(result.gas().state_gas_spent(), STATE_GAS_SSTORE_SET);
+    assert_eq!(result.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
     let spent_delta = result.gas().total_gas_spent() - baseline_result.gas().total_gas_spent();
     assert_eq!(spent_delta, STATE_GAS_SSTORE_SET);
     let gas_used_delta = result.tx_gas_used() - baseline_result.tx_gas_used();
@@ -1501,8 +1514,8 @@ fn test_eip8037_precompile_no_state_gas() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, 0);
-    assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(
         result.gas().total_gas_spent(),
         baseline_result.gas().total_gas_spent()
@@ -1512,10 +1525,12 @@ fn test_eip8037_precompile_no_state_gas() {
 
 // ---- Category 7: Reservoir Refill ----
 //
-// The reservoir refill logic (handler_reservoir_refill) is invoked on HALT or REVERT:
-// `new_reservoir = reservoir + max(0, state_gas_spent - reservoir)`
+// The reservoir refill logic is invoked on HALT or REVERT using the conserved
+// `reservoir + state_gas_spent` invariant:
+// `new_reservoir = reservoir + state_gas_spent_final`
 //
-// This accounts for state gas that had to be drawn from regular gas.
+// This accounts for both state gas borrowed from regular gas and nested refill
+// unwinds that can make `state_gas_spent_final` temporarily negative.
 // On OK: reservoir stays unchanged (no refill needed).
 // On REVERT: remaining is reimbursed, then refill applied.
 // On HALT: remaining is NOT reimbursed, refill applied to final gas accounting.
@@ -1553,9 +1568,9 @@ fn test_eip8037_reservoir_refill_revert_state_gas_less() {
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
     // On revert, state gas is refunded via reservoir, so no delta vs baseline.
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    // state_gas_spent is zeroed on revert (state changes rolled back).
-    assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    // state_gas_spent_final is zeroed on revert (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert!(
         result.tx_gas_used() < gas_limit,
         "REVERT reimburses remaining"
@@ -1598,9 +1613,9 @@ fn test_eip8037_reservoir_refill_revert_state_gas_more() {
     assert!(!result.is_success() && !result.is_halt(), "Expected REVERT");
     // On revert, state gas is refunded via reservoir, so no delta vs baseline.
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    // state_gas_spent is zeroed on revert (state changes rolled back).
-    assert_eq!(result.gas().state_gas_spent(), 0);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    // state_gas_spent_final is zeroed on revert (state changes rolled back).
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert!(result.tx_gas_used() < gas_limit);
     assert_eq!(result.gas().inner_refunded(), 0);
     assert!(result.logs().is_empty());
@@ -1715,9 +1730,9 @@ fn test_eip8037_reservoir_refill_halt_vs_revert_difference() {
     // since OOG happened before SSTORE could execute).
     assert_eq!(result_halt.tx_gas_used(), halt_gas_limit);
     assert!(result_revert.tx_gas_used() < revert_gas_limit);
-    // On revert/halt, state_gas_spent is zeroed (state changes rolled back).
-    assert_eq!(result_revert.gas().state_gas_spent(), 0);
-    assert_eq!(result_halt.gas().state_gas_spent(), 0);
+    // On revert/halt, state_gas_spent_final is zeroed (state changes rolled back).
+    assert_eq!(result_revert.gas().state_gas_spent_final(), 0);
+    assert_eq!(result_halt.gas().state_gas_spent_final(), 0);
     assert_eq!(result_halt.gas().inner_refunded(), 0);
     assert_eq!(result_revert.gas().inner_refunded(), 0);
     crate::assert_sorted_json_snapshot!(&(result_halt, result_revert));
@@ -1832,9 +1847,9 @@ fn test_eip8037_call_new_account_no_value() {
 
     assert!(result.is_success());
     // No value transfer → no new_account_state_gas even for empty account.
-    assert_eq!(result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.tx_gas_used(), baseline_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
@@ -1861,8 +1876,8 @@ fn test_eip8037_create_large_code() {
     let expected_delta = expected_state_gas + hash_cost(200);
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     // Verify code deposit portion is significant
     let code_deposit_portion = STATE_GAS_CODE_DEPOSIT * 200;
     assert_eq!(code_deposit_portion, 200_000);
@@ -1909,7 +1924,455 @@ fn test_eip8037_parent_sstore_after_child_revert() {
     assert!(result.is_success());
     let delta = result.tx_gas_used() - baseline_gas;
     assert_eq!(delta, expected_delta);
-    assert_eq!(result.gas().state_gas_spent(), expected_state_gas);
-    assert_eq!(baseline_result.gas().state_gas_spent(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+// ---- EIP-8037 issue #2: 0→x→0 storage reservoir refill ----
+
+/// EIP-8037 issue #2 — same frame: 0→1→0 restoration refills the reservoir
+/// with the state gas originally charged on 0→1 (via `refill_reservoir`)
+/// rather than routing it through the capped refund counter.
+///
+/// Compared against a set-only variant (0→1 with no clear): the set-then-clear
+/// variant must end with `state_gas_spent_final == 0`, while the set-only variant
+/// retains the full `STATE_GAS_SSTORE_SET` charge.
+#[test]
+fn test_eip8037_sstore_refill_same_frame() {
+    let mut evm = state_gas_evm(sstore_set_then_clear_bytecode(), u64::MAX);
+    let restored = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    let mut evm = state_gas_evm(sstore_bytecode(0, 1), u64::MAX);
+    let set_only = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(restored.is_success());
+    assert!(set_only.is_success());
+
+    // The refill nets state gas back to zero for the 0→1→0 round-trip.
+    assert_eq!(restored.gas().state_gas_spent_final(), 0);
+    // Without the clear, the full state gas stays spent.
+    assert_eq!(set_only.gas().state_gas_spent_final(), STATE_GAS_SSTORE_SET);
+}
+
+/// Parent SSTORE(0,1), CREATE a child, DELEGATECALL the child which SSTORE(0,0).
+///
+/// DELEGATECALL runs the child's code in the parent's storage context, so the
+/// child's SSTORE clears the slot the parent set. Used to exercise the
+/// cross-frame 0→x→0 case.
+fn sstore_parent_then_delegatecall_clear_bytecode() -> Bytecode {
+    // Child runtime: SSTORE(0, 0); STOP
+    let child_runtime: [u8; 6] = [
+        opcode::PUSH1,
+        0,
+        opcode::PUSH1,
+        0,
+        opcode::SSTORE,
+        opcode::STOP,
+    ];
+
+    // Init code: MSTORE8 each byte of child_runtime, then RETURN(0, len).
+    let mut init_code = Vec::new();
+    for (i, &byte) in child_runtime.iter().enumerate() {
+        init_code.push(opcode::PUSH1);
+        init_code.push(byte);
+        init_code.push(opcode::PUSH1);
+        init_code.push(i as u8);
+        init_code.push(opcode::MSTORE8);
+    }
+    init_code.push(opcode::PUSH1);
+    init_code.push(child_runtime.len() as u8);
+    init_code.push(opcode::PUSH1);
+    init_code.push(0);
+    init_code.push(opcode::RETURN);
+
+    // Parent: SSTORE(0, 1) — state gas charged on the parent frame.
+    let mut bytecode = vec![opcode::PUSH1, 1, opcode::PUSH1, 0, opcode::SSTORE];
+
+    // MSTORE8 init_code into memory.
+    for (i, &byte) in init_code.iter().enumerate() {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(byte);
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(i as u8);
+        bytecode.push(opcode::MSTORE8);
+    }
+
+    // CREATE(value=0, offset=0, length=init_code.len())
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(init_code.len() as u8);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::PUSH1);
+    bytecode.push(0);
+    bytecode.push(opcode::CREATE);
+    // Stack: [child_addr]
+
+    // DELEGATECALL args (retLen, retOff, argsLen, argsOff, addr, gas).
+    for _ in 0..4 {
+        bytecode.push(opcode::PUSH1);
+        bytecode.push(0);
+    }
+    // Stack: [child_addr, 0, 0, 0, 0]
+    bytecode.push(opcode::SWAP4);
+    // Stack: [0, 0, 0, 0, child_addr]
+    bytecode.push(opcode::GAS);
+    // Stack: [0, 0, 0, 0, child_addr, gas]
+    bytecode.push(opcode::DELEGATECALL);
+    bytecode.push(opcode::POP);
+    bytecode.push(opcode::STOP);
+
+    Bytecode::new_legacy(bytecode.into())
+}
+
+/// EIP-8037 issue #2 — cross frame: parent charges state gas on SSTORE(0,1),
+/// then DELEGATECALLs a child that does SSTORE(0,0). Because DELEGATECALL
+/// shares the caller's storage, the child performs the 0→1→0 restoration
+/// and calls `refill_reservoir` inside its own frame, driving the child's
+/// `state_gas_spent_final` to `-STATE_GAS_SSTORE_SET`. On frame return, the
+/// parent's +STATE_GAS_SSTORE_SET and the child's negative net out via the
+/// i64 accumulation in `handle_reservoir_remaining_gas`.
+///
+/// After the call, only the parent's CREATE + code-deposit state gas
+/// remains; the SSTORE round-trip leaves no net state gas.
+#[test]
+fn test_eip8037_sstore_refill_cross_frame() {
+    const CHILD_RUNTIME_LEN: u64 = 6;
+
+    let bytecode = sstore_parent_then_delegatecall_clear_bytecode();
+
+    let mut evm = state_gas_evm(bytecode, u64::MAX);
+    let result = evm
+        .transact_one(TxEnv::builder_for_bench().gas_price(0).build_fill())
+        .unwrap();
+
+    assert!(result.is_success());
+
+    // Parent charged STATE_GAS_SSTORE_SET on 0→1; the child's DELEGATECALL
+    // refills it on 1→0. Only the CREATE + code-deposit state gas remains.
+    let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * CHILD_RUNTIME_LEN;
+    assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+}
+
+// ---- Tx-kind Create with initcode that halts / self-destructs ----
+
+/// Initcode that does SSTORE(0, 1) then hits INVALID (0xFE) — exceptional halt.
+fn init_code_sstore_and_invalid() -> Vec<u8> {
+    vec![
+        opcode::PUSH1,
+        1,
+        opcode::PUSH1,
+        0,
+        opcode::SSTORE,
+        opcode::INVALID,
+    ]
+}
+
+/// Initcode that does SSTORE(0, 1) then SELFDESTRUCTs to `beneficiary`.
+fn init_code_sstore_and_selfdestruct(beneficiary: [u8; 20]) -> Vec<u8> {
+    let mut code = vec![
+        opcode::PUSH1,
+        1,
+        opcode::PUSH1,
+        0,
+        opcode::SSTORE,
+        opcode::PUSH20,
+    ];
+    code.extend_from_slice(&beneficiary);
+    code.push(opcode::SELFDESTRUCT);
+    code
+}
+
+/// Tx-kind Create whose initcode does SSTORE(0,1) then INVALID.
+///
+/// Initcode halts → all state changes are rolled back. The SSTORE state gas
+/// charged during execution is returned to the reservoir via
+/// `last_frame_result`'s halt branch, and the intrinsic `create_state_gas` is
+/// refilled by the same function's `create_failed` branch. Net result:
+/// `state_gas_spent_final == 0` and the caller pays less than the baseline by
+/// exactly the state gas that was refunded.
+#[test]
+fn test_eip8037_tx_create_initcode_halts() {
+    let init = init_code_sstore_and_invalid();
+
+    let mut baseline = baseline_evm(Bytecode::new());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .kind(TxKind::Create)
+                .data(init.clone().into())
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    let mut evm = state_gas_evm(Bytecode::new(), u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .kind(TxKind::Create)
+                .data(init.into())
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    // Both halt on INVALID inside the initcode.
+    assert!(baseline_result.is_halt());
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::InvalidFEOpcode));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+
+    // No state gas should be reported as spent: execution state gas (SSTORE)
+    // is rolled back on halt, and the intrinsic create_state_gas is refilled
+    // to the reservoir via the `create_failed` branch.
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+
+    // The state-gas variant pays less than the baseline because the refilled
+    // reservoir is reimbursed back to the caller.
+    assert!(result.tx_gas_used() < baseline_result.tx_gas_used());
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+/// Tx-kind Create whose initcode does SSTORE(0,1) then SELFDESTRUCTs.
+///
+/// Per EIP-6780 the contract is erased at tx end (created and self-destructed
+/// in the same transaction). Per EIP-8037 the state gas charged for that
+/// account — both the intrinsic `create_state_gas` and the execution-time
+/// SSTORE — should ideally be refunded to the reservoir, so the caller is not
+/// billed for state gas.
+///
+/// However, the journal-based selfdestruct state-gas refund was removed (it
+/// drew on the journal's destroyed-accounts list), so the SSTORE state gas
+/// is no longer refunded. The intrinsic `create_state_gas` is also not
+/// refunded: `return_create` rewrites the frame's `SelfDestruct` result to
+/// `Return` before `last_frame_result` runs, so `create_failed` evaluates to
+/// false and the `create_failed` branch that would refill `create_state_gas`
+/// never fires. The caller therefore pays both the intrinsic state gas and
+/// the SSTORE state gas even though the contract was erased.
+#[test]
+fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
+    // Use BENCH_CALLER as beneficiary so we don't trigger new_account_state_gas.
+    let init = init_code_sstore_and_selfdestruct(BENCH_CALLER.into_array());
+
+    let mut baseline = baseline_evm(Bytecode::new());
+    let baseline_result = baseline
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .kind(TxKind::Create)
+                .data(init.clone().into())
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    let mut evm = state_gas_evm(Bytecode::new(), u64::MAX);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .kind(TxKind::Create)
+                .data(init.into())
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    // SELFDESTRUCT during initcode is a successful create completion (with
+    // empty deployed code) that EIP-6780 then erases at tx end.
+    assert!(baseline_result.is_success());
+    assert!(result.is_success());
+
+    // Per EIP-8037 + EIP-6780 the user expects state_gas_spent_final == 0 here,
+    // but the journal-based selfdestruct refund was removed, so the SSTORE state
+    // gas is now also retained alongside the intrinsic `create_state_gas` —
+    // see the doc comment above.
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
+    assert_eq!(
+        result.gas().state_gas_spent_final(),
+        STATE_GAS_SSTORE_SET + revm::primitives::eip8037::NEW_ACCOUNT_BYTES
+    );
+
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+/// Tx-kind Create whose destination address already holds a non-empty account,
+/// triggering a `CreateCollision` halt in `create_account_checkpoint` before
+/// any initcode runs.
+///
+/// Verifies the failure path through `return_error` (frame.rs `make_create_frame`)
+/// into `last_frame_result`:
+/// - The halt fully consumes regular gas: `erase_cost(remaining)` is gated on
+///   `is_ok_or_revert()` and is skipped, so `gas.remaining == 0`.
+/// - `create_failed` matches (Create + not `is_ok_without_selfdestruct`), so
+///   the intrinsic `create_state_gas` is refilled to the reservoir.
+/// - `state_gas_spent` is reset to 0 (halt branch).
+///
+/// Net: the EIP-8037 variant pays exactly `STATE_GAS_CREATE` less than the
+/// baseline.
+#[test]
+fn test_eip8037_tx_create_collision() {
+    use revm::{
+        database::{CacheDB, EmptyDB},
+        state::AccountInfo,
+    };
+
+    // tx-Create from BENCH_CALLER (nonce=0) deploys to BENCH_CALLER.create(0).
+    let collision_addr = BENCH_CALLER.create(0);
+
+    // Build a DB with the caller funded and a non-empty account pre-existing
+    // at the create-address. `create_account_checkpoint` errors with
+    // `CreateCollision` when the target has nonce != 0 or non-empty code.
+    let build_db = || {
+        let mut db: CacheDB<EmptyDB> = CacheDB::new(EmptyDB::default());
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(u64::MAX),
+                nonce: 0,
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            collision_addr,
+            AccountInfo {
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        db
+    };
+
+    let init = init_code_sstore_and_invalid();
+    let build_tx = |gas_limit: u64| {
+        TxEnv::builder_for_bench()
+            .kind(TxKind::Create)
+            .data(init.clone().into())
+            .gas_price(0)
+            .gas_limit(gas_limit)
+            .build_fill()
+    };
+
+    // Baseline: EIP-8037 disabled.
+    let mut baseline = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip8037 = false;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let baseline_result = baseline.transact_one(build_tx(TX_GAS_LIMIT_CAP)).unwrap();
+
+    // State-gas variant: EIP-8037 enabled with cpsb_override = 1 so the
+    // gas-table overrides are interpreted as final amounts.
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.cpsb_override = Some(1);
+            cfg.gas_params.override_gas([
+                (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
+                (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
+                (GasId::code_deposit_state_gas(), STATE_GAS_CODE_DEPOSIT),
+                (GasId::create_state_gas(), STATE_GAS_CREATE),
+            ]);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let result = evm.transact_one(build_tx(TX_GAS_LIMIT_CAP + 10)).unwrap();
+
+    // Both halt with CreateCollision before any initcode runs.
+    assert!(baseline_result.is_halt());
+    assert!(result.is_halt());
+    match &baseline_result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::CreateCollision));
+        }
+        _ => panic!("Expected Halt variant for baseline"),
+    }
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::CreateCollision));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+
+    // No execution state gas accrued (initcode never ran), and on halt
+    // `last_frame_result` zeros `state_gas_spent` for both variants.
+    assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+
+    // Halt consumes the regular gas budget in full. With cpsb_override = 1 the
+    // intrinsic create_state_gas equals STATE_GAS_CREATE, and the state-gas
+    // variant's total gas spent is exactly that much less than the baseline,
+    // because the create_failed branch refills the reservoir with it.
+    //
+    // -10 as additional gas was added to tx.gas_limit to cover reservoir handling.
+    assert_eq!(
+        baseline_result.gas().total_gas_spent() - result.gas().total_gas_spent(),
+        STATE_GAS_CREATE - 10,
+    );
+
+    crate::assert_sorted_json_snapshot!(&(baseline_result, result));
+}
+
+/// Regression test for the `last_frame_result` revert/halt branch:
+/// state gas charged purely against the reservoir must not be over-refunded
+/// when the top frame halts.
+///
+/// Setup chosen so the state cost stays in the reservoir (no spill into
+/// regular gas) and the SSTORE has enough regular gas to complete:
+/// - `gas_limit = 1_000_000`, `tx_gas_limit_cap = 50_000`.
+/// - Intrinsic regular = `TX_BASE` (21_000). Regular budget = 29_000.
+/// - Reservoir = `gas_limit - cap` = 950_000, ample for STATE_GAS_SSTORE_SET.
+///
+/// Flow: SSTORE(0,1) consumes 22_100 regular + STATE_GAS_SSTORE_SET (200_000)
+/// state from the reservoir, then INVALID halts. State changes roll back, so
+/// the state gas must come back to the reservoir, leaving regular consumption
+/// at exactly the cap (50_000 = intrinsic + budget).
+///
+/// Pre-fix bug: the halt branch computed `reservoir = original + recovered =
+/// 950_000 + 200_000 = 1_150_000`, exceeding the original budget. That
+/// underflowed `total_gas_spent` to 0, the EIP-7623 floor took over, and the
+/// test would have observed `tx_gas_used == 21_000` instead of 50_000.
+#[test]
+fn test_eip8037_halt_no_overrefund_when_state_in_reservoir() {
+    let bytecode = sstore_then_invalid_bytecode();
+    let gas_limit = 1_000_000u64;
+    let cap = 50_000u64;
+
+    let mut evm = state_gas_evm(bytecode, cap);
+    let result = evm
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(gas_limit)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+
+    assert!(result.is_halt());
+    match &result {
+        revm::context_interface::result::ExecutionResult::Halt { reason, .. } => {
+            assert!(matches!(reason, HaltReason::InvalidFEOpcode));
+        }
+        _ => panic!("Expected Halt variant"),
+    }
+
+    // State changes rolled back on halt, so reported state gas is zero.
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+
+    // Regular gas is fully consumed (cap = 50_000) but the reservoir is
+    // refunded in full. tx_gas_used must equal exactly the cap — not the
+    // EIP-7623 floor, which is what the pre-fix code would have produced.
+    assert_eq!(result.tx_gas_used(), cap);
+    assert!(result.tx_gas_used() > result.gas().floor_gas());
 }

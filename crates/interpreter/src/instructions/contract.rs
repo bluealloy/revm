@@ -86,11 +86,16 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    // State gas for account creation + contract metadata (EIP-8037)
+    // State gas for account creation + contract metadata (EIP-8037).
+    // Charged upfront on the parent's tracker; `return_create` refunds the same
+    // amount (derived from cfg) on entry and re-records it on a successful commit.
     if context.host.is_amsterdam_eip8037_enabled() {
         state_gas!(
             context.interpreter,
-            context.host.gas_params().create_state_gas()
+            context
+                .host
+                .gas_params()
+                .create_state_gas(context.host.cpsb())
         );
     }
 
@@ -160,7 +165,7 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
         get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())?;
 
     let is_call = KIND == CALL;
-    let (gas_limit, bytecode, bytecode_hash) =
+    let (gas_limit, bytecode, bytecode_hash, charged_new_account_state_gas) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, is_call, local_gas_limit)?;
 
     let target_address = if matches!(KIND, CALLCODE | DELEGATECALL) {
@@ -204,6 +209,7 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
                 is_static,
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
+                charged_new_account_state_gas,
             },
         ))));
     Err(InstructionResult::Suspend)

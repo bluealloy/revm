@@ -236,7 +236,14 @@ impl InstructionResult {
 
     /// Returns whether the result is an error.
     #[inline]
+    #[deprecated(note = "use `is_halt` instead")]
     pub const fn is_error(self) -> bool {
+        self.is_halt()
+    }
+
+    /// Returns whether the result is a halt (error).
+    #[inline]
+    pub const fn is_halt(self) -> bool {
         matches!(self, return_error!())
     }
 }
@@ -403,7 +410,7 @@ mod tests {
         for result in ok_results {
             assert!(result.is_ok());
             assert!(!result.is_revert());
-            assert!(!result.is_error());
+            assert!(!result.is_halt());
         }
 
         let revert_results = [
@@ -414,7 +421,7 @@ mod tests {
         for result in revert_results {
             assert!(!result.is_ok());
             assert!(result.is_revert());
-            assert!(!result.is_error());
+            assert!(!result.is_halt());
         }
 
         let error_results = [
@@ -444,7 +451,7 @@ mod tests {
         for result in error_results {
             assert!(!result.is_ok());
             assert!(!result.is_revert());
-            assert!(result.is_error());
+            assert!(result.is_halt());
         }
     }
 }

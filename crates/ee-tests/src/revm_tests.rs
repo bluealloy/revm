@@ -439,6 +439,7 @@ const SELFDESTRUCT_TO_SELF_INIT_CODE: &[u8] = &[
 fn test_eip7708_selfdestruct_to_self() {
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .build_mainnet();
 
@@ -451,7 +452,7 @@ fn test_eip7708_selfdestruct_to_self() {
                 .kind(TxKind::Create)
                 .data(SELFDESTRUCT_TO_SELF_INIT_CODE.into())
                 .value(create_value)
-                .gas_limit(200_000)
+                .gas_limit(500_000)
                 .gas_price(0)
                 .build_fill(),
         )
@@ -532,13 +533,14 @@ fn test_eip7708_call_with_value() {
 
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .build_mainnet();
 
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_limit(200_000)
+                .gas_limit(500_000)
                 .gas_price(0)
                 .build_fill(),
         )
@@ -626,13 +628,14 @@ fn test_eip7708_create_with_value() {
 
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+        .modify_block_chained(|block| block.gas_limit = 100_000_000)
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .build_mainnet();
 
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
-                .gas_limit(200_000)
+                .gas_limit(500_000)
                 .gas_price(0)
                 .build_fill(),
         )
