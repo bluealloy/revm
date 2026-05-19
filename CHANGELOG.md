@@ -1,5 +1,25 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v108
+date: 19.05.2026
+
+Prep for Amsteradam, bal-devnet-7 version (EIP-8037)
+
+* `revm-primitives`: 23.0.0 -> 24.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 10.0.0 -> 11.0.0 (⚠ API breaking changes)
+* `revm-state`: 11.0.1 -> 12.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 11.0.1 -> 11.1.0 (✓ API compatible changes)
+* `revm-context-interface`: 17.0.1 -> 18.0.0 (⚠ API breaking changes)
+* `revm-context`: 16.0.1 -> 17.0.0 (⚠ API breaking changes)
+* `revm-database`: 13.0.1 -> 14.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 35.0.1 -> 36.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 34.0.0 -> 35.0.0 (⚠ API breaking changes)
+* `revm-handler`: 18.1.0 -> 19.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 19.0.0 -> 20.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 17.0.1 -> 18.0.0 (✓ API compatible changes)
+* `revm`: 38.0.0 -> 39.0.0 (✓ API compatible changes)
+* `revme`: 15.0.0 -> 16.0.0 (✓ API compatible changes)
+
 # v107
 date: 17.04.2026
 
