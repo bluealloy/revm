@@ -118,7 +118,12 @@ pub trait ExecuteEvm {
         Ok(ExecResultAndState::new(result, state))
     }
 
-    /// Execute previous transaction and finalize it.
+    /// Execute the transaction currently stored in context and finalize it.
+    ///
+    /// This method does not pull a "previous transaction" from history.
+    /// It re-runs the transaction that is currently present in `ctx.tx()`.
+    /// If another API (for example a system call helper) overwrote `ctx.tx()`,
+    /// `replay` will execute that updated transaction.
     fn replay(
         &mut self,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>;
@@ -159,7 +164,7 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
         Ok(outputs)
     }
 
-    /// Replay the transaction and commit to the state.
+    /// Replay the transaction currently stored in context and commit to the state.
     ///
     /// Internally calls `replay` and `commit` functions.
     #[inline]
