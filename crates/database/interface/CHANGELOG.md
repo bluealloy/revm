@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [11.1.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v11.0.1...revm-database-interface-v11.1.0) - 2026-05-19
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v11.0.1...revm-database-interface-v12.0.0) - 2026-05-19
 
 ### Added
 
