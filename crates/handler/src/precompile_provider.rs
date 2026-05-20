@@ -189,10 +189,12 @@ mod tests {
     use crate::{instructions::EthInstructions, ExecuteEvm, MainContext};
     use context::{Context, Evm, FrameStack, TxEnv};
     use context_interface::result::{ExecutionResult, HaltReason, OutOfGasError};
+    use core::convert::Infallible;
     use database::InMemoryDB;
+    use database_interface::Database;
     use interpreter::interpreter::EthInterpreter;
-    use primitives::{address, hardfork::SpecId, TxKind, U256};
-    use state::AccountInfo;
+    use primitives::{address, hardfork::SpecId, StorageKey, StorageValue, TxKind, B256, U256};
+    use state::{AccountInfo, Bytecode};
 
     /// Test-only address that hosts an over-spending precompile.
     const OVERSPEND_PRECOMPILE: Address = address!("0000000000000000000000000000000000000100");
@@ -309,5 +311,84 @@ mod tests {
             ),
             ExecutionResult::Revert { .. } => panic!("expected Halt(PrecompileOOG), got Revert"),
         }
+    }
+
+    #[derive(Debug)]
+    struct CodeLoadCountingDb {
+        caller: Address,
+        precompile: Address,
+        code_hash: B256,
+        code_by_hash_calls: usize,
+    }
+
+    impl Database for CodeLoadCountingDb {
+        type Error = Infallible;
+
+        fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+            if address == self.caller {
+                return Ok(Some(AccountInfo {
+                    balance: U256::from(10).pow(U256::from(18)),
+                    ..Default::default()
+                }));
+            }
+
+            if address == self.precompile {
+                return Ok(Some(AccountInfo {
+                    code_hash: self.code_hash,
+                    ..Default::default()
+                }));
+            }
+
+            Ok(None)
+        }
+
+        fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+            self.code_by_hash_calls += 1;
+            Ok(Bytecode::default())
+        }
+
+        fn storage(
+            &mut self,
+            _address: Address,
+            _index: StorageKey,
+        ) -> Result<StorageValue, Self::Error> {
+            Ok(StorageValue::default())
+        }
+
+        fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+            Ok(B256::ZERO)
+        }
+    }
+
+    #[test]
+    fn top_level_precompile_call_does_not_load_target_code() {
+        let caller = address!("0000000000000000000000000000000000000001");
+        let precompile = address!("0000000000000000000000000000000000000004");
+        let code_hash = B256::with_last_byte(1);
+        let spec = SpecId::default();
+        let ctx = Context::mainnet().with_db(CodeLoadCountingDb {
+            caller,
+            precompile,
+            code_hash,
+            code_by_hash_calls: 0,
+        });
+        let mut evm = Evm {
+            ctx,
+            inspector: (),
+            instruction: EthInstructions::<EthInterpreter, _>::new_mainnet_with_spec(spec),
+            precompiles: EthPrecompiles::new(spec),
+            frame_stack: FrameStack::new_prealloc(8),
+        };
+
+        let tx = TxEnv::builder()
+            .caller(caller)
+            .kind(TxKind::Call(precompile))
+            .gas_limit(100_000)
+            .build()
+            .unwrap();
+
+        evm.transact_one(tx).expect("handler returned an error");
+
+        assert_eq!(evm.ctx.journaled_state.database.code_by_hash_calls, 0);
     }
 }

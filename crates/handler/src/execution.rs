@@ -19,21 +19,29 @@ pub fn create_init_frame<CTX: ContextTr>(
 
     match tx.kind() {
         TxKind::Call(target_address) => {
-            let account = &journal.load_account_with_code(target_address)?.info;
-
-            let known_bytecode = if let Some(delegated_address) =
-                account.code.as_ref().and_then(Bytecode::eip7702_address)
-            {
-                let account = &journal.load_account_with_code(delegated_address)?.info;
+            let known_bytecode = if journal.precompile_addresses().contains(&target_address) {
+                let account = &journal.load_account(target_address)?.info;
                 (
                     account.code_hash(),
                     account.code.clone().unwrap_or_default(),
                 )
             } else {
-                (
-                    account.code_hash(),
-                    account.code.clone().unwrap_or_default(),
-                )
+                let account = &journal.load_account_with_code(target_address)?.info;
+
+                if let Some(delegated_address) =
+                    account.code.as_ref().and_then(Bytecode::eip7702_address)
+                {
+                    let account = &journal.load_account_with_code(delegated_address)?.info;
+                    (
+                        account.code_hash(),
+                        account.code.clone().unwrap_or_default(),
+                    )
+                } else {
+                    (
+                        account.code_hash(),
+                        account.code.clone().unwrap_or_default(),
+                    )
+                }
             };
             Ok(FrameInput::Call(Box::new(CallInputs {
                 input: CallInput::Bytes(input),
