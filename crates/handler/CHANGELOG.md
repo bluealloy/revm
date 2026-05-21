@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v20.0.0...revm-handler-v20.0.1) - 2026-05-21
+
+### Other
+
+- *(eip8037)* remove dead refill_amount tracking ([#3699](https://github.com/bluealloy/revm/pull/3699))
+
 ## [20.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v18.1.0...revm-handler-v20.0.0) - 2026-05-19
 
 ### Added
