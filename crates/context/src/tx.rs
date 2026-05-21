@@ -13,7 +13,7 @@ use primitives::{eip7825, Address, Bytes, TxKind, B256, U256};
 use std::{vec, vec::Vec};
 
 /// The Transaction Environment is a struct that contains all fields that can be found in all Ethereum transaction,
-/// including EIP-4844, EIP-7702, EIP-7873, etc.  It implements the [`Transaction`] trait, which is used inside the EVM to execute a transaction.
+/// including EIP-4844, EIP-7702, etc. It implements the [`Transaction`] trait, which is used inside the EVM to execute a transaction.
 ///
 /// [`TxEnvBuilder`] builder is recommended way to create a new [`TxEnv`] as it will automatically
 /// set the transaction type based on the fields set.
@@ -102,8 +102,6 @@ pub enum DeriveTxTypeError {
     MissingTargetForEip4844,
     /// Missing target for EIP-7702
     MissingTargetForEip7702,
-    /// Missing target for EIP-7873
-    MissingTargetForEip7873,
 }
 
 impl core::fmt::Display for DeriveTxTypeError {
@@ -111,7 +109,6 @@ impl core::fmt::Display for DeriveTxTypeError {
         let s = match self {
             Self::MissingTargetForEip4844 => "missing target for EIP-4844",
             Self::MissingTargetForEip7702 => "missing target for EIP-7702",
-            Self::MissingTargetForEip7873 => "missing target for EIP-7873",
         };
         f.write_str(s)
     }
@@ -496,9 +493,6 @@ impl TxEnvBuilder {
                     tx.kind = TxKind::Call(Address::default());
                 }
                 Err(DeriveTxTypeError::MissingTargetForEip7702) => {
-                    tx.kind = TxKind::Call(Address::default());
-                }
-                Err(DeriveTxTypeError::MissingTargetForEip7873) => {
                     tx.kind = TxKind::Call(Address::default());
                 }
             }
