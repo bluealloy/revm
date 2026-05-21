@@ -534,13 +534,10 @@ impl EthFrame<EthInterpreter> {
                 // this frame's tracker. When the child fails to deploy a contract
                 // (revert, halt, or early-fail paths that return `address == None`
                 // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent`.
-                // The nonce-overflow path reports `InstructionResult::Return` (ok)
+                // charge to the reservoir and undo it on `state_gas_spent` via
+                // `refill_reservoir` (matching 0→x→0 storage restoration). The
+                // nonce-overflow path reports `InstructionResult::Return` (ok)
                 // with `address == None`, so gate on address rather than the result.
-                //
-                // Use `refill_reservoir` so that this refund is counted in
-                // `refill_amount` and gets unwound if the parent itself
-                // reverts/halts (matching 0→x→0 storage restoration).
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
@@ -587,13 +584,6 @@ pub const fn handle_reservoir_remaining_gas(
             parent_gas
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
-        );
-        // Propagate child's 0→x→0 refill total so that if the parent
-        // later reverts/halts, the refill contribution can be unwound.
-        parent_gas.set_refill_amount(
-            parent_gas
-                .refill_amount()
-                .saturating_add(child_gas.refill_amount()),
         );
     } else {
         // On revert/halt: the child's state changes are rolled back, so any
