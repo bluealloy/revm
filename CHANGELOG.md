@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v110
+date: 21.05.2026
+
+Maintenance release. Removes the dead `refill_amount` tracking field from `GasTracker` and `PrecompileOutput` ([#3699](https://github.com/bluealloy/revm/pull/3699)). All transitively dependent crates bumped accordingly.
+
+* `revm-context-interface`: 19.0.0 -> 19.0.1 (✓ API compatible changes)
+* `revm-context`: 18.0.0 -> 18.0.1 (✓ dependency bump)
+* `revm-interpreter`: 37.0.0 -> 37.0.1 (✓ API compatible changes)
+* `revm-precompile`: 36.0.0 -> 36.0.1 (✓ API compatible changes)
+* `revm-handler`: 20.0.0 -> 20.0.1 (✓ API compatible changes)
+* `revm-inspector`: 21.0.0 -> 21.0.1 (✓ dependency bump)
+* `revm-statetest-types`: 19.0.0 -> 19.0.1 (✓ dependency bump)
+* `revm`: 40.0.0 -> 40.0.1 (✓ dependency bump)
+* `revme`: 17.0.0 -> 17.0.1 (✓ dependency bump)
+
 # v109
 date: 20.05.2026
 
