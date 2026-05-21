@@ -36,6 +36,10 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            // EIP-2780 changes intrinsic gas independently of the EIP-8037
+            // reservoir model this test file exercises; disable it here to
+            // keep the comparisons focused on state-gas behaviour.
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(cap);
             cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
@@ -55,6 +59,7 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip8037 = false;
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(bytecode))
@@ -1047,6 +1052,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
             cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
@@ -1081,6 +1087,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
     let mut evm_no_state = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .modify_block_chained(|block| {
@@ -2266,6 +2273,7 @@ fn test_eip8037_tx_create_collision() {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip8037 = false;
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(build_db())
@@ -2277,6 +2285,7 @@ fn test_eip8037_tx_create_collision() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),

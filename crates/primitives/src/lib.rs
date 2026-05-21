@@ -17,6 +17,7 @@ extern crate alloc as std;
 
 pub mod constants;
 pub mod eip170;
+pub mod eip2780;
 pub mod eip3860;
 pub mod eip4844;
 pub mod eip7702;

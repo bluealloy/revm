@@ -1,5 +1,43 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v109
+date: 20.05.2026
+
+Bump revm-database-interface major version. All dependent crates bumped accordingly.
+
+* `revm-database-interface`: 11.1.0 -> 12.0.0 (⚠ API breaking changes)
+* `revm-context-interface`: 18.0.0 -> 19.0.0 (⚠ dependency bump)
+* `revm-database`: 14.0.0 -> 15.0.0 (⚠ dependency bump)
+* `revm-context`: 17.0.0 -> 18.0.0 (⚠ dependency bump)
+* `revm-interpreter`: 36.0.0 -> 37.0.0 (⚠ dependency bump)
+* `revm-precompile`: 35.0.0 -> 36.0.0 (⚠ dependency bump)
+* `revm-handler`: 19.0.0 -> 20.0.0 (⚠ dependency bump)
+* `revm-inspector`: 20.0.0 -> 21.0.0 (⚠ dependency bump)
+* `revm-statetest-types`: 18.0.0 -> 19.0.0 (⚠ dependency bump)
+* `revm`: 39.0.0 -> 40.0.0 (⚠ dependency bump)
+* `revm-ee-tests`: 0.2.0 -> 0.3.0 (⚠ dependency bump)
+* `revme`: 16.0.0 -> 17.0.0 (⚠ dependency bump)
+
+# v108
+date: 19.05.2026
+
+Prep for Amsteradam, bal-devnet-7 version (EIP-8037)
+
+* `revm-primitives`: 23.0.0 -> 24.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 10.0.0 -> 11.0.0 (⚠ API breaking changes)
+* `revm-state`: 11.0.1 -> 12.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 11.0.1 -> 11.1.0 (✓ API compatible changes)
+* `revm-context-interface`: 17.0.1 -> 18.0.0 (⚠ API breaking changes)
+* `revm-context`: 16.0.1 -> 17.0.0 (⚠ API breaking changes)
+* `revm-database`: 13.0.1 -> 14.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 35.0.1 -> 36.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 34.0.0 -> 35.0.0 (⚠ API breaking changes)
+* `revm-handler`: 18.1.0 -> 19.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 19.0.0 -> 20.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 17.0.1 -> 18.0.0 (✓ API compatible changes)
+* `revm`: 38.0.0 -> 39.0.0 (✓ API compatible changes)
+* `revme`: 15.0.0 -> 16.0.0 (✓ API compatible changes)
+
 # v107
 date: 17.04.2026
 

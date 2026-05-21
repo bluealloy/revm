@@ -1,4 +1,58 @@
 
+# v108 tag (revm v39.0.0)
+
+### EIP-8037 Amsterdam — bal-devnet-7 ([#3667](https://github.com/bluealloy/revm/pull/3667))
+* `Cfg`, `Host`, `LocalContextTr` gained required `cpsb()`. `LocalContextTr` also gained `set_cpsb`.
+* `InitialAndFloorGas`: `initial_total_gas` / `eip7702_reservoir_refund` removed; `initial_regular_gas` / `state_refund` added.
+* `ResultGas::state_gas_spent` removed — use `state_gas_spent_final`.
+* New struct fields (break literal construction): `LocalContext.cpsb`, `CallInputs.charged_new_account_state_gas`, `CallOutcome.charged_new_account_state_gas`, `PrecompileOutput.refill_amount`.
+* `GasParams` accessors (`sstore_state_gas`, `new_account_state_gas`, `code_deposit_state_gas`, `create_state_gas`, `tx_eip7702_per_empty_account_cost`, `tx_eip7702_auth_refund`, `initial_tx_gas`) each gained one CPSB param. `tx_eip7702_per_auth_state_gas` and `split_eip7702_refund` removed (also dropped from `GasId`).
+* `calculate_initial_tx_gas` 6→7 params; `calculate_initial_tx_gas_for_tx` 2→3; `validate_initial_tx_gas` 5→6; `build_result_gas` 2→3; `apply_auth_list` 4→3; `initial_gas_and_reservoir` 2→3.
+* `Handler::last_frame_result` trait method 2→3 params. `return_create` 5→4 params and 2→1 generics.
+
+### JournalTr restructure ([#3663](https://github.com/bluealloy/revm/pull/3663))
+* New required methods `db_and_state` / `db_and_state_mut` (no default).
+* `JournalExt` now requires `JournalTr` as supertrait and is no longer dyn-compatible. `evm_state` / `evm_state_mut` removed.
+
+### Instructions return `Result` ([#3558](https://github.com/bluealloy/revm/pull/3558))
+* Opcode fns now return `InstructionExecResult` instead of `()`.
+* New `InstructionResult::Suspend` variant (update exhaustive matches).
+* `InstructionResult::is_error` / `InterpreterResult::is_error` deprecated.
+
+### Split instruction & gas tables ([#3561](https://github.com/bluealloy/revm/pull/3561))
+* `Instruction::new` 2→1 param; `Instruction::static_gas` removed.
+* `InstructionProvider` gained required `gas_table(&self) -> &GasTable`.
+* `EthInstructions`: no longer struct-literal constructible (`instruction_table` field removed). `new` 2→3 params; `insert_instruction` 2→3.
+* `Interpreter::step` / `run_plain` / `run_plain_as_output` 2→3 params; `inspect_instructions` 4→5.
+* `interpreter::instruction_table_gas_changes_spec` removed.
+
+### Reservoir in OOG constructors ([#3580](https://github.com/bluealloy/revm/pull/3580))
+* `Gas::new_spent` removed.
+* `InterpreterResult::new_oog`, `CallOutcome::new_oog`, `CreateOutcome::new_oog`, `FrameResult::new_call_oog`, `FrameResult::new_create_oog` each gained a trailing `reservoir` param.
+
+### SpecId cleanup ([#3593](https://github.com/bluealloy/revm/pull/3593), [#3649](https://github.com/bluealloy/revm/pull/3649))
+* `num_enum` dropped — use the manual `TryFrom<u8>`. New `SpecId::NEXT` constant.
+* Variants removed: `FRONTIER_THAWING`, `DAO_FORK`, `CONSTANTINOPLE`, `MUIR_GLACIER`, `ARROW_GLACIER`, `GRAY_GLACIER` (with their `name::*` consts).
+* Discriminants of the remaining variants shifted (e.g. `HOMESTEAD` 2→1, `AMSTERDAM` 20→14) — fix any `as u8` / pointer-cast usage.
+
+### `op-revm` removed ([#3568](https://github.com/bluealloy/revm/pull/3568))
+Moved to `ethereum-optimism/optimism` (`rust/op-revm`). Update dependency paths.
+
+### Other
+* `Bytecode::new_analyzed` is now `unsafe` ([#3557](https://github.com/bluealloy/revm/pull/3557)) — no PUSH-padding validation.
+* `OpCode::new_unchecked` deprecated ([#3566](https://github.com/bluealloy/revm/pull/3566)).
+* `BalError` ([#3619](https://github.com/bluealloy/revm/pull/3619)): `AccountNotFound` / `SlotNotFound` are now struct variants; new `InvalidAccountId` variant; discriminants no longer stable.
+* `StorageBal::get` 2→3 params; `get_bal_writes` 1→2.
+* `Account.original_info` pub field removed (now private — use accessors) ([#3590](https://github.com/bluealloy/revm/pull/3590)).
+* `MemoryTr::limit_reached` 2→1 param ([#3599](https://github.com/bluealloy/revm/pull/3599)).
+* CALL handlers unified ([#3626](https://github.com/bluealloy/revm/pull/3626)): `contract::call_code` / `delegate_call` / `static_call` removed — use `contract::call::<KIND, _, _>`. `contract::create` swapped const-generic / type-generic order.
+* `MemoryExtensionResult` enum removed ([#3646](https://github.com/bluealloy/revm/pull/3646)).
+* Removed: `Stack::pop_unsafe`, `Stack::top_unsafe`, `Interpreter::step_dummy`.
+* Macros removed: `resize_memory!`, `as_usize_or_fail_ret!`, `as_isize_saturated!`, `berlin_load_account!`.
+* `LoadError` variant discriminants swapped (`DBError` 0→1, `ColdLoadSkipped` 1→0).
+* `GasParams::get` and `log_cost` no longer `const fn` ([#3608](https://github.com/bluealloy/revm/pull/3608)).
+* `revm_precompile::blake2::algo` module + `SIGMA` / `IV` consts removed ([#3609](https://github.com/bluealloy/revm/pull/3609)).
+
 # v107 tag (revm v38.0.0)
 
 * `Handler::first_frame_input` ([#3578](https://github.com/bluealloy/revm/pull/3578)): `init_and_floor_gas: &InitialAndFloorGas` param replaced by `reservoir: u64`. Compute via `InitialAndFloorGas::initial_gas_and_reservoir(tx_gas_limit, tx_gas_limit_cap, is_eip8037) -> (gas_limit, reservoir)`.

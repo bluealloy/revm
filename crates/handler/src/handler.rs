@@ -10,12 +10,13 @@ use context::{
     LocalContextTr,
 };
 use context_interface::{
+    cfg::gas_params,
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use primitives::{hardfork::SpecId, U256};
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -306,14 +307,25 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
-        let ctx = evm.ctx_ref();
+        let ctx = evm.ctx();
+        let cfg = ctx.cfg();
+        let spec: SpecId = cfg.spec().into();
+        let is_eip7623_disabled = cfg.is_eip7623_disabled();
+        let is_amsterdam_eip8037_enabled = cfg.is_amsterdam_eip8037_enabled();
+        let is_amsterdam_eip2780_enabled = cfg.is_amsterdam_eip2780_enabled();
+        let tx_gas_limit_cap = cfg.tx_gas_limit_cap();
+        let cpsb = cfg.cpsb();
+        let tx = ctx.tx();
+        let eip2780 =
+            is_amsterdam_eip2780_enabled.then(|| gas_params::Eip2780TxInfo { value: tx.value() });
         let gas = validation::validate_initial_tx_gas(
-            ctx.tx(),
-            ctx.cfg().spec().into(),
-            ctx.cfg().is_eip7623_disabled(),
-            ctx.cfg().is_amsterdam_eip8037_enabled(),
-            ctx.cfg().tx_gas_limit_cap(),
-            ctx.cfg().cpsb(),
+            tx,
+            spec,
+            is_eip7623_disabled,
+            is_amsterdam_eip8037_enabled,
+            tx_gas_limit_cap,
+            cpsb,
+            eip2780,
         )?;
 
         Ok(gas)
