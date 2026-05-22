@@ -20,7 +20,6 @@ use interpreter::{
     InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use primitives::{
-    constants::CALL_STACK_LIMIT,
     eip8038,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     Address, Bytes, U256,
@@ -221,11 +220,6 @@ impl EthFrame<EthInterpreter> {
             return return_result(halt);
         }
 
-        // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_result(InstructionResult::CallTooDeep);
-        }
-
         // Resolve EIP-7702 deferred bytecode load BEFORE the checkpoint so the
         // delegate account's warmth (and code load) is not rolled back if the
         // child frame later reverts. The CALL helper already charged gas for
@@ -344,11 +338,6 @@ impl EthFrame<EthInterpreter> {
                 address: None,
             })))
         };
-
-        // Check depth
-        if depth > CALL_STACK_LIMIT as usize {
-            return return_error(InstructionResult::CallTooDeep);
-        }
 
         // Fetch balance of caller.
         let journal = context.journal_mut();

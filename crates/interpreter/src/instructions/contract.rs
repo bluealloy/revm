@@ -1,8 +1,8 @@
 mod call_helpers;
 
 pub use call_helpers::{
-    get_memory_input_and_out_ranges, load_acc_and_calc_gas, load_account_delegated,
-    load_account_delegated_handle_error, resize_memory,
+    check_call_depth, check_create_depth, get_memory_input_and_out_ranges, load_acc_and_calc_gas,
+    load_account_delegated, load_account_delegated_handle_error, resize_memory,
 };
 
 use crate::{
@@ -113,6 +113,10 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
     }
     gas!(context.interpreter, gas_limit);
 
+    if check_create_depth(context.interpreter, context.host, gas_limit) {
+        return Ok(());
+    }
+
     // Call host to interact with target contract
     let create_inputs = CreateInputs::new(
         context.interpreter.input.target_address(),
@@ -191,6 +195,10 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
         _ => unreachable!(),
     };
     let is_static = context.interpreter.runtime_flag.is_static() || KIND == STATICCALL;
+
+    if check_call_depth(context.interpreter, context.host, gas_limit) {
+        return Ok(());
+    }
 
     // Call host to interact with target contract
     context

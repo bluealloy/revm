@@ -533,6 +533,11 @@ impl<
 
     /* Journal */
 
+    #[inline]
+    fn depth(&self) -> usize {
+        self.journaled_state.depth()
+    }
+
     /// Gets the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: StorageKey) -> StorageValue {
         self.journal_mut().tload(address, index)

@@ -83,6 +83,16 @@ pub trait Host {
 
     /* Journal */
 
+    /// Returns the current call depth of the journal — i.e. the number of
+    /// nested checkpoints currently open.
+    ///
+    /// Used by CALL/CREATE opcodes to enforce the EIP-150 1024-frame stack
+    /// limit without going through a frame init that immediately fails. At
+    /// opcode dispatch time this equals `current_frame_depth + 1`, i.e. the
+    /// depth the next child frame would be created at, so the check is
+    /// `host.depth() > CALL_STACK_LIMIT`.
+    fn depth(&self) -> usize;
+
     /// Selfdestruct account, calls `ContextTr::journal_mut().selfdestruct(address, target)`
     fn selfdestruct(
         &mut self,
@@ -310,6 +320,10 @@ impl Host for DummyHost {
 
     fn block_hash(&mut self, _number: u64) -> Option<B256> {
         None
+    }
+
+    fn depth(&self) -> usize {
+        0
     }
 
     fn selfdestruct(

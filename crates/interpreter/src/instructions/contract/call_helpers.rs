@@ -6,6 +6,7 @@ use crate::{
 use context_interface::{cfg::GasParams, host::LoadError, Host};
 use core::{cmp::min, ops::Range};
 use primitives::{
+    constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, *},
     Address, B256, U256,
 };
@@ -227,4 +228,55 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         BytecodeLoad::Bytecode(bytecode),
         code_hash,
     ))
+}
+
+/// EIP-150 call-stack depth check for the CALL family.
+///
+/// Returns `true` and short-circuits the opcode when creating a child frame
+/// would exceed [`CALL_STACK_LIMIT`]. The full `gas_limit` (already including
+/// the call stipend for value-transferring calls) is reimbursed to the
+/// parent's tracker — matching the EVM spec where the stipend on a failed
+/// immediate call is effectively returned to the caller — `U256::ZERO` is
+/// pushed and the caller should return `Ok(())` to continue execution.
+///
+/// Returns `false` when the depth check passes; the caller should proceed to
+/// dispatch the child frame.
+#[inline]
+pub fn check_call_depth<IT: ITy, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<IT>,
+    host: &H,
+    gas_limit: u64,
+) -> bool {
+    if host.depth() <= CALL_STACK_LIMIT as usize {
+        return false;
+    }
+    interpreter.gas.erase_cost(gas_limit);
+    // Safe to push without stack-overflow check: each CALL family opcode pops
+    // at least two stack items before reaching this point.
+    let _ = interpreter.stack.push(U256::ZERO);
+    true
+}
+
+/// EIP-150 call-stack depth check for CREATE/CREATE2.
+///
+/// Returns `true` when the depth check fails: the allocated child gas is
+/// reimbursed to the parent, the EIP-8037 `create_state_gas` (if any) is
+/// returned to the reservoir, `U256::ZERO` is pushed, and the caller should
+/// return `Ok(())` to continue execution.
+#[inline]
+pub fn check_create_depth<IT: ITy, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<IT>,
+    host: &H,
+    gas_limit: u64,
+) -> bool {
+    if host.depth() <= CALL_STACK_LIMIT as usize {
+        return false;
+    }
+    interpreter.gas.erase_cost(gas_limit);
+    if host.is_amsterdam_eip8037_enabled() {
+        let state_gas = host.gas_params().create_state_gas(host.cpsb());
+        interpreter.gas.refill_reservoir(state_gas);
+    }
+    let _ = interpreter.stack.push(U256::ZERO);
+    true
 }
