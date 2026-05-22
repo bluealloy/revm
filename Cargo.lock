@@ -3775,6 +3775,7 @@ dependencies = [
  "alloy-eips",
  "alloy-provider",
  "alloy-transport",
+ "derive_more",
  "revm-bytecode",
  "revm-database-interface",
  "revm-primitives",

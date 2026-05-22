@@ -36,7 +36,7 @@ pub use context::{
     journal::{Journal, JournalEntry},
     Context,
 };
-pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
+pub use database_interface::{Database, DatabaseCommit, DatabaseRef, NoopHook, OnStateHook};
 pub use handler::{
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext, MainnetEvm, SystemCallCommitEvm,
     SystemCallEvm,
