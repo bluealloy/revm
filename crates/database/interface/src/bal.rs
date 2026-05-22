@@ -297,7 +297,14 @@ impl<ERROR> From<BalError> for EvmDatabaseError<ERROR> {
     }
 }
 
-impl<ERROR: core::error::Error + Send + Sync + 'static> DBErrorMarker for EvmDatabaseError<ERROR> {}
+impl<ERROR: core::error::Error + Send + Sync + 'static> DBErrorMarker for EvmDatabaseError<ERROR> {
+    fn is_fatal(&self) -> bool {
+        match self {
+            Self::Bal(_) => false,
+            Self::Database(_) => true,
+        }
+    }
+}
 
 impl<ERROR: Display> Display for EvmDatabaseError<ERROR> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
