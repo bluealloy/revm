@@ -1,3 +1,5 @@
+//! State commit hook.
+
 use crate::state::EvmState;
 
 /// A hook that is called when state changes are committed.

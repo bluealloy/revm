@@ -36,7 +36,6 @@ pub mod bal;
 pub mod either;
 pub mod empty_db;
 pub mod erased_error;
-/// State commit hook.
 pub mod state_hook;
 pub mod try_commit;
 
