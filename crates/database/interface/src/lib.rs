@@ -36,12 +36,15 @@ pub mod bal;
 pub mod either;
 pub mod empty_db;
 pub mod erased_error;
+/// State commit hook.
+pub mod state_hook;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 pub use erased_error::ErasedError;
+pub use state_hook::{NoopHook, OnStateHook};
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.

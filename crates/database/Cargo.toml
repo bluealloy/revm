@@ -22,6 +22,7 @@ state.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 bytecode.workspace = true
+derive_more.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -45,6 +46,7 @@ std = [
 	"alloy-eips?/std",
 	"bytecode/std",
 	"database-interface/std",
+	"derive_more/std",
 	"primitives/std",
 	"state/std",
 	"serde_json/std",
