@@ -4,7 +4,7 @@ use interpreter::{
     CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
 };
 use primitives::TxKind;
-use state::Bytecode;
+use state::{Bytecode, BytecodeLoad};
 use std::boxed::Box;
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
@@ -27,12 +27,12 @@ pub fn create_init_frame<CTX: ContextTr>(
                 let account = &journal.load_account_with_code(delegated_address)?.info;
                 (
                     account.code_hash(),
-                    account.code.clone().unwrap_or_default(),
+                    BytecodeLoad::Bytecode(account.code.clone().unwrap_or_default()),
                 )
             } else {
                 (
                     account.code_hash(),
-                    account.code.clone().unwrap_or_default(),
+                    BytecodeLoad::Bytecode(account.code.clone().unwrap_or_default()),
                 )
             };
             Ok(FrameInput::Call(Box::new(CallInputs {

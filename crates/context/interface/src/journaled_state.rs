@@ -337,6 +337,15 @@ pub trait JournalTr {
         _load_code: bool,
         _skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>>;
+
+    /// Returns `true` if `address` is currently warm — already in the journal
+    /// (precompiles, coinbase, access list, or touched this transaction).
+    ///
+    /// This is a pure lookup. It never touches the database, never promotes a
+    /// cold account to warm, and is intended for cases where the caller only
+    /// needs the warm/cold decision (e.g. EIP-7702 delegate gas charging) and
+    /// wants to defer the actual account/code load.
+    fn is_account_warm(&self, address: Address) -> bool;
 }
 
 /// Error that can happen when loading account info.

@@ -57,6 +57,48 @@ pub enum BytecodeKind {
     Eip7702,
 }
 
+/// Deferred bytecode reference produced when account loading is split from
+/// bytecode loading.
+///
+/// `Bytecode` carries an already-loaded [`Bytecode`]; `LoadFrom` carries an
+/// account [`Address`] whose code (and code hash) still needs to be fetched
+/// when the bytecode is actually required (e.g. on frame creation).
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum BytecodeLoad {
+    /// Code has not been loaded yet; load it from this address when needed.
+    LoadFrom(Address),
+    /// Code is already loaded.
+    Bytecode(Bytecode),
+}
+
+impl BytecodeLoad {
+    /// Returns the loaded bytecode if already available.
+    #[inline]
+    pub const fn as_bytecode(&self) -> Option<&Bytecode> {
+        match self {
+            Self::Bytecode(code) => Some(code),
+            Self::LoadFrom(_) => None,
+        }
+    }
+
+    /// Returns the address to load code from, if the load was deferred.
+    #[inline]
+    pub const fn load_from_address(&self) -> Option<Address> {
+        match self {
+            Self::LoadFrom(addr) => Some(*addr),
+            Self::Bytecode(_) => None,
+        }
+    }
+}
+
+impl From<Bytecode> for BytecodeLoad {
+    #[inline]
+    fn from(code: Bytecode) -> Self {
+        Self::Bytecode(code)
+    }
+}
+
 impl Default for Bytecode {
     #[inline]
     fn default() -> Self {

@@ -2,7 +2,7 @@ use crate::interpreter_types::MemoryTr;
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
 use primitives::{Address, Bytes, B256, U256};
-use state::Bytecode;
+use state::BytecodeLoad;
 
 /// Input enum for a call.
 ///
@@ -145,10 +145,14 @@ pub struct CallInputs {
     ///
     /// Previously `context.code_address`.
     pub bytecode_address: Address,
-    /// Known bytecode and its hash.
-    /// If None, bytecode will be loaded from the account at `bytecode_address`.
-    /// If Some((hash, bytecode)), the provided bytecode and hash will be used.
-    pub known_bytecode: (B256, Bytecode),
+    /// Known bytecode (or a deferred load) and its hash.
+    ///
+    /// `known_bytecode.0` is the code hash. It is meaningful when
+    /// `known_bytecode.1` is `BytecodeLoad::Bytecode`; for
+    /// `BytecodeLoad::LoadFrom`, the hash is unknown at this point and the
+    /// field is set to `B256::ZERO` — frame creation resolves the load and
+    /// uses the freshly loaded account's hash.
+    pub known_bytecode: (B256, BytecodeLoad),
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.

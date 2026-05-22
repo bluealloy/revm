@@ -9,7 +9,7 @@ use primitives::{
     hardfork::SpecId::{self, *},
     Address, B256, U256,
 };
-use state::Bytecode;
+use state::{Bytecode, BytecodeLoad};
 
 /// Gets memory input and output ranges for call instructions.
 #[inline]
@@ -64,7 +64,7 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
     transfers_value: bool,
     create_empty_account: bool,
     stack_gas_limit: u64,
-) -> Result<(u64, Bytecode, B256, bool), InstructionResult> {
+) -> Result<(u64, BytecodeLoad, B256, bool), InstructionResult> {
     // Transfer value cost
     if transfers_value {
         gas!(
@@ -115,14 +115,22 @@ pub fn load_acc_and_calc_gas<H: Host + ?Sized>(
 
 /// Loads accounts and its delegate account.
 ///
-/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode_load, code_hash)`.
+///
+/// `bytecode_load` is `BytecodeLoad::Bytecode(_)` when the bytecode for the
+/// frame is already known (non-delegated path), and
+/// `BytecodeLoad::LoadFrom(delegate_address)` when the call target is an
+/// EIP-7702 delegation — in that case the delegate account is not loaded here,
+/// only its warm/cold status is consulted to charge gas, and `code_hash` is
+/// returned as [`B256::ZERO`] (the real hash is fetched when the deferred
+/// load is resolved at frame creation).
 #[inline]
 pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
     context: &mut Ictx<'_, H, impl ITy>,
     to: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Result<(u64, u64, Bytecode, B256), InstructionResult> {
+) -> Result<(u64, u64, BytecodeLoad, B256), InstructionResult> {
     // move this to static gas.
     let remaining_gas = context.interpreter.gas.remaining();
     Ok(load_account_delegated(
@@ -139,8 +147,13 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 ///
 /// Assumption is that warm gas is already deducted.
 ///
-/// Returns `(regular_gas_cost, state_gas_cost, bytecode, code_hash)`.
+/// Returns `(regular_gas_cost, state_gas_cost, bytecode_load, code_hash)`.
 /// `state_gas_cost` is non-zero only when creating a new empty account (EIP-8037).
+///
+/// For EIP-7702 delegations the delegate account is **not** loaded here —
+/// only its warm/cold status is checked via [`Host::is_account_warm`] in
+/// order to charge the correct gas. The actual bytecode load is deferred to
+/// frame creation, signalled by returning `BytecodeLoad::LoadFrom(address)`.
 #[inline]
 pub fn load_account_delegated<H: Host + ?Sized>(
     host: &mut H,
@@ -149,7 +162,7 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     address: Address,
     transfers_value: bool,
     create_empty_account: bool,
-) -> Result<(u64, u64, Bytecode, B256), LoadError> {
+) -> Result<(u64, u64, BytecodeLoad, B256), LoadError> {
     let mut cost = 0;
     let mut state_gas_cost = 0;
     let is_berlin = spec.is_enabled_in(SpecId::BERLIN);
@@ -163,8 +176,8 @@ pub fn load_account_delegated<H: Host + ?Sized>(
     if is_berlin && account.is_cold {
         cost += additional_cold_cost;
     }
-    let mut bytecode = account.code.clone().unwrap_or_default();
-    let mut code_hash = account.code_hash();
+    let bytecode = account.code.clone().unwrap_or_default();
+    let code_hash = account.code_hash();
     // New account cost, as account is empty there is no delegated account and we can return early.
     if create_empty_account && account.is_empty {
         cost += host
@@ -173,28 +186,45 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         if host.is_amsterdam_eip8037_enabled() && transfers_value {
             state_gas_cost += host.gas_params().new_account_state_gas(host.cpsb());
         }
-        return Ok((cost, state_gas_cost, bytecode, code_hash));
+        return Ok((
+            cost,
+            state_gas_cost,
+            BytecodeLoad::Bytecode(bytecode),
+            code_hash,
+        ));
     }
 
-    // load delegate code if account is EIP-7702
-    if let Some(address) = account.code.as_ref().and_then(Bytecode::eip7702_address) {
+    // EIP-7702 delegation: the delegated account is never cold-loaded here.
+    // We only consult its warm/cold status to compute gas; the actual code
+    // load is deferred to frame creation via `BytecodeLoad::LoadFrom`.
+    if let Some(delegate_address) = account.code.as_ref().and_then(Bytecode::eip7702_address) {
         // EIP-7702 is enabled after berlin hardfork.
         cost += warm_storage_read_cost;
         if cost > remaining_gas {
             return Err(LoadError::ColdLoadSkipped);
         }
 
-        // skip cold load if there is enough gas to cover the cost.
-        let skip_cold_load = remaining_gas < cost + additional_cold_cost;
-        let delegate_account =
-            host.load_account_info_skip_cold_load(address, true, skip_cold_load)?;
-
-        if delegate_account.is_cold {
+        let is_warm = host.is_account_warm(delegate_address);
+        if !is_warm {
+            // Charging the cold-access surcharge requires the caller to have
+            // enough gas to actually load the delegate later.
+            if remaining_gas < cost + additional_cold_cost {
+                return Err(LoadError::ColdLoadSkipped);
+            }
             cost += additional_cold_cost;
         }
-        bytecode = delegate_account.code.clone().unwrap_or_default();
-        code_hash = delegate_account.code_hash();
+        return Ok((
+            cost,
+            state_gas_cost,
+            BytecodeLoad::LoadFrom(delegate_address),
+            B256::ZERO,
+        ));
     }
 
-    Ok((cost, state_gas_cost, bytecode, code_hash))
+    Ok((
+        cost,
+        state_gas_cost,
+        BytecodeLoad::Bytecode(bytecode),
+        code_hash,
+    ))
 }

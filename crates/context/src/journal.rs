@@ -399,4 +399,9 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
                 AccountInfoLoad::new(&a.data.info, a.is_cold, a.state_clear_aware_is_empty(spec))
             })
     }
+
+    #[inline]
+    fn is_account_warm(&self, address: Address) -> bool {
+        self.inner.is_account_warm(address)
+    }
 }

@@ -716,6 +716,23 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         })
     }
 
+    /// Returns `true` if `address` is currently warm in the journal — i.e. it
+    /// is either listed in the warm-address set (precompiles, coinbase, access
+    /// list) or has already been loaded in the current transaction.
+    ///
+    /// This is a pure lookup; it never reads from the database and never
+    /// promotes the account from cold to warm.
+    #[inline]
+    pub fn is_account_warm(&self, address: Address) -> bool {
+        if self.warm_addresses.is_warm(&address) {
+            return true;
+        }
+        match self.state.get(&address) {
+            Some(account) => !account.is_cold_transaction_id(self.transaction_id),
+            None => false,
+        }
+    }
+
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
     pub fn load_account<'a, 'db, DB: Database>(

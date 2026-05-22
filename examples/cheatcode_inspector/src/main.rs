@@ -315,6 +315,10 @@ impl JournalTr for Backend {
             .load_account_info_skip_cold_load(address, load_code, skip_cold_load)
     }
 
+    fn is_account_warm(&self, address: Address) -> bool {
+        self.journaled_state.is_account_warm(address)
+    }
+
     fn load_account_mut_optional_code(
         &mut self,
         address: Address,

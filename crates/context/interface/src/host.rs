@@ -147,6 +147,16 @@ pub trait Host {
         skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, LoadError>;
 
+    /// Returns `true` if `address` is currently warm — i.e. it has already been
+    /// loaded in this transaction or appears in the warm-address set
+    /// (precompiles, coinbase, access list).
+    ///
+    /// This is a pure lookup: it never reads from the database and never
+    /// promotes a cold account to warm. Intended for paths where the caller
+    /// only needs the warm/cold decision (e.g. EIP-7702 delegate gas charging)
+    /// and wants to defer the actual account/code load to a later point.
+    fn is_account_warm(&self, address: Address) -> bool;
+
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
@@ -326,6 +336,10 @@ impl Host for DummyHost {
         _skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, LoadError> {
         Ok(Default::default())
+    }
+
+    fn is_account_warm(&self, _address: Address) -> bool {
+        false
     }
 
     fn sstore_skip_cold_load(

@@ -630,4 +630,9 @@ impl<
             }
         }
     }
+
+    #[inline]
+    fn is_account_warm(&self, address: Address) -> bool {
+        self.journaled_state.is_account_warm(address)
+    }
 }
