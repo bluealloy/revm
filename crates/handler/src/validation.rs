@@ -363,7 +363,7 @@ mod tests {
 
     #[test]
     fn test_eip7954_initcode_between_old_and_new_limit() {
-        // Size between old limit (0xC000) and new limit (0x10000):
+        // Size between old limit (0xC000) and new limit (0x20000):
         // should fail pre-Amsterdam, succeed at Amsterdam
         let size = eip3860::MAX_INITCODE_SIZE + 1; // 0xC001
         let large_bytecode = vec![opcode::STOP; size];
@@ -386,13 +386,13 @@ mod tests {
 
     #[test]
     fn test_eip7954_code_size_limit_failure() {
-        // EIP-7954: MAX_CODE_SIZE = 0x8000
-        // use the simplest method to return a contract code size greater than 0x8000
-        // PUSH3 0x8001 (greater than 0x8000) - return size
+        // EIP-7954: MAX_CODE_SIZE = 0x10000
+        // use the simplest method to return a contract code size greater than 0x10000
+        // PUSH3 0x10001 (greater than 0x10000) - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x00, 0x80, 0x01, // PUSH3 0x8001 (greater than 0x8000)
+            0x62, 0x01, 0x00, 0x01, // PUSH3 0x10001 (greater than 0x10000)
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];

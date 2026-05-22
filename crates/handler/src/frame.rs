@@ -695,7 +695,7 @@ pub fn return_create<CTX: ContextTr>(
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7954 increased this limit to 0x8000 (~32kb).
+    // EIP-7954 increased this limit to 0x10000 (64kb).
     // This must be checked BEFORE charging state gas for code deposit,
     // so that oversized code does not incur storage gas costs.
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
