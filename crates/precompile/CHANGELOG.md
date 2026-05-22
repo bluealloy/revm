@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [36.0.2](https://github.com/bluealloy/revm/compare/revm-precompile-v36.0.1...revm-precompile-v36.0.2) - 2026-05-22
+
+### Other
+
+- updated the following local packages: revm-context-interface
+
+## [36.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v36.0.0...revm-precompile-v36.0.1) - 2026-05-21
+
+### Other
+
+- *(eip8037)* remove dead refill_amount tracking ([#3699](https://github.com/bluealloy/revm/pull/3699))
+
 ## [36.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v34.0.0...revm-precompile-v36.0.0) - 2026-05-19
 
 ### Added

@@ -45,7 +45,14 @@ pub use erased_error::ErasedError;
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 
 /// Database error marker is needed to implement From conversion for Error type.
-pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {}
+pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {
+    /// Returns `true` if the error is fatal and execution cannot recover from it.
+    ///
+    /// Defaults to `true`. Implementors can override this to signal recoverable errors.
+    fn is_fatal(&self) -> bool {
+        true
+    }
+}
 
 /// Implement marker for `()`.
 impl DBErrorMarker for Infallible {}
