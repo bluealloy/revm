@@ -54,6 +54,8 @@ where
             instruction: EthInstructions::new_mainnet_with_spec(SpecId::CANCUN),
             precompiles: CustomPrecompileProvider::new_with_spec(SpecId::CANCUN),
             frame_stack: FrameStack::new(),
+            #[cfg(feature = "asyncdb")]
+            async_stack: revm::database_interface::async_db::FiberStack::default(),
         })
     }
 }

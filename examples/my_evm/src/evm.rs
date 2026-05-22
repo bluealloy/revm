@@ -51,6 +51,8 @@ impl<CTX: ContextTr, INSP> MyEvm<CTX, INSP> {
             instruction: EthInstructions::new_mainnet_with_spec(SpecId::default()),
             precompiles: EthPrecompiles::new(SpecId::default()),
             frame_stack: FrameStack::new(),
+            #[cfg(feature = "asyncdb")]
+            async_stack: revm::database_interface::async_db::FiberStack::default(),
         })
     }
 }

@@ -32,6 +32,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 # asyncdb
 tokio = { workspace = true, optional = true }
+corosensei = { workspace = true, optional = true }
 
 [dev-dependencies]
 
@@ -45,4 +46,4 @@ std = [
     "thiserror/std",
 ]
 serde = ["dep:serde", "primitives/serde", "state/serde", "either/serde"]
-asyncdb = ["dep:tokio", "tokio/rt-multi-thread"]
+asyncdb = ["std", "dep:tokio", "tokio/rt-multi-thread", "dep:corosensei"]

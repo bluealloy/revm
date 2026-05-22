@@ -39,7 +39,7 @@ pub mod erased_error;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
-pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
+pub use async_db::{AsyncDb, AsyncError, AsyncResult, DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 pub use erased_error::ErasedError;
 pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};

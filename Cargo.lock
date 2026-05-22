@@ -1483,6 +1483,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
+name = "corosensei"
+version = "0.3.3"
+source = "git+https://github.com/Amanieu/corosensei?rev=3a122508ab1d7c25e4dee8b2b4b4c47046c3c3d8#3a122508ab1d7c25e4dee8b2b4b4c47046c3c3d8"
+dependencies = [
+ "autocfg",
+ "cfg-if",
+ "libc",
+ "scopeguard",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3789,6 +3801,7 @@ name = "revm-database-interface"
 version = "12.1.0"
 dependencies = [
  "auto_impl",
+ "corosensei",
  "either",
  "revm-primitives",
  "revm-state",

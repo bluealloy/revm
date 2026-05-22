@@ -70,6 +70,7 @@ dev = [
 	"optional_priority_fee_check",
 	"optional_fee_charge",
 ]
+asyncdb = ["std", "database-interface/asyncdb"]
 memory_limit = []
 optional_balance_check = []
 optional_block_gas_limit = []

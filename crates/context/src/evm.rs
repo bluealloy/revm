@@ -22,6 +22,9 @@ pub struct Evm<CTX, INSP, I, P, F> {
     pub precompiles: P,
     /// Frame that is going to be executed.
     pub frame_stack: FrameStack<F>,
+    /// Reusable async execution stack.
+    #[cfg(feature = "asyncdb")]
+    pub async_stack: database_interface::async_db::FiberStack,
 }
 
 impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
@@ -35,6 +38,8 @@ impl<CTX, I, P, F: Default> Evm<CTX, (), I, P, F> {
             instruction,
             precompiles,
             frame_stack: FrameStack::new_prealloc(8),
+            #[cfg(feature = "asyncdb")]
+            async_stack: database_interface::async_db::FiberStack::default(),
         }
     }
 }
@@ -48,6 +53,8 @@ impl<CTX, I, INSP, P, F: Default> Evm<CTX, INSP, I, P, F> {
             instruction,
             precompiles,
             frame_stack: FrameStack::new_prealloc(8),
+            #[cfg(feature = "asyncdb")]
+            async_stack: database_interface::async_db::FiberStack::default(),
         }
     }
 }
@@ -62,6 +69,8 @@ impl<CTX, INSP, I, P, F> Evm<CTX, INSP, I, P, F> {
             instruction: self.instruction,
             precompiles: self.precompiles,
             frame_stack: self.frame_stack,
+            #[cfg(feature = "asyncdb")]
+            async_stack: self.async_stack,
         }
     }
 
@@ -73,6 +82,8 @@ impl<CTX, INSP, I, P, F> Evm<CTX, INSP, I, P, F> {
             instruction: self.instruction,
             precompiles,
             frame_stack: self.frame_stack,
+            #[cfg(feature = "asyncdb")]
+            async_stack: self.async_stack,
         }
     }
 
