@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.1.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v12.0.0...revm-database-interface-v12.1.0) - 2026-05-22
+
+### Added
+
+- *(database)* add is_fatal to DBErrorMarker ([#3704](https://github.com/bluealloy/revm/pull/3704))
+
 ## [12.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v11.0.1...revm-database-interface-v12.0.0) - 2026-05-19
 
 ### Added
