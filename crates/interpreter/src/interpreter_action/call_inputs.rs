@@ -2,7 +2,7 @@ use crate::interpreter_types::MemoryTr;
 use context_interface::{ContextTr, LocalContextTr};
 use core::ops::Range;
 use primitives::{Address, Bytes, B256, U256};
-use state::BytecodeLoad;
+use state::Bytecode;
 
 /// Input enum for a call.
 ///
@@ -145,14 +145,12 @@ pub struct CallInputs {
     ///
     /// Previously `context.code_address`.
     pub bytecode_address: Address,
-    /// Known bytecode (or a deferred load) and its hash.
+    /// Known bytecode and its hash for the call's target.
     ///
-    /// `known_bytecode.0` is the code hash. It is meaningful when
-    /// `known_bytecode.1` is `BytecodeLoad::Bytecode`; for
-    /// `BytecodeLoad::LoadFrom`, the hash is unknown at this point and the
-    /// field is set to `B256::ZERO` — frame creation resolves the load and
-    /// uses the freshly loaded account's hash.
-    pub known_bytecode: (B256, BytecodeLoad),
+    /// For EIP-7702 delegations this is the delegated account's code (the
+    /// CALL opcode resolves the deferred load before building this struct);
+    /// otherwise it is the target account's own code.
+    pub known_bytecode: (B256, Bytecode),
     /// Target address, this account storage is going to be modified.
     ///
     /// Previously `context.address`.

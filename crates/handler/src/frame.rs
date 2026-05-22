@@ -24,7 +24,7 @@ use primitives::{
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     Address, Bytes, U256,
 };
-use state::{Bytecode, BytecodeLoad};
+use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
 
 /// Frame implementation for Ethereum.
@@ -220,20 +220,10 @@ impl EthFrame<EthInterpreter> {
             return return_result(halt);
         }
 
-        // Resolve EIP-7702 deferred bytecode load BEFORE the checkpoint so the
-        // delegate account's warmth (and code load) is not rolled back if the
-        // child frame later reverts. The CALL helper already charged gas for
-        // the access and we must honor it regardless of outcome.
-        let (bytecode_hash, bytecode) = match inputs.known_bytecode.clone() {
-            (hash, BytecodeLoad::Bytecode(code)) => (hash, code),
-            (_, BytecodeLoad::LoadFrom(delegate_address)) => {
-                let info = &ctx
-                    .journal_mut()
-                    .load_account_with_code(delegate_address)?
-                    .info;
-                (info.code_hash(), info.code.clone().unwrap_or_default())
-            }
-        };
+        // The CALL opcode has already resolved any EIP-7702 deferred load,
+        // verified caller balance for value transfers and applied the depth
+        // gate, so `known_bytecode` is a concrete `(hash, code)` pair here.
+        let (bytecode_hash, bytecode) = inputs.known_bytecode.clone();
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal_mut().checkpoint();

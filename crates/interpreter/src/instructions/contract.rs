@@ -1,8 +1,9 @@
 mod call_helpers;
 
 pub use call_helpers::{
-    check_call_depth, check_create_depth, get_memory_input_and_out_ranges, load_acc_and_calc_gas,
-    load_account_delegated, load_account_delegated_handle_error, resize_memory,
+    check_call_depth, check_caller_balance, check_create_depth, get_memory_input_and_out_ranges,
+    load_acc_and_calc_gas, load_account_delegated, load_account_delegated_handle_error,
+    resize_memory, resolve_bytecode_load,
 };
 
 use crate::{
@@ -169,7 +170,7 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
         get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())?;
 
     let is_call = KIND == CALL;
-    let (gas_limit, bytecode, bytecode_hash, charged_new_account_state_gas) =
+    let (gas_limit, bytecode_load, bytecode_hash, charged_new_account_state_gas) =
         load_acc_and_calc_gas(&mut context, to, has_transfer, is_call, local_gas_limit)?;
 
     let target_address = if matches!(KIND, CALLCODE | DELEGATECALL) {
@@ -181,11 +182,6 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
         context.interpreter.input.caller_address()
     } else {
         context.interpreter.input.target_address()
-    };
-    let value = if KIND == DELEGATECALL {
-        CallValue::Apparent(context.interpreter.input.call_value())
-    } else {
-        CallValue::Transfer(value)
     };
     let scheme = match KIND {
         CALL => CallScheme::Call,
@@ -199,6 +195,30 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
     if check_call_depth(context.interpreter, context.host, gas_limit) {
         return Ok(());
     }
+
+    // Balance check for value-transferring calls: if the caller can't cover the
+    // transfer, the call fails immediately just like a depth overflow — refund
+    // the allocated gas, push 0, and continue without ever spawning a frame.
+    // The transfer source is `caller` for CALL and `context.interpreter.input
+    // .target_address()` (self-transfer) for CALLCODE; both are captured by
+    // the `caller` binding above.
+    if has_transfer
+        && check_caller_balance(context.interpreter, context.host, caller, value, gas_limit)?
+    {
+        return Ok(());
+    }
+
+    let value = if KIND == DELEGATECALL {
+        CallValue::Apparent(context.interpreter.input.call_value())
+    } else {
+        CallValue::Transfer(value)
+    };
+
+    // All gas/depth/balance checks passed — resolve any EIP-7702 deferred code
+    // load now so the spawned frame receives a concrete bytecode and the
+    // delegate account is warmed before the child checkpoint is created.
+    let (bytecode_hash, bytecode) =
+        resolve_bytecode_load(context.host, bytecode_hash, bytecode_load)?;
 
     // Call host to interact with target contract
     context
