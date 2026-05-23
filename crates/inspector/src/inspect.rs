@@ -2,7 +2,7 @@ use context::result::ExecResultAndState;
 use handler::{system_call::SYSTEM_ADDRESS, ExecuteCommitEvm, ExecuteEvm, SystemCallEvm};
 use primitives::{Address, Bytes};
 
-/// InspectEvm is a API that allows inspecting the EVM.
+/// InspectEvm is an API that allows inspecting the EVM.
 ///
 /// It extends the `ExecuteEvm` trait and enabled setting inspector
 ///
@@ -52,7 +52,7 @@ pub trait InspectEvm: ExecuteEvm {
     }
 }
 
-/// InspectCommitEvm is a API that allows inspecting similar to `InspectEvm` but it has
+/// InspectCommitEvm is an API that allows inspecting similar to `InspectEvm` but it has
 /// functions that commit the state diff to the database.
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.

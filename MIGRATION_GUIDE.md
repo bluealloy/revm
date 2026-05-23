@@ -454,11 +454,11 @@ Forward compatible version.
 * Removal of `EvmData`.
     * It got flattened and ctx/inspector fields moved directly to Evm, additional layering didn't have purpose.
 * Merging of `Handler`'s `validate_tx_against_state` and `deduct_caller` into one function `validate_against_state_and_deduct_caller`
-    * If you dont override those functions there is no action. If you do please look at `pre_execution::validate_against_state_and_deduct_caller`
+    * If you don't override those functions there is no action. If you do please look at `pre_execution::validate_against_state_and_deduct_caller`
     function or `OpHandler` for examples of migration.
 * Breaking changed for EOF to support eof-devnet1. 
 * `SharedMemory` is not longer Rc<RefCell<>> and internally uses Rc<RefCell<Vec<u8>>> buffer.
-    * No action if you dont use it inside Interpreter.
+    * No action if you don't use it inside Interpreter.
 * In `JournalExt` fn `last_journal_mut()` is renamed to `journal_mut()`
 * EOF is disabled from Osaka and not accessible.
 

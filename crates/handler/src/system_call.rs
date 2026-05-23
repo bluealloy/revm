@@ -78,7 +78,7 @@ impl SystemCallTx for TxEnv {
     }
 }
 
-/// API for executing the system calls. System calls dont deduct the caller or reward the
+/// API for executing the system calls. System calls don't deduct the caller or reward the
 /// beneficiary. They are used before and after block execution to insert or obtain blockchain state.
 ///
 /// It act similar to `transact` function and sets default Tx with data and system contract as a target.
