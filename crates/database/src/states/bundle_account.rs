@@ -372,6 +372,6 @@ impl BundleAccount {
             }
         };
 
-        account_revert.and_then(|acc| if acc.is_empty() { None } else { Some(acc) })
+        account_revert.filter(|acc| !acc.is_empty())
     }
 }

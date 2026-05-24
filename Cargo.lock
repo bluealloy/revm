@@ -1484,8 +1484,9 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "corosensei"
-version = "0.3.3"
-source = "git+https://github.com/Amanieu/corosensei?rev=3a122508ab1d7c25e4dee8b2b4b4c47046c3c3d8#3a122508ab1d7c25e4dee8b2b4b4c47046c3c3d8"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6886a0c0f263965933c438626e7179139a62b978a33aa18281cbf0cd5a975f34"
 dependencies = [
  "autocfg",
  "cfg-if",
