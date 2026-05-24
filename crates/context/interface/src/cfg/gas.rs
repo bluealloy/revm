@@ -474,7 +474,6 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
-    cpsb: u64,
 ) -> InitialAndFloorGas {
     GasParams::new_spec(spec_id).initial_tx_gas(
         input,
@@ -482,7 +481,6 @@ pub fn calculate_initial_tx_gas(
         access_list_accounts,
         access_list_storages,
         authorization_list_num,
-        cpsb,
     )
 }
 
@@ -493,11 +491,7 @@ pub fn calculate_initial_tx_gas(
 ///
 /// - Intrinsic gas
 /// - Number of tokens in calldata
-pub fn calculate_initial_tx_gas_for_tx(
-    tx: impl Transaction,
-    spec: SpecId,
-    cpsb: u64,
-) -> InitialAndFloorGas {
+pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
     let mut accounts = 0;
     let mut storages = 0;
     // legacy is only tx type that does not have access list.
@@ -522,7 +516,6 @@ pub fn calculate_initial_tx_gas_for_tx(
         accounts as u64,
         storages as u64,
         tx.authorization_list_len() as u64,
-        cpsb,
     )
 }
 

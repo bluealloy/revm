@@ -202,7 +202,6 @@ pub fn apply_eip7702_auth_list<
     init_and_floor_gas: &mut InitialAndFloorGas,
 ) -> Result<u64, ERROR> {
     let chain_id = context.cfg().chain_id();
-    let cpsb = context.cfg().cpsb();
     let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
     let (tx, journal) = context.tx_journal_mut();
 
@@ -221,11 +220,8 @@ pub fn apply_eip7702_auth_list<
     // from the reservoir). The regular portion is returned and routed through
     // the standard refund counter, subject to the 1/5 cap.
     if is_eip8037 {
-        init_and_floor_gas.state_refund += params.tx_eip7702_state_refund(
-            number_of_refunded_accounts,
-            number_of_refunded_bytecodes,
-            cpsb,
-        );
+        init_and_floor_gas.state_refund += params
+            .tx_eip7702_state_refund(number_of_refunded_accounts, number_of_refunded_bytecodes);
     }
 
     let regular_gas_refund = params

@@ -92,10 +92,7 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
     if context.host.is_amsterdam_eip8037_enabled() {
         state_gas!(
             context.interpreter,
-            context
-                .host
-                .gas_params()
-                .create_state_gas(context.host.cpsb())
+            context.host.gas_params().create_state_gas()
         );
     }
 

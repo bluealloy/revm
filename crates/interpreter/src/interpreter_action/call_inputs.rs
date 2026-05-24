@@ -351,12 +351,6 @@ mod tests {
         fn take_precompile_error_context(&mut self) -> Option<String> {
             None
         }
-
-        fn cpsb(&self) -> u64 {
-            0
-        }
-
-        fn set_cpsb(&mut self, _cpsb: u64) {}
     }
 
     #[test]

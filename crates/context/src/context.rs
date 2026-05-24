@@ -467,11 +467,6 @@ impl<
         self.cfg().is_amsterdam_eip8037_enabled()
     }
 
-    #[inline]
-    fn cpsb(&self) -> u64 {
-        self.local().cpsb()
-    }
-
     fn block_number(&self) -> U256 {
         self.block().number()
     }

@@ -242,9 +242,8 @@ pub fn validate_initial_tx_gas(
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
-    cpsb: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec, cpsb);
+    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
