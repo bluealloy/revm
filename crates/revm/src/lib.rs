@@ -38,7 +38,7 @@ pub use context::{
 };
 #[cfg(feature = "asyncdb")]
 pub use database_interface::{AsyncDb, AsyncError, AsyncResult, DatabaseAsync, WrapDatabaseAsync};
-pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
+pub use database_interface::{Database, DatabaseCommit, DatabaseRef, NoopHook, OnStateHook};
 pub use handler::{
     ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext, MainnetEvm, SystemCallCommitEvm,
     SystemCallEvm,

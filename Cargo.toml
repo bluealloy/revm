@@ -119,6 +119,7 @@ corosensei = { version = "0.3.3", git = "https://github.com/Amanieu/corosensei",
     "unwind",
 ] }
 derive-where = { version = "1.6", default-features = false }
+derive_more = { version = "2.0", default-features = false, features = ["debug"] }
 rand = "0.9"
 tokio = "1.47"
 either = { version = "1.15.0", default-features = false }
