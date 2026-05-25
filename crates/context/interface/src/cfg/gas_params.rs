@@ -1607,7 +1607,7 @@ mod tests {
         assert_eq!(params.tx_floor_tokens_in_access_list(2, 3), (40 + 96) * 4);
 
         // Floor gas includes both calldata (empty here) and access-list contribution.
-        let gas = params.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        let gas = params.initial_tx_gas(b"", false, 2, 3, 0);
         let expected_al_floor = (40 + 96) * 4 * params.tx_floor_cost_per_token();
         assert_eq!(
             gas.floor_gas(),
@@ -1618,7 +1618,7 @@ mod tests {
         let prague = GasParams::new_spec(SpecId::PRAGUE);
         assert_eq!(prague.tx_access_list_floor_byte_multiplier(), 0);
         assert_eq!(prague.tx_floor_tokens_in_access_list(2, 3), 0);
-        let prague_gas = prague.initial_tx_gas(b"", false, 2, 3, 0, 0);
+        let prague_gas = prague.initial_tx_gas(b"", false, 2, 3, 0);
         assert_eq!(prague_gas.floor_gas(), prague.tx_floor_cost_base_gas());
     }
 }

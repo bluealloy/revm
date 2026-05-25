@@ -292,6 +292,7 @@ pub trait Handler {
         let gas = validation::validate_initial_tx_gas(
             ctx.tx(),
             ctx.cfg().spec().into(),
+            ctx.cfg().gas_params(),
             ctx.cfg().is_eip7623_disabled(),
             ctx.cfg().is_amsterdam_eip8037_enabled(),
             ctx.cfg().tx_gas_limit_cap(),

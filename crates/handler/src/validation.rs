@@ -1,10 +1,11 @@
 use context_interface::{
+    cfg::GasParams,
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{Transaction, TransactionType},
+    transaction::{AccessListItemTr, Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
+use interpreter::InitialAndFloorGas;
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
@@ -239,14 +240,42 @@ pub fn validate_tx_env<CTX: ContextTr>(
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
+    gas_params: &GasParams,
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec);
+    let mut accounts = 0;
+    let mut storages = 0;
+    // legacy is only tx type that does not have access list.
+    if tx.tx_type() != TransactionType::Legacy {
+        (accounts, storages) = tx
+            .access_list()
+            .map(|al| {
+                al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
+                    num_accounts += 1;
+                    num_storage_slots += item.storage_slots().count();
+
+                    (num_accounts, num_storage_slots)
+                })
+            })
+            .unwrap_or_default();
+    }
+
+    let mut gas = gas_params.initial_tx_gas(
+        tx.input(),
+        tx.kind().is_create(),
+        accounts as u64,
+        storages as u64,
+        tx.authorization_list_len() as u64,
+    );
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
+    }
+
+    if !is_amsterdam_eip8037_enabled {
+        gas.set_initial_state_gas(0);
     }
 
     // Additional check to see if limit is big enough to cover initial gas.

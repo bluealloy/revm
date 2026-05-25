@@ -2193,7 +2193,7 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(
         result.gas().state_gas_spent_final(),
-        STATE_GAS_SSTORE_SET + revm::primitives::eip8037::NEW_ACCOUNT_BYTES
+        STATE_GAS_SSTORE_SET + STATE_GAS_CREATE
     );
 
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
