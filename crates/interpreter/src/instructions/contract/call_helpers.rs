@@ -212,6 +212,9 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         let load = host.optional_account_warming(delegate_address, skip_cold_load)?;
         if load.is_cold {
             cost += additional_cold_cost;
+            if cost > remaining_gas {
+                return Err(LoadError::ColdLoadSkipped);
+            }
         }
         let bytecode_load = match load.data {
             Some(code) => BytecodeLoad::Bytecode(code),
