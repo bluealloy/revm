@@ -12,6 +12,7 @@ use derive_where::derive_where;
 use primitives::{
     hardfork::SpecId, hints_util::cold_path, Address, Log, StorageKey, StorageValue, B256, U256,
 };
+use state::Bytecode;
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error, LOCAL)]
@@ -637,7 +638,24 @@ impl<
     }
 
     #[inline]
-    fn is_account_warm(&self, address: Address) -> bool {
-        self.journaled_state.is_account_warm(address)
+    fn optional_account_warming(
+        &mut self,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, LoadError> {
+        match self
+            .journaled_state
+            .optional_account_warming(address, skip_cold_load)
+        {
+            Ok(a) => Ok(a),
+            Err(e) => {
+                cold_path();
+                let (ret, err) = e.into_parts();
+                if let Some(err) = err {
+                    self.error = Err(err.into());
+                }
+                Err(ret)
+            }
+        }
     }
 }

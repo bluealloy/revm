@@ -401,7 +401,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn is_account_warm(&self, address: Address) -> bool {
-        self.inner.is_account_warm(address)
+    fn optional_account_warming(
+        &mut self,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, JournalLoadError<<Self::Database as Database>::Error>>
+    {
+        self.inner
+            .optional_account_warming(&mut self.database, address, skip_cold_load)
     }
 }

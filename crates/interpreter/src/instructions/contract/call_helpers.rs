@@ -152,7 +152,7 @@ pub fn load_account_delegated_handle_error<H: Host + ?Sized>(
 /// `state_gas_cost` is non-zero only when creating a new empty account (EIP-8037).
 ///
 /// For EIP-7702 delegations the delegate account is **not** loaded here —
-/// only its warm/cold status is checked via [`Host::is_account_warm`] in
+/// only its warm/cold status is checked via [`Host::is_account_cold`] in
 /// order to charge the correct gas. The actual bytecode load is deferred to
 /// frame creation, signalled by returning `BytecodeLoad::LoadFrom(address)`.
 #[inline]
@@ -195,9 +195,11 @@ pub fn load_account_delegated<H: Host + ?Sized>(
         ));
     }
 
-    // EIP-7702 delegation: the delegated account is never cold-loaded here.
-    // We only consult its warm/cold status to compute gas; the actual code
-    // load is deferred to frame creation via `BytecodeLoad::LoadFrom`.
+    // EIP-7702 delegation: the delegate is warmed eagerly so the cold/warm gas
+    // charge can be computed correctly, but its bytecode is only loaded here
+    // when the account is already present in the journal state map. Otherwise
+    // the bytecode load is deferred to frame creation via
+    // `BytecodeLoad::LoadFrom`.
     if let Some(delegate_address) = account.code.as_ref().and_then(Bytecode::eip7702_address) {
         // EIP-7702 is enabled after berlin hardfork.
         cost += warm_storage_read_cost;
@@ -205,21 +207,17 @@ pub fn load_account_delegated<H: Host + ?Sized>(
             return Err(LoadError::ColdLoadSkipped);
         }
 
-        let is_warm = host.is_account_warm(delegate_address);
-        if !is_warm {
-            // Charging the cold-access surcharge requires the caller to have
-            // enough gas to actually load the delegate later.
-            if remaining_gas < cost + additional_cold_cost {
-                return Err(LoadError::ColdLoadSkipped);
-            }
+        // Skip the cold load if the caller cannot afford the cold surcharge.
+        let skip_cold_load = remaining_gas < cost + additional_cold_cost;
+        let load = host.optional_account_warming(delegate_address, skip_cold_load)?;
+        if load.is_cold {
             cost += additional_cold_cost;
         }
-        return Ok((
-            cost,
-            state_gas_cost,
-            BytecodeLoad::LoadFrom(delegate_address),
-            B256::ZERO,
-        ));
+        let bytecode_load = match load.data {
+            Some(code) => BytecodeLoad::Bytecode(code),
+            None => BytecodeLoad::LoadFrom(delegate_address),
+        };
+        return Ok((cost, state_gas_cost, bytecode_load, B256::ZERO));
     }
 
     Ok((

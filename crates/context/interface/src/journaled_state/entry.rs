@@ -5,7 +5,9 @@
 //! They are created when there is change to the state from loading (making it warm), changes to the balance,
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
-use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
+use primitives::{
+    Address, AddressMap, HashSet, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256,
+};
 use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
@@ -13,6 +15,13 @@ use state::{EvmState, TransientStorage};
 pub trait JournalEntryTr {
     /// Creates a journal entry for when an account is accessed and marked as "warm" for gas metering
     fn account_warmed(address: Address) -> Self;
+
+    /// Creates a journal entry for when an account is warmed by adding it to the
+    /// per-transaction access list **without** inserting it into the journal state
+    /// map. Used by code paths that need to charge cold-access gas (and therefore
+    /// must remember the warming for revert) but want to defer the actual account
+    /// load to a later point.
+    fn account_warmed_in_access_list(address: Address) -> Self;
 
     /// Creates a journal entry for when an account is destroyed via SELFDESTRUCT
     /// Records the target address that received the destroyed account's balance,
@@ -86,6 +95,7 @@ pub trait JournalEntryTr {
         self,
         state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
+        access_list: &mut AddressMap<HashSet<StorageKey>>,
         is_spurious_dragon_enabled: bool,
     );
 }
@@ -117,6 +127,15 @@ pub enum JournalEntry {
     /// Revert: we will remove account from state.
     AccountWarmed {
         /// Address of warmed account.
+        address: Address,
+    },
+    /// Used to mark an account warm by adding it to the per-tx access list
+    /// without touching the journal state map.
+    ///
+    /// Action: insert address into the access list.
+    /// Revert: remove the address from the access list.
+    AccessListAccountWarmed {
+        /// Address that was warmed in the access list.
         address: Address,
     },
     /// Mark account to be destroyed and journal balance to be reverted
@@ -232,6 +251,10 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::AccountWarmed { address }
     }
 
+    fn account_warmed_in_access_list(address: Address) -> Self {
+        JournalEntry::AccessListAccountWarmed { address }
+    }
+
     fn account_destroyed(
         address: Address,
         target: Address,
@@ -311,11 +334,15 @@ impl JournalEntryTr for JournalEntry {
         self,
         state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
+        access_list: &mut AddressMap<HashSet<StorageKey>>,
         is_spurious_dragon_enabled: bool,
     ) {
         match self {
             JournalEntry::AccountWarmed { address } => {
                 state.get_mut(&address).unwrap().mark_cold();
+            }
+            JournalEntry::AccessListAccountWarmed { address } => {
+                access_list.remove(&address);
             }
             JournalEntry::AccountTouched { address } => {
                 if is_spurious_dragon_enabled && address == PRECOMPILE3 {

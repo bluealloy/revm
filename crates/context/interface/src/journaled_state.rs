@@ -338,14 +338,26 @@ pub trait JournalTr {
         _skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>>;
 
-    /// Returns `true` if `address` is currently warm — already in the journal
-    /// (precompiles, coinbase, access list, or touched this transaction).
+    /// Optionally warms `address` and reports its cold/warm status, while
+    /// avoiding a full DB-backed account load when possible.
     ///
-    /// This is a pure lookup. It never touches the database, never promotes a
-    /// cold account to warm, and is intended for cases where the caller only
-    /// needs the warm/cold decision (e.g. EIP-7702 delegate gas charging) and
-    /// wants to defer the actual account/code load.
-    fn is_account_warm(&self, address: Address) -> bool;
+    /// Behavior:
+    /// - If the address is cold and `skip_cold_load` is `true`, returns
+    ///   [`JournalLoadError::ColdLoadSkipped`] without mutating any state.
+    /// - If the account already exists in the journal state map, marks it
+    ///   warm (journaling the warming), loads its bytecode from the database
+    ///   if needed, and returns it in [`StateLoad::data`].
+    /// - If the account is not in the state map but is already warm via the
+    ///   access list (or is a precompile / coinbase), this is a no-op and
+    ///   `data` is `None`.
+    /// - Otherwise the address is added to the access list and a revert-only
+    ///   journal entry is pushed; `data` is `None`. The actual account/code
+    ///   load is deferred to a later point.
+    fn optional_account_warming(
+        &mut self,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, JournalLoadError<<Self::Database as Database>::Error>>;
 }
 
 /// Error that can happen when loading account info.

@@ -99,6 +99,21 @@ impl WarmAddresses {
         &self.access_list
     }
 
+    /// Returns a mutable reference to the access list.
+    #[inline]
+    pub const fn access_list_mut(&mut self) -> &mut AddressMap<HashSet<StorageKey>> {
+        &mut self.access_list
+    }
+
+    /// Inserts `address` into the access list with an empty storage key set,
+    /// marking the account warm without touching the journal state map.
+    ///
+    /// No-op if the address is already in the access list.
+    #[inline]
+    pub fn add_address_to_access_list(&mut self, address: Address) {
+        self.access_list.entry(address).or_default();
+    }
+
     /// Clear the coinbase address.
     #[inline]
     pub const fn clear_coinbase(&mut self) {

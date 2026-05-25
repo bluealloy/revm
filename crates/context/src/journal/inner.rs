@@ -181,9 +181,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             selfdestructed_addresses,
         } = self;
         let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
+        let access_list = warm_addresses.access_list_mut();
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
+            entry.revert(state, None, access_list, is_spurious_dragon_enabled);
         });
         transient_storage.clear();
         *depth = 0;
@@ -594,8 +595,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = self.cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
-        let state = &mut self.state;
-        let transient_storage = &mut self.transient_storage;
         self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
         // EIP-7708: Remove selfdestructed addresses added after checkpoint
@@ -604,11 +603,19 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // iterate over last N journals sets and revert our global state
         if checkpoint.journal_i < self.journal.len() {
+            let state = &mut self.state;
+            let transient_storage = &mut self.transient_storage;
+            let access_list = self.warm_addresses.access_list_mut();
             self.journal
                 .drain(checkpoint.journal_i..)
                 .rev()
                 .for_each(|entry| {
-                    entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
+                    entry.revert(
+                        state,
+                        Some(transient_storage),
+                        access_list,
+                        is_spurious_dragon_enabled,
+                    );
                 });
         }
     }
@@ -716,20 +723,79 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         })
     }
 
-    /// Returns `true` if `address` is currently warm in the journal — i.e. it
-    /// is either listed in the warm-address set (precompiles, coinbase, access
-    /// list) or has already been loaded in the current transaction.
+    /// Optionally warms `address` and reports whether it was cold prior to the
+    /// call.
     ///
-    /// This is a pure lookup; it never reads from the database and never
-    /// promotes the account from cold to warm.
+    /// Behavior:
+    /// - If `skip_cold_load` is `true` and the address is cold, returns
+    ///   [`JournalLoadError::ColdLoadSkipped`] without mutating any state.
+    /// - If the account is already in the journal state map, marks it warm
+    ///   (journaling the warming via [`JournalEntryTr::account_warmed`]),
+    ///   loads its bytecode from the database if not already loaded, and
+    ///   returns the bytecode in [`StateLoad::data`].
+    /// - If the account is not in the state map but is already warm in the
+    ///   access list (or is a precompile / coinbase), it's a no-op and
+    ///   `data` is `None`.
+    /// - If the account is not in the state map and not warm, it is inserted
+    ///   into the access list and an
+    ///   [`JournalEntryTr::account_warmed_in_access_list`] entry is pushed so
+    ///   the warming can be reverted; `data` is `None`.
     #[inline]
-    pub fn is_account_warm(&self, address: Address) -> bool {
-        if self.warm_addresses.is_warm(&address) {
-            return true;
-        }
-        match self.state.get(&address) {
-            Some(account) => !account.is_cold_transaction_id(self.transaction_id),
-            None => false,
+    pub fn optional_account_warming<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, JournalLoadError<DB::Error>> {
+        match self.state.entry(address) {
+            Entry::Occupied(entry) => {
+                let account = entry.into_mut();
+                let mut is_cold = account.is_cold_transaction_id(self.transaction_id);
+
+                if unlikely(is_cold) {
+                    is_cold = self
+                        .warm_addresses
+                        .check_is_cold(&address, skip_cold_load)?;
+
+                    account.mark_warm_with_transaction_id(self.transaction_id);
+
+                    if account.is_selfdestructed_locally() {
+                        account.selfdestruct();
+                        account.unmark_selfdestructed_locally();
+                    }
+                    account.set_current_info_as_original();
+                    account.unmark_created_locally();
+
+                    self.journal.push(ENTRY::account_warmed(address));
+                }
+
+                if account.info.code.is_none() {
+                    let hash = account.info.code_hash;
+                    let code = if hash == KECCAK_EMPTY {
+                        Bytecode::default()
+                    } else {
+                        db.code_by_hash(hash).map_err(JournalLoadError::DBError)?
+                    };
+                    account.info.code = Some(code);
+                }
+
+                Ok(StateLoad::new(account.info.code.clone(), is_cold))
+            }
+            Entry::Vacant(_) => {
+                if self.warm_addresses.is_warm(&address) {
+                    return Ok(StateLoad::new(None, false));
+                }
+
+                if skip_cold_load {
+                    return Err(JournalLoadError::ColdLoadSkipped);
+                }
+
+                self.warm_addresses.add_address_to_access_list(address);
+                self.journal
+                    .push(ENTRY::account_warmed_in_access_list(address));
+
+                Ok(StateLoad::new(None, true))
+            }
         }
     }
 

@@ -157,15 +157,26 @@ pub trait Host {
         skip_cold_load: bool,
     ) -> Result<AccountInfoLoad<'_>, LoadError>;
 
-    /// Returns `true` if `address` is currently warm — i.e. it has already been
-    /// loaded in this transaction or appears in the warm-address set
-    /// (precompiles, coinbase, access list).
+    /// Optionally warms `address` and reports whether it was cold prior to the
+    /// call, while avoiding a full DB-backed account load when possible.
     ///
-    /// This is a pure lookup: it never reads from the database and never
-    /// promotes a cold account to warm. Intended for paths where the caller
-    /// only needs the warm/cold decision (e.g. EIP-7702 delegate gas charging)
-    /// and wants to defer the actual account/code load to a later point.
-    fn is_account_warm(&self, address: Address) -> bool;
+    /// Behavior:
+    /// - If the address is cold and `skip_cold_load` is `true`, returns
+    ///   [`LoadError::ColdLoadSkipped`] without mutating any state.
+    /// - If the account already exists in the journal state map, marks it
+    ///   warm, loads its bytecode from the database if needed, and returns it
+    ///   in [`StateLoad::data`].
+    /// - If the account is not in the state map but is already warm via the
+    ///   access list (or is a precompile / coinbase), this is a no-op and
+    ///   `data` is `None`.
+    /// - Otherwise the address is inserted into the access list and a
+    ///   revert-only journal entry is pushed; `data` is `None`. The actual
+    ///   account/code load is deferred to a later point.
+    fn optional_account_warming(
+        &mut self,
+        address: Address,
+        skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, LoadError>;
 
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
@@ -352,8 +363,12 @@ impl Host for DummyHost {
         Ok(Default::default())
     }
 
-    fn is_account_warm(&self, _address: Address) -> bool {
-        false
+    fn optional_account_warming(
+        &mut self,
+        _address: Address,
+        _skip_cold_load: bool,
+    ) -> Result<StateLoad<Option<Bytecode>>, LoadError> {
+        Ok(StateLoad::new(None, true))
     }
 
     fn sstore_skip_cold_load(
