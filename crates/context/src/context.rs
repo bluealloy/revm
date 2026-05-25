@@ -45,7 +45,7 @@ fn sync_cfg_to_journal<CFG: Cfg, JOURNAL: JournalTr>(cfg: &CFG, journal: &mut JO
     journal.set_spec_id(cfg.spec().into());
     journal.set_eip7708_config(
         cfg.is_eip7708_disabled(),
-        cfg.is_eip7708_delayed_burn_disabled(),
+        cfg.is_eip8246_delayed_clear_disabled(),
     );
 }
 

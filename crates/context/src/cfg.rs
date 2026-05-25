@@ -158,16 +158,19 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// By default, it is set to `false`.
     pub amsterdam_eip7708_disabled: bool,
-    /// Disables EIP-7708 delayed burn logging.
+    /// Disables the EIP-8246 delayed clearing of self-destructed accounts.
     ///
-    /// When enabled, revm tracks all self-destructed addresses and emits logs for
-    /// accounts that still have remaining balance at the end of the transaction.
-    /// This can be disabled for performance reasons as it requires storing and
-    /// iterating over all self-destructed accounts. When disabled, the logging
-    /// can be done outside of revm when applying accounts to database state.
+    /// When enabled, revm tracks all self-destructed addresses and, at the end of the
+    /// transaction, clears the code, storage and nonce of any that still have a remaining
+    /// balance while preserving the balance ([EIP-8246]). This can be disabled for performance
+    /// reasons as it requires storing and iterating over all self-destructed accounts. When
+    /// disabled, this clearing can be done outside of revm when applying accounts to database
+    /// state.
     ///
     /// By default, it is set to `false`.
-    pub amsterdam_eip7708_delayed_burn_disabled: bool,
+    ///
+    /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
+    pub amsterdam_eip8246_delayed_clear_disabled: bool,
 }
 
 impl CfgEnv {
@@ -287,7 +290,7 @@ impl<SPEC> CfgEnv<SPEC> {
             enable_amsterdam_eip8037: self.enable_amsterdam_eip8037,
             enable_amsterdam_eip2780: self.enable_amsterdam_eip2780,
             amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
-            amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
+            amsterdam_eip8246_delayed_clear_disabled: self.amsterdam_eip8246_delayed_clear_disabled,
         }
     }
 
@@ -379,7 +382,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             enable_amsterdam_eip8037: is_amsterdam,
             enable_amsterdam_eip2780: is_amsterdam,
             amsterdam_eip7708_disabled: false,
-            amsterdam_eip7708_delayed_burn_disabled: false,
+            amsterdam_eip8246_delayed_clear_disabled: false,
         }
     }
 
@@ -578,8 +581,8 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
         self.amsterdam_eip7708_disabled
     }
 
-    fn is_eip7708_delayed_burn_disabled(&self) -> bool {
-        self.amsterdam_eip7708_delayed_burn_disabled
+    fn is_eip8246_delayed_clear_disabled(&self) -> bool {
+        self.amsterdam_eip8246_delayed_clear_disabled
     }
 
     fn memory_limit(&self) -> u64 {
