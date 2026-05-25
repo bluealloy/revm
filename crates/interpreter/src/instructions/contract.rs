@@ -1,9 +1,9 @@
 mod call_helpers;
 
 pub use call_helpers::{
-    check_call_depth, check_caller_balance, check_create_depth, get_memory_input_and_out_ranges,
-    load_acc_and_calc_gas, load_account_delegated, load_account_delegated_handle_error,
-    resize_memory, resolve_bytecode_load,
+    check_call_depth, check_caller_balance, check_create_caller_balance, check_create_depth,
+    get_memory_input_and_out_ranges, load_acc_and_calc_gas, load_account_delegated,
+    load_account_delegated_handle_error, resize_memory, resolve_bytecode_load,
 };
 
 use crate::{
@@ -118,9 +118,21 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
         return Ok(());
     }
 
+    let caller = context.interpreter.input.target_address();
+
+    // Balance check for the value being moved into the to-be-created contract:
+    // if the caller can't cover the transfer, the CREATE fails immediately
+    // (same shape as a depth overflow) — refund allocated gas + EIP-8037
+    // state gas, push 0, and continue without ever spawning a frame.
+    if !value.is_zero()
+        && check_create_caller_balance(context.interpreter, context.host, caller, value, gas_limit)?
+    {
+        return Ok(());
+    }
+
     // Call host to interact with target contract
     let create_inputs = CreateInputs::new(
-        context.interpreter.input.target_address(),
+        caller,
         scheme,
         value,
         code,

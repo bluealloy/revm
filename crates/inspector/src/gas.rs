@@ -263,16 +263,12 @@ mod tests {
             opcode::DUP1,
             opcode::ADDRESS,
             opcode::CALL,
-            opcode::PUSH1,
-            0x01,
+            // CREATE with value=0 so the caller-balance gate doesn't
+            // short-circuit before the inspector override fires.
             opcode::PUSH1,
             0x0,
             opcode::DUP1,
             opcode::DUP1,
-            opcode::DUP1,
-            opcode::DUP1,
-            opcode::DUP1,
-            opcode::ADDRESS,
             opcode::CREATE,
             opcode::STOP,
         ]);

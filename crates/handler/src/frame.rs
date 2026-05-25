@@ -329,15 +329,12 @@ impl EthFrame<EthInterpreter> {
             })))
         };
 
-        // Fetch balance of caller.
+        // The CREATE opcode already verified the caller balance and applied
+        // the depth gate, so we can proceed straight to the nonce bump. The
+        // actual balance decrement is performed in `create_account_checkpoint`
+        // below.
         let journal = context.journal_mut();
         let mut caller_info = journal.load_account_mut(inputs.caller())?;
-
-        // Check if caller has enough balance to send to the created contract.
-        // decrement of balance is done in the create_account_checkpoint.
-        if *caller_info.balance() < inputs.value() {
-            return return_error(InstructionResult::OutOfFunds);
-        }
 
         // Increase nonce of caller and check if it overflows
         let old_nonce = caller_info.nonce();
@@ -573,12 +570,13 @@ impl EthFrame<EthInterpreter> {
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
                 // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent` via
-                // `refill_reservoir` (matching 0→x→0 storage restoration). The
-                // nonce-overflow path reports `InstructionResult::Return` (ok)
-                // with `address == None`, so gate on address rather than the result.
+                // (revert, halt, or the nonce-overflow early-fail that returns
+                // `address == None`), refund the upfront charge to the reservoir
+                // and undo it on `state_gas_spent` via `refill_reservoir`
+                // (matching 0→x→0 storage restoration). The nonce-overflow path
+                // reports `InstructionResult::Return` (ok) with `address == None`,
+                // so gate on address rather than the result. Depth and OutOfFunds
+                // are now handled at the opcode and never suspend into this frame.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {

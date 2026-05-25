@@ -322,6 +322,41 @@ pub fn check_caller_balance<IT: ITy, H: Host + ?Sized>(
     Ok(true)
 }
 
+/// Caller-balance check for CREATE/CREATE2.
+///
+/// Returns `true` when the caller cannot afford to transfer `value` into the
+/// to-be-created contract: the allocated child gas is reimbursed, the
+/// EIP-8037 `create_state_gas` (if any) is returned to the reservoir, the
+/// return-data buffer is cleared, `U256::ZERO` is pushed, and the caller
+/// should return `Ok(())` to continue execution — matching the
+/// [`check_create_depth`] short-circuit.
+///
+/// Returns `false` when the caller has enough balance; the caller should
+/// proceed to dispatch the child frame.
+#[inline]
+pub fn check_create_caller_balance<IT: ITy, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<IT>,
+    host: &mut H,
+    caller: Address,
+    value: U256,
+    gas_limit: u64,
+) -> Result<bool, InstructionResult> {
+    let balance = host
+        .balance(caller)
+        .ok_or(InstructionResult::FatalExternalError)?;
+    if balance.data >= value {
+        return Ok(false);
+    }
+    interpreter.gas.erase_cost(gas_limit);
+    if host.is_amsterdam_eip8037_enabled() {
+        let state_gas = host.gas_params().create_state_gas(host.cpsb());
+        interpreter.gas.refill_reservoir(state_gas);
+    }
+    interpreter.return_data.clear();
+    let _ = interpreter.stack.push(U256::ZERO);
+    Ok(true)
+}
+
 /// Resolve a [`BytecodeLoad`] produced by [`load_acc_and_calc_gas`] into the
 /// final `(code_hash, bytecode)` pair used to build [`crate::CallInputs`].
 ///
