@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v24.0.0...revm-primitives-v24.0.1) - 2026-05-26
+
+### Other
+
+- explain CPSB acronym ([#3716](https://github.com/bluealloy/revm/pull/3716))
+
 ## [24.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v23.0.0...revm-primitives-v24.0.0) - 2026-05-19
 
 ### Added

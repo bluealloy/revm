@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v11.0.0...revm-bytecode-v11.0.1) - 2026-05-26
+
+### Other
+
+- mark RETURN and REVERT as memory-modifying ([#3703](https://github.com/bluealloy/revm/pull/3703))
+
 ## [11.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v10.0.0...revm-bytecode-v11.0.0) - 2026-05-19
 
 ### Fixed

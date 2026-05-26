@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.2](https://github.com/bluealloy/revm/compare/revm-database-v15.0.1...revm-database-v15.0.2) - 2026-05-26
+
+### Added
+
+- add `OnStateHook` for `State<DB>` ([#3710](https://github.com/bluealloy/revm/pull/3710))
+
 ## [15.0.1](https://github.com/bluealloy/revm/compare/revm-database-v15.0.0...revm-database-v15.0.1) - 2026-05-22
 
 ### Other
