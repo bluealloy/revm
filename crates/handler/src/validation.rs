@@ -236,8 +236,29 @@ pub fn validate_tx_env<CTX: ContextTr>(
     Ok(())
 }
 
-/// Validate initial transaction gas.
+/// Validate initial transaction gas using the default [`GasParams`] for the given [`SpecId`].
+///
+/// For custom gas parameters (e.g. configured on the context), use
+/// [`validate_initial_tx_gas_with_gas_params`].
 pub fn validate_initial_tx_gas(
+    tx: impl Transaction,
+    spec: SpecId,
+    is_eip7623_disabled: bool,
+    is_amsterdam_eip8037_enabled: bool,
+    tx_gas_limit_cap: u64,
+) -> Result<InitialAndFloorGas, InvalidTransaction> {
+    validate_initial_tx_gas_with_gas_params(
+        tx,
+        spec,
+        &GasParams::new_spec(spec),
+        is_eip7623_disabled,
+        is_amsterdam_eip8037_enabled,
+        tx_gas_limit_cap,
+    )
+}
+
+/// Validate initial transaction gas using the provided [`GasParams`].
+pub fn validate_initial_tx_gas_with_gas_params(
     tx: impl Transaction,
     spec: SpecId,
     gas_params: &GasParams,

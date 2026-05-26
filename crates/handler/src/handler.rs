@@ -289,7 +289,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
-        let gas = validation::validate_initial_tx_gas(
+        let gas = validation::validate_initial_tx_gas_with_gas_params(
             ctx.tx(),
             ctx.cfg().spec().into(),
             ctx.cfg().gas_params(),
