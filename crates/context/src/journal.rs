@@ -203,9 +203,9 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+    fn set_eip7708_config(&mut self, disabled: bool, eip8246_delayed_clear_disabled: bool) {
         self.inner
-            .set_eip7708_config(disabled, delayed_burn_disabled);
+            .set_eip7708_config(disabled, eip8246_delayed_clear_disabled);
     }
 
     #[inline]
