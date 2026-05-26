@@ -3,6 +3,8 @@
 use crate::{
     cfg::gas::{self, get_tokens_in_calldata, InitialAndFloorGas},
     context::SStoreResult,
+    transaction::AccessListItemTr as _,
+    Transaction, TransactionType,
 };
 use core::hash::{Hash, Hasher};
 use primitives::{
@@ -1010,6 +1012,34 @@ impl GasParams {
             .with_initial_regular_gas(initial_regular_gas)
             .with_initial_state_gas(initial_state_gas)
             .with_floor_gas(floor_gas)
+    }
+
+    /// Calculates the initial transaction gas directly from a [`Transaction`],
+    /// deriving the access list counts from the transaction itself.
+    ///
+    /// See [`GasParams::initial_tx_gas`] for details on the returned gas.
+    pub fn initial_tx_gas_for_tx(&self, tx: impl Transaction) -> InitialAndFloorGas {
+        let mut accounts = 0;
+        let mut storages = 0;
+        // Legacy is the only tx type that does not have an access list.
+        if tx.tx_type() != TransactionType::Legacy {
+            (accounts, storages) = tx
+                .access_list()
+                .map(|al| {
+                    al.fold((0, 0), |(num_accounts, num_storage_slots), item| {
+                        (num_accounts + 1, num_storage_slots + item.storage_slots().count() as u64)
+                    })
+                })
+                .unwrap_or_default();
+        }
+
+        self.initial_tx_gas(
+            tx.input(),
+            tx.kind().is_create(),
+            accounts,
+            storages,
+            tx.authorization_list_len() as u64,
+        )
     }
 }
 

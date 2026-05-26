@@ -1,7 +1,7 @@
 use context_interface::{
     cfg::GasParams,
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{AccessListItemTr, Transaction, TransactionType},
+    transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
 use core::cmp;
@@ -245,30 +245,7 @@ pub fn validate_initial_tx_gas(
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut accounts = 0;
-    let mut storages = 0;
-    // legacy is only tx type that does not have access list.
-    if tx.tx_type() != TransactionType::Legacy {
-        (accounts, storages) = tx
-            .access_list()
-            .map(|al| {
-                al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
-                    num_accounts += 1;
-                    num_storage_slots += item.storage_slots().count();
-
-                    (num_accounts, num_storage_slots)
-                })
-            })
-            .unwrap_or_default();
-    }
-
-    let mut gas = gas_params.initial_tx_gas(
-        tx.input(),
-        tx.kind().is_create(),
-        accounts as u64,
-        storages as u64,
-        tx.authorization_list_len() as u64,
-    );
+    let mut gas = gas_params.initial_tx_gas_for_tx(&tx);
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
