@@ -63,7 +63,9 @@ impl<R, S> ExecResultAndState<R, S> {
 /// ## Derived values
 ///
 /// - [`tx_gas_used()`](ResultGas::tx_gas_used) = `max(total_gas_spent − refunded, floor_gas)` (the value that goes into receipts)
-/// - [`block_regular_gas_used()`](ResultGas::block_regular_gas_used) = `max(total_gas_spent − state_gas_spent, floor_gas)`
+/// - [`block_regular_gas_used()`](ResultGas::block_regular_gas_used) — EIP-8037 + EIP-7778:
+///   - floor-dominant (`floor_gas ≥ total_gas_spent − refunded`): `tx_gas_used − state_gas_spent`
+///   - refund-dominant: `total_gas_spent − state_gas_spent` (pre-refund; refunds are excluded from block accounting per EIP-7778)
 /// - [`block_state_gas_used()`](ResultGas::block_state_gas_used) = `state_gas_spent`
 /// - [`spent_sub_refunded()`](ResultGas::spent_sub_refunded) = `total_gas_spent − refunded` (before floor gas check)
 /// - [`final_refunded()`](ResultGas::final_refunded) = `refunded` when floor gas is inactive, `0` when floor gas kicks in
@@ -267,13 +269,24 @@ impl ResultGas {
         max(tx_gas_refunded, self.floor_gas())
     }
 
-    /// Returns the regular gas used by the block.
+    /// Returns the regular gas used by the block per EIP-8037 + EIP-7778.
+    ///
+    /// Refunds are excluded from block accounting (EIP-7778). The floor only
+    /// participates when it dominates the post-refund total:
+    ///
+    /// - Floor-dominant (`floor_gas >= total_gas_spent - refunded`):
+    ///   `tx_gas_used - state_gas_spent` (where `tx_gas_used = floor_gas`).
+    /// - Refund-dominant: `total_gas_spent - state_gas_spent` (pre-refund).
     #[inline]
     pub const fn block_regular_gas_used(&self) -> u64 {
-        let execution_gas_spent = self
-            .total_gas_spent()
-            .saturating_sub(self.state_gas_spent_final());
-        max(execution_gas_spent, self.floor_gas())
+        let state_gas = self.state_gas_spent_final();
+        if self.floor_gas() >= self.spent_sub_refunded() {
+            // Floor-dominant: tx_gas_used == floor_gas.
+            self.tx_gas_used().saturating_sub(state_gas)
+        } else {
+            // Refund-dominant: refunds excluded from block accounting.
+            self.total_gas_spent().saturating_sub(state_gas)
+        }
     }
 
     /// Returns the state gas used by the block.
@@ -1383,5 +1396,63 @@ mod tests {
             .with_floor_gas(40000);
         assert_eq!(gas.tx_gas_used(), 40000);
         assert_eq!(gas.final_refunded(), 10000);
+    }
+
+    #[test]
+    fn test_block_regular_gas_used_eip7778_branching() {
+        // Refund-dominant (floor < spent - refunded): pre-refund total minus state.
+        // spent=100k, refunded=10k, floor=20k → after_refund=90k > floor=20k.
+        // block_regular = total - state = 100k - 30k = 70k.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(100_000)
+            .with_refunded(10_000)
+            .with_floor_gas(20_000)
+            .with_state_gas_spent(30_000);
+        assert_eq!(gas.tx_gas_used(), 90_000);
+        assert_eq!(gas.block_regular_gas_used(), 70_000);
+        assert_eq!(gas.block_state_gas_used(), 30_000);
+
+        // Floor-dominant (floor >= spent - refunded): tx_gas_used (=floor) minus state.
+        // spent=100k, refunded=90k, floor=50k → after_refund=10k <= floor=50k.
+        // tx_gas_used = 50k; block_regular = 50k - 30k = 20k.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(100_000)
+            .with_refunded(90_000)
+            .with_floor_gas(50_000)
+            .with_state_gas_spent(30_000);
+        assert_eq!(gas.tx_gas_used(), 50_000);
+        assert_eq!(gas.block_regular_gas_used(), 20_000);
+
+        // No floor, no refund: block_regular = total - state.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(100_000)
+            .with_state_gas_spent(30_000);
+        assert_eq!(gas.block_regular_gas_used(), 70_000);
+
+        // No state gas: block_regular tracks tx_gas_used in floor case,
+        // total in refund case.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(50_000)
+            .with_refunded(10_000);
+        assert_eq!(gas.block_regular_gas_used(), 50_000);
+
+        // Refunds excluded from block accounting (EIP-7778):
+        // even with a non-floor refund, block_regular uses pre-refund total.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(50_000)
+            .with_refunded(10_000)
+            .with_floor_gas(30_000);
+        // after_refund=40k > floor=30k → refund-dominant.
+        assert_eq!(gas.tx_gas_used(), 40_000);
+        assert_eq!(gas.block_regular_gas_used(), 50_000);
+
+        // Floor-dominant edge: state_gas exceeds floor → saturates to 0.
+        let gas = ResultGas::default()
+            .with_total_gas_spent(100_000)
+            .with_refunded(90_000)
+            .with_floor_gas(30_000)
+            .with_state_gas_spent(40_000);
+        assert_eq!(gas.tx_gas_used(), 30_000);
+        assert_eq!(gas.block_regular_gas_used(), 0);
     }
 }
