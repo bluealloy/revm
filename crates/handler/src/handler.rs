@@ -1,6 +1,7 @@
 use crate::{
-    evm::FrameTr,
+    evm::{ContextDbError, FrameInitResult, FrameTr},
     execution,
+    item_or_result::FrameInitOrResult,
     post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
@@ -50,6 +51,164 @@ impl<
 pub fn cache_cpsb_on_local<CTX: ContextTr>(ctx: &mut CTX) {
     let cpsb = ctx.cfg().cpsb();
     ctx.local_mut().set_cpsb(cpsb);
+}
+
+/// Runs a top-level execution entry point and applies the common error cleanup.
+#[doc(hidden)]
+#[inline]
+pub fn run_with_catch<H, F>(
+    handler: &mut H,
+    evm: &mut H::Evm,
+    run: F,
+) -> Result<ExecutionResult<H::HaltReason>, H::Error>
+where
+    H: Handler + ?Sized,
+    F: FnOnce(&mut H, &mut H::Evm) -> Result<ExecutionResult<H::HaltReason>, H::Error>,
+{
+    cache_cpsb_on_local(evm.ctx_mut());
+    match run(handler, evm) {
+        Ok(output) => Ok(output),
+        Err(e) => handler.catch_error(evm, e),
+    }
+}
+
+/// Runs the common transaction phases with a caller-provided execution step.
+#[doc(hidden)]
+#[inline]
+pub fn run_without_catch_error_with_execution<H, F>(
+    handler: &mut H,
+    evm: &mut H::Evm,
+    execution: F,
+) -> Result<ExecutionResult<H::HaltReason>, H::Error>
+where
+    H: Handler + ?Sized,
+    F: FnOnce(&mut H, &mut H::Evm, &InitialAndFloorGas) -> Result<FrameResult, H::Error>,
+{
+    let mut init_and_floor_gas = handler.validate(evm)?;
+    let eip7702_refund = handler.pre_execution(evm, &mut init_and_floor_gas)?;
+    // Regular refund is returned from pre_execution after state gas split is applied.
+    let eip7702_regular_refund = eip7702_refund as i64;
+
+    let mut exec_result = execution(handler, evm, &init_and_floor_gas)?;
+    let result_gas = handler.post_execution(
+        evm,
+        &mut exec_result,
+        init_and_floor_gas,
+        eip7702_regular_refund,
+    )?;
+
+    handler.execution_result(evm, exec_result, result_gas)
+}
+
+/// Runs common system-call handling with a caller-provided execution step.
+#[doc(hidden)]
+#[inline]
+pub fn run_system_call_with_execution<H, F>(
+    handler: &mut H,
+    evm: &mut H::Evm,
+    execution: F,
+) -> Result<ExecutionResult<H::HaltReason>, H::Error>
+where
+    H: Handler + ?Sized,
+    F: FnOnce(&mut H, &mut H::Evm, &InitialAndFloorGas) -> Result<FrameResult, H::Error>,
+{
+    cache_cpsb_on_local(evm.ctx_mut());
+    // Dummy values that are not used.
+    let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+
+    let output = match execution(handler, evm, &init_and_floor_gas) {
+        Ok(exec_result) => {
+            // System calls have no intrinsic gas; build ResultGas from frame result.
+            let gas = exec_result.gas();
+            let result_gas = build_result_gas(false, gas, init_and_floor_gas);
+            handler.execution_result(evm, exec_result, result_gas)
+        }
+        Err(e) => Err(e),
+    };
+
+    match output {
+        out @ Ok(_) => out,
+        Err(e) => handler.catch_error(evm, e),
+    }
+}
+
+/// Runs common first-frame setup and final-frame handling with a custom frame loop.
+#[doc(hidden)]
+#[inline]
+pub fn execution_with_frame_loop<H, F>(
+    handler: &mut H,
+    evm: &mut H::Evm,
+    init_and_floor_gas: &InitialAndFloorGas,
+    run_frame_loop: F,
+) -> Result<FrameResult, H::Error>
+where
+    H: Handler + ?Sized,
+    F: FnOnce(
+        &mut H,
+        &mut H::Evm,
+        <<H::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
+    ) -> Result<FrameResult, H::Error>,
+{
+    // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
+    let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
+        evm.ctx().tx().gas_limit(),
+        evm.ctx().cfg().tx_gas_limit_cap(),
+    );
+
+    // Create first frame action.
+    // Note: first_frame_input now handles state gas deduction from the reservoir.
+    let first_frame_input = handler.first_frame_input(evm, gas_limit, reservoir)?;
+
+    let mut frame_result = run_frame_loop(handler, evm, first_frame_input)?;
+
+    handler.last_frame_result(evm, reservoir, &mut frame_result)?;
+    Ok(frame_result)
+}
+
+/// Runs the common frame stack loop with plain or inspector frame hooks.
+#[doc(hidden)]
+#[inline]
+pub fn run_frame_loop_with<EVM, ERROR, FI, FR>(
+    evm: &mut EVM,
+    first_frame_input: <EVM::Frame as FrameTr>::FrameInit,
+    mut frame_init: FI,
+    mut frame_run: FR,
+) -> Result<FrameResult, ERROR>
+where
+    EVM: EvmTr<Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>>,
+    ERROR: From<ContextDbError<EVM::Context>>,
+    FI: for<'a> FnMut(
+        &'a mut EVM,
+        <EVM::Frame as FrameTr>::FrameInit,
+    ) -> Result<FrameInitResult<'a, EVM::Frame>, ContextDbError<EVM::Context>>,
+    FR: FnMut(&mut EVM) -> Result<FrameInitOrResult<EVM::Frame>, ContextDbError<EVM::Context>>,
+{
+    let res = frame_init(evm, first_frame_input)?;
+
+    if let ItemOrResult::Result(frame_result) = res {
+        return Ok(frame_result);
+    }
+
+    loop {
+        let call_or_result = frame_run(evm)?;
+
+        let result = match call_or_result {
+            ItemOrResult::Item(init) => {
+                match frame_init(evm, init)? {
+                    ItemOrResult::Item(_) => {
+                        continue;
+                    }
+                    // Do not pop the frame since no new frame was created.
+                    ItemOrResult::Result(result) => result,
+                }
+            }
+            ItemOrResult::Result(result) => result,
+        };
+
+        if let Some(result) = evm.frame_return_result(result)? {
+            return Ok(result);
+        }
+    }
 }
 
 /// The main implementation of Ethereum Mainnet transaction execution.
@@ -109,14 +268,9 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
-        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
-        cache_cpsb_on_local(evm.ctx_mut());
-        // Run inner handler and catch all errors to handle cleanup.
-        match self.run_without_catch_error(evm) {
-            Ok(output) => Ok(output),
-            Err(e) => self.catch_error(evm, e),
-        }
+        run_with_catch(self, evm, |handler, evm| {
+            handler.run_without_catch_error(evm)
+        })
     }
 
     /// Runs the system call.
@@ -138,24 +292,9 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context. System calls
-        // skip validation/pre-execution but still execute interpreter code that
-        // reads Host::cpsb, so this must be populated here too.
-        cache_cpsb_on_local(evm.ctx_mut());
-        // dummy values that are not used.
-        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        // call execution and than output.
-        match self
-            .execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| {
-                // System calls have no intrinsic gas; build ResultGas from frame result.
-                let gas = exec_result.gas();
-                let result_gas = build_result_gas(false, gas, init_and_floor_gas);
-                self.execution_result(evm, exec_result, result_gas)
-            }) {
-            out @ Ok(_) => out,
-            Err(e) => self.catch_error(evm, e),
-        }
+        run_system_call_with_execution(self, evm, |handler, evm, init_and_floor_gas| {
+            handler.execution(evm, init_and_floor_gas)
+        })
     }
 
     /// Called by [`Handler::run`] to execute the core handler logic.
@@ -169,21 +308,9 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let mut init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas)?;
-        // Regular refund is returned from pre_execution after state gas split is applied
-        let eip7702_regular_refund = eip7702_refund as i64;
-
-        let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
-        let result_gas = self.post_execution(
-            evm,
-            &mut exec_result,
-            init_and_floor_gas,
-            eip7702_regular_refund,
-        )?;
-
-        // Prepare the output
-        self.execution_result(evm, exec_result, result_gas)
+        run_without_catch_error_with_execution(self, evm, |handler, evm, init_and_floor_gas| {
+            handler.execution(evm, init_and_floor_gas)
+        })
     }
 
     /// Validates the execution environment and transaction parameters.
@@ -227,22 +354,12 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
-        let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
-            evm.ctx().tx().gas_limit(),
-            evm.ctx().cfg().tx_gas_limit_cap(),
-        );
-
-        // Create first frame action
-        // Note: first_frame_input now handles state gas deduction from the reservoir
-        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
-
-        // Run execution loop
-        let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
-
-        // Handle last frame result
-        self.last_frame_result(evm, reservoir, &mut frame_result)?;
-        Ok(frame_result)
+        execution_with_frame_loop(
+            self,
+            evm,
+            init_and_floor_gas,
+            |handler, evm, first_frame| handler.run_exec_loop(evm, first_frame),
+        )
     }
 
     /// Handles the final steps of transaction execution.
@@ -468,32 +585,12 @@ pub trait Handler {
         evm: &mut Self::Evm,
         first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
-        let res = evm.frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
-        }
-
-        loop {
-            let call_or_result = evm.frame_run()?;
-
-            let result = match call_or_result {
-                ItemOrResult::Item(init) => {
-                    match evm.frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
-                        ItemOrResult::Result(result) => result,
-                    }
-                }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
-            }
-        }
+        run_frame_loop_with(
+            evm,
+            first_frame_input,
+            <Self::Evm as EvmTr>::frame_init,
+            <Self::Evm as EvmTr>::frame_run,
+        )
     }
 
     /* POST EXECUTION */

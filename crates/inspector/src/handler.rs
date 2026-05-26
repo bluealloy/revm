@@ -1,8 +1,12 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
-use context::{result::ExecutionResult, Cfg, ContextTr, JournalEntry, JournalTr, Transaction};
+use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr};
 use handler::{
-    cache_cpsb_on_local, evm::FrameTr, post_execution::build_result_gas, EvmTr, FrameResult,
-    Handler, ItemOrResult,
+    evm::FrameTr,
+    handler::{
+        execution_with_frame_loop, run_frame_loop_with, run_system_call_with_execution,
+        run_with_catch, run_without_catch_error_with_execution,
+    },
+    EvmTr, FrameResult, Handler,
 };
 use interpreter::{
     instructions::{GasTable, InstructionTable},
@@ -20,11 +24,10 @@ use state::bytecode::opcode;
 /// For system calls, [`InspectorHandler::inspect_run_system_call`] provides inspection
 /// support similar to [`Handler::run_system_call`].
 ///
-/// Notice that when inspection is run it skips few functions from handler, this can be
-/// a problem if custom EVM is implemented and some of skipped functions have changed logic.
-/// For custom EVM, those changed functions would need to be also changed in [`InspectorHandler`].
+/// Inspection uses shared handler helpers for the top-level execution flow, while routing frame
+/// execution through inspector-aware hooks.
 ///
-/// List of functions that are skipped in [`InspectorHandler`]:
+/// List of functions that are replaced in [`InspectorHandler`]:
 /// * [`Handler::run`] replaced with [`InspectorHandler::inspect_run`]
 /// * [`Handler::run_without_catch_error`] replaced with [`InspectorHandler::inspect_run_without_catch_error`]
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
@@ -46,13 +49,9 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
-        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
-        cache_cpsb_on_local(evm.ctx_mut());
-        match self.inspect_run_without_catch_error(evm) {
-            Ok(output) => Ok(output),
-            Err(e) => self.catch_error(evm, e),
-        }
+        run_with_catch(self, evm, |handler, evm| {
+            handler.inspect_run_without_catch_error(evm)
+        })
     }
 
     /// Run inspection without catching error.
@@ -62,19 +61,9 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let mut init_and_floor_gas = self.validate(evm)?;
-        // pre_execution now applies the EIP-7702 state gas refund split to init_and_floor_gas
-        // and returns the regular refund portion
-        let eip7702_regular_refund = self.pre_execution(evm, &mut init_and_floor_gas)? as i64;
-
-        let mut frame_result = self.inspect_execution(evm, &init_and_floor_gas)?;
-        let result_gas = self.post_execution(
-            evm,
-            &mut frame_result,
-            init_and_floor_gas,
-            eip7702_regular_refund,
-        )?;
-        self.execution_result(evm, frame_result, result_gas)
+        run_without_catch_error_with_execution(self, evm, |handler, evm, init_and_floor_gas| {
+            handler.inspect_execution(evm, init_and_floor_gas)
+        })
     }
 
     /// Run execution loop with inspection support
@@ -85,19 +74,12 @@ where
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
-        let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
-            evm.ctx().tx().gas_limit(),
-            evm.ctx().cfg().tx_gas_limit_cap(),
-        );
-        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
-
-        // Run execution loop
-        let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
-
-        // Handle last frame result
-        self.last_frame_result(evm, reservoir, &mut frame_result)?;
-        Ok(frame_result)
+        execution_with_frame_loop(
+            self,
+            evm,
+            init_and_floor_gas,
+            |handler, evm, first_frame| handler.inspect_run_exec_loop(evm, first_frame),
+        )
     }
 
     /* FRAMES */
@@ -115,32 +97,12 @@ where
         evm: &mut Self::Evm,
         first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
-        let res = evm.inspect_frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
-        }
-
-        loop {
-            let call_or_result = evm.inspect_frame_run()?;
-
-            let result = match call_or_result {
-                ItemOrResult::Item(init) => {
-                    match evm.inspect_frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
-                        ItemOrResult::Result(result) => result,
-                    }
-                }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
-            }
-        }
+        run_frame_loop_with(
+            evm,
+            first_frame_input,
+            <Self::Evm as InspectorEvmTr>::inspect_frame_init,
+            <Self::Evm as InspectorEvmTr>::inspect_frame_run,
+        )
     }
 
     /// Run system call with inspection support.
@@ -152,24 +114,9 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context. Inspector
-        // system calls skip validation/pre-execution but still execute
-        // interpreter code that reads Host::cpsb.
-        cache_cpsb_on_local(evm.ctx_mut());
-        // dummy values that are not used.
-        let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        // call execution with inspection and then output.
-        match self
-            .inspect_execution(evm, &init_and_floor_gas)
-            .and_then(|exec_result| {
-                // System calls have no intrinsic gas; build ResultGas from frame result.
-                let gas = exec_result.gas();
-                let result_gas = build_result_gas(false, gas, init_and_floor_gas);
-                self.execution_result(evm, exec_result, result_gas)
-            }) {
-            out @ Ok(_) => out,
-            Err(e) => self.catch_error(evm, e),
-        }
+        run_system_call_with_execution(self, evm, |handler, evm, init_and_floor_gas| {
+            handler.inspect_execution(evm, init_and_floor_gas)
+        })
     }
 }
 
