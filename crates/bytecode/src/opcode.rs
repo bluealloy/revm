@@ -191,6 +191,8 @@ impl OpCode {
                 | OpCode::LOG2
                 | OpCode::LOG3
                 | OpCode::LOG4
+                | OpCode::RETURN
+                | OpCode::REVERT
                 | OpCode::CREATE
                 | OpCode::CREATE2
         )
@@ -785,6 +787,8 @@ mod tests {
         assert!(OpCode::new(LOG2).unwrap().modifies_memory());
         assert!(OpCode::new(LOG3).unwrap().modifies_memory());
         assert!(OpCode::new(LOG4).unwrap().modifies_memory());
+        assert!(OpCode::new(RETURN).unwrap().modifies_memory());
+        assert!(OpCode::new(REVERT).unwrap().modifies_memory());
         assert!(OpCode::new(CREATE).unwrap().modifies_memory());
         assert!(OpCode::new(CREATE2).unwrap().modifies_memory());
     }
