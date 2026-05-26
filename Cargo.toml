@@ -74,12 +74,12 @@ alloy-signer-local = { version = "2.0.0", default-features = false }
 alloy-transport = { version = "2.0.0", default-features = false }
 
 # precompiles
-ark-bls12-381 = { version = "0.5", default-features = false }
-ark-bn254 = { version = "0.5", default-features = false }
-ark-ec = { version = "0.5", default-features = false }
-ark-ff = { version = "0.5", default-features = false }
-ark-serialize = { version = "0.5", default-features = false }
-ark-std = { version = "0.5", default-features = false }
+ark-bls12-381 = { version = "0.6", default-features = false }
+ark-bn254 = { version = "0.6", default-features = false }
+ark-ec = { version = "0.6", default-features = false }
+ark-ff = { version = "0.6", default-features = false }
+ark-serialize = { version = "0.6", default-features = false }
+ark-std = { version = "0.6", default-features = false }
 aurora-engine-modexp = { version = "1.2", default-features = false }
 gmp-mpfr-sys = { version = "1.6", default-features = false }
 blst = "0.3.15"
