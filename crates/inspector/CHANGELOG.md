@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.0.3](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.2...revm-inspector-v21.0.3) - 2026-05-26
+
+### Added
+
+- Bake EIP-8037 CPSB into gas params ([#3714](https://github.com/bluealloy/revm/pull/3714))
+
 ## [21.0.2](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.1...revm-inspector-v21.0.2) - 2026-05-22
 
 ### Other
