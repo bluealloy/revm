@@ -1027,7 +1027,10 @@ impl GasParams {
                 .access_list()
                 .map(|al| {
                     al.fold((0, 0), |(num_accounts, num_storage_slots), item| {
-                        (num_accounts + 1, num_storage_slots + item.storage_slots().count() as u64)
+                        (
+                            num_accounts + 1,
+                            num_storage_slots + item.storage_slots().count() as u64,
+                        )
                     })
                 })
                 .unwrap_or_default();
