@@ -1,10 +1,6 @@
 //! Gas constants and functions for gas calculation.
 
-use crate::{
-    cfg::{gas_params, GasParams},
-    transaction::AccessListItemTr as _,
-    Transaction, TransactionType,
-};
+use crate::{cfg::gas_params, cfg::GasParams, Transaction};
 use primitives::hardfork::SpecId;
 
 /// Tracker for gas during execution.
@@ -479,7 +475,6 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
-    cpsb: u64,
     eip2780: Option<gas_params::Eip2780TxInfo>,
 ) -> InitialAndFloorGas {
     GasParams::new_spec(spec_id).initial_tx_gas(
@@ -488,7 +483,6 @@ pub fn calculate_initial_tx_gas(
         access_list_accounts,
         access_list_storages,
         authorization_list_num,
-        cpsb,
         eip2780,
     )
 }
@@ -503,36 +497,9 @@ pub fn calculate_initial_tx_gas(
 pub fn calculate_initial_tx_gas_for_tx(
     tx: impl Transaction,
     spec: SpecId,
-    cpsb: u64,
     eip2780: Option<gas_params::Eip2780TxInfo>,
 ) -> InitialAndFloorGas {
-    let mut accounts = 0;
-    let mut storages = 0;
-    // legacy is only tx type that does not have access list.
-    if tx.tx_type() != TransactionType::Legacy {
-        (accounts, storages) = tx
-            .access_list()
-            .map(|al| {
-                al.fold((0, 0), |(mut num_accounts, mut num_storage_slots), item| {
-                    num_accounts += 1;
-                    num_storage_slots += item.storage_slots().count();
-
-                    (num_accounts, num_storage_slots)
-                })
-            })
-            .unwrap_or_default();
-    }
-
-    calculate_initial_tx_gas(
-        spec,
-        tx.input(),
-        tx.kind().is_create(),
-        accounts as u64,
-        storages as u64,
-        tx.authorization_list_len() as u64,
-        cpsb,
-        eip2780,
-    )
+    GasParams::new_spec(spec).initial_tx_gas_for_tx(tx, eip2780)
 }
 
 /// Retrieve the total number of tokens in calldata.

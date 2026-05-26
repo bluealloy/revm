@@ -10,11 +10,6 @@ pub struct LocalContext {
     pub shared_memory_buffer: Rc<RefCell<Vec<u8>>>,
     /// Optional precompile error message to bubble up.
     pub precompile_error_message: Option<String>,
-    /// EIP-8037 `cost_per_state_byte` cached for the current transaction.
-    ///
-    /// Populated at transaction start from `cfg.cpsb(block.gas_limit())`
-    /// (honoring `cpsb_override`). Read by the hot-path `Host::cpsb`.
-    pub cpsb: u64,
 }
 
 impl Default for LocalContext {
@@ -22,7 +17,6 @@ impl Default for LocalContext {
         Self {
             shared_memory_buffer: Rc::new(RefCell::new(Vec::with_capacity(1024 * 4))),
             precompile_error_message: None,
-            cpsb: 0,
         }
     }
 }
@@ -32,7 +26,6 @@ impl LocalContextTr for LocalContext {
         // Sets len to 0 but it will not shrink to drop the capacity.
         unsafe { self.shared_memory_buffer.borrow_mut().set_len(0) };
         self.precompile_error_message = None;
-        self.cpsb = 0;
     }
 
     fn shared_memory_buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
@@ -45,14 +38,6 @@ impl LocalContextTr for LocalContext {
 
     fn take_precompile_error_context(&mut self) -> Option<String> {
         self.precompile_error_message.take()
-    }
-
-    fn cpsb(&self) -> u64 {
-        self.cpsb
-    }
-
-    fn set_cpsb(&mut self, cpsb: u64) {
-        self.cpsb = cpsb;
     }
 }
 

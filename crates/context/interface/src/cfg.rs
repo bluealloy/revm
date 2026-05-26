@@ -106,13 +106,6 @@ pub trait Cfg {
     /// execution charges are applied for empty recipients with value and
     /// EIP-7702-delegated recipients.
     fn is_amsterdam_eip2780_enabled(&self) -> bool;
-
-    /// Returns the EIP-8037 `cost_per_state_byte` (CPSB).
-    ///
-    /// When [`Cfg::is_amsterdam_eip8037_enabled`] is `false` this returns `0`.
-    /// Otherwise, if an override is configured it is returned directly; otherwise
-    /// the fixed Glamsterdam value [`primitives::eip8037::CPSB_GLAMSTERDAM`] is returned.
-    fn cpsb(&self) -> u64;
 }
 
 /// What bytecode analysis to perform

@@ -1,10 +1,11 @@
 use context_interface::{
+    cfg::GasParams,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
+use interpreter::InitialAndFloorGas;
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
@@ -235,20 +236,49 @@ pub fn validate_tx_env<CTX: ContextTr>(
     Ok(())
 }
 
-/// Validate initial transaction gas.
+/// Validate initial transaction gas using the default [`GasParams`] for the given [`SpecId`].
+///
+/// For custom gas parameters (e.g. configured on the context), use
+/// [`validate_initial_tx_gas_with_gas_params`].
+#[allow(clippy::too_many_arguments)]
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
-    cpsb: u64,
     eip2780: Option<context_interface::cfg::gas_params::Eip2780TxInfo>,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec, cpsb, eip2780);
+    validate_initial_tx_gas_with_gas_params(
+        tx,
+        spec,
+        &GasParams::new_spec(spec),
+        is_eip7623_disabled,
+        is_amsterdam_eip8037_enabled,
+        tx_gas_limit_cap,
+        eip2780,
+    )
+}
+
+/// Validate initial transaction gas using the provided [`GasParams`].
+#[allow(clippy::too_many_arguments)]
+pub fn validate_initial_tx_gas_with_gas_params(
+    tx: impl Transaction,
+    spec: SpecId,
+    gas_params: &GasParams,
+    is_eip7623_disabled: bool,
+    is_amsterdam_eip8037_enabled: bool,
+    tx_gas_limit_cap: u64,
+    eip2780: Option<context_interface::cfg::gas_params::Eip2780TxInfo>,
+) -> Result<InitialAndFloorGas, InvalidTransaction> {
+    let mut gas = gas_params.initial_tx_gas_for_tx(&tx, eip2780);
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
+    }
+
+    if !is_amsterdam_eip8037_enabled {
+        gas.set_initial_state_gas(0);
     }
 
     // Additional check to see if limit is big enough to cover initial gas.

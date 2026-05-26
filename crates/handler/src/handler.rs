@@ -16,7 +16,7 @@ use context_interface::{
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
 use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
-use primitives::{hardfork::SpecId, U256};
+use primitives::U256;
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -40,17 +40,6 @@ impl<
             + FromStringError,
     > EvmTrError<EVM> for T
 {
-}
-
-/// Caches the EIP-8037 `cost_per_state_byte` on the local context for the
-/// current transaction, honoring `cfg.cpsb_override`.
-///
-/// Called at the start of every top-level execution entry point so that
-/// `Host::cpsb` becomes a single field read instead of a recomputation.
-#[inline]
-pub fn cache_cpsb_on_local<CTX: ContextTr>(ctx: &mut CTX) {
-    let cpsb = ctx.cfg().cpsb();
-    ctx.local_mut().set_cpsb(cpsb);
 }
 
 /// The main implementation of Ethereum Mainnet transaction execution.
@@ -110,9 +99,6 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context so the hot-path
-        // Host::cpsb is a single field read. Honors cfg.cpsb_override.
-        cache_cpsb_on_local(evm.ctx_mut());
         // Run inner handler and catch all errors to handle cleanup.
         match self.run_without_catch_error(evm) {
             Ok(output) => Ok(output),
@@ -139,10 +125,6 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        // Cache EIP-8037 cost_per_state_byte on the local context. System calls
-        // skip validation/pre-execution but still execute interpreter code that
-        // reads Host::cpsb, so this must be populated here too.
-        cache_cpsb_on_local(evm.ctx_mut());
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         // call execution and than output.
@@ -307,24 +289,18 @@ pub trait Handler {
         &self,
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
-        let ctx = evm.ctx();
-        let cfg = ctx.cfg();
-        let spec: SpecId = cfg.spec().into();
-        let is_eip7623_disabled = cfg.is_eip7623_disabled();
-        let is_amsterdam_eip8037_enabled = cfg.is_amsterdam_eip8037_enabled();
-        let is_amsterdam_eip2780_enabled = cfg.is_amsterdam_eip2780_enabled();
-        let tx_gas_limit_cap = cfg.tx_gas_limit_cap();
-        let cpsb = cfg.cpsb();
+        let ctx = evm.ctx_ref();
+        let is_amsterdam_eip2780_enabled = ctx.cfg().is_amsterdam_eip2780_enabled();
         let tx = ctx.tx();
         let eip2780 =
             is_amsterdam_eip2780_enabled.then(|| gas_params::Eip2780TxInfo { value: tx.value() });
-        let gas = validation::validate_initial_tx_gas(
+        let gas = validation::validate_initial_tx_gas_with_gas_params(
             tx,
-            spec,
-            is_eip7623_disabled,
-            is_amsterdam_eip8037_enabled,
-            tx_gas_limit_cap,
-            cpsb,
+            ctx.cfg().spec().into(),
+            ctx.cfg().gas_params(),
+            ctx.cfg().is_eip7623_disabled(),
+            ctx.cfg().is_amsterdam_eip8037_enabled(),
+            ctx.cfg().tx_gas_limit_cap(),
             eip2780,
         )?;
 
@@ -458,7 +434,7 @@ pub trait Handler {
         // or erased.
         if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
             let ctx = evm.ctx();
-            let state_gas_charged = ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
+            let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
             gas.refill_reservoir(state_gas_charged);
         }
 

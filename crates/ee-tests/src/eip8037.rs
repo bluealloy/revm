@@ -29,9 +29,6 @@ const fn hash_cost(len: usize) -> u64 {
 type MainEvm = MainnetEvm<MainnetContext<BenchmarkDB>>;
 
 /// Builds an EVM with state gas enabled and custom gas params.
-///
-/// Sets `cpsb_override = Some(1)` so the overridden gas-table values are
-/// interpreted as final gas amounts (the CPSB multiplier becomes a no-op).
 fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
@@ -41,7 +38,6 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
             // keep the comparisons focused on state-gas behaviour.
             cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(cap);
-            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -1054,7 +1050,6 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
-            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -2205,7 +2200,7 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(
         result.gas().state_gas_spent_final(),
-        STATE_GAS_SSTORE_SET + revm::primitives::eip8037::NEW_ACCOUNT_BYTES
+        STATE_GAS_SSTORE_SET + STATE_GAS_CREATE
     );
 
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
@@ -2280,13 +2275,12 @@ fn test_eip8037_tx_create_collision() {
         .build_mainnet();
     let baseline_result = baseline.transact_one(build_tx(TX_GAS_LIMIT_CAP)).unwrap();
 
-    // State-gas variant: EIP-8037 enabled with cpsb_override = 1 so the
-    // gas-table overrides are interpreted as final amounts.
+    // State-gas variant: EIP-8037 enabled with gas-table overrides interpreted
+    // as final amounts.
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip2780 = false;
-            cfg.cpsb_override = Some(1);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -2319,8 +2313,8 @@ fn test_eip8037_tx_create_collision() {
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().state_gas_spent_final(), 0);
 
-    // Halt consumes the regular gas budget in full. With cpsb_override = 1 the
-    // intrinsic create_state_gas equals STATE_GAS_CREATE, and the state-gas
+    // Halt consumes the regular gas budget in full. The intrinsic
+    // create_state_gas equals STATE_GAS_CREATE, and the state-gas
     // variant's total gas spent is exactly that much less than the baseline,
     // because the create_failed branch refills the reservoir with it.
     //

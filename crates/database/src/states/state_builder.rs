@@ -168,6 +168,7 @@ impl<DB: Database> StateBuilder<DB> {
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
             bal_state: self.bal_state,
+            state_hook: None,
         }
     }
 }
