@@ -1,10 +1,11 @@
 use context_interface::{
+    cfg::GasParams,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{Transaction, TransactionType},
     Block, Cfg, ContextTr,
 };
 use core::cmp;
-use interpreter::{instructions::calculate_initial_tx_gas_for_tx, InitialAndFloorGas};
+use interpreter::InitialAndFloorGas;
 use primitives::{eip4844, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
@@ -235,19 +236,44 @@ pub fn validate_tx_env<CTX: ContextTr>(
     Ok(())
 }
 
-/// Validate initial transaction gas.
+/// Validate initial transaction gas using the default [`GasParams`] for the given [`SpecId`].
+///
+/// For custom gas parameters (e.g. configured on the context), use
+/// [`validate_initial_tx_gas_with_gas_params`].
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
-    cpsb: u64,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = calculate_initial_tx_gas_for_tx(&tx, spec, cpsb);
+    validate_initial_tx_gas_with_gas_params(
+        tx,
+        spec,
+        &GasParams::new_spec(spec),
+        is_eip7623_disabled,
+        is_amsterdam_eip8037_enabled,
+        tx_gas_limit_cap,
+    )
+}
+
+/// Validate initial transaction gas using the provided [`GasParams`].
+pub fn validate_initial_tx_gas_with_gas_params(
+    tx: impl Transaction,
+    spec: SpecId,
+    gas_params: &GasParams,
+    is_eip7623_disabled: bool,
+    is_amsterdam_eip8037_enabled: bool,
+    tx_gas_limit_cap: u64,
+) -> Result<InitialAndFloorGas, InvalidTransaction> {
+    let mut gas = gas_params.initial_tx_gas_for_tx(&tx);
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
+    }
+
+    if !is_amsterdam_eip8037_enabled {
+        gas.set_initial_state_gas(0);
     }
 
     // Additional check to see if limit is big enough to cover initial gas.

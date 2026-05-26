@@ -2,7 +2,7 @@ use crate::{
     evm::FrameTr, item_or_result::FrameInitOrResult, precompile_provider::PrecompileProvider,
     CallFrame, CreateFrame, FrameData, FrameResult, ItemOrResult,
 };
-use context::{result::FromStringError, LocalContextTr};
+use context::result::FromStringError;
 use context_interface::{
     context::{take_error, ContextError},
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
@@ -541,8 +541,7 @@ impl EthFrame<EthInterpreter> {
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
                 if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
-                    let state_gas_charged =
-                        ctx.cfg().gas_params().create_state_gas(ctx.local().cpsb());
+                    let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
                     this_gas.refill_reservoir(state_gas_charged);
                 }
 
@@ -619,13 +618,12 @@ pub fn return_create<CTX: ContextTr>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
 ) {
-    let (_, _, cfg, journal, _, local) = context.all_mut();
+    let (_, _, cfg, journal, _, _) = context.all_mut();
 
     let max_code_size = cfg.max_code_size();
     let is_eip3541_disabled = cfg.is_eip3541_disabled();
     let spec_id = cfg.spec().into();
     let is_amsterdam_eip8037 = cfg.is_amsterdam_eip8037_enabled();
-    let cpsb = local.cpsb();
     let gas_params = cfg.gas_params();
 
     // If return is not ok revert and return.
@@ -691,8 +689,7 @@ pub fn return_create<CTX: ContextTr>(
         //
         // Note: This should be last operation before checkpoint commit as spending state before this messes
         // with refilling of state gas.
-        let state_gas_for_code =
-            gas_params.code_deposit_state_gas(interpreter_result.output.len(), cpsb);
+        let state_gas_for_code = gas_params.code_deposit_state_gas(interpreter_result.output.len());
         if state_gas_for_code > 0 && !interpreter_result.gas.record_state_cost(state_gas_for_code) {
             journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
