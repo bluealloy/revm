@@ -138,6 +138,15 @@ impl<DB: Database> StateBuilder<DB> {
         self
     }
 
+    /// Allow storage slots missing from the BAL to fall through to the backing database.
+    ///
+    /// Account lookups and declared storage writes remain enforced. This only relaxes read-only
+    /// storage slots that are absent from the BAL.
+    pub fn with_missing_storage_reads_allowed(mut self) -> Self {
+        self.bal_state = self.bal_state.with_missing_storage_reads_allowed();
+        self
+    }
+
     /// With BAL builder.
     pub fn with_bal_builder(mut self) -> Self {
         self.bal_state.bal_builder = Some(Bal::new());

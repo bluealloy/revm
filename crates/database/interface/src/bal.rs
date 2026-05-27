@@ -25,6 +25,8 @@ pub struct BalState {
     /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
     /// to submit changes.
     pub bal_index: BlockAccessIndex,
+    /// Whether storage slots missing from the BAL should fall through to the backing database.
+    pub allow_missing_storage_reads: bool,
 }
 
 impl BalState {
@@ -68,6 +70,16 @@ impl BalState {
     #[inline]
     pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
         self.bal = Some(bal);
+        self
+    }
+
+    /// Allow storage slots missing from the BAL to fall through to the backing database.
+    ///
+    /// Account lookups and declared storage writes remain enforced. This only relaxes read-only
+    /// storage slots that are absent from the BAL.
+    #[inline]
+    pub const fn with_missing_storage_reads_allowed(mut self) -> Self {
+        self.allow_missing_storage_reads = true;
         self
     }
 
@@ -164,10 +176,11 @@ impl BalState {
             return Err(BalError::AccountNotFound { address: *account });
         };
 
-        Ok(bal_account
-            .storage
-            .get_bal_writes(account, storage_key)?
-            .get(self.bal_index))
+        match bal_account.storage.get_bal_writes(account, storage_key) {
+            Ok(writes) => Ok(writes.get(self.bal_index)),
+            Err(BalError::SlotNotFound { .. }) if self.allow_missing_storage_reads => Ok(None),
+            Err(error) => Err(error),
+        }
     }
 
     /// Get the storage value by account id.
@@ -187,10 +200,11 @@ impl BalState {
             return Err(BalError::InvalidAccountId { account_id });
         };
 
-        Ok(bal_account
-            .storage
-            .get_bal_writes(address, storage_key)?
-            .get(self.bal_index))
+        match bal_account.storage.get_bal_writes(address, storage_key) {
+            Ok(writes) => Ok(writes.get(self.bal_index)),
+            Err(BalError::SlotNotFound { .. }) if self.allow_missing_storage_reads => Ok(None),
+            Err(error) => Err(error),
+        }
     }
 
     /// Apply changed from EvmState to the bal_builder
@@ -254,6 +268,18 @@ impl<DB> BalDatabase<DB> {
                 bal,
                 ..self.bal_state
             },
+            ..self
+        }
+    }
+
+    /// Allow storage slots missing from the BAL to fall through to the backing database.
+    ///
+    /// Account lookups and declared storage writes remain enforced. This only relaxes read-only
+    /// storage slots that are absent from the BAL.
+    #[inline]
+    pub fn with_missing_storage_reads_allowed(self) -> Self {
+        Self {
+            bal_state: self.bal_state.with_missing_storage_reads_allowed(),
             ..self
         }
     }
@@ -403,5 +429,75 @@ impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
             (address, account)
         });
         self.db.commit_iter(&mut changes);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Database;
+    use core::convert::Infallible;
+
+    #[derive(Default)]
+    struct StorageDb {
+        value: StorageValue,
+    }
+
+    impl Database for StorageDb {
+        type Error = Infallible;
+
+        fn basic(&mut self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+            Ok(None)
+        }
+
+        fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+            Ok(Bytecode::default())
+        }
+
+        fn storage(
+            &mut self,
+            _address: Address,
+            _index: StorageKey,
+        ) -> Result<StorageValue, Self::Error> {
+            Ok(self.value)
+        }
+
+        fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+            Ok(B256::ZERO)
+        }
+    }
+
+    fn bal_with_account(address: Address) -> Arc<Bal> {
+        let mut bal = Bal::new();
+        bal.accounts.insert(address, Default::default());
+        Arc::new(bal)
+    }
+
+    #[test]
+    fn strict_bal_errors_on_missing_storage_read() {
+        let address = Address::with_last_byte(1);
+        let key = StorageKey::from(2);
+        let value = StorageValue::from(3);
+        let mut db =
+            BalDatabase::new(StorageDb { value }).with_bal_option(Some(bal_with_account(address)));
+
+        let err = db.storage(address, key).unwrap_err();
+
+        assert_eq!(
+            err,
+            EvmDatabaseError::Bal(BalError::SlotNotFound { address, slot: key })
+        );
+    }
+
+    #[test]
+    fn relaxed_bal_falls_back_for_missing_storage_read() {
+        let address = Address::with_last_byte(1);
+        let key = StorageKey::from(2);
+        let value = StorageValue::from(3);
+        let mut db = BalDatabase::new(StorageDb { value })
+            .with_bal_option(Some(bal_with_account(address)))
+            .with_missing_storage_reads_allowed();
+
+        assert_eq!(db.storage(address, key).unwrap(), value);
     }
 }
