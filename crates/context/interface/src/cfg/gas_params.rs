@@ -297,11 +297,10 @@ impl GasParams {
         }
 
         if spec.is_enabled_in(SpecId::PRAGUE) {
-            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
-                eip7702::PER_EMPTY_ACCOUNT_COST;
+            table[GasId::tx_eip7702_regular_gas().as_usize()] = eip7702::PER_EMPTY_ACCOUNT_COST;
 
             // EIP-7702 authorization refund for existing accounts
-            table[GasId::tx_eip7702_auth_refund().as_usize()] =
+            table[GasId::tx_eip7702_regular_refund().as_usize()] =
                 eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST;
 
             table[GasId::tx_floor_cost_per_token().as_usize()] = gas::TOTAL_COST_FLOOR_PER_TOKEN;
@@ -348,9 +347,9 @@ impl GasParams {
             // helpers in `GasParams` combine the pre-scaled values.
             //   regular per-auth cost: 7500 (state bytes added pessimistically in `initial_tx_gas`)
             //   regular refund:        0   (per-auth refund is entirely state gas)
-            table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
+            table[GasId::tx_eip7702_regular_gas().as_usize()] =
                 eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
-            table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
+            table[GasId::tx_eip7702_regular_refund().as_usize()] = 0;
 
             // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
             // (zero/nonzero). The per-token constant bumps from 10 to 16, and
@@ -750,7 +749,7 @@ impl GasParams {
     /// `PER_EMPTY_ACCOUNT_COST`.
     #[inline]
     pub fn tx_eip7702_per_empty_account_cost(&self) -> u64 {
-        let regular = self.get(GasId::tx_eip7702_per_empty_account_cost());
+        let regular = self.get(GasId::tx_eip7702_regular_gas());
         let state = self.tx_eip7702_state_gas();
         regular.saturating_add(state)
     }
@@ -762,7 +761,7 @@ impl GasParams {
     /// state-gas portion.
     #[inline]
     pub fn tx_eip7702_auth_refund(&self) -> u64 {
-        let regular = self.get(GasId::tx_eip7702_auth_refund());
+        let regular = self.get(GasId::tx_eip7702_regular_refund());
         let state = self.new_account_state_gas();
         regular.saturating_add(state)
     }
@@ -800,7 +799,7 @@ impl GasParams {
     /// Under EIP-8037 it is zero — the refund is entirely state gas.
     #[inline]
     pub fn tx_eip7702_auth_refund_regular(&self) -> u64 {
-        self.get(GasId::tx_eip7702_auth_refund())
+        self.get(GasId::tx_eip7702_regular_refund())
     }
 
     /// Used in [GasParams::initial_tx_gas] to calculate the token non zero byte multiplier.
@@ -1123,9 +1122,7 @@ impl GasId {
                 "new_account_cost_for_selfdestruct"
             }
             x if x == Self::code_deposit_cost().as_u8() => "code_deposit_cost",
-            x if x == Self::tx_eip7702_per_empty_account_cost().as_u8() => {
-                "tx_eip7702_per_empty_account_cost"
-            }
+            x if x == Self::tx_eip7702_regular_gas().as_u8() => "tx_eip7702_regular_gas",
             x if x == Self::tx_token_non_zero_byte_multiplier().as_u8() => {
                 "tx_token_non_zero_byte_multiplier"
             }
@@ -1141,7 +1138,7 @@ impl GasId {
             x if x == Self::tx_initcode_cost().as_u8() => "tx_initcode_cost",
             x if x == Self::sstore_set_refund().as_u8() => "sstore_set_refund",
             x if x == Self::sstore_reset_refund().as_u8() => "sstore_reset_refund",
-            x if x == Self::tx_eip7702_auth_refund().as_u8() => "tx_eip7702_auth_refund",
+            x if x == Self::tx_eip7702_regular_refund().as_u8() => "tx_eip7702_regular_refund",
             x if x == Self::sstore_set_state_gas().as_u8() => "sstore_set_state_gas",
             x if x == Self::new_account_state_gas().as_u8() => "new_account_state_gas",
             x if x == Self::code_deposit_state_gas().as_u8() => "code_deposit_state_gas",
@@ -1202,7 +1199,7 @@ impl GasId {
             "cold_storage_cost" => Some(Self::cold_storage_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
             "code_deposit_cost" => Some(Self::code_deposit_cost()),
-            "tx_eip7702_per_empty_account_cost" => Some(Self::tx_eip7702_per_empty_account_cost()),
+            "tx_eip7702_regular_gas" => Some(Self::tx_eip7702_regular_gas()),
             "tx_token_non_zero_byte_multiplier" => Some(Self::tx_token_non_zero_byte_multiplier()),
             "tx_token_cost" => Some(Self::tx_token_cost()),
             "tx_floor_cost_per_token" => Some(Self::tx_floor_cost_per_token()),
@@ -1214,7 +1211,7 @@ impl GasId {
             "tx_initcode_cost" => Some(Self::tx_initcode_cost()),
             "sstore_set_refund" => Some(Self::sstore_set_refund()),
             "sstore_reset_refund" => Some(Self::sstore_reset_refund()),
-            "tx_eip7702_auth_refund" => Some(Self::tx_eip7702_auth_refund()),
+            "tx_eip7702_regular_refund" => Some(Self::tx_eip7702_regular_refund()),
             "sstore_set_state_gas" => Some(Self::sstore_set_state_gas()),
             "new_account_state_gas" => Some(Self::new_account_state_gas()),
             "code_deposit_state_gas" => Some(Self::code_deposit_state_gas()),
@@ -1363,8 +1360,13 @@ impl GasId {
         Self::new(26)
     }
 
-    /// EIP-7702 PER_EMPTY_ACCOUNT_COST gas
-    pub const fn tx_eip7702_per_empty_account_cost() -> GasId {
+    /// EIP-7702 per-auth regular intrinsic gas (the non-state portion).
+    ///
+    /// Pre-EIP-8037 this holds the full `PER_EMPTY_ACCOUNT_COST`; under EIP-8037
+    /// it holds only the regular slice and the state portion is sourced
+    /// separately. The combined total is exposed via
+    /// [`GasParams::tx_eip7702_per_empty_account_cost`].
+    pub const fn tx_eip7702_regular_gas() -> GasId {
         Self::new(27)
     }
 
@@ -1423,10 +1425,14 @@ impl GasId {
         Self::new(38)
     }
 
-    /// EIP-7702 authorization refund per existing account.
-    /// This is the refund given when an authorization is applied to an already existing account.
-    /// Calculated as PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST (25000 - 12500 = 12500).
-    pub const fn tx_eip7702_auth_refund() -> GasId {
+    /// EIP-7702 per-auth regular-gas refund (the non-state portion).
+    ///
+    /// This is the refund given when an authorization is applied to an already
+    /// existing account. Pre-EIP-8037 it is `PER_EMPTY_ACCOUNT_COST -
+    /// PER_AUTH_BASE_COST` (25000 - 12500 = 12500); under EIP-8037 the refund is
+    /// entirely state gas so this is zero. The combined total is exposed via
+    /// [`GasParams::tx_eip7702_auth_refund`].
+    pub const fn tx_eip7702_regular_refund() -> GasId {
         Self::new(39)
     }
 

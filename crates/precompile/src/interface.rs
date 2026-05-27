@@ -115,7 +115,7 @@ pub struct PrecompileOutput {
     /// Gas refunded by the precompile.
     pub gas_refunded: i64,
     /// State gas used by the precompile.
-    pub state_gas_used: u64,
+    pub state_gas_used: i64,
     /// Reservoir gas for EIP-8037.
     pub reservoir: u64,
     /// Output bytes.
