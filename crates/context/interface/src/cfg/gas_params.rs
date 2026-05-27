@@ -772,24 +772,26 @@ impl GasParams {
     /// `initial_state_gas` tracking. Zero before AMSTERDAM.
     #[inline]
     pub fn tx_eip7702_state_gas(&self) -> u64 {
-        let new_account = self.get(GasId::new_account_state_gas());
-        let bytecode = self.get(GasId::tx_eip7702_state_gas_bytecode());
-        new_account.saturating_add(bytecode)
+        // Per-auth pessimistic charge: one new account + one new delegation bytecode.
+        self.tx_eip7702_state_refund(1, 1)
     }
 
-    /// EIP-7702 total state-gas refund for a transaction.
+    /// EIP-7702 state gas for `num_accounts` new accounts and `num_bytecodes`
+    /// new delegation bytecodes.
     ///
-    /// Combines the per-account refund for an existing authorization account
-    /// with the per-bytecode refund for an already deployed delegation target.
-    /// Returns zero before AMSTERDAM.
+    /// Shared primitive for both the pessimistic per-auth charge (via
+    /// [`tx_eip7702_state_gas`](Self::tx_eip7702_state_gas), with counts of 1)
+    /// and the transaction state-gas refund for already-existing authorities
+    /// (with the counts of existing accounts and already-deployed delegation
+    /// targets). Returns zero before AMSTERDAM.
     #[inline]
-    pub fn tx_eip7702_state_refund(&self, refunded_accounts: u64, refunded_bytecodes: u64) -> u64 {
+    pub fn tx_eip7702_state_refund(&self, num_accounts: u64, num_bytecodes: u64) -> u64 {
         let per_account = self
             .get(GasId::new_account_state_gas())
-            .saturating_mul(refunded_accounts);
+            .saturating_mul(num_accounts);
         let per_bytecode = self
             .get(GasId::tx_eip7702_state_gas_bytecode())
-            .saturating_mul(refunded_bytecodes);
+            .saturating_mul(num_bytecodes);
         per_account.saturating_add(per_bytecode)
     }
 
