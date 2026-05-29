@@ -118,7 +118,7 @@ impl CacheAccount {
     /// Touch empty account, related to EIP-161 state clear.
     ///
     /// This account returns the Transition that is used to create the BundleState.
-    pub fn touch_empty_eip161(&mut self) -> Option<TransitionAccount<EvmStorage>> {
+    pub fn touch_empty_eip161<'a>(&mut self) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
         let previous_status = self.status;
 
         // Set account to None.
@@ -140,7 +140,7 @@ impl CacheAccount {
                 status: self.status,
                 previous_info,
                 previous_status,
-                storage: HashMap::default(),
+                storage: None,
                 storage_was_destroyed: true,
             })
         }
@@ -149,7 +149,7 @@ impl CacheAccount {
     /// Consumes self and make account as destroyed.
     ///
     /// Sets account as None and set status to Destroyer or DestroyedAgain.
-    pub fn selfdestruct(&mut self) -> Option<TransitionAccount<EvmStorage>> {
+    pub fn selfdestruct<'a>(&mut self) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
         // Account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);
         let previous_status = self.status;
@@ -164,14 +164,17 @@ impl CacheAccount {
                 status: self.status,
                 previous_info,
                 previous_status,
-                storage: HashMap::default(),
+                storage: None,
                 storage_was_destroyed: true,
             })
         }
     }
 
     /// Newly created account.
-    pub fn newly_created(&mut self, account: Account) -> TransitionAccount<EvmStorage> {
+    pub fn newly_created<'a>(
+        &mut self,
+        account: &'a Account,
+    ) -> TransitionAccount<Option<&'a EvmStorage>> {
         let previous_status = self.status;
         let previous_info = self.account.take().map(|a| a.info);
 
@@ -187,11 +190,11 @@ impl CacheAccount {
             status: self.status,
             previous_status,
             previous_info,
-            storage: account.storage,
+            storage: Some(&account.storage),
             storage_was_destroyed: false,
         };
         self.account = Some(PlainAccount {
-            info: account.info,
+            info: account.info.clone(),
             storage: new_bundle_storage,
         });
         transition_account
@@ -254,7 +257,10 @@ impl CacheAccount {
     /// Updates the account with new information and storage changes.
     ///
     /// Merges the provided storage values with the existing storage and updates the account status.
-    pub fn change(&mut self, account: Account) -> TransitionAccount<EvmStorage> {
+    pub fn change<'a>(
+        &mut self,
+        account: &'a Account,
+    ) -> TransitionAccount<Option<&'a EvmStorage>> {
         let previous_status = self.status;
         let (previous_info, mut this_storage) = if let Some(account) = self.account.take() {
             (Some(account.info), account.storage)
@@ -269,7 +275,7 @@ impl CacheAccount {
                 .filter_map(|(k, s)| s.is_changed().then_some((*k, s.present_value))),
         );
         let changed_account = PlainAccount {
-            info: account.info,
+            info: account.info.clone(),
             storage: this_storage,
         };
 
@@ -285,7 +291,7 @@ impl CacheAccount {
             status: self.status,
             previous_info,
             previous_status,
-            storage: account.storage,
+            storage: Some(&account.storage),
             storage_was_destroyed: false,
         }
     }

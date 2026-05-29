@@ -1,4 +1,4 @@
-use super::{AccountRevert, AccountStatus, BundleAccount, StorageWithOriginalValues};
+use super::{AccountRevert, AccountStatus, BundleAccount, StorageSlot, StorageWithOriginalValues};
 use bytecode::Bytecode;
 use primitives::{hash_map, B256, U256};
 use state::{AccountInfo, EvmStorage};
@@ -74,7 +74,7 @@ impl TransitionAccount {
 
     /// Update new values of transition. Don't override old values.
     /// Both account info and old storages need to be left intact.
-    pub fn update(&mut self, other: TransitionAccount<EvmStorage>) {
+    pub fn update(&mut self, other: TransitionAccount<Option<&EvmStorage>>) {
         self.info = other.info;
         self.status = other.status;
 
@@ -87,27 +87,36 @@ impl TransitionAccount {
             self.storage = other
                 .storage
                 .into_iter()
-                .filter_map(|(k, v)| v.is_changed().then_some((k, v.into())))
+                .flat_map(|storage| storage.iter())
+                .filter_map(|(key, slot)| {
+                    slot.is_changed().then_some((
+                        *key,
+                        StorageSlot::new_changed(slot.original_value, slot.present_value),
+                    ))
+                })
                 .collect();
             self.storage_was_destroyed = true;
         } else {
             // Update changed values to this transition.
-            for (key, slot) in other.storage.into_iter() {
-                if !slot.is_changed() {
-                    continue;
-                }
-                match self.storage.entry(key) {
-                    hash_map::Entry::Vacant(entry) => {
-                        entry.insert(slot.into());
+            if let Some(storage) = other.storage {
+                for (key, slot) in storage {
+                    if !slot.is_changed() {
+                        continue;
                     }
-                    hash_map::Entry::Occupied(mut entry) => {
-                        let value = entry.get_mut();
-                        // If new value is same as original value. Remove storage entry.
-                        if value.original_value() == slot.present_value() {
-                            entry.remove();
-                        } else {
-                            // If value is different, update transition present value;
-                            value.present_value = slot.present_value;
+                    let slot = StorageSlot::new_changed(slot.original_value, slot.present_value);
+                    match self.storage.entry(*key) {
+                        hash_map::Entry::Vacant(entry) => {
+                            entry.insert(slot);
+                        }
+                        hash_map::Entry::Occupied(mut entry) => {
+                            let value = entry.get_mut();
+                            // If new value is same as original value. Remove storage entry.
+                            if value.original_value() == slot.present_value() {
+                                entry.remove();
+                            } else {
+                                // If value is different, update transition present value;
+                                value.present_value = slot.present_value;
+                            }
                         }
                     }
                 }

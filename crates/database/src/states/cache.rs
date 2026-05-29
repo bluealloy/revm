@@ -88,11 +88,11 @@ impl CacheState {
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
     #[inline]
-    pub fn apply_evm_state<F>(
+    pub fn apply_evm_state<'a, F>(
         &mut self,
-        evm_state: impl IntoIterator<Item = (Address, Account)>,
+        evm_state: impl IntoIterator<Item = (Address, &'a Account)>,
         inspect: F,
-    ) -> Vec<(Address, TransitionAccount<EvmStorage>)>
+    ) -> Vec<(Address, TransitionAccount<Option<&'a EvmStorage>>)>
     where
         F: FnMut(&Address, &Account),
     {
@@ -101,19 +101,19 @@ impl CacheState {
 
     /// Applies output of revm execution and creates an iterator of account transitions.
     #[inline]
-    pub(crate) fn apply_evm_state_iter<'a, F, T>(
-        &'a mut self,
+    pub(crate) fn apply_evm_state_iter<'a, 'b, F, T>(
+        &'b mut self,
         evm_state: T,
         mut inspect: F,
-    ) -> impl Iterator<Item = (Address, TransitionAccount<EvmStorage>)> + use<'a, F, T>
+    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)> + use<'a, 'b, F, T>
     where
-        F: FnMut(&Address, &Account),
-        T: IntoIterator<Item = (Address, Account)>,
+        F: FnMut(&Address, &'a Account),
+        T: IntoIterator<Item = (Address, &'a Account)>,
     {
         evm_state.into_iter().filter_map(move |(address, account)| {
-            inspect(&address, &account);
+            inspect(&address, account);
             self.apply_account_state(address, account)
-                .map(|transition| (address, transition))
+                .map(move |transition| (address, transition))
         })
     }
 
@@ -179,11 +179,11 @@ impl CacheState {
     /// Applies updated account state to the cached account.
     ///
     /// Returns account transition if applicable.
-    pub(crate) fn apply_account_state(
+    pub(crate) fn apply_account_state<'a>(
         &mut self,
         address: Address,
-        account: Account,
-    ) -> Option<TransitionAccount<EvmStorage>> {
+        account: &'a Account,
+    ) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
         // Not touched account are never changed.
         if !account.is_touched() {
             return None;

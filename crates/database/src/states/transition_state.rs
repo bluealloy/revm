@@ -1,6 +1,6 @@
-use super::TransitionAccount;
+use super::{StorageSlot, TransitionAccount};
 use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
-use state::{EvmStorage};
+use state::EvmStorage;
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
@@ -34,26 +34,40 @@ impl TransitionState {
     ///
     /// This will insert new [`TransitionAccount`]s, or update existing ones via
     /// [`update`][TransitionAccount::update].
-    pub fn add_transitions(
+    pub fn add_transitions<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount<EvmStorage>)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)>,
     ) {
         let transitions = transitions.into_iter();
         if let Some(upper) = transitions.size_hint().1 {
             self.transitions.reserve(upper);
         }
         for (address, account) in transitions {
-            match self.transitions.entry(address) {
-                Entry::Occupied(entry) => entry.into_mut().update(account),
-                Entry::Vacant(entry) => {
-                    _ = entry.insert(account.map_storage(|storage| {
-                        // The storage piped from EVM might contain both changed and unchanged slots.
-                        storage
-                            .into_iter()
-                            .filter_map(|(k, v)| v.is_changed().then_some((k, v.into())))
-                            .collect()
-                    }))
-                }
+            self.add_transition(address, account);
+        }
+    }
+
+    /// Add one transition to the transition state.
+    pub fn add_transition(
+        &mut self,
+        address: Address,
+        account: TransitionAccount<Option<&EvmStorage>>,
+    ) {
+        match self.transitions.entry(address) {
+            Entry::Occupied(entry) => entry.into_mut().update(account),
+            Entry::Vacant(entry) => {
+                _ = entry.insert(account.map_storage(|storage| {
+                    storage
+                        .into_iter()
+                        .flat_map(|storage| storage.iter())
+                        .filter_map(|(key, slot)| {
+                            slot.is_changed().then_some((
+                                *key,
+                                StorageSlot::new_changed(slot.original_value, slot.present_value),
+                            ))
+                        })
+                        .collect()
+                }))
             }
         }
     }

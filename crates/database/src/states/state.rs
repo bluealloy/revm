@@ -113,9 +113,9 @@ impl<DB: Database> State<DB> {
     }
 
     /// Applies evm transitions to transition state.
-    pub fn apply_transition(
+    pub fn apply_transition<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount<EvmStorage>)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)>,
     ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
@@ -391,16 +391,19 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: AddressMap<Account>) {
-        if let Some(hook) = self.state_hook.as_mut() {
-            hook.on_state(&changes);
-        }
         self.bal_state.commit(&changes);
-        let transitions = self.cache.apply_evm_state_iter(changes, |_, _| {});
+        let transitions = self.cache.apply_evm_state_iter(
+            changes.iter().map(|(address, account)| (*address, account)),
+            |_, _| {},
+        );
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         } else {
             // Advance the iter to apply all state updates.
             transitions.for_each(|_| {});
+        }
+        if let Some(hook) = self.state_hook.as_mut() {
+            hook.on_state(changes);
         }
     }
 
@@ -411,16 +414,18 @@ impl<DB: Database> DatabaseCommit for State<DB> {
             return;
         }
 
-        let transitions = self
-            .cache
-            .apply_evm_state_iter(changes, |address, account| {
-                self.bal_state.commit_one(*address, account);
-            });
         if let Some(s) = self.transition_state.as_mut() {
-            s.add_transitions(transitions)
+            for (address, account) in changes {
+                self.bal_state.commit_one(address, &account);
+                if let Some(transition) = self.cache.apply_account_state(address, &account) {
+                    s.add_transition(address, transition);
+                }
+            }
         } else {
-            // Advance the iter to apply all state updates.
-            transitions.for_each(|_| {});
+            for (address, account) in changes {
+                self.bal_state.commit_one(address, &account);
+                _ = self.cache.apply_account_state(address, &account);
+            }
         }
     }
 }
