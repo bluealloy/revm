@@ -203,9 +203,10 @@ impl Account {
     /// Returns true if account info was changed.
     #[inline]
     pub fn is_changed(&self) -> bool {
-        self.original_info
-            .as_deref()
-            .map_or(!self.info.is_default(), |original| self.info != *original)
+        self.original_info.as_deref().map_or_else(
+            || !self.info.is_default(),
+            |original| self.info != *original,
+        )
     }
 
     /// Marks the account as newly created.
