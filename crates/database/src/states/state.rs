@@ -12,7 +12,7 @@ use database_interface::{
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal, BlockAccessIndex},
-    Account, AccountId, AccountInfo,
+    Account, AccountId, AccountInfo, EvmStorage,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -115,7 +115,7 @@ impl<DB: Database> State<DB> {
     /// Applies evm transitions to transition state.
     pub fn apply_transition(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<EvmStorage>)>,
     ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {

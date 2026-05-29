@@ -1,5 +1,6 @@
 use super::TransitionAccount;
 use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
+use state::{EvmStorage};
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
@@ -35,7 +36,7 @@ impl TransitionState {
     /// [`update`][TransitionAccount::update].
     pub fn add_transitions(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<EvmStorage>)>,
     ) {
         let transitions = transitions.into_iter();
         if let Some(upper) = transitions.size_hint().1 {
@@ -44,7 +45,15 @@ impl TransitionState {
         for (address, account) in transitions {
             match self.transitions.entry(address) {
                 Entry::Occupied(entry) => entry.into_mut().update(account),
-                Entry::Vacant(entry) => _ = entry.insert(account),
+                Entry::Vacant(entry) => {
+                    _ = entry.insert(account.map_storage(|storage| {
+                        // The storage piped from EVM might contain both changed and unchanged slots.
+                        storage
+                            .into_iter()
+                            .filter_map(|(k, v)| v.is_changed().then_some((k, v.into())))
+                            .collect()
+                    }))
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 use super::{AccountRevert, AccountStatus, BundleAccount, StorageWithOriginalValues};
 use bytecode::Bytecode;
 use primitives::{hash_map, B256, U256};
-use state::AccountInfo;
+use state::{AccountInfo, EvmStorage};
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is sent to Block state.
@@ -9,7 +9,7 @@ use state::AccountInfo;
 /// It is used when block state gets merged to bundle state to
 /// create needed Reverts.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct TransitionAccount {
+pub struct TransitionAccount<S = StorageWithOriginalValues> {
     /// Account information, if account exists.
     pub info: Option<AccountInfo>,
     /// Current account status.
@@ -21,7 +21,7 @@ pub struct TransitionAccount {
     /// Mostly needed when previous status Loaded/LoadedEmpty.
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
-    pub storage: StorageWithOriginalValues,
+    pub storage: S,
     /// If there is transition that clears the storage we should mark it here and
     /// delete all storages in BundleState. This flag is needed if we have transition
     /// between Destroyed states from DestroyedChanged-> DestroyedAgain-> DestroyedChanged
@@ -74,7 +74,7 @@ impl TransitionAccount {
 
     /// Update new values of transition. Don't override old values.
     /// Both account info and old storages need to be left intact.
-    pub fn update(&mut self, other: Self) {
+    pub fn update(&mut self, other: TransitionAccount<EvmStorage>) {
         self.info = other.info;
         self.status = other.status;
 
@@ -84,14 +84,21 @@ impl TransitionAccount {
             other.status,
             AccountStatus::Destroyed | AccountStatus::DestroyedAgain
         ) {
-            self.storage = other.storage;
+            self.storage = other
+                .storage
+                .into_iter()
+                .filter_map(|(k, v)| v.is_changed().then_some((k, v.into())))
+                .collect();
             self.storage_was_destroyed = true;
         } else {
             // Update changed values to this transition.
             for (key, slot) in other.storage.into_iter() {
+                if !slot.is_changed() {
+                    continue;
+                }
                 match self.storage.entry(key) {
                     hash_map::Entry::Vacant(entry) => {
-                        entry.insert(slot);
+                        entry.insert(slot.into());
                     }
                     hash_map::Entry::Occupied(mut entry) => {
                         let value = entry.get_mut();
@@ -131,6 +138,31 @@ impl TransitionAccount {
             original_info: self.previous_info.clone(),
             storage: StorageWithOriginalValues::default(),
             status: self.previous_status,
+        }
+    }
+}
+
+impl<S> TransitionAccount<S> {
+    /// Map the storage of the transition account.
+    pub fn map_storage<F, N>(self, f: F) -> TransitionAccount<N>
+    where
+        F: FnOnce(S) -> N,
+    {
+        let Self {
+            info,
+            status,
+            previous_info,
+            previous_status,
+            storage,
+            storage_was_destroyed,
+        } = self;
+        TransitionAccount {
+            info,
+            status,
+            previous_info,
+            previous_status,
+            storage: f(storage),
+            storage_was_destroyed,
         }
     }
 }
