@@ -9,6 +9,53 @@ use auto_impl::auto_impl;
 use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 use state::Bytecode;
 
+/// Result of SSTORE gas-state side effects.
+///
+/// Implementations of [`GasStateTr`] return this to let opcode-level SSTORE
+/// accounting apply state-gas credits, override state-gas refill, or suppress
+/// legacy refund behavior without knowing how the gas-state backend is stored.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct GasStateOutcome {
+    /// Credit applied to the state-gas component of this SSTORE.
+    pub state_gas_credit: u64,
+    /// State-gas refill override.
+    ///
+    /// `None` uses the default EIP-8037 refill calculation.
+    /// `Some(amount)` sets a specific refill, while `Some(0)` disables it.
+    pub state_gas_refill: Option<u64>,
+    /// Whether normal SSTORE refund accounting should be skipped.
+    pub skip_sstore_refund: bool,
+}
+
+/// Type-level SSTORE gas-state policy.
+///
+/// This hook is called after the storage write has been journaled and before
+/// the subsequent state-gas/refund accounting. The default policy is a no-op.
+pub trait GasStateTr<H: Host + ?Sized> {
+    /// Called after the main SSTORE journal update and before final gas/refund accounting.
+    fn sstore_gas_state(
+        host: &mut H,
+        owner: Address,
+        vals: &SStoreResult,
+    ) -> Result<GasStateOutcome, LoadError>;
+}
+
+/// No-op SSTORE gas-state policy.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct NoGasState;
+
+impl<H: Host + ?Sized> GasStateTr<H> for NoGasState {
+    #[inline]
+    fn sstore_gas_state(
+        _host: &mut H,
+        _owner: Address,
+        _vals: &SStoreResult,
+    ) -> Result<GasStateOutcome, LoadError> {
+        Ok(GasStateOutcome::default())
+    }
+}
+
 /// Error that can happen when loading account info.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
