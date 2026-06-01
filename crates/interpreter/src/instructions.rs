@@ -29,8 +29,11 @@ pub mod utility;
 
 pub use context_interface::cfg::gas::{self, *};
 
-use crate::{interpreter_types::InterpreterTypes, Host, InstructionContext, InstructionExecResult};
-use context_interface::host::{GasStateTr, NoGasState};
+use crate::{
+    instruction_context::{GasStateTr, NoGasState},
+    interpreter_types::InterpreterTypes,
+    Host, InstructionContext, InstructionExecResult,
+};
 use primitives::hardfork::SpecId;
 
 /// EVM opcode function pointer.
@@ -82,14 +85,14 @@ pub const fn instruction_table<WIRE: InterpreterTypes, H: Host>() -> Instruction
 
 /// Returns the default instruction table with a custom SSTORE gas-state policy.
 #[inline]
-pub const fn instruction_table_with_gas_state<GS, WIRE, H>() -> InstructionTable<WIRE, H>
+pub const fn instruction_table_with_gas_state<GS, ITy, H>() -> InstructionTable<ITy, H>
 where
-    GS: GasStateTr<H>,
-    WIRE: InterpreterTypes,
+    GS: GasStateTr<ITy, H>,
+    ITy: InterpreterTypes,
     H: Host,
 {
-    let mut table = instruction_table_impl::<WIRE, H>();
-    table[bytecode::opcode::SSTORE as usize] = Instruction::new(host::sstore::<GS, _, _>);
+    let mut table = instruction_table_impl::<ITy, H>();
+    table[bytecode::opcode::SSTORE as usize] = Instruction::new(host::sstore::<_, _, GS>);
     table
 }
 
@@ -212,7 +215,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> Instructio
     table[MSTORE as usize] = Instruction::new(memory::mstore);
     table[MSTORE8 as usize] = Instruction::new(memory::mstore8);
     table[SLOAD as usize] = Instruction::new(host::sload);
-    table[SSTORE as usize] = Instruction::new(host::sstore::<NoGasState, _, _>);
+    table[SSTORE as usize] = Instruction::new(host::sstore::<_, _, NoGasState>);
     table[JUMP as usize] = Instruction::new(control::jump);
     table[JUMPI as usize] = Instruction::new(control::jumpi);
     table[PC as usize] = Instruction::new(control::pc);

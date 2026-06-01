@@ -9,53 +9,6 @@ use auto_impl::auto_impl;
 use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
 use state::Bytecode;
 
-/// Result of SSTORE gas-state side effects.
-///
-/// Implementations of [`GasStateTr`] return this to let opcode-level SSTORE
-/// accounting apply state-gas credits, override state-gas refill, or suppress
-/// legacy refund behavior without knowing how the gas-state backend is stored.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct GasStateOutcome {
-    /// Credit applied to the state-gas component of this SSTORE.
-    pub state_gas_credit: u64,
-    /// State-gas refill override.
-    ///
-    /// `None` uses the default EIP-8037 refill calculation.
-    /// `Some(amount)` sets a specific refill, while `Some(0)` disables it.
-    pub state_gas_refill: Option<u64>,
-    /// Whether normal SSTORE refund accounting should be skipped.
-    pub skip_sstore_refund: bool,
-}
-
-/// Type-level SSTORE gas-state policy.
-///
-/// This hook is called after the storage write has been journaled and before
-/// the subsequent state-gas/refund accounting. The default policy is a no-op.
-pub trait GasStateTr<H: Host + ?Sized> {
-    /// Called after the main SSTORE journal update and before final gas/refund accounting.
-    fn sstore_gas_state(
-        host: &mut H,
-        owner: Address,
-        vals: &SStoreResult,
-    ) -> Result<GasStateOutcome, LoadError>;
-}
-
-/// No-op SSTORE gas-state policy.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub struct NoGasState;
-
-impl<H: Host + ?Sized> GasStateTr<H> for NoGasState {
-    #[inline]
-    fn sstore_gas_state(
-        _host: &mut H,
-        _owner: Address,
-        _vals: &SStoreResult,
-    ) -> Result<GasStateOutcome, LoadError> {
-        Ok(GasStateOutcome::default())
-    }
-}
-
 /// Error that can happen when loading account info.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -64,6 +17,91 @@ pub enum LoadError {
     ColdLoadSkipped,
     /// Database error.
     DBError,
+}
+
+/// Result of a TIP-1060 storage gas token counter update.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct GasTokenResult {
+    /// SStore result of the counter slot write, used to charge the extra
+    /// SSTORE-worth of gas. `None` when no write happened (a [`GasTokenOp::Consume`]
+    /// against an empty counter).
+    pub counter: Option<SStoreResult>,
+    /// Whether a token was actually consumed (a [`GasTokenOp::Consume`] that hit
+    /// a positive counter).
+    pub consumed: bool,
+}
+
+/// Derives the storage slot of an account's TIP-1060 gas token counter inside
+/// the storage gas token contract.
+///
+/// The counter is stored directly (no Solidity mapping hash): the slot is the
+/// account address left-padded into a [`StorageKey`].
+#[inline]
+pub fn storage_gas_token_slot(account: Address) -> StorageKey {
+    StorageKey::from_be_bytes(account.into_word().0)
+}
+
+/// TIP-1060 storage creation mode, encoded in bits 64..=65 of the packed state.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum StorageCreationMode {
+    /// `0`: pay the full creation cost up front and settle against the token
+    /// balance for a refund at the end of the transaction.
+    #[default]
+    RefundTokens,
+    /// `1`: always pay the full creation cost; never consume tokens.
+    PreserveTokens,
+    /// `2`: consume tokens synchronously to offset the creation cost.
+    DirectTokens,
+}
+
+impl StorageCreationMode {
+    /// Decodes the 2-bit mode field (only the low two bits are considered).
+    #[inline]
+    pub const fn from_bits(bits: u8) -> Self {
+        match bits & 0b11 {
+            0 => Self::RefundTokens,
+            1 => Self::PreserveTokens,
+            2 => Self::DirectTokens,
+            _ => Self::PreserveTokens,
+        }
+    }
+}
+
+/// Decoded TIP-1060 storage gas token packed state word.
+///
+/// Layout of the packed [`StorageValue`]:
+/// - bits `0..=63`: `gas_token_balance` (`uint64`)
+/// - bits `64..=65`: [`storage_creation_mode`](Self::storage_creation_mode)
+/// - bits `66..=255`: reserved for future hardfork-gated extensions
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct StorageGasTokenState {
+    /// Number of storage gas tokens held by the account (bits `0..=63`).
+    pub gas_token_balance: u64,
+    /// Storage creation mode (bits `64..=65`).
+    pub storage_creation_mode: StorageCreationMode,
+}
+
+impl From<StorageGasTokenState> for StorageValue {
+    fn from(state: StorageGasTokenState) -> Self {
+        StorageValue::from_limbs([
+            state.gas_token_balance,
+            state.storage_creation_mode as u64,
+            0,
+            0,
+        ])
+    }
+}
+
+impl From<StorageValue> for StorageGasTokenState {
+    fn from(value: StorageValue) -> Self {
+        // `StorageValue` (U256) limbs are little-endian: limb 0 holds bits 0..=63,
+        // limb 1 holds bits 64..=127.
+        let limbs = value.as_limbs();
+        StorageGasTokenState {
+            gas_token_balance: limbs[0],
+            storage_creation_mode: StorageCreationMode::from_bits(limbs[1] as u8),
+        }
+    }
 }
 
 /// Host trait with all methods that are needed by the Interpreter.
@@ -115,6 +153,13 @@ pub trait Host {
 
     /// Returns whether state gas (EIP-8037) is enabled.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
+
+    /// Returns the TIP-1060 storage gas token account, calls
+    /// `ContextTr::cfg().storage_gas_token_contract()`.
+    ///
+    /// When `Some`, SSTORE operations that create (0→x) or clear (x→0) storage
+    /// mint/consume a per-account counter held in this account.
+    fn storage_gas_token_contract(&self) -> Option<Address>;
 
     /* Database */
 
@@ -288,6 +333,10 @@ impl Host for DummyHost {
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         false
+    }
+
+    fn storage_gas_token_contract(&self) -> Option<Address> {
+        None
     }
 
     fn difficulty(&self) -> U256 {

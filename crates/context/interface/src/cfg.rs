@@ -94,6 +94,15 @@ pub trait Cfg {
     /// via the reservoir model. EIP-8037 specifies concrete gas values based on
     /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
+
+    /// Returns the TIP-1060 storage gas token account, if configured.
+    ///
+    /// When `Some`, the address points to the protocol account holding the
+    /// per-account storage-gas-token counters consumed/minted by the
+    /// `STATE_GAS_TOKEN` variant of the SSTORE instruction.
+    ///
+    /// Defaults to `None` (feature disabled).
+    fn storage_gas_token_contract(&self) -> Option<Address>;
 }
 
 /// What bytecode analysis to perform
