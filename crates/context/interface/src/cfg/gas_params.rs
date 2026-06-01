@@ -566,6 +566,56 @@ impl GasParams {
         refund
     }
 
+    /// SSTORE refund calculation under TIP-1060 (storage gas tokens).
+    ///
+    /// Identical to [`Self::sstore_refund`] except that the storage-clearing
+    /// refund (nonzero→zero) is removed — under TIP-1060 a clear mints a storage
+    /// gas token instead of awarding the clearing refund (and is therefore never
+    /// clawed back when the slot is later re-set). The reset-to-original refunds
+    /// (`sstore_set_refund` / `sstore_reset_refund`) are preserved.
+    #[inline]
+    pub fn sstore_refund_state_gas_token(&self, is_istanbul: bool, vals: &SStoreResult) -> i64 {
+        // TIP-1060: clearing refund is replaced by token minting.
+        let sstore_clearing_slot_refund = 0i64;
+
+        if !is_istanbul {
+            if !vals.is_present_zero() && vals.is_new_zero() {
+                return sstore_clearing_slot_refund;
+            }
+            return 0;
+        }
+
+        // If current value equals new value (this is a no-op)
+        if vals.is_new_eq_present() {
+            return 0;
+        }
+
+        // refund for the clearing of storage slot.
+        if vals.is_original_eq_present() && vals.is_new_zero() {
+            return sstore_clearing_slot_refund;
+        }
+
+        let mut refund = 0;
+        // If original value is not 0
+        if !vals.is_original_zero() {
+            if vals.is_present_zero() {
+                refund -= sstore_clearing_slot_refund;
+            } else if vals.is_new_zero() {
+                refund += sstore_clearing_slot_refund;
+            }
+        }
+
+        // If original value equals new value (this storage slot is reset)
+        if vals.is_original_eq_new() {
+            if vals.is_original_zero() {
+                refund += self.sstore_set_refund() as i64;
+            } else {
+                refund += self.sstore_reset_refund() as i64;
+            }
+        }
+        refund
+    }
+
     /// `LOG` opcode cost calculation.
     #[inline]
     pub fn log_cost(&self, n: u8, len: u64) -> u64 {
@@ -1508,6 +1558,39 @@ mod tests {
             assert_eq!(log2floor(U256::from(u64::MAX) + U256::from(1u64)), 64);
             assert_eq!(log2floor(U256::MAX), 255);
         }
+    }
+
+    #[test]
+    fn test_sstore_refund_state_gas_token_drops_clearing_refund() {
+        let gas = GasParams::new_spec(SpecId::PRAGUE);
+
+        // x→0 clear: standard refund awards the clearing refund; TIP-1060 drops it.
+        let clear = SStoreResult {
+            original_value: U256::from(1),
+            present_value: U256::from(1),
+            new_value: U256::ZERO,
+        };
+        assert!(gas.sstore_refund(true, &clear) > 0);
+        assert_eq!(gas.sstore_refund_state_gas_token(true, &clear), 0);
+
+        // 0→x→0 restore-to-original: reset refund is preserved (no clearing component).
+        let restore = SStoreResult {
+            original_value: U256::ZERO,
+            present_value: U256::from(5),
+            new_value: U256::ZERO,
+        };
+        assert_eq!(
+            gas.sstore_refund_state_gas_token(true, &restore),
+            gas.sstore_set_refund() as i64,
+        );
+
+        // No-op write: zero refund in both.
+        let noop = SStoreResult {
+            original_value: U256::from(7),
+            present_value: U256::from(7),
+            new_value: U256::from(7),
+        };
+        assert_eq!(gas.sstore_refund_state_gas_token(true, &noop), 0);
     }
 
     #[test]

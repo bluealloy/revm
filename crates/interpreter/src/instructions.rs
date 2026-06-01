@@ -198,7 +198,7 @@ const fn instruction_table_impl<WIRE: InterpreterTypes, H: Host>() -> Instructio
     table[MSTORE as usize] = Instruction::new(memory::mstore);
     table[MSTORE8 as usize] = Instruction::new(memory::mstore8);
     table[SLOAD as usize] = Instruction::new(host::sload);
-    table[SSTORE as usize] = Instruction::new(host::sstore);
+    table[SSTORE as usize] = Instruction::new(host::sstore::<_, _, false>);
     table[JUMP as usize] = Instruction::new(control::jump);
     table[JUMPI as usize] = Instruction::new(control::jumpi);
     table[PC as usize] = Instruction::new(control::pc);

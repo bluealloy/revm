@@ -3,11 +3,14 @@ use crate::{
     interpreter_types::{InputsTr, InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr},
     Gas, Host, InstructionExecResult as Result, InstructionResult,
 };
-use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
+use context_interface::{
+    host::{storage_gas_token_slot, LoadError, StorageCreationMode, StorageGasTokenState},
+    journaled_state::AccountInfoLoad,
+};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
-    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
+    Bytes, Log, LogData, StorageValue, B256, BLOCK_HASH_HISTORY, U256,
 };
 
 use crate::InstructionContext as Ictx;
@@ -187,12 +190,26 @@ pub fn sload<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
-pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+///
+/// When `STATE_GAS_TOKEN` is `true` and a storage gas token account is configured
+/// (TIP-1060), storage creates (0→x) consume and storage clears (x→0) mint a
+/// per-account counter held in that account. A consumed token covers the EIP-8037
+/// state-gas charge for the create; a minted token replaces the EIP-8037 reservoir
+/// refill and the storage-clearing refund, at the cost of an extra SSTORE-worth of
+/// gas for the counter write. On mainnet (`STATE_GAS_TOKEN = false`) the whole
+/// branch is compiled away. STATE_GAS_TOKEN is true assumes Osaka fork.
+pub fn sstore<IT: ITy, H: Host + ?Sized, const STATE_GAS_TOKEN: bool>(
+    context: Ictx<'_, H, IT>,
+) -> Result {
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
     let target = context.interpreter.input.target_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
+    let is_eip8037 = context.host.is_amsterdam_eip8037_enabled();
+
+    let warm_storage_read_cost = context.host.gas_params().warm_storage_read_cost();
+    let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
 
     // EIP-2200: Structured Definitions for Net Gas Metering
     // If gasleft is less than or equal to gas stipend, fail the current call frame with 'out of gas' exception.
@@ -222,18 +239,126 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
+    let mut do_refund = true;
+    let mut do_state_gas = true;
+    let mut do_regular_gas = true;
+
     // dynamic gas
-    gas!(
-        context.interpreter,
-        context.host.gas_params().sstore_dynamic_gas(
-            is_istanbul,
-            &state_load.data,
-            state_load.is_cold
-        )
-    );
+    if STATE_GAS_TOKEN {
+        let mut dynamic_gas = 0;
+        if state_load.is_cold {
+            dynamic_gas += context.host.gas_params().cold_storage_cost()
+        }
+
+        // 0→x: slot create (charged EIP-8037 state gas today).
+        let is_create = state_load.new_values_changes_present()
+            && state_load.is_original_eq_present()
+            && state_load.is_original_zero();
+        // x→0: slot clear (present non-zero set to zero).
+        let is_clear = state_load.new_values_changes_present()
+            && state_load.is_new_zero()
+            && !state_load.is_present_zero();
+
+        if !(is_create || is_clear) {
+            // if not create or is_clear return from instruction, nothing to be done.
+            return Ok(());
+        }
+
+        let Some(token_contract) = context.host.storage_gas_token_contract() else {
+            panic!("Storage gas token contract is not set");
+        };
+
+        dynamic_gas += warm_storage_read_cost;
+
+        // load account info
+        gas!(context.interpreter, dynamic_gas);
+
+        context
+            .host
+            .load_account_info_skip_cold_load(token_contract, false, false)?;
+
+        let token_state_slot = storage_gas_token_slot(target);
+
+        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
+        let storage =
+            context
+                .host
+                .sload_skip_cold_load(token_contract, token_state_slot, skip_cold)?;
+
+        if storage.is_cold {
+            gas!(context.interpreter, additional_cold_cost);
+        }
+
+        let mut outcome: StorageGasTokenState = storage.data.into();
+        let mut was_changed = false;
+
+        if is_clear {
+            outcome.gas_token_balance += 1;
+            was_changed = true;
+        } else {
+            match outcome.storage_creation_mode {
+                StorageCreationMode::DirectTokens => {
+                    do_refund = false;
+                    do_state_gas = false;
+                    do_regular_gas = false;
+                    // direct tokens
+                    if is_create {
+                        if outcome.gas_token_balance == 0 {
+                            let create_price =
+                                context.host.gas_params().sstore_set_without_load_cost();
+                            if is_eip8037 {
+                                state_gas!(context.interpreter, create_price);
+                            } else {
+                                gas!(context.interpreter, create_price);
+                            }
+                        } else {
+                            gas!(context.interpreter, 20_000);
+                            outcome.gas_token_balance -= 1;
+                            was_changed = true;
+                        }
+                    }
+                }
+                StorageCreationMode::PreserveTokens => {
+                    // do nothing both refund, state and regular gas are going to be accounted.
+                }
+                StorageCreationMode::RefundTokens => {
+                    // skip refund part sa refund is going to happen at the end of the transaction.
+                    do_refund = false;
+                    if is_create {
+                        let slot = context.host.tload(token_contract, token_state_slot);
+                        context.host.tstore(
+                            token_contract,
+                            token_state_slot,
+                            slot + StorageValue::from(1),
+                        );
+                    }
+                }
+            };
+        }
+
+        if was_changed {
+            context.host.sstore_skip_cold_load(
+                token_contract,
+                token_state_slot,
+                outcome.into(),
+                false,
+            )?;
+        };
+    }
+
+    if do_regular_gas {
+        gas!(
+            context.interpreter,
+            context.host.gas_params().sstore_dynamic_gas(
+                is_istanbul,
+                &state_load.data,
+                state_load.is_cold
+            )
+        );
+    }
 
     // state gas for new slot creation (EIP-8037)
-    if context.host.is_amsterdam_eip8037_enabled() {
+    if do_state_gas && is_eip8037 {
         state_gas!(
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)
@@ -253,12 +378,15 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     }
 
     // refund
-    context.interpreter.gas.record_refund(
-        context
+    if do_refund {
+        let refund = context
             .host
             .gas_params()
-            .sstore_refund(is_istanbul, &state_load.data),
-    );
+            .sstore_refund(is_istanbul, &state_load.data);
+
+        context.interpreter.gas.record_refund(refund);
+    }
+
     Ok(())
 }
 

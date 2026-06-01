@@ -131,4 +131,61 @@ mod test {
             StorageValue::from(1)
         );
     }
+
+    #[test]
+    fn tip1060_gas_token_mint_consume_and_revert() {
+        use context_interface::{
+            host::{storage_gas_token_slot, GasTokenOp},
+            ContextTr, Host, JournalTr,
+        };
+        use primitives::Address;
+
+        let token = Address::with_last_byte(0xAA);
+        let account = Address::with_last_byte(0xBB);
+        let slot = storage_gas_token_slot(account);
+
+        let mut ctx = Context::mainnet().modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE);
+            cfg.storage_gas_token_contract = Some(token);
+        });
+
+        // Mint: counter 0 -> 1 (no consume, always writes).
+        let res = ctx
+            .sstore_state_gas_token(token, account, GasTokenOp::Mint, false)
+            .unwrap();
+        assert!(!res.data.consumed);
+        assert_eq!(res.data.counter.unwrap().new_value, U256::from(1));
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::from(1));
+
+        // Mint again: 1 -> 2.
+        ctx.sstore_state_gas_token(token, account, GasTokenOp::Mint, false)
+            .unwrap();
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::from(2));
+
+        // Consume: 2 -> 1, token consumed.
+        let res = ctx
+            .sstore_state_gas_token(token, account, GasTokenOp::Consume, false)
+            .unwrap();
+        assert!(res.data.consumed);
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::from(1));
+
+        // The mint is journaled: a reverted checkpoint rolls the counter back.
+        let cp = ctx.journal_mut().checkpoint();
+        ctx.sstore_state_gas_token(token, account, GasTokenOp::Mint, false)
+            .unwrap();
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::from(2));
+        ctx.journal_mut().checkpoint_revert(cp);
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::from(1));
+
+        // Drain to zero, then consume on an empty counter: no write, nothing consumed.
+        ctx.sstore_state_gas_token(token, account, GasTokenOp::Consume, false)
+            .unwrap();
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::ZERO);
+        let res = ctx
+            .sstore_state_gas_token(token, account, GasTokenOp::Consume, false)
+            .unwrap();
+        assert!(!res.data.consumed);
+        assert!(res.data.counter.is_none());
+        assert_eq!(ctx.sload(token, slot).unwrap().data, U256::ZERO);
+    }
 }
