@@ -199,7 +199,6 @@ where
     let spec_id = context.interpreter.runtime_flag.spec_id();
 
     let is_eip8037 = context.host.is_amsterdam_eip8037_enabled();
-    let cold_storage_additional_cost = context.host.gas_params().cold_storage_additional_cost();
 
     // EIP-2200: Structured Definitions for Net Gas Metering
     // If gasleft is less than or equal to gas stipend, fail the current call frame with 'out of gas' exception.
@@ -215,7 +214,8 @@ where
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold = context.interpreter.gas.remaining() < cold_storage_additional_cost;
+        let skip_cold = context.interpreter.gas.remaining()
+            < context.host.gas_params().cold_storage_additional_cost();
         context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold)?
