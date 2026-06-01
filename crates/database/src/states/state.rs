@@ -14,7 +14,7 @@ use state::{
     bal::{alloy::AlloyBal, Bal, BlockAccessIndex},
     Account, AccountId, AccountInfo, EvmStorage,
 };
-use std::{boxed::Box, sync::Arc};
+use std::{borrow::Cow, boxed::Box, sync::Arc};
 
 /// Database boxed with a lifetime and Send
 pub type DBBox<'a, E> = Box<dyn Database<Error = E> + Send + 'a>;
@@ -115,7 +115,7 @@ impl<DB: Database> State<DB> {
     /// Applies evm transitions to transition state.
     pub fn apply_transition<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>,
     ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
@@ -392,18 +392,37 @@ impl<DB: Database> Database for State<DB> {
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: AddressMap<Account>) {
         self.bal_state.commit(&changes);
-        let transitions = self.cache.apply_evm_state_iter(
-            changes.iter().map(|(address, account)| (*address, account)),
-            |_, _| {},
-        );
-        if let Some(s) = self.transition_state.as_mut() {
-            s.add_transitions(transitions)
-        } else {
-            // Advance the iter to apply all state updates.
-            transitions.for_each(|_| {});
-        }
+
         if let Some(hook) = self.state_hook.as_mut() {
+            let transitions = self.cache.apply_evm_state_iter(
+                changes
+                    .iter()
+                    .map(|(address, account)| (*address, Cow::Borrowed(account))),
+                |_, _| {},
+            );
+
+            if let Some(s) = self.transition_state.as_mut() {
+                s.add_transitions(transitions)
+            } else {
+                // Advance the iter to apply all state updates.
+                transitions.for_each(|_| {});
+            }
+
             hook.on_state(changes);
+        } else {
+            let transitions = self.cache.apply_evm_state_iter(
+                changes
+                    .into_iter()
+                    .map(|(address, account)| (address, Cow::Owned(account))),
+                |_, _| {},
+            );
+
+            if let Some(s) = self.transition_state.as_mut() {
+                s.add_transitions(transitions)
+            } else {
+                // Advance the iter to apply all state updates.
+                transitions.for_each(|_| {});
+            }
         }
     }
 
@@ -417,14 +436,19 @@ impl<DB: Database> DatabaseCommit for State<DB> {
         if let Some(s) = self.transition_state.as_mut() {
             for (address, account) in changes {
                 self.bal_state.commit_one(address, &account);
-                if let Some(transition) = self.cache.apply_account_state(address, &account) {
+                if let Some(transition) = self
+                    .cache
+                    .apply_account_state(address, Cow::Owned(account))
+                {
                     s.add_transition(address, transition);
                 }
             }
         } else {
             for (address, account) in changes {
                 self.bal_state.commit_one(address, &account);
-                _ = self.cache.apply_account_state(address, &account);
+                _ = self
+                    .cache
+                    .apply_account_state(address, Cow::Owned(account));
             }
         }
     }
@@ -538,6 +562,14 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
     use primitives::{keccak256, BLOCK_HASH_HISTORY, U256};
+    use state::{EvmStorageSlot, TransactionId};
+
+    fn evm_storage<const N: usize>(
+        slots: [(StorageKey, EvmStorageSlot); N],
+    ) -> Option<Cow<'static, EvmStorage>> {
+        Some(Cow::Owned(HashMap::from_iter(slots)))
+    }
+
     #[test]
     fn has_bal_helper() {
         let state = State::builder().build();
@@ -651,6 +683,7 @@ mod tests {
                     info: Some(new_account_created_info.clone()),
                     previous_status: AccountStatus::LoadedNotExisting,
                     previous_info: None,
+                    storage: None,
                     ..Default::default()
                 },
             ),
@@ -661,11 +694,12 @@ mod tests {
                     info: Some(existing_account_changed_info.clone()),
                     previous_status: AccountStatus::Loaded,
                     previous_info: Some(existing_account_initial_info.clone()),
-                    storage: HashMap::from_iter([(
+                    storage: evm_storage([(
                         slot1,
-                        StorageSlot::new_changed(
+                        EvmStorageSlot::new_changed(
                             *existing_account_initial_storage.get(&slot1).unwrap(),
                             StorageValue::from(1000),
+                            TransactionId::ZERO,
                         ),
                     )]),
                     storage_was_destroyed: false,
@@ -694,9 +728,13 @@ mod tests {
                     info: Some(new_account_changed_info2.clone()),
                     previous_status: AccountStatus::InMemoryChange,
                     previous_info: Some(new_account_changed_info),
-                    storage: HashMap::from_iter([(
+                    storage: evm_storage([(
                         slot1,
-                        StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(1)),
+                        EvmStorageSlot::new_changed(
+                            StorageValue::ZERO,
+                            StorageValue::from(1),
+                            TransactionId::ZERO,
+                        ),
                     )]),
                     storage_was_destroyed: false,
                 },
@@ -708,25 +746,31 @@ mod tests {
                     info: Some(existing_account_changed_info.clone()),
                     previous_status: AccountStatus::InMemoryChange,
                     previous_info: Some(existing_account_changed_info.clone()),
-                    storage: HashMap::from_iter([
+                    storage: evm_storage([
                         (
                             slot1,
-                            StorageSlot::new_changed(
+                            EvmStorageSlot::new_changed(
                                 StorageValue::from(100),
                                 StorageValue::from(1_000),
+                                TransactionId::ZERO,
                             ),
                         ),
                         (
                             slot2,
-                            StorageSlot::new_changed(
+                            EvmStorageSlot::new_changed(
                                 *existing_account_initial_storage.get(&slot2).unwrap(),
                                 StorageValue::from(2_000),
+                                TransactionId::ZERO,
                             ),
                         ),
                         // Create new slot
                         (
                             slot3,
-                            StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(3_000)),
+                            EvmStorageSlot::new_changed(
+                                StorageValue::ZERO,
+                                StorageValue::from(3_000),
+                                TransactionId::ZERO,
+                            ),
                         ),
                     ]),
                     storage_was_destroyed: false,
@@ -894,14 +938,22 @@ mod tests {
                     info: Some(existing_account_with_storage_info.clone()),
                     previous_status: AccountStatus::Loaded,
                     previous_info: Some(existing_account_with_storage_info.clone()),
-                    storage: HashMap::from_iter([
+                    storage: evm_storage([
                         (
                             slot1,
-                            StorageSlot::new_changed(StorageValue::from(1), StorageValue::from(10)),
+                            EvmStorageSlot::new_changed(
+                                StorageValue::from(1),
+                                StorageValue::from(10),
+                                TransactionId::ZERO,
+                            ),
                         ),
                         (
                             slot2,
-                            StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(20)),
+                            EvmStorageSlot::new_changed(
+                                StorageValue::ZERO,
+                                StorageValue::from(20),
+                                TransactionId::ZERO,
+                            ),
                         ),
                     ]),
                     storage_was_destroyed: false,
@@ -938,14 +990,22 @@ mod tests {
                     info: Some(existing_account_with_storage_info.clone()),
                     previous_status: AccountStatus::Changed,
                     previous_info: Some(existing_account_with_storage_info.clone()),
-                    storage: HashMap::from_iter([
+                    storage: evm_storage([
                         (
                             slot1,
-                            StorageSlot::new_changed(StorageValue::from(10), StorageValue::from(1)),
+                            EvmStorageSlot::new_changed(
+                                StorageValue::from(10),
+                                StorageValue::from(1),
+                                TransactionId::ZERO,
+                            ),
                         ),
                         (
                             slot2,
-                            StorageSlot::new_changed(StorageValue::from(20), StorageValue::ZERO),
+                            EvmStorageSlot::new_changed(
+                                StorageValue::from(20),
+                                StorageValue::ZERO,
+                                TransactionId::ZERO,
+                            ),
                         ),
                     ]),
                     storage_was_destroyed: false,
@@ -985,7 +1045,7 @@ mod tests {
                 info: None,
                 previous_status: AccountStatus::Loaded,
                 previous_info: Some(existing_account_info.clone()),
-                storage: HashMap::default(),
+                storage: Some(Cow::Owned(HashMap::default())),
                 storage_was_destroyed: true,
             },
         )]));
@@ -998,9 +1058,13 @@ mod tests {
                 info: Some(existing_account_info.clone()),
                 previous_status: AccountStatus::Destroyed,
                 previous_info: None,
-                storage: HashMap::from_iter([(
+                storage: evm_storage([(
                     slot1,
-                    StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(1)),
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(1),
+                        TransactionId::ZERO,
+                    ),
                 )]),
                 storage_was_destroyed: false,
             },
@@ -1015,7 +1079,7 @@ mod tests {
                 previous_status: AccountStatus::DestroyedChanged,
                 previous_info: Some(existing_account_info.clone()),
                 // storage change should be ignored
-                storage: HashMap::default(),
+                storage: Some(Cow::Owned(HashMap::default())),
                 storage_was_destroyed: true,
             },
         )]));
@@ -1028,9 +1092,13 @@ mod tests {
                 info: Some(existing_account_info.clone()),
                 previous_status: AccountStatus::DestroyedAgain,
                 previous_info: None,
-                storage: HashMap::from_iter([(
+                storage: evm_storage([(
                     slot2,
-                    StorageSlot::new_changed(StorageValue::ZERO, StorageValue::from(2)),
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(2),
+                        TransactionId::ZERO,
+                    ),
                 )]),
                 storage_was_destroyed: false,
             },

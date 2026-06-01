@@ -23,6 +23,7 @@ primitives.workspace = true
 database-interface.workspace = true
 bytecode.workspace = true
 derive_more.workspace = true
+either.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }

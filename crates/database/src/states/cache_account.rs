@@ -3,6 +3,7 @@ use super::{
 };
 use primitives::{HashMap, StorageKey, StorageValue, U256};
 use state::{Account, AccountInfo, EvmStorage};
+use std::borrow::Cow;
 
 /// Cache account contains plain state that gets updated
 /// at every transaction when evm output is applied to CacheState.
@@ -118,7 +119,9 @@ impl CacheAccount {
     /// Touch empty account, related to EIP-161 state clear.
     ///
     /// This account returns the Transition that is used to create the BundleState.
-    pub fn touch_empty_eip161<'a>(&mut self) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
+    pub fn touch_empty_eip161<'a>(
+        &mut self,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
         let previous_status = self.status;
 
         // Set account to None.
@@ -149,7 +152,7 @@ impl CacheAccount {
     /// Consumes self and make account as destroyed.
     ///
     /// Sets account as None and set status to Destroyer or DestroyedAgain.
-    pub fn selfdestruct<'a>(&mut self) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
+    pub fn selfdestruct<'a>(&mut self) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
         // Account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);
         let previous_status = self.status;
@@ -173,8 +176,8 @@ impl CacheAccount {
     /// Newly created account.
     pub fn newly_created<'a>(
         &mut self,
-        account: &'a Account,
-    ) -> TransitionAccount<Option<&'a EvmStorage>> {
+        account: Cow<'a, Account>,
+    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>> {
         let previous_status = self.status;
         let previous_info = self.account.take().map(|a| a.info);
 
@@ -185,16 +188,20 @@ impl CacheAccount {
             .collect();
 
         self.status = self.status.on_created();
+        let (info, storage) = match account {
+            Cow::Borrowed(account) => (account.info.clone(), Cow::Borrowed(&account.storage)),
+            Cow::Owned(account) => (account.info, Cow::Owned(account.storage)),
+        };
         let transition_account = TransitionAccount {
-            info: Some(account.info.clone()),
+            info: Some(info.clone()),
             status: self.status,
             previous_status,
             previous_info,
-            storage: Some(&account.storage),
+            storage: Some(storage),
             storage_was_destroyed: false,
         };
         self.account = Some(PlainAccount {
-            info: account.info.clone(),
+            info,
             storage: new_bundle_storage,
         });
         transition_account
@@ -259,8 +266,8 @@ impl CacheAccount {
     /// Merges the provided storage values with the existing storage and updates the account status.
     pub fn change<'a>(
         &mut self,
-        account: &'a Account,
-    ) -> TransitionAccount<Option<&'a EvmStorage>> {
+        account: Cow<'a, Account>,
+    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>> {
         let previous_status = self.status;
         let (previous_info, mut this_storage) = if let Some(account) = self.account.take() {
             (Some(account.info), account.storage)
@@ -268,14 +275,18 @@ impl CacheAccount {
             (None, Default::default())
         };
 
+        let (info, storage) = match account {
+            Cow::Borrowed(account) => (account.info.clone(), Cow::Borrowed(&account.storage)),
+            Cow::Owned(account) => (account.info, Cow::Owned(account.storage)),
+        };
+
         this_storage.extend(
-            account
-                .storage
+            storage
                 .iter()
                 .filter_map(|(k, s)| s.is_changed().then_some((*k, s.present_value))),
         );
         let changed_account = PlainAccount {
-            info: account.info.clone(),
+            info,
             storage: this_storage,
         };
 
@@ -291,7 +302,7 @@ impl CacheAccount {
             status: self.status,
             previous_info,
             previous_status,
-            storage: Some(&account.storage),
+            storage: Some(storage),
             storage_was_destroyed: false,
         }
     }

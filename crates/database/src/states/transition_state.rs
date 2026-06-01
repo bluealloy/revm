@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::{StorageSlot, TransitionAccount};
 use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
 use state::EvmStorage;
@@ -36,7 +38,7 @@ impl TransitionState {
     /// [`update`][TransitionAccount::update].
     pub fn add_transitions<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>,
     ) {
         let transitions = transitions.into_iter();
         if let Some(upper) = transitions.size_hint().1 {
@@ -51,22 +53,28 @@ impl TransitionState {
     pub fn add_transition(
         &mut self,
         address: Address,
-        account: TransitionAccount<Option<&EvmStorage>>,
+        account: TransitionAccount<Option<Cow<'_, EvmStorage>>>,
     ) {
         match self.transitions.entry(address) {
             Entry::Occupied(entry) => entry.into_mut().update(account),
             Entry::Vacant(entry) => {
                 _ = entry.insert(account.map_storage(|storage| {
                     storage
-                        .into_iter()
-                        .flat_map(|storage| storage.iter())
-                        .filter_map(|(key, slot)| {
-                            slot.is_changed().then_some((
-                                *key,
-                                StorageSlot::new_changed(slot.original_value, slot.present_value),
-                            ))
+                        .map(|storage| {
+                            storage
+                                .iter()
+                                .filter_map(|(key, slot)| {
+                                    slot.is_changed().then_some((
+                                        *key,
+                                        StorageSlot::new_changed(
+                                            slot.original_value,
+                                            slot.present_value,
+                                        ),
+                                    ))
+                                })
+                                .collect()
                         })
-                        .collect()
+                        .unwrap_or_default()
                 }))
             }
         }

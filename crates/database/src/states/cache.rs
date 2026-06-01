@@ -4,7 +4,7 @@ use super::{
 use bytecode::Bytecode;
 use primitives::{hash_map, Address, AddressMap, B256Map, HashMap};
 use state::{Account, AccountInfo, EvmStorage};
-use std::vec::Vec;
+use std::{borrow::Cow, vec::Vec};
 
 /// Cache state contains both modified and original values
 ///
@@ -88,15 +88,23 @@ impl CacheState {
 
     /// Applies output of revm execution and create account transitions that are used to build BundleState.
     #[inline]
-    pub fn apply_evm_state<'a, F>(
+    pub fn apply_evm_state<F>(
         &mut self,
-        evm_state: impl IntoIterator<Item = (Address, &'a Account)>,
-        inspect: F,
-    ) -> Vec<(Address, TransitionAccount<Option<&'a EvmStorage>>)>
+        evm_state: impl IntoIterator<Item = (Address, Account)>,
+        mut inspect: F,
+    ) -> Vec<(Address, TransitionAccount<Option<Cow<'_, EvmStorage>>>)>
     where
         F: FnMut(&Address, &Account),
     {
-        self.apply_evm_state_iter(evm_state, inspect).collect()
+        self.apply_evm_state_iter(
+            evm_state
+                .into_iter()
+                .map(|(address, account)| (address, Cow::Owned(account))),
+            |address, account| {
+                inspect(address, account);
+            },
+        )
+        .collect()
     }
 
     /// Applies output of revm execution and creates an iterator of account transitions.
@@ -105,13 +113,14 @@ impl CacheState {
         &'b mut self,
         evm_state: T,
         mut inspect: F,
-    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<&'a EvmStorage>>)> + use<'a, 'b, F, T>
+    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>
+           + use<'a, 'b, F, T>
     where
-        F: FnMut(&Address, &'a Account),
-        T: IntoIterator<Item = (Address, &'a Account)>,
+        F: FnMut(&Address, &Cow<'a, Account>),
+        T: IntoIterator<Item = (Address, Cow<'a, Account>)>,
     {
         evm_state.into_iter().filter_map(move |(address, account)| {
-            inspect(&address, account);
+            inspect(&address, &account);
             self.apply_account_state(address, account)
                 .map(move |transition| (address, transition))
         })
@@ -182,8 +191,8 @@ impl CacheState {
     pub(crate) fn apply_account_state<'a>(
         &mut self,
         address: Address,
-        account: &'a Account,
-    ) -> Option<TransitionAccount<Option<&'a EvmStorage>>> {
+        account: Cow<'a, Account>,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
         // Not touched account are never changed.
         if !account.is_touched() {
             return None;

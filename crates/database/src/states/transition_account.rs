@@ -1,5 +1,8 @@
+use std::borrow::Cow;
+
 use super::{AccountRevert, AccountStatus, BundleAccount, StorageSlot, StorageWithOriginalValues};
 use bytecode::Bytecode;
+use either::Either;
 use primitives::{hash_map, B256, U256};
 use state::{AccountInfo, EvmStorage};
 
@@ -74,9 +77,22 @@ impl TransitionAccount {
 
     /// Update new values of transition. Don't override old values.
     /// Both account info and old storages need to be left intact.
-    pub fn update(&mut self, other: TransitionAccount<Option<&EvmStorage>>) {
+    pub fn update(&mut self, other: TransitionAccount<Option<Cow<'_, EvmStorage>>>) {
         self.info = other.info;
         self.status = other.status;
+
+        let storage = other.storage.into_iter().flat_map(|storage| match storage {
+            Cow::Borrowed(storage) => Either::Left(
+                storage
+                    .iter()
+                    .map(|(k, v)| (Cow::Borrowed(k), Cow::Borrowed(v))),
+            ),
+            Cow::Owned(storage) => Either::Right(
+                storage
+                    .into_iter()
+                    .map(|(k, v)| (Cow::Owned(k), Cow::Owned(v))),
+            ),
+        });
 
         // If transition is from some to destroyed drop the storage.
         // This need to be done here as it is one increment of the state.
@@ -84,10 +100,7 @@ impl TransitionAccount {
             other.status,
             AccountStatus::Destroyed | AccountStatus::DestroyedAgain
         ) {
-            self.storage = other
-                .storage
-                .into_iter()
-                .flat_map(|storage| storage.iter())
+            self.storage = storage
                 .filter_map(|(key, slot)| {
                     slot.is_changed().then_some((
                         *key,
@@ -98,25 +111,23 @@ impl TransitionAccount {
             self.storage_was_destroyed = true;
         } else {
             // Update changed values to this transition.
-            if let Some(storage) = other.storage {
-                for (key, slot) in storage {
-                    if !slot.is_changed() {
-                        continue;
+            for (key, slot) in storage {
+                if !slot.is_changed() {
+                    continue;
+                }
+                let slot = StorageSlot::new_changed(slot.original_value, slot.present_value);
+                match self.storage.entry(*key) {
+                    hash_map::Entry::Vacant(entry) => {
+                        entry.insert(slot);
                     }
-                    let slot = StorageSlot::new_changed(slot.original_value, slot.present_value);
-                    match self.storage.entry(*key) {
-                        hash_map::Entry::Vacant(entry) => {
-                            entry.insert(slot);
-                        }
-                        hash_map::Entry::Occupied(mut entry) => {
-                            let value = entry.get_mut();
-                            // If new value is same as original value. Remove storage entry.
-                            if value.original_value() == slot.present_value() {
-                                entry.remove();
-                            } else {
-                                // If value is different, update transition present value;
-                                value.present_value = slot.present_value;
-                            }
+                    hash_map::Entry::Occupied(mut entry) => {
+                        let value = entry.get_mut();
+                        // If new value is same as original value. Remove storage entry.
+                        if value.original_value() == slot.present_value() {
+                            entry.remove();
+                        } else {
+                            // If value is different, update transition present value;
+                            value.present_value = slot.present_value;
                         }
                     }
                 }
