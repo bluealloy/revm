@@ -436,9 +436,8 @@ impl<DB: Database> DatabaseCommit for State<DB> {
         if let Some(s) = self.transition_state.as_mut() {
             for (address, account) in changes {
                 self.bal_state.commit_one(address, &account);
-                if let Some(transition) = self
-                    .cache
-                    .apply_account_state(address, Cow::Owned(account))
+                if let Some(transition) =
+                    self.cache.apply_account_state(address, Cow::Owned(account))
                 {
                     s.add_transition(address, transition);
                 }
@@ -446,9 +445,7 @@ impl<DB: Database> DatabaseCommit for State<DB> {
         } else {
             for (address, account) in changes {
                 self.bal_state.commit_one(address, &account);
-                _ = self
-                    .cache
-                    .apply_account_state(address, Cow::Owned(account));
+                _ = self.cache.apply_account_state(address, Cow::Owned(account));
             }
         }
     }

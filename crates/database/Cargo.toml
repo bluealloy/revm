@@ -48,6 +48,7 @@ std = [
 	"bytecode/std",
 	"database-interface/std",
 	"derive_more/std",
+	"either/std",
 	"primitives/std",
 	"state/std",
 	"serde_json/std",
@@ -59,6 +60,7 @@ serde = [
 	"database-interface/serde",
 	"primitives/serde",
 	"state/serde",
+	"either/serde",
 ]
 alloydb = [
 	"std",
