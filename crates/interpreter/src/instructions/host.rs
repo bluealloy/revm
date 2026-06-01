@@ -3,7 +3,10 @@ use crate::{
     interpreter_types::{InputsTr, InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr},
     Gas, Host, InstructionExecResult as Result, InstructionResult,
 };
-use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
+use context_interface::{
+    host::{GasStateTr, LoadError},
+    journaled_state::AccountInfoLoad,
+};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
@@ -187,7 +190,12 @@ pub fn sload<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
-pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+pub fn sstore<GS, IT, H>(context: Ictx<'_, H, IT>) -> Result
+where
+    GS: GasStateTr<H>,
+    IT: ITy,
+    H: Host + ?Sized,
+{
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
@@ -220,6 +228,8 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
             .ok_or(InstructionResult::FatalExternalError)?
     };
 
+    let gas_state_outcome = GS::sstore_gas_state(context.host, target, &state_load.data)?;
+
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
     // dynamic gas
@@ -234,31 +244,37 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 
     // state gas for new slot creation (EIP-8037)
     if context.host.is_amsterdam_eip8037_enabled() {
-        state_gas!(
-            context.interpreter,
-            context.host.gas_params().sstore_state_gas(&state_load.data)
-        );
+        let state_gas = context
+            .host
+            .gas_params()
+            .sstore_state_gas(&state_load.data)
+            .saturating_sub(gas_state_outcome.state_gas_credit);
+        state_gas!(context.interpreter, state_gas);
 
         // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
         // directly rather than routing the state gas through the capped refund
         // counter. The regular-gas portion of the restoration still flows
         // through `sstore_refund` below.
-        let refill = context
-            .host
-            .gas_params()
-            .sstore_state_gas_refill(&state_load.data);
+        let refill = gas_state_outcome.state_gas_refill.unwrap_or_else(|| {
+            context
+                .host
+                .gas_params()
+                .sstore_state_gas_refill(&state_load.data)
+        });
         if refill > 0 {
             context.interpreter.gas.refill_reservoir(refill);
         }
     }
 
     // refund
-    context.interpreter.gas.record_refund(
-        context
-            .host
-            .gas_params()
-            .sstore_refund(is_istanbul, &state_load.data),
-    );
+    if !gas_state_outcome.skip_sstore_refund {
+        context.interpreter.gas.record_refund(
+            context
+                .host
+                .gas_params()
+                .sstore_refund(is_istanbul, &state_load.data),
+        );
+    }
     Ok(())
 }
 

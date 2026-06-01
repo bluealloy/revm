@@ -23,7 +23,7 @@ pub use cfg::{Cfg, CreateScheme, TransactTo};
 pub use context::{ContextError, ContextSetters, ContextTr};
 pub use database_interface::{erased_error::ErasedError, DBErrorMarker, Database};
 pub use either;
-pub use host::{DummyHost, Host};
+pub use host::{DummyHost, GasStateOutcome, GasStateTr, Host, NoGasState};
 pub use journaled_state::JournalTr;
 pub use local::{FrameStack, FrameToken, LocalContextTr, OutFrame};
 pub use transaction::{Transaction, TransactionType};
