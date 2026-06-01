@@ -16,8 +16,7 @@ use primitives::{
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
-    Address, AddressMap, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256,
-    KECCAK_EMPTY, U256,
+    Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
 use state::{Account, EvmState, TransactionId, TransientStorage};
 use std::vec::Vec;
@@ -90,8 +89,6 @@ pub struct JournalInner<ENTRY> {
     ///
     /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
     pub selfdestructed_addresses: Vec<Address>,
-    /// Transaction-local gas-state refund counters, discarded after every transaction.
-    pub gas_state_refund_counts: AddressMap<u64>,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -116,7 +113,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg: JournalCfg::default(),
             warm_addresses: WarmAddresses::new(),
             selfdestructed_addresses: Vec::new(),
-            gas_state_refund_counts: HashMap::default(),
         }
     }
 
@@ -151,7 +147,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts,
         } = self;
         // Cfg and state are not changed. They are always set again before execution.
         let _ = cfg;
@@ -169,7 +164,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         logs.clear();
         selfdestructed_addresses.clear();
-        gas_state_refund_counts.clear();
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -185,23 +179,16 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts,
         } = self;
         let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
-            entry.revert(
-                state,
-                None,
-                gas_state_refund_counts,
-                is_spurious_dragon_enabled,
-            );
+            entry.revert(state, None, is_spurious_dragon_enabled);
         });
         transient_storage.clear();
         *depth = 0;
         logs.clear();
         selfdestructed_addresses.clear();
-        gas_state_refund_counts.clear();
         transaction_id.increment();
 
         // Clear coinbase address warming for next tx
@@ -226,12 +213,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts,
         } = self;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
         selfdestructed_addresses.clear();
-        gas_state_refund_counts.clear();
 
         let mut state = mem::take(state);
 
@@ -315,24 +300,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     #[inline]
     pub const fn state(&mut self) -> &mut EvmState {
         &mut self.state
-    }
-
-    /// Increments the transaction-local gas-state refund counter.
-    #[inline]
-    pub fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
-        let previous = self.gas_state_refund_counts.get(&address).copied();
-        let new = previous.unwrap_or(0).saturating_add(1);
-
-        self.journal
-            .push(ENTRY::gas_state_refund_changed(address, previous));
-        self.gas_state_refund_counts.insert(address, new);
-        new
-    }
-
-    /// Returns transaction-local gas-state refund counters.
-    #[inline]
-    pub const fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
-        &self.gas_state_refund_counts
     }
 
     /// Sets SpecId.
@@ -629,7 +596,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_spurious_dragon_enabled = self.cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
-        let gas_state_refund_counts = &mut self.gas_state_refund_counts;
         self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
         // EIP-7708: Remove selfdestructed addresses added after checkpoint
@@ -642,12 +608,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 .drain(checkpoint.journal_i..)
                 .rev()
                 .for_each(|entry| {
-                    entry.revert(
-                        state,
-                        Some(transient_storage),
-                        gas_state_refund_counts,
-                        is_spurious_dragon_enabled,
-                    );
+                    entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
                 });
         }
     }
@@ -1219,41 +1180,5 @@ mod tests {
         let state_load = result.unwrap();
         assert!(!state_load.is_cold); // Should be warm
         assert_eq!(state_load.data, U256::ZERO); // Empty slot
-    }
-
-    #[test]
-    fn gas_state_refund_counts_revert_to_checkpoint() {
-        let mut journal = JournalInner::<JournalEntry>::new();
-        let address = address!("1000000000000000000000000000000000000000");
-
-        assert_eq!(journal.increment_gas_state_refund_count(address), 1);
-        let checkpoint = journal.checkpoint();
-        assert_eq!(journal.increment_gas_state_refund_count(address), 2);
-
-        journal.checkpoint_revert(checkpoint);
-        assert_eq!(journal.gas_state_refund_counts()[&address], 1);
-    }
-
-    #[test]
-    fn gas_state_refund_counts_revert_removes_new_entry() {
-        let mut journal = JournalInner::<JournalEntry>::new();
-        let address = address!("1000000000000000000000000000000000000000");
-
-        let checkpoint = journal.checkpoint();
-        assert_eq!(journal.increment_gas_state_refund_count(address), 1);
-
-        journal.checkpoint_revert(checkpoint);
-        assert!(!journal.gas_state_refund_counts().contains_key(&address));
-    }
-
-    #[test]
-    fn gas_state_refund_counts_clear_on_commit_tx() {
-        let mut journal = JournalInner::<JournalEntry>::new();
-        let address = address!("1000000000000000000000000000000000000000");
-
-        journal.increment_gas_state_refund_count(address);
-        journal.commit_tx();
-
-        assert!(journal.gas_state_refund_counts().is_empty());
     }
 }

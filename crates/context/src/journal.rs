@@ -158,16 +158,6 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.take_logs()
     }
 
-    #[inline]
-    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
-        self.inner.increment_gas_state_refund_count(address)
-    }
-
-    #[inline]
-    fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
-        self.inner.gas_state_refund_counts()
-    }
-
     fn selfdestruct(
         &mut self,
         address: Address,

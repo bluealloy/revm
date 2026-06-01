@@ -5,7 +5,7 @@
 //! They are created when there is change to the state from loading (making it warm), changes to the balance,
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
-use primitives::{Address, AddressMap, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
+use primitives::{Address, StorageKey, StorageValue, KECCAK_EMPTY, PRECOMPILE3, U256};
 use state::{EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
@@ -63,9 +63,6 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's code is modified
     fn code_changed(address: Address) -> Self;
 
-    /// Creates a journal entry for when a gas-state refund counter is modified.
-    fn gas_state_refund_changed(address: Address, previous: Option<u64>) -> Self;
-
     /// Reverts the state change recorded by this journal entry
     ///
     /// More information on what is reverted can be found in [`JournalEntry`] enum.
@@ -89,7 +86,6 @@ pub trait JournalEntryTr {
         self,
         state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
-        gas_state_refund_counts: &mut AddressMap<u64>,
         is_spurious_dragon_enabled: bool,
     );
 }
@@ -230,16 +226,8 @@ pub enum JournalEntry {
         /// Address of account that had its code changed.
         address: Address,
     },
-    /// Gas-state refund counter changed.
-    /// Action: Update the counter.
-    /// Revert: Restore the previous counter value.
-    GasStateRefundChange {
-        /// Address of account whose counter changed.
-        address: Address,
-        /// Previous value of the counter, or `None` if it did not exist.
-        previous: Option<u64>,
-    },
 }
+
 impl JournalEntryTr for JournalEntry {
     fn account_warmed(address: Address) -> Self {
         JournalEntry::AccountWarmed { address }
@@ -320,15 +308,10 @@ impl JournalEntryTr for JournalEntry {
         JournalEntry::CodeChange { address }
     }
 
-    fn gas_state_refund_changed(address: Address, previous: Option<u64>) -> Self {
-        JournalEntry::GasStateRefundChange { address, previous }
-    }
-
     fn revert(
         self,
         state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
-        gas_state_refund_counts: &mut AddressMap<u64>,
         is_spurious_dragon_enabled: bool,
     ) {
         match self {
@@ -449,13 +432,6 @@ impl JournalEntryTr for JournalEntry {
                 let acc = state.get_mut(&address).unwrap();
                 acc.info.code_hash = KECCAK_EMPTY;
                 acc.info.code = None;
-            }
-            JournalEntry::GasStateRefundChange { address, previous } => {
-                if let Some(value) = previous {
-                    gas_state_refund_counts.insert(address, value);
-                } else {
-                    gas_state_refund_counts.remove(&address);
-                }
             }
         }
     }

@@ -543,10 +543,6 @@ impl<
         self.journal_mut().log(log);
     }
 
-    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
-        self.journal_mut().increment_gas_state_refund_count(address)
-    }
-
     /// Marks `address` to be deleted, with funds transferred to `target`.
     #[inline]
     fn selfdestruct(

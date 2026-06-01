@@ -107,15 +107,6 @@ impl JournalTr for Backend {
         self.journaled_state.logs()
     }
 
-    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
-        self.journaled_state
-            .increment_gas_state_refund_count(address)
-    }
-
-    fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
-        self.journaled_state.gas_state_refund_counts()
-    }
-
     fn selfdestruct(
         &mut self,
         address: Address,

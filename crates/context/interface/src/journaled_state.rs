@@ -116,12 +116,6 @@ pub trait JournalTr {
     /// Returns the logs from journal.
     fn logs(&self) -> &[Log];
 
-    /// Increments the transaction-local gas-state refund counter for `address`.
-    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64;
-
-    /// Returns transaction-local gas-state refund counters.
-    fn gas_state_refund_counts(&self) -> &AddressMap<u64>;
-
     /// Marks the account for selfdestruction and transfers all the balance to the target.
     fn selfdestruct(
         &mut self,
