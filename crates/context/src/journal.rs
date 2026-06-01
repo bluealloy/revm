@@ -158,6 +158,17 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         self.inner.take_logs()
     }
 
+    #[inline]
+    fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64 {
+        self.inner
+            .increment_pending_refund_eligible_creation(address)
+    }
+
+    #[inline]
+    fn pending_refund_eligible_creations(&self) -> &AddressMap<u64> {
+        self.inner.pending_refund_eligible_creations()
+    }
+
     fn selfdestruct(
         &mut self,
         address: Address,

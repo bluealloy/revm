@@ -443,6 +443,8 @@ pub struct JournalCheckpoint {
     pub journal_i: usize,
     /// Checkpoint for self-destructed addresses tracking (EIP-7708).
     pub selfdestructed_i: usize,
+    /// Checkpoint for pending refund-eligible creation counters.
+    pub pending_refund_eligible_creations_i: usize,
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded
