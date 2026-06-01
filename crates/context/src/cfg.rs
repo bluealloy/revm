@@ -2,7 +2,7 @@
 pub use context_interface::Cfg;
 
 use context_interface::cfg::GasParams;
-use primitives::{eip170, eip3860, eip7825, eip7954, hardfork::SpecId};
+use primitives::{eip170, eip3860, eip7825, eip7954, hardfork::SpecId, Address};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -153,6 +153,15 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// By default, it is set to `false`.
     pub amsterdam_eip7708_delayed_burn_disabled: bool,
+    /// TIP-1060 storage gas token account.
+    ///
+    /// When `Some`, the address points to the protocol account that holds the
+    /// per-account storage-gas-token counters. SSTORE operations that create
+    /// (0→x) or clear (x→0) storage mint/consume tokens against this account.
+    /// Only consulted by the `STATE_GAS_TOKEN` variant of the SSTORE instruction.
+    ///
+    /// By default, it is set to `None` (feature disabled).
+    pub storage_gas_token_contract: Option<Address>,
 }
 
 impl CfgEnv {
@@ -269,6 +278,7 @@ impl<SPEC> CfgEnv<SPEC> {
             enable_amsterdam_eip8037: self.enable_amsterdam_eip8037,
             amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
             amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
+            storage_gas_token_contract: self.storage_gas_token_contract,
         }
     }
 
@@ -314,6 +324,12 @@ impl<SPEC> CfgEnv<SPEC> {
         self.enable_amsterdam_eip8037 = enable;
         self
     }
+
+    /// Sets the TIP-1060 storage gas token account.
+    pub const fn with_storage_gas_token_contract(mut self, address: Option<Address>) -> Self {
+        self.storage_gas_token_contract = address;
+        self
+    }
 }
 
 impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
@@ -352,6 +368,7 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             enable_amsterdam_eip8037: is_amsterdam,
             amsterdam_eip7708_disabled: false,
             amsterdam_eip7708_delayed_burn_disabled: false,
+            storage_gas_token_contract: None,
         }
     }
 
@@ -570,6 +587,10 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         self.enable_amsterdam_eip8037
+    }
+
+    fn storage_gas_token_contract(&self) -> Option<Address> {
+        self.storage_gas_token_contract
     }
 }
 
