@@ -543,9 +543,8 @@ impl<
         self.journal_mut().log(log);
     }
 
-    fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64 {
-        self.journal_mut()
-            .increment_pending_refund_eligible_creation(address)
+    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
+        self.journal_mut().increment_gas_state_refund_count(address)
     }
 
     /// Marks `address` to be deleted, with funds transferred to `target`.

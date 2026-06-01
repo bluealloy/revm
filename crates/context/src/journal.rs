@@ -159,14 +159,13 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64 {
-        self.inner
-            .increment_pending_refund_eligible_creation(address)
+    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
+        self.inner.increment_gas_state_refund_count(address)
     }
 
     #[inline]
-    fn pending_refund_eligible_creations(&self) -> &AddressMap<u64> {
-        self.inner.pending_refund_eligible_creations()
+    fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
+        self.inner.gas_state_refund_counts()
     }
 
     fn selfdestruct(

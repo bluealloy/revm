@@ -107,13 +107,13 @@ impl JournalTr for Backend {
         self.journaled_state.logs()
     }
 
-    fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64 {
+    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
         self.journaled_state
-            .increment_pending_refund_eligible_creation(address)
+            .increment_gas_state_refund_count(address)
     }
 
-    fn pending_refund_eligible_creations(&self) -> &AddressMap<u64> {
-        self.journaled_state.pending_refund_eligible_creations()
+    fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
+        self.journaled_state.gas_state_refund_counts()
     }
 
     fn selfdestruct(

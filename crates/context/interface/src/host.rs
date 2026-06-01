@@ -134,8 +134,8 @@ pub trait Host {
     /// Log, calls `ContextTr::journal_mut().log(log)`
     fn log(&mut self, log: Log);
 
-    /// Increments the transaction-local pending refund-eligible creation counter.
-    fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64;
+    /// Increments the transaction-local gas-state refund counter.
+    fn increment_gas_state_refund_count(&mut self, address: Address) -> u64;
 
     /// Sstore with optional fetch from database. Return none if the value is cold or if there is db error.
     fn sstore_skip_cold_load(
@@ -352,7 +352,7 @@ impl Host for DummyHost {
 
     fn log(&mut self, _log: Log) {}
 
-    fn increment_pending_refund_eligible_creation(&mut self, _address: Address) -> u64 {
+    fn increment_gas_state_refund_count(&mut self, _address: Address) -> u64 {
         0
     }
 

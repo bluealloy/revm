@@ -90,10 +90,8 @@ pub struct JournalInner<ENTRY> {
     ///
     /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
     pub selfdestructed_addresses: Vec<Address>,
-    /// Gas state counters are discarded after every transaction.
+    /// Transaction-local gas-state refund counters, discarded after every transaction.
     pub gas_state_refund_counts: AddressMap<u64>,
-    /// Journal of gas state refund counter changes, discarded after every transaction.
-    pub gas_state_refund_journal: Vec<(Address, Option<u64>)>,
 }
 
 impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
@@ -119,7 +117,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             warm_addresses: WarmAddresses::new(),
             selfdestructed_addresses: Vec::new(),
             gas_state_refund_counts: HashMap::default(),
-            gas_state_refund_journal: Vec::new(),
         }
     }
 
@@ -154,8 +151,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts: pending_refund_eligible_creations,
-            gas_state_refund_journal: pending_refund_eligible_creations_journal,
+            gas_state_refund_counts,
         } = self;
         // Cfg and state are not changed. They are always set again before execution.
         let _ = cfg;
@@ -173,8 +169,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         logs.clear();
         selfdestructed_addresses.clear();
-        pending_refund_eligible_creations.clear();
-        pending_refund_eligible_creations_journal.clear();
+        gas_state_refund_counts.clear();
     }
 
     /// Discard the current transaction, by reverting the journal entries and incrementing the transaction id.
@@ -190,20 +185,23 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts: pending_refund_eligible_creations,
-            gas_state_refund_journal: pending_refund_eligible_creations_journal,
+            gas_state_refund_counts,
         } = self;
         let is_spurious_dragon_enabled = cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         // iterate over all journals entries and revert our global state
         journal.drain(..).rev().for_each(|entry| {
-            entry.revert(state, None, is_spurious_dragon_enabled);
+            entry.revert(
+                state,
+                None,
+                gas_state_refund_counts,
+                is_spurious_dragon_enabled,
+            );
         });
         transient_storage.clear();
         *depth = 0;
         logs.clear();
         selfdestructed_addresses.clear();
-        pending_refund_eligible_creations.clear();
-        pending_refund_eligible_creations_journal.clear();
+        gas_state_refund_counts.clear();
         transaction_id.increment();
 
         // Clear coinbase address warming for next tx
@@ -228,14 +226,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             cfg,
             warm_addresses,
             selfdestructed_addresses,
-            gas_state_refund_counts: pending_refund_eligible_creations,
-            gas_state_refund_journal: pending_refund_eligible_creations_journal,
+            gas_state_refund_counts,
         } = self;
         // Clear coinbase address warming for next tx
         warm_addresses.clear_coinbase_and_access_list();
         selfdestructed_addresses.clear();
-        pending_refund_eligible_creations.clear();
-        pending_refund_eligible_creations_journal.clear();
+        gas_state_refund_counts.clear();
 
         let mut state = mem::take(state);
 
@@ -321,20 +317,21 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         &mut self.state
     }
 
-    /// Increments the transaction-local pending refund-eligible creation counter.
+    /// Increments the transaction-local gas-state refund counter.
     #[inline]
-    pub fn increment_pending_refund_eligible_creation(&mut self, address: Address) -> u64 {
+    pub fn increment_gas_state_refund_count(&mut self, address: Address) -> u64 {
         let previous = self.gas_state_refund_counts.get(&address).copied();
         let new = previous.unwrap_or(0).saturating_add(1);
 
-        self.gas_state_refund_journal.push((address, previous));
+        self.journal
+            .push(ENTRY::gas_state_refund_changed(address, previous));
         self.gas_state_refund_counts.insert(address, new);
         new
     }
 
-    /// Returns transaction-local pending refund-eligible creation counters.
+    /// Returns transaction-local gas-state refund counters.
     #[inline]
-    pub const fn pending_refund_eligible_creations(&self) -> &AddressMap<u64> {
+    pub const fn gas_state_refund_counts(&self) -> &AddressMap<u64> {
         &self.gas_state_refund_counts
     }
 
@@ -615,7 +612,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             log_i: self.logs.len(),
             journal_i: self.journal.len(),
             selfdestructed_i: self.selfdestructed_addresses.len(),
-            pending_refund_eligible_creations_i: self.gas_state_refund_journal.len(),
         };
         self.depth += 1;
         checkpoint
@@ -633,6 +629,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let is_spurious_dragon_enabled = self.cfg.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
+        let gas_state_refund_counts = &mut self.gas_state_refund_counts;
         self.depth = self.depth.saturating_sub(1);
         self.logs.truncate(checkpoint.log_i);
         // EIP-7708: Remove selfdestructed addresses added after checkpoint
@@ -645,20 +642,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 .drain(checkpoint.journal_i..)
                 .rev()
                 .for_each(|entry| {
-                    entry.revert(state, Some(transient_storage), is_spurious_dragon_enabled);
+                    entry.revert(
+                        state,
+                        Some(transient_storage),
+                        gas_state_refund_counts,
+                        is_spurious_dragon_enabled,
+                    );
                 });
-        }
-
-        for (address, previous) in self
-            .gas_state_refund_journal
-            .drain(checkpoint.pending_refund_eligible_creations_i..)
-            .rev()
-        {
-            if let Some(value) = previous {
-                self.gas_state_refund_counts.insert(address, value);
-            } else {
-                self.gas_state_refund_counts.remove(&address);
-            }
         }
     }
 
@@ -1232,50 +1222,38 @@ mod tests {
     }
 
     #[test]
-    fn pending_refund_eligible_creations_revert_to_checkpoint() {
+    fn gas_state_refund_counts_revert_to_checkpoint() {
         let mut journal = JournalInner::<JournalEntry>::new();
         let address = address!("1000000000000000000000000000000000000000");
 
-        assert_eq!(
-            journal.increment_pending_refund_eligible_creation(address),
-            1
-        );
+        assert_eq!(journal.increment_gas_state_refund_count(address), 1);
         let checkpoint = journal.checkpoint();
-        assert_eq!(
-            journal.increment_pending_refund_eligible_creation(address),
-            2
-        );
+        assert_eq!(journal.increment_gas_state_refund_count(address), 2);
 
         journal.checkpoint_revert(checkpoint);
-        assert_eq!(journal.pending_refund_eligible_creations()[&address], 1);
+        assert_eq!(journal.gas_state_refund_counts()[&address], 1);
     }
 
     #[test]
-    fn pending_refund_eligible_creations_revert_removes_new_entry() {
+    fn gas_state_refund_counts_revert_removes_new_entry() {
         let mut journal = JournalInner::<JournalEntry>::new();
         let address = address!("1000000000000000000000000000000000000000");
 
         let checkpoint = journal.checkpoint();
-        assert_eq!(
-            journal.increment_pending_refund_eligible_creation(address),
-            1
-        );
+        assert_eq!(journal.increment_gas_state_refund_count(address), 1);
 
         journal.checkpoint_revert(checkpoint);
-        assert!(!journal
-            .pending_refund_eligible_creations()
-            .contains_key(&address));
+        assert!(!journal.gas_state_refund_counts().contains_key(&address));
     }
 
     #[test]
-    fn pending_refund_eligible_creations_clear_on_commit_tx() {
+    fn gas_state_refund_counts_clear_on_commit_tx() {
         let mut journal = JournalInner::<JournalEntry>::new();
         let address = address!("1000000000000000000000000000000000000000");
 
-        journal.increment_pending_refund_eligible_creation(address);
+        journal.increment_gas_state_refund_count(address);
         journal.commit_tx();
 
-        assert!(journal.pending_refund_eligible_creations().is_empty());
-        assert!(journal.gas_state_refund_journal.is_empty());
+        assert!(journal.gas_state_refund_counts().is_empty());
     }
 }
