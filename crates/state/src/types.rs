@@ -74,15 +74,9 @@ impl TransientStorage {
     /// Removes the transient storage slot for the given account `address` and
     /// storage `key`.
     ///
-    /// Returns the removed value if the slot was set. If the account has no
-    /// remaining slots after removal, its (now empty) slot map is removed as well.
+    /// Returns the removed value if the slot was set.
     #[inline]
     pub fn remove_value(&mut self, address: Address, key: StorageKey) -> Option<StorageValue> {
-        let slots = self.0.get_mut(&address)?;
-        let removed = slots.remove(&key);
-        if slots.is_empty() {
-            self.0.remove(&address);
-        }
-        removed
+        self.0.get_mut(&address)?.remove(&key)
     }
 }
