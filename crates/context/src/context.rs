@@ -467,10 +467,6 @@ impl<
         self.cfg().is_amsterdam_eip8037_enabled()
     }
 
-    fn storage_gas_token_contract(&self) -> Option<Address> {
-        self.cfg().storage_gas_token_contract()
-    }
-
     fn block_number(&self) -> U256 {
         self.block().number()
     }
