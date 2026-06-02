@@ -230,7 +230,7 @@ where
 
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
-    if !outcome.skip_regular_gas {
+    if !outcome.skip_gas {
         // dynamic gas
         gas!(
             context.interpreter,
@@ -242,7 +242,7 @@ where
         );
     }
 
-    if !outcome.skip_state_gas && is_eip8037 {
+    if !outcome.skip_gas && is_eip8037 {
         state_gas!(
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)

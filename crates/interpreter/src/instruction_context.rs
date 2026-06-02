@@ -28,17 +28,16 @@ impl<H: ?Sized, IT: InterpreterTypes> std::fmt::Debug for InstructionContext<'_,
 /// Result of SSTORE gas-state side effects.
 ///
 /// Implementations of [`GasStateTr`] return this to let opcode-level SSTORE
-/// accounting apply state-gas credits, override state-gas refill, or suppress
-/// legacy refund behavior without knowing how the gas-state backend is stored.
+/// accounting be overridden without knowing how the gas-state backend is stored.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct GasStateOutcome {
     /// Whether normal SSTORE refund accounting should be skipped.
     pub skip_refund: bool,
-    /// Whether state-gas accounting should be performed.
-    pub skip_state_gas: bool,
-    /// Whether regular gas accounting should be performed.
-    pub skip_regular_gas: bool,
+    /// Whether opcode-level SSTORE dynamic gas and EIP-8037 state-gas accounting should be skipped.
+    ///
+    /// When true, the gas-state policy is responsible for any replacement gas accounting.
+    pub skip_gas: bool,
 }
 
 /// Type-level SSTORE gas-state policy.
