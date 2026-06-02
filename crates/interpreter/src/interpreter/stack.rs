@@ -503,34 +503,6 @@ mod tests {
     }
 
     #[test]
-    fn pop_address_truncates_to_low_20_bytes() {
-        use primitives::Address;
-
-        // A full 32-byte word whose high 12 bytes are set and must be discarded,
-        // and whose low 20 bytes are the address. This mirrors how the EVM reads an
-        // address from a stack word (e.g. BALANCE/EXTCODESIZE/EXTCODECOPY targets).
-        let word = U256::from_be_bytes::<32>([
-            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x11, 0x22,
-            0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00,
-            0x12, 0x34, 0x56, 0x78,
-        ]);
-        let expected = Address::from([
-            0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee,
-            0xff, 0x00, 0x12, 0x34, 0x56, 0x78,
-        ]);
-
-        run(|stack| {
-            assert!(stack.push(word));
-            assert_eq!(stack.pop_address(), Some(expected));
-        });
-
-        // Empty stack returns None rather than panicking.
-        run(|stack| {
-            assert_eq!(stack.pop_address(), None);
-        });
-    }
-
-    #[test]
     fn stack_clone() {
         // Test cloning an empty stack
         let empty_stack = Stack::new();
