@@ -227,6 +227,7 @@ pub enum JournalEntry {
         address: Address,
     },
 }
+
 impl JournalEntryTr for JournalEntry {
     fn account_warmed(address: Address) -> Self {
         JournalEntry::AccountWarmed { address }
