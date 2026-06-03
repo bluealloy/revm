@@ -1,4 +1,7 @@
-use context_interface::{context::SStoreResult, Host};
+use context_interface::{
+    context::{SStoreResult, StateLoad},
+    Host,
+};
 use primitives::Address;
 
 use crate::{
@@ -49,7 +52,7 @@ pub trait GasStateTr<IT: ITy, H: Host + ?Sized> {
     fn sstore_gas_state(
         context: &mut Ictx<'_, H, IT>,
         owner: Address,
-        vals: &SStoreResult,
+        state_load: &StateLoad<SStoreResult>,
     ) -> Result<GasStateOutcome, InstructionResult>;
 }
 
@@ -62,7 +65,7 @@ impl<IT: ITy, H: Host + ?Sized> GasStateTr<IT, H> for NoGasState {
     fn sstore_gas_state(
         _context: &mut Ictx<'_, H, IT>,
         _owner: Address,
-        _vals: &SStoreResult,
+        _state_load: &StateLoad<SStoreResult>,
     ) -> Result<GasStateOutcome, InstructionResult> {
         Ok(GasStateOutcome::default())
     }

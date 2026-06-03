@@ -226,7 +226,7 @@ where
             .ok_or(InstructionResult::FatalExternalError)?
     };
 
-    let outcome = GS::sstore_gas_state(&mut context, target, &state_load.data)?;
+    let outcome = GS::sstore_gas_state(&mut context, target, &state_load)?;
 
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
