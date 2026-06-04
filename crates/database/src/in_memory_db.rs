@@ -36,7 +36,6 @@ impl Default for Cache {
     fn default() -> Self {
         let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
-        contracts.insert(B256::ZERO, Bytecode::default());
 
         Cache {
             accounts: HashMap::default(),
@@ -598,7 +597,7 @@ impl Database for BenchmarkDB {
 mod tests {
     use super::{CacheDB, EmptyDB};
     use database_interface::{Database, DatabaseCommit};
-    use primitives::{Address, HashMap, StorageKey, StorageValue};
+    use primitives::{Address, HashMap, StorageKey, StorageValue, B256, KECCAK_EMPTY};
     use state::{Account, AccountInfo, EvmStorageSlot, TransactionId};
 
     #[test]
@@ -684,10 +683,29 @@ mod tests {
         assert_eq!(db.storage(address, key), Ok(value));
     }
 
+    #[test]
+    fn insert_account_info_normalizes_zero_code_hash() {
+        let address = Address::with_last_byte(42);
+        let mut db = CacheDB::new(EmptyDB::default());
+
+        db.insert_account_info(
+            address,
+            AccountInfo {
+                code_hash: B256::ZERO,
+                code: None,
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(db.basic(address).unwrap().unwrap().code_hash, KECCAK_EMPTY);
+        assert!(db.cache.contracts.contains_key(&KECCAK_EMPTY));
+        assert!(!db.cache.contracts.contains_key(&B256::ZERO));
+    }
+
     #[cfg(feature = "std")]
     #[test]
     fn test_pretty_print_cachedb() {
-        use primitives::{Bytes, Log, LogData, B256, U256};
+        use primitives::{Bytes, Log, LogData, U256};
 
         let account = Address::with_last_byte(55);
         let mut cachedb = CacheDB::new(EmptyDB::default());
