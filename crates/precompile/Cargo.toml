@@ -101,28 +101,41 @@ asm-keccak = ["primitives/asm-keccak"]
 asm-sha2 = ["sha2/asm"]
 
 
-# Enables the c-kzg point evaluation precompile. Enabled by default as most stable/used implementation.
+# Use c-kzg for the KZG point evaluation precompile. This is the default,
+# battle-tested Ethereum implementation and has had portability/performance work
+# upstream, but it is a C-backed dependency; without it, revm falls back to the
+# Rust BLS12-381 backends when available.
 c-kzg = ["dep:c-kzg"]
 
-# Compile in portable mode, without ISA extensions.
-# Binary can be executed on all systems.
+# Compile c-kzg/blst without ISA-specific extensions. Prefer this for binaries
+# that must run across different CPUs; disabling it can be faster on tuned
+# targets but produces less portable artifacts.
 portable = ["c-kzg?/portable", "blst?/portable"]
 
-# Use `secp256k1` as a faster alternative to `k256`.
-# The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
-# In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
+# Use rust-secp256k1 for ecrecover. It is faster and uses a global verification
+# context, so it is the default backend; the pure-Rust k256 path is more portable,
+# especially for wasm builds on Windows/macOS, but slower.
 secp256k1 = ["dep:secp256k1"]
 
-# Enables the blst implementation of the BLS12-381 precompile.
+# Use blst for BLS12-381 and, when c-kzg is off, KZG point evaluation. This is
+# the default fast backend and matches c-kzg's underlying implementation style,
+# but it brings an FFI dependency and needs portable mode for broad CPU support;
+# without it, revm uses the pure-Rust arkworks backend.
 blst = ["dep:blst"]
 
-# Enables the substrate implementation of eip1962
+# Use substrate-bn for the BN254/EIP-196 precompiles. This preserves the
+# historical/default backend; without it, revm uses the arkworks BN254 backend,
+# which is pure Rust and shared with the BLS stack.
 bn = ["dep:bn"]
 
-# Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
+# Use GMP for the modexp precompile. This is much faster on long-tail mainnet
+# workloads such as Aztec/ZKSync transactions, but requires dynamically linking
+# libgmp at runtime; without it, revm uses the portable Rust implementation.
 gmp = ["dep:gmp-mpfr-sys"]
 
-# Use aws-lc-rs as a faster alternative to `p256` for secp256r1 signature verification.
+# Use aws-lc-rs for secp256r1 signature verification. It is faster than the
+# pure-Rust p256 backend, but adds the AWS-LC native dependency; without it, revm
+# keeps the more portable p256 implementation.
 p256-aws-lc-rs = ["dep:aws-lc-rs"]
 
 [[bench]]

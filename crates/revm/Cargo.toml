@@ -101,24 +101,35 @@ optional_no_base_fee = ["context/optional_no_base_fee"]
 optional_fee_charge = ["context/optional_fee_charge"]
 optional_priority_fee_check = ["context/optional_priority_fee_check"]
 
-# Precompiles features: Please look at the comments in `precompile` crate for more information.
+# Precompile backend features. The `precompile` crate has the detailed tradeoffs
+# for each backend.
 
-secp256k1 = ["precompile/secp256k1"] # See comments in `precompile` use it with caution
+# Faster ecrecover backend; falls back to the more portable pure-Rust k256 path
+# when disabled.
+secp256k1 = ["precompile/secp256k1"]
+
+# Default KZG backend; falls back to the Rust BLS12-381 backends when disabled.
 c-kzg = ["precompile/c-kzg"]
 
-# blst will be enabled both for bls precompiles and for kzg precompile.
+# Fast BLS12-381 backend, also used for KZG when c-kzg is disabled; falls back to
+# pure-Rust arkworks when disabled.
 blst = ["precompile/blst"]
+
+# Historical/default BN254 backend; falls back to the pure-Rust arkworks backend
+# when disabled.
 bn = ["precompile/bn"]
 asm-sha2 = ["precompile/asm-sha2"]
 
-# Compile in portable mode, without ISA extensions.
-# Binary can be executed on all systems.
+# Compile c-kzg/blst without ISA-specific extensions for broadly runnable
+# binaries; disabling it can be faster for tuned deployment targets.
 portable = ["precompile/portable"]
 
-# Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
+# Faster modexp backend for long-tail mainnet workloads; dynamically links libgmp
+# at runtime and falls back to the portable Rust implementation when disabled.
 gmp = ["precompile/gmp"]
 
-# Use aws-lc-rs as a faster alternative to `p256` for secp256r1 signature verification.
+# Faster secp256r1 backend; falls back to the more portable pure-Rust p256 path
+# when disabled.
 p256-aws-lc-rs = ["precompile/p256-aws-lc-rs"]
 
 # Statetest types for running ethereum tests
