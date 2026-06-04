@@ -59,9 +59,13 @@ cfg_if::cfg_if! {
     }
 }
 
-// silence aurora-engine-modexp if gmp is enabled
-#[cfg(feature = "gmp")]
+// silence aurora-engine-modexp if another modexp backend is enabled
+#[cfg(any(feature = "gmp", feature = "num-bigint"))]
 use aurora_engine_modexp as _;
+
+// silence num-bigint if gmp is enabled
+#[cfg(all(feature = "gmp", feature = "num-bigint"))]
+use num_bigint as _;
 
 // silence p256 lint as aws-lc-rs will be used if both are enabled.
 #[cfg(feature = "p256-aws-lc-rs")]

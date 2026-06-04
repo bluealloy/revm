@@ -26,6 +26,7 @@ context-interface.workspace = true
 aurora-engine-modexp.workspace = true
 # gmp ffi
 gmp-mpfr-sys = { workspace = true, default-features = false, optional = true }
+num-bigint = { workspace = true, optional = true }
 
 # ecRecover
 k256 = { workspace = true, features = ["ecdsa"] }
@@ -90,6 +91,7 @@ std = [
 	"ark-bn254/std",
 	"ark-bls12-381/std",
 	"aurora-engine-modexp/std",
+	"num-bigint?/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
@@ -121,6 +123,9 @@ bn = ["dep:bn"]
 
 # Use GMP for accelerated modexp precompile. Dynamically links to libgmp at runtime.
 gmp = ["dep:gmp-mpfr-sys"]
+
+# Use `num-bigint` for the modexp precompile.
+num-bigint = ["dep:num-bigint"]
 
 # Use aws-lc-rs as a faster alternative to `p256` for secp256r1 signature verification.
 p256-aws-lc-rs = ["dep:aws-lc-rs"]

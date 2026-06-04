@@ -137,6 +137,21 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
 }
 
 #[cfg(not(feature = "gmp"))]
+#[cfg(feature = "num-bigint")]
+pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+    use num_bigint::BigUint;
+
+    let modulus = BigUint::from_bytes_be(modulus);
+    if modulus == BigUint::from(0u8) {
+        return Vec::new();
+    }
+
+    let base = BigUint::from_bytes_be(base);
+    let exponent = BigUint::from_bytes_be(exponent);
+    base.modpow(&exponent, &modulus).to_bytes_be()
+}
+
+#[cfg(not(any(feature = "gmp", feature = "num-bigint")))]
 pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     aurora_engine_modexp::modexp(base, exponent, modulus)
 }
