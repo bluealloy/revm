@@ -26,7 +26,7 @@ fn repeated(byte: u8, len: usize) -> Vec<u8> {
 }
 
 fn hex_bytes(hex: &str) -> Vec<u8> {
-    assert!(hex.len() % 2 == 0, "hex input length must be even");
+    assert!(hex.len().is_multiple_of(2), "hex input length must be even");
     hex.as_bytes()
         .chunks_exact(2)
         .map(|chunk| {
@@ -46,7 +46,12 @@ fn hex_value(byte: u8) -> u8 {
     }
 }
 
-fn encoded(name: &'static str, base: Vec<u8>, exponent: Vec<u8>, modulus: Vec<u8>) -> ModexpCase {
+const fn encoded(
+    name: &'static str,
+    base: Vec<u8>,
+    exponent: Vec<u8>,
+    modulus: Vec<u8>,
+) -> ModexpCase {
     ModexpCase::Encoded {
         name,
         base,
