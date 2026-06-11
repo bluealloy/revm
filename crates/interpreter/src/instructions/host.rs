@@ -1,15 +1,19 @@
 use crate::{
-    instruction_context::GasStateTr,
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr},
-    Gas, Host, InstructionContext as Ictx, InstructionExecResult as Result, InstructionResult,
+    Gas, Host, InstructionExecResult as Result, InstructionResult,
 };
-use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
+use context_interface::{
+    context::{SStoreResult, StateLoad},
+    host::LoadError,
+    journaled_state::AccountInfoLoad,
+};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
-    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
+    Address, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
 };
+use crate::InstructionContext as Ictx;
 
 /// Loads an account, handling cold load gas accounting.
 ///
@@ -186,19 +190,34 @@ pub fn sload<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// Implements the SSTORE instruction.
 ///
 /// Stores a word to storage.
-pub fn sstore<IT, H, GS>(mut context: Ictx<'_, H, IT>) -> Result
+pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+    sstore_with_gas_accounting(context, sstore_default_gas_accounting)
+}
+
+/// Implements SSTORE, delegating dynamic gas and refund accounting to `gas_accounting`.
+///
+/// This helper performs the common SSTORE instruction flow: static-call checks,
+/// stack pops, stipend/static-gas charging, and the journaled storage write.
+/// Custom instruction sets can override the SSTORE opcode and call this helper
+/// with their own gas accounting closure.
+pub fn sstore_with_gas_accounting<'a, IT, H, F>(
+    mut context: Ictx<'a, H, IT>,
+    gas_accounting: F,
+) -> Result
 where
     IT: ITy,
     H: Host + ?Sized,
-    GS: GasStateTr<IT, H>,
+    F: for<'ctx, 'load> FnOnce(
+        &'ctx mut Ictx<'a, H, IT>,
+        Address,
+        &'load StateLoad<SStoreResult>,
+    ) -> Result,
 {
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
     let target = context.interpreter.input.target_address();
     let spec_id = context.interpreter.runtime_flag.spec_id();
-
-    let is_eip8037 = context.host.is_amsterdam_eip8037_enabled();
 
     // EIP-2200: Structured Definitions for Net Gas Metering
     // If gasleft is less than or equal to gas stipend, fail the current call frame with 'out of gas' exception.
@@ -226,27 +245,39 @@ where
             .ok_or(InstructionResult::FatalExternalError)?
     };
 
-    let outcome = GS::sstore_gas_state(&mut context, target, &state_load)?;
+    gas_accounting(&mut context, target, &state_load)
+}
 
+/// Default dynamic gas and refund accounting for SSTORE.
+pub fn sstore_default_gas_accounting<IT, H>(
+    context: &mut Ictx<'_, H, IT>,
+    _target: Address,
+    state_load: &StateLoad<SStoreResult>,
+) -> Result
+where
+    IT: ITy,
+    H: Host + ?Sized,
+{
+    let spec_id = context.interpreter.runtime_flag.spec_id();
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
-    if !outcome.skip_gas {
-        // dynamic gas
-        gas!(
-            context.interpreter,
-            context.host.gas_params().sstore_dynamic_gas(
-                is_istanbul,
-                &state_load.data,
-                state_load.is_cold
-            )
-        );
-    }
+    // dynamic gas
+    gas!(
+        context.interpreter,
+        context.host.gas_params().sstore_dynamic_gas(
+            is_istanbul,
+            &state_load.data,
+            state_load.is_cold
+        )
+    );
 
-    if !outcome.skip_gas && is_eip8037 {
+    // state gas for new slot creation (EIP-8037)
+    if context.host.is_amsterdam_eip8037_enabled() {
         state_gas!(
             context.interpreter,
             context.host.gas_params().sstore_state_gas(&state_load.data)
         );
+
         // EIP-8037 issue #2: 0→x→0 storage restoration refills the reservoir
         // directly rather than routing the state gas through the capped refund
         // counter. The regular-gas portion of the restoration still flows
@@ -261,15 +292,12 @@ where
     }
 
     // refund
-    if !outcome.skip_refund {
-        context.interpreter.gas.record_refund(
-            context
-                .host
-                .gas_params()
-                .sstore_refund(is_istanbul, &state_load.data),
-        );
-    }
-
+    context.interpreter.gas.record_refund(
+        context
+            .host
+            .gas_params()
+            .sstore_refund(is_istanbul, &state_load.data),
+    );
     Ok(())
 }
 
