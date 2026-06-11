@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.1.0](https://github.com/bluealloy/revm/compare/revm-state-v12.0.1...revm-state-v12.1.0) - 2026-06-11
+
+### Added
+
+- wrap TransientStorage as AddressMap<StorageKeyMap<U256>> ([#3736](https://github.com/bluealloy/revm/pull/3736))
+- `Account::is_changed` ([#3727](https://github.com/bluealloy/revm/pull/3727))
+
 ## [12.0.1](https://github.com/bluealloy/revm/compare/revm-state-v12.0.0...revm-state-v12.0.1) - 2026-05-26
 
 ### Other

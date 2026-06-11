@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [37.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v37.0.3...revm-interpreter-v37.1.0) - 2026-06-11
+
+### Added
+
+- add SSTORE gas-state policy hook ([#3734](https://github.com/bluealloy/revm/pull/3734))
+
+### Fixed
+
+- *(interpreter)* use IntoAddress in pop_address to avoid const-eval panic ([#3735](https://github.com/bluealloy/revm/pull/3735))
+
+### Other
+
+- run cargo fmt ([#3751](https://github.com/bluealloy/revm/pull/3751))
+- remove GasStateTr ([#3750](https://github.com/bluealloy/revm/pull/3750))
+- make `GasStateTr` expose `StateLoad` ([#3737](https://github.com/bluealloy/revm/pull/3737))
+
 ## [37.0.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v37.0.2...revm-interpreter-v37.0.3) - 2026-05-26
 
 ### Added

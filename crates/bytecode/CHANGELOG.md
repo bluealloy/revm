@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.2](https://github.com/bluealloy/revm/compare/revm-bytecode-v11.0.1...revm-bytecode-v11.0.2) - 2026-06-11
+
+### Fixed
+
+- *(bytecode)* avoid out-of-bounds pointer in analyze_legacy ([#3752](https://github.com/bluealloy/revm/pull/3752))
+
 ## [11.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v11.0.0...revm-bytecode-v11.0.1) - 2026-05-26
 
 ### Other
