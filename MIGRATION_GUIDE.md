@@ -1,4 +1,40 @@
 
+# v113 tag (all crates v41.0.0)
+
+### Unified workspace versioning
+All workspace crates are now released in lockstep under a single version, starting at **41.0.0**. This explains the version jump (e.g. `revm-bytecode` 11.0.1 → 41.0.0). Going forward, every release bumps all crates to the same version — pin them together when upgrading.
+
+### `TransientStorage` is now a newtype ([#3736](https://github.com/bluealloy/revm/pull/3736))
+`TransientStorage` changed from the type alias `HashMap<(Address, StorageKey), StorageValue>` to a newtype wrapping `AddressMap<StorageKeyMap<StorageValue>>` (per-account nested maps instead of tuple keys).
+
+```rust
+// Before:
+transient_storage.get(&(address, key)).copied().unwrap_or_default();
+transient_storage.insert((address, key), value);
+transient_storage.remove(&(address, key));
+
+// After:
+transient_storage.get_value(address, key); // returns StorageValue::ZERO if unset
+transient_storage.insert_value(address, key, value);
+transient_storage.remove_value(address, key);
+```
+
+It derefs to the inner `AddressMap`, so map-level operations (`clear`, `iter`, `len`, …) keep working, but iteration now yields `(Address, StorageKeyMap<StorageValue>)` pairs instead of `((Address, StorageKey), StorageValue)`.
+
+### `OnStateHook` takes state by value ([#3732](https://github.com/bluealloy/revm/pull/3732))
+`OnStateHook::on_state(&mut self, state: &EvmState)` is now `on_state(&mut self, state: EvmState)`. Closure-based hooks change from `FnMut(&EvmState)` to `FnMut(EvmState)`.
+
+### `TransitionAccount` storage is generic ([#3732](https://github.com/bluealloy/revm/pull/3732))
+* `TransitionAccount` gained a storage type parameter: `TransitionAccount<S = StorageWithOriginalValues>`. Existing uses of the bare `TransitionAccount` name keep compiling via the default.
+* `TransitionAccount::update` now takes `TransitionAccount<Option<Cow<'_, EvmStorage>>>` instead of `Self`. New `map_storage` helper converts between storage representations.
+* `TransitionState::add_transitions` / `State::apply_transition` now take `impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>`. New `TransitionState::add_transition` adds a single transition.
+
+### Other
+* `StateBuilder::with_bundle_update_if(enable)` added for conditionally enabling bundle updates ([#3729](https://github.com/bluealloy/revm/pull/3729)).
+* SSTORE instruction split into `sstore_with_gas_accounting` + `sstore_default_gas_accounting` so custom instruction sets can override dynamic gas/refund accounting ([#3734](https://github.com/bluealloy/revm/pull/3734), [#3750](https://github.com/bluealloy/revm/pull/3750)). Additive — `sstore` behavior is unchanged.
+* `Account::is_changed()` added ([#3727](https://github.com/bluealloy/revm/pull/3727)).
+* `revm-database` gained an `either` dependency.
+
 # v108 tag (revm v39.0.0)
 
 ### EIP-8037 Amsterdam — bal-devnet-7 ([#3667](https://github.com/bluealloy/revm/pull/3667))
