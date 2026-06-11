@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [36.0.4](https://github.com/bluealloy/revm/compare/revm-precompile-v36.0.3...revm-precompile-v36.0.4) - 2026-06-11
+
+### Other
+
+- Add MODEXP precompile benchmarks ([#3744](https://github.com/bluealloy/revm/pull/3744))
+
 ## [36.0.3](https://github.com/bluealloy/revm/compare/revm-precompile-v36.0.2...revm-precompile-v36.0.3) - 2026-05-26
 
 ### Other
