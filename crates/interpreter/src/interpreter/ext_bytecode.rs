@@ -172,7 +172,10 @@ impl Jumps for ExtBytecode {
     #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
         let jt = self.base.legacy_jump_table();
-        debug_assert!(jt.is_some(), "is_valid_legacy_jump called on non-legacy bytecode");
+        debug_assert!(
+            jt.is_some(),
+            "is_valid_legacy_jump called on non-legacy bytecode"
+        );
         // SAFETY: Only called by legacy bytecode. Asserted above in debug mode.
         unsafe { jt.unwrap_unchecked() }.is_valid(offset)
     }
@@ -209,7 +212,10 @@ impl Immediates for ExtBytecode {
     #[inline]
     fn read_u16(&self) -> u16 {
         debug_assert!(
-            self.pc_unchecked() + 2 <= self.base.bytes_ref().len(),
+            {
+                let (base, end) = self.bytecode_bounds();
+                self.instruction_pointer >= base && self.instruction_pointer.wrapping_add(2) <= end
+            },
             "read_u16: not enough bytes remaining (pc: {}, len: {})",
             self.pc_unchecked(),
             self.base.bytes_ref().len(),
@@ -231,7 +237,11 @@ impl Immediates for ExtBytecode {
     #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
         debug_assert!(
-            self.pc_unchecked() + len <= self.base.bytes_ref().len(),
+            {
+                let (base, end) = self.bytecode_bounds();
+                self.instruction_pointer >= base
+                    && self.instruction_pointer.wrapping_add(len) <= end
+            },
             "read_slice: not enough bytes remaining (pc: {}, len: {}, bytecode_len: {})",
             self.pc_unchecked(),
             len,
