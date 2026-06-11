@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [19.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v19.0.3...revm-context-interface-v19.1.0) - 2026-06-11
+## [41.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v19.0.3...revm-context-interface-v41.0.0) - 2026-06-11
 
 ### Added
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [21.0.4](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.3...revm-inspector-v21.0.4) - 2026-06-11
+## [41.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.3...revm-inspector-v41.0.0) - 2026-06-11
 
 ### Other
 
