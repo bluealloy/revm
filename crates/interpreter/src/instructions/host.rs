@@ -1,3 +1,4 @@
+use crate::InstructionContext as Ictx;
 use crate::{
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr},
@@ -13,7 +14,6 @@ use primitives::{
     hardfork::SpecId::{self, *},
     Address, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
 };
-use crate::InstructionContext as Ictx;
 
 /// Loads an account, handling cold load gas accounting.
 ///
