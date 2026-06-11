@@ -3,17 +3,14 @@ Because this is workspace with multi libraries, tags will be simplified, and wit
 # v113
 date: 11.06.2026
 
-From this release all workspace crates are versioned in lockstep under a single unified version, starting at **41.0.0**. Highlights:
-* `TransientStorage` is now a newtype over `AddressMap<StorageKeyMap<StorageValue>>` ([#3736](https://github.com/bluealloy/revm/pull/3736))
-* SSTORE gas accounting hook via `sstore_with_gas_accounting` ([#3734](https://github.com/bluealloy/revm/pull/3734), [#3750](https://github.com/bluealloy/revm/pull/3750))
-* Conditional bundle update builder `StateBuilder::with_bundle_update_if` ([#3729](https://github.com/bluealloy/revm/pull/3729))
-* Avoid reallocations and cloning during commit, `OnStateHook` takes state by value ([#3732](https://github.com/bluealloy/revm/pull/3732))
-* Add `Account::is_changed` ([#3727](https://github.com/bluealloy/revm/pull/3727))
+All crates are now versioned in lockstep, starting at **41.0.0**. Highlights:
+* `TransientStorage` newtype ([#3736](https://github.com/bluealloy/revm/pull/3736))
+* SSTORE gas accounting hook ([#3734](https://github.com/bluealloy/revm/pull/3734), [#3750](https://github.com/bluealloy/revm/pull/3750))
+* Conditional bundle update builder ([#3729](https://github.com/bluealloy/revm/pull/3729))
+* Commit perf improvements ([#3732](https://github.com/bluealloy/revm/pull/3732))
 * Fix out-of-bounds pointer in `analyze_legacy` ([#3752](https://github.com/bluealloy/revm/pull/3752))
-* Fix const-eval panic in `pop_address` via `IntoAddress` ([#3735](https://github.com/bluealloy/revm/pull/3735))
-* Add MODEXP precompile benchmarks ([#3744](https://github.com/bluealloy/revm/pull/3744))
 
-* `revm-primitives`: 24.0.1 -> 41.0.0 (✓ version unification only)
+* `revm-primitives`: 24.0.1 -> 41.0.0 (✓ API compatible changes)
 * `revm-bytecode`: 11.0.1 -> 41.0.0 (✓ API compatible changes)
 * `revm-state`: 12.0.1 -> 41.0.0 (⚠ API breaking changes)
 * `revm-database-interface`: 12.1.1 -> 41.0.0 (⚠ API breaking changes)
