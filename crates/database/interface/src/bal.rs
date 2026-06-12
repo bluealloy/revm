@@ -87,7 +87,7 @@ impl BalState {
         self
     }
 
-    /// Enable database fallback for reads not covered by the BAL.
+    /// Set whether reads not covered by the BAL fall back to the underlying database.
     ///
     /// See [`Self::allow_db_fallback`].
     #[inline]
@@ -311,7 +311,7 @@ impl<DB> BalDatabase<DB> {
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
     ///
-    /// See [`BalState::fallback`].
+    /// See [`BalState::allow_db_fallback`].
     #[inline]
     pub const fn with_allow_bal_db_fallback(mut self, allow: bool) -> Self {
         self.bal_state.allow_db_fallback = allow;
