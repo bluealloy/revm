@@ -33,7 +33,7 @@ pub struct BalState {
     /// block (e.g. RPC calls) on top of BAL-positioned state: state not covered by the BAL is
     /// untouched by the block, so the database values are correct.
     #[cfg_attr(feature = "serde", serde(default))]
-    pub fallback: bool,
+    pub allow_db_fallback: bool,
 }
 
 impl BalState {
@@ -89,19 +89,19 @@ impl BalState {
 
     /// Enable database fallback for reads not covered by the BAL.
     ///
-    /// See [`Self::fallback`].
+    /// See [`Self::allow_db_fallback`].
     #[inline]
-    pub const fn with_fallback(mut self) -> Self {
-        self.fallback = true;
+    pub const fn with_allow_db_fallback(mut self, allow: bool) -> Self {
+        self.allow_db_fallback = allow;
         self
     }
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
     ///
-    /// See [`Self::fallback`].
+    /// See [`Self::allow_db_fallback`].
     #[inline]
-    pub const fn set_fallback(&mut self, fallback: bool) {
-        self.fallback = fallback;
+    pub const fn set_allow_db_fallback(&mut self, allow: bool) {
+        self.allow_db_fallback = allow;
     }
 
     /// Take BAL builder.
@@ -119,7 +119,7 @@ impl BalState {
 
     /// Get account id from BAL.
     ///
-    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::fallback`] is enabled and the
+    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::allow_db_fallback`] is enabled and the
     /// account is not covered by the BAL.
     ///
     /// Return Error if the BAL is attached but does not contain the account and fallback is
@@ -131,7 +131,7 @@ impl BalState {
         };
         match bal.accounts.get_full(address) {
             Some(i) => Ok(Some(AccountId::new(i.0).expect("too many bals"))),
-            None if self.fallback => Ok(None),
+            None if self.allow_db_fallback => Ok(None),
             None => Err(BalError::AccountNotFound { address: *address }),
         }
     }
@@ -178,7 +178,7 @@ impl BalState {
 
     /// Get storage value from BAL.
     ///
-    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::fallback`] is enabled and the
+    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::allow_db_fallback`] is enabled and the
     /// account or slot is not covered by the BAL.
     ///
     /// Return Err if bal is present but account or storage is not found inside BAL and fallback
@@ -194,7 +194,7 @@ impl BalState {
         };
 
         let Some(bal_account) = bal.accounts.get(account) else {
-            if self.fallback {
+            if self.allow_db_fallback {
                 return Ok(None);
             }
             return Err(BalError::AccountNotFound { address: *account });
@@ -202,14 +202,14 @@ impl BalState {
 
         match bal_account.storage.get_bal_writes(account, storage_key) {
             Ok(writes) => Ok(writes.get(self.bal_index)),
-            Err(BalError::SlotNotFound { .. }) if self.fallback => Ok(None),
+            Err(BalError::SlotNotFound { .. }) if self.allow_db_fallback => Ok(None),
             Err(err) => Err(err),
         }
     }
 
     /// Get the storage value by account id.
     ///
-    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::fallback`] is enabled and the
+    /// Returns `Ok(None)` if no BAL is attached, or if [`Self::allow_db_fallback`] is enabled and the
     /// slot is not covered by the BAL.
     ///
     /// Return Err if the account id is invalid, or if the slot is not found inside BAL and
@@ -230,7 +230,7 @@ impl BalState {
 
         match bal_account.storage.get_bal_writes(address, storage_key) {
             Ok(writes) => Ok(writes.get(self.bal_index)),
-            Err(BalError::SlotNotFound { .. }) if self.fallback => Ok(None),
+            Err(BalError::SlotNotFound { .. }) if self.allow_db_fallback => Ok(None),
             Err(err) => Err(err),
         }
     }
@@ -313,8 +313,8 @@ impl<DB> BalDatabase<DB> {
     ///
     /// See [`BalState::fallback`].
     #[inline]
-    pub const fn with_bal_fallback(mut self, fallback: bool) -> Self {
-        self.bal_state.fallback = fallback;
+    pub const fn with_allow_bal_db_fallback(mut self, allow: bool) -> Self {
+        self.bal_state.allow_db_fallback = allow;
         self
     }
 
@@ -505,7 +505,7 @@ mod tests {
         let missing_slot = U256::from(2);
         let mut bal_state = BalState::new()
             .with_bal(bal_with_account(address, slot))
-            .with_fallback();
+            .with_allow_db_fallback(true);
 
         // Misses fall through to the database instead of erroring.
         assert_eq!(bal_state.get_account_id(&missing), Ok(None));

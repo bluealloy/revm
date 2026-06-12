@@ -239,10 +239,10 @@ impl<DB: Database> State<DB> {
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
     ///
-    /// See [`BalState::fallback`](database_interface::bal::BalState).
+    /// See [`BalState::allow_db_fallback`](database_interface::bal::BalState).
     #[inline]
-    pub const fn set_bal_fallback(&mut self, fallback: bool) {
-        self.bal_state.fallback = fallback;
+    pub const fn set_allow_bal_db_fallback(&mut self, allow: bool) {
+        self.bal_state.allow_db_fallback = allow;
     }
 
     /// Sets the hook invoked whenever state changes are committed.
