@@ -501,8 +501,11 @@ pub trait Handler {
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
     ) {
-        let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+        post_execution::refund(
+            evm.ctx().cfg().gas_params(),
+            exec_result.gas_mut(),
+            eip7702_refund,
+        )
     }
 
     /// Returns unused gas costs to the transaction sender's account.

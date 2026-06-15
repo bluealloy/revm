@@ -1,6 +1,7 @@
 use crate::FrameResult;
 use context::journaled_state::account::JournaledAccountTr;
 use context_interface::{
+    cfg::GasParams,
     journaled_state::JournalTr,
     result::{ExecutionResult, HaltReason, HaltReasonTr, ResultGas},
     Block, Cfg, ContextTr, Database, LocalContextTr, Transaction,
@@ -60,13 +61,10 @@ pub const fn eip7623_check_gas_floor(gas: &mut Gas, init_and_floor_gas: InitialA
     }
 }
 
-/// Calculates and applies gas refunds based on the specification.
-pub fn refund(spec: SpecId, gas: &mut Gas, eip7702_refund: i64) {
+/// Calculates and applies gas refunds based on the configured gas parameters.
+pub fn refund(gas_params: &GasParams, gas: &mut Gas, eip7702_refund: i64) {
     gas.record_refund(eip7702_refund);
-    // Calculate gas refund for transaction.
-    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
-    // gas spend. (Before london it was 2th part of gas spend)
-    gas.set_final_refund(spec.is_enabled_in(SpecId::LONDON));
+    gas.set_final_refund(gas_params.max_refund_quotient());
 }
 
 /// Reimburses the caller for unused gas.
