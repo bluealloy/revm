@@ -202,6 +202,7 @@ impl GasParams {
         table[GasId::initcode_per_word().as_usize()] = gas::INITCODE_WORD_COST;
         table[GasId::create().as_usize()] = gas::CREATE;
         table[GasId::call_stipend_reduction().as_usize()] = 64;
+        table[GasId::max_refund_quotient().as_usize()] = 2;
         table[GasId::transfer_value_cost().as_usize()] = gas::CALLVALUE;
         table[GasId::cold_account_additional_cost().as_usize()] = 0;
         table[GasId::new_account_cost().as_usize()] = gas::NEWACCOUNT;
@@ -290,6 +291,7 @@ impl GasParams {
                 gas::WARM_SSTORE_RESET + gas::ACCESS_LIST_STORAGE_KEY;
 
             table[GasId::selfdestruct_refund().as_usize()] = 0;
+            table[GasId::max_refund_quotient().as_usize()] = 5;
         }
 
         if spec.is_enabled_in(SpecId::SHANGHAI) {
@@ -474,6 +476,14 @@ impl GasParams {
     #[inline]
     pub fn sstore_reset_refund(&self) -> u64 {
         self.get(GasId::sstore_reset_refund())
+    }
+
+    /// Maximum gas refund quotient.
+    ///
+    /// The final transaction refund is capped to `gas_used / max_refund_quotient`.
+    #[inline]
+    pub fn max_refund_quotient(&self) -> u64 {
+        self.get(GasId::max_refund_quotient())
     }
 
     /// Dynamic gas cost for SSTORE opcode.
@@ -1099,6 +1109,7 @@ impl GasId {
             x if x == Self::initcode_per_word().as_u8() => "initcode_per_word",
             x if x == Self::create().as_u8() => "create",
             x if x == Self::call_stipend_reduction().as_u8() => "call_stipend_reduction",
+            x if x == Self::max_refund_quotient().as_u8() => "max_refund_quotient",
             x if x == Self::transfer_value_cost().as_u8() => "transfer_value_cost",
             x if x == Self::cold_account_additional_cost().as_u8() => {
                 "cold_account_additional_cost"
@@ -1186,6 +1197,7 @@ impl GasId {
             "initcode_per_word" => Some(Self::initcode_per_word()),
             "create" => Some(Self::create()),
             "call_stipend_reduction" => Some(Self::call_stipend_reduction()),
+            "max_refund_quotient" => Some(Self::max_refund_quotient()),
             "transfer_value_cost" => Some(Self::transfer_value_cost()),
             "cold_account_additional_cost" => Some(Self::cold_account_additional_cost()),
             "new_account_cost" => Some(Self::new_account_cost()),
@@ -1288,6 +1300,11 @@ impl GasId {
     /// Call stipend reduction. Call stipend is reduced by 1/64 of the gas limit.
     pub const fn call_stipend_reduction() -> GasId {
         Self::new(12)
+    }
+
+    /// Maximum gas refund quotient.
+    pub const fn max_refund_quotient() -> GasId {
+        Self::new(47)
     }
 
     /// Transfer value cost
@@ -1545,13 +1562,32 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 46 known GasIds (based on the indices 1-46 used)
+        // We should have exactly 47 known GasIds (based on the indices 1-47 used)
         assert_eq!(
             unique_names.len(),
-            46,
-            "Expected 46 unique GasIds, found {}",
+            47,
+            "Expected 47 unique GasIds, found {}",
             unique_names.len()
         );
+    }
+
+    #[test]
+    fn test_max_refund_quotient_defaults_and_override() {
+        let frontier = GasParams::new_spec(SpecId::FRONTIER);
+        assert_eq!(frontier.max_refund_quotient(), 2);
+        assert_eq!(frontier.get(GasId::max_refund_quotient()), 2);
+
+        let london = GasParams::new_spec(SpecId::LONDON);
+        assert_eq!(london.max_refund_quotient(), 5);
+        assert_eq!(
+            GasId::from_name("max_refund_quotient"),
+            Some(GasId::max_refund_quotient())
+        );
+        assert_eq!(GasId::max_refund_quotient().name(), "max_refund_quotient");
+
+        let mut custom = london;
+        custom.override_gas([(GasId::max_refund_quotient(), 10)]);
+        assert_eq!(custom.max_refund_quotient(), 10);
     }
 
     #[test]
