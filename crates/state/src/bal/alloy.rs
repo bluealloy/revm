@@ -2,8 +2,8 @@
 
 // Re-export Alloy BAL types.
 pub use alloy_eip7928::{
-    BalanceChange as AlloyBalanceChange, BlockAccessList as AlloyBal,
-    CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+    AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
+    BlockAccessList as AlloyBal, CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
     StorageChange as AlloyStorageChange,
 };
 
@@ -33,7 +33,7 @@ impl Bal {
         Ok(Self { accounts })
     }
 
-    /// Clone an EIP-7928 [`AlloyBal`] into a [`Bal`] without consuming the source.
+    /// Clone EIP-7928 [`AlloyAccountChanges`] into a [`Bal`] without consuming the source.
     ///
     /// # Errors
     ///
@@ -42,7 +42,9 @@ impl Bal {
     /// EIP-7702 bytecode, such as bytes with the EIP-7702 magic prefix but an invalid
     /// length or unsupported version.
     #[inline]
-    pub fn clone_from_alloy(alloy_bal: &AlloyBal) -> Result<Self, BytecodeDecodeError> {
+    pub fn clone_from_alloy(
+        alloy_bal: &[AlloyAccountChanges],
+    ) -> Result<Self, BytecodeDecodeError> {
         let accounts = AddressIndexMap::from_iter(
             alloy_bal
                 .iter()
