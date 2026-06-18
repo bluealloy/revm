@@ -619,8 +619,12 @@ impl EvmStorageSlot {
     #[inline]
     pub const fn mark_warm_with_transaction_id(&mut self, transaction_id: TransactionId) -> bool {
         let is_cold = self.is_cold_transaction_id(transaction_id);
-        if is_cold {
-            // if slot is cold original value should be reset to present value.
+        // Re-baseline the EIP-2200 `original_value` only when the slot belongs to a *previous*
+        // transaction (transaction id mismatch). `is_cold` also covers a slot flagged cold
+        // within the same transaction (e.g. a reverted `StorageWarmed` entry, or an explicit
+        // `mark_cold`); those must keep the original value captured at the start of this
+        // transaction. The committed/original value is tx-scoped, not access-list-scoped.
+        if self.transaction_id.get() != transaction_id.get() {
             self.original_value = self.present_value;
         }
         self.transaction_id = transaction_id;
