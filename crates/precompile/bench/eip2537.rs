@@ -160,8 +160,7 @@ fn splitmix32(seed: u64) -> u32 {
     let mut z = seed.wrapping_add(0x9e3779b97f4a7c15);
     z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
     z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
-    let value = ((z ^ (z >> 31)) as u32).max(1);
-    value
+    ((z ^ (z >> 31)) as u32).max(1)
 }
 
 fn seeded_g1_point(seed: u64) -> [u8; PADDED_G1_LENGTH] {
