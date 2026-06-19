@@ -9,10 +9,11 @@ use crate::{
 use blst::{
     blst_bendian_from_fp, blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul,
     blst_fp2, blst_fp_from_bendian, blst_map_to_g1, blst_map_to_g2, blst_miller_loop, blst_p1,
-    blst_p1_add_or_double_affine, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve,
-    blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2, blst_p2_add_or_double_affine,
-    blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve, blst_p2_from_affine,
-    blst_p2_mult, blst_p2_to_affine, blst_scalar, blst_scalar_from_be_bytes, MultiPoint,
+    blst_p1_add_or_double_affine, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_is_inf,
+    blst_p1_affine_on_curve, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2,
+    blst_p2_add_or_double_affine, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_is_inf,
+    blst_p2_affine_on_curve, blst_p2_from_affine, blst_p2_mult, blst_p2_to_affine, blst_scalar,
+    blst_scalar_from_be_bytes, MultiPoint,
 };
 use std::vec::Vec;
 
@@ -398,6 +399,29 @@ fn decode_g1_on_curve(
 fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<blst_p1_affine, PrecompileHalt> {
     _extract_g1_input(x, y, true)
 }
+
+fn read_g1_msm(
+    x: &[u8; FP_LENGTH],
+    y: &[u8; FP_LENGTH],
+) -> Result<Option<blst_p1_affine>, PrecompileHalt> {
+    let out = decode_g1_on_curve(x, y)?;
+
+    // SAFETY: Out is a blst value.
+    if unsafe { blst_p1_affine_is_inf(&out) } {
+        return Ok(None);
+    }
+
+    // NB: MSM requires a subgroup check for non-infinity points.
+    //
+    // Infinity is the identity, lies in every subgroup, and contributes nothing to
+    // the MSM result, so it can be skipped after the on-curve validation above.
+    // SAFETY: Out is a blst value.
+    if unsafe { !blst_p1_affine_in_g1(&out) } {
+        return Err(PrecompileHalt::Bls12381G1NotInSubgroup);
+    }
+
+    Ok(Some(out))
+}
 /// Extracts a G1 point in Affine format from the x and y coordinates
 /// without performing a subgroup check.
 ///
@@ -514,6 +538,31 @@ fn read_g2(
     a_y_1: &[u8; FP_LENGTH],
 ) -> Result<blst_p2_affine, PrecompileHalt> {
     _extract_g2_input(a_x_0, a_x_1, a_y_0, a_y_1, true)
+}
+
+fn read_g2_msm(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+) -> Result<Option<blst_p2_affine>, PrecompileHalt> {
+    let out = decode_g2_on_curve(a_x_0, a_x_1, a_y_0, a_y_1)?;
+
+    // SAFETY: Out is a blst value.
+    if unsafe { blst_p2_affine_is_inf(&out) } {
+        return Ok(None);
+    }
+
+    // NB: MSM requires a subgroup check for non-infinity points.
+    //
+    // Infinity is the identity, lies in every subgroup, and contributes nothing to
+    // the MSM result, so it can be skipped after the on-curve validation above.
+    // SAFETY: Out is a blst value.
+    if unsafe { !blst_p2_affine_in_g2(&out) } {
+        return Err(PrecompileHalt::Bls12381G2NotInSubgroup);
+    }
+
+    Ok(Some(out))
 }
 /// Extracts a G2 point in Affine format from the x and y coordinates
 /// without performing a subgroup check.
@@ -695,8 +744,9 @@ pub(crate) fn p1_msm_bytes(
     for pair_result in point_scalar_pairs {
         let ((x, y), scalar_bytes) = pair_result?;
 
-        // NB: MSM requires subgroup check
-        let point = read_g1(&x, &y)?;
+        let Some(point) = read_g1_msm(&x, &y)? else {
+            continue;
+        };
 
         let scalar = read_scalar(&scalar_bytes)?;
 
@@ -734,8 +784,9 @@ pub(crate) fn p2_msm_bytes(
     for pair_result in point_scalar_pairs {
         let ((x_0, x_1, y_0, y_1), scalar_bytes) = pair_result?;
 
-        // NB: MSM requires subgroup check
-        let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
+        let Some(point) = read_g2_msm(&x_0, &x_1, &y_0, &y_1)? else {
+            continue;
+        };
 
         let scalar = read_scalar(&scalar_bytes)?;
 
@@ -764,4 +815,21 @@ pub(crate) fn p2_msm_bytes(
 #[inline]
 pub(crate) fn pairing_check_bytes(pairs: &[PairingPair]) -> Result<bool, crate::PrecompileHalt> {
     super::pairing_common::pairing_check_bytes_generic(pairs, read_g1, read_g2, pairing_check)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_g1_msm_skips_infinity() {
+        let zero = [0u8; FP_LENGTH];
+        assert!(read_g1_msm(&zero, &zero).unwrap().is_none());
+    }
+
+    #[test]
+    fn read_g2_msm_skips_infinity() {
+        let zero = [0u8; FP_LENGTH];
+        assert!(read_g2_msm(&zero, &zero, &zero, &zero).unwrap().is_none());
+    }
 }
