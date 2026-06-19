@@ -434,12 +434,13 @@ pub(crate) fn p1_msm_bytes(
         // NB: MSM requires subgroup check
         let point = read_g1(&x, &y)?;
 
-        // Skip zero scalars after validating the point
-        if scalar_bytes.iter().all(|&b| b == 0) {
+        let scalar = read_scalar(&scalar_bytes)?;
+
+        // Skip scalars that reduce to zero after validating the point.
+        if scalar.is_zero() {
             continue;
         }
 
-        let scalar = read_scalar(&scalar_bytes)?;
         g1_points.push(point);
         scalars.push(scalar);
     }
@@ -472,12 +473,13 @@ pub(crate) fn p2_msm_bytes(
         // NB: MSM requires subgroup check
         let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
 
-        // Skip zero scalars after validating the point
-        if scalar_bytes.iter().all(|&b| b == 0) {
+        let scalar = read_scalar(&scalar_bytes)?;
+
+        // Skip scalars that reduce to zero after validating the point.
+        if scalar.is_zero() {
             continue;
         }
 
-        let scalar = read_scalar(&scalar_bytes)?;
         g2_points.push(point);
         scalars.push(scalar);
     }

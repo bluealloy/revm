@@ -55,3 +55,42 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
 
     Ok(EthPrecompileOutput::new(required_gas, padded_result.into()))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use primitives::{hex, Bytes};
+    use std::vec::Vec;
+
+    const SCALAR_MODULUS: [u8; SCALAR_LENGTH] =
+        hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+
+    fn g2_generator_with_scalar_modulus() -> Bytes {
+        let mut input = Vec::with_capacity(G2_MSM_INPUT_LENGTH);
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb8"
+        ));
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "13e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e"
+        ));
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "0ce5d527727d6e118cc9cdc6da2e351aadfd9baa8cbdd3a76d429a695160d12c923ac9cc3baca289e193548608b82801"
+        ));
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "0606c4a02ea734cc32acd2b02bc28b99cb3e287e85a763af267492ab572e99ab3f370d275cec1da1aaa9075ff05f79be"
+        ));
+        input.extend_from_slice(&SCALAR_MODULUS);
+        input.into()
+    }
+
+    #[test]
+    fn bls_g2msm_scalar_modulus_returns_infinity() {
+        let output = g2_msm(&g2_generator_with_scalar_modulus(), G2_MSM_BASE_GAS_FEE).unwrap();
+        assert_eq!(output.gas_used, G2_MSM_BASE_GAS_FEE);
+        assert_eq!(output.bytes, Bytes::from(vec![0; PADDED_G2_LENGTH]));
+    }
+}
