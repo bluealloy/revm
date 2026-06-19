@@ -260,7 +260,31 @@ fn bench_precompile(
     });
 }
 
-fn bench_uncachable_precompile(
+fn bench_feedback_precompile(
+    group: &mut BenchmarkGroup<'_, WallTime>,
+    name: &'static str,
+    precompile: &Precompile,
+    input: PrecompileInput,
+    ret_size: usize,
+) {
+    group.throughput(Throughput::Bytes(input.len() as u64));
+    group.bench_function(name, move |b| {
+        let mut input = input.clone();
+        b.iter(|| {
+            // Benchmarkoor's uncachable BLS loop uses args_offset=0, ret_offset=0, and
+            // args_size=CALLDATASIZE, so each call writes its output over the next input prefix.
+            let output = precompile
+                .execute(black_box(input.as_slice()), GAS_LIMIT, RESERVOIR)
+                .expect("BLS12-381 benchmark input succeeds");
+            let copy_len = ret_size.min(output.bytes.len()).min(input.len());
+            input[..copy_len].copy_from_slice(&output.bytes[..copy_len]);
+            black_box(&input);
+            black_box(output);
+        });
+    });
+}
+
+fn bench_cycling_precompile(
     group: &mut BenchmarkGroup<'_, WallTime>,
     name: &'static str,
     precompile: &Precompile,
@@ -387,57 +411,51 @@ fn add_pairing_size_benches(group: &mut BenchmarkGroup<'_, WallTime>) {
 }
 
 fn add_uncachable_benches(group: &mut BenchmarkGroup<'_, WallTime>) {
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_g1add]",
         &revm_precompile::bls12_381::g1_add::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| g1_add_input(seeded_g1_point(seed as u64)))
-            .collect(),
+        g1_add_input(seeded_g1_point(0)),
+        PADDED_G1_LENGTH,
     );
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_g2add]",
         &revm_precompile::bls12_381::g2_add::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| g2_add_input(seeded_g2_point(seed as u64)))
-            .collect(),
+        g2_add_input(seeded_g2_point(0)),
+        PADDED_G2_LENGTH,
     );
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_g1msm]",
         &revm_precompile::bls12_381::g1_msm::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| g1_msm_input(seeded_g1_point(seed as u64), 1))
-            .collect(),
+        g1_msm_input(seeded_g1_point(0), 1),
+        PADDED_G1_LENGTH,
     );
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_g2msm]",
         &revm_precompile::bls12_381::g2_msm::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| g2_msm_input(seeded_g2_point(seed as u64), 1))
-            .collect(),
+        g2_msm_input(seeded_g2_point(0), 1),
+        PADDED_G2_LENGTH,
     );
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_fp_to_g1]",
         &revm_precompile::bls12_381::map_fp_to_g1::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| seeded_fp(seed as u64))
-            .collect(),
+        seeded_fp(0),
+        PADDED_FP_LENGTH,
     );
-    bench_uncachable_precompile(
+    bench_feedback_precompile(
         group,
         "test_bls12_381_uncachable[bls12_fp_to_g2]",
         &revm_precompile::bls12_381::map_fp2_to_g2::PRECOMPILE,
-        (0..UNCACHABLE_INPUTS)
-            .map(|seed| seeded_fp2(seed as u64))
-            .collect(),
+        seeded_fp2(0),
+        2 * PADDED_FP_LENGTH,
     );
 
     for num_pairs in [1, 3, 6, 12, 24] {
-        bench_uncachable_precompile(
+        bench_cycling_precompile(
             group,
             match num_pairs {
                 1 => "test_bls12_pairing_uncachable[num_pairs=1]",
