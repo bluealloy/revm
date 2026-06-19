@@ -86,6 +86,12 @@ pub trait Transaction {
     /// For Eip1559 it is max_fee_per_gas.
     fn gas_price(&self) -> u128;
 
+    /// Whether the `gas_price >= basefee` check should be skipped for this transaction
+    /// during validation. Defaults to `false`.
+    fn skip_base_fee_check(&self) -> bool {
+        false
+    }
+
     /// Access list for the transaction.
     ///
     /// Introduced in EIP-2930.

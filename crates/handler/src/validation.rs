@@ -126,7 +126,7 @@ pub fn validate_tx_env<CTX: ContextTr>(
     let tx = context.tx();
     let tx_type = tx.tx_type();
 
-    let base_fee = if context.cfg().is_base_fee_check_disabled() {
+    let base_fee = if context.cfg().is_base_fee_check_disabled() || tx.skip_base_fee_check() {
         None
     } else {
         Some(context.block().basefee() as u128)
@@ -317,6 +317,7 @@ mod tests {
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output},
         Context, ContextTr, TxEnv,
     };
+    use context_interface::Transaction;
     use database::{CacheDB, EmptyDB};
     use primitives::{address, eip3860, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
     use state::{AccountInfo, Bytecode};
@@ -777,5 +778,109 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    /// Minimal transaction wrapper that delegates everything to an inner [`TxEnv`] but
+    /// forces [`Transaction::skip_base_fee_check`] to return `true`.
+    struct SkipBaseFeeTx(TxEnv);
+
+    impl Transaction for SkipBaseFeeTx {
+        type AccessListItem<'a> = <TxEnv as Transaction>::AccessListItem<'a>;
+        type Authorization<'a> = <TxEnv as Transaction>::Authorization<'a>;
+
+        fn skip_base_fee_check(&self) -> bool {
+            true
+        }
+
+        fn tx_type(&self) -> u8 {
+            self.0.tx_type()
+        }
+
+        fn caller(&self) -> primitives::Address {
+            self.0.caller()
+        }
+
+        fn gas_limit(&self) -> u64 {
+            self.0.gas_limit()
+        }
+
+        fn value(&self) -> primitives::U256 {
+            self.0.value()
+        }
+
+        fn input(&self) -> &Bytes {
+            self.0.input()
+        }
+
+        fn nonce(&self) -> u64 {
+            self.0.nonce()
+        }
+
+        fn kind(&self) -> TxKind {
+            self.0.kind()
+        }
+
+        fn chain_id(&self) -> Option<u64> {
+            self.0.chain_id()
+        }
+
+        fn gas_price(&self) -> u128 {
+            self.0.gas_price()
+        }
+
+        fn access_list(&self) -> Option<impl Iterator<Item = Self::AccessListItem<'_>>> {
+            self.0.access_list()
+        }
+
+        fn blob_versioned_hashes(&self) -> &[B256] {
+            self.0.blob_versioned_hashes()
+        }
+
+        fn max_fee_per_blob_gas(&self) -> u128 {
+            self.0.max_fee_per_blob_gas()
+        }
+
+        fn authorization_list_len(&self) -> usize {
+            self.0.authorization_list_len()
+        }
+
+        fn authorization_list(&self) -> impl Iterator<Item = Self::Authorization<'_>> {
+            self.0.authorization_list()
+        }
+
+        fn max_priority_fee_per_gas(&self) -> Option<u128> {
+            self.0.max_priority_fee_per_gas()
+        }
+    }
+
+    fn legacy_zero_gas_price_tx() -> TxEnv {
+        TxEnv::builder()
+            .gas_limit(21_000)
+            .gas_price(0)
+            .build()
+            .unwrap()
+    }
+
+    #[test]
+    fn test_default_tx_rejected_below_basefee() {
+        let mut ctx = Context::mainnet()
+            .modify_block_chained(|block| block.basefee = 7)
+            .with_tx(legacy_zero_gas_price_tx());
+
+        let err = super::validate_tx_env(&mut ctx, SpecId::LONDON).unwrap_err();
+        assert!(
+            matches!(err, InvalidTransaction::GasPriceLessThanBasefee),
+            "{err:?}"
+        );
+    }
+
+    #[test]
+    fn test_skip_base_fee_check_bypasses_basefee() {
+        let mut ctx = Context::mainnet()
+            .modify_block_chained(|block| block.basefee = 7)
+            .with_tx(SkipBaseFeeTx(legacy_zero_gas_price_tx()));
+
+        super::validate_tx_env(&mut ctx, SpecId::LONDON)
+            .expect("tx with skip_base_fee_check must pass the basefee check");
     }
 }
