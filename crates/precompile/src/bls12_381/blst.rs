@@ -639,9 +639,9 @@ fn read_fp(input: &[u8; FP_LENGTH]) -> Result<blst_fp, PrecompileHalt> {
 /// * A scalar for the multiplication operation is encoded as 32 bytes by performing BigEndian
 ///   encoding of the corresponding (unsigned) integer.
 ///
-/// We do not check that the scalar is a canonical Fr element, because the EIP specifies:
-/// * The corresponding integer is not required to be less than or equal than main subgroup order
-///   `q`.
+/// EIP-2537 does not require the corresponding integer to be less than the main subgroup order
+/// `r`. Because every MSM input point is subgroup-checked (order `r`), reducing the scalar modulo
+/// `r` yields an identical result while letting callers cheaply skip scalars that reduce to zero.
 fn read_scalar(input: &[u8]) -> Result<blst_scalar, PrecompileHalt> {
     if input.len() != SCALAR_LENGTH {
         return Err(PrecompileHalt::Bls12381ScalarInputLength);

@@ -96,4 +96,42 @@ mod test {
         assert_eq!(output.gas_used, G1_MSM_BASE_GAS_FEE);
         assert_eq!(output.bytes, Bytes::from(vec![0; PADDED_G1_LENGTH]));
     }
+
+    fn g1_generator_point() -> [u8; PADDED_G1_LENGTH] {
+        let mut point = [0u8; PADDED_G1_LENGTH];
+        point[16..64].copy_from_slice(&hex!(
+            "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"
+        ));
+        point[80..128].copy_from_slice(&hex!(
+            "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
+        ));
+        point
+    }
+
+    fn scalar32(value: u8) -> [u8; SCALAR_LENGTH] {
+        let mut scalar = [0u8; SCALAR_LENGTH];
+        scalar[SCALAR_LENGTH - 1] = value;
+        scalar
+    }
+
+    /// An infinity point paired with a non-zero scalar must be skipped, leaving the result
+    /// identical to omitting it entirely.
+    #[test]
+    fn bls_g1msm_skips_infinity_points() {
+        let generator = g1_generator_point();
+
+        let mut single = Vec::with_capacity(G1_MSM_INPUT_LENGTH);
+        single.extend_from_slice(&generator);
+        single.extend_from_slice(&scalar32(2));
+        let expected = g1_msm(&single, 1_000_000).unwrap();
+
+        let mut mixed = Vec::with_capacity(2 * G1_MSM_INPUT_LENGTH);
+        mixed.extend_from_slice(&generator);
+        mixed.extend_from_slice(&scalar32(2));
+        mixed.extend_from_slice(&[0u8; PADDED_G1_LENGTH]);
+        mixed.extend_from_slice(&scalar32(5));
+        let got = g1_msm(&mixed, 1_000_000).unwrap();
+
+        assert_eq!(got.bytes, expected.bytes);
+    }
 }

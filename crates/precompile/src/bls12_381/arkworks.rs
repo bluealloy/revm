@@ -127,6 +127,26 @@ fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, Precomp
     Ok(point)
 }
 
+/// Reads a G1 point for use in an MSM, returning `None` for the point at infinity.
+///
+/// Infinity is the identity, lies in every subgroup, and contributes nothing to the MSM
+/// result, so it can be skipped after the on-curve validation. Non-infinity points still
+/// require a subgroup check, exactly like [`read_g1`].
+#[inline]
+fn read_g1_msm(
+    x: &[u8; FP_LENGTH],
+    y: &[u8; FP_LENGTH],
+) -> Result<Option<G1Affine>, PrecompileHalt> {
+    let point = read_g1_no_subgroup_check(x, y)?;
+    if point.is_zero() {
+        return Ok(None);
+    }
+    if !point.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(PrecompileHalt::Bls12381G1NotInSubgroup);
+    }
+    Ok(Some(point))
+}
+
 /// Reads a G1 point without performing a subgroup check.
 ///
 /// Note: Skipping subgroup checks can introduce security issues.
@@ -184,6 +204,28 @@ fn read_g2(
     Ok(point)
 }
 
+/// Reads a G2 point for use in an MSM, returning `None` for the point at infinity.
+///
+/// Infinity is the identity, lies in every subgroup, and contributes nothing to the MSM
+/// result, so it can be skipped after the on-curve validation. Non-infinity points still
+/// require a subgroup check, exactly like [`read_g2`].
+#[inline]
+fn read_g2_msm(
+    a_x_0: &[u8; FP_LENGTH],
+    a_x_1: &[u8; FP_LENGTH],
+    a_y_0: &[u8; FP_LENGTH],
+    a_y_1: &[u8; FP_LENGTH],
+) -> Result<Option<G2Affine>, PrecompileHalt> {
+    let point = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+    if point.is_zero() {
+        return Ok(None);
+    }
+    if !point.is_in_correct_subgroup_assuming_on_curve() {
+        return Err(PrecompileHalt::Bls12381G2NotInSubgroup);
+    }
+    Ok(Some(point))
+}
+
 /// Reads a G2 point without performing a subgroup check.
 ///
 /// Note: Skipping subgroup checks can introduce security issues.
@@ -228,10 +270,11 @@ fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
 }
 
 /// Extracts a scalar from a byte slice representation, decoding the input as a Big Endian
-/// unsigned integer.
+/// unsigned integer and reducing it modulo the subgroup order.
 ///
-/// Note: We do not check that the scalar is a canonical Fr element, because the EIP specifies:
-/// * The corresponding integer is not required to be less than or equal than main subgroup order.
+/// EIP-2537 does not require the corresponding integer to be less than the main subgroup order.
+/// Because every MSM input point is subgroup-checked (order `r`), reducing the scalar modulo `r`
+/// yields an identical result while letting callers cheaply skip scalars that reduce to zero.
 #[inline]
 fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileHalt> {
     if input.len() != SCALAR_LENGTH {
@@ -431,8 +474,10 @@ pub(crate) fn p1_msm_bytes(
     for pair_result in point_scalar_pairs {
         let ((x, y), scalar_bytes) = pair_result?;
 
-        // NB: MSM requires subgroup check
-        let point = read_g1(&x, &y)?;
+        // Skip points at infinity after validating they are on-curve and in the subgroup.
+        let Some(point) = read_g1_msm(&x, &y)? else {
+            continue;
+        };
 
         let scalar = read_scalar(&scalar_bytes)?;
 
@@ -470,8 +515,10 @@ pub(crate) fn p2_msm_bytes(
     for pair_result in point_scalar_pairs {
         let ((x_0, x_1, y_0, y_1), scalar_bytes) = pair_result?;
 
-        // NB: MSM requires subgroup check
-        let point = read_g2(&x_0, &x_1, &y_0, &y_1)?;
+        // Skip points at infinity after validating they are on-curve and in the subgroup.
+        let Some(point) = read_g2_msm(&x_0, &x_1, &y_0, &y_1)? else {
+            continue;
+        };
 
         let scalar = read_scalar(&scalar_bytes)?;
 
@@ -494,4 +541,21 @@ pub(crate) fn p2_msm_bytes(
 
     // Encode result
     Ok(encode_g2_point(&result))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_g1_msm_skips_infinity() {
+        let zero = [0u8; FP_LENGTH];
+        assert!(read_g1_msm(&zero, &zero).unwrap().is_none());
+    }
+
+    #[test]
+    fn read_g2_msm_skips_infinity() {
+        let zero = [0u8; FP_LENGTH];
+        assert!(read_g2_msm(&zero, &zero, &zero, &zero).unwrap().is_none());
+    }
 }
