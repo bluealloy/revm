@@ -317,6 +317,12 @@ pub fn execute_test_suite(
                 continue;
             }
 
+            // Skip unknown/unsupported specs (e.g. transition forks not yet
+            // mapped) instead of panicking in `to_spec_id`.
+            if *spec_name == SpecName::Unknown {
+                continue;
+            }
+
             cfg.set_spec_and_mainnet_gas_params(spec_name.to_spec_id());
 
             // Configure max blobs per spec
