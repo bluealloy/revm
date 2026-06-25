@@ -292,8 +292,14 @@ pub trait Handler {
         let ctx = evm.ctx_ref();
         let is_amsterdam_eip2780_enabled = ctx.cfg().is_amsterdam_eip2780_enabled();
         let tx = ctx.tx();
-        let eip2780 =
-            is_amsterdam_eip2780_enabled.then(|| gas_params::Eip2780TxInfo { value: tx.value() });
+        let eip2780 = is_amsterdam_eip2780_enabled.then(|| {
+            // Self-transfer: a `Call` whose recipient is the sender itself.
+            let is_self_transfer = tx.kind().to() == Some(&tx.caller());
+            gas_params::Eip2780TxInfo {
+                value: tx.value(),
+                is_self_transfer,
+            }
+        });
         let gas = validation::validate_initial_tx_gas_with_gas_params(
             tx,
             ctx.cfg().spec().into(),

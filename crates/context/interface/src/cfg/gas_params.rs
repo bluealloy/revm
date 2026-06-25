@@ -344,15 +344,21 @@ impl GasParams {
             // to the reservoir via `GasParams::sstore_state_gas_refill`.
             table[GasId::sstore_set_refund().as_usize()] = 2800;
 
-            // EIP-7702 under EIP-8037: only the regular-gas slots live here.
+            // EIP-7702 under EIP-8037/8038: only the regular-gas slots live here.
             // The state-gas portions are sourced from `new_account_state_gas`
             // (per-account) and `tx_eip7702_state_gas_bytecode` (per-bytecode);
-            // helpers in `GasParams` combine the pre-scaled values.
-            //   regular per-auth cost: 7500 (state bytes added pessimistically in `initial_tx_gas`)
-            //   regular refund:        0   (per-auth refund is entirely state gas)
+            // helpers in `GasParams` combine the pre-scaled values. The per-auth
+            // ACCOUNT_WRITE is charged pessimistically in the regular per-auth cost
+            // and refunded (`tx_eip7702_auth_refund`) for existing or rejected
+            // authorizations whose target account is not newly created.
+            //   regular per-auth cost: 15816 (incl. ACCOUNT_WRITE)
+            //   regular refund:        8000  (ACCOUNT_WRITE, per existing/rejected auth)
             table[GasId::tx_eip7702_per_empty_account_cost().as_usize()] =
-                eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
-            table[GasId::tx_eip7702_auth_refund().as_usize()] = 0;
+                eip8038::EIP7702_PER_EMPTY_ACCOUNT_REGULAR;
+            table[GasId::tx_eip7702_auth_refund().as_usize()] = eip8038::ACCOUNT_WRITE;
+
+            // EIP-2780: the floor base drops from 21,000 to TX_BASE (12,000).
+            table[GasId::tx_floor_cost_base_gas().as_usize()] = eip2780::TX_BASE_COST;
 
             // EIP-7976: Increase calldata floor cost from 10/40 to 64/64 gas per byte
             // (zero/nonzero). The per-token constant bumps from 10 to 16, and
@@ -391,14 +397,21 @@ impl GasParams {
                 eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL;
             table[GasId::cold_storage_additional_cost().as_usize()] =
                 eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
-            table[GasId::cold_storage_cost().as_usize()] = eip8038::COLD_STORAGE_ACCESS;
+            // EIP-8038 folds the warm base into the cold cost: a cold SSTORE pays
+            // COLD_STORAGE_ACCESS (3000) total, not warm(100)+cold. Since
+            // `sstore_static` (warm, 100) is always charged in `sstore_dynamic_gas`,
+            // the cold add-on here is the premium above warm (2900), unlike pre-8038
+            // forks which add the full `COLD_SLOAD_COST` on top of the warm base.
+            table[GasId::cold_storage_cost().as_usize()] = eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
             // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND.
+            // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND. A value-bearing CALL already
+            // pays the ACCOUNT_WRITE surcharge via `transfer_value_cost`, so creating
+            // the target charges no extra regular gas — only the NEW_ACCOUNT state gas
+            // (hence `new_account_cost` is zero). SELFDESTRUCT has no such bundled
+            // charge, so it still pays a separate ACCOUNT_WRITE when sending balance to
+            // an empty account (execution-specs `selfdestruct`).
             table[GasId::transfer_value_cost().as_usize()] = eip8038::CALL_VALUE;
-            // ACCOUNT_WRITE surcharge for first-time writes to an account: CALL
-            // to empty account, SELFDESTRUCT sending balance to empty account.
-            // Under EIP-8037 these were zeroed out (cost moved to state gas);
-            // EIP-8038 reintroduces a regular-gas surcharge.
-            table[GasId::new_account_cost().as_usize()] = eip8038::ACCOUNT_WRITE;
+            table[GasId::new_account_cost().as_usize()] = 0;
             table[GasId::new_account_cost_for_selfdestruct().as_usize()] = eip8038::ACCOUNT_WRITE;
 
             // SSTORE table values.
@@ -1134,28 +1147,28 @@ impl GasParams {
     /// regular-gas charges. Excludes calldata, access list, authorizations,
     /// and initcode/state-gas pieces which are added by the caller.
     ///
-    /// The self-transfer and precompile zero-charge edge cases from the
-    /// current EIP-2780 draft are not implemented — a future revision is
-    /// expected to drop those carve-outs, so self-transfers and precompile
-    /// transfers pay the same `to`/`value` charges as any other recipient.
+    /// Per execution-specs, a self-transfer (`tx.to == sender`) pays neither
+    /// the `to`- nor `value`-based charge — only the base. Precompile
+    /// recipients are charged the same as any other account (the precompile
+    /// carve-out from the draft is not implemented).
     fn eip2780_base_to_value_gas(&self, is_create: bool, info: &Eip2780TxInfo) -> u64 {
-        // tx.to charge
-        let to_cost = if is_create {
-            self.tx_create_access_cost()
-        } else {
-            eip8038::COLD_ACCOUNT_ACCESS
-        };
+        let mut gas = eip2780::TX_BASE_COST;
 
-        // tx.value charge
-        let value_cost = if info.value.is_zero() {
-            0
-        } else if is_create {
-            self.tx_transfer_log_cost()
-        } else {
-            self.tx_transfer_log_cost() + self.tx_account_write_cost()
-        };
+        if is_create {
+            // tx.to charge: contract-creation access cost.
+            gas += self.tx_create_access_cost();
+            if !info.value.is_zero() {
+                gas += self.tx_transfer_log_cost();
+            }
+        } else if !info.is_self_transfer {
+            // tx.to charge: cold account access of the recipient.
+            gas += eip8038::COLD_ACCOUNT_ACCESS;
+            if !info.value.is_zero() {
+                gas += self.tx_transfer_log_cost() + eip2780::TX_VALUE_COST;
+            }
+        }
 
-        eip2780::TX_BASE_COST + to_cost + value_cost
+        gas
     }
 
     /// Calculates the initial transaction gas directly from a [`Transaction`],
@@ -1197,15 +1210,17 @@ impl GasParams {
 
 /// EIP-2780 inputs to [`GasParams::initial_tx_gas`].
 ///
-/// Only carries the transferred value — the decomposed intrinsic model only
-/// branches on `is_create` (already passed to `initial_tx_gas`) and whether
-/// `tx.value` is zero. The self-transfer and precompile carve-outs in the
-/// current draft are intentionally not implemented; see
+/// Carries the transferred value and whether the transaction is a
+/// self-transfer (`tx.to == sender`). The decomposed intrinsic model branches
+/// on `is_create` (already passed to `initial_tx_gas`), whether `tx.value` is
+/// zero, and the self-transfer carve-out; see
 /// [`GasParams::eip2780_base_to_value_gas`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Eip2780TxInfo {
     /// Transferred value.
     pub value: U256,
+    /// Whether `tx.to == sender` (a `Call` to the sender's own address).
+    pub is_self_transfer: bool,
 }
 
 #[inline]

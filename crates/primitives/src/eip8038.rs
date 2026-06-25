@@ -54,17 +54,31 @@ pub const COLD_STORAGE_ACCESS_ADDITIONAL: u64 = COLD_STORAGE_ACCESS - WARM_ACCES
 /// CALL value transfer cost: `ACCOUNT_WRITE + CALL_STIPEND` per the EIP.
 pub const CALL_VALUE: u64 = ACCOUNT_WRITE + 2_300;
 
+/// Calldata bytes charged for one EIP-7702 authorization tuple (execution-specs
+/// `AUTH_TUPLE_BYTES`): chain id, authority address, nonce, signature parity, and
+/// the two signature scalars. Charged at the calldata floor rate.
+pub const EIP7702_AUTH_TUPLE_BYTES: u64 = 101;
+
+/// ecRecover precompile base cost, charged once per EIP-7702 authorization to
+/// recover the authority.
+pub const EIP7702_ECRECOVER_COST: u64 = 3_000;
+
+/// Calldata floor rate per token under EIP-7976 (Amsterdam).
+pub const TX_DATA_TOKEN_FLOOR: u64 = 16;
+
 /// Regular-gas portion of EIP-7702 `PER_EMPTY_ACCOUNT_COST` under EIP-8038.
 ///
-/// Built on the EIP-8037 regular base
-/// ([`crate::eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR`]) by applying only the
-/// EIP-8038 deltas of the primitives in the per-auth breakdown: `ACCOUNT_WRITE`
-/// (6,700→8,000) and `COLD_ACCOUNT_ACCESS` (2,600→3,000). The two `WARM_ACCESS`
-/// occurrences and the `PRECOMPILE_ECRECOVER` (EIP-7904) / calldata terms are
-/// unchanged by EIP-8038, so they contribute no delta. Evaluates to 9,200.
-pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = crate::eip8037::EIP7702_PER_EMPTY_ACCOUNT_REGULAR
-    + (ACCOUNT_WRITE - 6_700)
-    + (COLD_ACCOUNT_ACCESS - 2_600);
+/// Per execution-specs, the regular per-auth charge is
+/// `ACCOUNT_WRITE + REGULAR_PER_AUTH_BASE_COST`, where
+/// `REGULAR_PER_AUTH_BASE_COST = AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR
+/// + PRECOMPILE_ECRECOVER + COLD_ACCOUNT_ACCESS + 2 * WARM_ACCESS`.
+/// Evaluates to `8,000 + (101*16 + 3,000 + 3,000 + 200) = 8,000 + 7,816 = 15,816`.
+/// (The per-auth state gas — `NEW_ACCOUNT + AUTH_BASE` — is charged separately.)
+pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = ACCOUNT_WRITE
+    + (EIP7702_AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR
+        + EIP7702_ECRECOVER_COST
+        + COLD_ACCOUNT_ACCESS
+        + 2 * WARM_ACCESS);
 
 #[cfg(test)]
 mod tests {
@@ -83,7 +97,7 @@ mod tests {
         assert_eq!(ACCESS_LIST_ADDRESS_COST, 3_000);
         assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, 3_000);
         assert_eq!(CALL_VALUE, 10_300);
-        assert_eq!(EIP7702_PER_EMPTY_ACCOUNT_REGULAR, 9_200);
+        assert_eq!(EIP7702_PER_EMPTY_ACCOUNT_REGULAR, 15_816);
     }
 
     /// Spec-defined relationships between the parameters (kept as derivations so a
