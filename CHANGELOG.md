@@ -1,5 +1,55 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v113
+date: 11.06.2026
+
+All crates are now versioned in lockstep, starting at **41.0.0**. Highlights:
+* `TransientStorage` newtype ([#3736](https://github.com/bluealloy/revm/pull/3736))
+* SSTORE gas accounting hook ([#3734](https://github.com/bluealloy/revm/pull/3734), [#3750](https://github.com/bluealloy/revm/pull/3750))
+* Conditional bundle update builder ([#3729](https://github.com/bluealloy/revm/pull/3729))
+* Commit perf improvements ([#3732](https://github.com/bluealloy/revm/pull/3732))
+* Fix out-of-bounds pointer in `analyze_legacy` ([#3752](https://github.com/bluealloy/revm/pull/3752))
+
+* `revm-primitives`: 24.0.1 -> 41.0.0 (✓ API compatible changes)
+* `revm-bytecode`: 11.0.1 -> 41.0.0 (✓ API compatible changes)
+* `revm-state`: 12.0.1 -> 41.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 12.1.1 -> 41.0.0 (⚠ API breaking changes)
+* `revm-context-interface`: 19.0.3 -> 41.0.0 (⚠ dependency bump)
+* `revm-context`: 18.0.3 -> 41.0.0 (⚠ dependency bump)
+* `revm-database`: 15.0.2 -> 41.0.0 (⚠ API breaking changes)
+* `revm-interpreter`: 37.0.3 -> 41.0.0 (✓ API compatible changes)
+* `revm-precompile`: 36.0.3 -> 41.0.0 (✓ dependency bump)
+* `revm-handler`: 20.0.3 -> 41.0.0 (✓ dependency bump)
+* `revm-inspector`: 21.0.3 -> 41.0.0 (✓ dependency bump)
+* `revm-statetest-types`: 19.0.3 -> 41.0.0 (✓ dependency bump)
+* `revm`: 40.0.3 -> 41.0.0 (✓ dependency bump)
+* `revm-ee-tests`: 0.3.0 -> 41.0.0 (✓ dependency bump)
+* `revme`: 17.0.3 -> 41.0.0 (✓ dependency bump)
+
+# v112
+date: 26.05.2026
+
+Maintenance release bundling the EIP-8037 (CPSB) gas-param work and a few utility additions. Highlights:
+* Bake EIP-8037 CPSB into gas params ([#3714](https://github.com/bluealloy/revm/pull/3714))
+* Add `OnStateHook` for `State<DB>` ([#3710](https://github.com/bluealloy/revm/pull/3710))
+* Mark `RETURN` and `REVERT` as memory-modifying ([#3703](https://github.com/bluealloy/revm/pull/3703))
+* Explain the CPSB acronym in docs ([#3716](https://github.com/bluealloy/revm/pull/3716))
+
+* `revm-primitives`: 24.0.0 -> 24.0.1 (✓ API compatible changes)
+* `revm-bytecode`: 11.0.0 -> 11.0.1 (✓ API compatible changes)
+* `revm-database-interface`: 12.1.0 -> 12.1.1 (✓ API compatible changes)
+* `revm-context-interface`: 19.0.2 -> 19.0.3 (✓ API compatible changes)
+* `revm-state`: 12.0.0 -> 12.0.1 (✓ dependency bump)
+* `revm-context`: 18.0.2 -> 18.0.3 (✓ dependency bump)
+* `revm-database`: 15.0.1 -> 15.0.2 (✓ dependency bump)
+* `revm-interpreter`: 37.0.2 -> 37.0.3 (✓ API compatible changes)
+* `revm-precompile`: 36.0.2 -> 36.0.3 (✓ dependency bump)
+* `revm-handler`: 20.0.2 -> 20.0.3 (✓ dependency bump)
+* `revm-inspector`: 21.0.2 -> 21.0.3 (✓ dependency bump)
+* `revm-statetest-types`: 19.0.2 -> 19.0.3 (✓ dependency bump)
+* `revm`: 40.0.2 -> 40.0.3 (✓ dependency bump)
+* `revme`: 17.0.2 -> 17.0.3 (✓ dependency bump)
+
 # v111
 date: 22.05.2026
 

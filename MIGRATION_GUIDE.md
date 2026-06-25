@@ -1,4 +1,13 @@
 
+# v113 tag (all crates v41.0.0)
+
+All crates are now versioned in lockstep, starting at **41.0.0** — hence the version jump (e.g. `revm-bytecode` 11.0.1 → 41.0.0).
+
+* `TransientStorage` ([#3736](https://github.com/bluealloy/revm/pull/3736)): type alias `HashMap<(Address, StorageKey), StorageValue>` replaced by a newtype over `AddressMap<StorageKeyMap<StorageValue>>`. Use `get_value(address, key)` / `insert_value(address, key, value)` / `remove_value(address, key)` instead of tuple-key map access. Derefs to the inner map, but iteration now yields per-account slot maps.
+* `OnStateHook::on_state` takes `EvmState` by value instead of `&EvmState` ([#3732](https://github.com/bluealloy/revm/pull/3732)).
+* `TransitionAccount` gained a storage generic `S = StorageWithOriginalValues` ([#3732](https://github.com/bluealloy/revm/pull/3732)). `update`, `TransitionState::add_transitions` and `State::apply_transition` now take `TransitionAccount<Option<Cow<'_, EvmStorage>>>` items. New `map_storage` and `TransitionState::add_transition` helpers.
+* Additive: `sstore_with_gas_accounting` hook for custom SSTORE gas accounting ([#3734](https://github.com/bluealloy/revm/pull/3734), [#3750](https://github.com/bluealloy/revm/pull/3750)), `StateBuilder::with_bundle_update_if` ([#3729](https://github.com/bluealloy/revm/pull/3729)), `Account::is_changed` ([#3727](https://github.com/bluealloy/revm/pull/3727)).
+
 # v108 tag (revm v39.0.0)
 
 ### EIP-8037 Amsterdam — bal-devnet-7 ([#3667](https://github.com/bluealloy/revm/pull/3667))

@@ -3,8 +3,8 @@ use super::{
 };
 use bytecode::Bytecode;
 use primitives::{hash_map, Address, AddressMap, B256Map, HashMap};
-use state::{Account, AccountInfo};
-use std::vec::Vec;
+use state::{Account, AccountInfo, EvmStorage};
+use std::{borrow::Cow, vec::Vec};
 
 /// Cache state contains both modified and original values
 ///
@@ -91,29 +91,38 @@ impl CacheState {
     pub fn apply_evm_state<F>(
         &mut self,
         evm_state: impl IntoIterator<Item = (Address, Account)>,
-        inspect: F,
-    ) -> Vec<(Address, TransitionAccount)>
+        mut inspect: F,
+    ) -> Vec<(Address, TransitionAccount<Option<Cow<'_, EvmStorage>>>)>
     where
         F: FnMut(&Address, &Account),
     {
-        self.apply_evm_state_iter(evm_state, inspect).collect()
+        self.apply_evm_state_iter(
+            evm_state
+                .into_iter()
+                .map(|(address, account)| (address, Cow::Owned(account))),
+            |address, account| {
+                inspect(address, account);
+            },
+        )
+        .collect()
     }
 
     /// Applies output of revm execution and creates an iterator of account transitions.
     #[inline]
-    pub(crate) fn apply_evm_state_iter<'a, F, T>(
-        &'a mut self,
+    pub(crate) fn apply_evm_state_iter<'a, 'b, F, T>(
+        &'b mut self,
         evm_state: T,
         mut inspect: F,
-    ) -> impl Iterator<Item = (Address, TransitionAccount)> + use<'a, F, T>
+    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>
+           + use<'a, 'b, F, T>
     where
-        F: FnMut(&Address, &Account),
-        T: IntoIterator<Item = (Address, Account)>,
+        F: FnMut(&Address, &Cow<'a, Account>),
+        T: IntoIterator<Item = (Address, Cow<'a, Account>)>,
     {
         evm_state.into_iter().filter_map(move |(address, account)| {
             inspect(&address, &account);
             self.apply_account_state(address, account)
-                .map(|transition| (address, transition))
+                .map(move |transition| (address, transition))
         })
     }
 
@@ -179,11 +188,11 @@ impl CacheState {
     /// Applies updated account state to the cached account.
     ///
     /// Returns account transition if applicable.
-    pub(crate) fn apply_account_state(
+    pub(crate) fn apply_account_state<'a>(
         &mut self,
         address: Address,
-        account: Account,
-    ) -> Option<TransitionAccount> {
+        account: Cow<'a, Account>,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
         // Not touched account are never changed.
         if !account.is_touched() {
             return None;
@@ -217,14 +226,6 @@ impl CacheState {
         let is_created = account.is_created();
         let is_empty = account.is_empty();
 
-        // Transform evm storage to storage with previous value.
-        let changed_storage = account
-            .storage
-            .into_iter()
-            .filter(|(_, slot)| slot.is_changed())
-            .map(|(key, slot)| (key, slot.into()))
-            .collect();
-
         // Note: It can happen that created contract get selfdestructed in same block
         // that is why is_created is checked after selfdestructed
         //
@@ -234,7 +235,7 @@ impl CacheState {
         // by just setting storage inside CRATE constructor. Overlap of those contracts
         // is not possible because CREATE2 is introduced later.
         if is_created {
-            return Some(this_account.newly_created(account.info, changed_storage));
+            return Some(this_account.newly_created(account));
         }
 
         // Account is touched, but not selfdestructed or newly created.
@@ -246,7 +247,7 @@ impl CacheState {
             // Pre-EIP-161 behavior is handled by the journal in `finalize()`.
             this_account.touch_empty_eip161()
         } else {
-            Some(this_account.change(account.info, changed_storage))
+            Some(this_account.change(account))
         }
     }
 }

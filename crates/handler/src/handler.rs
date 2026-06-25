@@ -247,7 +247,7 @@ pub trait Handler {
         eip7702_gas_refund: i64,
     ) -> Result<ResultGas, Self::Error> {
         // Calculate final refund and add EIP-7702 refund to gas.
-        self.refund(evm, exec_result, eip7702_gas_refund);
+        self.refund(evm, exec_result, eip7702_gas_refund)?;
 
         // Build ResultGas from the final gas state
         // This includes all necessary fields and gas values.
@@ -506,9 +506,14 @@ pub trait Handler {
         evm: &mut Self::Evm,
         exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
         eip7702_refund: i64,
-    ) {
-        let spec = evm.ctx().cfg().spec().into();
-        post_execution::refund(spec, exec_result.gas_mut(), eip7702_refund)
+    ) -> Result<(), Self::Error> {
+        post_execution::refund(
+            evm.ctx().cfg().gas_params(),
+            exec_result.gas_mut(),
+            eip7702_refund,
+        );
+
+        Ok(())
     }
 
     /// Returns unused gas costs to the transaction sender's account.

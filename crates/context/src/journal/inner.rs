@@ -1056,10 +1056,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// EIP-1153: Transient storage opcodes
     #[inline]
     pub fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
-        self.transient_storage
-            .get(&(address, key))
-            .copied()
-            .unwrap_or_default()
+        self.transient_storage.get_value(address, key)
     }
 
     /// Store transient storage tied to the account.
@@ -1074,12 +1071,12 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             // if new values is zero, remove entry from transient storage.
             // if previous values was some insert it inside journal.
             // If it is none nothing should be inserted.
-            self.transient_storage.remove(&(address, key))
+            self.transient_storage.remove_value(address, key)
         } else {
             // insert values
             let previous_value = self
                 .transient_storage
-                .insert((address, key), new)
+                .insert_value(address, key, new)
                 .unwrap_or_default();
 
             // check if previous value is same

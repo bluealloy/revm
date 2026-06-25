@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.0.0](https://github.com/bluealloy/revm/compare/revm-database-v15.0.2...revm-database-v41.0.0) - 2026-06-11
+
+### Added
+
+- *(database)* add conditional bundle update builder ([#3729](https://github.com/bluealloy/revm/pull/3729))
+
+### Other
+
+- avoid reallocations and cloning during commit ([#3732](https://github.com/bluealloy/revm/pull/3732))
+
+## [15.0.2](https://github.com/bluealloy/revm/compare/revm-database-v15.0.1...revm-database-v15.0.2) - 2026-05-26
+
+### Added
+
+- add `OnStateHook` for `State<DB>` ([#3710](https://github.com/bluealloy/revm/pull/3710))
+
 ## [15.0.1](https://github.com/bluealloy/revm/compare/revm-database-v15.0.0...revm-database-v15.0.1) - 2026-05-22
 
 ### Other

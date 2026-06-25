@@ -1,4 +1,4 @@
-use crate::{CallInput, InstructionResult, InterpreterAction};
+use crate::{instructions::utility::IntoAddress, CallInput, InstructionResult, InterpreterAction};
 use core::{
     cell::Ref,
     ops::{Deref, Range},
@@ -222,7 +222,7 @@ pub trait StackTr {
     /// Internally call [`StackTr::pop`] and converts [`U256`] into [`Address`].
     #[must_use]
     fn pop_address(&mut self) -> Option<Address> {
-        self.pop().map(|value| Address::from(value.to_be_bytes()))
+        self.pop().map(|value| value.into_address())
     }
 
     /// Exchanges two values on the stack.

@@ -2,8 +2,8 @@
 
 // Re-export Alloy BAL types.
 pub use alloy_eip7928::{
-    BalanceChange as AlloyBalanceChange, BlockAccessList as AlloyBal,
-    CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
+    AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
+    BlockAccessList as AlloyBal, CodeChange as AlloyCodeChange, NonceChange as AlloyNonceChange,
     StorageChange as AlloyStorageChange,
 };
 
@@ -23,17 +23,17 @@ impl Bal {
     /// length or unsupported version.
     #[inline]
     pub fn try_from_alloy(alloy_bal: AlloyBal) -> Result<Self, BytecodeDecodeError> {
-        let accounts = AddressIndexMap::from_iter(
-            alloy_bal
-                .into_iter()
-                .map(AccountBal::try_from_alloy)
-                .collect::<Result<Vec<_>, _>>()?,
-        );
+        let mut accounts =
+            AddressIndexMap::with_capacity_and_hasher(alloy_bal.len(), Default::default());
+        for alloy_account in alloy_bal {
+            let (address, account_bal) = AccountBal::try_from_alloy(alloy_account)?;
+            accounts.insert(address, account_bal);
+        }
 
         Ok(Self { accounts })
     }
 
-    /// Clone an EIP-7928 [`AlloyBal`] into a [`Bal`] without consuming the source.
+    /// Clone EIP-7928 [`AlloyAccountChanges`] into a [`Bal`] without consuming the source.
     ///
     /// # Errors
     ///
@@ -42,13 +42,15 @@ impl Bal {
     /// EIP-7702 bytecode, such as bytes with the EIP-7702 magic prefix but an invalid
     /// length or unsupported version.
     #[inline]
-    pub fn clone_from_alloy(alloy_bal: &AlloyBal) -> Result<Self, BytecodeDecodeError> {
-        let accounts = AddressIndexMap::from_iter(
-            alloy_bal
-                .iter()
-                .map(AccountBal::clone_from_alloy)
-                .collect::<Result<Vec<_>, _>>()?,
-        );
+    pub fn clone_from_alloy(
+        alloy_bal: &[AlloyAccountChanges],
+    ) -> Result<Self, BytecodeDecodeError> {
+        let mut accounts =
+            AddressIndexMap::with_capacity_and_hasher(alloy_bal.len(), Default::default());
+        for alloy_account in alloy_bal {
+            let (address, account_bal) = AccountBal::clone_from_alloy(alloy_account)?;
+            accounts.insert(address, account_bal);
+        }
 
         Ok(Self { accounts })
     }

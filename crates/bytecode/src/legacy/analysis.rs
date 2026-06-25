@@ -26,8 +26,10 @@ pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
         } else {
             let push_offset = last_byte.wrapping_sub(opcode::PUSH1);
             if push_offset < 32 {
-                // SAFETY: Iterator access range is checked in the while loop
-                iterator = unsafe { iterator.add(push_offset as usize + 2) };
+                // A trailing PUSH can advance the iterator past the end of the
+                // bytecode allocation; `wrapping_add` keeps that offset
+                // computation defined (the `< end` guard prevents any OOB read).
+                iterator = iterator.wrapping_add(push_offset as usize + 2);
             } else {
                 // SAFETY: Iterator access range is checked in the while loop
                 iterator = unsafe { iterator.add(1) };

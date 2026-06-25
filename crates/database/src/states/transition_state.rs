@@ -1,5 +1,8 @@
-use super::TransitionAccount;
+use std::borrow::Cow;
+
+use super::{StorageSlot, TransitionAccount};
 use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
+use state::EvmStorage;
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
@@ -33,18 +36,46 @@ impl TransitionState {
     ///
     /// This will insert new [`TransitionAccount`]s, or update existing ones via
     /// [`update`][TransitionAccount::update].
-    pub fn add_transitions(
+    pub fn add_transitions<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount)>,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>,
     ) {
         let transitions = transitions.into_iter();
         if let Some(upper) = transitions.size_hint().1 {
             self.transitions.reserve(upper);
         }
         for (address, account) in transitions {
-            match self.transitions.entry(address) {
-                Entry::Occupied(entry) => entry.into_mut().update(account),
-                Entry::Vacant(entry) => _ = entry.insert(account),
+            self.add_transition(address, account);
+        }
+    }
+
+    /// Add one transition to the transition state.
+    pub fn add_transition(
+        &mut self,
+        address: Address,
+        account: TransitionAccount<Option<Cow<'_, EvmStorage>>>,
+    ) {
+        match self.transitions.entry(address) {
+            Entry::Occupied(entry) => entry.into_mut().update(account),
+            Entry::Vacant(entry) => {
+                _ = entry.insert(account.map_storage(|storage| {
+                    storage
+                        .map(|storage| {
+                            storage
+                                .iter()
+                                .filter_map(|(key, slot)| {
+                                    slot.is_changed().then_some((
+                                        *key,
+                                        StorageSlot::new_changed(
+                                            slot.original_value,
+                                            slot.present_value,
+                                        ),
+                                    ))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default()
+                }))
             }
         }
     }

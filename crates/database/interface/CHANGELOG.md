@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.0.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v12.1.1...revm-database-interface-v41.0.0) - 2026-06-11
+
+### Other
+
+- avoid reallocations and cloning during commit ([#3732](https://github.com/bluealloy/revm/pull/3732))
+
+## [12.1.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v12.1.0...revm-database-interface-v12.1.1) - 2026-05-26
+
+### Added
+
+- add `OnStateHook` for `State<DB>` ([#3710](https://github.com/bluealloy/revm/pull/3710))
+
 ## [12.1.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v12.0.0...revm-database-interface-v12.1.0) - 2026-05-22
 
 ### Added

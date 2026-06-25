@@ -227,6 +227,7 @@ pub enum JournalEntry {
         address: Address,
     },
 }
+
 impl JournalEntryTr for JournalEntry {
     fn account_warmed(address: Address) -> Self {
         JournalEntry::AccountWarmed { address }
@@ -418,13 +419,12 @@ impl JournalEntryTr for JournalEntry {
                 let Some(transient_storage) = transient_storage else {
                     return;
                 };
-                let tkey = (address, key);
                 if had_value.is_zero() {
                     // if previous value is zero, remove it
-                    transient_storage.remove(&tkey);
+                    transient_storage.remove_value(address, key);
                 } else {
                     // if not zero, reinsert old value to transient storage.
-                    transient_storage.insert(tkey, had_value);
+                    transient_storage.insert_value(address, key, had_value);
                 }
             }
             JournalEntry::CodeChange { address } => {

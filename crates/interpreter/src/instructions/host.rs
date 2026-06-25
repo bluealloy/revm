@@ -1,16 +1,19 @@
+use crate::InstructionContext as Ictx;
 use crate::{
     instructions::utility::{IntoAddress, IntoU256},
     interpreter_types::{InputsTr, InterpreterTypes as ITy, MemoryTr, RuntimeFlag, StackTr},
     Gas, Host, InstructionExecResult as Result, InstructionResult,
 };
-use context_interface::{host::LoadError, journaled_state::AccountInfoLoad};
+use context_interface::{
+    context::{SStoreResult, StateLoad},
+    host::LoadError,
+    journaled_state::AccountInfoLoad,
+};
 use core::cmp::min;
 use primitives::{
     hardfork::SpecId::{self, *},
-    Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
+    Address, Bytes, Log, LogData, B256, BLOCK_HASH_HISTORY, U256,
 };
-
-use crate::InstructionContext as Ictx;
 
 /// Loads an account, handling cold load gas accounting.
 ///
@@ -188,6 +191,28 @@ pub fn sload<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 ///
 /// Stores a word to storage.
 pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+    sstore_with_gas_accounting(context, sstore_default_gas_accounting)
+}
+
+/// Implements SSTORE, delegating dynamic gas and refund accounting to `gas_accounting`.
+///
+/// This helper performs the common SSTORE instruction flow: static-call checks,
+/// stack pops, stipend/static-gas charging, and the journaled storage write.
+/// Custom instruction sets can override the SSTORE opcode and call this helper
+/// with their own gas accounting closure.
+pub fn sstore_with_gas_accounting<'a, IT, H, F>(
+    mut context: Ictx<'a, H, IT>,
+    gas_accounting: F,
+) -> Result
+where
+    IT: ITy,
+    H: Host + ?Sized,
+    F: for<'ctx, 'load> FnOnce(
+        &'ctx mut Ictx<'a, H, IT>,
+        Address,
+        &'load StateLoad<SStoreResult>,
+    ) -> Result,
+{
     require_non_staticcall!(context.interpreter);
     popn!([index, value], context.interpreter);
 
@@ -208,8 +233,8 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let additional_cold_cost = context.host.gas_params().cold_storage_additional_cost();
-        let skip_cold = context.interpreter.gas.remaining() < additional_cold_cost;
+        let skip_cold = context.interpreter.gas.remaining()
+            < context.host.gas_params().cold_storage_additional_cost();
         context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold)?
@@ -220,6 +245,20 @@ pub fn sstore<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
             .ok_or(InstructionResult::FatalExternalError)?
     };
 
+    gas_accounting(&mut context, target, &state_load)
+}
+
+/// Default dynamic gas and refund accounting for SSTORE.
+pub fn sstore_default_gas_accounting<IT, H>(
+    context: &mut Ictx<'_, H, IT>,
+    _target: Address,
+    state_load: &StateLoad<SStoreResult>,
+) -> Result
+where
+    IT: ITy,
+    H: Host + ?Sized,
+{
+    let spec_id = context.interpreter.runtime_flag.spec_id();
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
 
     // dynamic gas

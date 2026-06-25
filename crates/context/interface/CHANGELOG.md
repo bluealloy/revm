@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.0.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v19.0.3...revm-context-interface-v41.0.0) - 2026-06-11
+
+### Added
+
+- wrap TransientStorage as AddressMap<StorageKeyMap<U256>> ([#3736](https://github.com/bluealloy/revm/pull/3736))
+- add SSTORE gas-state policy hook ([#3734](https://github.com/bluealloy/revm/pull/3734))
+
+## [19.0.3](https://github.com/bluealloy/revm/compare/revm-context-interface-v19.0.2...revm-context-interface-v19.0.3) - 2026-05-26
+
+### Added
+
+- Bake EIP-8037 CPSB into gas params ([#3714](https://github.com/bluealloy/revm/pull/3714))
+
 ## [19.0.2](https://github.com/bluealloy/revm/compare/revm-context-interface-v19.0.1...revm-context-interface-v19.0.2) - 2026-05-22
 
 ### Other
