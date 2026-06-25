@@ -512,7 +512,7 @@ impl EthFrame<EthInterpreter> {
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
-                let out_gas = outcome.gas();
+                let mut out_gas = outcome.gas();
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
 
@@ -535,20 +535,17 @@ impl EthFrame<EthInterpreter> {
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);
 
-                // Return unspend gas.
+                // Copy returned data into the parent's memory on success or revert.
                 if ins_result.is_ok_or_revert() {
-                    interpreter.gas.erase_cost(out_gas.remaining());
                     interpreter
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
-                // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &out_gas);
-
-                if ins_result.is_ok() {
-                    interpreter.gas.record_refund(out_gas.refunded());
-                }
+                // Settle the child's gas and merge it into the parent (returns
+                // unused regular gas, adopts the reservoir, and propagates state
+                // gas / refunds on success).
+                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &mut out_gas);
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -570,14 +567,13 @@ impl EthFrame<EthInterpreter> {
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
+                let mut create_gas = *outcome.gas();
                 let this_gas = &mut interpreter.gas;
-                // Refund unused gas for success and revert cases.
-                if instruction_result.is_ok_or_revert() {
-                    this_gas.erase_cost(outcome.gas().remaining());
-                }
 
-                // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(instruction_result, this_gas, outcome.gas());
+                // Settle the child's gas and merge it into the parent (returns
+                // unused regular gas, adopts the reservoir, and propagates state
+                // gas / refunds on success).
+                handle_reservoir_remaining_gas(instruction_result, this_gas, &mut create_gas);
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
                 // this frame's tracker. When the child fails to deploy a contract
@@ -595,7 +591,6 @@ impl EthFrame<EthInterpreter> {
                 }
 
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO
@@ -610,47 +605,62 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
-/// Handles the remaining gas of the parent frame.
+/// Settles a returning child frame's gas and merges it into the parent
+/// (EIP-8037 reservoir model).
+///
+/// First the child *settles its own gas*: a failing frame (revert or halt) rolls
+/// its state-gas charges back in last-in-first-out order
+/// ([`Gas::rollback_state_gas`]) — crediting the spilled portion back to its
+/// `remaining` and restoring the reservoir to the value it inherited — and drops
+/// its execution refund counter; an exceptional halt additionally consumes the
+/// child's regular gas.
+///
+/// Then the parent *merges* the settled child:
+/// - unused regular gas (`remaining`, including any spill returned on revert)
+///   flows back to the parent on success or revert; a halt consumes it.
+/// - the reservoir, a shared state-gas pool the child inherited at call time, is
+///   always adopted from the child (restored to the inherited value on
+///   revert/halt).
+/// - net state gas, its spilled portion, and the refund counter persist only on
+///   success; on revert/halt the child's state changes roll back and contribute
+///   nothing.
 #[inline]
 pub const fn handle_reservoir_remaining_gas(
     instruction_result: InstructionResult,
     parent_gas: &mut Gas,
-    child_gas: &Gas,
+    child_gas: &mut Gas,
 ) {
+    // Settle the child's own gas for its stop reason.
+    if !instruction_result.is_ok() {
+        child_gas.rollback_state_gas();
+        child_gas.set_refunded(0);
+    }
+    let is_halt = !instruction_result.is_ok_or_revert();
+    if is_halt {
+        // Exceptional halt consumes the child's regular gas (including the spill
+        // just credited back by `rollback_state_gas`); the reservoir is left
+        // restored to the inherited value for the parent.
+        child_gas.spend_all();
+    }
+
+    // Merge the settled child into the parent.
+    if instruction_result.is_ok_or_revert() {
+        parent_gas.erase_cost(child_gas.remaining());
+    }
+    parent_gas.set_reservoir(child_gas.reservoir());
     if instruction_result.is_ok() {
-        // On success: parent takes the child's final reservoir.
-        parent_gas.set_reservoir(child_gas.reservoir());
-        // Accumulate child's state gas into parent's total.
-        // Parent may have already charged state gas (e.g., new_account + create) before
-        // creating the child frame. Child starts with state_gas_spent=0, so we must add
-        // rather than overwrite to preserve the parent's prior charges.
-        //
-        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
-        // child did more 0→x→0 restorations than 0→x creations; the negative
+        // Parent may have already charged state gas (e.g. new_account + create)
+        // before creating the child frame, so add rather than overwrite. The
+        // child's `state_gas_spent` can be negative (EIP-8037 issue #2) when it
+        // did more 0→x→0 restorations than 0→x creations; the negative
         // contribution is the parent's matching charge flowing back out.
         parent_gas.set_state_gas_spent(
             parent_gas
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
         );
-    } else {
-        // On revert/halt: the child's state changes are rolled back, so any
-        // 0→x→0 refills the child (or its descendants) credited to the
-        // reservoir must unwind too — the underlying clears no longer exist.
-        //
-        // Invariant when no reservoir→remaining spill happened in the child:
-        //     pre_call_reservoir = child.reservoir + child.state_gas_spent
-        // because every reservoir-funded `record_state_cost(c)` increments
-        // state_gas_spent by `c` while decrementing reservoir by `c`, and every
-        // `refill_reservoir(r)` does the opposite. Adding the (possibly negative)
-        // state_gas_spent back to the final reservoir recovers the pre-call value
-        // — discarding the negative branch (the old `.max(0)`) would leak
-        // grandchild refill credits up through a reverting parent.
-        parent_gas.set_reservoir(
-            child_gas
-                .reservoir()
-                .saturating_add_signed(child_gas.state_gas_spent()),
-        );
+        parent_gas.add_state_gas_spilled(child_gas.state_gas_spilled());
+        parent_gas.record_refund(child_gas.refunded());
     }
 }
 

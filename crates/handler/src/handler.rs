@@ -390,6 +390,20 @@ pub trait Handler {
             matches!(frame_result, FrameResult::Create(_)) && !instruction_result.is_ok();
 
         let gas = frame_result.gas_mut();
+
+        // Settle the top frame's own gas (mirrors `handle_reservoir_remaining_gas`'s
+        // child settle). A failing frame rolls its state-gas charges back in LIFO
+        // order — crediting the spilled portion back to `remaining` and restoring
+        // the reservoir to its pre-tx value — and drops the refund counter; an
+        // exceptional halt additionally consumes the regular gas.
+        if !instruction_result.is_ok() {
+            gas.rollback_state_gas();
+            gas.set_refunded(0);
+        }
+        if !instruction_result.is_ok_or_revert() {
+            gas.spend_all();
+        }
+
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
@@ -399,35 +413,14 @@ pub trait Handler {
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
         if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
+            // Return unused regular gas (including any spill credited back by the
+            // rollback above on revert). The reservoir was restored separately.
             gas.erase_cost(remaining);
         }
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
-        }
-
-        // return zero state gas on halt/revert.
-        if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
-        } else {
-            gas.set_state_gas_spent(0);
-        }
-
-        // state gas
-        if !instruction_result.is_ok() {
-            // State changes rolled back (revert or halt). Apply the same
-            // invariant used by `handle_reservoir_remaining_gas` to recover
-            // the pre-call reservoir value: signed `reservoir + state_gas_spent`.
-            //
-            // record_state_cost increments state_gas_spent and decrements
-            // reservoir by the same amount; refill_reservoir does the inverse.
-            // Their sum is conserved, so adding the (possibly negative)
-            // state_gas_spent back to the final reservoir recovers the
-            // pre-call (here: pre-tx) value. The negative branch unwinds any
-            // 0→x→0 refill inflation propagated up from descendants — the
-            // grandchild-leak fix at the frame level applied to the top frame.
-            gas.set_reservoir(reservoir.saturating_add_signed(state_gas_spent));
         }
 
         // EIP-8037: for a failed top-level CREATE (or one that self-destructs
