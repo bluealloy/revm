@@ -166,10 +166,12 @@ impl EthFrame<EthInterpreter> {
             && ctx.cfg().is_amsterdam_eip2780_enabled()
             && !precompiles.contains(&inputs.target_address)
         {
-            // Load the (already-cached) recipient account.
+            // Load the recipient account *with code* so the EIP-7702 delegation
+            // designator can be read (`load_account` alone does not populate
+            // `info.code`).
             let acc_info = ctx
                 .journal_mut()
-                .load_account(inputs.target_address)
+                .load_account_with_code(inputs.target_address)
                 .ok()
                 .map(|a| a.info.clone());
 
@@ -282,7 +284,8 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
+        let frame = this.get(EthFrame::invalid);
+        frame.clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -297,6 +300,13 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+        // `clear` rebuilds the interpreter's gas from `gas_limit`/reservoir, which
+        // discards any EIP-2780 depth-0 charges (delegate cold access, empty-
+        // recipient state gas) applied to `gas` above. Carry them over: `gas` was
+        // built with the same limit and reservoir, so this preserves the charges'
+        // effect on `remaining`, `reservoir`, and the state-gas counters while
+        // leaving memory gas (unused so far) at its fresh state.
+        frame.interpreter.gas = gas;
         Ok(ItemOrResult::Item(this.consume()))
     }
 
