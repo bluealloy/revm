@@ -383,11 +383,15 @@ pub trait Handler {
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
 
-        // Detect a failed top-level CREATE so the intrinsic `create_state_gas`
-        // charged at tx entry can be unwound below. Mirrors the `create_failed`
-        // condition used in `EthFrame::return_result` for nested creates.
-        let create_failed =
-            matches!(frame_result, FrameResult::Create(_)) && !instruction_result.is_ok();
+        // Detect a top-level CREATE that creates no new account leaf — either it
+        // failed, or it succeeded at a pre-existing alive (balance-only) target —
+        // so the intrinsic `create_state_gas` charged at tx entry can be unwound
+        // below. Mirrors the condition used in `EthFrame::return_result` for
+        // nested creates.
+        let create_refunds_state_gas = match &frame_result {
+            FrameResult::Create(outcome) => !instruction_result.is_ok() || outcome.target_was_alive,
+            _ => false,
+        };
 
         let gas = frame_result.gas_mut();
 
@@ -431,7 +435,7 @@ pub trait Handler {
         // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
         // it would otherwise stay consumed when the deployment is rolled back
         // or erased.
-        if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
+        if create_refunds_state_gas && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
             let ctx = evm.ctx();
             let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
             gas.refill_reservoir(state_gas_charged);
