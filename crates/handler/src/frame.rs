@@ -556,6 +556,18 @@ impl EthFrame<EthInterpreter> {
                 // unused regular gas, adopts the reservoir, and propagates state
                 // gas / refunds on success).
                 handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &mut out_gas);
+
+                // EIP-8037: the CALL charged `new_account_state_gas` upfront on the
+                // parent's tracker (for a value transfer to an empty recipient).
+                // When the call does not result in account creation (revert, halt,
+                // or an early failure such as insufficient balance), refund that
+                // upfront charge to the parent's reservoir — the child rollback in
+                // `handle_reservoir_remaining_gas` cannot, since the charge lives on
+                // the parent, not the child.
+                if !ins_result.is_ok() && outcome.charged_new_account_state_gas {
+                    let charge = ctx.cfg().gas_params().new_account_state_gas();
+                    interpreter.gas.refill_reservoir(charge);
+                }
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
