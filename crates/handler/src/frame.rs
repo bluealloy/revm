@@ -162,10 +162,7 @@ impl EthFrame<EthInterpreter> {
         // EIP-2780 top-level execution charges. Applied before any state changes
         // so the recipient's pre-call state determines the charge.
         let mut early_halt: Option<InstructionResult> = None;
-        if depth == 0
-            && ctx.cfg().is_amsterdam_eip2780_enabled()
-            && !precompiles.contains(&inputs.target_address)
-        {
+        if depth == 0 && ctx.cfg().is_amsterdam_eip2780_enabled() {
             // Load the recipient account *with code* so the EIP-7702 delegation
             // designator can be read (`load_account` alone does not populate
             // `info.code`).
@@ -253,7 +250,20 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+        if let Some(mut result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+            // EIP-2780 depth-0 `new_account_state_gas` was charged to the local
+            // `gas` above, but the precompile path returns its own result gas, so
+            // re-apply that charge here (drawing from the reservoir). Only at depth
+            // 0: a precompile reached by a CALL opcode (depth > 0) already had the
+            // charge applied on the parent's tracker. Precompiles are never EIP-7702
+            // delegated, so only the state-gas portion applies.
+            if depth == 0 && charged_new_account_state_gas && result.result.is_ok() {
+                let charge = ctx.cfg().gas_params().new_account_state_gas();
+                if !result.gas.record_state_cost(charge) {
+                    result.gas.spend_all();
+                    result.result = InstructionResult::OutOfGas;
+                }
+            }
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 // Preserve the reservoir on the result gas so it can be reimbursed.
