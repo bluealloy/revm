@@ -262,8 +262,10 @@ pub enum ForkSpec {
     /// Homestead to Tangerine
     HomesteadToEIP150At5,
     /// Tangerine
+    #[serde(alias = "TangerineWhistle")]
     EIP150,
     /// Spurious Dragon
+    #[serde(alias = "SpuriousDragon")]
     EIP158,
     /// Spurious Dragon to Byzantium
     EIP158ToByzantiumAt5,
