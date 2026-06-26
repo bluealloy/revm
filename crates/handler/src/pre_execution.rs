@@ -302,16 +302,44 @@ pub fn apply_auth_list<
             reject!();
         }
 
-        // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !(authority_acc_info.is_empty()
+        // Refund-relevant facts for this accepted authorization (mirrors
+        // execution-specs `set_delegation` / evm2 `apply_one_auth`).
+        //   existed             — the authority account already existed in state.
+        //   delegated_now       — its current code is a delegation (non-empty code
+        //                          is necessarily EIP-7702 here, having passed the
+        //                          validity check above).
+        //   delegated_before_tx — its code at the start of the transaction was a
+        //                          delegation (may differ from `delegated_now` when
+        //                          an earlier authorization in this tx cleared it).
+        //   clearing            — this authorization clears the delegation.
+        let existed = !(authority_acc_info.is_empty()
             && authority_acc
                 .account()
-                .is_loaded_as_not_existing_not_touched())
-        {
+                .is_loaded_as_not_existing_not_touched());
+        let delegated_now = !authority_acc_info.is_code_hash_empty_or_zero();
+        let delegated_before_tx = authority_acc
+            .account()
+            .original_info()
+            .code
+            .as_ref()
+            .is_some_and(Bytecode::is_eip7702);
+        let clearing = authorization.address().is_zero();
+
+        // Existing authority: the worst-case `ACCOUNT_WRITE` regular gas and the
+        // per-account `NEW_ACCOUNT` state gas were not needed.
+        if existed {
             refunded_accounts += 1;
         }
 
-        if !authority_acc_info.is_code_hash_empty_or_zero() || authorization.address().is_zero() {
+        // Bytecode (`AUTH_BASE`) state-gas refunds.
+        if clearing {
+            refunded_bytecodes += 1;
+            // Clearing a delegation freshly installed earlier in this transaction
+            // refills the bytecode state gas a second time.
+            if delegated_now && !delegated_before_tx {
+                refunded_bytecodes += 1;
+            }
+        } else if delegated_now || delegated_before_tx {
             refunded_bytecodes += 1;
         }
 
