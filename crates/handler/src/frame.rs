@@ -339,6 +339,7 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 address: None,
+                target_was_alive: false,
             })))
         };
 
@@ -372,7 +373,13 @@ impl EthFrame<EthInterpreter> {
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
-        journal.load_account(created_address)?;
+        // EIP-8037: capture whether the target leaf is already alive (existing,
+        // non-empty) before creation, so a successful create at a pre-existing
+        // balance-only account refunds the upfront `create_state_gas`.
+        let target_was_alive = {
+            let acc = journal.load_account(created_address)?;
+            !acc.info.is_empty()
+        };
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
@@ -400,7 +407,10 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::Create(CreateFrame {
+                created_address,
+                target_was_alive,
+            }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -500,10 +510,10 @@ impl EthFrame<EthInterpreter> {
                     frame.created_address,
                 );
 
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
+                let mut create_outcome =
+                    CreateOutcome::new(interpreter_result, Some(frame.created_address));
+                create_outcome.target_was_alive = frame.target_was_alive;
+                ItemOrResult::Result(FrameResult::Create(create_outcome))
             }
         };
 
@@ -598,16 +608,19 @@ impl EthFrame<EthInterpreter> {
                 handle_reservoir_remaining_gas(instruction_result, this_gas, &mut create_gas);
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent` via
-                // `refill_reservoir` (matching 0→x→0 storage restoration). The
-                // nonce-overflow path reports `InstructionResult::Return` (ok)
-                // with `address == None`, so gate on address rather than the result.
+                // this frame's tracker. Refund it via `refill_reservoir` (matching
+                // 0→x→0 storage restoration) when no new account leaf ends up
+                // created: either the child failed to deploy (revert, halt, or
+                // early-fail paths that return `address == None` such as nonce
+                // overflow, depth, OutOfFunds — the nonce-overflow path reports
+                // `InstructionResult::Return` (ok) with `address == None`, so gate
+                // on address rather than the result), or it succeeded at a
+                // pre-existing alive (balance-only) target.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
-                if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
+                if (create_failed || outcome.target_was_alive)
+                    && ctx.cfg().is_amsterdam_eip8037_enabled()
+                {
                     let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
                     this_gas.refill_reservoir(state_gas_charged);
                 }
