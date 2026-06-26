@@ -317,9 +317,10 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            // Skip unknown/unsupported specs (e.g. transition forks not yet
-            // mapped) instead of panicking in `to_spec_id`.
+            // Unknown/unsupported spec (e.g. a transition fork not yet mapped to a
+            // `SpecId`). Report it and skip rather than panicking in `to_spec_id`.
             if *spec_name == SpecName::Unknown {
+                eprintln!("Error: unknown spec in post state, skipping: path={path}");
                 continue;
             }
 
