@@ -4,12 +4,12 @@ use core::{
     fmt::Display,
     ops::{Deref, DerefMut},
 };
-use primitives::{Address, StorageKey, StorageValue, B256};
+use primitives::{Address, StorageKey, StorageKeyMap, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
+    bal::{alloy::AlloyBal, AccountBal, Bal, BalError, BlockAccessIndex},
     Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
-use std::sync::Arc;
+use std::{sync::Arc, vec::Vec};
 
 use crate::{DBErrorMarker, Database, DatabaseCommit};
 
@@ -34,6 +34,9 @@ pub struct BalState {
     /// untouched by the block, so the database values are correct.
     #[cfg_attr(feature = "serde", serde(default))]
     pub allow_db_fallback: bool,
+    /// Verification state for checking committed accesses against the attached BAL.
+    #[cfg_attr(feature = "serde", serde(skip, default))]
+    pub bal_verifier: Option<BalVerificationState>,
 }
 
 impl BalState {
@@ -73,10 +76,16 @@ impl BalState {
         self.bal_builder.clone()
     }
 
+    /// Returns true if commits need to update BAL state.
+    #[inline]
+    pub const fn tracks_commits(&self) -> bool {
+        self.bal_builder.is_some() || self.bal_verifier.is_some()
+    }
+
     /// Set BAL.
     #[inline]
     pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
-        self.bal = Some(bal);
+        self.set_bal(Some(bal));
         self
     }
 
@@ -85,6 +94,47 @@ impl BalState {
     pub fn with_bal_builder(mut self) -> Self {
         self.bal_builder = Some(Bal::new());
         self
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    #[inline]
+    pub fn with_bal_verifier(mut self) -> Self {
+        self.enable_bal_verifier();
+        self
+    }
+
+    /// Set BAL.
+    #[inline]
+    pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
+        self.bal = bal;
+        if self.bal_verifier.is_some() {
+            self.enable_bal_verifier();
+        }
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    #[inline]
+    pub fn enable_bal_verifier(&mut self) {
+        self.bal_verifier = Some(match self.bal.as_deref() {
+            Some(bal) => BalVerificationState::new(bal),
+            None => BalVerificationState::missing_bal(),
+        });
+    }
+
+    /// Disable BAL verification.
+    #[inline]
+    pub fn disable_bal_verifier(&mut self) {
+        self.bal_verifier = None;
+    }
+
+    /// Verify that all declared BAL entries were observed by execution.
+    #[inline]
+    pub fn verify_bal(&self) -> Result<(), BalVerificationError> {
+        match (&self.bal_verifier, self.bal.as_deref()) {
+            (Some(verifier), Some(bal)) => verifier.verify(bal),
+            (Some(_), None) => Err(BalVerificationError::MissingBal),
+            (None, _) => Ok(()),
+        }
     }
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
@@ -243,6 +293,13 @@ impl BalState {
                 bal_builder.update_account(self.bal_index, *address, account);
             }
         }
+
+        if let Some(verifier) = &mut self.bal_verifier {
+            match self.bal.as_deref() {
+                Some(bal) => verifier.commit(self.bal_index, bal, changes),
+                None => verifier.record_error(BalVerificationError::MissingBal),
+            }
+        }
     }
 
     /// Commit one account to the BAL builder.
@@ -251,7 +308,323 @@ impl BalState {
         if let Some(bal_builder) = &mut self.bal_builder {
             bal_builder.update_account(self.bal_index, address, account);
         }
+
+        if let Some(verifier) = &mut self.bal_verifier {
+            match self.bal.as_deref() {
+                Some(bal) => {
+                    if let Err(error) = verifier.commit_one(self.bal_index, bal, address, account) {
+                        verifier.record_error(error);
+                    }
+                }
+                None => verifier.record_error(BalVerificationError::MissingBal),
+            }
+        }
     }
+}
+
+/// Tracks which declared BAL entries were actually observed.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct BalVerificationState {
+    accounts: Vec<BalAccountVerification>,
+    error: Option<BalVerificationError>,
+}
+
+impl BalVerificationState {
+    fn new(bal: &Bal) -> Self {
+        Self {
+            accounts: bal
+                .accounts
+                .iter()
+                .map(|(_, account)| BalAccountVerification::new(account))
+                .collect(),
+            error: None,
+        }
+    }
+
+    const fn missing_bal() -> Self {
+        Self {
+            accounts: Vec::new(),
+            error: Some(BalVerificationError::MissingBal),
+        }
+    }
+
+    const fn record_error(&mut self, error: BalVerificationError) {
+        if self.error.is_none() {
+            self.error = Some(error);
+        }
+    }
+
+    fn commit(&mut self, index: BlockAccessIndex, bal: &Bal, changes: &EvmState) {
+        if self.error.is_some() {
+            return;
+        }
+
+        for (address, account) in changes {
+            if let Err(error) = self.commit_one(index, bal, *address, account) {
+                self.record_error(error);
+                break;
+            }
+        }
+    }
+
+    fn commit_one(
+        &mut self,
+        index: BlockAccessIndex,
+        bal: &Bal,
+        address: Address,
+        account: &Account,
+    ) -> Result<(), BalVerificationError> {
+        let (account_index, bal_account) = bal_account_by_id_or_address(bal, address, account)?;
+        let seen_account = self
+            .accounts
+            .get_mut(account_index)
+            .ok_or(BalError::AccountNotFound { address })?;
+
+        seen_account.seen = true;
+
+        let original = account.original_info();
+        let empty = AccountInfo::default();
+        let present = if account.is_selfdestructed_locally() {
+            &empty
+        } else {
+            &account.info
+        };
+
+        verify_account_writes(index, &original, present, bal_account, seen_account)?;
+        verify_storage_writes(index, address, account, bal_account, seen_account)
+    }
+
+    fn verify(&self, bal: &Bal) -> Result<(), BalVerificationError> {
+        if let Some(error) = &self.error {
+            return Err(error.clone());
+        }
+
+        for (account_index, (_, bal_account)) in bal.accounts.iter().enumerate() {
+            let Some(seen_account) = self.accounts.get(account_index) else {
+                return Err(BalVerificationError::UnusedEntry);
+            };
+
+            if !seen_account.seen {
+                return Err(BalVerificationError::UnusedEntry);
+            }
+
+            if seen_account.balance_next != bal_account.account_info.balance.writes.len()
+                || seen_account.nonce_next != bal_account.account_info.nonce.writes.len()
+                || seen_account.code_next != bal_account.account_info.code.writes.len()
+                || seen_account.remaining_storage != 0
+            {
+                return Err(BalVerificationError::UnusedEntry);
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+struct BalAccountVerification {
+    seen: bool,
+    balance_next: usize,
+    nonce_next: usize,
+    code_next: usize,
+    remaining_storage: usize,
+    storage: StorageKeyMap<BalSlotVerification>,
+}
+
+impl BalAccountVerification {
+    fn new(account: &AccountBal) -> Self {
+        Self {
+            seen: false,
+            balance_next: 0,
+            nonce_next: 0,
+            code_next: 0,
+            remaining_storage: account.storage.storage.len(),
+            storage: StorageKeyMap::default(),
+        }
+    }
+
+    fn mark_storage_complete(&mut self, slot: StorageKey) -> Result<(), BalVerificationError> {
+        let slot = self.storage.entry(slot).or_default();
+        if slot.complete {
+            return Ok(());
+        }
+
+        slot.complete = true;
+        self.remaining_storage = self
+            .remaining_storage
+            .checked_sub(1)
+            .ok_or(BalVerificationError::UnusedEntry)?;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+struct BalSlotVerification {
+    next: usize,
+    complete: bool,
+}
+
+/// Error returned when committed execution state does not match the submitted BAL.
+#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+pub enum BalVerificationError {
+    /// BAL verification was enabled but no BAL was attached.
+    #[error("BAL verification enabled without an attached BAL")]
+    MissingBal,
+    /// BAL lookup failed.
+    #[error(transparent)]
+    Bal(#[from] BalError),
+    /// Execution changed state without a matching BAL write at the current index.
+    #[error("missing BAL write")]
+    MissingWrite,
+    /// Execution changed state to a value different from the BAL write.
+    #[error("mismatched BAL write")]
+    MismatchedWrite,
+    /// The BAL declared an entry that execution did not observe.
+    #[error("unused BAL entry")]
+    UnusedEntry,
+}
+
+fn verify_account_writes(
+    index: BlockAccessIndex,
+    original: &AccountInfo,
+    present: &AccountInfo,
+    bal_account: &AccountBal,
+    seen_account: &mut BalAccountVerification,
+) -> Result<(), BalVerificationError> {
+    if original.balance != present.balance {
+        verify_write(
+            index,
+            &present.balance,
+            &bal_account.account_info.balance.writes,
+            &mut seen_account.balance_next,
+        )?;
+    }
+
+    if original.nonce != present.nonce {
+        verify_write(
+            index,
+            &present.nonce,
+            &bal_account.account_info.nonce.writes,
+            &mut seen_account.nonce_next,
+        )?;
+    }
+
+    if original.code_hash != present.code_hash {
+        let code = (present.code_hash, present.code.clone().unwrap_or_default());
+        verify_write(
+            index,
+            &code,
+            &bal_account.account_info.code.writes,
+            &mut seen_account.code_next,
+        )?;
+    }
+
+    Ok(())
+}
+
+fn verify_storage_writes(
+    index: BlockAccessIndex,
+    address: Address,
+    account: &Account,
+    bal_account: &AccountBal,
+    seen_account: &mut BalAccountVerification,
+) -> Result<(), BalVerificationError> {
+    for (slot, value) in &account.storage {
+        let writes = bal_account
+            .storage
+            .storage
+            .get(slot)
+            .ok_or(BalError::SlotNotFound {
+                address,
+                slot: *slot,
+            })?;
+
+        if account.is_selfdestructed_locally() {
+            if value.original_value != StorageValue::ZERO {
+                verify_storage_write(
+                    index,
+                    *slot,
+                    &StorageValue::ZERO,
+                    &writes.writes,
+                    seen_account,
+                )?;
+            } else if writes.writes.is_empty() {
+                seen_account.mark_storage_complete(*slot)?;
+            }
+        } else if value.is_changed() {
+            verify_storage_write(
+                index,
+                *slot,
+                &value.present_value,
+                &writes.writes,
+                seen_account,
+            )?;
+        } else if writes.writes.is_empty() {
+            seen_account.mark_storage_complete(*slot)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn bal_account_by_id_or_address<'a>(
+    bal: &'a Bal,
+    address: Address,
+    account: &Account,
+) -> Result<(usize, &'a AccountBal), BalVerificationError> {
+    if let Some(account_id) = account.info.account_id {
+        if let Some((stored_address, bal_account)) = bal.accounts.get_index(account_id.get()) {
+            if *stored_address == address {
+                return Ok((account_id.get(), bal_account));
+            }
+        }
+
+        return Err(BalError::AccountNotFound { address }.into());
+    }
+
+    bal.accounts
+        .get_full(&address)
+        .map(|(index, _, account)| (index, account))
+        .ok_or(BalError::AccountNotFound { address }.into())
+}
+
+fn verify_storage_write<T: PartialEq>(
+    index: BlockAccessIndex,
+    slot: StorageKey,
+    actual: &T,
+    writes: &[(BlockAccessIndex, T)],
+    seen_account: &mut BalAccountVerification,
+) -> Result<(), BalVerificationError> {
+    let slot_seen = seen_account.storage.entry(slot).or_default();
+    verify_write(index, actual, writes, &mut slot_seen.next)?;
+    if slot_seen.next == writes.len() {
+        seen_account.mark_storage_complete(slot)?;
+    }
+    Ok(())
+}
+
+fn verify_write<T: PartialEq>(
+    index: BlockAccessIndex,
+    actual: &T,
+    writes: &[(BlockAccessIndex, T)],
+    next: &mut usize,
+) -> Result<(), BalVerificationError> {
+    let Some((write_index, expected)) = writes.get(*next) else {
+        return Err(BalVerificationError::MissingWrite);
+    };
+
+    if *write_index < index {
+        return Err(BalVerificationError::UnusedEntry);
+    }
+    if *write_index > index {
+        return Err(BalVerificationError::MissingWrite);
+    }
+    if expected != actual {
+        return Err(BalVerificationError::MismatchedWrite);
+    }
+
+    *next += 1;
+    Ok(())
 }
 
 /// Database implementation for BAL.
@@ -290,14 +663,9 @@ impl<DB> BalDatabase<DB> {
 
     /// With BAL.
     #[inline]
-    pub fn with_bal_option(self, bal: Option<Arc<Bal>>) -> Self {
-        Self {
-            bal_state: BalState {
-                bal,
-                ..self.bal_state
-            },
-            ..self
-        }
+    pub fn with_bal_option(mut self, bal: Option<Arc<Bal>>) -> Self {
+        self.bal_state.set_bal(bal);
+        self
     }
 
     /// With BAL builder.
@@ -307,6 +675,31 @@ impl<DB> BalDatabase<DB> {
             bal_state: self.bal_state.with_bal_builder(),
             ..self
         }
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    #[inline]
+    pub fn with_bal_verifier(mut self) -> Self {
+        self.bal_state.enable_bal_verifier();
+        self
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    #[inline]
+    pub fn enable_bal_verifier(&mut self) {
+        self.bal_state.enable_bal_verifier();
+    }
+
+    /// Disable BAL verification.
+    #[inline]
+    pub fn disable_bal_verifier(&mut self) {
+        self.bal_state.disable_bal_verifier();
+    }
+
+    /// Verify that all declared BAL entries were observed by execution.
+    #[inline]
+    pub fn verify_bal(&self) -> Result<(), BalVerificationError> {
+        self.bal_state.verify_bal()
     }
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
@@ -443,17 +836,23 @@ impl<DB: Database> Database for BalDatabase<DB> {
 
 impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
     fn commit(&mut self, changes: EvmState) {
-        self.bal_state.commit(&changes);
+        if self.bal_state.tracks_commits() {
+            self.bal_state.commit(&changes);
+        }
         self.db.commit(changes);
     }
 
     fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
-        let bal_state = &mut self.bal_state;
-        let mut changes = changes.map(|(address, account)| {
-            bal_state.commit_one(address, &account);
-            (address, account)
-        });
-        self.db.commit_iter(&mut changes);
+        if self.bal_state.tracks_commits() {
+            let bal_state = &mut self.bal_state;
+            let mut changes = changes.map(|(address, account)| {
+                bal_state.commit_one(address, &account);
+                (address, account)
+            });
+            self.db.commit_iter(&mut changes);
+        } else {
+            self.db.commit_iter(changes);
+        }
     }
 }
 
@@ -462,6 +861,7 @@ mod tests {
     use super::*;
     use primitives::U256;
     use state::bal::{AccountBal, BalWrites};
+    use state::{EvmStorageSlot, TransactionId};
 
     fn bal_with_account(address: Address, slot: StorageKey) -> Arc<Bal> {
         let mut account = AccountBal::default();
@@ -518,6 +918,142 @@ mod tests {
         assert_eq!(
             bal_state.storage(&address, slot),
             Ok(Some(StorageValue::from(42u64)))
+        );
+    }
+
+    fn idx(index: u64) -> BlockAccessIndex {
+        BlockAccessIndex::new(index)
+    }
+
+    fn evm_state(address: Address, account: Account) -> EvmState {
+        EvmState::from_iter([(address, account)])
+    }
+
+    #[test]
+    fn bal_verifier_accepts_matching_account_and_storage_writes() {
+        let address = Address::with_last_byte(1);
+        let slot = U256::from(1);
+        let mut bal_account = AccountBal::default();
+        bal_account.account_info.balance = BalWrites::new(vec![(idx(1), U256::from(7))]);
+        bal_account
+            .storage
+            .storage
+            .insert(slot, BalWrites::new(vec![(idx(1), U256::from(42))]));
+        let bal = Arc::new(Bal::from_iter([(address, bal_account)]));
+
+        let mut account = Account::from(AccountInfo::default());
+        account.info.balance = U256::from(7);
+        account.storage.insert(
+            slot,
+            EvmStorageSlot::new_changed(U256::ZERO, U256::from(42), TransactionId::ZERO),
+        );
+
+        let mut bal_state = BalState::new().with_bal(bal).with_bal_verifier();
+        bal_state.bal_index = idx(1);
+        bal_state.commit(&evm_state(address, account));
+
+        assert_eq!(bal_state.verify_bal(), Ok(()));
+    }
+
+    #[test]
+    fn bal_verifier_accepts_multiple_storage_writes_in_order() {
+        let address = Address::with_last_byte(1);
+        let slot = U256::from(1);
+        let mut bal_account = AccountBal::default();
+        bal_account.storage.storage.insert(
+            slot,
+            BalWrites::new(vec![(idx(1), U256::from(42)), (idx(2), U256::from(43))]),
+        );
+        let bal = Arc::new(Bal::from_iter([(address, bal_account)]));
+
+        let mut first = Account::from(AccountInfo::default());
+        first.storage.insert(
+            slot,
+            EvmStorageSlot::new_changed(U256::ZERO, U256::from(42), TransactionId::ZERO),
+        );
+
+        let mut second = Account::from(AccountInfo::default());
+        second.storage.insert(
+            slot,
+            EvmStorageSlot::new_changed(U256::from(42), U256::from(43), TransactionId::ZERO),
+        );
+
+        let mut bal_state = BalState::new().with_bal(bal).with_bal_verifier();
+        bal_state.bal_index = idx(1);
+        bal_state.commit(&evm_state(address, first));
+        bal_state.bal_index = idx(2);
+        bal_state.commit(&evm_state(address, second));
+
+        assert_eq!(bal_state.verify_bal(), Ok(()));
+    }
+
+    #[test]
+    fn bal_verifier_accepts_declared_storage_read() {
+        let address = Address::with_last_byte(1);
+        let slot = U256::from(1);
+        let mut bal_account = AccountBal::default();
+        bal_account
+            .storage
+            .storage
+            .insert(slot, BalWrites::default());
+        let bal = Arc::new(Bal::from_iter([(address, bal_account)]));
+
+        let mut account = Account::from(AccountInfo::default());
+        account.storage.insert(
+            slot,
+            EvmStorageSlot::new(U256::from(5), TransactionId::ZERO),
+        );
+
+        let mut bal_state = BalState::new().with_bal(bal).with_bal_verifier();
+        bal_state.bal_index = idx(1);
+        bal_state.commit(&evm_state(address, account));
+
+        assert_eq!(bal_state.verify_bal(), Ok(()));
+    }
+
+    #[test]
+    fn bal_verifier_rejects_write_to_declared_read_slot() {
+        let address = Address::with_last_byte(1);
+        let slot = U256::from(1);
+        let mut bal_account = AccountBal::default();
+        bal_account
+            .storage
+            .storage
+            .insert(slot, BalWrites::default());
+        let bal = Arc::new(Bal::from_iter([(address, bal_account)]));
+
+        let mut account = Account::from(AccountInfo::default());
+        account.storage.insert(
+            slot,
+            EvmStorageSlot::new_changed(U256::ZERO, U256::from(42), TransactionId::ZERO),
+        );
+
+        let mut bal_state = BalState::new().with_bal(bal).with_bal_verifier();
+        bal_state.bal_index = idx(1);
+        bal_state.commit(&evm_state(address, account));
+
+        assert_eq!(
+            bal_state.verify_bal(),
+            Err(BalVerificationError::MissingWrite)
+        );
+    }
+
+    #[test]
+    fn bal_verifier_rejects_unused_declared_write() {
+        let address = Address::with_last_byte(1);
+        let mut bal_account = AccountBal::default();
+        bal_account.account_info.balance = BalWrites::new(vec![(idx(1), U256::from(7))]);
+        let bal = Arc::new(Bal::from_iter([(address, bal_account)]));
+
+        let account = Account::from(AccountInfo::default());
+
+        let mut bal_state = BalState::new().with_bal(bal).with_bal_verifier();
+        bal_state.bal_index = idx(1);
+        bal_state.commit(&evm_state(address, account));
+
+        assert_eq!(
+            bal_state.verify_bal(),
+            Err(BalVerificationError::UnusedEntry)
         );
     }
 }

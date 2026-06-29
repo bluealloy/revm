@@ -142,7 +142,13 @@ impl<DB: Database> StateBuilder<DB> {
 
     /// With BAL.
     pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
-        self.bal_state.bal = Some(bal);
+        self.bal_state.set_bal(Some(bal));
+        self
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    pub fn with_bal_verifier(mut self) -> Self {
+        self.bal_state.enable_bal_verifier();
         self
     }
 

@@ -6,7 +6,7 @@ use super::{
 };
 use bytecode::Bytecode;
 use database_interface::{
-    bal::{BalState, EvmDatabaseError},
+    bal::{BalState, BalVerificationError, EvmDatabaseError},
     Database, DatabaseCommit, DatabaseRef, EmptyDB, OnStateHook,
 };
 use primitives::{hash_map, Address, AddressMap, HashMap, StorageKey, StorageValue, B256};
@@ -234,7 +234,25 @@ impl<DB: Database> State<DB> {
     /// Set BAL.
     #[inline]
     pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
-        self.bal_state.bal = bal;
+        self.bal_state.set_bal(bal);
+    }
+
+    /// Enable BAL verification against the attached BAL.
+    #[inline]
+    pub fn enable_bal_verifier(&mut self) {
+        self.bal_state.enable_bal_verifier();
+    }
+
+    /// Disable BAL verification.
+    #[inline]
+    pub fn disable_bal_verifier(&mut self) {
+        self.bal_state.disable_bal_verifier();
+    }
+
+    /// Verify that all declared BAL entries were observed by execution.
+    #[inline]
+    pub fn verify_bal(&self) -> Result<(), BalVerificationError> {
+        self.bal_state.verify_bal()
     }
 
     /// Set whether reads not covered by the BAL fall back to the underlying database.
@@ -399,7 +417,9 @@ impl<DB: Database> Database for State<DB> {
 
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: AddressMap<Account>) {
-        self.bal_state.commit(&changes);
+        if self.bal_state.tracks_commits() {
+            self.bal_state.commit(&changes);
+        }
 
         if let Some(hook) = self.state_hook.as_mut() {
             let transitions = self.cache.apply_evm_state_iter(
@@ -441,9 +461,12 @@ impl<DB: Database> DatabaseCommit for State<DB> {
             return;
         }
 
+        let tracks_bal_commits = self.bal_state.tracks_commits();
         if let Some(s) = self.transition_state.as_mut() {
             for (address, account) in changes {
-                self.bal_state.commit_one(address, &account);
+                if tracks_bal_commits {
+                    self.bal_state.commit_one(address, &account);
+                }
                 if let Some(transition) =
                     self.cache.apply_account_state(address, Cow::Owned(account))
                 {
@@ -452,7 +475,9 @@ impl<DB: Database> DatabaseCommit for State<DB> {
             }
         } else {
             for (address, account) in changes {
-                self.bal_state.commit_one(address, &account);
+                if tracks_bal_commits {
+                    self.bal_state.commit_one(address, &account);
+                }
                 _ = self.cache.apply_account_state(address, Cow::Owned(account));
             }
         }
