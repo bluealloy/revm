@@ -34,7 +34,7 @@ jobs:
         # A PR with the semver bump is created with a new release tag and changelog
         # if you configure the cargo registry token, the action will also publish the new version to crates.io
       - name: Run release-plz
-        uses: MarcoIeni/release-plz-action@064f4d1e36c843611ddf013be726beaa4ad804db # v0.5.129
+        uses: MarcoIeni/release-plz-action@e8792575c7f2366cf6ff3ccc33ead9ace5b691c7 # v0.5.130
         with:
           command: release-pr
         env:
