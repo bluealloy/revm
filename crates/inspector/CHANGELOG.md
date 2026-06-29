@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v41.0.0...revm-inspector-v41.0.1) - 2026-06-29
+
+### Fixed
+
+- *(inspect)* finalize journal on error to prevent EIP-2929 warm set leak ([#3780](https://github.com/bluealloy/revm/pull/3780))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.3...revm-inspector-v41.0.0) - 2026-06-11
 
 ### Other
