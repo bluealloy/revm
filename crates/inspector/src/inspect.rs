@@ -25,8 +25,7 @@ pub trait InspectEvm: ExecuteEvm {
     /// # Outcome of Error
     ///
     /// If the transaction fails, the journal is finalized (cleared) so that the
-    /// next transaction starts from a clean state. This mirrors
-    /// [`ExecuteEvm::transact`][handler::ExecuteEvm::transact].
+    /// next transaction starts from a clean state. This mirrors [`ExecuteEvm::transact`].
     fn inspect_tx(
         &mut self,
         tx: Self::Tx,
