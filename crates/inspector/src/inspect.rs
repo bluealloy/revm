@@ -21,23 +21,36 @@ pub trait InspectEvm: ExecuteEvm {
     fn inspect_one_tx(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error>;
 
     /// Inspect the EVM and finalize the state.
+    ///
+    /// # Outcome of Error
+    ///
+    /// If the transaction fails, the journal is finalized (cleared) so that the
+    /// next transaction starts from a clean state. This mirrors [`ExecuteEvm::transact`].
     fn inspect_tx(
         &mut self,
         tx: Self::Tx,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_one_tx(tx)?;
+        // finalize the journal unconditionally, even on error, so the
+        // EIP-2929 warm set and state do not leak into the next transaction.
+        let output_or_error = self.inspect_one_tx(tx);
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 
     /// Inspect the EVM with the given inspector and transaction, and finalize the state.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectEvm::inspect_tx`]: the journal is finalized on error.
     fn inspect(
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_one(tx, inspector)?;
+        let output_or_error = self.inspect_one(tx, inspector);
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 
@@ -59,20 +72,34 @@ pub trait InspectEvm: ExecuteEvm {
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
     /// Inspect the EVM with the current inspector and previous transaction by replaying, similar to [`InspectEvm::inspect_tx`]
     /// and commit the state diff to the database.
+    ///
+    /// # Outcome of Error
+    ///
+    /// If the transaction fails, the journal is finalized (not committed) so it
+    /// does not leak into the next transaction.
     fn inspect_tx_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_one_tx(tx)?;
+        let output = self.inspect_one_tx(tx).inspect_err(|_| {
+            // finalize (clear) the journal on error; do not commit it.
+            let _ = self.finalize();
+        })?;
         self.commit_inner();
         Ok(output)
     }
 
     /// Inspect the EVM with the given transaction and inspector similar to [`InspectEvm::inspect`]
     /// and commit the state diff to the database.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectCommitEvm::inspect_tx_commit`]: the journal is finalized on error.
     fn inspect_commit(
         &mut self,
         tx: Self::Tx,
         inspector: Self::Inspector,
     ) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.inspect_one(tx, inspector)?;
+        let output = self.inspect_one(tx, inspector).inspect_err(|_| {
+            let _ = self.finalize();
+        })?;
         self.commit_inner();
         Ok(output)
     }
@@ -109,28 +136,38 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
     /// Inspect a system call and finalize the state.
     ///
     /// Similar to [`InspectEvm::inspect_tx`] but for system calls.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectEvm::inspect_tx`]: the journal is finalized on error.
     fn inspect_system_call(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_one_system_call(system_contract_address, data)?;
+        let output_or_error = self.inspect_one_system_call(system_contract_address, data);
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 
     /// Inspect a system call with a custom caller and finalize the state.
     ///
     /// Similar to [`InspectEvm::inspect_tx`] but for system calls with a custom caller.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectEvm::inspect_tx`]: the journal is finalized on error.
     fn inspect_system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output =
-            self.inspect_one_system_call_with_caller(caller, system_contract_address, data)?;
+        let output_or_error =
+            self.inspect_one_system_call_with_caller(caller, system_contract_address, data);
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 
@@ -150,15 +187,20 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
     /// Inspect a system call with a given inspector and finalize the state.
     ///
     /// Similar to [`InspectEvm::inspect`] but for system calls.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectEvm::inspect_tx`]: the journal is finalized on error.
     fn inspect_system_call_with_inspector(
         &mut self,
         system_contract_address: Address,
         data: Bytes,
         inspector: Self::Inspector,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output =
-            self.inspect_one_system_call_with_inspector(system_contract_address, data, inspector)?;
+        let output_or_error =
+            self.inspect_one_system_call_with_inspector(system_contract_address, data, inspector);
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 
@@ -179,6 +221,10 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
     /// Inspect a system call with a given inspector and finalize the state.
     ///
     /// Similar to [`InspectEvm::inspect`] but for system calls.
+    ///
+    /// # Outcome of Error
+    ///
+    /// Same as [`InspectEvm::inspect_tx`]: the journal is finalized on error.
     fn inspect_system_call_with_inspector_and_caller(
         &mut self,
         caller: Address,
@@ -186,13 +232,14 @@ pub trait InspectSystemCallEvm: InspectEvm + SystemCallEvm {
         data: Bytes,
         inspector: Self::Inspector,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let output = self.inspect_one_system_call_with_inspector_and_caller(
+        let output_or_error = self.inspect_one_system_call_with_inspector_and_caller(
             caller,
             system_contract_address,
             data,
             inspector,
-        )?;
+        );
         let state = self.finalize();
+        let output = output_or_error?;
         Ok(ExecResultAndState::new(output, state))
     }
 }

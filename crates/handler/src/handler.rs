@@ -224,7 +224,7 @@ pub trait Handler {
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
 
         // Handle last frame result
-        self.last_frame_result(evm, reservoir, &mut frame_result)?;
+        self.last_frame_result(evm, &mut frame_result)?;
         Ok(frame_result)
     }
 
@@ -378,7 +378,6 @@ pub trait Handler {
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
-        _original_reservoir: u64,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
