@@ -139,9 +139,17 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     }
 
     /// Transact the transaction and commit to the state.
+    ///
+    /// # Outcome of Error
+    ///
+    /// If the transaction fails, the journal is finalized (not committed) so it
+    /// does not leak into the next transaction.
     #[inline]
     fn transact_commit(&mut self, tx: Self::Tx) -> Result<Self::ExecutionResult, Self::Error> {
-        let output = self.transact_one(tx)?;
+        let output = self.transact_one(tx).inspect_err(|_| {
+            // finalize (clear) the journal on error; do not commit it.
+            let _ = self.finalize();
+        })?;
         self.commit_inner();
         Ok(output)
     }
@@ -201,10 +209,17 @@ where
 
     #[inline]
     fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
-        MainnetHandler::default().run(self).map(|result| {
-            let state = self.finalize();
-            ResultAndState::new(result, state)
-        })
+        MainnetHandler::default()
+            .run(self)
+            // finalize (clear) the journal on error; on success the `map`
+            // branch below finalizes it.
+            .inspect_err(|_| {
+                let _ = self.finalize();
+            })
+            .map(|result| {
+                let state = self.finalize();
+                ResultAndState::new(result, state)
+            })
     }
 }
 

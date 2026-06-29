@@ -1,9 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::{InspectEvm, InspectSystemCallEvm, InspectorEvent, TestInspector};
+    use crate::{
+        InspectCommitEvm, InspectEvm, InspectSystemCallEvm, InspectorEvent, TestInspector,
+    };
     use context::{Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-    use handler::{MainBuilder, MainContext};
+    use handler::{ExecuteEvm, MainBuilder, MainContext};
     use primitives::{address, Address, Bytes, TxKind, U256};
     use state::{bytecode::opcode, AccountInfo, Bytecode};
 
@@ -770,6 +772,104 @@ mod tests {
             result_plain.gas().state_gas_spent_final(),
             result_inspect.gas().state_gas_spent_final(),
             "system_call state_gas_spent must match between inspect and non-inspect paths",
+        );
+    }
+
+    /// Regression test for https://github.com/bluealloy/revm/issues/3779
+    ///
+    /// `inspect_tx` used to short-circuit on `inspect_one_tx` returning `Err`
+    /// and skip `finalize()`, leaving the journal (EIP-2929 warm set, touched
+    /// accounts) in a dirty state that leaked into the next transaction. The
+    /// handler's error path calls `discard_tx`, which reverts account *values*
+    /// but keeps the account *entries* in the state map, so a subsequent
+    /// `finalize()` drains those leftovers — making the leak observable.
+    ///
+    /// Here a nonce mismatch triggers an `InvalidTransaction` *after* the
+    /// caller and coinbase have been loaded and warmed in `load_accounts`.
+    /// After `inspect_tx` returns `Err`, the journal must already be cleared,
+    /// i.e. the drained state must be empty.
+    #[test]
+    fn test_inspect_tx_finalizes_journal_on_error() {
+        use database::{CacheDB, EmptyDB};
+
+        // Caller account exists in the DB with nonce = 1.
+        let mut db = CacheDB::<EmptyDB>::default();
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(1_000_000_000_000_000_000u64),
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        let ctx = Context::mainnet().with_db(db);
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        // Send a tx with nonce = 0 -> InvalidTransaction::NonceTooLow, raised
+        // after load_accounts warmed the caller/coinbase.
+        let result = evm.inspect_tx(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(BENCH_TARGET))
+                .gas_limit(100_000)
+                .nonce(0)
+                .build()
+                .unwrap(),
+        );
+        assert!(
+            result.is_err(),
+            "tx with stale nonce must error so the error path is exercised"
+        );
+
+        // `inspect_tx` must have finalized the journal on error, so draining
+        // it now yields an empty state. Before the fix this contained the
+        // warmed caller/coinbase accounts and was non-empty.
+        let leftover = evm.finalize();
+        assert!(
+            leftover.is_empty(),
+            "journal must be cleared after a failed inspect_tx, but found {} leftover accounts",
+            leftover.len(),
+        );
+    }
+
+    /// Companion to [`Self::test_inspect_tx_finalizes_journal_on_error`] for the
+    /// `inspect_tx_commit` path: on error the journal must be finalized (not
+    /// committed), so a subsequent drain yields an empty state.
+    #[test]
+    fn test_inspect_tx_commit_finalizes_journal_on_error() {
+        use database::{CacheDB, EmptyDB};
+
+        let mut db = CacheDB::<EmptyDB>::default();
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(1_000_000_000_000_000_000u64),
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        let ctx = Context::mainnet().with_db(db);
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm.inspect_tx_commit(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(BENCH_TARGET))
+                .gas_limit(100_000)
+                .nonce(0)
+                .build()
+                .unwrap(),
+        );
+        assert!(
+            result.is_err(),
+            "tx with stale nonce must error so the error path is exercised"
+        );
+
+        let leftover = evm.finalize();
+        assert!(
+            leftover.is_empty(),
+            "journal must be cleared after a failed inspect_tx_commit, but found {} leftover accounts",
+            leftover.len(),
         );
     }
 }
