@@ -1215,7 +1215,7 @@ impl GasParams {
 /// self-transfer (`tx.to == sender`). The decomposed intrinsic model branches
 /// on `is_create` (already passed to `initial_tx_gas`), whether `tx.value` is
 /// zero, and the self-transfer carve-out; see
-/// [`GasParams::eip2780_base_to_value_gas`].
+/// `GasParams::eip2780_base_to_value_gas`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Eip2780TxInfo {
     /// Transferred value.
