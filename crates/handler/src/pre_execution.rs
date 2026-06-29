@@ -210,7 +210,7 @@ pub fn apply_eip7702_auth_list<
         return Ok(0);
     }
     let (number_of_refunded_accounts, number_of_refunded_bytecodes) =
-        apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
+        apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal, is_eip8037)?;
 
     let params = context.cfg().gas_params();
 
@@ -248,25 +248,40 @@ pub fn apply_auth_list<
     chain_id: u64,
     auth_list: impl Iterator<Item = impl AuthorizationTr>,
     journal: &mut JOURNAL,
+    is_eip8037: bool,
 ) -> Result<(u64, u64), ERROR> {
     let mut refunded_accounts = 0;
     let mut refunded_bytecodes = 0;
+    // EIP-8037: a rejected authorization had its full pessimistic intrinsic cost
+    // charged (regular ACCOUNT_WRITE plus per-account NEW_ACCOUNT and per-bytecode
+    // AUTH_BASE state gas), none of which is needed, so all of it is refunded.
+    // Counting both refund slots credits the regular ACCOUNT_WRITE and both
+    // state-gas portions. Before EIP-8037 rejected authorizations refund nothing.
+    macro_rules! reject {
+        () => {{
+            if is_eip8037 {
+                refunded_accounts += 1;
+                refunded_bytecodes += 1;
+            }
+            continue;
+        }};
+    }
     for authorization in auth_list {
         // 1. Verify the chain id is either 0 or the chain's current ID.
         let auth_chain_id = authorization.chain_id();
         if !auth_chain_id.is_zero() && auth_chain_id != U256::from(chain_id) {
-            continue;
+            reject!();
         }
 
         // 2. Verify the `nonce` is less than `2**64 - 1`.
         if authorization.nonce() == u64::MAX {
-            continue;
+            reject!();
         }
 
         // recover authority and authorized addresses.
         // 3. `authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]`
         let Some(authority) = authorization.authority() else {
-            continue;
+            reject!();
         };
 
         // warm authority account and check nonce.
@@ -278,25 +293,53 @@ pub fn apply_auth_list<
         if let Some(bytecode) = &authority_acc_info.code {
             // if it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
-                continue;
+                reject!();
             }
         }
 
         // 6. Verify the nonce of `authority` is equal to `nonce`. In case `authority` does not exist in the trie, verify that `nonce` is equal to `0`.
         if authorization.nonce() != authority_acc_info.nonce {
-            continue;
+            reject!();
         }
 
-        // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
-        if !(authority_acc_info.is_empty()
+        // Refund-relevant facts for this accepted authorization (mirrors
+        // execution-specs `set_delegation` / evm2 `apply_one_auth`).
+        //   existed             — the authority account already existed in state.
+        //   delegated_now       — its current code is a delegation (non-empty code
+        //                          is necessarily EIP-7702 here, having passed the
+        //                          validity check above).
+        //   delegated_before_tx — its code at the start of the transaction was a
+        //                          delegation (may differ from `delegated_now` when
+        //                          an earlier authorization in this tx cleared it).
+        //   clearing            — this authorization clears the delegation.
+        let existed = !(authority_acc_info.is_empty()
             && authority_acc
                 .account()
-                .is_loaded_as_not_existing_not_touched())
-        {
+                .is_loaded_as_not_existing_not_touched());
+        let delegated_now = !authority_acc_info.is_code_hash_empty_or_zero();
+        let delegated_before_tx = authority_acc
+            .account()
+            .original_info()
+            .code
+            .as_ref()
+            .is_some_and(Bytecode::is_eip7702);
+        let clearing = authorization.address().is_zero();
+
+        // Existing authority: the worst-case `ACCOUNT_WRITE` regular gas and the
+        // per-account `NEW_ACCOUNT` state gas were not needed.
+        if existed {
             refunded_accounts += 1;
         }
 
-        if !authority_acc_info.is_code_hash_empty_or_zero() || authorization.address().is_zero() {
+        // Bytecode (`AUTH_BASE`) state-gas refunds.
+        if clearing {
+            refunded_bytecodes += 1;
+            // Clearing a delegation freshly installed earlier in this transaction
+            // refills the bytecode state gas a second time.
+            if delegated_now && !delegated_before_tx {
+                refunded_bytecodes += 1;
+            }
+        } else if delegated_now || delegated_before_tx {
             refunded_bytecodes += 1;
         }
 

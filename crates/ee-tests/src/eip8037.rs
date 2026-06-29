@@ -1458,11 +1458,13 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    // On halt, state gas is refunded via reservoir, so tx_gas_used is reduced.
+    // On halt the SSTORE state gas had spilled into regular gas (the reservoir
+    // starts empty), so it is consumed like any other regular gas — tx_gas_used
+    // is the full gas limit, matching the non-state-gas baseline.
     assert_eq!(
         result.tx_gas_used(),
-        gas_limit - STATE_GAS_SSTORE_SET,
-        "Halt refunds state gas via reservoir"
+        gas_limit,
+        "Halt consumes spilled state gas (not refunded)"
     );
     // state_gas_spent_final is zeroed on halt (state changes rolled back).
     assert_eq!(result.gas().state_gas_spent_final(), 0);

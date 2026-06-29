@@ -4,10 +4,10 @@
 //! value-based) and the top-level execution charges (state gas for empty
 //! recipient with value, extra cold access for EIP-7702-delegated recipients).
 //!
-//! The self-transfer and precompile zero-charge edge cases in the current
-//! EIP-2780 draft are intentionally not implemented (a future revision is
-//! expected to drop them), so the tests below treat self-transfers and
-//! precompile transfers as regular recipients.
+//! Self-transfers (`tx.to == sender`) are special-cased per execution-specs:
+//! they pay only `TX_BASE_COST` with no `to`- or `value`-based charge. The
+//! precompile zero-charge edge case from the draft is not implemented, so
+//! precompile transfers are charged as regular recipients.
 
 use revm::{
     context::TxEnv,
@@ -77,11 +77,8 @@ fn regular_spent(gas: &revm::context_interface::result::ResultGas) -> u64 {
 fn test_eip2780_self_transfer() {
     let mut evm = evm();
     let gas = run(&mut evm, TxKind::Call(BENCH_CALLER), U256::ZERO);
-    // Self-transfer is not special-cased: pays TX_BASE_COST + COLD_ACCOUNT_ACCESS.
-    assert_eq!(
-        gas.total_gas_spent(),
-        eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS
-    );
+    // Self-transfer pays only TX_BASE_COST (no `to`- or `value`-based charge).
+    assert_eq!(gas.total_gas_spent(), eip2780::TX_BASE_COST);
     assert_eq!(gas.state_gas_spent_final(), 0);
 }
 
@@ -104,12 +101,13 @@ fn test_eip2780_call_empty_with_value() {
     let mut evm = evm();
     let to = address!("0x00000000000000000000000000000000000000ab");
     let gas = run(&mut evm, TxKind::Call(to), U256::from(1u64));
-    // Intrinsic regular: TX_BASE_COST + COLD_ACCOUNT_ACCESS + ACCOUNT_WRITE + TRANSFER_LOG_COST = 23_356.
-    // Top-level state gas: STATE_BYTES_PER_NEW_ACCOUNT × CPSB = 183_600.
+    // Intrinsic regular: TX_BASE_COST + COLD_ACCOUNT_ACCESS + TRANSFER_LOG_COST + TX_VALUE_COST = 21_000.
+    // The ACCOUNT_WRITE for creating the empty recipient is not charged as regular
+    // gas (only the NEW_ACCOUNT state gas is). Top-level state gas: 183_600.
     let expected_regular = eip2780::TX_BASE_COST
         + eip8038::COLD_ACCOUNT_ACCESS
-        + eip8038::ACCOUNT_WRITE
-        + eip2780::TRANSFER_LOG_COST;
+        + eip2780::TRANSFER_LOG_COST
+        + eip2780::TX_VALUE_COST;
     assert_eq!(regular_spent(&gas), expected_regular);
     assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
 }

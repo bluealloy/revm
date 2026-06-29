@@ -300,7 +300,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account.info.nonce = 0;
             account.info.code_hash = KECCAK_EMPTY;
             account.info.code = Some(Bytecode::default());
-            account.storage.clear();
+            // Wipe storage to zero in place rather than dropping the entries: the
+            // slots were accessed during the (now self-destructed) execution and
+            // EIP-7928 records those accesses in the block access list. Keeping the
+            // entries (present_value = 0) preserves the access — read-only slots
+            // stay read-only and written slots become writes-to-zero — while the
+            // committed state is still an empty (balance-only) account.
+            for slot in account.storage.values_mut() {
+                slot.present_value = StorageValue::ZERO;
+            }
 
             // Remove the self-destruct flags so the account is preserved instead of destroyed.
             account.unmark_selfdestruct();
