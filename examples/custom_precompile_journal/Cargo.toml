@@ -13,3 +13,6 @@ rust-version.workspace = true
 [dependencies]
 revm = { path = "../../crates/revm", features = ["optional_eip3607"] }
 anyhow = "1.0"
+
+[features]
+asyncdb = ["revm/asyncdb"]

@@ -40,7 +40,7 @@ pub mod state_hook;
 pub mod try_commit;
 
 #[cfg(feature = "asyncdb")]
-pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
+pub use async_db::{AsyncDb, AsyncError, AsyncResult, DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 pub use erased_error::ErasedError;
 pub use state_hook::{NoopHook, OnStateHook};

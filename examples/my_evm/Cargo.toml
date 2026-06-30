@@ -19,3 +19,6 @@ workspace = true
 
 [dependencies]
 revm = { workspace = true }
+
+[features]
+asyncdb = ["revm/asyncdb"]

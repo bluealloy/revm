@@ -24,10 +24,14 @@ use crate::{
     MainnetHandler, PrecompileProvider,
 };
 use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
+#[cfg(feature = "asyncdb")]
+use database_interface::async_db::{on_fiber_result_with_stack, AsyncResult};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip8037, Address, Bytes, TxKind};
 use state::EvmState;
+#[cfg(feature = "asyncdb")]
+use std::ptr::NonNull;
 
 /// The system address used for system calls.
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
@@ -227,6 +231,51 @@ pub trait SystemCallCommitEvm: SystemCallEvm + ExecuteCommitEvm {
     }
 }
 
+/// Async extension of the [`SystemCallEvm`] trait that runs execution on an async fiber.
+#[cfg(feature = "asyncdb")]
+pub trait SystemCallEvmAsync: SystemCallEvm {
+    /// System call executed on an async fiber.
+    fn system_call_one_with_caller_async(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<Output = AsyncResult<Self::ExecutionResult, Self::Error>> + Send + '_;
+
+    /// System call executed on an async fiber.
+    fn system_call_one_async(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<Output = AsyncResult<Self::ExecutionResult, Self::Error>> + Send + '_
+    {
+        self.system_call_one_with_caller_async(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+
+    /// System call executed and finalized on an async fiber.
+    fn system_call_with_caller_async(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<
+        Output = AsyncResult<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>,
+    > + Send
+           + '_;
+
+    /// System call executed and finalized on an async fiber.
+    fn system_call_async(
+        &mut self,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<
+        Output = AsyncResult<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>,
+    > + Send
+           + '_ {
+        self.system_call_with_caller_async(SYSTEM_ADDRESS, system_contract_address, data)
+    }
+}
+
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
@@ -248,6 +297,57 @@ where
         ));
         // create handler
         MainnetHandler::default().run_system_call(self)
+    }
+}
+
+#[cfg(feature = "asyncdb")]
+impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvmAsync
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+where
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+    Self: ExecuteEvm,
+    <Self as ExecuteEvm>::ExecutionResult: Send,
+    <Self as ExecuteEvm>::State: Send,
+    <Self as ExecuteEvm>::Error: Send,
+{
+    #[inline]
+    fn system_call_one_with_caller_async(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<Output = AsyncResult<Self::ExecutionResult, Self::Error>> + Send + '_
+    {
+        let stack = NonNull::from(&mut self.async_stack);
+        // SAFETY: The returned future owns the exclusive `&mut self` borrow, so nothing else can
+        // access the EVM stack slot until that future is dropped.
+        unsafe {
+            on_fiber_result_with_stack(stack, move || {
+                self.system_call_one_with_caller(caller, system_contract_address, data)
+            })
+        }
+    }
+
+    #[inline]
+    fn system_call_with_caller_async(
+        &mut self,
+        caller: Address,
+        system_contract_address: Address,
+        data: Bytes,
+    ) -> impl core::future::Future<
+        Output = AsyncResult<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>,
+    > + Send
+           + '_ {
+        let stack = NonNull::from(&mut self.async_stack);
+        // SAFETY: The returned future owns the exclusive `&mut self` borrow, so nothing else can
+        // access the EVM stack slot until that future is dropped.
+        unsafe {
+            on_fiber_result_with_stack(stack, move || {
+                self.system_call_with_caller(caller, system_contract_address, data)
+            })
+        }
     }
 }
 

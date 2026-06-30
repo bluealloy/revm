@@ -8,9 +8,13 @@ use context::{
     },
     Block, ContextSetters, ContextTr, Database, Evm, JournalTr, Transaction,
 };
+#[cfg(feature = "asyncdb")]
+use database_interface::async_db::{on_fiber_result_with_stack, AsyncResult};
 use database_interface::DatabaseCommit;
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use state::EvmState;
+#[cfg(feature = "asyncdb")]
+use std::ptr::NonNull;
 use std::vec::Vec;
 
 /// Type alias for the result of transact_many_finalize to reduce type complexity.
@@ -178,6 +182,25 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     }
 }
 
+/// Async extension of the [`ExecuteEvm`] trait that runs execution on an async fiber.
+#[cfg(feature = "asyncdb")]
+pub trait ExecuteEvmAsync: ExecuteEvm {
+    /// Execute transaction and store state inside journal on an async fiber.
+    fn transact_one_async(
+        &mut self,
+        tx: Self::Tx,
+    ) -> impl core::future::Future<Output = AsyncResult<Self::ExecutionResult, Self::Error>> + Send + '_;
+
+    /// Transact the given transaction and finalize in a single operation on an async fiber.
+    fn transact_async(
+        &mut self,
+        tx: Self::Tx,
+    ) -> impl core::future::Future<
+        Output = AsyncResult<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>,
+    > + Send
+           + '_;
+}
+
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
@@ -220,6 +243,45 @@ where
                 let state = self.finalize();
                 ResultAndState::new(result, state)
             })
+    }
+}
+
+#[cfg(feature = "asyncdb")]
+impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvmAsync
+    for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
+where
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
+    INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
+    PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
+    ExecutionResult<HaltReason>: Send,
+    EvmState: Send,
+    EVMError<<CTX::Db as Database>::Error, InvalidTransaction>: Send,
+    <CTX as ContextTr>::Tx: Send,
+{
+    #[inline]
+    fn transact_one_async(
+        &mut self,
+        tx: Self::Tx,
+    ) -> impl core::future::Future<Output = AsyncResult<Self::ExecutionResult, Self::Error>> + Send + '_
+    {
+        let stack = NonNull::from(&mut self.async_stack);
+        // SAFETY: The returned future owns the exclusive `&mut self` borrow, so nothing else can
+        // access the EVM stack slot until that future is dropped.
+        unsafe { on_fiber_result_with_stack(stack, move || self.transact_one(tx)) }
+    }
+
+    #[inline]
+    fn transact_async(
+        &mut self,
+        tx: Self::Tx,
+    ) -> impl core::future::Future<
+        Output = AsyncResult<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error>,
+    > + Send
+           + '_ {
+        let stack = NonNull::from(&mut self.async_stack);
+        // SAFETY: The returned future owns the exclusive `&mut self` borrow, so nothing else can
+        // access the EVM stack slot until that future is dropped.
+        unsafe { on_fiber_result_with_stack(stack, move || self.transact(tx)) }
     }
 }
 

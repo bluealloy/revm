@@ -43,6 +43,8 @@ where
             instruction: EthInstructions::new_mainnet_with_spec(spec),
             precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
+            #[cfg(feature = "asyncdb")]
+            async_stack: database_interface::async_db::FiberStack::default(),
         }
     }
 
@@ -57,6 +59,8 @@ where
             instruction: EthInstructions::new_mainnet_with_spec(spec),
             precompiles: EthPrecompiles::new(spec),
             frame_stack: FrameStack::new_prealloc(8),
+            #[cfg(feature = "asyncdb")]
+            async_stack: database_interface::async_db::FiberStack::default(),
         }
     }
 }
