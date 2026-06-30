@@ -196,17 +196,8 @@ pub fn run_pair(
 
     let mut points = Vec::with_capacity(elements);
 
-    for idx in 0..elements {
-        // Offset to the start of the pairing element at index `idx` in the byte slice
-        let start = idx * PAIR_ELEMENT_LEN;
-        let g1_start = start;
-        // Offset to the start of the G2 element in the pairing element
-        // This is where G1 ends.
-        let g2_start = start + G1_LEN;
-
-        // Get G1 and G2 points from the input
-        let encoded_g1_element = &input[g1_start..g2_start];
-        let encoded_g2_element = &input[g2_start..g2_start + G2_LEN];
+    for pair in input.chunks_exact(PAIR_ELEMENT_LEN) {
+        let (encoded_g1_element, encoded_g2_element) = pair.split_at(G1_LEN);
         points.push((encoded_g1_element, encoded_g2_element));
     }
 
