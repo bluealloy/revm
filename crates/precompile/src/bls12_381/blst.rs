@@ -10,9 +10,11 @@ use blst::{
     blst_bendian_from_fp, blst_final_exp, blst_fp, blst_fp12, blst_fp12_is_one, blst_fp12_mul,
     blst_fp2, blst_fp_from_bendian, blst_map_to_g1, blst_map_to_g2, blst_miller_loop, blst_p1,
     blst_p1_add_or_double_affine, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve,
-    blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p2, blst_p2_add_or_double_affine,
-    blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve, blst_p2_from_affine,
-    blst_p2_mult, blst_p2_to_affine, blst_scalar, blst_scalar_from_bendian, MultiPoint,
+    blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine, blst_p1s_mult_pippenger,
+    blst_p1s_mult_pippenger_scratch_sizeof, blst_p2, blst_p2_add_or_double_affine, blst_p2_affine,
+    blst_p2_affine_in_g2, blst_p2_affine_on_curve, blst_p2_from_affine, blst_p2_mult,
+    blst_p2_to_affine, blst_p2s_mult_pippenger, blst_p2s_mult_pippenger_scratch_sizeof,
+    blst_scalar, blst_scalar_from_bendian,
 };
 use std::vec::Vec;
 
@@ -182,11 +184,8 @@ fn p1_msm(g1_points: Vec<blst_p1_affine>, scalars: Vec<blst_scalar>) -> blst_p1_
         return p1_scalar_mul(&g1_points[0], &scalars[0]);
     }
 
-    // SAFETY: blst_scalar is repr(C) with a single `b: [u8; 32]` field.
-    let scalars_bytes =
-        unsafe { core::slice::from_raw_parts(scalars.as_ptr() as *const u8, scalars.len() * 32) };
-    // Perform multi-scalar multiplication
-    let multiexp = g1_points.mult(scalars_bytes, SCALAR_LENGTH_BITS);
+    let scalars_bytes = scalar_bytes(&scalars);
+    let multiexp = p1s_mult_pippenger(&g1_points, &scalars_bytes);
 
     // Convert result back to affine coordinates
     p1_to_affine(&multiexp)
@@ -222,15 +221,72 @@ fn p2_msm(g2_points: Vec<blst_p2_affine>, scalars: Vec<blst_scalar>) -> blst_p2_
         return p2_scalar_mul(&g2_points[0], &scalars[0]);
     }
 
-    // SAFETY: blst_scalar is repr(C) with a single `b: [u8; 32]` field.
-    let scalars_bytes =
-        unsafe { core::slice::from_raw_parts(scalars.as_ptr() as *const u8, scalars.len() * 32) };
-
-    // Perform multi-scalar multiplication
-    let multiexp = g2_points.mult(scalars_bytes, SCALAR_LENGTH_BITS);
+    let scalars_bytes = scalar_bytes(&scalars);
+    let multiexp = p2s_mult_pippenger(&g2_points, &scalars_bytes);
 
     // Convert result back to affine coordinates
     p2_to_affine(&multiexp)
+}
+
+#[inline]
+fn scalar_bytes(scalars: &[blst_scalar]) -> Vec<u8> {
+    scalars.iter().flat_map(|scalar| scalar.b).collect()
+}
+
+#[inline]
+fn p1s_mult_pippenger(points: &[blst_p1_affine], scalars: &[u8]) -> blst_p1 {
+    let npoints = points.len();
+    debug_assert!(npoints > 1);
+    debug_assert_eq!(scalars.len(), npoints * 32);
+
+    let point_batches: [*const blst_p1_affine; 2] = [points.as_ptr(), core::ptr::null()];
+    let scalar_batches: [*const u8; 2] = [scalars.as_ptr(), core::ptr::null()];
+    let mut out = blst_p1::default();
+
+    // SAFETY: the point and scalar slices contain `npoints` initialized entries,
+    // the pointer arrays are null-terminated as required by blst, and scratch is
+    // sized by blst for this point count.
+    unsafe {
+        let mut scratch = vec![0u64; blst_p1s_mult_pippenger_scratch_sizeof(npoints) / 8];
+        blst_p1s_mult_pippenger(
+            &mut out,
+            point_batches.as_ptr(),
+            npoints,
+            scalar_batches.as_ptr(),
+            SCALAR_LENGTH_BITS,
+            scratch.as_mut_ptr(),
+        );
+    }
+
+    out
+}
+
+#[inline]
+fn p2s_mult_pippenger(points: &[blst_p2_affine], scalars: &[u8]) -> blst_p2 {
+    let npoints = points.len();
+    debug_assert!(npoints > 1);
+    debug_assert_eq!(scalars.len(), npoints * 32);
+
+    let point_batches: [*const blst_p2_affine; 2] = [points.as_ptr(), core::ptr::null()];
+    let scalar_batches: [*const u8; 2] = [scalars.as_ptr(), core::ptr::null()];
+    let mut out = blst_p2::default();
+
+    // SAFETY: the point and scalar slices contain `npoints` initialized entries,
+    // the pointer arrays are null-terminated as required by blst, and scratch is
+    // sized by blst for this point count.
+    unsafe {
+        let mut scratch = vec![0u64; blst_p2s_mult_pippenger_scratch_sizeof(npoints) / 8];
+        blst_p2s_mult_pippenger(
+            &mut out,
+            point_batches.as_ptr(),
+            npoints,
+            scalar_batches.as_ptr(),
+            SCALAR_LENGTH_BITS,
+            scratch.as_mut_ptr(),
+        );
+    }
+
+    out
 }
 
 /// Maps a field element to a G1 point
