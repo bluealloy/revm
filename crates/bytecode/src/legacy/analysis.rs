@@ -143,6 +143,19 @@ mod tests {
     }
 
     #[test]
+    fn test_truncated_pushes_are_padded_without_inbounds_pointer_advance() {
+        for push in opcode::PUSH1..=opcode::PUSH32 {
+            let bytecode = vec![push];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            let push_immediate_len = (push - opcode::PUSH1 + 1) as usize;
+            assert_eq!(
+                padded_bytecode.len(),
+                bytecode.len() + push_immediate_len + 1
+            );
+        }
+    }
+
+    #[test]
     fn test_bytecode_with_invalid_opcode() {
         let bytecode = vec![0xFF, opcode::STOP]; // 0xFF is an invalid opcode
         let (jump_table, _) = analyze_legacy(bytecode.into());
