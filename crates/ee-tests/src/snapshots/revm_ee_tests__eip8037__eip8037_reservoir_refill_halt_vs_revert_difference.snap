@@ -12,7 +12,7 @@ expression: "&(result_halt, result_revert)"
         "gas_spent": 25000,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": []
     }
@@ -20,10 +20,10 @@ expression: "&(result_halt, result_revert)"
   {
     "Revert": {
       "gas": {
-        "gas_spent": 26012,
+        "gas_spent": 34012,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": [],
       "output": "0x"

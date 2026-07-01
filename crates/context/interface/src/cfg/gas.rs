@@ -1,6 +1,6 @@
 //! Gas constants and functions for gas calculation.
 
-use crate::{cfg::GasParams, Transaction};
+use crate::{cfg::gas_params, cfg::GasParams, Transaction};
 use primitives::hardfork::SpecId;
 
 /// Tracker for gas during execution.
@@ -22,6 +22,15 @@ pub struct GasTracker {
     /// more state gas than the frame itself has charged (the parent previously
     /// charged the 0→x portion). The net is reconciled on frame return.
     state_gas_spent: i64,
+    /// State gas drawn from regular gas (`remaining`) because the reservoir was
+    /// empty (EIP-8037's `state_gas_from_gas_left`).
+    ///
+    /// Incremented by [`Self::record_state_cost`] whenever a state-gas charge
+    /// spills out of the reservoir into regular gas. On frame rollback (revert or
+    /// halt) the spilled portion is credited back to `remaining` in last-in-
+    /// first-out order by [`Self::rollback_state_gas`]; on success it is
+    /// propagated to the parent frame so a later parent rollback can return it.
+    state_gas_spilled: u64,
     /// Refunded gas. Used to refund the gas to the caller at the end of execution.
     refunded: i64,
 }
@@ -35,6 +44,7 @@ impl GasTracker {
             remaining,
             reservoir,
             state_gas_spent: 0,
+            state_gas_spilled: 0,
             refunded: 0,
         }
     }
@@ -93,6 +103,28 @@ impl GasTracker {
         self.state_gas_spent = val;
     }
 
+    /// Returns the state gas drawn from regular gas (`remaining`) because the
+    /// reservoir was empty (EIP-8037's `state_gas_from_gas_left`).
+    #[inline]
+    pub const fn state_gas_spilled(&self) -> u64 {
+        self.state_gas_spilled
+    }
+
+    /// Sets the spilled state gas.
+    #[inline]
+    pub const fn set_state_gas_spilled(&mut self, val: u64) {
+        self.state_gas_spilled = val;
+    }
+
+    /// Adds `delta` to the spilled state gas, saturating.
+    ///
+    /// Used to merge a successful child frame's spilled state gas into this
+    /// (parent) frame so a later parent rollback can return it.
+    #[inline]
+    pub const fn add_state_gas_spilled(&mut self, delta: u64) {
+        self.state_gas_spilled = self.state_gas_spilled.saturating_add(delta);
+    }
+
     /// Returns the refunded gas.
     #[inline]
     pub const fn refunded(&self) -> i64 {
@@ -139,9 +171,34 @@ impl GasTracker {
         let success = self.record_regular_cost(spill);
         if success {
             self.state_gas_spent = self.state_gas_spent.saturating_add(cost as i64);
+            self.state_gas_spilled = self.state_gas_spilled.saturating_add(spill);
             self.reservoir = 0;
         }
         success
+    }
+
+    /// Rolls back this frame's state-gas charges on revert or exceptional halt
+    /// (EIP-8037).
+    ///
+    /// The state gas charged within the frame is refilled in last-in-first-out
+    /// order: the spilled portion is credited back to `remaining` (the pool
+    /// charged last) and the rest restores the reservoir to its frame-start
+    /// value. Concretely, `remaining` gains `state_gas_spilled` and the reservoir
+    /// becomes `reservoir + state_gas_spent - state_gas_spilled`, which is exactly
+    /// the reservoir the frame inherited. Both state-gas counters are then reset.
+    ///
+    /// On revert the resulting `remaining` (including the refilled spill) is
+    /// returned to the parent; on halt the caller additionally zeroes `remaining`
+    /// so the spilled gas is consumed while the reservoir is left untouched.
+    #[inline]
+    pub const fn rollback_state_gas(&mut self) {
+        self.reservoir = self
+            .reservoir
+            .saturating_add_signed(self.state_gas_spent)
+            .saturating_sub(self.state_gas_spilled);
+        self.remaining = self.remaining.saturating_add(self.state_gas_spilled);
+        self.state_gas_spent = 0;
+        self.state_gas_spilled = 0;
     }
 
     /// Refills the reservoir with state gas that is returned by 0→x→0 storage
@@ -152,12 +209,25 @@ impl GasTracker {
     /// transition is directly restored to the reservoir rather than routed
     /// through the capped refund counter.
     ///
-    /// `state_gas_spent` is decremented by the same amount and may become
-    /// negative if the matching 0→x charge was made by a parent frame. The
-    /// parent's total is reconciled on frame return.
+    /// `state_gas_spent` is decremented by the full `amount` and may become
+    /// negative if the matching 0→x charge was made by a parent frame (so this
+    /// frame's `state_gas_spilled` is zero and the whole refill lands in the
+    /// reservoir); the parent's total is reconciled on frame return.
+    ///
+    /// Because charges deduct from the reservoir first and from regular gas
+    /// (`remaining`) last, the refill credits the pool charged last first:
+    /// `remaining` is credited up to `state_gas_spilled` and any remainder tops
+    /// up the reservoir.
     #[inline]
     pub const fn refill_reservoir(&mut self, amount: u64) {
-        self.reservoir = self.reservoir.saturating_add(amount);
+        let to_remaining = if amount < self.state_gas_spilled {
+            amount
+        } else {
+            self.state_gas_spilled
+        };
+        self.remaining = self.remaining.saturating_add(to_remaining);
+        self.state_gas_spilled -= to_remaining;
+        self.reservoir = self.reservoir.saturating_add(amount - to_remaining);
         self.state_gas_spent = self.state_gas_spent.saturating_sub(amount as i64);
     }
 
@@ -467,6 +537,7 @@ impl InitialAndFloorGas {
 ///
 /// - Intrinsic gas
 /// - Number of tokens in calldata
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
@@ -474,6 +545,7 @@ pub fn calculate_initial_tx_gas(
     access_list_accounts: u64,
     access_list_storages: u64,
     authorization_list_num: u64,
+    eip2780: Option<gas_params::Eip2780TxInfo>,
 ) -> InitialAndFloorGas {
     GasParams::new_spec(spec_id).initial_tx_gas(
         input,
@@ -481,6 +553,7 @@ pub fn calculate_initial_tx_gas(
         access_list_accounts,
         access_list_storages,
         authorization_list_num,
+        eip2780,
     )
 }
 
@@ -491,8 +564,12 @@ pub fn calculate_initial_tx_gas(
 ///
 /// - Intrinsic gas
 /// - Number of tokens in calldata
-pub fn calculate_initial_tx_gas_for_tx(tx: impl Transaction, spec: SpecId) -> InitialAndFloorGas {
-    GasParams::new_spec(spec).initial_tx_gas_for_tx(tx)
+pub fn calculate_initial_tx_gas_for_tx(
+    tx: impl Transaction,
+    spec: SpecId,
+    eip2780: Option<gas_params::Eip2780TxInfo>,
+) -> InitialAndFloorGas {
+    GasParams::new_spec(spec).initial_tx_gas_for_tx(tx, eip2780)
 }
 
 /// Retrieve the total number of tokens in calldata.

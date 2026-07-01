@@ -7,10 +7,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Stop",
       "gas": {
-        "gas_spent": 35747,
+        "gas_spent": 45747,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": [],
       "output": {
@@ -22,10 +22,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Stop",
       "gas": {
-        "gas_spent": 375753,
+        "gas_spent": 385753,
         "state_gas_spent": 340000,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": [],
       "output": {

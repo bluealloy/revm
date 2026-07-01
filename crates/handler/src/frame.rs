@@ -21,6 +21,7 @@ use interpreter::{
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
+    eip8038,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     Address, Bytes, U256,
 };
@@ -154,9 +155,52 @@ impl EthFrame<EthInterpreter> {
         inputs: Box<CallInputs>,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
-        let charged_new_account_state_gas = inputs.charged_new_account_state_gas;
-        let gas =
+        let mut charged_new_account_state_gas = inputs.charged_new_account_state_gas;
+        let mut gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
+
+        // EIP-2780 top-level execution charges. Applied before any state changes
+        // so the recipient's pre-call state determines the charge.
+        let mut early_halt: Option<InstructionResult> = None;
+        if depth == 0 && ctx.cfg().is_amsterdam_eip2780_enabled() {
+            // Load the recipient account *with code* so the EIP-7702 delegation
+            // designator can be read (`load_account` alone does not populate
+            // `info.code`).
+            let acc_info = ctx
+                .journal_mut()
+                .load_account_with_code(inputs.target_address)
+                .ok()
+                .map(|a| a.info.clone());
+
+            if let Some(info) = acc_info {
+                // 7702 delegation: additional COLD_ACCOUNT_ACCESS regular gas.
+                let is_7702_delegated = info
+                    .code
+                    .as_ref()
+                    .and_then(Bytecode::eip7702_address)
+                    .is_some();
+                if is_7702_delegated && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS) {
+                    early_halt = Some(InstructionResult::OutOfGas);
+                }
+
+                // Empty recipient + nonzero value: charge `new_account_state_gas`.
+                // Refunded on revert via the existing `state_gas_spent`/reservoir
+                // reconciliation in `last_frame_result`.
+                if early_halt.is_none() {
+                    if let CallValue::Transfer(value) = inputs.value {
+                        if !value.is_zero() && info.is_empty() {
+                            let charge = ctx.cfg().gas_params().new_account_state_gas();
+                            if !gas.record_state_cost(charge) {
+                                early_halt = Some(InstructionResult::OutOfGas);
+                            } else {
+                                charged_new_account_state_gas = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let return_result = |instruction_result: InstructionResult| {
             Ok(ItemOrResult::Result(FrameResult::Call(CallOutcome {
                 result: InterpreterResult {
@@ -170,6 +214,10 @@ impl EthFrame<EthInterpreter> {
                 charged_new_account_state_gas,
             })))
         };
+
+        if let Some(halt) = early_halt {
+            return return_result(halt);
+        }
 
         // Check depth
         if depth > CALL_STACK_LIMIT as usize {
@@ -202,7 +250,20 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+        if let Some(mut result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+            // EIP-2780 depth-0 `new_account_state_gas` was charged to the local
+            // `gas` above, but the precompile path returns its own result gas, so
+            // re-apply that charge here (drawing from the reservoir). Only at depth
+            // 0: a precompile reached by a CALL opcode (depth > 0) already had the
+            // charge applied on the parent's tracker. Precompiles are never EIP-7702
+            // delegated, so only the state-gas portion applies.
+            if depth == 0 && charged_new_account_state_gas && result.result.is_ok() {
+                let charge = ctx.cfg().gas_params().new_account_state_gas();
+                if !result.gas.record_state_cost(charge) {
+                    result.gas.spend_all();
+                    result.result = InstructionResult::OutOfGas;
+                }
+            }
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 // Preserve the reservoir on the result gas so it can be reimbursed.
@@ -233,7 +294,8 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        this.get(EthFrame::invalid).clear(
+        let frame = this.get(EthFrame::invalid);
+        frame.clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -248,6 +310,13 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+        // `clear` rebuilds the interpreter's gas from `gas_limit`/reservoir, which
+        // discards any EIP-2780 depth-0 charges (delegate cold access, empty-
+        // recipient state gas) applied to `gas` above. Carry them over: `gas` was
+        // built with the same limit and reservoir, so this preserves the charges'
+        // effect on `remaining`, `reservoir`, and the state-gas counters while
+        // leaving memory gas (unused so far) at its fresh state.
+        frame.interpreter.gas = gas;
         Ok(ItemOrResult::Item(this.consume()))
     }
 
@@ -280,6 +349,7 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 address: None,
+                target_was_alive: false,
             })))
         };
 
@@ -313,7 +383,13 @@ impl EthFrame<EthInterpreter> {
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
-        journal.load_account(created_address)?;
+        // EIP-8037: capture whether the target leaf is already alive (existing,
+        // non-empty) before creation, so a successful create at a pre-existing
+        // balance-only account refunds the upfront `create_state_gas`.
+        let target_was_alive = {
+            let acc = journal.load_account(created_address)?;
+            !acc.info.is_empty()
+        };
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
@@ -341,7 +417,10 @@ impl EthFrame<EthInterpreter> {
         let gas_limit = inputs.gas_limit();
 
         this.get(EthFrame::invalid).clear(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::Create(CreateFrame {
+                created_address,
+                target_was_alive,
+            }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -441,10 +520,10 @@ impl EthFrame<EthInterpreter> {
                     frame.created_address,
                 );
 
-                ItemOrResult::Result(FrameResult::Create(CreateOutcome::new(
-                    interpreter_result,
-                    Some(frame.created_address),
-                )))
+                let mut create_outcome =
+                    CreateOutcome::new(interpreter_result, Some(frame.created_address));
+                create_outcome.target_was_alive = frame.target_was_alive;
+                ItemOrResult::Result(FrameResult::Create(create_outcome))
             }
         };
 
@@ -463,7 +542,7 @@ impl EthFrame<EthInterpreter> {
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
-                let out_gas = outcome.gas();
+                let mut out_gas = outcome.gas();
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
 
@@ -486,19 +565,28 @@ impl EthFrame<EthInterpreter> {
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);
 
-                // Return unspend gas.
+                // Copy returned data into the parent's memory on success or revert.
                 if ins_result.is_ok_or_revert() {
-                    interpreter.gas.erase_cost(out_gas.remaining());
                     interpreter
                         .memory
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
 
-                // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &out_gas);
+                // Settle the child's gas and merge it into the parent (returns
+                // unused regular gas, adopts the reservoir, and propagates state
+                // gas / refunds on success).
+                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &mut out_gas);
 
-                if ins_result.is_ok() {
-                    interpreter.gas.record_refund(out_gas.refunded());
+                // EIP-8037: the CALL charged `new_account_state_gas` upfront on the
+                // parent's tracker (for a value transfer to an empty recipient).
+                // When the call does not result in account creation (revert, halt,
+                // or an early failure such as insufficient balance), refund that
+                // upfront charge to the parent's reservoir — the child rollback in
+                // `handle_reservoir_remaining_gas` cannot, since the charge lives on
+                // the parent, not the child.
+                if !ins_result.is_ok() && outcome.charged_new_account_state_gas {
+                    let charge = ctx.cfg().gas_params().new_account_state_gas();
+                    interpreter.gas.refill_reservoir(charge);
                 }
             }
             FrameResult::Create(outcome) => {
@@ -521,32 +609,33 @@ impl EthFrame<EthInterpreter> {
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
+                let mut create_gas = *outcome.gas();
                 let this_gas = &mut interpreter.gas;
-                // Refund unused gas for success and revert cases.
-                if instruction_result.is_ok_or_revert() {
-                    this_gas.erase_cost(outcome.gas().remaining());
-                }
 
-                // handle reservoir remaining gas
-                handle_reservoir_remaining_gas(instruction_result, this_gas, outcome.gas());
+                // Settle the child's gas and merge it into the parent (returns
+                // unused regular gas, adopts the reservoir, and propagates state
+                // gas / refunds on success).
+                handle_reservoir_remaining_gas(instruction_result, this_gas, &mut create_gas);
 
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker. When the child fails to deploy a contract
-                // (revert, halt, or early-fail paths that return `address == None`
-                // such as nonce overflow, depth, OutOfFunds), refund the upfront
-                // charge to the reservoir and undo it on `state_gas_spent` via
-                // `refill_reservoir` (matching 0→x→0 storage restoration). The
-                // nonce-overflow path reports `InstructionResult::Return` (ok)
-                // with `address == None`, so gate on address rather than the result.
+                // this frame's tracker. Refund it via `refill_reservoir` (matching
+                // 0→x→0 storage restoration) when no new account leaf ends up
+                // created: either the child failed to deploy (revert, halt, or
+                // early-fail paths that return `address == None` such as nonce
+                // overflow, depth, OutOfFunds — the nonce-overflow path reports
+                // `InstructionResult::Return` (ok) with `address == None`, so gate
+                // on address rather than the result), or it succeeded at a
+                // pre-existing alive (balance-only) target.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
-                if create_failed && ctx.cfg().is_amsterdam_eip8037_enabled() {
+                if (create_failed || outcome.target_was_alive)
+                    && ctx.cfg().is_amsterdam_eip8037_enabled()
+                {
                     let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
                     this_gas.refill_reservoir(state_gas_charged);
                 }
 
                 let stack_item = if instruction_result.is_ok() {
-                    this_gas.record_refund(outcome.gas().refunded());
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
                     U256::ZERO
@@ -561,47 +650,62 @@ impl EthFrame<EthInterpreter> {
     }
 }
 
-/// Handles the remaining gas of the parent frame.
+/// Settles a returning child frame's gas and merges it into the parent
+/// (EIP-8037 reservoir model).
+///
+/// First the child *settles its own gas*: a failing frame (revert or halt) rolls
+/// its state-gas charges back in last-in-first-out order
+/// ([`Gas::rollback_state_gas`]) — crediting the spilled portion back to its
+/// `remaining` and restoring the reservoir to the value it inherited — and drops
+/// its execution refund counter; an exceptional halt additionally consumes the
+/// child's regular gas.
+///
+/// Then the parent *merges* the settled child:
+/// - unused regular gas (`remaining`, including any spill returned on revert)
+///   flows back to the parent on success or revert; a halt consumes it.
+/// - the reservoir, a shared state-gas pool the child inherited at call time, is
+///   always adopted from the child (restored to the inherited value on
+///   revert/halt).
+/// - net state gas, its spilled portion, and the refund counter persist only on
+///   success; on revert/halt the child's state changes roll back and contribute
+///   nothing.
 #[inline]
 pub const fn handle_reservoir_remaining_gas(
     instruction_result: InstructionResult,
     parent_gas: &mut Gas,
-    child_gas: &Gas,
+    child_gas: &mut Gas,
 ) {
+    // Settle the child's own gas for its stop reason.
+    if !instruction_result.is_ok() {
+        child_gas.rollback_state_gas();
+        child_gas.set_refunded(0);
+    }
+    let is_halt = !instruction_result.is_ok_or_revert();
+    if is_halt {
+        // Exceptional halt consumes the child's regular gas (including the spill
+        // just credited back by `rollback_state_gas`); the reservoir is left
+        // restored to the inherited value for the parent.
+        child_gas.spend_all();
+    }
+
+    // Merge the settled child into the parent.
+    if instruction_result.is_ok_or_revert() {
+        parent_gas.erase_cost(child_gas.remaining());
+    }
+    parent_gas.set_reservoir(child_gas.reservoir());
     if instruction_result.is_ok() {
-        // On success: parent takes the child's final reservoir.
-        parent_gas.set_reservoir(child_gas.reservoir());
-        // Accumulate child's state gas into parent's total.
-        // Parent may have already charged state gas (e.g., new_account + create) before
-        // creating the child frame. Child starts with state_gas_spent=0, so we must add
-        // rather than overwrite to preserve the parent's prior charges.
-        //
-        // `child.state_gas_spent()` can be negative (EIP-8037 issue #2) when the
-        // child did more 0→x→0 restorations than 0→x creations; the negative
+        // Parent may have already charged state gas (e.g. new_account + create)
+        // before creating the child frame, so add rather than overwrite. The
+        // child's `state_gas_spent` can be negative (EIP-8037 issue #2) when it
+        // did more 0→x→0 restorations than 0→x creations; the negative
         // contribution is the parent's matching charge flowing back out.
         parent_gas.set_state_gas_spent(
             parent_gas
                 .state_gas_spent()
                 .saturating_add(child_gas.state_gas_spent()),
         );
-    } else {
-        // On revert/halt: the child's state changes are rolled back, so any
-        // 0→x→0 refills the child (or its descendants) credited to the
-        // reservoir must unwind too — the underlying clears no longer exist.
-        //
-        // Invariant when no reservoir→remaining spill happened in the child:
-        //     pre_call_reservoir = child.reservoir + child.state_gas_spent
-        // because every reservoir-funded `record_state_cost(c)` increments
-        // state_gas_spent by `c` while decrementing reservoir by `c`, and every
-        // `refill_reservoir(r)` does the opposite. Adding the (possibly negative)
-        // state_gas_spent back to the final reservoir recovers the pre-call value
-        // — discarding the negative branch (the old `.max(0)`) would leak
-        // grandchild refill credits up through a reverting parent.
-        parent_gas.set_reservoir(
-            child_gas
-                .reservoir()
-                .saturating_add_signed(child_gas.state_gas_spent()),
-        );
+        parent_gas.add_state_gas_spilled(child_gas.state_gas_spilled());
+        parent_gas.record_refund(child_gas.refunded());
     }
 }
 
@@ -633,7 +737,7 @@ pub fn return_create<CTX: ContextTr>(
     }
 
     // EIP-170: Contract code size limit to 0x6000 (~25kb)
-    // EIP-7954 increased this limit to 0x8000 (~32kb).
+    // EIP-7954 increased this limit to 0x10000 (64kb).
     // This must be checked BEFORE charging state gas for code deposit,
     // so that oversized code does not incur storage gas costs.
     if spec_id.is_enabled_in(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {

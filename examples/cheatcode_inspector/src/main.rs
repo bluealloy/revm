@@ -137,9 +137,9 @@ impl JournalTr for Backend {
         self.journaled_state.set_spec_id(spec_id);
     }
 
-    fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+    fn set_eip7708_config(&mut self, disabled: bool, eip8246_delayed_clear_disabled: bool) {
         self.journaled_state
-            .set_eip7708_config(disabled, delayed_burn_disabled);
+            .set_eip7708_config(disabled, eip8246_delayed_clear_disabled);
     }
 
     fn touch_account(&mut self, address: Address) {

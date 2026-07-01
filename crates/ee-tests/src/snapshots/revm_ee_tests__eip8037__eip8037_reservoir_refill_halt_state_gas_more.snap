@@ -11,7 +11,7 @@ expression: "&result"
       "gas_spent": 30000,
       "state_gas_spent": 0,
       "gas_refunded": 0,
-      "floor_gas": 21000
+      "floor_gas": 12000
     },
     "logs": []
   }

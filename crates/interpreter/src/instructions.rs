@@ -125,6 +125,18 @@ pub const fn gas_table_spec(spec: SpecId) -> GasTable {
         table[STATICCALL as usize] = gas::WARM_STORAGE_READ_COST as u16;
     }
 
+    if spec.is_enabled_in(AMSTERDAM) {
+        // EIP-8038 §"EXT* family update": EXTCODESIZE and EXTCODECOPY perform two
+        // database reads (load the account object, then read its code), so their
+        // per-access base is charged an extra WARM_ACCESS on top of the normal
+        // account access. WARM_ACCESS itself is unchanged by EIP-8038 (100), so
+        // every other access opcode keeps its Berlin warm base; only these two
+        // change. The dynamic cold premium is still added by `load_account`.
+        let warm = primitives::eip8038::WARM_ACCESS as u16;
+        table[EXTCODESIZE as usize] = warm + warm;
+        table[EXTCODECOPY as usize] = warm + warm;
+    }
+
     table
 }
 
@@ -498,5 +510,25 @@ mod tests {
                 "Opcode 0x{i:X?} is not handled",
             );
         }
+    }
+
+    #[test]
+    fn amsterdam_eip8038_ext_family_second_read() {
+        use super::gas_table_spec;
+        use primitives::hardfork::SpecId;
+
+        let warm = primitives::eip8038::WARM_ACCESS as u16;
+        let table = gas_table_spec(SpecId::AMSTERDAM);
+        // EIP-8038 §"EXT* family update": EXTCODESIZE / EXTCODECOPY make a second
+        // database read, charged an extra WARM_ACCESS on the static base.
+        assert_eq!(table[EXTCODESIZE as usize], warm + warm);
+        assert_eq!(table[EXTCODECOPY as usize], warm + warm);
+        // Other account-access opcodes keep a single WARM_ACCESS base.
+        assert_eq!(table[EXTCODEHASH as usize], warm);
+        assert_eq!(table[BALANCE as usize], warm);
+        assert_eq!(table[SLOAD as usize], warm);
+        // The surcharge is Amsterdam-only: pre-Amsterdam EXTCODESIZE == EXTCODEHASH.
+        let prague = gas_table_spec(SpecId::PRAGUE);
+        assert_eq!(prague[EXTCODESIZE as usize], prague[EXTCODEHASH as usize]);
     }
 }
