@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      cargo_features:
+        description: "Optional Cargo features for cargo codspeed build, e.g. revm-precompile/gmp"
+        required: false
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -28,7 +33,14 @@ jobs:
         with:
           tool: cargo-codspeed
       - name: Build the benchmark target(s)
-        run: cargo codspeed build --profile profiling --workspace --exclude '*example*'
+        env:
+          CARGO_FEATURES: ${{ inputs.cargo_features }}
+        run: |
+          if [ -n "$CARGO_FEATURES" ]; then
+            cargo codspeed build --profile profiling --workspace --exclude '*example*' --features "$CARGO_FEATURES"
+          else
+            cargo codspeed build --profile profiling --workspace --exclude '*example*'
+          fi
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@a4a36bb07c0638b0b4ca52bf1f3dad1b4289e52f # v4.18.1
         with:
