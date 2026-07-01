@@ -24,6 +24,7 @@ context-interface.workspace = true
 
 # modexp precompiles
 aurora-engine-modexp.workspace = true
+malachite = { workspace = true, optional = true }
 # gmp ffi
 gmp-mpfr-sys = { workspace = true, default-features = false, optional = true }
 
@@ -89,12 +90,12 @@ std = [
 	"secp256k1?/std",
 	"ark-bn254/std",
 	"ark-bls12-381/std",
-	"aurora-engine-modexp/std",
 	"ark-ec/std",
 	"ark-ff/std",
 	"ark-serialize/std",
 	"ark-std/std",
 	"p256/std",
+	"dep:malachite",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]

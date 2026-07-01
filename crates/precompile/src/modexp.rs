@@ -136,7 +136,30 @@ pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     result.to_be_bytes()
 }
 
-#[cfg(not(feature = "gmp"))]
+#[cfg(all(not(feature = "gmp"), feature = "std"))]
+pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
+    use malachite::{
+        base::num::{arithmetic::traits::ModPow, conversion::traits::PowerOf2Digits},
+        Natural,
+    };
+
+    if modulus.iter().all(|&byte| byte == 0) {
+        return Vec::new();
+    }
+
+    let base = Natural::from_power_of_2_digits_desc(8, base.iter().copied())
+        .expect("u8 digits are always valid base-256 digits");
+    let exponent = Natural::from_power_of_2_digits_desc(8, exponent.iter().copied())
+        .expect("u8 digits are always valid base-256 digits");
+    let modulus = Natural::from_power_of_2_digits_desc(8, modulus.iter().copied())
+        .expect("u8 digits are always valid base-256 digits");
+
+    (base % &modulus)
+        .mod_pow(exponent, &modulus)
+        .to_power_of_2_digits_desc(8)
+}
+
+#[cfg(all(not(feature = "gmp"), not(feature = "std")))]
 pub(crate) fn modexp(base: &[u8], exponent: &[u8], modulus: &[u8]) -> Vec<u8> {
     aurora_engine_modexp::modexp(base, exponent, modulus)
 }

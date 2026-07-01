@@ -59,9 +59,13 @@ cfg_if::cfg_if! {
     }
 }
 
-// silence aurora-engine-modexp if gmp is enabled
-#[cfg(feature = "gmp")]
+// silence aurora-engine-modexp when std uses malachite or gmp takes precedence.
+#[cfg(any(feature = "gmp", feature = "std"))]
 use aurora_engine_modexp as _;
+
+// silence malachite if gmp is enabled, because gmp takes precedence for MODEXP.
+#[cfg(all(feature = "gmp", feature = "std"))]
+use malachite as _;
 
 // silence p256 lint as aws-lc-rs will be used if both are enabled.
 #[cfg(feature = "p256-aws-lc-rs")]
