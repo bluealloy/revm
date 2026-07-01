@@ -64,11 +64,36 @@ pub fn g1_msm(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
 mod test {
     use super::*;
     use primitives::{hex, Bytes};
+    use std::vec::Vec;
+
+    const SCALAR_MODULUS: [u8; SCALAR_LENGTH] =
+        hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+
+    fn g1_generator_with_scalar_modulus() -> Bytes {
+        let mut input = Vec::with_capacity(G1_MSM_INPUT_LENGTH);
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"
+        ));
+        input.extend_from_slice(&[0u8; 16]);
+        input.extend_from_slice(&hex!(
+            "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
+        ));
+        input.extend_from_slice(&SCALAR_MODULUS);
+        input.into()
+    }
 
     #[test]
     fn bls_g1multiexp_g1_not_on_curve_but_in_subgroup() {
         let input = Bytes::from(hex!("000000000000000000000000000000000a2833e497b38ee3ca5c62828bf4887a9f940c9e426c7890a759c20f248c23a7210d2432f4c98a514e524b5184a0ddac00000000000000000000000000000000150772d56bf9509469f9ebcd6e47570429fd31b0e262b66d512e245c38ec37255529f2271fd70066473e393a8bead0c30000000000000000000000000000000000000000000000000000000000000000"));
         let fail = g1_msm(&input, G1_MSM_BASE_GAS_FEE);
         assert_eq!(fail, Err(PrecompileHalt::Bls12381G1NotOnCurve));
+    }
+
+    #[test]
+    fn bls_g1msm_scalar_modulus_returns_infinity() {
+        let output = g1_msm(&g1_generator_with_scalar_modulus(), G1_MSM_BASE_GAS_FEE).unwrap();
+        assert_eq!(output.gas_used, G1_MSM_BASE_GAS_FEE);
+        assert_eq!(output.bytes, Bytes::from(vec![0; PADDED_G1_LENGTH]));
     }
 }
