@@ -5,8 +5,8 @@ use super::{
 };
 use crate::{
     bls12_381_const::{
-        PADDED_G1_LENGTH, PADDED_G2_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH,
-        PAIRING_MULTIPLIER_BASE, PAIRING_OFFSET_BASE,
+        PADDED_G1_LENGTH, PAIRING_ADDRESS, PAIRING_INPUT_LENGTH, PAIRING_MULTIPLIER_BASE,
+        PAIRING_OFFSET_BASE,
     },
     crypto, eth_precompile_fn, EthPrecompileOutput, EthPrecompileResult, Precompile,
     PrecompileHalt, PrecompileId,
@@ -49,11 +49,8 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
 
     // Collect pairs of points for the pairing check
     let mut pairs: Vec<PairingPair> = Vec::with_capacity(k);
-    for i in 0..k {
-        let encoded_g1_element =
-            &input[i * PAIRING_INPUT_LENGTH..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH];
-        let encoded_g2_element = &input[i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH
-            ..i * PAIRING_INPUT_LENGTH + PADDED_G1_LENGTH + PADDED_G2_LENGTH];
+    for pair in input.chunks_exact(PAIRING_INPUT_LENGTH) {
+        let (encoded_g1_element, encoded_g2_element) = pair.split_at(PADDED_G1_LENGTH);
 
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;
         let [b_x_0, b_x_1, b_y_0, b_y_1] = remove_g2_padding(encoded_g2_element)?;

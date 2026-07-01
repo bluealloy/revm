@@ -1,5 +1,5 @@
 //! BN128 precompile using Arkworks BLS12-381 implementation.
-use super::{FQ2_LEN, FQ_LEN, G1_LEN, SCALAR_LEN};
+use super::{FQ2_LEN, FQ_LEN, G1_LEN, G2_LEN, SCALAR_LEN};
 use crate::PrecompileHalt;
 use std::vec::Vec;
 
@@ -18,9 +18,7 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 ///
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
-fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHalt> {
-    assert_eq!(input_be.len(), FQ_LEN, "input must be {FQ_LEN} bytes");
-
+fn read_fq(input_be: &[u8; FQ_LEN]) -> Result<Fq, PrecompileHalt> {
     let mut input_le = [0u8; FQ_LEN];
     input_le.copy_from_slice(input_be);
 
@@ -42,8 +40,12 @@ fn read_fq(input_be: &[u8]) -> Result<Fq, PrecompileHalt> {
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
 fn read_fq2(input: &[u8]) -> Result<Fq2, PrecompileHalt> {
-    let y = read_fq(&input[..FQ_LEN])?;
-    let x = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
+    let input: &[u8; FQ2_LEN] = input[..FQ2_LEN]
+        .try_into()
+        .expect("input must be at least FQ2_LEN bytes");
+    let (y, x) = input.split_at(FQ_LEN);
+    let y = read_fq(y.try_into().expect("split must yield FQ_LEN bytes"))?;
+    let x = read_fq(x.try_into().expect("split must yield FQ_LEN bytes"))?;
 
     Ok(Fq2::new(x, y))
 }
@@ -108,8 +110,12 @@ fn new_g2_point(x: Fq2, y: Fq2) -> Result<G2Affine, PrecompileHalt> {
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
 pub(super) fn read_g1_point(input: &[u8]) -> Result<G1Affine, PrecompileHalt> {
-    let px = read_fq(&input[0..FQ_LEN])?;
-    let py = read_fq(&input[FQ_LEN..2 * FQ_LEN])?;
+    let input: &[u8; G1_LEN] = input[..G1_LEN]
+        .try_into()
+        .expect("input must be at least G1_LEN bytes");
+    let (px, py) = input.split_at(FQ_LEN);
+    let px = read_fq(px.try_into().expect("split must yield FQ_LEN bytes"))?;
+    let py = read_fq(py.try_into().expect("split must yield FQ_LEN bytes"))?;
     new_g1_point(px, py)
 }
 
@@ -156,8 +162,12 @@ pub(super) fn encode_g1_point(point: G1Affine) -> [u8; G1_LEN] {
 /// Panics if the input is not at least 128 bytes long.
 #[inline]
 pub(super) fn read_g2_point(input: &[u8]) -> Result<G2Affine, PrecompileHalt> {
-    let ba = read_fq2(&input[0..FQ2_LEN])?;
-    let bb = read_fq2(&input[FQ2_LEN..2 * FQ2_LEN])?;
+    let input: &[u8; G2_LEN] = input[..G2_LEN]
+        .try_into()
+        .expect("input must be at least G2_LEN bytes");
+    let (ba, bb) = input.split_at(FQ2_LEN);
+    let ba = read_fq2(ba)?;
+    let bb = read_fq2(bb)?;
     new_g2_point(ba, bb)
 }
 
@@ -170,12 +180,7 @@ pub(super) fn read_g2_point(input: &[u8]) -> Result<G2Affine, PrecompileHalt> {
 /// If `input.len()` is not equal to [`SCALAR_LEN`].
 #[inline]
 pub(super) fn read_scalar(input: &[u8]) -> Fr {
-    assert_eq!(
-        input.len(),
-        SCALAR_LEN,
-        "unexpected scalar length. got {}, expected {SCALAR_LEN}",
-        input.len()
-    );
+    let input: &[u8; SCALAR_LEN] = input.try_into().expect("input must be SCALAR_LEN bytes");
     Fr::from_be_bytes_mod_order(input)
 }
 
