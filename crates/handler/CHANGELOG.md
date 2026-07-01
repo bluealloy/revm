@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v41.0.0...revm-handler-v42.0.0) - 2026-07-01
+
+### Added
+
+- make max refund quotient configurable ([#3757](https://github.com/bluealloy/revm/pull/3757))
+
+### Fixed
+
+- *(inspect)* finalize journal on error to prevent EIP-2929 warm set leak ([#3780](https://github.com/bluealloy/revm/pull/3780))
+- faillible refund ([#3758](https://github.com/bluealloy/revm/pull/3758))
+
+### Other
+
+- clarify EIP-7702 regular-gas GasId names ([#3725](https://github.com/bluealloy/revm/pull/3725))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v20.0.3...revm-handler-v41.0.0) - 2026-06-11
 
 ### Other
