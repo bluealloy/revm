@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v41.0.0...revm-interpreter-v41.1.0) - 2026-07-01
+
+### Added
+
+- make max refund quotient configurable ([#3757](https://github.com/bluealloy/revm/pull/3757))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v37.0.3...revm-interpreter-v41.0.0) - 2026-06-11
 
 ### Added
