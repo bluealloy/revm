@@ -655,9 +655,11 @@ impl GasParams {
     }
 
     /// Cold storage cost.
+    ///
+    /// This includes the warm storage read cost plus the additional cold storage cost.
     #[inline]
     pub fn cold_storage_cost(&self) -> u64 {
-        self.get(GasId::cold_storage_cost())
+        self.cold_storage_additional_cost() + self.warm_storage_read_cost()
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.
@@ -1596,6 +1598,24 @@ mod tests {
         let mut custom = london;
         custom.override_gas([(GasId::max_refund_quotient(), 10)]);
         assert_eq!(custom.max_refund_quotient(), 10);
+    }
+
+    #[test]
+    fn test_cold_storage_cost() {
+        use crate::cfg::gas;
+
+        let istanbul = GasParams::new_spec(SpecId::ISTANBUL);
+        assert_eq!(istanbul.cold_storage_cost(), 0);
+
+        let berlin = GasParams::new_spec(SpecId::BERLIN);
+        assert_eq!(berlin.cold_storage_cost(), gas::COLD_SLOAD_COST);
+
+        let mut custom = berlin;
+        custom.override_gas([
+            (GasId::cold_storage_additional_cost(), 3000),
+            (GasId::warm_storage_read_cost(), 200),
+        ]);
+        assert_eq!(custom.cold_storage_cost(), 3200);
     }
 
     #[test]
