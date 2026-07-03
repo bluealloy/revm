@@ -35,6 +35,7 @@ members = [
     "examples/custom_opcodes",
     "examples/custom_precompile_journal",
     "examples/bal_example",
+    "examples/gas_estimation",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
