@@ -1,0 +1,58 @@
+name: Auto Fast-Forward from upstream
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-fast-forward-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fast-forward from upstream default branch
+        env:
+          UPSTREAM_REPO: bluealloy/revm
+        run: |
+          set -euo pipefail
+
+          default_branch="${{ github.event.repository.default_branch }}"
+
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch upstream "$default_branch"
+          git fetch origin "$default_branch"
+
+          local_sha="$(git rev-parse "origin/$default_branch")"
+          upstream_sha="$(git rev-parse "upstream/$default_branch")"
+
+          if [ "$local_sha" = "$upstream_sha" ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+
+          # Only continue on true fast-forward. If this is not a clean ff, do not rewrite.
+          if git merge-base --is-ancestor "$local_sha" "upstream/$default_branch"; then
+            git checkout "$default_branch"
+            git merge --ff-only "upstream/$default_branch"
+            git push origin "$default_branch"
+            echo "Fast-forwarded $default_branch to upstream."
+          else
+            echo "Upstream is not a fast-forward from current HEAD. Manual merge/rebase required."
+            exit 1
+          fi
