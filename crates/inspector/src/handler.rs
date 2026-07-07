@@ -29,6 +29,7 @@ use state::bytecode::opcode;
 /// * [`Handler::execution`] replaced with [`InspectorHandler::inspect_execution`]
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
 ///   * `run_exec_loop` calls `inspect_frame_init` and `inspect_frame_run` that call inspector inside.
+/// * [`Handler::run_exec_frame`] replaced with [`InspectorHandler::inspect_run_exec_frame`]
 /// * [`Handler::run_system_call`] replaced with [`InspectorHandler::inspect_run_system_call`]
 pub trait InspectorHandler: Handler
 where
@@ -111,30 +112,39 @@ where
         evm: &mut Self::Evm,
         first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
-        let res = evm.inspect_frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
+        match evm.inspect_frame_init(first_frame_input)? {
+            // First frame produced an immediate result; no frame was pushed.
+            ItemOrResult::Result(frame_result) => Ok(frame_result),
+            // First frame was pushed onto the stack; run it (and its subframes).
+            ItemOrResult::Item(_) => self.inspect_run_exec_frame(evm),
         }
+    }
 
+    /// Recursively runs the frame on top of the frame stack to completion with
+    /// inspection support.
+    ///
+    /// Inspection counterpart of [`Handler::run_exec_frame`]: each nested
+    /// call/create pushes a child frame and recurses; a finished frame is popped
+    /// and its result fed back into the caller frame.
+    fn inspect_run_exec_frame(&mut self, evm: &mut Self::Evm) -> Result<FrameResult, Self::Error> {
         loop {
-            let call_or_result = evm.inspect_frame_run()?;
-
-            let result = match call_or_result {
+            match evm.inspect_frame_run()? {
+                // Frame requested a nested call/create.
                 ItemOrResult::Item(init) => {
-                    match evm.inspect_frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
+                    let child_result = match evm.inspect_frame_init(init)? {
+                        // Child frame created: recurse to run it to completion.
+                        ItemOrResult::Item(_) => self.inspect_run_exec_frame(evm)?,
+                        // No new frame was created (e.g. a precompile): use the result directly.
                         ItemOrResult::Result(result) => result,
-                    }
+                    };
+                    // Feed the child result into this (still-running) frame.
+                    evm.frame_return_result(child_result)?;
                 }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
+                // Frame finished: pop it and return its result to the caller.
+                ItemOrResult::Result(result) => {
+                    evm.frame_stack().pop();
+                    return Ok(result);
+                }
             }
         }
     }

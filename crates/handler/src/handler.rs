@@ -436,43 +436,50 @@ pub trait Handler {
 
     /* FRAMES */
 
-    /// Executes the main frame processing loop.
+    /// Executes the initial frame and drives execution to completion.
     ///
-    /// This loop manages the frame stack, processing each frame until execution completes.
-    /// For each iteration:
-    /// 1. Calls the current frame
-    /// 2. Handles the returned frame input or result
-    /// 3. Creates new frames or propagates results as needed
+    /// Initializes the first frame; if it resolves immediately (e.g. a precompile)
+    /// its result is returned directly, otherwise the pushed frame is run to
+    /// completion recursively by [`Handler::run_exec_frame`].
     #[inline]
     fn run_exec_loop(
         &mut self,
         evm: &mut Self::Evm,
         first_frame_input: <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameInit,
     ) -> Result<FrameResult, Self::Error> {
-        let res = evm.frame_init(first_frame_input)?;
-
-        if let ItemOrResult::Result(frame_result) = res {
-            return Ok(frame_result);
+        match evm.frame_init(first_frame_input)? {
+            // First frame produced an immediate result; no frame was pushed.
+            ItemOrResult::Result(frame_result) => Ok(frame_result),
+            // First frame was pushed onto the stack; run it (and its subframes).
+            ItemOrResult::Item(_) => self.run_exec_frame(evm),
         }
+    }
 
+    /// Recursively runs the frame on top of the frame stack to completion.
+    ///
+    /// Each nested call/create pushes a child frame and recurses. When a frame
+    /// finishes it is popped and its result returned to the caller frame, which
+    /// feeds it back in via [`EvmTr::frame_return_result`].
+    #[inline]
+    fn run_exec_frame(&mut self, evm: &mut Self::Evm) -> Result<FrameResult, Self::Error> {
         loop {
-            let call_or_result = evm.frame_run()?;
-
-            let result = match call_or_result {
+            match evm.frame_run()? {
+                // Frame requested a nested call/create.
                 ItemOrResult::Item(init) => {
-                    match evm.frame_init(init)? {
-                        ItemOrResult::Item(_) => {
-                            continue;
-                        }
-                        // Do not pop the frame since no new frame was created
+                    let child_result = match evm.frame_init(init)? {
+                        // Child frame created: recurse to run it to completion.
+                        ItemOrResult::Item(_) => self.run_exec_frame(evm)?,
+                        // No new frame was created (e.g. a precompile): use the result directly.
                         ItemOrResult::Result(result) => result,
-                    }
+                    };
+                    // Feed the child result into this (still-running) frame.
+                    evm.frame_return_result(child_result)?;
                 }
-                ItemOrResult::Result(result) => result,
-            };
-
-            if let Some(result) = evm.frame_return_result(result)? {
-                return Ok(result);
+                // Frame finished: pop it and return its result to the caller.
+                ItemOrResult::Result(result) => {
+                    evm.frame_stack().pop();
+                    return Ok(result);
+                }
             }
         }
     }

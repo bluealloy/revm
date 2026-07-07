@@ -34,6 +34,7 @@ members = [
     "examples/my_evm",
     "examples/custom_opcodes",
     "examples/custom_precompile_journal",
+    "examples/reentrant_precompile",
     "examples/bal_example",
 ]
 resolver = "2"
