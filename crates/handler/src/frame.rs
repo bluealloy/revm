@@ -21,7 +21,6 @@ use interpreter::{
 };
 use primitives::{
     constants::CALL_STACK_LIMIT,
-    eip8038,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
     Address, Bytes, U256,
 };
@@ -160,42 +159,28 @@ impl EthFrame<EthInterpreter> {
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, reservoir_remaining_gas);
 
         // EIP-2780 top-level execution charges. Applied before any state changes
-        // so the recipient's pre-call state determines the charge.
+        // so the recipient's pre-call state determines the charge. The
+        // delegation-target access is charged at the runtime gas phase
+        // (`apply_eip2780_runtime_gas`, warm/cold aware); only the new-account
+        // state gas is charged here, on the frame's tracker, so a revert rolls
+        // it back via the `state_gas_spent`/reservoir reconciliation in
+        // `last_frame_result`. Its affordability was already checked in the
+        // runtime gas phase, so the out-of-gas branch is a defensive backstop.
         let mut early_halt: Option<InstructionResult> = None;
         if depth == 0 && ctx.cfg().is_amsterdam_eip2780_enabled() {
-            // Load the recipient account *with code* so the EIP-7702 delegation
-            // designator can be read (`load_account` alone does not populate
-            // `info.code`).
-            let acc_info = ctx
+            let recipient_is_empty = ctx
                 .journal_mut()
-                .load_account_with_code(inputs.target_address)
-                .ok()
-                .map(|a| a.info.clone());
+                .load_account(inputs.target_address)
+                .map(|a| a.info.is_empty())
+                .unwrap_or(false);
 
-            if let Some(info) = acc_info {
-                // 7702 delegation: additional COLD_ACCOUNT_ACCESS regular gas.
-                let is_7702_delegated = info
-                    .code
-                    .as_ref()
-                    .and_then(Bytecode::eip7702_address)
-                    .is_some();
-                if is_7702_delegated && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS) {
-                    early_halt = Some(InstructionResult::OutOfGas);
-                }
-
-                // Empty recipient + nonzero value: charge `new_account_state_gas`.
-                // Refunded on revert via the existing `state_gas_spent`/reservoir
-                // reconciliation in `last_frame_result`.
-                if early_halt.is_none() {
-                    if let CallValue::Transfer(value) = inputs.value {
-                        if !value.is_zero() && info.is_empty() {
-                            let charge = ctx.cfg().gas_params().new_account_state_gas();
-                            if !gas.record_state_cost(charge) {
-                                early_halt = Some(InstructionResult::OutOfGas);
-                            } else {
-                                charged_new_account_state_gas = true;
-                            }
-                        }
+            if let CallValue::Transfer(value) = inputs.value {
+                if !value.is_zero() && recipient_is_empty {
+                    let charge = ctx.cfg().gas_params().new_account_state_gas();
+                    if !gas.record_state_cost(charge) {
+                        early_halt = Some(InstructionResult::OutOfGas);
+                    } else {
+                        charged_new_account_state_gas = true;
                     }
                 }
             }
@@ -391,6 +376,24 @@ impl EthFrame<EthInterpreter> {
             !acc.info.is_empty()
         };
 
+        // EIP-2780: a top-level create transaction pays the new-account state
+        // gas at runtime, only when the deployment target does not already
+        // exist. Charged on this frame's tracker so an initcode revert or halt
+        // refills it in LIFO order via `rollback_state_gas` (the spilled
+        // portion back to `gas_left`, the remainder to the reservoir).
+        // Pre-EIP-2780 the charge is part of the intrinsic gas instead.
+        let mut gas =
+            Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit(), reservoir_remaining_gas);
+        if depth == 0 && !target_was_alive && context.cfg().is_amsterdam_eip2780_enabled() {
+            let charge = context.cfg().gas_params().create_state_gas();
+            if !gas.record_state_cost(charge) {
+                // Runtime out-of-gas: the transaction stays valid and halts
+                // before the frame is entered; `last_frame_result` consumes the
+                // remaining gas.
+                return return_error(InstructionResult::OutOfGas);
+            }
+        }
+
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(
             inputs.caller(),
@@ -416,7 +419,8 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit();
 
-        this.get(EthFrame::invalid).clear(
+        let frame = this.get(EthFrame::invalid);
+        frame.clear(
             FrameData::Create(CreateFrame {
                 created_address,
                 target_was_alive,
@@ -432,6 +436,12 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+        // `clear` rebuilds the interpreter's gas from `gas_limit`/reservoir,
+        // which discards the EIP-2780 depth-0 create state-gas charge applied
+        // to `gas` above. Carry it over (same limit and reservoir, so this
+        // preserves the charge's effect on `remaining`, `reservoir`, and the
+        // state-gas counters).
+        frame.interpreter.gas = gas;
 
         Ok(ItemOrResult::Item(this.consume()))
     }

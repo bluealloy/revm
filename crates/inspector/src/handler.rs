@@ -6,10 +6,10 @@ use handler::{
 use interpreter::{
     instructions::{GasTable, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
-    FrameInput, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterTypes,
+    CallOutcome, CreateOutcome, FrameInput, Host, InitialAndFloorGas, InstructionResult,
+    Interpreter, InterpreterAction, InterpreterTypes,
 };
-use primitives::hints_util::cold_path;
+use primitives::{hints_util::cold_path, TxKind};
 use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -81,6 +81,19 @@ where
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
+        // EIP-2780: the transaction is valid but its gas cannot cover the
+        // state-dependent runtime charges — include it as an out-of-gas halt
+        // without entering the first frame (mirrors `Handler::execution`).
+        if init_and_floor_gas.runtime_oog {
+            let tx_gas_limit = evm.ctx().tx().gas_limit();
+            let mut frame_result = match evm.ctx().tx().kind() {
+                TxKind::Call(_) => FrameResult::Call(CallOutcome::new_oog(tx_gas_limit, 0..0, 0)),
+                TxKind::Create => FrameResult::Create(CreateOutcome::new_oog(tx_gas_limit, 0)),
+            };
+            self.last_frame_result(evm, &mut frame_result)?;
+            return Ok(frame_result);
+        }
+
         // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
         let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),

@@ -375,6 +375,17 @@ pub struct InitialAndFloorGas {
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
+    /// EIP-2780: the transaction passed the intrinsic validity check but its gas
+    /// cannot cover the state-dependent runtime charges applied in the
+    /// pre-execution phase (EIP-7702 authority charges, recipient
+    /// delegation-target access, new-account state gas).
+    ///
+    /// The transaction stays valid and included: execution is skipped, all gas
+    /// is consumed, and all runtime state changes (including applied EIP-7702
+    /// delegations) are reverted, exactly like an out-of-gas halt inside a
+    /// frame.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub runtime_oog: bool,
 }
 
 impl InitialAndFloorGas {
@@ -388,6 +399,7 @@ impl InitialAndFloorGas {
             initial_state_gas: 0,
             state_refund: 0,
             floor_gas,
+            runtime_oog: false,
         }
     }
 
@@ -403,6 +415,7 @@ impl InitialAndFloorGas {
             initial_state_gas,
             state_refund: 0,
             floor_gas,
+            runtime_oog: false,
         }
     }
 
@@ -527,6 +540,52 @@ impl InitialAndFloorGas {
         reservoir += self.state_refund;
 
         (regular_gas_limit, reservoir)
+    }
+
+    /// Checked variant of [`Self::initial_gas_and_reservoir`].
+    ///
+    /// Returns `None` when the initial gas does not fit the transaction's gas
+    /// limit — either the regular gas exceeds `min(tx_gas_limit,
+    /// tx_gas_limit_cap)` or the state gas spilling out of the reservoir
+    /// exceeds the remaining regular budget. Used by the EIP-2780 runtime
+    /// phase, where state-dependent charges are folded into the initial gas
+    /// after validation and may exceed the supplied gas (an out-of-gas halt,
+    /// not an invalid transaction).
+    pub fn checked_initial_gas_and_reservoir(
+        &self,
+        tx_gas_limit: u64,
+        tx_gas_limit_cap: u64,
+    ) -> Option<(u64, u64)> {
+        let execution_gas = tx_gas_limit.checked_sub(self.initial_regular_gas())?;
+
+        // System calls pass InitialAndFloorGas with all zeros and should not be
+        // subject to the TX_MAX_GAS_LIMIT cap.
+        let tx_gas_limit_cap = if self.initial_total_gas() == 0 {
+            u64::MAX
+        } else {
+            tx_gas_limit_cap
+        };
+
+        let mut regular_gas_limit = core::cmp::min(tx_gas_limit, tx_gas_limit_cap)
+            .checked_sub(self.initial_regular_gas())?;
+        let mut reservoir = execution_gas - regular_gas_limit;
+
+        // Deduct initial state gas from the reservoir. When the reservoir is
+        // insufficient, the deficit is charged from the regular gas budget.
+        if reservoir >= self.initial_state_gas {
+            reservoir -= self.initial_state_gas;
+        } else {
+            regular_gas_limit =
+                regular_gas_limit.checked_sub(self.initial_state_gas - reservoir)?;
+            reservoir = 0;
+        }
+
+        // EIP-7702 state gas refund for existing authorities goes directly to
+        // the reservoir. In the Python spec, set_delegation adds this refund to
+        // state_gas_reservoir so it stays as state gas (not regular gas).
+        reservoir += self.state_refund;
+
+        Some((regular_gas_limit, reservoir))
     }
 }
 

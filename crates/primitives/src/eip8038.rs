@@ -66,18 +66,30 @@ pub const EIP7702_ECRECOVER_COST: u64 = 3_000;
 /// Calldata floor rate per token under EIP-7976 (Amsterdam).
 pub const TX_DATA_TOKEN_FLOOR: u64 = 16;
 
+/// `REGULAR_PER_AUTH_BASE_COST`: the state-independent regular-gas base charged
+/// per EIP-7702 authorization at the intrinsic phase under EIP-2780
+/// (ethereum/EIPs#11844).
+///
+/// `AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR + PRECOMPILE_ECRECOVER + COLD_ACCOUNT_ACCESS + 2 * WARM_ACCESS`
+/// = `101*16 + 3,000 + 3,000 + 200 = 7,816`. Covers the authorization's calldata,
+/// the ECDSA recovery, the authority's cold access, and the warm writes every
+/// authorization performs. The state-dependent remainder (`ACCOUNT_WRITE` and the
+/// new-account / delegation-bytes state gas) is charged at runtime, only for the
+/// authorities that incur it.
+pub const EIP7702_PER_AUTH_BASE_REGULAR: u64 = EIP7702_AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR
+    + EIP7702_ECRECOVER_COST
+    + COLD_ACCOUNT_ACCESS
+    + 2 * WARM_ACCESS;
+
 /// Regular-gas portion of EIP-7702 `PER_EMPTY_ACCOUNT_COST` under EIP-8038.
 ///
-/// Per execution-specs, the regular per-auth charge is
-/// `ACCOUNT_WRITE + REGULAR_PER_AUTH_BASE_COST`, where
-/// `REGULAR_PER_AUTH_BASE_COST = AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR + PRECOMPILE_ECRECOVER + COLD_ACCOUNT_ACCESS + 2 * WARM_ACCESS`.
-/// Evaluates to `8,000 + (101*16 + 3,000 + 3,000 + 200) = 8,000 + 7,816 = 15,816`.
+/// Per execution-specs, the pessimistic regular per-auth charge is
+/// `ACCOUNT_WRITE + REGULAR_PER_AUTH_BASE_COST` = `8,000 + 7,816 = 15,816`.
 /// (The per-auth state gas — `NEW_ACCOUNT + AUTH_BASE` — is charged separately.)
-pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = ACCOUNT_WRITE
-    + (EIP7702_AUTH_TUPLE_BYTES * TX_DATA_TOKEN_FLOOR
-        + EIP7702_ECRECOVER_COST
-        + COLD_ACCOUNT_ACCESS
-        + 2 * WARM_ACCESS);
+/// Used when EIP-2780 is disabled; with EIP-2780 only
+/// [`EIP7702_PER_AUTH_BASE_REGULAR`] is intrinsic and `ACCOUNT_WRITE` moves to
+/// the runtime phase.
+pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = ACCOUNT_WRITE + EIP7702_PER_AUTH_BASE_REGULAR;
 
 #[cfg(test)]
 mod tests {
@@ -96,6 +108,7 @@ mod tests {
         assert_eq!(ACCESS_LIST_ADDRESS_COST, 3_000);
         assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, 3_000);
         assert_eq!(CALL_VALUE, 10_300);
+        assert_eq!(EIP7702_PER_AUTH_BASE_REGULAR, 7_816);
         assert_eq!(EIP7702_PER_EMPTY_ACCOUNT_REGULAR, 15_816);
     }
 

@@ -15,8 +15,11 @@ use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
-use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
-use primitives::U256;
+use interpreter::{
+    interpreter_action::FrameInit, CallOutcome, CreateOutcome, Gas, InitialAndFloorGas,
+    SharedMemory,
+};
+use primitives::{TxKind, U256};
 
 /// Trait for errors that can occur during EVM execution.
 ///
@@ -210,6 +213,20 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
+        // EIP-2780: the transaction is valid but its gas cannot cover the
+        // state-dependent runtime charges. It is included as an out-of-gas
+        // halt: execution is skipped, all gas is consumed, and the runtime
+        // state changes were already reverted in the runtime gas phase.
+        if init_and_floor_gas.runtime_oog {
+            let tx_gas_limit = evm.ctx().tx().gas_limit();
+            let mut frame_result = match evm.ctx().tx().kind() {
+                TxKind::Call(_) => FrameResult::Call(CallOutcome::new_oog(tx_gas_limit, 0..0, 0)),
+                TxKind::Create => FrameResult::Create(CreateOutcome::new_oog(tx_gas_limit, 0)),
+            };
+            self.last_frame_result(evm, &mut frame_result)?;
+            return Ok(frame_result);
+        }
+
         // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
         let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
@@ -434,7 +451,16 @@ pub trait Handler {
         // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
         // it would otherwise stay consumed when the deployment is rolled back
         // or erased.
-        if create_refunds_state_gas && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
+        //
+        // Under EIP-2780 the charge is instead applied at runtime on the first
+        // frame's gas tracker, only when the deployment target does not
+        // already exist (`EthFrame::make_create_frame`), so a failure is
+        // already unwound by `rollback_state_gas` above and no extra refill
+        // must happen here.
+        if create_refunds_state_gas
+            && evm.ctx().cfg().is_amsterdam_eip8037_enabled()
+            && !evm.ctx().cfg().is_amsterdam_eip2780_enabled()
+        {
             let ctx = evm.ctx();
             let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
             gas.refill_reservoir(state_gas_charged);
