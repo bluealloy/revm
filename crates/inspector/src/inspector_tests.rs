@@ -3,10 +3,15 @@ mod tests {
     use crate::{
         InspectCommitEvm, InspectEvm, InspectSystemCallEvm, InspectorEvent, TestInspector,
     };
-    use context::{Context, TxEnv};
+    use context::{CfgEnv, Context, TxEnv};
     use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
     use handler::{ExecuteEvm, MainBuilder, MainContext};
-    use primitives::{address, Address, Bytes, TxKind, U256};
+    use primitives::{
+        address,
+        eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
+        hardfork::SpecId,
+        Address, Bytes, TxKind, B256, U256,
+    };
     use state::{bytecode::opcode, AccountInfo, Bytecode};
 
     #[test]
@@ -397,6 +402,84 @@ mod tests {
         assert_eq!(log_events.len(), 1, "Should have recorded one LOG event");
         let log = &log_events[0];
         assert_eq!(log.topics().len(), 0, "LOG0 should have 0 topics");
+    }
+
+    #[test]
+    fn test_eip7708_tx_value_transfer_log_is_inspected() {
+        let recipient = address!("4000000000000000000000000000000000000000");
+        let value = U256::from(1_000_000_000_000_000u128);
+
+        let ctx = Context::mainnet()
+            .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+            .with_db(BenchmarkDB::new_bytecode(Bytecode::new()));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm
+            .inspect_one_tx(
+                TxEnv::builder_for_bench()
+                    .to(recipient)
+                    .value(value)
+                    .gas_limit(300_000)
+                    .gas_price(0)
+                    .build_fill(),
+            )
+            .unwrap();
+        assert!(result.is_success());
+
+        let events = evm.inspector.get_events();
+        let transfer_log = events.iter().find_map(|event| {
+            let InspectorEvent::Log(log) = event else {
+                return None;
+            };
+            (log.address == ETH_TRANSFER_LOG_ADDRESS
+                && log.data.topics().len() == 3
+                && log.data.topics()[0] == ETH_TRANSFER_LOG_TOPIC
+                && log.data.topics()[1] == B256::left_padding_from(BENCH_CALLER.as_slice())
+                && log.data.topics()[2] == B256::left_padding_from(recipient.as_slice()))
+            .then_some(log)
+        });
+
+        assert!(
+            transfer_log.is_some(),
+            "expected inspector to receive EIP-7708 tx value transfer log"
+        );
+    }
+
+    #[test]
+    fn test_eip7708_selfdestruct_transfer_log_is_inspected() {
+        let code = Bytes::from(vec![opcode::CALLER, opcode::SELFDESTRUCT, opcode::STOP]);
+        let ctx = Context::mainnet()
+            .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(code)));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm
+            .inspect_one_tx(
+                TxEnv::builder_for_bench()
+                    .gas_limit(100_000)
+                    .gas_price(0)
+                    .build_fill(),
+            )
+            .unwrap();
+        assert!(result.is_success());
+
+        let events = evm.inspector.get_events();
+        let transfer_log = events.iter().find_map(|event| {
+            let InspectorEvent::Log(log) = event else {
+                return None;
+            };
+            (log.address == ETH_TRANSFER_LOG_ADDRESS
+                && log.data.topics().len() == 3
+                && log.data.topics()[0] == ETH_TRANSFER_LOG_TOPIC
+                && log.data.topics()[1] == B256::left_padding_from(BENCH_TARGET.as_slice())
+                && log.data.topics()[2] == B256::left_padding_from(BENCH_CALLER.as_slice()))
+            .then_some(log)
+        });
+
+        assert!(
+            transfer_log.is_some(),
+            "expected inspector to receive EIP-7708 selfdestruct transfer log"
+        );
     }
 
     #[test]

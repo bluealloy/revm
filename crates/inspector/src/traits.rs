@@ -10,7 +10,7 @@ use interpreter::{
 };
 
 use crate::{
-    handler::{frame_end, frame_start},
+    handler::{frame_end, frame_start, inspect_eip7708_transfer_logs},
     inspect_instructions, Inspector, JournalExt,
 };
 
@@ -122,7 +122,11 @@ pub trait InspectorEvmTr:
                     for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
                         inspector.log(ctx, log);
                     }
+                } else {
+                    inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
                 }
+            } else {
+                inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
             }
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
@@ -130,6 +134,7 @@ pub trait InspectorEvmTr:
 
         // if it is new frame, initialize the interpreter.
         let (ctx, inspector, frame) = self.ctx_inspector_frame();
+        inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
         if let Some(frame) = frame.eth_frame() {
             let interp = &mut frame.interpreter;
             inspector.initialize_interp(interp, ctx);
