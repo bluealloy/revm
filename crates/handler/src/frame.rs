@@ -323,6 +323,7 @@ impl EthFrame<EthInterpreter> {
         // applied uniformly in `return_result` when the create fails (revert,
         // halt, or early-fail with `address == None`), so early-fail results
         // only carry the reservoir they inherited from the parent.
+        let charged_create_state_gas = inputs.charged_create_state_gas();
         let return_error = |e| {
             Ok(ItemOrResult::Result(FrameResult::Create(CreateOutcome {
                 result: InterpreterResult {
@@ -335,6 +336,7 @@ impl EthFrame<EthInterpreter> {
                 },
                 address: None,
                 target_was_alive: false,
+                charged_create_state_gas,
             })))
         };
 
@@ -533,6 +535,10 @@ impl EthFrame<EthInterpreter> {
                 let mut create_outcome =
                     CreateOutcome::new(interpreter_result, Some(frame.created_address));
                 create_outcome.target_was_alive = frame.target_was_alive;
+                create_outcome.charged_create_state_gas = match &self.input {
+                    FrameInput::Create(inputs) => inputs.charged_create_state_gas(),
+                    _ => false,
+                };
                 ItemOrResult::Result(FrameResult::Create(create_outcome))
             }
         };
@@ -630,19 +636,29 @@ impl EthFrame<EthInterpreter> {
                 // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
                 // this frame's tracker. Refund it via `refill_reservoir` (matching
                 // 0→x→0 storage restoration) when no new account leaf ends up
-                // created: either the child failed to deploy (revert, halt, or
-                // early-fail paths that return `address == None` such as nonce
-                // overflow, depth, OutOfFunds — the nonce-overflow path reports
+                // created: the child failed to deploy (revert, halt, or early-fail
+                // paths that return `address == None` such as nonce overflow,
+                // depth, OutOfFunds — the nonce-overflow path reports
                 // `InstructionResult::Return` (ok) with `address == None`, so gate
-                // on address rather than the result), or it succeeded at a
-                // pre-existing alive (balance-only) target.
+                // on address rather than the result).
+                //
+                // Under the devnet-7 rules (EIP-2780 enabled) the opcode only
+                // charged when the destination did not exist, so the refund is
+                // gated on that charge. Pre-devnet-7 the charge was unconditional,
+                // so a success at a pre-existing alive (balance-only) target also
+                // refunds it.
                 let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
 
-                if (create_failed || outcome.target_was_alive)
-                    && ctx.cfg().is_amsterdam_eip8037_enabled()
-                {
-                    let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
-                    this_gas.refill_reservoir(state_gas_charged);
+                if ctx.cfg().is_amsterdam_eip8037_enabled() {
+                    let refund = if ctx.cfg().is_amsterdam_eip2780_enabled() {
+                        create_failed && outcome.charged_create_state_gas
+                    } else {
+                        create_failed || outcome.target_was_alive
+                    };
+                    if refund {
+                        let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
+                        this_gas.refill_reservoir(state_gas_charged);
+                    }
                 }
 
                 let stack_item = if instruction_result.is_ok() {

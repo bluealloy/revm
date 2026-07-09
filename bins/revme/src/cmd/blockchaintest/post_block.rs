@@ -115,7 +115,7 @@ where
 }
 
 pub const BUILDER_DEPOSIT_REQUEST_ADDRESS: Address =
-    address!("0x0000884d2AA32eAa155F59A2f24eFa73D9008282");
+    address!("0x0000BFF46984E3725691FA540A8C7589300D8282");
 
 /// EIP-8282: Builder deposit requests system call (request type `0x03`).
 pub(crate) fn system_call_eip8282_builder_deposit_request<EVM>(
@@ -129,7 +129,7 @@ where
 }
 
 pub const BUILDER_EXIT_REQUEST_ADDRESS: Address =
-    address!("0x000014574A74c805590AFF9499fc7A690f008282");
+    address!("0x000064D678505AD48F8CCB093BC65613800E8282");
 
 /// EIP-8282: Builder exit requests system call (request type `0x04`).
 pub(crate) fn system_call_eip8282_builder_exit_request<EVM>(evm: &mut EVM) -> Result<(), EVM::Error>

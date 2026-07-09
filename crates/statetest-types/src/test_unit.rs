@@ -166,11 +166,12 @@ mod tests {
             post: BTreeMap::default(),
             transaction: TransactionParts {
                 tx_type: None,
+                chain_id: None,
                 data: vec![],
                 gas_limit: vec![],
                 gas_price: None,
                 nonce: U256::ZERO,
-                secret_key: B256::ZERO,
+                secret_key: Some(B256::ZERO),
                 sender: None,
                 to: None,
                 value: vec![],

@@ -233,14 +233,22 @@ where
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        // Note: the slot is always cold-loaded (warmed), even when there is not
-        // enough gas to pay the cold cost. Skipping the load would avoid a DB
-        // read on a certain out-of-gas, but EIP-7928 (block access lists) records
-        // the slot access regardless of the subsequent OOG, so the warming must
-        // happen. The OOG outcome is unchanged: the cold charge below still fails.
+        // EIP-8038/7928 (devnet-7, EIPs#11854): the frame must cover the slot's
+        // access cost before the implicit storage read; if it cannot, SSTORE
+        // fails without the slot appearing in the block access list. The warm
+        // access portion is covered by the static gas charged above, so only
+        // the cold-additional cost is checked here; a cold load is skipped
+        // (and turned into an out-of-gas) when it cannot be paid.
+        //
+        // Pre-devnet-7 the slot is always cold-loaded (warmed), even when there
+        // is not enough gas to pay the cold cost, and the cold charge below
+        // fails afterwards.
+        let skip_cold_load = context.host.is_amsterdam_eip8037_enabled()
+            && context.host.is_amsterdam_eip2780_enabled()
+            && context.interpreter.gas.remaining() < context.host.gas_params().cold_storage_cost();
         context
             .host
-            .sstore_skip_cold_load(target, index, value, false)?
+            .sstore_skip_cold_load(target, index, value, skip_cold_load)?
     } else {
         context
             .host

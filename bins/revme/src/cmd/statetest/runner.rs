@@ -347,7 +347,9 @@ pub fn execute_test_suite(
                         return Err(TestError {
                             name,
                             path,
-                            kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
+                            kind: TestErrorKind::UnknownPrivateKey(
+                                unit.transaction.secret_key.unwrap_or_default(),
+                            ),
                         });
                     }
                 };

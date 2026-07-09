@@ -18,6 +18,10 @@ pub struct CreateOutcome {
     /// address no new account leaf is created, so the upfront `create_state_gas`
     /// is refunded to the parent's reservoir.
     pub target_was_alive: bool,
+    /// EIP-8037 (devnet-7): whether the CREATE opcode charged the conditional
+    /// `create_state_gas` on the parent's tracker (the destination did not
+    /// exist at access time). When the create fails the parent refunds it.
+    pub charged_create_state_gas: bool,
 }
 
 impl CreateOutcome {
@@ -36,6 +40,7 @@ impl CreateOutcome {
             result,
             address,
             target_was_alive: false,
+            charged_create_state_gas: false,
         }
     }
 

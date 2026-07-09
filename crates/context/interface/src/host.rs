@@ -69,6 +69,9 @@ pub trait Host {
     /// Returns whether state gas (EIP-8037) is enabled.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
+    /// Returns whether the EIP-2780 runtime gas phase is enabled.
+    fn is_amsterdam_eip2780_enabled(&self) -> bool;
+
     /* Database */
 
     /// Block hash, calls `ContextTr::journal_mut().db().block_hash(number)`
@@ -240,6 +243,10 @@ impl Host for DummyHost {
     }
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
+        false
+    }
+
+    fn is_amsterdam_eip2780_enabled(&self) -> bool {
         false
     }
 

@@ -1118,7 +1118,7 @@ impl GasParams {
             (auth_total_cost - auth_state_gas, auth_state_gas)
         };
 
-        let base_and_to_and_value_gas = match eip2780 {
+        let base_and_to_and_value_gas = match &eip2780 {
             None => {
                 let mut base = self.tx_base_stipend();
                 if is_create {
@@ -1127,7 +1127,7 @@ impl GasParams {
                 }
                 base
             }
-            Some(info) => self.eip2780_base_to_value_gas(is_create, &info),
+            Some(info) => self.eip2780_base_to_value_gas(is_create, info),
         };
 
         let mut initial_regular_gas = tokens_in_calldata * self.tx_token_cost()
@@ -1159,10 +1159,19 @@ impl GasParams {
 
         // Calculate gas floor. Introduced by EIP-7623, updated by EIP-7976, and
         // extended by EIP-7981 to include access-list data alongside calldata.
+        //
+        // Under EIP-2780 the floor is anchored on the decomposed regular-gas
+        // intrinsic base (`TX_BASE + to-based + value-based`, the same sum used
+        // for `base_and_to_and_value_gas` above) rather than the flat
+        // `tx_floor_cost_base_gas`, so it never undercuts the transaction's own
+        // intrinsic base.
         let access_list_floor_tokens =
             self.tx_floor_tokens_in_access_list(access_list_accounts, access_list_storages);
-        let floor_gas =
+        let mut floor_gas =
             self.tx_floor_cost(input) + access_list_floor_tokens * self.tx_floor_cost_per_token();
+        if eip2780.is_some() {
+            floor_gas = floor_gas - self.tx_floor_cost_base_gas() + base_and_to_and_value_gas;
+        }
 
         InitialAndFloorGas::default()
             .with_initial_regular_gas(initial_regular_gas)

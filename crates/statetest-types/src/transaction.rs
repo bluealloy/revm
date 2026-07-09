@@ -11,6 +11,9 @@ pub struct TransactionParts {
     /// Transaction type (0=Legacy, 1=EIP-2930, 2=EIP-1559, 3=EIP-4844, 4=EIP-7702)
     #[serde(rename = "type")]
     pub tx_type: Option<u8>,
+    /// Chain id of the transaction. If it differs from the network chain id the
+    /// transaction is expected to be rejected with `INVALID_CHAINID`.
+    pub chain_id: Option<U256>,
     /// Transaction data/input (multiple variants for different test cases)
     pub data: Vec<Bytes>,
     /// Gas limit values (multiple variants for different test cases)
@@ -19,8 +22,12 @@ pub struct TransactionParts {
     pub gas_price: Option<U256>,
     /// Transaction nonce
     pub nonce: U256,
-    /// Private key for signing the transaction
-    pub secret_key: B256,
+    /// Private key for signing the transaction.
+    ///
+    /// State tests are unsigned; the secret key stands in for a valid
+    /// signature. A fixture without one models an invalidly-signed
+    /// transaction (e.g. `test_bad_v_r_s`) and is expected to be rejected.
+    pub secret_key: Option<B256>,
     /// if sender is not present we need to derive it from secret key.
     #[serde(default)]
     pub sender: Option<Address>,

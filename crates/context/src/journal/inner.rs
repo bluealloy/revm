@@ -380,7 +380,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(&mut self.journal, address, account);
 
-        self.journal.push(ENTRY::code_changed(address));
+        let had_code_hash = account.info.code_hash;
+        let had_code = account.info.code.take();
+        self.journal
+            .push(ENTRY::code_changed(address, had_code_hash, had_code));
 
         account.info.code_hash = hash;
         account.info.code = Some(code);

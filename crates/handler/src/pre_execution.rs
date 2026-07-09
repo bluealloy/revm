@@ -5,7 +5,7 @@
 use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
 use context_interface::{
-    journaled_state::{account::JournaledAccountTr, JournalTr},
+    journaled_state::{account::JournaledAccountTr, JournalLoadError, JournalTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
@@ -290,85 +290,135 @@ pub fn apply_eip2780_runtime_gas<
     let delegation_bytes_state_gas = params.tx_eip7702_state_gas_bytecode();
     let (tx, journal) = context.tx_journal_mut();
 
+    // The recipient is read when the message is prepared (its access was
+    // already charged at the cold rate at the intrinsic phase), before the
+    // runtime charges are applied, so the read stays in the EIP-7928 block
+    // access list even if the runtime phase runs out of gas.
+    if let TxKind::Call(target) = tx.kind() {
+        journal.load_account_with_code(target)?;
+    }
+
     // All runtime state changes are reverted wholesale if the transaction
     // cannot afford the runtime charges.
     let checkpoint = journal.checkpoint();
 
+    // The runtime charges draw from the same gas the first frame will see.
+    // Track them on a real gas tracker so the phase stops at the first
+    // unaffordable charge: later authorities must not be loaded (observable
+    // through the EIP-7928 block access list).
+    let mut gas = init_and_floor_gas
+        .checked_initial_gas_and_reservoir(tx.gas_limit(), tx_gas_limit_cap)
+        .map(|(gas_limit, reservoir)| Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir))
+        .unwrap_or_else(|| Gas::new_with_regular_gas_and_reservoir(0, 0));
+
     let mut runtime_regular_gas: u64 = 0;
     let mut runtime_state_gas: u64 = 0;
+    let mut oog = false;
 
-    // Apply EIP-7702 authorizations, accumulating the per-authority runtime
-    // charges.
+    // Apply EIP-7702 authorizations, charging the per-authority runtime
+    // charges as the authorizations are applied.
     if tx.tx_type() == TransactionType::Eip7702 {
-        let (regular, state) = apply_auth_list_eip2780::<_, ERROR>(
+        // Accounts this transaction has already written (their `ACCOUNT_WRITE`
+        // is already paid): the sender's leaf is written at inclusion (priced
+        // into `TX_BASE`), and the recipient's when value is transferred
+        // (priced into `TX_VALUE_COST`).
+        let mut written_accounts: HashSet<Address> = HashSet::default();
+        written_accounts.insert(tx.caller());
+        if let TxKind::Call(target) = tx.kind() {
+            if !tx.value().is_zero() {
+                written_accounts.insert(target);
+            }
+        }
+        let (regular, state, auth_oog) = apply_auth_list_eip2780::<_, ERROR>(
             chain_id,
             tx.authorization_list(),
             journal,
             account_write_cost,
-            per_new_account_state_gas,
-            delegation_bytes_state_gas,
+            if is_eip8037 {
+                per_new_account_state_gas
+            } else {
+                0
+            },
+            if is_eip8037 {
+                delegation_bytes_state_gas
+            } else {
+                0
+            },
+            &mut written_accounts,
+            &mut gas,
         )?;
         runtime_regular_gas += regular;
         runtime_state_gas += state;
+        oog = auth_oog;
     }
 
-    // Load the recipient (adding it to `accessed_addresses`) and evaluate the
-    // recipient runtime charges. Evaluated after authorizations so a recipient
-    // materialized or delegated by an authorization in this transaction is
-    // seen in its post-authorization state. A self-transfer recipient is the
-    // (non-empty) sender, so the new-account charge never fires for it, while
-    // a delegated sender still pays for resolving its delegation.
-    let mut new_account_state_gas = 0u64;
-    if let TxKind::Call(target) = tx.kind() {
-        let (recipient_is_empty, delegation_target) = {
-            let acc = journal.load_account_with_code(target)?;
-            (
-                acc.info.is_empty(),
-                acc.info.code.as_ref().and_then(Bytecode::eip7702_address),
-            )
-        };
-
-        // EIP-7702 delegated recipient: resolving the delegation loads the
-        // target's code, charged per the standard EIP-2929 warm/cold model.
-        if let Some(delegated) = delegation_target {
-            let is_cold = journal.load_account(delegated)?.is_cold;
-            runtime_regular_gas += if is_cold {
-                eip8038::COLD_ACCOUNT_ACCESS
-            } else {
-                eip8038::WARM_ACCESS
+    // Evaluate the recipient runtime charges (the recipient itself was loaded
+    // and warmed with the access list; its access was already charged at the
+    // cold rate at the intrinsic phase). Evaluated after authorizations so a
+    // recipient materialized or delegated by an authorization in this
+    // transaction is seen in its post-authorization state. A self-transfer
+    // recipient is the (non-empty) sender, so the new-account charge never
+    // fires for it, while a delegated sender still pays for resolving its
+    // delegation.
+    if !oog {
+        if let TxKind::Call(target) = tx.kind() {
+            let (recipient_is_empty, delegation_target) = {
+                let acc = journal.load_account_with_code(target)?;
+                (
+                    acc.info.is_empty(),
+                    acc.info.code.as_ref().and_then(Bytecode::eip7702_address),
+                )
             };
-        }
 
-        // Value transfer to a non-existent recipient grows the state by one
-        // account leaf. The charge itself is applied on the first frame's gas
-        // tracker so a revert rolls it back; only checked for affordability
-        // here.
-        if !tx.value().is_zero() && recipient_is_empty {
-            new_account_state_gas = per_new_account_state_gas;
+            // Value transfer to a non-existent recipient grows the state by
+            // one account leaf. The charge itself is applied on the first
+            // frame's gas tracker so a revert rolls it back; only checked for
+            // affordability here. Checked before the delegation resolution,
+            // matching the spec's `prepare_dispatch` order.
+            if is_eip8037
+                && !tx.value().is_zero()
+                && recipient_is_empty
+                && !gas.record_state_cost(per_new_account_state_gas)
+            {
+                oog = true;
+            }
+
+            // EIP-7702 delegated recipient: resolving the delegation loads the
+            // target's code, charged per the standard EIP-2929 warm/cold model.
+            // The charge must be covered before the delegate is read, so an
+            // out-of-gas here leaves a cold delegate out of the block access
+            // list.
+            if !oog {
+                if let Some(delegated) = delegation_target {
+                    if gas.remaining() < eip8038::WARM_ACCESS {
+                        // The access cost cannot be covered whether the
+                        // delegate is warm or cold: fail without reading it.
+                        oog = true;
+                    } else {
+                        let skip_cold_load = gas.remaining() < eip8038::COLD_ACCOUNT_ACCESS;
+                        match journal.load_account_mut_skip_cold_load(delegated, skip_cold_load) {
+                            Ok(acc) => {
+                                let cost = if acc.is_cold {
+                                    eip8038::COLD_ACCOUNT_ACCESS
+                                } else {
+                                    eip8038::WARM_ACCESS
+                                };
+                                if gas.record_regular_cost(cost) {
+                                    runtime_regular_gas += cost;
+                                } else {
+                                    oog = true;
+                                }
+                            }
+                            Err(JournalLoadError::ColdLoadSkipped) => oog = true,
+                            Err(JournalLoadError::DBError(e)) => return Err(e.into()),
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // Without EIP-8037 there is no state-gas metering.
-    if !is_eip8037 {
-        runtime_state_gas = 0;
-        new_account_state_gas = 0;
-    }
-
-    // Affordability: the runtime charges draw from the same gas the
-    // transaction supplies, exactly as the first frame will see it.
-    let mut probe = *init_and_floor_gas;
-    probe.initial_regular_gas += runtime_regular_gas;
-    probe.initial_state_gas += runtime_state_gas;
-    let affordable = probe
-        .checked_initial_gas_and_reservoir(tx.gas_limit(), tx_gas_limit_cap)
-        .map(|(gas_limit, reservoir)| {
-            new_account_state_gas == 0
-                || Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir)
-                    .record_state_cost(new_account_state_gas)
-        })
-        .unwrap_or(false);
-
-    if !affordable {
+    if oog {
         // Out-of-gas in the runtime phase: the transaction stays valid and
         // included, but halts before the first frame is entered and all
         // runtime state changes (including applied delegations) are reverted.
@@ -392,8 +442,19 @@ pub fn apply_eip2780_runtime_gas<
 /// performs (calldata, recovery, authority access), so there is nothing to
 /// refund either.
 ///
-/// Returns the accumulated `(regular_gas, state_gas)` runtime charges.
+/// `written_accounts` holds the accounts whose leaf write is already paid for
+/// (the sender, and the recipient of a value-bearing transaction); applying an
+/// authorization to any other authority pays `ACCOUNT_WRITE` on the first
+/// write to that authority within the transaction.
+///
+/// The charges are recorded on `gas` as the authorizations are applied, so
+/// the phase stops at the first unaffordable charge without loading the
+/// remaining authorities (observable through the EIP-7928 block access list).
+///
+/// Returns the accumulated `(regular_gas, state_gas, out_of_gas)` runtime
+/// charges.
 #[inline]
+#[allow(clippy::too_many_arguments)]
 pub fn apply_auth_list_eip2780<
     JOURNAL: JournalTr,
     ERROR: From<InvalidTransaction> + From<<JOURNAL::Database as Database>::Error>,
@@ -404,7 +465,9 @@ pub fn apply_auth_list_eip2780<
     account_write_cost: u64,
     new_account_state_gas: u64,
     delegation_bytes_state_gas: u64,
-) -> Result<(u64, u64), ERROR> {
+    written_accounts: &mut HashSet<Address>,
+    gas: &mut Gas,
+) -> Result<(u64, u64, bool), ERROR> {
     let mut regular_gas: u64 = 0;
     let mut state_gas: u64 = 0;
     // EIP-8037 per-authority rules: each charge is applied at most once per
@@ -463,11 +526,24 @@ pub fn apply_auth_list_eip2780<
             .is_some_and(Bytecode::is_eip7702);
         let clearing = authorization.address().is_zero();
 
-        // Non-existent authority: pay for the new account leaf — its state
-        // bytes plus the `ACCOUNT_WRITE` that materializes it.
+        // Non-existent authority: pay for the new account leaf's state bytes.
         if !existed {
+            if !gas.record_state_cost(new_account_state_gas) {
+                return Ok((regular_gas, state_gas, true));
+            }
             state_gas += new_account_state_gas;
+        }
+
+        // First write to the authority's leaf within the transaction pays
+        // `ACCOUNT_WRITE`, unless that write is already paid for (the sender at
+        // inclusion, the recipient of a value-bearing transaction, or a
+        // preceding valid authorization on the same authority).
+        if !written_accounts.contains(&authority) {
+            if !gas.record_regular_cost(account_write_cost) {
+                return Ok((regular_gas, state_gas, true));
+            }
             regular_gas += account_write_cost;
+            written_accounts.insert(authority);
         }
 
         // Net-new delegation bytes: the 23-byte delegation indicator written
@@ -475,9 +551,13 @@ pub fn apply_auth_list_eip2780<
         if !clearing
             && !delegated_now
             && !delegated_before_tx
-            && charged_delegation_bytes.insert(authority)
+            && !charged_delegation_bytes.contains(&authority)
         {
+            if !gas.record_state_cost(delegation_bytes_state_gas) {
+                return Ok((regular_gas, state_gas, true));
+            }
             state_gas += delegation_bytes_state_gas;
+            charged_delegation_bytes.insert(authority);
         }
 
         // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
@@ -487,7 +567,7 @@ pub fn apply_auth_list_eip2780<
         authority_acc.delegate(authorization.address());
     }
 
-    Ok((regular_gas, state_gas))
+    Ok((regular_gas, state_gas, false))
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.

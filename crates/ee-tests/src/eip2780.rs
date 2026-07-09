@@ -336,8 +336,10 @@ fn test_eip2780_auth_new_authority_runtime_charges() {
 
 #[test]
 fn test_eip2780_auth_existing_authority_runtime_charges() {
-    // An existing authority pays neither the new-account state gas nor
-    // ACCOUNT_WRITE; only the net-new delegation bytes are charged.
+    // An existing authority does not pay the new-account state gas, but the
+    // authorization is still the transaction's first write to its leaf, so
+    // ACCOUNT_WRITE is charged (EIPs#11891) along with the net-new delegation
+    // bytes.
     let to = address!("0x00000000000000000000000000000000000000aa");
     let authority = address!("0x00000000000000000000000000000000000000cc");
     let delegate = address!("0x00000000000000000000000000000000000000dd");
@@ -363,6 +365,7 @@ fn test_eip2780_auth_existing_authority_runtime_charges() {
         eip2780::TX_BASE_COST
             + eip8038::COLD_ACCOUNT_ACCESS
             + eip8038::EIP7702_PER_AUTH_BASE_REGULAR
+            + eip8038::ACCOUNT_WRITE
     );
 }
 

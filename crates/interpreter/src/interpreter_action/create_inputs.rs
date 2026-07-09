@@ -18,6 +18,11 @@ pub struct CreateInputs {
     gas_limit: u64,
     /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
     reservoir: u64,
+    /// EIP-8037 (devnet-7): whether the CREATE opcode charged the conditional
+    /// `create_state_gas` on the parent's tracker (the destination did not
+    /// exist at access time). Propagated onto [`crate::CreateOutcome`] so the
+    /// parent refunds the charge when the create fails.
+    charged_create_state_gas: bool,
     /// Cached created address. This is computed lazily and cached to avoid
     /// redundant keccak computations when inspectors call `created_address`.
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -46,6 +51,7 @@ impl CreateInputs {
             init_code,
             gas_limit,
             reservoir,
+            charged_create_state_gas: false,
             cached_address: OnceCell::new(),
             cached_init_code_hash: OnceCell::new(),
         }
@@ -133,7 +139,19 @@ impl CreateInputs {
         self.reservoir
     }
 
-    /// Set the state gas reservoir (EIP-8037).
+    /// Returns whether the CREATE opcode charged the conditional
+    /// `create_state_gas` (EIP-8037, devnet-7).
+    pub const fn charged_create_state_gas(&self) -> bool {
+        self.charged_create_state_gas
+    }
+
+    /// Marks that the CREATE opcode charged the conditional `create_state_gas`
+    /// on the parent's tracker (EIP-8037, devnet-7).
+    pub const fn set_charged_create_state_gas(&mut self, charged: bool) {
+        self.charged_create_state_gas = charged;
+    }
+
+    /// Sets the state gas reservoir (EIP-8037).
     pub const fn set_reservoir(&mut self, reservoir: u64) {
         self.reservoir = reservoir;
     }

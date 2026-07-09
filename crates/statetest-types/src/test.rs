@@ -59,12 +59,22 @@ impl Test {
     /// - The private key cannot be used to recover the sender address
     /// - The transaction type is invalid and no exception is expected
     pub fn tx_env(&self, unit: &TestUnit) -> Result<TxEnv, TestError> {
+        // State tests are unsigned; the secret key stands in for a valid
+        // signature. A fixture without one models an invalidly-signed
+        // transaction (e.g. bad v/r/s values) and must be rejected.
+        let Some(secret_key) = unit.transaction.secret_key else {
+            return Err(TestError::UnexpectedException {
+                expected_exception: self.expect_exception.clone(),
+                got_exception: Some("Missing secret key".to_string()),
+            });
+        };
+
         // Setup sender
         let caller = if let Some(address) = unit.transaction.sender {
             address
         } else {
-            recover_address(unit.transaction.secret_key.as_slice())
-                .ok_or(TestError::UnknownPrivateKey(unit.transaction.secret_key))?
+            recover_address(secret_key.as_slice())
+                .ok_or(TestError::UnknownPrivateKey(secret_key))?
         };
 
         // Transaction specific fields
@@ -101,7 +111,18 @@ impl Test {
             tx_type: tx_type as u8,
             gas_limit: unit.transaction.gas_limit[self.indexes.gas].saturating_to(),
             data: unit.transaction.data[self.indexes.data].clone(),
-            nonce: u64::try_from(unit.transaction.nonce).unwrap(),
+            nonce: u64::try_from(unit.transaction.nonce).map_err(|_| {
+                TestError::UnexpectedException {
+                    expected_exception: self.expect_exception.clone(),
+                    got_exception: Some("Nonce overflow".to_string()),
+                }
+            })?,
+            chain_id: Some(
+                unit.transaction
+                    .chain_id
+                    .map(|id| id.try_into().unwrap_or(u64::MAX))
+                    .unwrap_or(1),
+            ),
             value: unit.transaction.value[self.indexes.value],
             access_list: unit
                 .transaction
@@ -125,7 +146,6 @@ impl Test {
                 Some(add) => TxKind::Call(add),
                 None => TxKind::Create,
             },
-            ..TxEnv::default()
         };
 
         Ok(tx)

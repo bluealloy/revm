@@ -9,7 +9,7 @@ use crate::{
     instructions::utility::IntoAddress,
     interpreter_action::FrameInput,
     interpreter_types::{
-        InputsTr, InterpreterTypes as ITy, LoopControl, MemoryTr, RuntimeFlag, StackTr,
+        InputsTr, InterpreterTypes as ITy, LoopControl, MemoryTr, ReturnData, RuntimeFlag, StackTr,
     },
     CallInput, CallInputs, CallScheme, CallValue, CreateInputs, Host,
     InstructionExecResult as Result, InstructionResult, InterpreterAction,
@@ -86,14 +86,62 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
+    // Build the inputs before the gas split so the created address (and the
+    // CREATE2 init-code hash) is computed once and cached for frame creation.
+    let mut create_inputs = CreateInputs::new(
+        context.interpreter.input.target_address(),
+        scheme,
+        value,
+        code,
+        0,
+        0,
+    );
+
     // State gas for account creation + contract metadata (EIP-8037).
-    // Charged upfront on the parent's tracker; `return_create` refunds the same
-    // amount (derived from cfg) on entry and re-records it on a successful commit.
     if context.host.is_amsterdam_eip8037_enabled() {
-        state_gas!(
-            context.interpreter,
-            context.host.gas_params().create_state_gas()
-        );
+        if context.host.is_amsterdam_eip2780_enabled() {
+            // Devnet-7 (#11858): the charge is conditional at access, applied in
+            // the creating frame before the 63/64 split. The destination is read
+            // (and charged for) only after the pre-access checks — endowment
+            // balance and sender nonce overflow — pass; failing those pushes 0
+            // without touching the destination. (The call-depth pre-access check
+            // lives at frame creation; its failure path refunds the charge.)
+            let caller = create_inputs.caller();
+            let caller_info = context
+                .host
+                .load_account_info_skip_cold_load(caller, false, false)?;
+            let caller_balance = caller_info.account.balance;
+            let caller_nonce = caller_info.account.nonce;
+            if caller_balance < value || caller_nonce == u64::MAX {
+                context.interpreter.return_data.clear();
+                push!(context.interpreter, U256::ZERO);
+                return Ok(());
+            }
+
+            // Single read of the destination: decides the charge by existence
+            // alone (independently of the collision outcome checked at frame
+            // creation) and adds it to the accessed addresses.
+            let created_address = create_inputs.created_address(caller_nonce);
+            let destination_alive = !context
+                .host
+                .load_account_info_skip_cold_load(created_address, false, false)?
+                .is_empty;
+            if !destination_alive {
+                state_gas!(
+                    context.interpreter,
+                    context.host.gas_params().create_state_gas()
+                );
+                create_inputs.set_charged_create_state_gas(true);
+            }
+        } else {
+            // Pre-devnet-7 rules: charged upfront on the parent's tracker;
+            // `return_result` refunds the same amount when the create fails or
+            // the target was already alive.
+            state_gas!(
+                context.interpreter,
+                context.host.gas_params().create_state_gas()
+            );
+        }
     }
 
     let mut gas_limit = context.interpreter.gas.remaining();
@@ -110,15 +158,8 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
     }
     gas!(context.interpreter, gas_limit);
 
-    // Call host to interact with target contract
-    let create_inputs = CreateInputs::new(
-        context.interpreter.input.target_address(),
-        scheme,
-        value,
-        code,
-        gas_limit,
-        context.interpreter.gas.reservoir(),
-    );
+    create_inputs.set_gas_limit(gas_limit);
+    create_inputs.set_reservoir(context.interpreter.gas.reservoir());
     context
         .interpreter
         .bytecode
