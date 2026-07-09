@@ -213,29 +213,39 @@ pub trait Handler {
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
-        // EIP-2780: the transaction is valid but its gas cannot cover the
-        // state-dependent runtime charges. It is included as an out-of-gas
-        // halt: execution is skipped, all gas is consumed, and the runtime
-        // state changes were already reverted in the runtime gas phase.
-        if init_and_floor_gas.runtime_oog {
-            let tx_gas_limit = evm.ctx().tx().gas_limit();
-            let mut frame_result = match evm.ctx().tx().kind() {
-                TxKind::Call(_) => FrameResult::Call(CallOutcome::new_oog(tx_gas_limit, 0..0, 0)),
-                TxKind::Create => FrameResult::Create(CreateOutcome::new_oog(tx_gas_limit, 0)),
-            };
-            self.last_frame_result(evm, &mut frame_result)?;
-            return Ok(frame_result);
-        }
-
         // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
         let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
             evm.ctx().cfg().tx_gas_limit_cap(),
         );
 
+        // EIP-2780: the transaction is valid but its gas cannot cover the
+        // state-dependent runtime charges. It is included as an out-of-gas
+        // halt: execution is skipped, all regular gas is consumed (the
+        // reservoir is returned), and the runtime state changes were already
+        // reverted in the runtime gas phase.
+        if init_and_floor_gas.runtime_oog {
+            let tx_gas_limit = evm.ctx().tx().gas_limit();
+            let mut frame_result = match evm.ctx().tx().kind() {
+                TxKind::Call(_) => {
+                    FrameResult::Call(CallOutcome::new_oog(tx_gas_limit, 0..0, reservoir))
+                }
+                TxKind::Create => {
+                    FrameResult::Create(CreateOutcome::new_oog(tx_gas_limit, reservoir))
+                }
+            };
+            self.last_frame_result(evm, &mut frame_result)?;
+            return Ok(frame_result);
+        }
+
         // Create first frame action
         // Note: first_frame_input now handles state gas deduction from the reservoir
-        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
+        let first_frame_input = self.first_frame_input(
+            evm,
+            gas_limit,
+            reservoir,
+            init_and_floor_gas.first_frame_state_gas,
+        )?;
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
@@ -370,12 +380,16 @@ pub trait Handler {
     /* EXECUTION */
 
     /// Creates initial frame input using transaction parameters, gas limit and configuration.
+    ///
+    /// `state_gas_charge` is the EIP-2780 runtime charge decided at the
+    /// runtime gas phase to be recorded on the first frame's gas tracker.
     #[inline]
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
         reservoir: u64,
+        state_gas_charge: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
@@ -387,6 +401,7 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input,
+            state_gas_charge,
         })
     }
 

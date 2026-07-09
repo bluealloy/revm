@@ -288,6 +288,7 @@ pub fn apply_eip2780_runtime_gas<
     let account_write_cost = params.tx_account_write_cost();
     let per_new_account_state_gas = params.new_account_state_gas();
     let delegation_bytes_state_gas = params.tx_eip7702_state_gas_bytecode();
+    let create_state_gas = params.create_state_gas();
     let (tx, journal) = context.tx_journal_mut();
 
     // The recipient is read when the message is prepared (its access was
@@ -313,6 +314,9 @@ pub fn apply_eip2780_runtime_gas<
 
     let mut runtime_regular_gas: u64 = 0;
     let mut runtime_state_gas: u64 = 0;
+    // State gas to be recorded on the first frame's gas tracker (rather than
+    // folded into the initial gas) so a revert or halt of the frame refills it.
+    let mut first_frame_state_gas: u64 = 0;
     let mut oog = false;
 
     // Apply EIP-7702 authorizations, charging the per-authority runtime
@@ -371,16 +375,17 @@ pub fn apply_eip2780_runtime_gas<
             };
 
             // Value transfer to a non-existent recipient grows the state by
-            // one account leaf. The charge itself is applied on the first
-            // frame's gas tracker so a revert rolls it back; only checked for
-            // affordability here. Checked before the delegation resolution,
-            // matching the spec's `prepare_dispatch` order.
-            if is_eip8037
-                && !tx.value().is_zero()
-                && recipient_is_empty
-                && !gas.record_state_cost(per_new_account_state_gas)
-            {
-                oog = true;
+            // one account leaf. The charge is recorded on the first frame's
+            // gas tracker (`EthFrame::make_call_frame`) so a revert rolls it
+            // back; here it is checked for affordability and decided. Checked
+            // before the delegation resolution, matching the spec's
+            // `prepare_dispatch` order.
+            if is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
+                if gas.record_state_cost(per_new_account_state_gas) {
+                    first_frame_state_gas = per_new_account_state_gas;
+                } else {
+                    oog = true;
+                }
             }
 
             // EIP-7702 delegated recipient: resolving the delegation loads the
@@ -418,11 +423,37 @@ pub fn apply_eip2780_runtime_gas<
         }
     }
 
+    // A create transaction pays the account-creation state gas at runtime,
+    // only when the deployment target does not already exist. The single read
+    // that decides the charge (also warming the target) matches the spec's
+    // `prepare_dispatch`; the charge is recorded on the first frame's gas
+    // tracker (`EthFrame::make_create_frame`) so an initcode revert or halt
+    // refills it in LIFO order.
+    if !oog && is_eip8037 && tx.kind().is_create() {
+        let nonce = journal.load_account(tx.caller())?.info.nonce;
+        let created_address = tx.caller().create(nonce);
+        let target_is_empty = journal.load_account(created_address)?.info.is_empty();
+        if target_is_empty {
+            if gas.record_state_cost(create_state_gas) {
+                first_frame_state_gas = create_state_gas;
+            } else {
+                oog = true;
+            }
+        }
+    }
+
     if oog {
         // Out-of-gas in the runtime phase: the transaction stays valid and
         // included, but halts before the first frame is entered and all
         // runtime state changes (including applied delegations) are reverted.
         journal.checkpoint_revert(checkpoint);
+        // A create transaction still bumps the sender nonce: the increment
+        // precedes message processing and survives the halt. (Calls bump it in
+        // `validate_against_state_and_deduct_caller`; creates at frame
+        // creation, which the runtime halt never reaches.)
+        if tx.kind().is_create() {
+            journal.load_account_mut(tx.caller())?.data.bump_nonce();
+        }
         init_and_floor_gas.runtime_oog = true;
         return Ok(());
     }
@@ -430,6 +461,7 @@ pub fn apply_eip2780_runtime_gas<
     journal.checkpoint_commit();
     init_and_floor_gas.initial_regular_gas += runtime_regular_gas;
     init_and_floor_gas.initial_state_gas += runtime_state_gas;
+    init_and_floor_gas.first_frame_state_gas = first_frame_state_gas;
     Ok(())
 }
 

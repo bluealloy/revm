@@ -386,6 +386,17 @@ pub struct InitialAndFloorGas {
     /// frame.
     #[cfg_attr(feature = "serde", serde(default))]
     pub runtime_oog: bool,
+    /// EIP-2780: state gas decided at the runtime gas phase to be recorded on
+    /// the first frame's gas tracker — the recipient new-account leaf charge
+    /// of a value transfer, or the account-creation charge of a create
+    /// transaction whose deployment target does not exist.
+    ///
+    /// Charged on the frame (rather than folded into `initial_state_gas`) so
+    /// a revert or halt of the frame refills it. Its affordability was
+    /// verified at the runtime phase; an unaffordable charge sets
+    /// [`runtime_oog`](Self::runtime_oog) instead.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub first_frame_state_gas: u64,
 }
 
 impl InitialAndFloorGas {
@@ -400,6 +411,7 @@ impl InitialAndFloorGas {
             state_refund: 0,
             floor_gas,
             runtime_oog: false,
+            first_frame_state_gas: 0,
         }
     }
 
@@ -416,6 +428,7 @@ impl InitialAndFloorGas {
             state_refund: 0,
             floor_gas,
             runtime_oog: false,
+            first_frame_state_gas: 0,
         }
     }
 
