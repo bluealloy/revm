@@ -49,6 +49,24 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
         .build_mainnet()
 }
 
+/// Builds an EVM with state gas, the EIP-2780 runtime gas phase (the devnet-7
+/// Amsterdam configuration), and custom gas params.
+fn devnet7_state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
+    Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.tx_gas_limit_cap = Some(cap);
+            cfg.gas_params.override_gas([
+                (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
+                (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
+                (GasId::code_deposit_state_gas(), STATE_GAS_CODE_DEPOSIT),
+                (GasId::create_state_gas(), STATE_GAS_CREATE),
+            ]);
+        })
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
+        .build_mainnet()
+}
+
 /// Builds an EVM without state gas (standard behavior, no cap).
 fn baseline_evm(bytecode: Bytecode) -> MainEvm {
     Context::mainnet()
@@ -2093,12 +2111,13 @@ fn init_code_sstore_and_selfdestruct(beneficiary: [u8; 20]) -> Vec<u8> {
 
 /// Tx-kind Create whose initcode does SSTORE(0,1) then INVALID.
 ///
-/// Initcode halts → all state changes are rolled back. The SSTORE state gas
-/// charged during execution is returned to the reservoir via
-/// `last_frame_result`'s halt branch, and the intrinsic `create_state_gas` is
-/// refilled by the same function's `create_failed` branch. Net result:
-/// `state_gas_spent_final == 0` and the caller pays less than the baseline by
-/// exactly the state gas that was refunded.
+/// Initcode halts → all state changes are rolled back. Under the EIP-2780
+/// runtime gas phase the `create_state_gas` for the (non-existent) deployment
+/// target is recorded on the first frame's gas tracker, so the halt unwinds it
+/// via `rollback_state_gas` together with the SSTORE state gas charged during
+/// execution. Net result: `state_gas_spent_final == 0`, and with an uncapped
+/// transaction (empty reservoir, every state charge spills into regular gas)
+/// the halt consumes the full gas limit — exactly like the baseline.
 #[test]
 fn test_eip8037_tx_create_initcode_halts() {
     let init = init_code_sstore_and_invalid();
@@ -2114,7 +2133,7 @@ fn test_eip8037_tx_create_initcode_halts() {
         )
         .unwrap();
 
-    let mut evm = state_gas_evm(Bytecode::new(), u64::MAX);
+    let mut evm = devnet7_state_gas_evm(Bytecode::new(), u64::MAX);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
@@ -2135,15 +2154,15 @@ fn test_eip8037_tx_create_initcode_halts() {
         _ => panic!("Expected Halt variant"),
     }
 
-    // No state gas should be reported as spent: execution state gas (SSTORE)
-    // is rolled back on halt, and the intrinsic create_state_gas is refilled
-    // to the reservoir via the `create_failed` branch.
+    // No state gas should be reported as spent: both the runtime-phase
+    // create_state_gas and the execution state gas (SSTORE) are rolled back
+    // on halt.
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().state_gas_spent_final(), 0);
 
-    // The state-gas variant pays less than the baseline because the refilled
-    // reservoir is reimbursed back to the caller.
-    assert!(result.tx_gas_used() < baseline_result.tx_gas_used());
+    // With no cap there is no reservoir: the halt consumes the entire gas
+    // limit in both variants.
+    assert_eq!(result.tx_gas_used(), baseline_result.tx_gas_used());
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));
 }
 
@@ -2151,18 +2170,17 @@ fn test_eip8037_tx_create_initcode_halts() {
 ///
 /// Per EIP-6780 the contract is erased at tx end (created and self-destructed
 /// in the same transaction). Per EIP-8037 the state gas charged for that
-/// account — both the intrinsic `create_state_gas` and the execution-time
+/// account — the runtime-phase `create_state_gas` and the execution-time
 /// SSTORE — should ideally be refunded to the reservoir, so the caller is not
 /// billed for state gas.
 ///
 /// However, the journal-based selfdestruct state-gas refund was removed (it
 /// drew on the journal's destroyed-accounts list), so the SSTORE state gas
-/// is no longer refunded. The intrinsic `create_state_gas` is also not
-/// refunded: `return_create` rewrites the frame's `SelfDestruct` result to
-/// `Return` before `last_frame_result` runs, so `create_failed` evaluates to
-/// false and the `create_failed` branch that would refill `create_state_gas`
-/// never fires. The caller therefore pays both the intrinsic state gas and
-/// the SSTORE state gas even though the contract was erased.
+/// is no longer refunded. The `create_state_gas` charged at the EIP-2780
+/// runtime phase is not refunded either: the create completes successfully
+/// (SELFDESTRUCT in initcode deploys empty code), so the charge is never
+/// rolled back even though EIP-6780 erases the account at tx end. The caller
+/// therefore pays both state-gas charges.
 #[test]
 fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     // Use BENCH_CALLER as beneficiary so we don't trigger new_account_state_gas.
@@ -2179,7 +2197,7 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
         )
         .unwrap();
 
-    let mut evm = state_gas_evm(Bytecode::new(), u64::MAX);
+    let mut evm = devnet7_state_gas_evm(Bytecode::new(), u64::MAX);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
@@ -2196,9 +2214,7 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
     assert!(result.is_success());
 
     // Per EIP-8037 + EIP-6780 the user expects state_gas_spent_final == 0 here,
-    // but the journal-based selfdestruct refund was removed, so the SSTORE state
-    // gas is now also retained alongside the intrinsic `create_state_gas` —
-    // see the doc comment above.
+    // but neither charge is refunded — see the doc comment above.
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(
         result.gas().state_gas_spent_final(),
@@ -2216,12 +2232,14 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
 /// into `last_frame_result`:
 /// - The halt fully consumes regular gas: `erase_cost(remaining)` is gated on
 ///   `is_ok_or_revert()` and is skipped, so `gas.remaining == 0`.
-/// - `create_failed` matches (Create + not `is_ok_without_selfdestruct`), so
-///   the intrinsic `create_state_gas` is refilled to the reservoir.
+/// - The EIP-2780 runtime phase charges `create_state_gas` only when the
+///   deployment target does not exist; the collision target exists, so no
+///   state gas is charged (the existence check and the collision check are
+///   independent — existence is by non-emptiness, collision by nonce/code).
 /// - `state_gas_spent` is reset to 0 (halt branch).
 ///
-/// Net: the EIP-8037 variant pays exactly `STATE_GAS_CREATE` less than the
-/// baseline.
+/// Net: both variants consume their full regular gas budget; the EIP-8037
+/// variant's extra 10 gas above the cap sits in the reservoir and is returned.
 #[test]
 fn test_eip8037_tx_create_collision() {
     use revm::{
@@ -2277,12 +2295,12 @@ fn test_eip8037_tx_create_collision() {
         .build_mainnet();
     let baseline_result = baseline.transact_one(build_tx(TX_GAS_LIMIT_CAP)).unwrap();
 
-    // State-gas variant: EIP-8037 enabled with gas-table overrides interpreted
-    // as final amounts.
+    // State-gas variant: EIP-8037 and the EIP-2780 runtime gas phase enabled
+    // (devnet-7 configuration) with gas-table overrides interpreted as final
+    // amounts.
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
-            cfg.enable_amsterdam_eip2780 = false;
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),
@@ -2315,15 +2333,13 @@ fn test_eip8037_tx_create_collision() {
     assert_eq!(baseline_result.gas().state_gas_spent_final(), 0);
     assert_eq!(result.gas().state_gas_spent_final(), 0);
 
-    // Halt consumes the regular gas budget in full. The intrinsic
-    // create_state_gas equals STATE_GAS_CREATE, and the state-gas
-    // variant's total gas spent is exactly that much less than the baseline,
-    // because the create_failed branch refills the reservoir with it.
-    //
-    // -10 as additional gas was added to tx.gas_limit to cover reservoir handling.
+    // Halt consumes the regular gas budget in full in both variants. The
+    // EIP-2780 runtime phase charges no create_state_gas (the target exists),
+    // and the 10 gas above the cap sits in the reservoir and is returned, so
+    // both spend exactly the regular budget (the cap).
     assert_eq!(
-        baseline_result.gas().total_gas_spent() - result.gas().total_gas_spent(),
-        STATE_GAS_CREATE - 10,
+        baseline_result.gas().total_gas_spent(),
+        result.gas().total_gas_spent(),
     );
 
     crate::assert_sorted_json_snapshot!(&(baseline_result, result));

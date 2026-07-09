@@ -18,16 +18,12 @@ pub fn build_result_gas(
     // `state_gas_spent` is tracked as i64 to allow a child frame's count to go
     // negative on 0→x→0 restoration; at the top level, post-reconciliation it
     // is expected to be >= 0 and is clamped defensively before combining with
-    // intrinsic state gas.
-    //
-    // Per the spec, tx_state_gas = intrinsic_state_gas + execution_state_gas,
-    // then reduced by the EIP-7702 per-authorization state-gas refund (which
-    // was also added back to the reservoir budget at tx start).
+    // the state gas charged before the first frame (the EIP-2780 runtime gas
+    // phase).
     let state_gas = gas
         .state_gas_spent()
         .saturating_add_unsigned(init_and_floor_gas.initial_state_gas)
         .max(0) as u64;
-    let state_gas = state_gas.saturating_sub(init_and_floor_gas.state_refund);
 
     ResultGas::default()
         .with_total_gas_spent(

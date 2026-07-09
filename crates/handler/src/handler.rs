@@ -414,16 +414,6 @@ pub trait Handler {
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
 
-        // Detect a top-level CREATE that creates no new account leaf — either it
-        // failed, or it succeeded at a pre-existing alive (balance-only) target —
-        // so the intrinsic `create_state_gas` charged at tx entry can be unwound
-        // below. Mirrors the condition used in `EthFrame::return_result` for
-        // nested creates.
-        let create_refunds_state_gas = match &frame_result {
-            FrameResult::Create(outcome) => !instruction_result.is_ok() || outcome.target_was_alive,
-            _ => false,
-        };
-
         let gas = frame_result.gas_mut();
 
         // Settle the top frame's own gas (mirrors `handle_reservoir_remaining_gas`'s
@@ -456,29 +446,6 @@ pub trait Handler {
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
             gas.set_state_gas_spent(state_gas_spent);
-        }
-
-        // EIP-8037: for a failed top-level CREATE (or one that self-destructs
-        // in init code, see EIP-6780), refund the intrinsic `create_state_gas`
-        // to the reservoir. The nested-create equivalent is
-        // `EthFrame::return_result`'s `refill_reservoir(create_state_gas)`; at
-        // the top level the same charge is deducted in
-        // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
-        // it would otherwise stay consumed when the deployment is rolled back
-        // or erased.
-        //
-        // Under EIP-2780 the charge is instead applied at runtime on the first
-        // frame's gas tracker, only when the deployment target does not
-        // already exist (`EthFrame::make_create_frame`), so a failure is
-        // already unwound by `rollback_state_gas` above and no extra refill
-        // must happen here.
-        if create_refunds_state_gas
-            && evm.ctx().cfg().is_amsterdam_eip8037_enabled()
-            && !evm.ctx().cfg().is_amsterdam_eip2780_enabled()
-        {
-            let ctx = evm.ctx();
-            let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
-            gas.refill_reservoir(state_gas_charged);
         }
 
         Ok(())

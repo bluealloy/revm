@@ -323,7 +323,6 @@ impl EthFrame<EthInterpreter> {
                     output: Bytes::new(),
                 },
                 address: None,
-                target_was_alive: false,
                 charged_create_state_gas,
             })))
         };
@@ -358,13 +357,7 @@ impl EthFrame<EthInterpreter> {
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
         // warm load account.
-        // EIP-8037: capture whether the target leaf is already alive (existing,
-        // non-empty) before creation, so a successful create at a pre-existing
-        // balance-only account refunds the upfront `create_state_gas`.
-        let target_was_alive = {
-            let acc = journal.load_account(created_address)?;
-            !acc.info.is_empty()
-        };
+        journal.load_account(created_address)?;
 
         // EIP-2780 first-frame charge decided at the runtime gas phase
         // (`apply_eip2780_runtime_gas`): a top-level create transaction pays
@@ -409,10 +402,7 @@ impl EthFrame<EthInterpreter> {
 
         let frame = this.get(EthFrame::invalid);
         frame.clear(
-            FrameData::Create(CreateFrame {
-                created_address,
-                target_was_alive,
-            }),
+            FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
             memory,
@@ -532,7 +522,6 @@ impl EthFrame<EthInterpreter> {
 
                 let mut create_outcome =
                     CreateOutcome::new(interpreter_result, Some(frame.created_address));
-                create_outcome.target_was_alive = frame.target_was_alive;
                 create_outcome.charged_create_state_gas = match &self.input {
                     FrameInput::Create(inputs) => inputs.charged_create_state_gas(),
                     _ => false,

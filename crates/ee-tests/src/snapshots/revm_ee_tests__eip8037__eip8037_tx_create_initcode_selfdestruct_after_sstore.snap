@@ -25,10 +25,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Return",
       "gas": {
-        "gas_spent": 580431,
+        "gas_spent": 571431,
         "state_gas_spent": 530000,
         "gas_refunded": 0,
-        "floor_gas": 13728
+        "floor_gas": 24728
       },
       "logs": [],
       "output": {

@@ -19,10 +19,10 @@ expression: "&(baseline_result, result)"
     "Halt": {
       "reason": "CreateCollision",
       "gas": {
-        "gas_spent": 16447226,
+        "gas_spent": 16777216,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 12384
+        "floor_gas": 23384
       },
       "logs": []
     }
