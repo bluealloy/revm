@@ -51,7 +51,6 @@ serde = [
 	"primitives/serde",
 	"bitvec/serde",
 	"phf?/serde",
-	"rand/serde"
 ]
 parse = ["phf", "paste"]
 
