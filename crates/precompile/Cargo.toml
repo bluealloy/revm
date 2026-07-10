@@ -83,7 +83,6 @@ std = [
 	"primitives/std",
 	"context-interface/std",
 	"k256/std",
-	#"sha2/std",
 	"c-kzg?/std",
 	"secp256k1?/std",
 	"ark-bn254/std",
