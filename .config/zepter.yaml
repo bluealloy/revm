@@ -17,6 +17,12 @@ workflows:
         "--left-side-feature-missing=ignore",
         # Ignore the case that `A` is outside of the workspace. Otherwise it will report errors in external dependencies that we have no influence on.
         "--left-side-outside-workspace=ignore",
+        # `rand` is only a dev-dependency of `revm-bytecode` and its tests do not
+        # serialize rand types. Propagating `rand/serde` also trips a cargo
+        # feature-unification quirk: in whole-workspace builds rand is compiled
+        # with the `serde` feature enabled but without its optional `serde`
+        # dependency linked, failing the build inside rand itself.
+        "--ignore-missing-propagate=revm-bytecode/serde:rand/serde",
         "--show-path",
         "--quiet",
       ]
