@@ -382,26 +382,36 @@ fn inspect_selfdestruct<CTX, IT>(
     IT: InterpreterTypes,
 {
     let entry = context
-        .journal_mut()
+        .journal()
         .journal()
         .get(journal_i..)
         .and_then(|entries| entries.last());
 
-    if let Some(
+    let Some((contract, target, value)) = entry.and_then(|entry| match entry {
         JournalEntry::AccountDestroyed {
             address: contract,
-            target: to,
-            had_balance: balance,
+            target,
+            had_balance,
             ..
+        } => {
+            let value = if contract == target && had_balance.is_zero() {
+                context
+                    .journal()
+                    .evm_state()
+                    .get(contract)
+                    .map_or(*had_balance, |account| account.info.balance)
+            } else {
+                *had_balance
+            };
+            Some((*contract, *target, value))
         }
-        | JournalEntry::BalanceTransfer {
-            from: contract,
-            to,
-            balance,
-            ..
-        },
-    ) = entry
-    {
-        inspector.selfdestruct(*contract, *to, *balance);
-    }
+        JournalEntry::BalanceTransfer {
+            from, to, balance, ..
+        } => Some((*from, *to, *balance)),
+        _ => None,
+    }) else {
+        return;
+    };
+
+    inspector.selfdestruct(contract, target, value);
 }

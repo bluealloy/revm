@@ -565,6 +565,64 @@ mod tests {
     }
 
     #[test]
+    fn amsterdam_selfdestruct_to_self_reports_preserved_balance() {
+        let value = U256::from(304);
+        let code = Bytes::from(vec![
+            opcode::ADDRESS,
+            opcode::ADDRESS,
+            opcode::SELFDESTRUCT,
+            opcode::STOP,
+        ]);
+        let ctx = Context::mainnet()
+            .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+            .with_db(BenchmarkDB::new_bytecode(
+                Bytecode::new_legacy(Bytes::new()),
+            ));
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm
+            .inspect_one_tx(
+                TxEnv::builder()
+                    .caller(BENCH_CALLER)
+                    .create()
+                    .data(code)
+                    .value(value)
+                    .gas_limit(100_000_000)
+                    .gas_price(0)
+                    .build()
+                    .unwrap(),
+            )
+            .unwrap();
+        assert!(result.is_success());
+
+        let events = evm.inspector.get_events();
+        let selfdestruct_events: Vec<_> = events
+            .iter()
+            .filter_map(|event| {
+                if let InspectorEvent::Selfdestruct {
+                    address,
+                    beneficiary,
+                    value,
+                } = event
+                {
+                    Some((address, beneficiary, value))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        assert_eq!(
+            selfdestruct_events.len(),
+            1,
+            "Should have recorded SELFDESTRUCT event"
+        );
+        let (contract, beneficiary, event_value) = selfdestruct_events[0];
+        assert_eq!(contract, beneficiary);
+        assert_eq!(*event_value, value);
+    }
+
+    #[test]
     fn test_comprehensive_inspector_integration() {
         // Complex contract with multiple operations:
         // 1. PUSH and arithmetic
