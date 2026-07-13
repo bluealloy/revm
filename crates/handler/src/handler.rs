@@ -214,7 +214,7 @@ pub trait Handler {
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
         // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
-        let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
+        let (mut gas_limit, mut reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
             evm.ctx().cfg().tx_gas_limit_cap(),
         );
@@ -238,17 +238,28 @@ pub trait Handler {
             return Ok(frame_result);
         }
 
+        // Deduct the EIP-2780 refundable first-frame charge (decided at the
+        // runtime gas phase) from the budget the first frame will see.
+        let refundable_spill = execution::deduct_refundable_state_gas(
+            init_and_floor_gas,
+            &mut gas_limit,
+            &mut reservoir,
+        );
+
         // Create first frame action
-        // Note: first_frame_input now handles state gas deduction from the reservoir
-        let first_frame_input = self.first_frame_input(
-            evm,
-            gas_limit,
-            reservoir,
-            init_and_floor_gas.refundable_state_gas,
-        )?;
+        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
+
+        // Seed the refundable first-frame charge on the frame's state-gas
+        // counters so `last_frame_result` reports it on success and rolls it
+        // back on revert or halt.
+        execution::settle_refundable_state_gas(
+            init_and_floor_gas.refundable_state_gas,
+            refundable_spill,
+            &mut frame_result,
+        );
 
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
@@ -380,16 +391,12 @@ pub trait Handler {
     /* EXECUTION */
 
     /// Creates initial frame input using transaction parameters, gas limit and configuration.
-    ///
-    /// `refundable_state_gas` is the EIP-2780 runtime charge decided at the
-    /// runtime gas phase to be recorded on the first frame's gas tracker.
     #[inline]
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
         reservoir: u64,
-        refundable_state_gas: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
@@ -401,7 +408,6 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input,
-            refundable_state_gas,
         })
     }
 

@@ -34,12 +34,6 @@ pub struct FrameInit {
     pub memory: SharedMemory,
     /// Data needed as input for Interpreter.
     pub frame_input: FrameInput,
-    /// EIP-2780: state gas to record on the frame's gas tracker at creation,
-    /// refunded if the frame reverts or halts. Decided at the runtime gas
-    /// phase for the first frame (recipient new-account leaf or the create
-    /// transaction's account-creation charge). Zero for nested frames (their
-    /// charges are applied by the opcodes).
-    pub refundable_state_gas: u64,
 }
 
 impl FrameInput {

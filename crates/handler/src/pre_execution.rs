@@ -295,8 +295,9 @@ pub fn apply_eip2780_runtime_gas<
 
     let mut runtime_regular_gas: u64 = 0;
     let mut runtime_state_gas: u64 = 0;
-    // State gas to be recorded on the first frame's gas tracker (rather than
-    // folded into the initial gas) so a revert or halt of the frame refills it.
+    // State gas deducted from the first frame's budget at the execution phase
+    // (rather than folded into the initial gas) so a revert or halt of the
+    // frame refunds it.
     let mut refundable_state_gas: u64 = 0;
     let mut oog = false;
 
@@ -358,9 +359,9 @@ pub fn apply_eip2780_runtime_gas<
             };
 
             // Value transfer to a non-existent recipient grows the state by
-            // one account leaf. The charge is recorded on the first frame's
-            // gas tracker (`EthFrame::make_call_frame`) so a revert rolls it
-            // back; here it is checked for affordability and decided. Checked
+            // one account leaf. The charge is deducted from the first frame's
+            // budget at the execution phase and refunded if the frame fails;
+            // here it is checked for affordability and decided. Checked
             // before the delegation resolution, matching the spec's
             // `prepare_dispatch` order.
             if is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
@@ -409,9 +410,9 @@ pub fn apply_eip2780_runtime_gas<
     // A create transaction pays the account-creation state gas at runtime,
     // only when the deployment target does not already exist. The single read
     // that decides the charge (also warming the target) matches the spec's
-    // `prepare_dispatch`; the charge is recorded on the first frame's gas
-    // tracker (`EthFrame::make_create_frame`) so an initcode revert or halt
-    // refills it in LIFO order.
+    // `prepare_dispatch`; the charge is deducted from the first frame's
+    // budget at the execution phase so an initcode revert or halt refunds it
+    // in LIFO order.
     if !oog && is_eip8037 && tx.kind().is_create() {
         let nonce = journal.load_account(tx.caller())?.info.nonce;
         let created_address = tx.caller().create(nonce);

@@ -388,8 +388,11 @@ pub struct InitialAndFloorGas {
     /// transaction whose deployment target does not exist.
     ///
     /// Unlike `initial_state_gas` (consumed unconditionally), this charge is
-    /// recorded on the first frame's gas tracker so a failing frame refills
-    /// it. Its affordability was verified at the runtime phase; an
+    /// deducted from the first frame's budget at the execution phase
+    /// (`deduct_refundable_state_gas`) and seeded onto the frame's state-gas
+    /// counters after the run (`settle_refundable_state_gas`) so the
+    /// handler's final settle reports it on success and rolls it back on
+    /// failure. Its affordability was verified at the runtime phase; an
     /// unaffordable charge sets [`runtime_oog`](Self::runtime_oog) instead.
     #[cfg_attr(feature = "serde", serde(default))]
     pub refundable_state_gas: u64,

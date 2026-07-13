@@ -1,7 +1,10 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
 use context::{result::ExecutionResult, Cfg, ContextTr, JournalEntry, JournalTr, Transaction};
 use handler::{
-    evm::FrameTr, post_execution::build_result_gas, EvmTr, FrameResult, Handler, ItemOrResult,
+    evm::FrameTr,
+    execution::{deduct_refundable_state_gas, settle_refundable_state_gas},
+    post_execution::build_result_gas,
+    EvmTr, FrameResult, Handler, ItemOrResult,
 };
 use interpreter::{
     instructions::{GasTable, InstructionTable},
@@ -82,7 +85,7 @@ where
         init_and_floor_gas: &InitialAndFloorGas,
     ) -> Result<FrameResult, Self::Error> {
         // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
-        let (gas_limit, reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
+        let (mut gas_limit, mut reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
             evm.ctx().tx().gas_limit(),
             evm.ctx().cfg().tx_gas_limit_cap(),
         );
@@ -104,15 +107,24 @@ where
             return Ok(frame_result);
         }
 
-        let first_frame_input = self.first_frame_input(
-            evm,
-            gas_limit,
-            reservoir,
-            init_and_floor_gas.refundable_state_gas,
-        )?;
+        // Deduct the EIP-2780 refundable first-frame charge (decided at the
+        // runtime gas phase) from the budget the first frame will see.
+        let refundable_spill =
+            deduct_refundable_state_gas(init_and_floor_gas, &mut gas_limit, &mut reservoir);
+
+        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
 
         // Run execution loop
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;
+
+        // Seed the refundable first-frame charge on the frame's state-gas
+        // counters so `last_frame_result` reports it on success and rolls it
+        // back on revert or halt.
+        settle_refundable_state_gas(
+            init_and_floor_gas.refundable_state_gas,
+            refundable_spill,
+            &mut frame_result,
+        );
 
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result)?;
