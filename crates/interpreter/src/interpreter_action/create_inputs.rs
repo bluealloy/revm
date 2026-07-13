@@ -18,7 +18,7 @@ pub struct CreateInputs {
     gas_limit: u64,
     /// State gas reservoir (EIP-8037). Passed from parent frame to child frame.
     reservoir: u64,
-    /// EIP-8037 (devnet-7): whether the CREATE opcode charged the conditional
+    /// EIP-8037: whether the CREATE opcode charged the conditional
     /// `create_state_gas` on the parent's tracker (the destination did not
     /// exist at access time). Propagated onto [`crate::CreateOutcome`] so the
     /// parent refunds the charge when the create fails.
@@ -140,13 +140,13 @@ impl CreateInputs {
     }
 
     /// Returns whether the CREATE opcode charged the conditional
-    /// `create_state_gas` (EIP-8037, devnet-7).
+    /// `create_state_gas` (EIP-8037).
     pub const fn charged_create_state_gas(&self) -> bool {
         self.charged_create_state_gas
     }
 
     /// Marks that the CREATE opcode charged the conditional `create_state_gas`
-    /// on the parent's tracker (EIP-8037, devnet-7).
+    /// on the parent's tracker (EIP-8037).
     pub const fn set_charged_create_state_gas(&mut self, charged: bool) {
         self.charged_create_state_gas = charged;
     }

@@ -49,9 +49,9 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
         .build_mainnet()
 }
 
-/// Builds an EVM with state gas, the EIP-2780 runtime gas phase (the devnet-7
+/// Builds an EVM with state gas, the EIP-2780 runtime gas phase (the full
 /// Amsterdam configuration), and custom gas params.
-fn devnet7_state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
+fn amsterdam_state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
@@ -2133,7 +2133,7 @@ fn test_eip8037_tx_create_initcode_halts() {
         )
         .unwrap();
 
-    let mut evm = devnet7_state_gas_evm(Bytecode::new(), u64::MAX);
+    let mut evm = amsterdam_state_gas_evm(Bytecode::new(), u64::MAX);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
@@ -2197,7 +2197,7 @@ fn test_eip8037_tx_create_initcode_selfdestruct_after_sstore() {
         )
         .unwrap();
 
-    let mut evm = devnet7_state_gas_evm(Bytecode::new(), u64::MAX);
+    let mut evm = amsterdam_state_gas_evm(Bytecode::new(), u64::MAX);
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
@@ -2296,8 +2296,8 @@ fn test_eip8037_tx_create_collision() {
     let baseline_result = baseline.transact_one(build_tx(TX_GAS_LIMIT_CAP)).unwrap();
 
     // State-gas variant: EIP-8037 and the EIP-2780 runtime gas phase enabled
-    // (devnet-7 configuration) with gas-table overrides interpreted as final
-    // amounts.
+    // (full Amsterdam configuration) with gas-table overrides interpreted as
+    // final amounts.
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);

@@ -32,12 +32,12 @@ use state::EvmState;
 /// The system address used for system calls.
 pub const SYSTEM_ADDRESS: Address = address!("0xfffffffffffffffffffffffffffffffffffffffe");
 
-/// Maximum number of SSTOREs a bal-devnet-7 system call reserves state gas for.
+/// Maximum number of SSTOREs a system call reserves state gas for under EIP-8037.
 pub const SYSTEM_MAX_SSTORES_PER_CALL: u64 = 16;
 
-/// Gas limit for system calls under bal-devnet-7.
+/// Gas limit for system calls under EIP-8037.
 ///
-/// Per `tests-bal@v7.0.0`, system calls get the base 30M regular-gas budget plus
+/// System calls get the base 30M regular-gas budget plus
 /// a state-gas reservoir sized for `SYSTEM_MAX_SSTORES_PER_CALL` storage writes.
 pub const SYSTEM_CALL_GAS_LIMIT: u64 = 30_000_000
     + eip8037::SSTORE_SET_BYTES * eip8037::CPSB_GLAMSTERDAM * SYSTEM_MAX_SSTORES_PER_CALL;
@@ -309,7 +309,7 @@ mod tests {
             .system_call(HISTORY_STORAGE_ADDRESS, block_hash.0.into())
             .unwrap();
 
-        // bal-devnet-7 adds a state-gas reservoir on top of the 30M base limit.
+        // EIP-8037 adds a state-gas reservoir on top of the 30M base limit.
         assert_eq!(evm.ctx.tx().gas_limit(), SYSTEM_CALL_GAS_LIMIT);
 
         assert_eq!(

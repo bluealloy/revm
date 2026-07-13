@@ -13,7 +13,7 @@ pub struct CreateOutcome {
     pub result: InterpreterResult,
     /// An optional address associated with the create operation
     pub address: Option<Address>,
-    /// EIP-8037 (devnet-7): whether the CREATE opcode charged the conditional
+    /// EIP-8037: whether the CREATE opcode charged the conditional
     /// `create_state_gas` on the parent's tracker (the destination did not
     /// exist at access time). When the create fails the parent refunds it.
     pub charged_create_state_gas: bool,

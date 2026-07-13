@@ -99,7 +99,7 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
 
     // State gas for account creation + contract metadata (EIP-8037).
     if context.host.is_amsterdam_eip8037_enabled() {
-        // Devnet-7 (#11858): the charge is conditional at access, applied in
+        // The charge is conditional at access, applied in
         // the creating frame before the 63/64 split. The destination is read
         // (and charged for) only after the pre-access checks — endowment
         // balance and sender nonce overflow — pass; failing those pushes 0
