@@ -269,6 +269,7 @@ where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
+    let mut instruction_journal_i = None;
     loop {
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
@@ -277,6 +278,7 @@ where
         }
 
         let opcode = interpreter.bytecode.opcode();
+        instruction_journal_i = Some(context.journal().journal().len());
         if let Err(e) = interpreter.step(instructions, gas_table, context) {
             cold_path();
             if interpreter.bytecode.action().is_none() {
@@ -301,7 +303,9 @@ where
     // Handle selfdestruct.
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
-            inspect_selfdestruct(context, &mut inspector);
+            if let Some(journal_i) = instruction_journal_i {
+                inspect_selfdestruct(context, &mut inspector, journal_i);
+            }
         }
     }
 
@@ -334,11 +338,20 @@ fn inspect_log<CTX, IT>(
 
 #[inline(never)]
 #[cold]
-fn inspect_selfdestruct<CTX, IT>(context: &mut CTX, inspector: &mut impl Inspector<CTX, IT>)
-where
+fn inspect_selfdestruct<CTX, IT>(
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+    journal_i: usize,
+) where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
+    let entry = context
+        .journal_mut()
+        .journal()
+        .get(journal_i..)
+        .and_then(|entries| entries.last());
+
     if let Some(
         JournalEntry::AccountDestroyed {
             address: contract,
@@ -352,7 +365,7 @@ where
             balance,
             ..
         },
-    ) = context.journal_mut().journal().last()
+    ) = entry
     {
         inspector.selfdestruct(*contract, *to, *balance);
     }
