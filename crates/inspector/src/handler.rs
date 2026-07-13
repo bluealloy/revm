@@ -108,7 +108,7 @@ where
             evm,
             gas_limit,
             reservoir,
-            init_and_floor_gas.first_frame_state_gas,
+            init_and_floor_gas.refundable_state_gas,
         )?;
 
         // Run execution loop

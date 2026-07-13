@@ -244,7 +244,7 @@ pub trait Handler {
             evm,
             gas_limit,
             reservoir,
-            init_and_floor_gas.first_frame_state_gas,
+            init_and_floor_gas.refundable_state_gas,
         )?;
 
         // Run execution loop
@@ -381,7 +381,7 @@ pub trait Handler {
 
     /// Creates initial frame input using transaction parameters, gas limit and configuration.
     ///
-    /// `state_gas_charge` is the EIP-2780 runtime charge decided at the
+    /// `refundable_state_gas` is the EIP-2780 runtime charge decided at the
     /// runtime gas phase to be recorded on the first frame's gas tracker.
     #[inline]
     fn first_frame_input(
@@ -389,7 +389,7 @@ pub trait Handler {
         evm: &mut Self::Evm,
         gas_limit: u64,
         reservoir: u64,
-        state_gas_charge: u64,
+        refundable_state_gas: u64,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
@@ -401,7 +401,7 @@ pub trait Handler {
             depth: 0,
             memory,
             frame_input,
-            state_gas_charge,
+            refundable_state_gas,
         })
     }
 

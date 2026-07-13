@@ -305,7 +305,7 @@ pub fn apply_eip2780_runtime_gas<
     let mut runtime_state_gas: u64 = 0;
     // State gas to be recorded on the first frame's gas tracker (rather than
     // folded into the initial gas) so a revert or halt of the frame refills it.
-    let mut first_frame_state_gas: u64 = 0;
+    let mut refundable_state_gas: u64 = 0;
     let mut oog = false;
 
     // Apply EIP-7702 authorizations, charging the per-authority runtime
@@ -371,7 +371,7 @@ pub fn apply_eip2780_runtime_gas<
             // `prepare_dispatch` order.
             if is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
                 if gas.record_state_cost(per_new_account_state_gas) {
-                    first_frame_state_gas = per_new_account_state_gas;
+                    refundable_state_gas = per_new_account_state_gas;
                 } else {
                     oog = true;
                 }
@@ -424,7 +424,7 @@ pub fn apply_eip2780_runtime_gas<
         let target_is_empty = journal.load_account(created_address)?.info.is_empty();
         if target_is_empty {
             if gas.record_state_cost(create_state_gas) {
-                first_frame_state_gas = create_state_gas;
+                refundable_state_gas = create_state_gas;
             } else {
                 oog = true;
             }
@@ -450,7 +450,7 @@ pub fn apply_eip2780_runtime_gas<
     journal.checkpoint_commit();
     init_and_floor_gas.initial_regular_gas += runtime_regular_gas;
     init_and_floor_gas.initial_state_gas += runtime_state_gas;
-    init_and_floor_gas.first_frame_state_gas = first_frame_state_gas;
+    init_and_floor_gas.refundable_state_gas = refundable_state_gas;
     Ok(())
 }
 

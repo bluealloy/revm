@@ -152,7 +152,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CallInputs>,
-        state_gas_charge: u64,
+        refundable_state_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir;
         let mut charged_new_account_state_gas = inputs.charged_new_account_state_gas;
@@ -166,8 +166,8 @@ impl EthFrame<EthInterpreter> {
         // `last_frame_result`. Its affordability was already checked at the
         // runtime gas phase, so the out-of-gas branch is a defensive backstop.
         let mut early_halt: Option<InstructionResult> = None;
-        if state_gas_charge != 0 {
-            if gas.record_state_cost(state_gas_charge) {
+        if refundable_state_gas != 0 {
+            if gas.record_state_cost(refundable_state_gas) {
                 charged_new_account_state_gas = true;
             } else {
                 early_halt = Some(InstructionResult::OutOfGas);
@@ -227,11 +227,11 @@ impl EthFrame<EthInterpreter> {
             // The EIP-2780 first-frame charge was recorded on the local `gas`
             // above, but the precompile path returns its own result gas, so
             // re-apply that charge here (drawing from the reservoir). Nested
-            // precompile calls carry a zero `state_gas_charge`: their charge was
+            // precompile calls carry a zero `refundable_state_gas`: their charge was
             // applied on the parent's tracker by the CALL opcode.
-            if state_gas_charge != 0
+            if refundable_state_gas != 0
                 && result.result.is_ok()
-                && !result.gas.record_state_cost(state_gas_charge)
+                && !result.gas.record_state_cost(refundable_state_gas)
             {
                 result.gas.spend_all();
                 result.result = InstructionResult::OutOfGas;
@@ -303,7 +303,7 @@ impl EthFrame<EthInterpreter> {
         depth: usize,
         memory: SharedMemory,
         inputs: Box<CreateInputs>,
-        state_gas_charge: u64,
+        refundable_state_gas: u64,
     ) -> Result<ItemOrResult<FrameToken, FrameResult>, ERROR> {
         let reservoir_remaining_gas = inputs.reservoir();
         let spec = context.cfg().spec().into();
@@ -371,7 +371,7 @@ impl EthFrame<EthInterpreter> {
         // instead.
         let mut gas =
             Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit(), reservoir_remaining_gas);
-        if state_gas_charge != 0 && !gas.record_state_cost(state_gas_charge) {
+        if refundable_state_gas != 0 && !gas.record_state_cost(refundable_state_gas) {
             return return_error(InstructionResult::OutOfGas);
         }
 
@@ -442,7 +442,7 @@ impl EthFrame<EthInterpreter> {
             depth,
             memory,
             frame_input,
-            state_gas_charge,
+            refundable_state_gas,
         } = frame_init;
 
         match frame_input {
@@ -453,10 +453,10 @@ impl EthFrame<EthInterpreter> {
                 depth,
                 memory,
                 inputs,
-                state_gas_charge,
+                refundable_state_gas,
             ),
             FrameInput::Create(inputs) => {
-                Self::make_create_frame(this, ctx, depth, memory, inputs, state_gas_charge)
+                Self::make_create_frame(this, ctx, depth, memory, inputs, refundable_state_gas)
             }
             FrameInput::Empty => unreachable!(),
         }
@@ -484,7 +484,7 @@ impl EthFrame<EthInterpreter> {
                     memory: self.interpreter.memory.new_child_context(),
                     // Nested frames carry no first-frame charge: their state
                     // gas is applied by the CALL/CREATE opcodes.
-                    state_gas_charge: 0,
+                    refundable_state_gas: 0,
                 }));
             }
             InterpreterAction::Return(result) => result,

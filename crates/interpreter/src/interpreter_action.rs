@@ -35,10 +35,11 @@ pub struct FrameInit {
     /// Data needed as input for Interpreter.
     pub frame_input: FrameInput,
     /// EIP-2780: state gas to record on the frame's gas tracker at creation,
-    /// decided at the runtime gas phase for the first frame (recipient
-    /// new-account leaf or the create transaction's account-creation charge).
-    /// Zero for nested frames (their charges are applied by the opcodes).
-    pub state_gas_charge: u64,
+    /// refunded if the frame reverts or halts. Decided at the runtime gas
+    /// phase for the first frame (recipient new-account leaf or the create
+    /// transaction's account-creation charge). Zero for nested frames (their
+    /// charges are applied by the opcodes).
+    pub refundable_state_gas: u64,
 }
 
 impl FrameInput {
