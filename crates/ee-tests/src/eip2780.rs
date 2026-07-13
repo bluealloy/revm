@@ -401,3 +401,196 @@ fn test_eip2780_auth_runtime_oog_reverts_delegation() {
 fn run_cache(evm: &mut CacheEvm, tx: TxEnv) -> revm::context_interface::result::ResultGas {
     *evm.transact_one(tx).unwrap().gas()
 }
+
+// ---------------------------------------------------------------------------
+// Spilled refundable-charge coverage.
+//
+// The tests above run with `tx_gas_limit_cap = u64::MAX`, so the EIP-8037
+// reservoir is zero and every state charge — including the EIP-2780 refundable
+// first-frame charge — spills into the regular gas budget. The tests below pin
+// the gas accounting of that spilled charge across the interesting first-frame
+// outcomes (success, revert, halt), through the reservoir "laundering" dance
+// (a child DELEGATECALL clearing a slot its parent set mints reservoir on the
+// child's tracker while the parent's `state_gas_spilled` counter goes stale),
+// and through the precompile-recipient path where the charge is applied to the
+// precompile's own result gas. They are the regression net for any refactor of
+// where the refundable charge is recorded (see the reverted "Path C" redesign).
+// ---------------------------------------------------------------------------
+
+/// Address holding the slot-clearing helper called via DELEGATECALL.
+const CLEAR_HELPER: Address = address!("0x00000000000000000000000000000000000000e1");
+
+/// Helper runtime code: `SSTORE(slot0, 0); STOP`.
+fn clear_slot0_code() -> Bytecode {
+    Bytecode::new_raw([0x60, 0x00, 0x60, 0x00, 0x55, 0x00].as_slice().into())
+}
+
+/// Initcode performing the reservoir-laundering dance, ending in `tail`:
+/// 1. `SSTORE(0, 1)` — 0→x state charge, fully spilled (reservoir is 0).
+/// 2. `DELEGATECALL(CLEAR_HELPER)` — the child clears slot 0; the 0→x→0
+///    refill happens on the child's tracker (child `state_gas_spilled` = 0),
+///    so the credit mints child reservoir that the parent adopts on success,
+///    while the parent's own `state_gas_spilled` stays stale.
+/// 3. `SSTORE(1, 1)` — drawn from the minted reservoir (no spill).
+/// 4. `SSTORE(1, 0)` — refill whose remaining-vs-reservoir split probes the
+///    `min(refill, state_gas_spilled)` computation against the stale counter.
+/// 5. `SSTORE(2, 1)`; `SSTORE(2, 0)` — one more spill/refill round.
+fn laundering_initcode(tail: &[u8]) -> Vec<u8> {
+    let mut code = vec![
+        0x60, 0x01, 0x60, 0x00, 0x55, // SSTORE(0, 1)
+        0x60, 0x00, 0x60, 0x00, 0x60, 0x00, 0x60,
+        0x00, // retSize/retOffset/argsSize/argsOffset
+        0x73, // PUSH20 helper
+    ];
+    code.extend_from_slice(CLEAR_HELPER.as_slice());
+    code.extend_from_slice(&[
+        0x5a, 0xf4, 0x50, // GAS; DELEGATECALL; POP
+        0x60, 0x01, 0x60, 0x01, 0x55, // SSTORE(1, 1)
+        0x60, 0x00, 0x60, 0x01, 0x55, // SSTORE(1, 0)
+        0x60, 0x01, 0x60, 0x02, 0x55, // SSTORE(2, 1)
+        0x60, 0x00, 0x60, 0x02, 0x55, // SSTORE(2, 0)
+    ]);
+    code.extend_from_slice(tail);
+    code
+}
+
+/// EVM over a CacheDB with the clear helper deployed and the caller funded.
+fn evm_with_helper() -> CacheEvm {
+    let mut db = CacheDB::<EmptyDB>::default();
+    let code = clear_slot0_code();
+    db.insert_account_info(
+        CLEAR_HELPER,
+        AccountInfo::new(U256::ZERO, 1, code.hash_slow(), code),
+    );
+    db.insert_account_info(
+        BENCH_CALLER,
+        AccountInfo::new(
+            U256::from(1_000_000_000u64),
+            0,
+            KECCAK_EMPTY,
+            Bytecode::new(),
+        ),
+    );
+    evm_with_db(db)
+}
+
+fn create_tx(initcode: Vec<u8>) -> TxEnv {
+    TxEnv::builder_for_bench()
+        .kind(TxKind::Create)
+        .value(U256::ZERO)
+        .gas_price(0)
+        .gas_limit(TX_GAS_LIMIT)
+        .data(initcode.into())
+        .build_fill()
+}
+
+#[test]
+fn test_eip2780_create_spilled_charge_reverted_initcode() {
+    // Refundable create charge fully spilled; initcode reverts immediately:
+    // the charge must be rolled back (spilled portion returned as unused
+    // regular gas) and reported state gas must be zero.
+    let mut evm = evm_with_helper();
+    let result = evm
+        .transact_one(create_tx(vec![0x60, 0x00, 0x60, 0x00, 0xfd])) // PUSH1 0 PUSH1 0 REVERT
+        .unwrap();
+    assert!(!result.is_success());
+    assert!(!result.is_halt());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), 0);
+    // TX_BASE_COST + CREATE_ACCESS + initcode words + REVERT-path costs; the
+    // rolled-back spilled charge is returned as unused regular gas.
+    assert_eq!(gas.total_gas_spent(), 23_064);
+}
+
+#[test]
+fn test_eip2780_create_spilled_charge_halted_initcode() {
+    // Refundable create charge fully spilled; initcode halts (INVALID): the
+    // spilled charge is rolled back to `remaining`, which the halt then
+    // consumes — all gas spent, no state gas reported.
+    let mut evm = evm_with_helper();
+    let result = evm.transact_one(create_tx(vec![0xfe])).unwrap();
+    assert!(result.is_halt());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), 0);
+    assert_eq!(gas.total_gas_spent(), TX_GAS_LIMIT);
+}
+
+#[test]
+fn test_eip2780_create_spilled_charge_laundering_success() {
+    let mut evm = evm_with_helper();
+    let result = evm
+        .transact_one(create_tx(laundering_initcode(&[0x00]))) // STOP
+        .unwrap();
+    assert!(result.is_success());
+    let gas = result.gas();
+    // Only the create charge remains as state gas: all three storage slots
+    // were restored to zero, so their 0->x charges were refilled.
+    assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
+    assert_eq!(gas.total_gas_spent(), 249_563);
+}
+
+#[test]
+fn test_eip2780_create_spilled_charge_laundering_revert() {
+    let mut evm = evm_with_helper();
+    let result = evm
+        .transact_one(create_tx(laundering_initcode(&[
+            0x60, 0x00, 0x60, 0x00, 0xfd, // PUSH1 0 PUSH1 0 REVERT
+        ])))
+        .unwrap();
+    assert!(!result.is_success());
+    assert!(!result.is_halt());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), 0);
+    assert_eq!(gas.total_gas_spent(), 66_021);
+}
+
+#[test]
+fn test_eip2780_create_spilled_charge_laundering_halt() {
+    let mut evm = evm_with_helper();
+    let result = evm
+        .transact_one(create_tx(laundering_initcode(&[0xfe]))) // INVALID
+        .unwrap();
+    assert!(result.is_halt());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), 0);
+    assert_eq!(gas.total_gas_spent(), TX_GAS_LIMIT);
+}
+
+fn value_call_tx(to: Address, data: Vec<u8>) -> TxEnv {
+    TxEnv::builder_for_bench()
+        .kind(TxKind::Call(to))
+        .value(U256::from(1u64))
+        .gas_price(0)
+        .gas_limit(TX_GAS_LIMIT)
+        .data(data.into())
+        .build_fill()
+}
+
+#[test]
+fn test_eip2780_precompile_recipient_value_success() {
+    // Value transfer to an empty precompile account (SHA-256): the refundable
+    // new-account charge fires and must be applied to the precompile's own
+    // result gas (spilled, since the reservoir is 0).
+    let sha256 = address!("0x0000000000000000000000000000000000000002");
+    let mut evm = evm_with_helper();
+    let result = evm.transact_one(value_call_tx(sha256, vec![])).unwrap();
+    assert!(result.is_success());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
+    // 21_000 intrinsic + 183_600 new-account state gas (spilled) + 60 SHA-256.
+    assert_eq!(gas.total_gas_spent(), 204_660);
+}
+
+#[test]
+fn test_eip2780_precompile_recipient_value_failure() {
+    // Value transfer to an empty precompile that errors (blake2f with an
+    // invalid input length): the transfer is reverted, so the refundable
+    // charge must not be reported as spent state gas.
+    let blake2f = address!("0x0000000000000000000000000000000000000009");
+    let mut evm = evm_with_helper();
+    let result = evm.transact_one(value_call_tx(blake2f, vec![])).unwrap();
+    assert!(result.is_halt());
+    let gas = result.gas();
+    assert_eq!(gas.state_gas_spent_final(), 0);
+    assert_eq!(gas.total_gas_spent(), TX_GAS_LIMIT);
+}
