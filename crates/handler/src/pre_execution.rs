@@ -280,14 +280,6 @@ pub fn apply_eip2780_runtime_gas<
     let create_state_gas = params.create_state_gas();
     let (tx, journal) = context.tx_journal_mut();
 
-    // The recipient is read when the message is prepared (its access was
-    // already charged at the cold rate at the intrinsic phase), before the
-    // runtime charges are applied, so the read stays in the EIP-7928 block
-    // access list even if the runtime phase runs out of gas.
-    if let TxKind::Call(target) = tx.kind() {
-        journal.load_account_with_code(target)?;
-    }
-
     // All runtime state changes are reverted wholesale if the transaction
     // cannot afford the runtime charges.
     let checkpoint = journal.checkpoint();
@@ -345,9 +337,11 @@ pub fn apply_eip2780_runtime_gas<
         oog = auth_oog;
     }
 
-    // Evaluate the recipient runtime charges (the recipient itself was loaded
-    // and warmed with the access list; its access was already charged at the
-    // cold rate at the intrinsic phase). Evaluated after authorizations so a
+    // Read the recipient and evaluate its runtime charges (its access was
+    // already charged at the cold rate at the intrinsic phase). The read
+    // happens only after the authorization charges are covered, so a runtime
+    // out-of-gas during authorization processing leaves the recipient out of
+    // the EIP-7928 block access list. Evaluated after authorizations so a
     // recipient materialized or delegated by an authorization in this
     // transaction is seen in its post-authorization state. A self-transfer
     // recipient is the (non-empty) sender, so the new-account charge never
