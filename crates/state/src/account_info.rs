@@ -214,14 +214,19 @@ impl AccountInfo {
         self.code = Some(code);
         self
     }
-    /// Sets the bytecode and its hash.
+    /// Sets the bytecode and its hash, returning the previous code and hash.
     ///
     /// # Note
     ///
     /// It is on the caller's responsibility to ensure that the bytecode hash is correct.
-    pub fn set_code_and_hash(&mut self, code: Bytecode, code_hash: B256) {
-        self.code_hash = code_hash;
-        self.code = Some(code);
+    pub const fn set_code_and_hash(
+        &mut self,
+        code: Bytecode,
+        code_hash: B256,
+    ) -> (B256, Option<Bytecode>) {
+        let previous_hash = core::mem::replace(&mut self.code_hash, code_hash);
+        let previous_code = self.code.replace(code);
+        (previous_hash, previous_code)
     }
     /// Returns a copy of this account with the [`Bytecode`] removed.
     ///
