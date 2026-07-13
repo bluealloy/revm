@@ -81,16 +81,6 @@ pub const EIP7702_PER_AUTH_BASE_REGULAR: u64 = EIP7702_AUTH_TUPLE_BYTES * TX_DAT
     + COLD_ACCOUNT_ACCESS
     + 2 * WARM_ACCESS;
 
-/// Regular-gas portion of EIP-7702 `PER_EMPTY_ACCOUNT_COST` under EIP-8038.
-///
-/// Per execution-specs, the pessimistic regular per-auth charge is
-/// `ACCOUNT_WRITE + REGULAR_PER_AUTH_BASE_COST` = `8,000 + 7,816 = 15,816`.
-/// (The per-auth state gas — `NEW_ACCOUNT + AUTH_BASE` — is charged separately.)
-/// Used when EIP-2780 is disabled; with EIP-2780 only
-/// [`EIP7702_PER_AUTH_BASE_REGULAR`] is intrinsic and `ACCOUNT_WRITE` moves to
-/// the runtime phase.
-pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = ACCOUNT_WRITE + EIP7702_PER_AUTH_BASE_REGULAR;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,7 +99,6 @@ mod tests {
         assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, 3_000);
         assert_eq!(CALL_VALUE, 10_300);
         assert_eq!(EIP7702_PER_AUTH_BASE_REGULAR, 7_816);
-        assert_eq!(EIP7702_PER_EMPTY_ACCOUNT_REGULAR, 15_816);
     }
 
     /// Spec-defined relationships between the parameters (kept as derivations so a

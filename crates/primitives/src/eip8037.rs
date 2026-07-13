@@ -29,9 +29,6 @@ pub const AUTH_BASE_BYTES: u64 = 23;
 /// State bytes charged per byte of deployed code.
 pub const CODE_DEPOSIT_PER_BYTE: u64 = 1;
 
-/// Regular gas component of EIP-7702 `PER_EMPTY_ACCOUNT_COST` under EIP-8037.
-pub const EIP7702_PER_EMPTY_ACCOUNT_REGULAR: u64 = 7500;
-
 /// Cost per state byte (CPSB) for Glamsterdam.
 ///
 /// Reference: [EIP-8037: State Creation Gas Cost Increase](https://eips.ethereum.org/EIPS/eip-8037).
