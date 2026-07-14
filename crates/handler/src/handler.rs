@@ -176,10 +176,10 @@ pub trait Handler {
         // included as an out-of-gas halt without entering execution.
         let pre_execution = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
 
-        let mut refund = 0;
+        let refund = pre_execution.map(|pe| pe.eip7702_refund).unwrap_or(0) as i64;
+
         let mut exec_result = None;
         if let Some(pre_execution) = pre_execution {
-            refund = pre_execution.eip7702_refund as i64;
             exec_result = self.execution(evm, pre_execution.checkpoint, &mut gas)?;
         }
         let mut exec_result = match exec_result {
