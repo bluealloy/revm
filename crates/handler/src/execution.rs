@@ -76,21 +76,20 @@ pub fn create_init_frame<CTX: ContextTr>(
 
             if let Some(delegated_address) = delegated_address {
                 if is_eip2780 {
-                    if gas.remaining() < eip8038::WARM_ACCESS {
-                        // The access cost cannot be covered whether the
-                        // delegate is warm or cold: fail without reading it.
+                    // Charge the warm access upfront and the cold difference
+                    // after the load. Charges made before an out-of-gas bail
+                    // need no undo: the runtime out-of-gas path rebuilds the
+                    // transaction-level gas.
+                    if !gas.record_regular_cost(eip8038::WARM_ACCESS) {
                         return Ok(None);
                     }
-                    let skip_cold_load = gas.remaining() < eip8038::COLD_ACCOUNT_ACCESS;
+                    let skip_cold_load = gas.remaining() < eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL;
                     match journal.load_account_mut_skip_cold_load(delegated_address, skip_cold_load)
                     {
                         Ok(acc) => {
-                            let cost = if acc.is_cold {
-                                eip8038::COLD_ACCOUNT_ACCESS
-                            } else {
-                                eip8038::WARM_ACCESS
-                            };
-                            if !gas.record_regular_cost(cost) {
+                            if acc.is_cold
+                                && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL)
+                            {
                                 return Ok(None);
                             }
                         }
