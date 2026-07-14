@@ -371,31 +371,21 @@ pub struct InitialAndFloorGas {
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
-    /// EIP-2780: the transaction passed the intrinsic validity check but its gas
-    /// cannot cover the state-dependent runtime charges applied in the
-    /// pre-execution phase (EIP-7702 authority charges, recipient
-    /// delegation-target access, new-account state gas).
-    ///
-    /// The transaction stays valid and included: execution is skipped, all gas
-    /// is consumed, and all runtime state changes (including applied EIP-7702
-    /// delegations) are reverted, exactly like an out-of-gas halt inside a
-    /// frame.
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub runtime_oog: bool,
-    /// EIP-2780: state gas decided at the runtime gas phase that is refunded
-    /// if the first frame reverts or halts — the recipient new-account leaf
-    /// charge of a value transfer, or the account-creation charge of a create
-    /// transaction whose deployment target does not exist.
+    /// EIP-2780: set when the runtime gas phase charged the refundable
+    /// first-frame state gas — the recipient new-account leaf charge of a
+    /// value transfer, or the account-creation charge of a create transaction
+    /// whose deployment target does not exist. The amount is derived from the
+    /// transaction kind and the gas params when it is refunded.
     ///
     /// Unlike `initial_state_gas` (consumed unconditionally), this charge is
-    /// deducted from the first frame's budget at the execution phase
-    /// (`deduct_refundable_state_gas`) and seeded onto the frame's state-gas
-    /// counters after the run (`settle_refundable_state_gas`) so the
-    /// handler's final settle reports it on success and rolls it back on
-    /// failure. Its affordability was verified at the runtime phase; an
-    /// unaffordable charge sets [`runtime_oog`](Self::runtime_oog) instead.
+    /// refundable: the runtime gas phase records it on the transaction-level
+    /// gas (`apply_eip2780_runtime_gas`) and this flag travels onto the first
+    /// frame's `charged_*` input flags, so the handler refunds the charge at
+    /// frame settle when the frame does not create the account leaf it paid
+    /// for — mirroring how a parent frame refunds the upfront CALL/CREATE
+    /// state charges of inner frames.
     #[cfg_attr(feature = "serde", serde(default))]
-    pub refundable_state_gas: u64,
+    pub charged_refundable_state_gas: bool,
 }
 
 impl InitialAndFloorGas {
@@ -408,8 +398,7 @@ impl InitialAndFloorGas {
             initial_regular_gas,
             initial_state_gas: 0,
             floor_gas,
-            runtime_oog: false,
-            refundable_state_gas: 0,
+            charged_refundable_state_gas: false,
         }
     }
 
@@ -424,8 +413,7 @@ impl InitialAndFloorGas {
             initial_regular_gas,
             initial_state_gas,
             floor_gas,
-            runtime_oog: false,
-            refundable_state_gas: 0,
+            charged_refundable_state_gas: false,
         }
     }
 
@@ -543,47 +531,6 @@ impl InitialAndFloorGas {
         }
 
         (regular_gas_limit, reservoir)
-    }
-
-    /// Checked variant of [`Self::initial_gas_and_reservoir`].
-    ///
-    /// Returns `None` when the initial gas does not fit the transaction's gas
-    /// limit — either the regular gas exceeds `min(tx_gas_limit,
-    /// tx_gas_limit_cap)` or the state gas spilling out of the reservoir
-    /// exceeds the remaining regular budget. Used by the EIP-2780 runtime
-    /// phase, where state-dependent charges are folded into the initial gas
-    /// after validation and may exceed the supplied gas (an out-of-gas halt,
-    /// not an invalid transaction).
-    pub fn checked_initial_gas_and_reservoir(
-        &self,
-        tx_gas_limit: u64,
-        tx_gas_limit_cap: u64,
-    ) -> Option<(u64, u64)> {
-        let execution_gas = tx_gas_limit.checked_sub(self.initial_regular_gas())?;
-
-        // System calls pass InitialAndFloorGas with all zeros and should not be
-        // subject to the TX_MAX_GAS_LIMIT cap.
-        let tx_gas_limit_cap = if self.initial_total_gas() == 0 {
-            u64::MAX
-        } else {
-            tx_gas_limit_cap
-        };
-
-        let mut regular_gas_limit = core::cmp::min(tx_gas_limit, tx_gas_limit_cap)
-            .checked_sub(self.initial_regular_gas())?;
-        let mut reservoir = execution_gas - regular_gas_limit;
-
-        // Deduct initial state gas from the reservoir. When the reservoir is
-        // insufficient, the deficit is charged from the regular gas budget.
-        if reservoir >= self.initial_state_gas {
-            reservoir -= self.initial_state_gas;
-        } else {
-            regular_gas_limit =
-                regular_gas_limit.checked_sub(self.initial_state_gas - reservoir)?;
-            reservoir = 0;
-        }
-
-        Some((regular_gas_limit, reservoir))
     }
 }
 

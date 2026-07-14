@@ -197,10 +197,14 @@ pub fn validate_against_state_and_deduct_caller<
 /// Internally uses [`apply_auth_list`] function.
 ///
 /// Under EIP-2780 this instead runs the runtime gas phase
-/// ([`apply_eip2780_runtime_gas`]): state-dependent charges are metered as the
-/// authorizations are applied and the recipient is loaded, and no refund is
-/// returned (the pessimistic intrinsic charge and its refund are replaced by
-/// conditional runtime charges).
+/// ([`apply_eip2780_runtime_gas`]): state-dependent charges are metered on the
+/// transaction-level `gas` as the authorizations are applied and the recipient
+/// is loaded, and no refund is returned (the pessimistic intrinsic charge and
+/// its refund are replaced by conditional runtime charges).
+///
+/// Returns the EIP-7702 gas refund, or `None` when the EIP-2780 runtime gas
+/// phase ran out of gas: the transaction stays valid and must be included as
+/// an out-of-gas halt without entering execution.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
@@ -208,13 +212,15 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
     init_and_floor_gas: &mut InitialAndFloorGas,
-) -> Result<u64, ERROR> {
+    gas: &mut Gas,
+) -> Result<Option<u64>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
     // delegation-target access, recipient new-account state gas) are charged at
     // the runtime phase instead of pessimistically at the intrinsic phase.
     if context.cfg().is_amsterdam_eip2780_enabled() {
-        apply_eip2780_runtime_gas::<CTX, ERROR>(context, init_and_floor_gas)?;
-        return Ok(0);
+        let runtime_oog =
+            apply_eip2780_runtime_gas::<CTX, ERROR>(context, init_and_floor_gas, gas)?;
+        return Ok(if runtime_oog { None } else { Some(0) });
     }
 
     let chain_id = context.cfg().chain_id();
@@ -222,7 +228,7 @@ pub fn apply_eip7702_auth_list<
 
     // Return if not EIP-7702 transaction.
     if tx.tx_type() != TransactionType::Eip7702 {
-        return Ok(0);
+        return Ok(Some(0));
     }
     let number_of_refunded_accounts =
         apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
@@ -233,14 +239,14 @@ pub fn apply_eip7702_auth_list<
         .tx_eip7702_auth_refund_regular()
         .saturating_mul(number_of_refunded_accounts);
 
-    Ok(regular_gas_refund)
+    Ok(Some(regular_gas_refund))
 }
 
 /// EIP-2780 runtime gas phase (ethereum/EIPs#11844).
 ///
 /// Once the transaction has passed the state-independent intrinsic gas check,
 /// the state-dependent charges are applied here, before the first frame is
-/// entered, drawing from the same gas the transaction supplies:
+/// entered, recorded directly on the transaction-level `gas`:
 ///
 /// - While processing each valid EIP-7702 authorization (at most once per
 ///   authority): a non-existent authority pays `STATE_BYTES_PER_NEW_ACCOUNT ×
@@ -252,16 +258,22 @@ pub fn apply_eip7702_auth_list<
 ///   delegation-target access is charged following the standard EIP-2929
 ///   warm/cold model (`COLD_ACCOUNT_ACCESS` if cold, `WARM_ACCESS` if warm).
 /// - A value transfer to a non-existent recipient additionally requires
-///   `STATE_BYTES_PER_NEW_ACCOUNT × CPSB` state gas; that charge is applied on
-///   the first frame's gas tracker (see `EthFrame::make_call_frame`) so a
-///   revert rolls it back, but its affordability is checked here.
+///   `STATE_BYTES_PER_NEW_ACCOUNT × CPSB` state gas, and a create transaction
+///   whose deployment target does not exist pays the account-creation state
+///   gas. These refundable charges stay deducted on `gas` and only the
+///   decision is carried ([`InitialAndFloorGas::charged_refundable_state_gas`]
+///   onto the first frame's `charged_*` input flags), so the handler refunds
+///   them at frame settle when the frame fails to create the account leaf.
 ///
-/// The affordable charges are folded into `init_and_floor_gas` so
-/// [`InitialAndFloorGas::initial_gas_and_reservoir`] deducts them before the
-/// first frame is entered. Running out of gas here does **not** invalidate the
-/// transaction: `runtime_oog` is set, all runtime state changes — including
-/// applied delegations — are reverted, and the caller turns the transaction
-/// into an out-of-gas halt that consumes all gas.
+/// Recording the charges on `gas` makes the phase stop at the first
+/// unaffordable charge: later authorities must not be loaded (observable
+/// through the EIP-7928 block access list). Running out of gas here does
+/// **not** invalidate the transaction: `true` is returned, `gas` is restored
+/// to its pre-phase state, all runtime state changes — including applied
+/// delegations — are reverted, and the caller turns the transaction into an
+/// out-of-gas halt that consumes all gas.
+///
+/// Returns whether the runtime gas phase ran out of gas.
 #[inline]
 pub fn apply_eip2780_runtime_gas<
     CTX: ContextTr,
@@ -269,10 +281,10 @@ pub fn apply_eip2780_runtime_gas<
 >(
     context: &mut CTX,
     init_and_floor_gas: &mut InitialAndFloorGas,
-) -> Result<(), ERROR> {
+    gas: &mut Gas,
+) -> Result<bool, ERROR> {
     let chain_id = context.cfg().chain_id();
     let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
-    let tx_gas_limit_cap = context.cfg().tx_gas_limit_cap();
     let params = context.cfg().gas_params();
     let account_write_cost = params.tx_account_write_cost();
     let per_new_account_state_gas = params.new_account_state_gas();
@@ -280,25 +292,16 @@ pub fn apply_eip2780_runtime_gas<
     let create_state_gas = params.create_state_gas();
     let (tx, journal) = context.tx_journal_mut();
 
-    // All runtime state changes are reverted wholesale if the transaction
-    // cannot afford the runtime charges.
+    // All runtime state changes and gas charges are reverted wholesale if the
+    // transaction cannot afford the runtime charges.
     let checkpoint = journal.checkpoint();
+    let gas_snapshot = *gas;
 
-    // The runtime charges draw from the same gas the first frame will see.
-    // Track them on a real gas tracker so the phase stops at the first
-    // unaffordable charge: later authorities must not be loaded (observable
-    // through the EIP-7928 block access list).
-    let mut gas = init_and_floor_gas
-        .checked_initial_gas_and_reservoir(tx.gas_limit(), tx_gas_limit_cap)
-        .map(|(gas_limit, reservoir)| Gas::new_with_regular_gas_and_reservoir(gas_limit, reservoir))
-        .unwrap_or_else(|| Gas::new_with_regular_gas_and_reservoir(0, 0));
-
-    let mut runtime_regular_gas: u64 = 0;
-    let mut runtime_state_gas: u64 = 0;
-    // State gas deducted from the first frame's budget at the execution phase
-    // (rather than folded into the initial gas) so a revert or halt of the
-    // frame refunds it.
-    let mut refundable_state_gas: u64 = 0;
+    // State gas that stays deducted on `gas` but is refunded if the first
+    // frame does not create the account leaf it paid for. Only the decision is
+    // carried; the amount is derived from the transaction kind and the gas
+    // params when it is refunded.
+    let mut charged_refundable_state_gas = false;
     let mut oog = false;
 
     // Apply EIP-7702 authorizations, charging the per-authority runtime
@@ -315,7 +318,7 @@ pub fn apply_eip2780_runtime_gas<
                 written_accounts.insert(target);
             }
         }
-        let (regular, state, auth_oog) = apply_auth_list_eip2780::<_, ERROR>(
+        oog = apply_auth_list_eip2780::<_, ERROR>(
             chain_id,
             tx.authorization_list(),
             journal,
@@ -331,11 +334,8 @@ pub fn apply_eip2780_runtime_gas<
                 0
             },
             &mut written_accounts,
-            &mut gas,
+            gas,
         )?;
-        runtime_regular_gas += regular;
-        runtime_state_gas += state;
-        oog = auth_oog;
     }
 
     // Read the recipient and evaluate its runtime charges (its access was
@@ -359,14 +359,13 @@ pub fn apply_eip2780_runtime_gas<
             };
 
             // Value transfer to a non-existent recipient grows the state by
-            // one account leaf. The charge is deducted from the first frame's
-            // budget at the execution phase and refunded if the frame fails;
-            // here it is checked for affordability and decided. Checked
-            // before the delegation resolution, matching the spec's
-            // `prepare_dispatch` order.
+            // one account leaf. The charge stays deducted on the
+            // transaction-level gas and is refunded at frame settle if the
+            // frame fails. Checked before the delegation resolution, matching
+            // the spec's `prepare_dispatch` order.
             if is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
                 if gas.record_state_cost(per_new_account_state_gas) {
-                    refundable_state_gas = per_new_account_state_gas;
+                    charged_refundable_state_gas = true;
                 } else {
                     oog = true;
                 }
@@ -392,9 +391,7 @@ pub fn apply_eip2780_runtime_gas<
                                 } else {
                                     eip8038::WARM_ACCESS
                                 };
-                                if gas.record_regular_cost(cost) {
-                                    runtime_regular_gas += cost;
-                                } else {
+                                if !gas.record_regular_cost(cost) {
                                     oog = true;
                                 }
                             }
@@ -410,16 +407,16 @@ pub fn apply_eip2780_runtime_gas<
     // A create transaction pays the account-creation state gas at runtime,
     // only when the deployment target does not already exist. The single read
     // that decides the charge (also warming the target) matches the spec's
-    // `prepare_dispatch`; the charge is deducted from the first frame's
-    // budget at the execution phase so an initcode revert or halt refunds it
-    // in LIFO order.
+    // `prepare_dispatch`; the charge stays deducted on the transaction-level
+    // gas and is refunded in LIFO order at frame settle if the initcode
+    // reverts or halts.
     if !oog && is_eip8037 && tx.kind().is_create() {
         let nonce = journal.load_account(tx.caller())?.info.nonce;
         let created_address = tx.caller().create(nonce);
         let target_is_empty = journal.load_account(created_address)?.info.is_empty();
         if target_is_empty {
             if gas.record_state_cost(create_state_gas) {
-                refundable_state_gas = create_state_gas;
+                charged_refundable_state_gas = true;
             } else {
                 oog = true;
             }
@@ -428,8 +425,10 @@ pub fn apply_eip2780_runtime_gas<
 
     if oog {
         // Out-of-gas in the runtime phase: the transaction stays valid and
-        // included, but halts before the first frame is entered and all
-        // runtime state changes (including applied delegations) are reverted.
+        // included, but halts before the first frame is entered; the runtime
+        // gas charges and all runtime state changes (including applied
+        // delegations) are reverted.
+        *gas = gas_snapshot;
         journal.checkpoint_revert(checkpoint);
         // A create transaction still bumps the sender nonce: the increment
         // precedes message processing and survives the halt. (Calls bump it in
@@ -438,20 +437,17 @@ pub fn apply_eip2780_runtime_gas<
         if tx.kind().is_create() {
             journal.load_account_mut(tx.caller())?.data.bump_nonce();
         }
-        init_and_floor_gas.runtime_oog = true;
-        return Ok(());
+        return Ok(true);
     }
 
     journal.checkpoint_commit();
-    init_and_floor_gas.initial_regular_gas += runtime_regular_gas;
-    init_and_floor_gas.initial_state_gas += runtime_state_gas;
-    init_and_floor_gas.refundable_state_gas = refundable_state_gas;
-    Ok(())
+    init_and_floor_gas.charged_refundable_state_gas = charged_refundable_state_gas;
+    Ok(false)
 }
 
-/// Applies an EIP-7702 auth list under EIP-2780, accumulating the
-/// state-dependent runtime charges instead of the pessimistic
-/// intrinsic-charge/refund bookkeeping of [`apply_auth_list`].
+/// Applies an EIP-7702 auth list under EIP-2780, recording the
+/// state-dependent runtime charges on the transaction-level `gas` instead of
+/// the pessimistic intrinsic-charge/refund bookkeeping of [`apply_auth_list`].
 ///
 /// Rejected authorizations charge nothing here: the intrinsic
 /// `REGULAR_PER_AUTH_BASE_COST` already covers the work every authorization
@@ -467,8 +463,7 @@ pub fn apply_eip2780_runtime_gas<
 /// the phase stops at the first unaffordable charge without loading the
 /// remaining authorities (observable through the EIP-7928 block access list).
 ///
-/// Returns the accumulated `(regular_gas, state_gas, out_of_gas)` runtime
-/// charges.
+/// Returns whether the authorization processing ran out of gas.
 #[inline]
 #[allow(clippy::too_many_arguments)]
 pub fn apply_auth_list_eip2780<
@@ -483,9 +478,7 @@ pub fn apply_auth_list_eip2780<
     delegation_bytes_state_gas: u64,
     written_accounts: &mut HashSet<Address>,
     gas: &mut Gas,
-) -> Result<(u64, u64, bool), ERROR> {
-    let mut regular_gas: u64 = 0;
-    let mut state_gas: u64 = 0;
+) -> Result<bool, ERROR> {
     // EIP-8037 per-authority rules: each charge is applied at most once per
     // authority. The new-account charges self-limit (after the first
     // application the authority exists), the delegation-bytes charge is
@@ -543,11 +536,8 @@ pub fn apply_auth_list_eip2780<
         let clearing = authorization.address().is_zero();
 
         // Non-existent authority: pay for the new account leaf's state bytes.
-        if !existed {
-            if !gas.record_state_cost(new_account_state_gas) {
-                return Ok((regular_gas, state_gas, true));
-            }
-            state_gas += new_account_state_gas;
+        if !existed && !gas.record_state_cost(new_account_state_gas) {
+            return Ok(true);
         }
 
         // First write to the authority's leaf within the transaction pays
@@ -556,9 +546,8 @@ pub fn apply_auth_list_eip2780<
         // preceding valid authorization on the same authority).
         if !written_accounts.contains(&authority) {
             if !gas.record_regular_cost(account_write_cost) {
-                return Ok((regular_gas, state_gas, true));
+                return Ok(true);
             }
-            regular_gas += account_write_cost;
             written_accounts.insert(authority);
         }
 
@@ -570,9 +559,8 @@ pub fn apply_auth_list_eip2780<
             && !charged_delegation_bytes.contains(&authority)
         {
             if !gas.record_state_cost(delegation_bytes_state_gas) {
-                return Ok((regular_gas, state_gas, true));
+                return Ok(true);
             }
-            state_gas += delegation_bytes_state_gas;
             charged_delegation_bytes.insert(authority);
         }
 
@@ -583,7 +571,7 @@ pub fn apply_auth_list_eip2780<
         authority_acc.delegate(authorization.address());
     }
 
-    Ok((regular_gas, state_gas, false))
+    Ok(false)
 }
 
 /// Apply EIP-7702 style auth list and return number gas refund on already created accounts.

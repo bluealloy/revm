@@ -1,73 +1,72 @@
 use crate::FrameResult;
 use context::{ContextTr, Database, JournalTr};
-use context_interface::Transaction;
+use context_interface::{Cfg, Transaction};
 use interpreter::{
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
-    InitialAndFloorGas,
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput, Gas,
 };
 use primitives::TxKind;
 use state::Bytecode;
 use std::boxed::Box;
 
-/// Deducts the EIP-2780 refundable first-frame state gas
-/// ([`InitialAndFloorGas::refundable_state_gas`]) from the first frame's
-/// budget: the reservoir is drawn first and the deficit spills into the
-/// regular gas budget, mirroring `record_state_cost`. The charge was the last
-/// state charge of the runtime gas phase, so deducting it on top of the
-/// aggregate initial state gas reproduces the split that phase verified;
-/// affordability failures set `runtime_oog` there instead of reaching this
-/// point.
+/// Refunds the EIP-2780 refundable first-frame state gas from the
+/// transaction-level gas when the first frame did not create the account leaf
+/// the charge paid for, mirroring how `EthFrame::return_result` refunds the
+/// upfront CALL/CREATE state charges of inner frames from the outcome's
+/// `charged_*` flags.
 ///
-/// Returns the spilled portion, which [`settle_refundable_state_gas`] needs to
-/// restore the pools correctly when the charge is refunded.
-pub fn deduct_refundable_state_gas(
-    init_and_floor_gas: &InitialAndFloorGas,
-    gas_limit: &mut u64,
-    reservoir: &mut u64,
-) -> u64 {
-    let charge = init_and_floor_gas.refundable_state_gas;
-    let drawn = core::cmp::min(*reservoir, charge);
-    let spill = charge - drawn;
-    *reservoir -= drawn;
-    *gas_limit = gas_limit.saturating_sub(spill);
-    spill
-}
+/// The charge was recorded on the transaction-level gas by the EIP-2780
+/// runtime gas phase as its last state charge. On success without deployment
+/// (a create that early-failed with `address == None`) or on revert it is
+/// fully refunded in LIFO order ([`Gas::refill_reservoir`]): the spilled
+/// portion returns to `remaining` and the rest to the reservoir. On an
+/// exceptional halt the regular gas is consumed, so the spilled portion is
+/// consumed with it and only the portion drawn from the reservoir is
+/// restored.
+pub fn refund_refundable_state_gas<CTX: ContextTr>(
+    ctx: &CTX,
+    frame_result: &FrameResult,
+    gas: &mut Gas,
+) {
+    let instruction_result = frame_result.instruction_result();
+    let charge = match frame_result {
+        FrameResult::Call(outcome) => {
+            if instruction_result.is_ok() || !outcome.charged_new_account_state_gas {
+                return;
+            }
+            ctx.cfg().gas_params().new_account_state_gas()
+        }
+        FrameResult::Create(outcome) => {
+            let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
+            if !create_failed || !outcome.charged_create_state_gas {
+                return;
+            }
+            ctx.cfg().gas_params().create_state_gas()
+        }
+    };
 
-/// Seeds the first frame's state-gas counters with the EIP-2780 refundable
-/// charge that [`deduct_refundable_state_gas`] took from the frame's budget,
-/// so `last_frame_result` settles it like a charge the frame recorded itself:
-/// on success the seeded `state_gas_spent` is reported as spent state gas; on
-/// revert or halt `rollback_state_gas` restores it in LIFO order (the spilled
-/// portion back to `remaining` — consumed by a halt — and the rest to the
-/// reservoir).
-pub const fn settle_refundable_state_gas(charge: u64, spill: u64, frame_result: &mut FrameResult) {
-    if charge == 0 {
-        return;
-    }
-    // A create that returns success without deploying (e.g. sender nonce
-    // overflow at frame creation) never created the account leaf, but its
-    // success result skips `last_frame_result`'s rollback — roll the charge
-    // back directly. Its early-fail gas carries no other state charges, so
-    // the rollback undoes exactly the seeded charge.
-    let refund_now = matches!(
-        frame_result,
-        FrameResult::Create(outcome)
-            if outcome.instruction_result().is_ok() && outcome.address.is_none()
-    );
-    let gas = frame_result.gas_mut();
-    gas.set_state_gas_spent(gas.state_gas_spent() + charge as i64);
-    gas.add_state_gas_spilled(spill);
-    if refund_now {
-        gas.rollback_state_gas();
+    if instruction_result.is_ok_or_revert() {
+        gas.refill_reservoir(charge);
+    } else {
+        // Exceptional halt: the spilled portion of the charge is consumed
+        // along with the regular gas; restore only the reservoir-drawn part.
+        let spill = charge.min(gas.state_gas_spilled());
+        gas.set_state_gas_spilled(gas.state_gas_spilled() - spill);
+        gas.set_reservoir(gas.reservoir().saturating_add(charge - spill));
+        gas.set_state_gas_spent(gas.state_gas_spent() - charge as i64);
     }
 }
 
 /// Creates the first [`FrameInput`] from the transaction, spec and gas limit.
+///
+/// `charged_refundable_state_gas` marks that the EIP-2780 runtime gas phase
+/// charged the refundable first-frame state gas; it is carried on the frame
+/// inputs like the `charged_*` flags of the CALL/CREATE opcodes.
 #[inline]
 pub fn create_init_frame<CTX: ContextTr>(
     ctx: &mut CTX,
     gas_limit: u64,
     reservoir: u64,
+    charged_refundable_state_gas: bool,
 ) -> Result<FrameInput, <<CTX::Journal as JournalTr>::Database as Database>::Error> {
     let (tx, journal) = ctx.tx_journal_mut();
     let input = tx.input().clone();
@@ -102,16 +101,20 @@ pub fn create_init_frame<CTX: ContextTr>(
                 is_static: false,
                 return_memory_offset: 0..0,
                 reservoir,
-                charged_new_account_state_gas: false,
+                charged_new_account_state_gas: charged_refundable_state_gas,
             })))
         }
-        TxKind::Create => Ok(FrameInput::Create(Box::new(CreateInputs::new(
-            tx.caller(),
-            CreateScheme::Create,
-            tx.value(),
-            input,
-            gas_limit,
-            reservoir,
-        )))),
+        TxKind::Create => {
+            let mut inputs = CreateInputs::new(
+                tx.caller(),
+                CreateScheme::Create,
+                tx.value(),
+                input,
+                gas_limit,
+                reservoir,
+            );
+            inputs.set_charged_create_state_gas(charged_refundable_state_gas);
+            Ok(FrameInput::Create(Box::new(inputs)))
+        }
     }
 }

@@ -1,6 +1,7 @@
 use crate::{
     evm::FrameTr,
     execution,
+    frame::handle_reservoir_remaining_gas,
     post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list},
     validation, EvmTr, FrameResult, ItemOrResult,
@@ -15,10 +16,7 @@ use context_interface::{
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
 };
-use interpreter::{
-    interpreter_action::FrameInit, CallOutcome, CreateOutcome, Gas, InitialAndFloorGas,
-    SharedMemory,
-};
+use interpreter::{interpreter_action::FrameInit, Gas, InitialAndFloorGas, SharedMemory};
 use primitives::{TxKind, U256};
 
 /// Trait for errors that can occur during EVM execution.
@@ -130,9 +128,10 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
+        let mut gas = self.tx_gas(evm, &init_and_floor_gas);
         // call execution and than output.
         match self
-            .execution(evm, &init_and_floor_gas)
+            .execution(evm, &init_and_floor_gas, &mut gas)
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
@@ -156,17 +155,25 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let mut init_and_floor_gas = self.validate(evm)?;
-        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas)?;
-        // Regular refund is returned from pre_execution after state gas split is applied
-        let eip7702_regular_refund = eip7702_refund as i64;
+        // Create the transaction-level gas from the validated intrinsic gas,
+        // mirroring how frames create their [`Gas`] at frame init. All later
+        // phases charge and settle against it.
+        let mut gas = self.tx_gas(evm, &init_and_floor_gas);
+        // Regular refund is returned from pre_execution after state gas split
+        // is applied. `None` means the EIP-2780 runtime gas phase ran out of
+        // gas: the transaction is included as an out-of-gas halt without
+        // entering execution.
+        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
 
-        let mut exec_result = self.execution(evm, &init_and_floor_gas)?;
-        let result_gas = self.post_execution(
-            evm,
-            &mut exec_result,
-            init_and_floor_gas,
-            eip7702_regular_refund,
-        )?;
+        let mut refund = 0;
+        let mut exec_result = if let Some(eip7702_refund) = eip7702_refund {
+            refund = eip7702_refund as i64;
+            self.execution(evm, &init_and_floor_gas, &mut gas)?
+        } else {
+            self.runtime_oog_result(evm, &mut gas)?
+        };
+
+        let result_gas = self.post_execution(evm, &mut exec_result, init_and_floor_gas, refund)?;
 
         // Prepare the output
         self.execution_result(evm, exec_result, result_gas)
@@ -183,6 +190,21 @@ pub trait Handler {
         self.validate_initial_tx_gas(evm)
     }
 
+    /// Creates the transaction-level [`Gas`] from the validated initial gas.
+    ///
+    /// The gas limit is the transaction gas limit, `remaining` is the regular
+    /// gas budget left after the intrinsic gas (constrained by the EIP-8037
+    /// `TX_MAX_GAS_LIMIT` cap) and `reservoir` is the state gas pool, so the
+    /// intrinsic gas is accounted as already spent.
+    #[inline]
+    fn tx_gas(&self, evm: &mut Self::Evm, init_and_floor_gas: &InitialAndFloorGas) -> Gas {
+        let ctx = evm.ctx_ref();
+        let tx_gas_limit = ctx.tx().gas_limit();
+        let (remaining, reservoir) = init_and_floor_gas
+            .initial_gas_and_reservoir(tx_gas_limit, ctx.cfg().tx_gas_limit_cap());
+        Gas::new_with_remaining_and_reservoir(tx_gas_limit, remaining, reservoir)
+    }
+
     /// Prepares the EVM state for execution.
     ///
     /// Loads the beneficiary account (EIP-3651: Warm COINBASE) and all accounts/storage from the access list (EIP-2929).
@@ -191,17 +213,22 @@ pub trait Handler {
     ///
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
     /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
+    ///
+    /// Returns `None` when the EIP-2780 runtime gas phase ran out of gas: the
+    /// transaction stays valid but must skip execution and be included as an
+    /// out-of-gas halt ([`Handler::runtime_oog_result`]).
     #[inline]
     fn pre_execution(
         &self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &mut InitialAndFloorGas,
-    ) -> Result<u64, Self::Error> {
+        gas: &mut Gas,
+    ) -> Result<Option<u64>, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm, init_and_floor_gas)?;
         self.load_accounts(evm)?;
 
-        let gas = self.apply_eip7702_auth_list(evm, init_and_floor_gas)?;
-        Ok(gas)
+        let refund = self.apply_eip7702_auth_list(evm, init_and_floor_gas, gas)?;
+        Ok(refund)
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.
@@ -212,57 +239,58 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &InitialAndFloorGas,
+        gas: &mut Gas,
     ) -> Result<FrameResult, Self::Error> {
-        // Compute the regular gas budget and EIP-8037 reservoir for the first frame.
-        let (mut gas_limit, mut reservoir) = init_and_floor_gas.initial_gas_and_reservoir(
-            evm.ctx().tx().gas_limit(),
-            evm.ctx().cfg().tx_gas_limit_cap(),
-        );
-
-        // EIP-2780: the transaction is valid but its gas cannot cover the
-        // state-dependent runtime charges. It is included as an out-of-gas
-        // halt: execution is skipped, all regular gas is consumed (the
-        // reservoir is returned), and the runtime state changes were already
-        // reverted in the runtime gas phase.
-        if init_and_floor_gas.runtime_oog {
-            let tx_gas_limit = evm.ctx().tx().gas_limit();
-            let mut frame_result = match evm.ctx().tx().kind() {
-                TxKind::Call(_) => {
-                    FrameResult::Call(CallOutcome::new_oog(tx_gas_limit, 0..0, reservoir))
-                }
-                TxKind::Create => {
-                    FrameResult::Create(CreateOutcome::new_oog(tx_gas_limit, reservoir))
-                }
-            };
-            self.last_frame_result(evm, &mut frame_result)?;
-            return Ok(frame_result);
-        }
-
-        // Deduct the EIP-2780 refundable first-frame charge (decided at the
-        // runtime gas phase) from the budget the first frame will see.
-        let refundable_spill = execution::deduct_refundable_state_gas(
-            init_and_floor_gas,
-            &mut gas_limit,
-            &mut reservoir,
-        );
-
-        // Create first frame action
-        let first_frame_input = self.first_frame_input(evm, gas_limit, reservoir)?;
+        // Create the first frame action from the transaction-level gas. Like a
+        // frame forwarding gas to a child, the first frame receives all
+        // remaining regular gas and the reservoir. The EIP-2780 refundable
+        // first-frame charge (already deducted from the transaction-level gas
+        // by the runtime gas phase) travels on the frame inputs like the
+        // `charged_*` flags of the CALL/CREATE opcodes.
+        let first_frame_input = self.first_frame_input(
+            evm,
+            gas.remaining(),
+            gas.reservoir(),
+            init_and_floor_gas.charged_refundable_state_gas,
+        )?;
+        // All regular gas is forwarded to the first frame; unused gas returns
+        // when `last_frame_result` settles the frame.
+        gas.spend_all();
 
         // Run execution loop
         let mut frame_result = self.run_exec_loop(evm, first_frame_input)?;
 
-        // Seed the refundable first-frame charge on the frame's state-gas
-        // counters so `last_frame_result` reports it on success and rolls it
-        // back on revert or halt.
-        execution::settle_refundable_state_gas(
-            init_and_floor_gas.refundable_state_gas,
-            refundable_spill,
-            &mut frame_result,
-        );
-
         // Handle last frame result
-        self.last_frame_result(evm, &mut frame_result)?;
+        self.last_frame_result(evm, &mut frame_result, gas)?;
+        Ok(frame_result)
+    }
+
+    /// Builds the result for a transaction whose EIP-2780 runtime gas phase
+    /// ran out of gas ([`Handler::pre_execution`] returned `None`).
+    ///
+    /// The transaction is valid but its gas cannot cover the state-dependent
+    /// runtime charges. It is included as an out-of-gas halt: execution is
+    /// skipped, all regular gas is consumed (the reservoir is returned), and
+    /// the runtime state changes were already reverted in the runtime gas
+    /// phase.
+    #[inline]
+    fn runtime_oog_result(
+        &mut self,
+        evm: &mut Self::Evm,
+        gas: &mut Gas,
+    ) -> Result<FrameResult, Self::Error> {
+        let tx_gas_limit = evm.ctx().tx().gas_limit();
+        // Execution is skipped: all regular gas is consumed while the
+        // reservoir (untouched — the runtime gas phase restored the
+        // transaction-level gas on out-of-gas) is carried by the synthetic
+        // out-of-gas frame result and returned by the settle below.
+        let reservoir = gas.reservoir();
+        gas.spend_all();
+        let mut frame_result = match evm.ctx().tx().kind() {
+            TxKind::Call(_) => FrameResult::new_call_oog(tx_gas_limit, 0..0, reservoir),
+            TxKind::Create => FrameResult::new_create_oog(tx_gas_limit, reservoir),
+        };
+        self.last_frame_result(evm, &mut frame_result, gas)?;
         Ok(frame_result)
     }
 
@@ -362,14 +390,16 @@ pub trait Handler {
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
     /// Applies valid authorizations to accounts.
     ///
-    /// Returns the gas refund amount specified by EIP-7702.
+    /// Returns the gas refund amount specified by EIP-7702, or `None` when
+    /// the EIP-2780 runtime gas phase ran out of gas.
     #[inline]
     fn apply_eip7702_auth_list(
         &self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &mut InitialAndFloorGas,
-    ) -> Result<u64, Self::Error> {
-        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas)
+        gas: &mut Gas,
+    ) -> Result<Option<u64>, Self::Error> {
+        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas, gas)
     }
 
     /// Deducts the maximum possible fee from caller's balance.
@@ -391,18 +421,25 @@ pub trait Handler {
     /* EXECUTION */
 
     /// Creates initial frame input using transaction parameters, gas limit and configuration.
+    ///
+    /// `charged_refundable_state_gas` marks that the EIP-2780 runtime gas
+    /// phase charged the refundable first-frame state gas; it is carried on
+    /// the frame inputs like the `charged_*` flags of the CALL/CREATE opcodes
+    /// so [`Handler::last_frame_result`] can refund it from the outcome.
     #[inline]
     fn first_frame_input(
         &mut self,
         evm: &mut Self::Evm,
         gas_limit: u64,
         reservoir: u64,
+        charged_refundable_state_gas: bool,
     ) -> Result<FrameInit, Self::Error> {
         let ctx = evm.ctx_mut();
         let mut memory = SharedMemory::new_with_buffer(ctx.local().shared_memory_buffer().clone());
         memory.set_memory_limit(ctx.cfg().memory_limit());
 
-        let frame_input = execution::create_init_frame(ctx, gas_limit, reservoir)?;
+        let frame_input =
+            execution::create_init_frame(ctx, gas_limit, reservoir, charged_refundable_state_gas)?;
 
         Ok(FrameInit {
             depth: 0,
@@ -411,48 +448,39 @@ pub trait Handler {
         })
     }
 
-    /// Processes the result of the initial call and handles returned gas.
+    /// Processes the result of the initial call and settles it into the
+    /// transaction-level gas.
+    ///
+    /// Emulates how a parent frame settles a returning child
+    /// ([`handle_reservoir_remaining_gas`]): a failing frame rolls its
+    /// state-gas charges back in LIFO order and drops its refund counter, an
+    /// exceptional halt additionally consumes its regular gas; unused regular
+    /// gas then returns to the transaction-level gas and the reservoir is
+    /// adopted from the frame. The EIP-2780 refundable first-frame charge is
+    /// refunded from the outcome's `charged_*` flags, mirroring
+    /// `EthFrame::return_result`.
+    ///
+    /// The settled transaction-level gas is written back to the frame result,
+    /// which carries it into the post-execution phase.
     #[inline]
     fn last_frame_result(
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
+        gas: &mut Gas,
     ) -> Result<(), Self::Error> {
-        let instruction_result = frame_result.interpreter_result().result;
+        let instruction_result = frame_result.instruction_result();
 
-        let gas = frame_result.gas_mut();
+        // Settle the frame into the transaction-level gas like a parent frame.
+        handle_reservoir_remaining_gas(instruction_result, gas, frame_result.gas_mut());
 
-        // Settle the top frame's own gas (mirrors `handle_reservoir_remaining_gas`'s
-        // child settle). A failing frame rolls its state-gas charges back in LIFO
-        // order — crediting the spilled portion back to `remaining` and restoring
-        // the reservoir to its pre-tx value — and drops the refund counter; an
-        // exceptional halt additionally consumes the regular gas.
-        if !instruction_result.is_ok() {
-            gas.rollback_state_gas();
-            gas.set_refunded(0);
-        }
-        if !instruction_result.is_ok_or_revert() {
-            gas.spend_all();
-        }
+        // Refund the EIP-2780 refundable first-frame charge when no account
+        // leaf was created.
+        execution::refund_refundable_state_gas(evm.ctx(), frame_result, gas);
 
-        let remaining = gas.remaining();
-        let refunded = gas.refunded();
-        let reservoir = gas.reservoir();
-        let state_gas_spent = gas.state_gas_spent();
-
-        // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
-
-        if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas (including any spill credited back by the
-            // rollback above on revert). The reservoir was restored separately.
-            gas.erase_cost(remaining);
-        }
-
-        if instruction_result.is_ok() {
-            gas.record_refund(refunded);
-            gas.set_state_gas_spent(state_gas_spent);
-        }
+        // The frame result carries the transaction-level gas onward to the
+        // post-execution phase.
+        *frame_result.gas_mut() = *gas;
 
         Ok(())
     }
