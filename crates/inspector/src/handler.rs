@@ -1,7 +1,9 @@
 use crate::{Inspector, InspectorEvmTr, JournalExt};
+use context::journaled_state::JournalCheckpoint;
 use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr};
 use handler::{
-    evm::FrameTr, post_execution::build_result_gas, EvmTr, FrameResult, Handler, ItemOrResult,
+    evm::FrameTr, execution::runtime_oog_unwind, post_execution::build_result_gas, EvmTr,
+    FrameResult, Handler, ItemOrResult,
 };
 use interpreter::{
     instructions::{GasTable, InstructionTable},
@@ -63,24 +65,24 @@ where
         // mirroring how frames create their [`Gas`] at frame init (mirrors
         // `Handler::run_without_catch_error`).
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
-        // Pre-execution returns the EIP-7702 refund and the EIP-2780
-        // refundable first-frame charge decision. `None` means the EIP-2780
-        // runtime gas phase ran out of gas: the transaction is included as an
-        // out-of-gas halt without entering execution.
+        // Pre-execution returns the EIP-7702 refund and the EIP-2780 runtime
+        // gas phase checkpoint. `None` — from pre-execution or execution —
+        // means the runtime gas phase ran out of gas: the transaction is
+        // included as an out-of-gas halt without entering execution.
         let pre_execution = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
 
-        let mut frame_result = match pre_execution {
-            Some(pre_execution) => {
-                self.inspect_execution(evm, pre_execution.charged_refundable_state_gas, &mut gas)?
-            }
-            None => self.runtime_oog_result(evm, &mut gas)?,
+        let mut refund = 0;
+        let mut exec_result = None;
+        if let Some(pre_execution) = pre_execution {
+            refund = pre_execution.eip7702_refund as i64;
+            exec_result =
+                self.inspect_execution(evm, pre_execution.runtime_gas_checkpoint, &mut gas)?;
+        }
+        let mut frame_result = match exec_result {
+            Some(exec_result) => exec_result,
+            None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
         };
-        let result_gas = self.post_execution(
-            evm,
-            &mut frame_result,
-            init_and_floor_gas,
-            pre_execution.map_or(0, |pre_execution| pre_execution.eip7702_refund) as i64,
-        )?;
+        let result_gas = self.post_execution(evm, &mut frame_result, init_and_floor_gas, refund)?;
         self.execution_result(evm, frame_result, result_gas)
     }
 
@@ -90,17 +92,19 @@ where
     fn inspect_execution(
         &mut self,
         evm: &mut Self::Evm,
-        charged_refundable_state_gas: bool,
+        runtime_gas_checkpoint: Option<JournalCheckpoint>,
         gas: &mut Gas,
-    ) -> Result<FrameResult, Self::Error> {
+    ) -> Result<Option<FrameResult>, Self::Error> {
         // Create the first frame action from the transaction-level gas
         // (mirrors `Handler::execution`).
-        let first_frame_input = self.first_frame_input(
-            evm,
-            gas.remaining(),
-            gas.reservoir(),
-            charged_refundable_state_gas,
-        )?;
+        let Some(first_frame_input) = self.first_frame_input(evm, gas)? else {
+            runtime_oog_unwind(evm.ctx(), runtime_gas_checkpoint)?;
+            return Ok(None);
+        };
+        // The runtime gas phase is complete: commit its state changes.
+        if runtime_gas_checkpoint.is_some() {
+            evm.ctx().journal_mut().checkpoint_commit();
+        }
         // All regular gas is forwarded to the first frame; unused gas returns
         // when `last_frame_result` settles the frame.
         gas.spend_all();
@@ -110,7 +114,7 @@ where
 
         // Handle last frame result
         self.last_frame_result(evm, &mut frame_result, gas)?;
-        Ok(frame_result)
+        Ok(Some(frame_result))
     }
 
     /* FRAMES */
@@ -170,8 +174,15 @@ where
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
         // call execution with inspection and then output.
         match self
-            .inspect_execution(evm, false, &mut gas)
+            .inspect_execution(evm, None, &mut gas)
             .and_then(|exec_result| {
+                let exec_result = match exec_result {
+                    Some(exec_result) => exec_result,
+                    // Unreachable in practice: system calls carry no value and
+                    // target non-delegated system contracts, so no runtime
+                    // charges apply.
+                    None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
+                };
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
                 let result_gas = build_result_gas(false, gas, init_and_floor_gas);

@@ -5,16 +5,14 @@
 use crate::{EvmTr, PrecompileProvider};
 use bytecode::Bytecode;
 use context_interface::{
-    journaled_state::{account::JournaledAccountTr, JournalLoadError, JournalTr},
+    journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
 use interpreter::Gas;
-use primitives::{
-    eip8038, hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256,
-};
+use primitives::{hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256};
 use state::AccountInfo;
 
 /// Loads and warms accounts for execution, including precompiles and access list.
@@ -195,19 +193,15 @@ pub fn validate_against_state_and_deduct_caller<
 pub struct PreExecutionOutput {
     /// EIP-7702 regular gas refund for authorities that already existed.
     pub eip7702_refund: u64,
-    /// EIP-2780: set when the runtime gas phase charged the refundable
-    /// first-frame state gas — the recipient new-account leaf charge of a
-    /// value transfer, or the account-creation charge of a create transaction
-    /// whose deployment target does not exist. The amount is derived from the
-    /// transaction kind and the gas params when it is refunded.
+    /// EIP-2780: journal checkpoint opened at the start of the runtime gas
+    /// phase, spanning the applied authorizations.
     ///
-    /// The charge stays recorded on the transaction-level gas
-    /// ([`apply_eip2780_runtime_gas`]) and this flag travels onto the first
-    /// frame's `charged_*` input flags, so the handler refunds the charge at
-    /// frame settle when the frame does not create the account leaf it paid
-    /// for — mirroring how a parent frame refunds the upfront CALL/CREATE
-    /// state charges of inner frames.
-    pub charged_refundable_state_gas: bool,
+    /// It is left open because the runtime gas phase continues at first-frame
+    /// creation (`create_init_frame` charges the recipient and create-target
+    /// costs): [`crate::Handler::execution`] commits it once the first frame
+    /// is created, or reverts it — dropping the applied delegations — when
+    /// the frame-creation charges run out of gas.
+    pub runtime_gas_checkpoint: Option<JournalCheckpoint>,
 }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
@@ -217,15 +211,21 @@ pub struct PreExecutionOutput {
 ///
 /// Internally uses [`apply_auth_list`] function.
 ///
-/// Under EIP-2780 this instead runs the runtime gas phase
-/// ([`apply_eip2780_runtime_gas`]): state-dependent charges are metered on the
-/// transaction-level `gas` as the authorizations are applied and the recipient
-/// is loaded, and no refund is returned (the pessimistic intrinsic charge and
-/// its refund are replaced by conditional runtime charges).
+/// Under EIP-2780 the authorization charges are instead metered on the
+/// transaction-level `gas` as the authorizations are applied
+/// ([`apply_auth_list_eip2780`]) and no refund is returned (the pessimistic
+/// intrinsic charge and its refund are replaced by conditional runtime
+/// charges). Charging as the authorizations are applied makes the phase stop
+/// at the first unaffordable charge: later authorities must not be loaded
+/// (observable through the EIP-7928 block access list). The opened journal
+/// checkpoint is returned still open
+/// ([`PreExecutionOutput::runtime_gas_checkpoint`]): the runtime gas phase
+/// continues at first-frame creation, which settles it.
 ///
-/// Returns the pre-execution gas decisions, or `None` when the EIP-2780
-/// runtime gas phase ran out of gas: the transaction stays valid and must be
-/// included as an out-of-gas halt without entering execution.
+/// Returns the pre-execution gas decisions, or `None` when the authorization
+/// charges ran out of gas: the applied delegations are reverted and the
+/// transaction stays valid but must be included as an out-of-gas halt without
+/// entering execution.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
@@ -238,12 +238,65 @@ pub fn apply_eip7702_auth_list<
     // delegation-target access, recipient new-account state gas) are charged at
     // the runtime phase instead of pessimistically at the intrinsic phase.
     if context.cfg().is_amsterdam_eip2780_enabled() {
-        return Ok(apply_eip2780_runtime_gas::<CTX, ERROR>(context, gas)?.map(
-            |charged_refundable_state_gas| PreExecutionOutput {
-                eip7702_refund: 0,
-                charged_refundable_state_gas,
-            },
-        ));
+        let chain_id = context.cfg().chain_id();
+        let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
+        let params = context.cfg().gas_params();
+        let account_write_cost = params.tx_account_write_cost();
+        let new_account_state_gas = if is_eip8037 {
+            params.new_account_state_gas()
+        } else {
+            0
+        };
+        let delegation_bytes_state_gas = if is_eip8037 {
+            params.tx_eip7702_state_gas_bytecode()
+        } else {
+            0
+        };
+        let (tx, journal) = context.tx_journal_mut();
+
+        // The checkpoint spans the whole runtime gas phase: it stays open
+        // through first-frame creation so a runtime out-of-gas there reverts
+        // the runtime state changes (including applied delegations) wholesale.
+        let checkpoint = journal.checkpoint();
+
+        // Apply EIP-7702 authorizations, charging the per-authority runtime
+        // charges as the authorizations are applied.
+        if tx.tx_type() == TransactionType::Eip7702 {
+            // Accounts this transaction has already written (their `ACCOUNT_WRITE`
+            // is already paid): the sender's leaf is written at inclusion (priced
+            // into `TX_BASE`), and the recipient's when value is transferred
+            // (priced into `TX_VALUE_COST`).
+            let mut written_accounts: HashSet<Address> = HashSet::default();
+            written_accounts.insert(tx.caller());
+            if let TxKind::Call(target) = tx.kind() {
+                if !tx.value().is_zero() {
+                    written_accounts.insert(target);
+                }
+            }
+            let oog = apply_auth_list_eip2780::<_, ERROR>(
+                chain_id,
+                tx.authorization_list(),
+                journal,
+                account_write_cost,
+                new_account_state_gas,
+                delegation_bytes_state_gas,
+                &mut written_accounts,
+                gas,
+            )?;
+            if oog {
+                // Out-of-gas while processing the authorizations: the applied
+                // delegations are reverted and the transaction is included as
+                // an out-of-gas halt. (An EIP-7702 transaction is always a
+                // call, so no create nonce bump is needed here.)
+                journal.checkpoint_revert(checkpoint);
+                return Ok(None);
+            }
+        }
+
+        return Ok(Some(PreExecutionOutput {
+            eip7702_refund: 0,
+            runtime_gas_checkpoint: Some(checkpoint),
+        }));
     }
 
     let chain_id = context.cfg().chain_id();
@@ -264,211 +317,8 @@ pub fn apply_eip7702_auth_list<
 
     Ok(Some(PreExecutionOutput {
         eip7702_refund: regular_gas_refund,
-        charged_refundable_state_gas: false,
+        runtime_gas_checkpoint: None,
     }))
-}
-
-/// EIP-2780 runtime gas phase (ethereum/EIPs#11844).
-///
-/// Once the transaction has passed the state-independent intrinsic gas check,
-/// the state-dependent charges are applied here, before the first frame is
-/// entered, recorded directly on the transaction-level `gas`:
-///
-/// - While processing each valid EIP-7702 authorization (at most once per
-///   authority): a non-existent authority pays `STATE_BYTES_PER_NEW_ACCOUNT ×
-///   CPSB` state gas plus `ACCOUNT_WRITE` regular gas for the new account
-///   leaf, and writing the 23-byte delegation indicator into a previously
-///   empty slot pays `STATE_BYTES_PER_AUTH_BASE × CPSB` state gas.
-/// - The recipient is then loaded (its access was already charged at the cold
-///   rate at the intrinsic phase). If it is EIP-7702 delegated, the
-///   delegation-target access is charged following the standard EIP-2929
-///   warm/cold model (`COLD_ACCOUNT_ACCESS` if cold, `WARM_ACCESS` if warm).
-/// - A value transfer to a non-existent recipient additionally requires
-///   `STATE_BYTES_PER_NEW_ACCOUNT × CPSB` state gas, and a create transaction
-///   whose deployment target does not exist pays the account-creation state
-///   gas. These refundable charges stay deducted on `gas` and only the
-///   decision is carried
-///   ([`PreExecutionOutput::charged_refundable_state_gas`] onto the first
-///   frame's `charged_*` input flags), so the handler refunds them at frame
-///   settle when the frame fails to create the account leaf.
-///
-/// Recording the charges on `gas` makes the phase stop at the first
-/// unaffordable charge: later authorities must not be loaded (observable
-/// through the EIP-7928 block access list). Running out of gas here does
-/// **not** invalidate the transaction: `None` is returned, `gas` is restored
-/// to its pre-phase state, all runtime state changes — including applied
-/// delegations — are reverted, and the caller turns the transaction into an
-/// out-of-gas halt that consumes all gas.
-///
-/// Returns `None` when the runtime gas phase ran out of gas, otherwise
-/// whether the refundable first-frame state gas was charged.
-#[inline]
-pub fn apply_eip2780_runtime_gas<
-    CTX: ContextTr,
-    ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
->(
-    context: &mut CTX,
-    gas: &mut Gas,
-) -> Result<Option<bool>, ERROR> {
-    let chain_id = context.cfg().chain_id();
-    let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
-    let params = context.cfg().gas_params();
-    let account_write_cost = params.tx_account_write_cost();
-    let per_new_account_state_gas = params.new_account_state_gas();
-    let delegation_bytes_state_gas = params.tx_eip7702_state_gas_bytecode();
-    let create_state_gas = params.create_state_gas();
-    let (tx, journal) = context.tx_journal_mut();
-
-    // All runtime state changes and gas charges are reverted wholesale if the
-    // transaction cannot afford the runtime charges.
-    let checkpoint = journal.checkpoint();
-    let gas_snapshot = *gas;
-
-    // State gas that stays deducted on `gas` but is refunded if the first
-    // frame does not create the account leaf it paid for. Only the decision is
-    // carried; the amount is derived from the transaction kind and the gas
-    // params when it is refunded.
-    let mut charged_refundable_state_gas = false;
-    let mut oog = false;
-
-    // Apply EIP-7702 authorizations, charging the per-authority runtime
-    // charges as the authorizations are applied.
-    if tx.tx_type() == TransactionType::Eip7702 {
-        // Accounts this transaction has already written (their `ACCOUNT_WRITE`
-        // is already paid): the sender's leaf is written at inclusion (priced
-        // into `TX_BASE`), and the recipient's when value is transferred
-        // (priced into `TX_VALUE_COST`).
-        let mut written_accounts: HashSet<Address> = HashSet::default();
-        written_accounts.insert(tx.caller());
-        if let TxKind::Call(target) = tx.kind() {
-            if !tx.value().is_zero() {
-                written_accounts.insert(target);
-            }
-        }
-        oog = apply_auth_list_eip2780::<_, ERROR>(
-            chain_id,
-            tx.authorization_list(),
-            journal,
-            account_write_cost,
-            if is_eip8037 {
-                per_new_account_state_gas
-            } else {
-                0
-            },
-            if is_eip8037 {
-                delegation_bytes_state_gas
-            } else {
-                0
-            },
-            &mut written_accounts,
-            gas,
-        )?;
-    }
-
-    // Read the recipient and evaluate its runtime charges (its access was
-    // already charged at the cold rate at the intrinsic phase). The read
-    // happens only after the authorization charges are covered, so a runtime
-    // out-of-gas during authorization processing leaves the recipient out of
-    // the EIP-7928 block access list. Evaluated after authorizations so a
-    // recipient materialized or delegated by an authorization in this
-    // transaction is seen in its post-authorization state. A self-transfer
-    // recipient is the (non-empty) sender, so the new-account charge never
-    // fires for it, while a delegated sender still pays for resolving its
-    // delegation.
-    if !oog {
-        if let TxKind::Call(target) = tx.kind() {
-            let (recipient_is_empty, delegation_target) = {
-                let acc = journal.load_account_with_code(target)?;
-                (
-                    acc.info.is_empty(),
-                    acc.info.code.as_ref().and_then(Bytecode::eip7702_address),
-                )
-            };
-
-            // Value transfer to a non-existent recipient grows the state by
-            // one account leaf. The charge stays deducted on the
-            // transaction-level gas and is refunded at frame settle if the
-            // frame fails. Checked before the delegation resolution, matching
-            // the spec's `prepare_dispatch` order.
-            if is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
-                if gas.record_state_cost(per_new_account_state_gas) {
-                    charged_refundable_state_gas = true;
-                } else {
-                    oog = true;
-                }
-            }
-
-            // EIP-7702 delegated recipient: resolving the delegation loads the
-            // target's code, charged per the standard EIP-2929 warm/cold model.
-            // The charge must be covered before the delegate is read, so an
-            // out-of-gas here leaves a cold delegate out of the block access
-            // list.
-            if !oog {
-                if let Some(delegated) = delegation_target {
-                    if gas.remaining() < eip8038::WARM_ACCESS {
-                        // The access cost cannot be covered whether the
-                        // delegate is warm or cold: fail without reading it.
-                        oog = true;
-                    } else {
-                        let skip_cold_load = gas.remaining() < eip8038::COLD_ACCOUNT_ACCESS;
-                        match journal.load_account_mut_skip_cold_load(delegated, skip_cold_load) {
-                            Ok(acc) => {
-                                let cost = if acc.is_cold {
-                                    eip8038::COLD_ACCOUNT_ACCESS
-                                } else {
-                                    eip8038::WARM_ACCESS
-                                };
-                                if !gas.record_regular_cost(cost) {
-                                    oog = true;
-                                }
-                            }
-                            Err(JournalLoadError::ColdLoadSkipped) => oog = true,
-                            Err(JournalLoadError::DBError(e)) => return Err(e.into()),
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // A create transaction pays the account-creation state gas at runtime,
-    // only when the deployment target does not already exist. The single read
-    // that decides the charge (also warming the target) matches the spec's
-    // `prepare_dispatch`; the charge stays deducted on the transaction-level
-    // gas and is refunded in LIFO order at frame settle if the initcode
-    // reverts or halts.
-    if !oog && is_eip8037 && tx.kind().is_create() {
-        let nonce = journal.load_account(tx.caller())?.info.nonce;
-        let created_address = tx.caller().create(nonce);
-        let target_is_empty = journal.load_account(created_address)?.info.is_empty();
-        if target_is_empty {
-            if gas.record_state_cost(create_state_gas) {
-                charged_refundable_state_gas = true;
-            } else {
-                oog = true;
-            }
-        }
-    }
-
-    if oog {
-        // Out-of-gas in the runtime phase: the transaction stays valid and
-        // included, but halts before the first frame is entered; the runtime
-        // gas charges and all runtime state changes (including applied
-        // delegations) are reverted.
-        *gas = gas_snapshot;
-        journal.checkpoint_revert(checkpoint);
-        // A create transaction still bumps the sender nonce: the increment
-        // precedes message processing and survives the halt. (Calls bump it in
-        // `validate_against_state_and_deduct_caller`; creates at frame
-        // creation, which the runtime halt never reaches.)
-        if tx.kind().is_create() {
-            journal.load_account_mut(tx.caller())?.data.bump_nonce();
-        }
-        return Ok(None);
-    }
-
-    journal.checkpoint_commit();
-    Ok(Some(charged_refundable_state_gas))
 }
 
 /// Applies an EIP-7702 auth list under EIP-2780, recording the
