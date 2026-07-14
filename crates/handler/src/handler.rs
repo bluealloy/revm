@@ -3,7 +3,7 @@ use crate::{
     execution,
     frame::handle_reservoir_remaining_gas,
     post_execution::{self, build_result_gas},
-    pre_execution::{self, apply_eip7702_auth_list},
+    pre_execution::{self, apply_eip7702_auth_list, PreExecutionOutput},
     validation, EvmTr, FrameResult, ItemOrResult,
 };
 use context::{
@@ -131,7 +131,7 @@ pub trait Handler {
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
         // call execution and than output.
         match self
-            .execution(evm, &init_and_floor_gas, &mut gas)
+            .execution(evm, false, &mut gas)
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
@@ -159,16 +159,16 @@ pub trait Handler {
         // mirroring how frames create their [`Gas`] at frame init. All later
         // phases charge and settle against it.
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
-        // Regular refund is returned from pre_execution after state gas split
-        // is applied. `None` means the EIP-2780 runtime gas phase ran out of
-        // gas: the transaction is included as an out-of-gas halt without
-        // entering execution.
-        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
+        // Pre-execution returns the EIP-7702 refund and the EIP-2780
+        // refundable first-frame charge decision. `None` means the EIP-2780
+        // runtime gas phase ran out of gas: the transaction is included as an
+        // out-of-gas halt without entering execution.
+        let pre_execution = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
 
         let mut refund = 0;
-        let mut exec_result = if let Some(eip7702_refund) = eip7702_refund {
-            refund = eip7702_refund as i64;
-            self.execution(evm, &init_and_floor_gas, &mut gas)?
+        let mut exec_result = if let Some(pre_execution) = pre_execution {
+            refund = pre_execution.eip7702_refund as i64;
+            self.execution(evm, pre_execution.charged_refundable_state_gas, &mut gas)?
         } else {
             self.runtime_oog_result(evm, &mut gas)?
         };
@@ -212,23 +212,25 @@ pub trait Handler {
     /// Deducts the maximum possible fee from the caller's balance.
     ///
     /// For EIP-7702 transactions, applies the authorization list and delegates successful authorizations.
-    /// Returns the gas refund amount from EIP-7702. Authorizations are applied before execution begins.
+    /// Authorizations are applied before execution begins.
     ///
-    /// Returns `None` when the EIP-2780 runtime gas phase ran out of gas: the
-    /// transaction stays valid but must skip execution and be included as an
-    /// out-of-gas halt ([`Handler::runtime_oog_result`]).
+    /// Returns the pre-execution gas decisions ([`PreExecutionOutput`]): the
+    /// EIP-7702 gas refund and whether the EIP-2780 runtime gas phase charged
+    /// the refundable first-frame state gas. Returns `None` when the EIP-2780
+    /// runtime gas phase ran out of gas: the transaction stays valid but must
+    /// skip execution and be included as an out-of-gas halt
+    /// ([`Handler::runtime_oog_result`]).
     #[inline]
     fn pre_execution(
         &self,
         evm: &mut Self::Evm,
         init_and_floor_gas: &mut InitialAndFloorGas,
         gas: &mut Gas,
-    ) -> Result<Option<u64>, Self::Error> {
+    ) -> Result<Option<PreExecutionOutput>, Self::Error> {
         self.validate_against_state_and_deduct_caller(evm, init_and_floor_gas)?;
         self.load_accounts(evm)?;
 
-        let refund = self.apply_eip7702_auth_list(evm, init_and_floor_gas, gas)?;
-        Ok(refund)
+        self.apply_eip7702_auth_list(evm, gas)
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.
@@ -238,7 +240,7 @@ pub trait Handler {
     fn execution(
         &mut self,
         evm: &mut Self::Evm,
-        init_and_floor_gas: &InitialAndFloorGas,
+        charged_refundable_state_gas: bool,
         gas: &mut Gas,
     ) -> Result<FrameResult, Self::Error> {
         // Create the first frame action from the transaction-level gas. Like a
@@ -251,7 +253,7 @@ pub trait Handler {
             evm,
             gas.remaining(),
             gas.reservoir(),
-            init_and_floor_gas.charged_refundable_state_gas,
+            charged_refundable_state_gas,
         )?;
         // All regular gas is forwarded to the first frame; unused gas returns
         // when `last_frame_result` settles the frame.
@@ -390,16 +392,16 @@ pub trait Handler {
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
     /// Applies valid authorizations to accounts.
     ///
-    /// Returns the gas refund amount specified by EIP-7702, or `None` when
+    /// Returns the pre-execution gas decisions (the EIP-7702 gas refund and
+    /// the EIP-2780 refundable first-frame charge decision), or `None` when
     /// the EIP-2780 runtime gas phase ran out of gas.
     #[inline]
     fn apply_eip7702_auth_list(
         &self,
         evm: &mut Self::Evm,
-        init_and_floor_gas: &mut InitialAndFloorGas,
         gas: &mut Gas,
-    ) -> Result<Option<u64>, Self::Error> {
-        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas, gas)
+    ) -> Result<Option<PreExecutionOutput>, Self::Error> {
+        apply_eip7702_auth_list(evm.ctx_mut(), gas)
     }
 
     /// Deducts the maximum possible fee from caller's balance.

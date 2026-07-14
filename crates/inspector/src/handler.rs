@@ -63,21 +63,23 @@ where
         // mirroring how frames create their [`Gas`] at frame init (mirrors
         // `Handler::run_without_catch_error`).
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
-        // pre_execution records the EIP-2780 runtime charges on the
-        // transaction-level gas and returns the regular refund portion. `None`
-        // means the EIP-2780 runtime gas phase ran out of gas: the transaction
-        // is included as an out-of-gas halt without entering execution.
-        let eip7702_refund = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
+        // Pre-execution returns the EIP-7702 refund and the EIP-2780
+        // refundable first-frame charge decision. `None` means the EIP-2780
+        // runtime gas phase ran out of gas: the transaction is included as an
+        // out-of-gas halt without entering execution.
+        let pre_execution = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
 
-        let mut frame_result = match eip7702_refund {
-            Some(_) => self.inspect_execution(evm, &init_and_floor_gas, &mut gas)?,
+        let mut frame_result = match pre_execution {
+            Some(pre_execution) => {
+                self.inspect_execution(evm, pre_execution.charged_refundable_state_gas, &mut gas)?
+            }
             None => self.runtime_oog_result(evm, &mut gas)?,
         };
         let result_gas = self.post_execution(
             evm,
             &mut frame_result,
             init_and_floor_gas,
-            eip7702_refund.unwrap_or(0) as i64,
+            pre_execution.map_or(0, |pre_execution| pre_execution.eip7702_refund) as i64,
         )?;
         self.execution_result(evm, frame_result, result_gas)
     }
@@ -88,7 +90,7 @@ where
     fn inspect_execution(
         &mut self,
         evm: &mut Self::Evm,
-        init_and_floor_gas: &InitialAndFloorGas,
+        charged_refundable_state_gas: bool,
         gas: &mut Gas,
     ) -> Result<FrameResult, Self::Error> {
         // Create the first frame action from the transaction-level gas
@@ -97,7 +99,7 @@ where
             evm,
             gas.remaining(),
             gas.reservoir(),
-            init_and_floor_gas.charged_refundable_state_gas,
+            charged_refundable_state_gas,
         )?;
         // All regular gas is forwarded to the first frame; unused gas returns
         // when `last_frame_result` settles the frame.
@@ -168,7 +170,7 @@ where
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
         // call execution with inspection and then output.
         match self
-            .inspect_execution(evm, &init_and_floor_gas, &mut gas)
+            .inspect_execution(evm, false, &mut gas)
             .and_then(|exec_result| {
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();

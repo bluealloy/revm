@@ -11,7 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use interpreter::{Gas, InitialAndFloorGas};
+use interpreter::Gas;
 use primitives::{
     eip8038, hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256,
 };
@@ -189,6 +189,27 @@ pub fn validate_against_state_and_deduct_caller<
     Ok(())
 }
 
+/// Gas decisions made by the pre-execution phase, carried to the execution
+/// phase.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PreExecutionOutput {
+    /// EIP-7702 regular gas refund for authorities that already existed.
+    pub eip7702_refund: u64,
+    /// EIP-2780: set when the runtime gas phase charged the refundable
+    /// first-frame state gas — the recipient new-account leaf charge of a
+    /// value transfer, or the account-creation charge of a create transaction
+    /// whose deployment target does not exist. The amount is derived from the
+    /// transaction kind and the gas params when it is refunded.
+    ///
+    /// The charge stays recorded on the transaction-level gas
+    /// ([`apply_eip2780_runtime_gas`]) and this flag travels onto the first
+    /// frame's `charged_*` input flags, so the handler refunds the charge at
+    /// frame settle when the frame does not create the account leaf it paid
+    /// for — mirroring how a parent frame refunds the upfront CALL/CREATE
+    /// state charges of inner frames.
+    pub charged_refundable_state_gas: bool,
+}
+
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 ///
 /// Note that this function will do nothing if the transaction type is not EIP-7702.
@@ -202,25 +223,27 @@ pub fn validate_against_state_and_deduct_caller<
 /// is loaded, and no refund is returned (the pessimistic intrinsic charge and
 /// its refund are replaced by conditional runtime charges).
 ///
-/// Returns the EIP-7702 gas refund, or `None` when the EIP-2780 runtime gas
-/// phase ran out of gas: the transaction stays valid and must be included as
-/// an out-of-gas halt without entering execution.
+/// Returns the pre-execution gas decisions, or `None` when the EIP-2780
+/// runtime gas phase ran out of gas: the transaction stays valid and must be
+/// included as an out-of-gas halt without entering execution.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
-    init_and_floor_gas: &mut InitialAndFloorGas,
     gas: &mut Gas,
-) -> Result<Option<u64>, ERROR> {
+) -> Result<Option<PreExecutionOutput>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
     // delegation-target access, recipient new-account state gas) are charged at
     // the runtime phase instead of pessimistically at the intrinsic phase.
     if context.cfg().is_amsterdam_eip2780_enabled() {
-        let runtime_oog =
-            apply_eip2780_runtime_gas::<CTX, ERROR>(context, init_and_floor_gas, gas)?;
-        return Ok(if runtime_oog { None } else { Some(0) });
+        return Ok(apply_eip2780_runtime_gas::<CTX, ERROR>(context, gas)?.map(
+            |charged_refundable_state_gas| PreExecutionOutput {
+                eip7702_refund: 0,
+                charged_refundable_state_gas,
+            },
+        ));
     }
 
     let chain_id = context.cfg().chain_id();
@@ -228,7 +251,7 @@ pub fn apply_eip7702_auth_list<
 
     // Return if not EIP-7702 transaction.
     if tx.tx_type() != TransactionType::Eip7702 {
-        return Ok(Some(0));
+        return Ok(Some(PreExecutionOutput::default()));
     }
     let number_of_refunded_accounts =
         apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
@@ -239,7 +262,10 @@ pub fn apply_eip7702_auth_list<
         .tx_eip7702_auth_refund_regular()
         .saturating_mul(number_of_refunded_accounts);
 
-    Ok(Some(regular_gas_refund))
+    Ok(Some(PreExecutionOutput {
+        eip7702_refund: regular_gas_refund,
+        charged_refundable_state_gas: false,
+    }))
 }
 
 /// EIP-2780 runtime gas phase (ethereum/EIPs#11844).
@@ -261,28 +287,29 @@ pub fn apply_eip7702_auth_list<
 ///   `STATE_BYTES_PER_NEW_ACCOUNT × CPSB` state gas, and a create transaction
 ///   whose deployment target does not exist pays the account-creation state
 ///   gas. These refundable charges stay deducted on `gas` and only the
-///   decision is carried ([`InitialAndFloorGas::charged_refundable_state_gas`]
-///   onto the first frame's `charged_*` input flags), so the handler refunds
-///   them at frame settle when the frame fails to create the account leaf.
+///   decision is carried
+///   ([`PreExecutionOutput::charged_refundable_state_gas`] onto the first
+///   frame's `charged_*` input flags), so the handler refunds them at frame
+///   settle when the frame fails to create the account leaf.
 ///
 /// Recording the charges on `gas` makes the phase stop at the first
 /// unaffordable charge: later authorities must not be loaded (observable
 /// through the EIP-7928 block access list). Running out of gas here does
-/// **not** invalidate the transaction: `true` is returned, `gas` is restored
+/// **not** invalidate the transaction: `None` is returned, `gas` is restored
 /// to its pre-phase state, all runtime state changes — including applied
 /// delegations — are reverted, and the caller turns the transaction into an
 /// out-of-gas halt that consumes all gas.
 ///
-/// Returns whether the runtime gas phase ran out of gas.
+/// Returns `None` when the runtime gas phase ran out of gas, otherwise
+/// whether the refundable first-frame state gas was charged.
 #[inline]
 pub fn apply_eip2780_runtime_gas<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
-    init_and_floor_gas: &mut InitialAndFloorGas,
     gas: &mut Gas,
-) -> Result<bool, ERROR> {
+) -> Result<Option<bool>, ERROR> {
     let chain_id = context.cfg().chain_id();
     let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
     let params = context.cfg().gas_params();
@@ -437,12 +464,11 @@ pub fn apply_eip2780_runtime_gas<
         if tx.kind().is_create() {
             journal.load_account_mut(tx.caller())?.data.bump_nonce();
         }
-        return Ok(true);
+        return Ok(None);
     }
 
     journal.checkpoint_commit();
-    init_and_floor_gas.charged_refundable_state_gas = charged_refundable_state_gas;
-    Ok(false)
+    Ok(Some(charged_refundable_state_gas))
 }
 
 /// Applies an EIP-7702 auth list under EIP-2780, recording the

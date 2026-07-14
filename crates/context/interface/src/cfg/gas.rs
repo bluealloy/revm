@@ -363,29 +363,15 @@ pub struct InitialAndFloorGas {
     /// Under EIP-8037, this is the part constrained by `TX_MAX_GAS_LIMIT`;
     /// state gas uses its own reservoir and is not subject to that cap.
     pub initial_regular_gas: u64,
-    /// State gas charged before the first frame is entered.
+    /// State gas charged at the intrinsic phase, before the first frame is
+    /// entered.
     ///
-    /// Zero at the intrinsic phase; the EIP-2780 runtime gas phase adds the
-    /// state-dependent charges metered while applying EIP-7702 authorizations.
+    /// The state-dependent charges of the EIP-2780 runtime gas phase are not
+    /// included here: they are recorded directly on the transaction-level gas.
     pub initial_state_gas: u64,
     /// If transaction is a Call and Prague is enabled
     /// floor_gas is at least amount of gas that is going to be spent.
     pub floor_gas: u64,
-    /// EIP-2780: set when the runtime gas phase charged the refundable
-    /// first-frame state gas — the recipient new-account leaf charge of a
-    /// value transfer, or the account-creation charge of a create transaction
-    /// whose deployment target does not exist. The amount is derived from the
-    /// transaction kind and the gas params when it is refunded.
-    ///
-    /// Unlike `initial_state_gas` (consumed unconditionally), this charge is
-    /// refundable: the runtime gas phase records it on the transaction-level
-    /// gas (`apply_eip2780_runtime_gas`) and this flag travels onto the first
-    /// frame's `charged_*` input flags, so the handler refunds the charge at
-    /// frame settle when the frame does not create the account leaf it paid
-    /// for — mirroring how a parent frame refunds the upfront CALL/CREATE
-    /// state charges of inner frames.
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub charged_refundable_state_gas: bool,
 }
 
 impl InitialAndFloorGas {
@@ -398,7 +384,6 @@ impl InitialAndFloorGas {
             initial_regular_gas,
             initial_state_gas: 0,
             floor_gas,
-            charged_refundable_state_gas: false,
         }
     }
 
@@ -413,7 +398,6 @@ impl InitialAndFloorGas {
             initial_regular_gas,
             initial_state_gas,
             floor_gas,
-            charged_refundable_state_gas: false,
         }
     }
 
