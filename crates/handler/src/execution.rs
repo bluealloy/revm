@@ -156,12 +156,10 @@ pub fn create_init_frame<CTX: ContextTr>(
 #[inline]
 pub fn runtime_oog_unwind<CTX: ContextTr>(
     ctx: &mut CTX,
-    checkpoint: Option<JournalCheckpoint>,
+    checkpoint: JournalCheckpoint,
 ) -> Result<(), <<CTX::Journal as JournalTr>::Database as Database>::Error> {
     let (tx, journal) = ctx.tx_journal_mut();
-    if let Some(checkpoint) = checkpoint {
-        journal.checkpoint_revert(checkpoint);
-    }
+    journal.checkpoint_revert(checkpoint);
     if tx.kind().is_create() {
         journal.load_account_mut(tx.caller())?.data.bump_nonce();
     }

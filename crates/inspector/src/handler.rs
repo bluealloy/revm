@@ -75,8 +75,7 @@ where
         let mut exec_result = None;
         if let Some(pre_execution) = pre_execution {
             refund = pre_execution.eip7702_refund as i64;
-            exec_result =
-                self.inspect_execution(evm, pre_execution.runtime_gas_checkpoint, &mut gas)?;
+            exec_result = self.inspect_execution(evm, pre_execution.checkpoint, &mut gas)?;
         }
         let mut frame_result = match exec_result {
             Some(exec_result) => exec_result,
@@ -92,19 +91,17 @@ where
     fn inspect_execution(
         &mut self,
         evm: &mut Self::Evm,
-        runtime_gas_checkpoint: Option<JournalCheckpoint>,
+        checkpoint: JournalCheckpoint,
         gas: &mut Gas,
     ) -> Result<Option<FrameResult>, Self::Error> {
         // Create the first frame action from the transaction-level gas
         // (mirrors `Handler::execution`).
         let Some(first_frame_input) = self.first_frame_input(evm, gas)? else {
-            runtime_oog_unwind(evm.ctx(), runtime_gas_checkpoint)?;
+            runtime_oog_unwind(evm.ctx(), checkpoint)?;
             return Ok(None);
         };
         // The runtime gas phase is complete: commit its state changes.
-        if runtime_gas_checkpoint.is_some() {
-            evm.ctx().journal_mut().checkpoint_commit();
-        }
+        evm.ctx().journal_mut().checkpoint_commit();
         // All regular gas is forwarded to the first frame; unused gas returns
         // when `last_frame_result` settles the frame.
         gas.spend_all();
@@ -172,9 +169,12 @@ where
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
+        // System calls skip pre-execution, so the checkpoint that
+        // `inspect_execution` settles is opened here.
+        let checkpoint = evm.ctx().journal_mut().checkpoint();
         // call execution with inspection and then output.
         match self
-            .inspect_execution(evm, None, &mut gas)
+            .inspect_execution(evm, checkpoint, &mut gas)
             .and_then(|exec_result| {
                 let exec_result = match exec_result {
                     Some(exec_result) => exec_result,

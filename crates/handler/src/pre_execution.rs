@@ -193,16 +193,17 @@ pub fn validate_against_state_and_deduct_caller<
 pub struct PreExecutionOutput {
     /// EIP-7702 regular gas refund for authorities that already existed.
     pub eip7702_refund: u64,
-    /// EIP-2780: journal checkpoint opened by [`crate::Handler::pre_execution`]
-    /// before the authorization list is applied, spanning the runtime gas
+    /// Journal checkpoint opened by [`crate::Handler::pre_execution`] before
+    /// the authorization list is applied, spanning the EIP-2780 runtime gas
     /// phase.
     ///
     /// It is left open because the runtime gas phase continues at first-frame
     /// creation (`create_init_frame` charges the recipient and create-target
     /// costs): [`crate::Handler::execution`] commits it once the first frame
     /// is created, or reverts it — dropping the applied delegations — when
-    /// the frame-creation charges run out of gas.
-    pub runtime_gas_checkpoint: Option<JournalCheckpoint>,
+    /// the frame-creation charges run out of gas. Pre-Amsterdam there are no
+    /// runtime charges, so the checkpoint is always committed.
+    pub checkpoint: JournalCheckpoint,
 }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.

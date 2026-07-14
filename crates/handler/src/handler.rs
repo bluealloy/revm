@@ -130,20 +130,25 @@ pub trait Handler {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
+        // System calls skip pre-execution, so the checkpoint that
+        // [`Handler::execution`] settles is opened here.
+        let checkpoint = evm.ctx().journal_mut().checkpoint();
         // call execution and than output.
-        match self.execution(evm, None, &mut gas).and_then(|exec_result| {
-            let exec_result = match exec_result {
-                Some(exec_result) => exec_result,
-                // Unreachable in practice: system calls carry no value and
-                // target non-delegated system contracts, so no runtime
-                // charges apply.
-                None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
-            };
-            // System calls have no intrinsic gas; build ResultGas from frame result.
-            let gas = exec_result.gas();
-            let result_gas = build_result_gas(false, gas, init_and_floor_gas);
-            self.execution_result(evm, exec_result, result_gas)
-        }) {
+        match self
+            .execution(evm, checkpoint, &mut gas)
+            .and_then(|exec_result| {
+                let exec_result = match exec_result {
+                    Some(exec_result) => exec_result,
+                    // Unreachable in practice: system calls carry no value and
+                    // target non-delegated system contracts, so no runtime
+                    // charges apply.
+                    None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
+                };
+                // System calls have no intrinsic gas; build ResultGas from frame result.
+                let gas = exec_result.gas();
+                let result_gas = build_result_gas(false, gas, init_and_floor_gas);
+                self.execution_result(evm, exec_result, result_gas)
+            }) {
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }
@@ -175,7 +180,7 @@ pub trait Handler {
         let mut exec_result = None;
         if let Some(pre_execution) = pre_execution {
             refund = pre_execution.eip7702_refund as i64;
-            exec_result = self.execution(evm, pre_execution.runtime_gas_checkpoint, &mut gas)?;
+            exec_result = self.execution(evm, pre_execution.checkpoint, &mut gas)?;
         }
         let mut exec_result = match exec_result {
             Some(exec_result) => exec_result,
@@ -239,37 +244,32 @@ pub trait Handler {
         self.validate_against_state_and_deduct_caller(evm, init_and_floor_gas)?;
         self.load_accounts(evm)?;
 
-        // EIP-2780: the checkpoint spans the whole runtime gas phase — the
-        // authorization charges below and the recipient/create-target charges
-        // at first-frame creation, which settles it ([`Handler::execution`]).
-        let is_eip2780 = evm.ctx().cfg().is_amsterdam_eip2780_enabled();
-        let runtime_gas_checkpoint = is_eip2780.then(|| evm.ctx().journal_mut().checkpoint());
+        // EIP-2780: the checkpoint spans the whole runtime gas phase.
+        let checkpoint = evm.ctx().journal_mut().checkpoint();
 
         let Some(eip7702_refund) = self.apply_eip7702_auth_list(evm, gas)? else {
             // Out-of-gas while processing the authorizations: revert the
             // applied delegations; the transaction is included as an
             // out-of-gas halt. (An EIP-7702 transaction is always a call, so
             // no create nonce bump is needed here.)
-            if let Some(checkpoint) = runtime_gas_checkpoint {
-                evm.ctx().journal_mut().checkpoint_revert(checkpoint);
-            }
+            evm.ctx().journal_mut().checkpoint_revert(checkpoint);
             return Ok(None);
         };
 
         Ok(Some(PreExecutionOutput {
             eip7702_refund,
-            runtime_gas_checkpoint,
+            checkpoint,
         }))
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.
     ///
-    /// Under EIP-2780 the first-frame creation completes the runtime gas
-    /// phase: it charges the recipient/create-target costs on the
-    /// transaction-level gas, and `runtime_gas_checkpoint` (opened at
-    /// pre-execution around the applied authorizations) is committed here —
-    /// or reverted when those charges run out of gas, in which case `None` is
-    /// returned and the caller includes the transaction as an out-of-gas halt
+    /// First-frame creation completes the EIP-2780 runtime gas phase: it
+    /// charges the recipient/create-target costs on the transaction-level
+    /// gas, and `checkpoint` (opened at pre-execution around the applied
+    /// authorizations) is committed here — or reverted when those charges run
+    /// out of gas, in which case `None` is returned and the caller includes
+    /// the transaction as an out-of-gas halt
     /// ([`Handler::runtime_oog_result`]).
     ///
     /// Always calls [Handler::last_frame_result] to handle returned gas from the call.
@@ -277,7 +277,7 @@ pub trait Handler {
     fn execution(
         &mut self,
         evm: &mut Self::Evm,
-        runtime_gas_checkpoint: Option<JournalCheckpoint>,
+        checkpoint: JournalCheckpoint,
         gas: &mut Gas,
     ) -> Result<Option<FrameResult>, Self::Error> {
         // Create the first frame action from the transaction-level gas. Like a
@@ -286,13 +286,11 @@ pub trait Handler {
         // first-frame charges travel on the frame inputs like the `charged_*`
         // flags of the CALL/CREATE opcodes.
         let Some(first_frame_input) = self.first_frame_input(evm, gas)? else {
-            execution::runtime_oog_unwind(evm.ctx(), runtime_gas_checkpoint)?;
+            execution::runtime_oog_unwind(evm.ctx(), checkpoint)?;
             return Ok(None);
         };
         // The runtime gas phase is complete: commit its state changes.
-        if runtime_gas_checkpoint.is_some() {
-            evm.ctx().journal_mut().checkpoint_commit();
-        }
+        evm.ctx().journal_mut().checkpoint_commit();
         // All regular gas is forwarded to the first frame; unused gas returns
         // when `last_frame_result` settles the frame.
         gas.spend_all();
