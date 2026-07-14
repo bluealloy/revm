@@ -239,7 +239,27 @@ pub trait Handler {
         self.validate_against_state_and_deduct_caller(evm, init_and_floor_gas)?;
         self.load_accounts(evm)?;
 
-        self.apply_eip7702_auth_list(evm, gas)
+        // EIP-2780: the checkpoint spans the whole runtime gas phase — the
+        // authorization charges below and the recipient/create-target charges
+        // at first-frame creation, which settles it ([`Handler::execution`]).
+        let is_eip2780 = evm.ctx().cfg().is_amsterdam_eip2780_enabled();
+        let runtime_gas_checkpoint = is_eip2780.then(|| evm.ctx().journal_mut().checkpoint());
+
+        let Some(eip7702_refund) = self.apply_eip7702_auth_list(evm, gas)? else {
+            // Out-of-gas while processing the authorizations: revert the
+            // applied delegations; the transaction is included as an
+            // out-of-gas halt. (An EIP-7702 transaction is always a call, so
+            // no create nonce bump is needed here.)
+            if let Some(checkpoint) = runtime_gas_checkpoint {
+                evm.ctx().journal_mut().checkpoint_revert(checkpoint);
+            }
+            return Ok(None);
+        };
+
+        Ok(Some(PreExecutionOutput {
+            eip7702_refund,
+            runtime_gas_checkpoint,
+        }))
     }
 
     /// Creates and executes the initial frame, then processes the execution loop.
@@ -413,15 +433,15 @@ pub trait Handler {
     /// Processes the authorization list, validating authority signatures, nonces and chain IDs.
     /// Applies valid authorizations to accounts.
     ///
-    /// Returns the pre-execution gas decisions (the EIP-7702 gas refund and
-    /// the still-open EIP-2780 runtime gas phase checkpoint), or `None` when
-    /// the EIP-2780 authorization charges ran out of gas.
+    /// Returns the EIP-7702 gas refund, or `None` when the EIP-2780
+    /// authorization charges ran out of gas — [`Handler::pre_execution`] owns
+    /// the runtime gas phase checkpoint and reverts it in that case.
     #[inline]
     fn apply_eip7702_auth_list(
         &self,
         evm: &mut Self::Evm,
         gas: &mut Gas,
-    ) -> Result<Option<PreExecutionOutput>, Self::Error> {
+    ) -> Result<Option<u64>, Self::Error> {
         apply_eip7702_auth_list(evm.ctx_mut(), gas)
     }
 

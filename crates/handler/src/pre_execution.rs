@@ -193,8 +193,9 @@ pub fn validate_against_state_and_deduct_caller<
 pub struct PreExecutionOutput {
     /// EIP-7702 regular gas refund for authorities that already existed.
     pub eip7702_refund: u64,
-    /// EIP-2780: journal checkpoint opened at the start of the runtime gas
-    /// phase, spanning the applied authorizations.
+    /// EIP-2780: journal checkpoint opened by [`crate::Handler::pre_execution`]
+    /// before the authorization list is applied, spanning the runtime gas
+    /// phase.
     ///
     /// It is left open because the runtime gas phase continues at first-frame
     /// creation (`create_init_frame` charges the recipient and create-target
@@ -217,15 +218,12 @@ pub struct PreExecutionOutput {
 /// intrinsic charge and its refund are replaced by conditional runtime
 /// charges). Charging as the authorizations are applied makes the phase stop
 /// at the first unaffordable charge: later authorities must not be loaded
-/// (observable through the EIP-7928 block access list). The opened journal
-/// checkpoint is returned still open
-/// ([`PreExecutionOutput::runtime_gas_checkpoint`]): the runtime gas phase
-/// continues at first-frame creation, which settles it.
+/// (observable through the EIP-7928 block access list).
 ///
-/// Returns the pre-execution gas decisions, or `None` when the authorization
-/// charges ran out of gas: the applied delegations are reverted and the
-/// transaction stays valid but must be included as an out-of-gas halt without
-/// entering execution.
+/// Returns the EIP-7702 gas refund, or `None` when the authorization charges
+/// ran out of gas: the caller owns the runtime gas phase checkpoint and must
+/// revert it, dropping the applied delegations; the transaction stays valid
+/// but must be included as an out-of-gas halt without entering execution.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
@@ -233,11 +231,14 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
     gas: &mut Gas,
-) -> Result<Option<PreExecutionOutput>, ERROR> {
+) -> Result<Option<u64>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
     // delegation-target access, recipient new-account state gas) are charged at
     // the runtime phase instead of pessimistically at the intrinsic phase.
     if context.cfg().is_amsterdam_eip2780_enabled() {
+        if context.tx().tx_type() != TransactionType::Eip7702 {
+            return Ok(Some(0));
+        }
         let chain_id = context.cfg().chain_id();
         let is_eip8037 = context.cfg().is_amsterdam_eip8037_enabled();
         let params = context.cfg().gas_params();
@@ -254,49 +255,28 @@ pub fn apply_eip7702_auth_list<
         };
         let (tx, journal) = context.tx_journal_mut();
 
-        // The checkpoint spans the whole runtime gas phase: it stays open
-        // through first-frame creation so a runtime out-of-gas there reverts
-        // the runtime state changes (including applied delegations) wholesale.
-        let checkpoint = journal.checkpoint();
-
-        // Apply EIP-7702 authorizations, charging the per-authority runtime
-        // charges as the authorizations are applied.
-        if tx.tx_type() == TransactionType::Eip7702 {
-            // Accounts this transaction has already written (their `ACCOUNT_WRITE`
-            // is already paid): the sender's leaf is written at inclusion (priced
-            // into `TX_BASE`), and the recipient's when value is transferred
-            // (priced into `TX_VALUE_COST`).
-            let mut written_accounts: HashSet<Address> = HashSet::default();
-            written_accounts.insert(tx.caller());
-            if let TxKind::Call(target) = tx.kind() {
-                if !tx.value().is_zero() {
-                    written_accounts.insert(target);
-                }
-            }
-            let oog = apply_auth_list_eip2780::<_, ERROR>(
-                chain_id,
-                tx.authorization_list(),
-                journal,
-                account_write_cost,
-                new_account_state_gas,
-                delegation_bytes_state_gas,
-                &mut written_accounts,
-                gas,
-            )?;
-            if oog {
-                // Out-of-gas while processing the authorizations: the applied
-                // delegations are reverted and the transaction is included as
-                // an out-of-gas halt. (An EIP-7702 transaction is always a
-                // call, so no create nonce bump is needed here.)
-                journal.checkpoint_revert(checkpoint);
-                return Ok(None);
+        // Accounts this transaction has already written (their `ACCOUNT_WRITE`
+        // is already paid): the sender's leaf is written at inclusion (priced
+        // into `TX_BASE`), and the recipient's when value is transferred
+        // (priced into `TX_VALUE_COST`).
+        let mut written_accounts: HashSet<Address> = HashSet::default();
+        written_accounts.insert(tx.caller());
+        if let TxKind::Call(target) = tx.kind() {
+            if !tx.value().is_zero() {
+                written_accounts.insert(target);
             }
         }
-
-        return Ok(Some(PreExecutionOutput {
-            eip7702_refund: 0,
-            runtime_gas_checkpoint: Some(checkpoint),
-        }));
+        let oog = apply_auth_list_eip2780::<_, ERROR>(
+            chain_id,
+            tx.authorization_list(),
+            journal,
+            account_write_cost,
+            new_account_state_gas,
+            delegation_bytes_state_gas,
+            &mut written_accounts,
+            gas,
+        )?;
+        return Ok(if oog { None } else { Some(0) });
     }
 
     let chain_id = context.cfg().chain_id();
@@ -304,7 +284,7 @@ pub fn apply_eip7702_auth_list<
 
     // Return if not EIP-7702 transaction.
     if tx.tx_type() != TransactionType::Eip7702 {
-        return Ok(Some(PreExecutionOutput::default()));
+        return Ok(Some(0));
     }
     let number_of_refunded_accounts =
         apply_auth_list::<_, ERROR>(chain_id, tx.authorization_list(), journal)?;
@@ -315,10 +295,7 @@ pub fn apply_eip7702_auth_list<
         .tx_eip7702_auth_refund_regular()
         .saturating_mul(number_of_refunded_accounts);
 
-    Ok(Some(PreExecutionOutput {
-        eip7702_refund: regular_gas_refund,
-        runtime_gas_checkpoint: None,
-    }))
+    Ok(Some(regular_gas_refund))
 }
 
 /// Applies an EIP-7702 auth list under EIP-2780, recording the
