@@ -4,9 +4,10 @@ use context_interface::{
     Cfg, Transaction,
 };
 use interpreter::{
-    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput, Gas,
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
+    GasTracker,
 };
-use primitives::{eip8038, TxKind};
+use primitives::TxKind;
 use state::Bytecode;
 use std::boxed::Box;
 
@@ -44,13 +45,14 @@ use std::boxed::Box;
 #[inline]
 pub fn create_init_frame<CTX: ContextTr>(
     ctx: &mut CTX,
-    gas: &mut Gas,
+    gas: &mut GasTracker,
 ) -> Result<Option<FrameInput>, <<CTX::Journal as JournalTr>::Database as Database>::Error> {
     let is_eip2780 = ctx.cfg().is_amsterdam_eip2780_enabled();
-    let is_eip8037 = ctx.cfg().is_amsterdam_eip8037_enabled();
     let params = ctx.cfg().gas_params();
     let new_account_state_gas = params.new_account_state_gas();
     let create_state_gas = params.create_state_gas();
+    let warm_access_cost = params.warm_storage_read_cost();
+    let cold_account_additional_cost = params.cold_account_additional_cost();
     let (tx, journal) = ctx.tx_journal_mut();
     let input = tx.input().clone();
 
@@ -67,7 +69,7 @@ pub fn create_init_frame<CTX: ContextTr>(
             );
 
             let mut charged_new_account_state_gas = false;
-            if is_eip2780 && is_eip8037 && !tx.value().is_zero() && recipient_is_empty {
+            if is_eip2780 && !tx.value().is_zero() && recipient_is_empty {
                 if !gas.record_state_cost(new_account_state_gas) {
                     return Ok(None);
                 }
@@ -80,28 +82,31 @@ pub fn create_init_frame<CTX: ContextTr>(
                     // after the load. Charges made before an out-of-gas bail
                     // need no undo: the runtime out-of-gas path rebuilds the
                     // transaction-level gas.
-                    if !gas.record_regular_cost(eip8038::WARM_ACCESS) {
+                    if !gas.record_regular_cost(warm_access_cost) {
                         return Ok(None);
                     }
-                    let skip_cold_load = gas.remaining() < eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL;
-                    match journal.load_account_mut_skip_cold_load(delegated_address, skip_cold_load)
+                    let skip_cold_load = gas.remaining() < cold_account_additional_cost;
+                    let acc = match journal
+                        .load_account_mut_skip_cold_load(delegated_address, skip_cold_load)
                     {
-                        Ok(acc) => {
-                            if acc.is_cold
-                                && !gas.record_regular_cost(eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL)
-                            {
-                                return Ok(None);
-                            }
-                        }
+                        Ok(acc) => acc,
                         Err(JournalLoadError::ColdLoadSkipped) => return Ok(None),
                         Err(JournalLoadError::DBError(e)) => return Err(e),
+                    };
+                    if acc.is_cold && !gas.record_regular_cost(cold_account_additional_cost) {
+                        return Ok(None);
                     }
+                    known_bytecode = (
+                        acc.data.account().info.code_hash(),
+                        acc.data.account().info.code.clone().unwrap_or_default(),
+                    );
+                } else {
+                    let account = &journal.load_account_with_code(delegated_address)?.info;
+                    known_bytecode = (
+                        account.code_hash(),
+                        account.code.clone().unwrap_or_default(),
+                    );
                 }
-                let account = &journal.load_account_with_code(delegated_address)?.info;
-                known_bytecode = (
-                    account.code_hash(),
-                    account.code.clone().unwrap_or_default(),
-                );
             }
 
             Ok(Some(FrameInput::Call(Box::new(CallInputs {
@@ -121,9 +126,11 @@ pub fn create_init_frame<CTX: ContextTr>(
         }
         TxKind::Create => {
             let mut charged_create_state_gas = false;
-            if is_eip2780 && is_eip8037 {
-                let nonce = journal.load_account(tx.caller())?.info.nonce;
-                let created_address = tx.caller().create(nonce);
+            if is_eip2780 {
+                // The tx nonce was validated against the caller's nonce, which
+                // a create transaction bumps only at frame creation — after
+                // this point.
+                let created_address = tx.caller().create(tx.nonce());
                 let target_is_empty = journal.load_account(created_address)?.info.is_empty();
                 if target_is_empty {
                     if !gas.record_state_cost(create_state_gas) {

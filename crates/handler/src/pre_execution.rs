@@ -11,7 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use interpreter::Gas;
+use interpreter::GasTracker;
 use primitives::{hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256};
 use state::AccountInfo;
 
@@ -231,7 +231,7 @@ pub fn apply_eip7702_auth_list<
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
-    gas: &mut Gas,
+    gas: &mut GasTracker,
 ) -> Result<Option<u64>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
     // delegation-target access, recipient new-account state gas) are charged at
@@ -331,7 +331,7 @@ pub fn apply_auth_list_eip2780<
     new_account_state_gas: u64,
     delegation_bytes_state_gas: u64,
     written_accounts: &mut HashSet<Address>,
-    gas: &mut Gas,
+    gas: &mut GasTracker,
 ) -> Result<bool, ERROR> {
     // EIP-8037 per-authority rules: each charge is applied at most once per
     // authority. The new-account charges self-limit (after the first

@@ -8,8 +8,8 @@ use handler::{
 use interpreter::{
     instructions::{GasTable, InstructionTable},
     interpreter_types::{Jumps, LoopControl},
-    FrameInput, Gas, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
-    InterpreterTypes,
+    FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
+    InterpreterAction, InterpreterTypes,
 };
 use primitives::hints_util::cold_path;
 use state::bytecode::opcode;
@@ -61,9 +61,8 @@ where
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         let mut init_and_floor_gas = self.validate(evm)?;
-        // Create the transaction-level gas from the validated intrinsic gas,
-        // mirroring how frames create their [`Gas`] at frame init (mirrors
-        // `Handler::run_without_catch_error`).
+        // Create the transaction-level gas tracker from the validated
+        // intrinsic gas (mirrors `Handler::run_without_catch_error`).
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
         // Pre-execution returns the EIP-7702 refund and the EIP-2780 runtime
         // gas phase checkpoint. `None` — from pre-execution or execution —
@@ -92,7 +91,7 @@ where
         &mut self,
         evm: &mut Self::Evm,
         checkpoint: JournalCheckpoint,
-        gas: &mut Gas,
+        gas: &mut GasTracker,
     ) -> Result<Option<FrameResult>, Self::Error> {
         // Create the first frame action from the transaction-level gas
         // (mirrors `Handler::execution`).
@@ -102,9 +101,6 @@ where
         };
         // The runtime gas phase is complete: commit its state changes.
         evm.ctx().journal_mut().checkpoint_commit();
-        // All regular gas is forwarded to the first frame; unused gas returns
-        // when `last_frame_result` settles the frame.
-        gas.spend_all();
 
         // Run execution loop
         let mut frame_result = self.inspect_run_exec_loop(evm, first_frame_input)?;

@@ -16,7 +16,7 @@ use interpreter::{
     interpreter_action::FrameInit,
     interpreter_types::ReturnData,
     CallInput, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    FrameInput, Gas, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
+    FrameInput, Gas, GasTracker, InputsImpl, InstructionResult, Interpreter, InterpreterAction,
     InterpreterResult, InterpreterTypes, SharedMemory,
 };
 use primitives::{
@@ -511,7 +511,11 @@ impl EthFrame<EthInterpreter> {
                 // Settle the child's gas and merge it into the parent (returns
                 // unused regular gas, adopts the reservoir, and propagates state
                 // gas / refunds on success).
-                handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &mut out_gas);
+                handle_reservoir_remaining_gas(
+                    ins_result,
+                    interpreter.gas.tracker_mut(),
+                    out_gas.tracker_mut(),
+                );
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -534,12 +538,15 @@ impl EthFrame<EthInterpreter> {
                 );
 
                 let mut create_gas = *outcome.gas();
-                let this_gas = &mut interpreter.gas;
 
                 // Settle the child's gas and merge it into the parent (returns
                 // unused regular gas, adopts the reservoir, and propagates state
                 // gas / refunds on success).
-                handle_reservoir_remaining_gas(instruction_result, this_gas, &mut create_gas);
+                handle_reservoir_remaining_gas(
+                    instruction_result,
+                    interpreter.gas.tracker_mut(),
+                    create_gas.tracker_mut(),
+                );
 
                 let stack_item = if instruction_result.is_ok() {
                     outcome.address.unwrap_or_default().into_word().into()
@@ -567,7 +574,7 @@ impl EthFrame<EthInterpreter> {
 ///
 /// First the child *settles its own gas*: a failing frame (revert or halt) rolls
 /// its state-gas charges back in last-in-first-out order
-/// ([`Gas::rollback_state_gas`]) — crediting the spilled portion back to its
+/// ([`GasTracker::rollback_state_gas`]) — crediting the spilled portion back to its
 /// `remaining` and restoring the reservoir to the value it inherited — and drops
 /// its execution refund counter; an exceptional halt additionally consumes the
 /// child's regular gas.
@@ -584,8 +591,8 @@ impl EthFrame<EthInterpreter> {
 #[inline]
 pub const fn handle_reservoir_remaining_gas(
     instruction_result: InstructionResult,
-    parent_gas: &mut Gas,
-    child_gas: &mut Gas,
+    parent_gas: &mut GasTracker,
+    child_gas: &mut GasTracker,
 ) {
     // Settle the child's own gas for its stop reason.
     if !instruction_result.is_ok() {

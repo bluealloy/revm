@@ -74,24 +74,6 @@ impl Gas {
         }
     }
 
-    /// Creates a new `Gas` struct with distinct limit, remaining regular gas and reservoir.
-    ///
-    /// Used for the transaction-level gas where part of the limit is already
-    /// spent: `limit` is the transaction gas limit while `remaining` is the
-    /// regular gas budget left after the intrinsic gas (and, under EIP-8037,
-    /// the `TX_MAX_GAS_LIMIT` cap), with the surplus in `reservoir`.
-    #[inline]
-    pub const fn new_with_remaining_and_reservoir(
-        limit: u64,
-        remaining: u64,
-        reservoir: u64,
-    ) -> Self {
-        Self {
-            tracker: GasTracker::new(limit, remaining, reservoir),
-            memory: MemoryGas::new(),
-        }
-    }
-
     /// Returns the gas limit.
     #[inline]
     pub const fn limit(&self) -> u64 {
