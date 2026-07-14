@@ -63,8 +63,8 @@ impl<R, S> ExecResultAndState<R, S> {
 /// ## Derived values
 ///
 /// - [`tx_gas_used()`](ResultGas::tx_gas_used) = `max(total_gas_spent − refunded, floor_gas)` (the value that goes into receipts)
-/// - [`block_regular_gas_used()`](ResultGas::block_regular_gas_used) = `total_gas_spent − state_gas_spent`
-///   (EIP-8037 + EIP-7778: pre-refund; refund and floor only affect `tx_gas_used`, not block-level regular gas)
+/// - [`block_regular_gas_used()`](ResultGas::block_regular_gas_used) = `max(total_gas_spent − state_gas_spent, floor_gas)`
+///   (EIP-8037 + EIP-7778: pre-refund; the EIP-7623 calldata floor binds against the regular component)
 /// - [`block_state_gas_used()`](ResultGas::block_state_gas_used) = `state_gas_spent`
 /// - [`spent_sub_refunded()`](ResultGas::spent_sub_refunded) = `total_gas_spent − refunded` (before floor gas check)
 /// - [`final_refunded()`](ResultGas::final_refunded) = `refunded` when floor gas is inactive, `0` when floor gas kicks in
@@ -270,13 +270,18 @@ impl ResultGas {
 
     /// Returns the regular gas used by the block per EIP-8037 + EIP-7778.
     ///
-    /// `total_gas_spent - state_gas_spent` (pre-refund). Refund and floor are
-    /// applied to the combined pre-refund total and only affect `tx_gas_used`
-    /// (the receipt value), not the block-level regular component.
+    /// `max(total_gas_spent - state_gas_spent, floor_gas)` (pre-refund). The
+    /// EIP-7623 calldata floor binds against the regular component only (it is
+    /// not discounted by state gas), while the refund only affects
+    /// `tx_gas_used` (the receipt value), not the block-level regular
+    /// component.
     #[inline]
     pub const fn block_regular_gas_used(&self) -> u64 {
-        self.total_gas_spent()
-            .saturating_sub(self.state_gas_spent_final())
+        max(
+            self.total_gas_spent()
+                .saturating_sub(self.state_gas_spent_final()),
+            self.floor_gas(),
+        )
     }
 
     /// Returns the state gas used by the block.

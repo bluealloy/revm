@@ -234,8 +234,7 @@ impl EthFrame<EthInterpreter> {
         }
 
         // Create interpreter and executes call and push new CallStackFrame.
-        let frame = this.get(EthFrame::invalid);
-        frame.clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
             }),
@@ -250,6 +249,7 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+
         Ok(ItemOrResult::Item(this.consume()))
     }
 
@@ -344,8 +344,7 @@ impl EthFrame<EthInterpreter> {
         };
         let gas_limit = inputs.gas_limit();
 
-        let frame = this.get(EthFrame::invalid);
-        frame.clear(
+        this.get(EthFrame::invalid).clear(
             FrameData::Create(CreateFrame { created_address }),
             FrameInput::Create(inputs),
             depth,
@@ -358,6 +357,7 @@ impl EthFrame<EthInterpreter> {
             reservoir_remaining_gas,
             checkpoint,
         );
+
         Ok(ItemOrResult::Item(this.consume()))
     }
 
