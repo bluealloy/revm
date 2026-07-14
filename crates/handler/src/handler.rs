@@ -469,20 +469,29 @@ pub trait Handler {
         &mut self,
         evm: &mut Self::Evm,
         frame_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
-        gas: &mut Gas,
+        parent_gas: &mut Gas,
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.instruction_result();
 
         // Settle the frame into the transaction-level gas like a parent frame.
-        handle_reservoir_remaining_gas(instruction_result, gas, frame_result.gas_mut());
+        handle_reservoir_remaining_gas(instruction_result, parent_gas, frame_result.gas_mut());
 
         // Refund the EIP-2780 refundable first-frame charge when no account
-        // leaf was created.
-        execution::refund_refundable_state_gas(evm.ctx(), frame_result, gas);
+        // leaf was created, exactly like `EthFrame::return_result` refunds
+        // the upfront CALL/CREATE state charges of inner frames.
+        if let Some(charge) = frame_result.refundable_state_gas(evm.ctx().cfg().gas_params()) {
+            parent_gas.refill_reservoir(charge);
+            // Unlike an inner frame's caller, the transaction ends here: an
+            // exceptional halt consumes all regular gas, including the
+            // spilled portion the refill just credited back to `remaining`.
+            if instruction_result.is_halt() {
+                parent_gas.spend_all();
+            }
+        }
 
         // The frame result carries the transaction-level gas onward to the
         // post-execution phase.
-        *frame_result.gas_mut() = *gas;
+        *frame_result.gas_mut() = *parent_gas;
 
         Ok(())
     }

@@ -467,6 +467,14 @@ impl EthFrame<EthInterpreter> {
         self.interpreter.memory.free_child_context();
         take_error::<ERROR, _>(ctx.error())?;
 
+        // EIP-8037: the CALL/CREATE opcode charged the new-account or
+        // create state gas upfront on this (parent) frame's tracker. When the
+        // child does not create the account leaf it paid for, the charge is
+        // refunded below via `refill_reservoir` (matching 0→x→0 storage
+        // restoration) — the child rollback in `handle_reservoir_remaining_gas`
+        // cannot do it, since the charge lives on the parent, not the child.
+        let refund_state_gas = result.refundable_state_gas(ctx.cfg().gas_params());
+
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
@@ -504,18 +512,6 @@ impl EthFrame<EthInterpreter> {
                 // unused regular gas, adopts the reservoir, and propagates state
                 // gas / refunds on success).
                 handle_reservoir_remaining_gas(ins_result, &mut interpreter.gas, &mut out_gas);
-
-                // EIP-8037: the CALL charged `new_account_state_gas` upfront on the
-                // parent's tracker (for a value transfer to an empty recipient).
-                // When the call does not result in account creation (revert, halt,
-                // or an early failure such as insufficient balance), refund that
-                // upfront charge to the parent's reservoir — the child rollback in
-                // `handle_reservoir_remaining_gas` cannot, since the charge lives on
-                // the parent, not the child.
-                if !ins_result.is_ok() && outcome.charged_new_account_state_gas {
-                    let charge = ctx.cfg().gas_params().new_account_state_gas();
-                    interpreter.gas.refill_reservoir(charge);
-                }
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -545,22 +541,6 @@ impl EthFrame<EthInterpreter> {
                 // gas / refunds on success).
                 handle_reservoir_remaining_gas(instruction_result, this_gas, &mut create_gas);
 
-                // EIP-8037: The CREATE opcode charged `create_state_gas` upfront on
-                // this frame's tracker, only when the destination did not exist at
-                // access time. Refund it via `refill_reservoir` (matching 0→x→0
-                // storage restoration) when no new account leaf ends up created:
-                // the child failed to deploy (revert, halt, or early-fail paths
-                // that return `address == None` such as nonce overflow, depth,
-                // OutOfFunds — the nonce-overflow path reports
-                // `InstructionResult::Return` (ok) with `address == None`, so gate
-                // on address rather than the result).
-                let create_failed = outcome.address.is_none() || !instruction_result.is_ok();
-
-                if create_failed && outcome.charged_create_state_gas {
-                    let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
-                    this_gas.refill_reservoir(state_gas_charged);
-                }
-
                 let stack_item = if instruction_result.is_ok() {
                     outcome.address.unwrap_or_default().into_word().into()
                 } else {
@@ -570,6 +550,12 @@ impl EthFrame<EthInterpreter> {
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(stack_item);
             }
+        }
+
+        // Refund the upfront state charge after the child's gas is settled
+        // (the settle overwrites the reservoir with the child's).
+        if let Some(charge) = refund_state_gas {
+            self.interpreter.gas.refill_reservoir(charge);
         }
 
         Ok(())
@@ -606,8 +592,7 @@ pub const fn handle_reservoir_remaining_gas(
         child_gas.rollback_state_gas();
         child_gas.set_refunded(0);
     }
-    let is_halt = !instruction_result.is_ok_or_revert();
-    if is_halt {
+    if instruction_result.is_halt() {
         // Exceptional halt consumes the child's regular gas (including the spill
         // just credited back by `rollback_state_gas`); the reservoir is left
         // restored to the inherited value for the parent.

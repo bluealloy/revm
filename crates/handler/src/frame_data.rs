@@ -1,4 +1,4 @@
-use context_interface::result::Output;
+use context_interface::{cfg::GasParams, result::Output};
 use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
@@ -118,6 +118,31 @@ impl FrameResult {
     #[inline]
     pub const fn instruction_result(&self) -> InstructionResult {
         self.interpreter_result().result
+    }
+
+    /// Returns the upfront state charge (EIP-8037) to refund when the frame
+    /// did not create the account leaf it paid for, or `None` when nothing is
+    /// to be refunded.
+    ///
+    /// The charge was recorded on the caller's gas before the frame ran — by
+    /// the CALL/CREATE opcode for inner frames, or by the EIP-2780 runtime
+    /// gas phase on the transaction-level gas for the first frame — and its
+    /// decision is carried on the outcome's `charged_*` flags. A call refunds
+    /// it when it did not succeed; a create also refunds it when no contract
+    /// address was deployed (early-fail paths such as sender nonce overflow
+    /// report success with `address == None`, so the address is checked
+    /// rather than the result alone).
+    #[inline]
+    pub fn refundable_state_gas(&self, gas_params: &GasParams) -> Option<u64> {
+        match self {
+            FrameResult::Call(outcome) => (!outcome.instruction_result().is_ok()
+                && outcome.charged_new_account_state_gas)
+                .then(|| gas_params.new_account_state_gas()),
+            FrameResult::Create(outcome) => ((outcome.address.is_none()
+                || !outcome.instruction_result().is_ok())
+                && outcome.charged_create_state_gas)
+                .then(|| gas_params.create_state_gas()),
+        }
     }
 }
 
