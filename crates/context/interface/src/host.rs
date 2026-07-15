@@ -169,7 +169,6 @@ pub trait Host {
                 .load_account_info_skip_cold_load(address, true, false)
                 .ok()?;
             account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
-            account_load.data.is_empty = delegate_account.is_empty;
         }
 
         Some(account_load)
@@ -334,5 +333,176 @@ impl Host for DummyHost {
         _skip_cold_load: bool,
     ) -> Result<StateLoad<StorageValue>, LoadError> {
         Ok(Default::default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::{hardfork::SpecId, Address, U256};
+    use state::{AccountInfo, Bytecode};
+    use std::borrow::Cow;
+
+    /// Host used to regression-test [`Host::load_account_delegated`].
+    ///
+    /// `delegated` is a non-empty EIP-7702 account pointing at an empty `delegate`.
+    struct Eip7702Host {
+        dummy: DummyHost,
+        delegated: Address,
+        delegate: Address,
+        delegated_info: AccountInfo,
+    }
+
+    impl Eip7702Host {
+        fn new() -> Self {
+            let delegated = Address::repeat_byte(0x11);
+            let delegate = Address::repeat_byte(0x22);
+            let delegated_info = AccountInfo::new(
+                U256::from(1),
+                1,
+                B256::ZERO,
+                Bytecode::new_eip7702(delegate),
+            );
+            Self {
+                dummy: DummyHost::new(SpecId::PRAGUE),
+                delegated,
+                delegate,
+                delegated_info,
+            }
+        }
+    }
+
+    impl Host for Eip7702Host {
+        fn basefee(&self) -> U256 {
+            self.dummy.basefee()
+        }
+        fn blob_gasprice(&self) -> U256 {
+            self.dummy.blob_gasprice()
+        }
+        fn gas_limit(&self) -> U256 {
+            self.dummy.gas_limit()
+        }
+        fn gas_params(&self) -> &GasParams {
+            self.dummy.gas_params()
+        }
+        fn is_amsterdam_eip8037_enabled(&self) -> bool {
+            self.dummy.is_amsterdam_eip8037_enabled()
+        }
+        fn difficulty(&self) -> U256 {
+            self.dummy.difficulty()
+        }
+        fn prevrandao(&self) -> Option<U256> {
+            self.dummy.prevrandao()
+        }
+        fn block_number(&self) -> U256 {
+            self.dummy.block_number()
+        }
+        fn timestamp(&self) -> U256 {
+            self.dummy.timestamp()
+        }
+        fn beneficiary(&self) -> Address {
+            self.dummy.beneficiary()
+        }
+        fn slot_num(&self) -> U256 {
+            self.dummy.slot_num()
+        }
+        fn chain_id(&self) -> U256 {
+            self.dummy.chain_id()
+        }
+        fn effective_gas_price(&self) -> U256 {
+            self.dummy.effective_gas_price()
+        }
+        fn caller(&self) -> Address {
+            self.dummy.caller()
+        }
+        fn blob_hash(&self, number: usize) -> Option<U256> {
+            self.dummy.blob_hash(number)
+        }
+        fn max_initcode_size(&self) -> usize {
+            self.dummy.max_initcode_size()
+        }
+        fn block_hash(&mut self, number: u64) -> Option<B256> {
+            self.dummy.block_hash(number)
+        }
+        fn selfdestruct(
+            &mut self,
+            address: Address,
+            target: Address,
+            skip_cold_load: bool,
+        ) -> Result<StateLoad<SelfDestructResult>, LoadError> {
+            self.dummy.selfdestruct(address, target, skip_cold_load)
+        }
+        fn log(&mut self, log: Log) {
+            self.dummy.log(log)
+        }
+        fn tstore(&mut self, address: Address, key: StorageKey, value: StorageValue) {
+            self.dummy.tstore(address, key, value)
+        }
+        fn tload(&mut self, address: Address, key: StorageKey) -> StorageValue {
+            self.dummy.tload(address, key)
+        }
+        fn sstore_skip_cold_load(
+            &mut self,
+            address: Address,
+            key: StorageKey,
+            value: StorageValue,
+            skip_cold_load: bool,
+        ) -> Result<StateLoad<SStoreResult>, LoadError> {
+            self.dummy
+                .sstore_skip_cold_load(address, key, value, skip_cold_load)
+        }
+        fn sload_skip_cold_load(
+            &mut self,
+            address: Address,
+            key: StorageKey,
+            skip_cold_load: bool,
+        ) -> Result<StateLoad<StorageValue>, LoadError> {
+            self.dummy
+                .sload_skip_cold_load(address, key, skip_cold_load)
+        }
+
+        fn load_account_info_skip_cold_load(
+            &mut self,
+            address: Address,
+            _load_code: bool,
+            _skip_cold_load: bool,
+        ) -> Result<AccountInfoLoad<'_>, LoadError> {
+            if address == self.delegated {
+                Ok(AccountInfoLoad {
+                    account: Cow::Owned(self.delegated_info.clone()),
+                    is_cold: false,
+                    is_empty: false,
+                })
+            } else if address == self.delegate {
+                // Empty delegated target: must not overwrite the caller's `is_empty`.
+                Ok(AccountInfoLoad {
+                    account: Cow::Owned(AccountInfo::default()),
+                    is_cold: true,
+                    is_empty: true,
+                })
+            } else {
+                Ok(Default::default())
+            }
+        }
+    }
+
+    #[test]
+    fn load_account_delegated_keeps_caller_is_empty_not_delegate() {
+        // Regression: previously `is_empty` was overwritten with the empty
+        // delegate account's flag. Gas accounting / account-creation costs
+        // must use the EIP-7702 account itself (non-empty here).
+        let mut host = Eip7702Host::new();
+        let load = host
+            .load_account_delegated(host.delegated)
+            .expect("delegated account loads");
+
+        assert!(
+            load.data.is_delegate_account_cold.is_some(),
+            "delegate account must be loaded"
+        );
+        assert!(
+            !load.data.is_empty,
+            "is_empty must stay false for the non-empty EIP-7702 account"
+        );
     }
 }
