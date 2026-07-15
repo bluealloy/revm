@@ -13,11 +13,9 @@ pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     let start = range.start;
     let mut iterator = start;
     let end = range.end;
-    let mut prev_byte: u8 = 0;
     let mut last_byte: u8 = 0;
 
     while iterator < end {
-        prev_byte = last_byte;
         last_byte = unsafe { *iterator };
         if last_byte == opcode::JUMPDEST {
             // SAFETY: Jumps are max length of the code
@@ -30,6 +28,10 @@ pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
                 // bytecode allocation; `wrapping_add` keeps that offset
                 // computation defined (the `< end` guard prevents any OOB read).
                 iterator = iterator.wrapping_add(push_offset as usize + 2);
+            } else if is_dupn_swapn_exchange(last_byte) {
+                // Same as PUSH: skip the 1-byte immediate. Trailing opcodes may
+                // advance past `end`; `wrapping_add` keeps that defined.
+                iterator = iterator.wrapping_add(2);
             } else {
                 // SAFETY: Iterator access range is checked in the while loop
                 iterator = unsafe { iterator.add(1) };
@@ -38,17 +40,14 @@ pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
     }
 
     // Calculate padding needed:
-    // push_overflow: bytes needed for incomplete PUSH immediate data
+    // push_overflow covers incomplete PUSH / DUPN / SWAPN / EXCHANGE immediates
+    // that caused the iterator to advance past the end of the bytecode.
     let push_overflow = (iterator as usize) - (end as usize);
     let mut padding = push_overflow;
 
-    if last_byte == opcode::STOP {
-        // DUPN/SWAPN/EXCHANGE have 1-byte immediates that aren't handled by the loop above,
-        // so we need extra padding to ensure safe execution.
-        padding += is_dupn_swapn_exchange(prev_byte) as usize;
-    } else {
-        // Add final STOP instruction and immediate for DUPN/SWAPN/EXCHANGE
-        padding += 1 + is_dupn_swapn_exchange(last_byte) as usize;
+    if last_byte != opcode::STOP {
+        // Append a final STOP so execution always has a terminating opcode.
+        padding += 1;
     }
 
     let bytecode = if padding > 0 {
@@ -210,6 +209,33 @@ mod tests {
                 assert_eq!(padded_bytecode[1], opcode::STOP);
                 assert_eq!(padded_bytecode[2], opcode::STOP);
             }
+        }
+    }
+
+    #[test]
+    fn test_jumpdest_in_dupn_swapn_exchange_immediate_is_not_valid() {
+        // Regression: DUPN/SWAPN/EXCHANGE have a 1-byte immediate that must be
+        // skipped during analysis (same as PUSH data). Otherwise a JUMPDEST byte
+        // in the immediate is incorrectly marked as a valid jump target.
+        for op in [opcode::DUPN, opcode::SWAPN, opcode::EXCHANGE] {
+            let bytecode = vec![op, opcode::JUMPDEST, opcode::STOP];
+            let (jump_table, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            assert_eq!(padded_bytecode.len(), bytecode.len());
+            assert!(
+                !jump_table.is_valid(1),
+                "immediate of {op:#04x} must not be JUMPDEST"
+            );
+        }
+    }
+
+    #[test]
+    fn test_truncated_dupn_swapn_exchange_are_padded_like_push() {
+        // Truncated opcode+immediate must pad the missing immediate and a STOP.
+        for op in [opcode::DUPN, opcode::SWAPN, opcode::EXCHANGE] {
+            let bytecode = vec![op];
+            let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            assert_eq!(padded_bytecode.len(), bytecode.len() + 2);
+            assert_eq!(&padded_bytecode[..], &[op, opcode::STOP, opcode::STOP]);
         }
     }
 }
