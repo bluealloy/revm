@@ -311,18 +311,23 @@ pub fn apply_auth_list<
         //   delegated_before_tx — its code at the start of the transaction was a
         //                          delegation (may differ from `delegated_now` when
         //                          an earlier authorization in this tx cleared it).
+        //                          Derived from the code hash because the original
+        //                          info carries no bytecode when the database serves
+        //                          code separately from the account; a non-empty
+        //                          hash is necessarily a delegation here, since code
+        //                          only changes within a transaction through earlier
+        //                          accepted authorizations, which keep it
+        //                          empty-or-delegation.
         //   clearing            — this authorization clears the delegation.
         let existed = !(authority_acc_info.is_empty()
             && authority_acc
                 .account()
                 .is_loaded_as_not_existing_not_touched());
         let delegated_now = !authority_acc_info.is_code_hash_empty_or_zero();
-        let delegated_before_tx = authority_acc
+        let delegated_before_tx = !authority_acc
             .account()
             .original_info()
-            .code
-            .as_ref()
-            .is_some_and(Bytecode::is_eip7702);
+            .is_code_hash_empty_or_zero();
         let clearing = authorization.address().is_zero();
 
         // Existing authority: the worst-case `ACCOUNT_WRITE` regular gas and the
