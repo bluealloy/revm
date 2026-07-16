@@ -86,20 +86,20 @@ pub fn create_init_frame<CTX: ContextTr>(
                         return Ok(None);
                     }
                     let skip_cold_load = gas.remaining() < cold_account_additional_cost;
-                    let acc = match journal
-                        .load_account_mut_skip_cold_load(delegated_address, skip_cold_load)
-                    {
+                    let acc = match journal.load_account_info_skip_cold_load(
+                        delegated_address,
+                        true,
+                        skip_cold_load,
+                    ) {
                         Ok(acc) => acc,
                         Err(JournalLoadError::ColdLoadSkipped) => return Ok(None),
                         Err(JournalLoadError::DBError(e)) => return Err(e),
                     };
+
                     if acc.is_cold && !gas.record_regular_cost(cold_account_additional_cost) {
                         return Ok(None);
                     }
-                    known_bytecode = (
-                        acc.data.account().info.code_hash(),
-                        acc.data.account().info.code.clone().unwrap_or_default(),
-                    );
+                    known_bytecode = (acc.code_hash(), acc.code.clone().unwrap_or_default());
                 } else {
                     let account = &journal.load_account_with_code(delegated_address)?.info;
                     known_bytecode = (

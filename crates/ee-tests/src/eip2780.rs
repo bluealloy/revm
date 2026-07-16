@@ -594,3 +594,81 @@ fn test_eip2780_precompile_recipient_value_failure() {
     assert_eq!(gas.state_gas_spent_final(), 0);
     assert_eq!(gas.total_gas_spent(), TX_GAS_LIMIT);
 }
+
+// ---------------------------------------------------------------------------
+// Delegate bytecode must be loaded even when `Database::basic` omits it.
+
+/// A database shaped like a node's state provider: `basic` returns account
+/// info without bytecode (`code: None`); code is only served by
+/// `code_by_hash`. `CacheDB` keeps code inline in `basic`, which masks any
+/// path that forgets to go through the code-loading load.
+struct NoCodeInBasicDB(CacheDB<EmptyDB>);
+
+impl revm::Database for NoCodeInBasicDB {
+    type Error = <CacheDB<EmptyDB> as revm::Database>::Error;
+
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        Ok(
+            revm::Database::basic(&mut self.0, address)?.map(|mut info| {
+                info.code = None;
+                info
+            }),
+        )
+    }
+
+    fn code_by_hash(&mut self, code_hash: revm::primitives::B256) -> Result<Bytecode, Self::Error> {
+        revm::Database::code_by_hash(&mut self.0, code_hash)
+    }
+
+    fn storage(
+        &mut self,
+        address: Address,
+        index: revm::primitives::StorageKey,
+    ) -> Result<revm::primitives::StorageValue, Self::Error> {
+        revm::Database::storage(&mut self.0, address, index)
+    }
+
+    fn block_hash(&mut self, number: u64) -> Result<revm::primitives::B256, Self::Error> {
+        revm::Database::block_hash(&mut self.0, number)
+    }
+}
+
+#[test]
+fn test_eip2780_delegated_recipient_code_loaded_from_hash() {
+    // Regression test for the glamsterdam-devnet-7 block 6371 gas divergence
+    // (bug017): the first-frame delegate load metered the access correctly but
+    // read the bytecode from an account load that does not fetch code. With a
+    // provider-style database the delegate then executed as empty code,
+    // under-counting gas by the delegated code's execution cost.
+    let to = address!("0x00000000000000000000000000000000000000ac");
+    let target = address!("0x00000000000000000000000000000000000000bb");
+    // PUSH1 1, PUSH1 2, ADD, STOP: 9 gas of observable execution.
+    let target_code = Bytecode::new_raw([0x60, 0x01, 0x60, 0x02, 0x01, 0x00].into());
+    let delegation = Bytecode::new_eip7702(target);
+
+    let mut db = CacheDB::<EmptyDB>::default();
+    db.insert_account_info(
+        to,
+        AccountInfo::new(U256::ZERO, 1, delegation.hash_slow(), delegation),
+    );
+    db.insert_account_info(
+        target,
+        AccountInfo::new(U256::ZERO, 1, target_code.hash_slow(), target_code),
+    );
+
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .with_db(NoCodeInBasicDB(db))
+        .build_mainnet();
+
+    let result = evm.transact_one(tx(TxKind::Call(to), U256::ZERO)).unwrap();
+    assert!(result.is_success());
+    // TX_BASE + COLD (recipient) + COLD (delegation target) + 9 gas executed.
+    assert_eq!(
+        result.gas().total_gas_spent(),
+        eip2780::TX_BASE_COST + 2 * eip8038::COLD_ACCOUNT_ACCESS + 9
+    );
+}
