@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.0.1](https://github.com/bluealloy/revm/compare/revm-bytecode-v41.0.0...revm-bytecode-v41.0.1) - 2026-07-16
+
+### Fixed
+
+- *(bytecode)* avoid iterating legacy padding opcodes ([#3792](https://github.com/bluealloy/revm/pull/3792))
+
+### Other
+
+- *(deps)* bump dependencies ([#3794](https://github.com/bluealloy/revm/pull/3794))
+- *(bytecode)* cover all truncated pushes ([#3783](https://github.com/bluealloy/revm/pull/3783))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-bytecode-v11.0.1...revm-bytecode-v41.0.0) - 2026-06-11
 
 ### Fixed

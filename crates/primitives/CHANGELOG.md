@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v41.0.0...revm-primitives-v41.1.0) - 2026-07-16
+
+### Added
+
+- *(amsterdam)* glam devnet-6 gas accounting & EIP alignment ([#3782](https://github.com/bluealloy/revm/pull/3782))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v24.0.0...revm-primitives-v41.0.0) - 2026-05-26
 
 ### Other
