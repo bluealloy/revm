@@ -472,6 +472,39 @@ mod tests {
     }
 
     #[test]
+    fn eip7702_invalid_magic() {
+        let raw1 = bytes!("ee0101deadbeef00000000000000000000000000000000");
+        assert_eq!(
+            Bytecode::new_eip7702_raw(raw1),
+            Err(Eip7702DecodeError::InvalidMagic)
+        );
+
+        let raw2 = bytes!("ef0001deadbeef00000000000000000000000000000000");
+        assert_eq!(
+            Bytecode::new_eip7702_raw(raw2),
+            Err(Eip7702DecodeError::InvalidMagic)
+        );
+    }
+
+    #[test]
+    fn new_raw_checked_dispatch() {
+        let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
+        let bytecode = Bytecode::new_raw_checked(raw).unwrap();
+        assert!(bytecode.is_eip7702());
+
+        assert_eq!(
+            Bytecode::new_raw_checked(bytes!("ef01")),
+            Err(BytecodeDecodeError::Eip7702(
+                Eip7702DecodeError::InvalidLength
+            ))
+        );
+
+        let bytecode = Bytecode::new_raw_checked(bytes!("ef00")).unwrap();
+        assert!(bytecode.is_legacy());
+        assert_eq!(bytecode.eip7702_address(), None);
+    }
+
+    #[test]
     fn is_default() {
         assert!(Bytecode::default().is_default());
     }
