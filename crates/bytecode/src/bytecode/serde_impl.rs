@@ -69,3 +69,57 @@ impl<'de> Deserialize<'de> for Bytecode {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::bytes;
+
+    #[test]
+    fn test_eip7702_roundtrip() {
+        let original = Bytecode::new_eip7702(Address::new([0xAA; 20]));
+        let json = serde_json::to_string(&original).unwrap();
+        let deser: Bytecode = serde_json::from_str(&json).unwrap();
+
+        assert!(deser.is_eip7702());
+        assert_eq!(deser.eip7702_address(), original.eip7702_address());
+        assert_eq!(deser, original);
+    }
+
+    #[test]
+    fn test_legacy_rejects_oversized_original_len() {
+        let original = Bytecode::new_legacy(bytes!("6001600155"));
+        let mut value = serde_json::to_value(&original).unwrap();
+        value["LegacyAnalyzed"]["original_len"] = 1000.into();
+
+        let err = serde_json::from_value::<Bytecode>(value).unwrap_err();
+        assert!(err.to_string().contains("original_len"));
+    }
+
+    #[test]
+    fn test_legacy_ignores_serialized_jump_table() {
+        // `5b` is a JUMPDEST opcode; in `605b` the 0x5b is PUSH1 data.
+        let original = Bytecode::new_legacy(bytes!("5b"));
+        let other = Bytecode::new_legacy(bytes!("605b"));
+
+        let mut value = serde_json::to_value(&original).unwrap();
+        value["LegacyAnalyzed"]["jump_table"] =
+            serde_json::to_value(&other).unwrap()["LegacyAnalyzed"]["jump_table"].take();
+
+        let deser: Bytecode = serde_json::from_value(value).unwrap();
+        assert_eq!(deser, original);
+        assert_eq!(deser.legacy_jump_table(), original.legacy_jump_table());
+    }
+
+    #[test]
+    fn test_legacy_roundtrip() {
+        // PUSH1 0x5b, JUMPDEST, STOP: only the second 0x5b is a valid dest.
+        let original = Bytecode::new_legacy(bytes!("605b5b00"));
+        let json = serde_json::to_string(&original).unwrap();
+        let deser: Bytecode = serde_json::from_str(&json).unwrap();
+
+        assert!(deser.is_legacy());
+        assert_eq!(deser.legacy_jump_table(), original.legacy_jump_table());
+        assert_eq!(deser, original);
+    }
+}
