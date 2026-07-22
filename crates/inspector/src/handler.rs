@@ -60,7 +60,7 @@ where
         &mut self,
         evm: &mut Self::Evm,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
-        let mut init_and_floor_gas = self.validate(evm)?;
+        let init_and_floor_gas = self.validate(evm)?;
         // Create the transaction-level gas tracker from the validated
         // intrinsic gas (mirrors `Handler::run_without_catch_error`).
         let mut gas = self.tx_gas(evm, &init_and_floor_gas);
@@ -68,7 +68,7 @@ where
         // gas phase checkpoint. `None` — from pre-execution or execution —
         // means the runtime gas phase ran out of gas: the transaction is
         // included as an out-of-gas halt without entering execution.
-        let pre_execution = self.pre_execution(evm, &mut init_and_floor_gas, &mut gas)?;
+        let pre_execution = self.pre_execution(evm, &mut gas)?;
 
         let mut refund = 0;
         let mut exec_result = None;

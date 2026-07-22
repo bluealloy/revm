@@ -11,7 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use interpreter::{GasTracker, InitialAndFloorGas};
+use interpreter::GasTracker;
 use primitives::{hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256};
 use state::AccountInfo;
 
@@ -236,7 +236,6 @@ pub fn apply_eip7702_auth_list<
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
-    _init_and_floor_gas: &mut InitialAndFloorGas,
     gas: &mut GasTracker,
 ) -> Result<Option<u64>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
