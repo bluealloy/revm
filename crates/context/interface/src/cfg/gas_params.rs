@@ -1582,8 +1582,8 @@ impl GasId {
     /// This is the refund given when an authorization is applied to an already
     /// existing account. Pre-EIP-8037 it is `PER_EMPTY_ACCOUNT_COST -
     /// PER_AUTH_BASE_COST` (25000 - 12500 = 12500); under EIP-8037 the refund is
-    /// entirely state gas so this is zero. The combined total is exposed via
-    /// [`GasParams::tx_eip7702_auth_refund`].
+    /// entirely state gas so this is zero. Read it through
+    /// [`GasParams::tx_eip7702_auth_refund_regular`].
     pub const fn tx_eip7702_regular_refund() -> GasId {
         Self::new(39)
     }
