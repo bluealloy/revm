@@ -13,6 +13,11 @@ pub struct CreateOutcome {
     pub result: InterpreterResult,
     /// An optional address associated with the create operation
     pub address: Option<Address>,
+    /// EIP-8037: whether the created address was already alive (existing,
+    /// non-empty) before this CREATE. When the create succeeds at such an
+    /// address no new account leaf is created, so the upfront `create_state_gas`
+    /// is refunded to the parent's reservoir.
+    pub target_was_alive: bool,
 }
 
 impl CreateOutcome {
@@ -27,7 +32,11 @@ impl CreateOutcome {
     ///
     /// A new [`CreateOutcome`] instance.
     pub const fn new(result: InterpreterResult, address: Option<Address>) -> Self {
-        Self { result, address }
+        Self {
+            result,
+            address,
+            target_was_alive: false,
+        }
     }
 
     /// Constructs a new [`CreateOutcome`] for an out-of-gas error.

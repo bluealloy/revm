@@ -240,12 +240,14 @@ pub fn validate_tx_env<CTX: ContextTr>(
 ///
 /// For custom gas parameters (e.g. configured on the context), use
 /// [`validate_initial_tx_gas_with_gas_params`].
+#[allow(clippy::too_many_arguments)]
 pub fn validate_initial_tx_gas(
     tx: impl Transaction,
     spec: SpecId,
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
+    eip2780: Option<context_interface::cfg::gas_params::Eip2780TxInfo>,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
     validate_initial_tx_gas_with_gas_params(
         tx,
@@ -254,10 +256,12 @@ pub fn validate_initial_tx_gas(
         is_eip7623_disabled,
         is_amsterdam_eip8037_enabled,
         tx_gas_limit_cap,
+        eip2780,
     )
 }
 
 /// Validate initial transaction gas using the provided [`GasParams`].
+#[allow(clippy::too_many_arguments)]
 pub fn validate_initial_tx_gas_with_gas_params(
     tx: impl Transaction,
     spec: SpecId,
@@ -265,8 +269,9 @@ pub fn validate_initial_tx_gas_with_gas_params(
     is_eip7623_disabled: bool,
     is_amsterdam_eip8037_enabled: bool,
     tx_gas_limit_cap: u64,
+    eip2780: Option<context_interface::cfg::gas_params::Eip2780TxInfo>,
 ) -> Result<InitialAndFloorGas, InvalidTransaction> {
-    let mut gas = gas_params.initial_tx_gas_for_tx(&tx);
+    let mut gas = gas_params.initial_tx_gas_for_tx(&tx, eip2780);
 
     if is_eip7623_disabled {
         gas.set_floor_gas(0);
@@ -388,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_eip7954_initcode_between_old_and_new_limit() {
-        // Size between old limit (0xC000) and new limit (0x10000):
+        // Size between old limit (0xC000) and new limit (0x20000):
         // should fail pre-Amsterdam, succeed at Amsterdam
         let size = eip3860::MAX_INITCODE_SIZE + 1; // 0xC001
         let large_bytecode = vec![opcode::STOP; size];
@@ -411,13 +416,13 @@ mod tests {
 
     #[test]
     fn test_eip7954_code_size_limit_failure() {
-        // EIP-7954: MAX_CODE_SIZE = 0x8000
-        // use the simplest method to return a contract code size greater than 0x8000
-        // PUSH3 0x8001 (greater than 0x8000) - return size
+        // EIP-7954: MAX_CODE_SIZE = 0x10000
+        // use the simplest method to return a contract code size greater than 0x10000
+        // PUSH3 0x10001 (greater than 0x10000) - return size
         // PUSH1 0x00 - memory position 0
         // RETURN - return uninitialized memory, will be filled with 0
         let init_code = vec![
-            0x62, 0x00, 0x80, 0x01, // PUSH3 0x8001 (greater than 0x8000)
+            0x62, 0x01, 0x00, 0x01, // PUSH3 0x10001 (greater than 0x10000)
             0x60, 0x00, // PUSH1 0
             0xf3, // RETURN
         ];

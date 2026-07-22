@@ -15,8 +15,10 @@ pub enum SpecName {
     /// Transition from Homestead to EIP-150 at block 5
     HomesteadToEIP150At5,
     /// EIP-150 hardfork (Tangerine Whistle, October 2016)
+    #[serde(alias = "TangerineWhistle")]
     EIP150,
     /// EIP-158/EIP-161 hardfork (Spurious Dragon, November 2016)
+    #[serde(alias = "SpuriousDragon")]
     EIP158, // EIP-161: State trie clearing
     /// Transition from EIP-158 to Byzantium at block 5
     EIP158ToByzantiumAt5,

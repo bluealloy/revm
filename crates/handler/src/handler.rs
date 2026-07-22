@@ -10,6 +10,7 @@ use context::{
     LocalContextTr,
 };
 use context_interface::{
+    cfg::gas_params,
     context::{take_error, ContextError},
     result::{HaltReasonTr, InvalidHeader, InvalidTransaction, ResultGas},
     Cfg, ContextTr, Database, JournalTr, Transaction,
@@ -289,13 +290,24 @@ pub trait Handler {
         evm: &mut Self::Evm,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let ctx = evm.ctx_ref();
+        let is_amsterdam_eip2780_enabled = ctx.cfg().is_amsterdam_eip2780_enabled();
+        let tx = ctx.tx();
+        let eip2780 = is_amsterdam_eip2780_enabled.then(|| {
+            // Self-transfer: a `Call` whose recipient is the sender itself.
+            let is_self_transfer = tx.kind().to() == Some(&tx.caller());
+            gas_params::Eip2780TxInfo {
+                value: tx.value(),
+                is_self_transfer,
+            }
+        });
         let gas = validation::validate_initial_tx_gas_with_gas_params(
-            ctx.tx(),
+            tx,
             ctx.cfg().spec().into(),
             ctx.cfg().gas_params(),
             ctx.cfg().is_eip7623_disabled(),
             ctx.cfg().is_amsterdam_eip8037_enabled(),
             ctx.cfg().tx_gas_limit_cap(),
+            eip2780,
         )?;
 
         Ok(gas)
@@ -370,13 +382,31 @@ pub trait Handler {
     ) -> Result<(), Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;
 
-        // Detect a failed top-level CREATE so the intrinsic `create_state_gas`
-        // charged at tx entry can be unwound below. Mirrors the `create_failed`
-        // condition used in `EthFrame::return_result` for nested creates.
-        let create_failed =
-            matches!(frame_result, FrameResult::Create(_)) && !instruction_result.is_ok();
+        // Detect a top-level CREATE that creates no new account leaf — either it
+        // failed, or it succeeded at a pre-existing alive (balance-only) target —
+        // so the intrinsic `create_state_gas` charged at tx entry can be unwound
+        // below. Mirrors the condition used in `EthFrame::return_result` for
+        // nested creates.
+        let create_refunds_state_gas = match &frame_result {
+            FrameResult::Create(outcome) => !instruction_result.is_ok() || outcome.target_was_alive,
+            _ => false,
+        };
 
         let gas = frame_result.gas_mut();
+
+        // Settle the top frame's own gas (mirrors `handle_reservoir_remaining_gas`'s
+        // child settle). A failing frame rolls its state-gas charges back in LIFO
+        // order — crediting the spilled portion back to `remaining` and restoring
+        // the reservoir to its pre-tx value — and drops the refund counter; an
+        // exceptional halt additionally consumes the regular gas.
+        if !instruction_result.is_ok() {
+            gas.rollback_state_gas();
+            gas.set_refunded(0);
+        }
+        if !instruction_result.is_ok_or_revert() {
+            gas.spend_all();
+        }
+
         let remaining = gas.remaining();
         let refunded = gas.refunded();
         let reservoir = gas.reservoir();
@@ -386,35 +416,14 @@ pub trait Handler {
         *gas = Gas::new_spent_with_reservoir(evm.ctx().tx().gas_limit(), reservoir);
 
         if instruction_result.is_ok_or_revert() {
-            // Return unused regular gas. Reservoir is handled separately via state_gas_spent.
+            // Return unused regular gas (including any spill credited back by the
+            // rollback above on revert). The reservoir was restored separately.
             gas.erase_cost(remaining);
         }
 
         if instruction_result.is_ok() {
             gas.record_refund(refunded);
-        }
-
-        // return zero state gas on halt/revert.
-        if instruction_result.is_ok() {
             gas.set_state_gas_spent(state_gas_spent);
-        } else {
-            gas.set_state_gas_spent(0);
-        }
-
-        // state gas
-        if !instruction_result.is_ok() {
-            // State changes rolled back (revert or halt). Apply the same
-            // invariant used by `handle_reservoir_remaining_gas` to recover
-            // the pre-call reservoir value: signed `reservoir + state_gas_spent`.
-            //
-            // record_state_cost increments state_gas_spent and decrements
-            // reservoir by the same amount; refill_reservoir does the inverse.
-            // Their sum is conserved, so adding the (possibly negative)
-            // state_gas_spent back to the final reservoir recovers the
-            // pre-call (here: pre-tx) value. The negative branch unwinds any
-            // 0→x→0 refill inflation propagated up from descendants — the
-            // grandchild-leak fix at the frame level applied to the top frame.
-            gas.set_reservoir(reservoir.saturating_add_signed(state_gas_spent));
         }
 
         // EIP-8037: for a failed top-level CREATE (or one that self-destructs
@@ -425,7 +434,7 @@ pub trait Handler {
         // `initial_gas_and_reservoir` rather than via `record_state_cost`, so
         // it would otherwise stay consumed when the deployment is rolled back
         // or erased.
-        if create_failed && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
+        if create_refunds_state_gas && evm.ctx().cfg().is_amsterdam_eip8037_enabled() {
             let ctx = evm.ctx();
             let state_gas_charged = ctx.cfg().gas_params().create_state_gas();
             gas.refill_reservoir(state_gas_charged);

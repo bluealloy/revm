@@ -30,16 +30,15 @@ pub fn g2_msm(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
         return Err(PrecompileHalt::Bls12381G2MsmInputLength);
     }
 
-    let k = input_len / G2_MSM_INPUT_LENGTH;
+    let input_chunks = input.chunks_exact(G2_MSM_INPUT_LENGTH);
+    let k = input_chunks.len();
     let required_gas = msm_required_gas(k, &DISCOUNT_TABLE_G2_MSM, G2_MSM_BASE_GAS_FEE);
     if required_gas > gas_limit {
         return Err(PrecompileHalt::OutOfGas);
     }
 
-    let mut valid_pairs_iter = (0..k).map(|i| {
-        let start = i * G2_MSM_INPUT_LENGTH;
-        let padded_g2 = &input[start..start + PADDED_G2_LENGTH];
-        let scalar_bytes = &input[start + PADDED_G2_LENGTH..start + G2_MSM_INPUT_LENGTH];
+    let mut valid_pairs_iter = input_chunks.map(|pair| {
+        let (padded_g2, scalar_bytes) = pair.split_at(PADDED_G2_LENGTH);
 
         // Remove padding from G2 point - this validates padding format
         let [x_0, x_1, y_0, y_1] = remove_g2_padding(padded_g2)?;

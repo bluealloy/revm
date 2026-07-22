@@ -1,6 +1,5 @@
 ---
 source: crates/ee-tests/src/eip8037.rs
-assertion_line: 2199
 expression: "&(baseline_result, result)"
 ---
 [
@@ -8,10 +7,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Return",
       "gas": {
-        "gas_spent": 40431,
+        "gas_spent": 50431,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 22728
+        "floor_gas": 13728
       },
       "logs": [],
       "output": {
@@ -26,10 +25,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "Return",
       "gas": {
-        "gas_spent": 570431,
+        "gas_spent": 580431,
         "state_gas_spent": 530000,
         "gas_refunded": 0,
-        "floor_gas": 22728
+        "floor_gas": 13728
       },
       "logs": [],
       "output": {

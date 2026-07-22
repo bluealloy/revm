@@ -17,6 +17,10 @@ pub struct CallFrame {
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
+    /// EIP-8037: whether the created address was already alive (existing,
+    /// non-empty) before this CREATE. When true, no new account leaf is created,
+    /// so the upfront `create_state_gas` is refunded on a successful create.
+    pub target_was_alive: bool,
 }
 
 /// Frame Data
@@ -124,7 +128,10 @@ impl FrameResult {
 impl FrameData {
     /// Creates a new create frame data.
     pub const fn new_create(created_address: Address) -> Self {
-        Self::Create(CreateFrame { created_address })
+        Self::Create(CreateFrame {
+            created_address,
+            target_was_alive: false,
+        })
     }
 
     /// Creates a new call frame data.

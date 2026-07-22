@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.4.0"
-DEVNET_VERSION="tests-bal%40v7.1.1"
+DEVNET_VERSION="tests-glamsterdam-devnet%40v6.1.0"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"
@@ -33,7 +33,7 @@ else
     MAIN_LABEL="main develop"
 fi
 
-DEVNET_TAR="fixtures_bal.tar.gz"
+DEVNET_TAR="fixtures_glamsterdam-devnet.tar.gz"
 
 LEGACY_REPO_URL="https://github.com/ethereum/legacytests.git"
 

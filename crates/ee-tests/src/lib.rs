@@ -19,4 +19,7 @@ macro_rules! assert_sorted_json_snapshot {
 mod revm_tests;
 
 #[cfg(test)]
+mod eip2780;
+
+#[cfg(test)]
 mod eip8037;

@@ -12,7 +12,7 @@ use context_interface::{
 use core::mem;
 use database_interface::Database;
 use primitives::{
-    eip7708::{BURN_LOG_TOPIC, ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
+    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
     hardfork::SpecId::{self, *},
     hash_map::Entry,
     hints_util::unlikely,
@@ -42,14 +42,17 @@ pub struct JournalCfg {
     pub spec: SpecId,
     /// Whether EIP-7708 (ETH transfers emit logs) is disabled.
     pub eip7708_disabled: bool,
-    /// Whether EIP-7708 delayed burn logging is disabled.
+    /// Whether the EIP-8246 delayed clearing of self-destructed accounts is disabled.
     ///
-    /// When enabled, revm tracks all self-destructed addresses and emits logs for
-    /// accounts that still have remaining balance at the end of the transaction.
-    /// This can be disabled for performance reasons as it requires storing and
-    /// iterating over all self-destructed accounts. When disabled, the logging
-    /// can be done outside of revm when applying accounts to database state.
-    pub eip7708_delayed_burn_disabled: bool,
+    /// When enabled, revm tracks all self-destructed addresses and, at the end of the
+    /// transaction, clears the code, storage and nonce of any that still have a remaining
+    /// balance while preserving the balance (see [EIP-8246]). This can be disabled for
+    /// performance reasons as it requires storing and iterating over all self-destructed
+    /// accounts. When disabled, this clearing can be done outside of revm when applying
+    /// accounts to database state.
+    ///
+    /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
+    pub eip8246_delayed_clear_disabled: bool,
 }
 /// Inner journal state that contains journal and state changes.
 ///
@@ -81,13 +84,13 @@ pub struct JournalInner<ENTRY> {
     pub warm_addresses: WarmAddresses,
     /// Addresses that were self-destructed for the first time in this transaction.
     ///
-    /// This is used by [EIP-7708] to emit logs for self-destructed accounts that still
-    /// have balance at the end of the transaction.
+    /// This is used by [EIP-8246] to clear (code, storage and nonce) self-destructed accounts
+    /// that still have balance at the end of the transaction, preserving their balance.
     ///
     /// The vec is indexed by checkpoint - on revert, entries added after the checkpoint
     /// are removed.
     ///
-    /// [EIP-7708]: https://eips.ethereum.org/EIPS/eip-7708
+    /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
     pub selfdestructed_addresses: Vec<Address>,
 }
 
@@ -118,12 +121,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
     /// Returns the logs.
     ///
-    /// Before returning, this function emits EIP-7708 logs for any self-destructed
-    /// accounts that still have a non-zero balance.
+    /// Before returning, this function applies EIP-8246 to any self-destructed
+    /// accounts that still have a non-zero balance, clearing their code, storage and
+    /// nonce while preserving the balance.
     #[inline]
     pub fn take_logs(&mut self) -> Vec<Log> {
-        // EIP-7708: Emit logs for self-destructed accounts with remaining balance
-        self.eip7708_emit_burn_remaining_balance_logs();
+        // EIP-8246: clear self-destructed accounts that still hold a balance.
+        self.eip8246_clear_selfdestructed_accounts();
         mem::take(&mut self.logs)
     }
 
@@ -254,45 +258,61 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         state
     }
 
-    /// Emit EIP-7708 logs for self-destructed accounts that still have balance.
+    /// Apply [EIP-8246] to self-destructed accounts that still have a balance.
     ///
     /// This should be called before `take_logs()` at the end of transaction execution.
-    /// It checks all accounts that were self-destructed in this transaction and emits
-    /// a `Burn` log for any that still have a non-zero balance.
+    /// It iterates over all accounts that were self-destructed in this transaction and,
+    /// for any that still hold a non-zero balance, clears the rest of the account instead
+    /// of letting the balance be burned: the nonce is reset to `0`, the code and storage are
+    /// cleared, the balance is left unchanged and the self-destruct flag is removed so the
+    /// account is preserved in state as a balance-only account.
     ///
-    /// This can happen when an account receives ETH after being self-destructed
-    /// in the same transaction.
+    /// A non-zero balance can remain when an account receives ETH after being self-destructed
+    /// in the same transaction, or when a contract created in the same transaction
+    /// self-destructs to itself (see [`Self::selfdestruct`]).
     ///
-    /// Logs are emitted sorted by address in ascending order.
+    /// Accounts with a zero balance keep their self-destruct flag and are removed from state as
+    /// before (they are *empty* and deleted by [EIP-161]).
     ///
-    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
+    /// Self-destructed accounts can only reach this point if they were created in the same
+    /// transaction (EIP-6780 is always active alongside EIP-8246), so they never have storage
+    /// stored in the database and clearing the in-memory storage is sufficient.
+    ///
+    /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
+    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     #[inline]
-    pub fn eip7708_emit_burn_remaining_balance_logs(&mut self) {
-        if !self.cfg.spec.is_enabled_in(AMSTERDAM)
-            || self.cfg.eip7708_disabled
-            || self.cfg.eip7708_delayed_burn_disabled
-        {
+    pub fn eip8246_clear_selfdestructed_accounts(&mut self) {
+        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip8246_delayed_clear_disabled {
             return;
         }
 
-        // Collect addresses with non-zero balance and sort by address
-        let mut addresses_with_balance: Vec<(Address, U256)> = self
-            .selfdestructed_addresses
-            .iter()
-            .filter_map(|address| {
-                self.state
-                    .get(address)
-                    .filter(|account| !account.info.balance.is_zero())
-                    .map(|account| (*address, account.info.balance))
-            })
-            .collect();
+        for address in &self.selfdestructed_addresses {
+            let Some(account) = self.state.get_mut(address) else {
+                continue;
+            };
 
-        // Sort by address (ascending)
-        addresses_with_balance.sort_by_key(|(addr, _)| *addr);
+            // Zero-balance accounts stay self-destructed and are removed from state (EIP-161).
+            if account.info.balance.is_zero() {
+                continue;
+            }
 
-        // Emit logs in sorted order
-        for (address, balance) in addresses_with_balance {
-            self.eip7708_burn_log(address, balance);
+            // EIP-8246: keep the balance but clear the rest of the account.
+            account.info.nonce = 0;
+            account.info.code_hash = KECCAK_EMPTY;
+            account.info.code = Some(Bytecode::default());
+            // Wipe storage to zero in place rather than dropping the entries: the
+            // slots were accessed during the (now self-destructed) execution and
+            // EIP-7928 records those accesses in the block access list. Keeping the
+            // entries (present_value = 0) preserves the access — read-only slots
+            // stay read-only and written slots become writes-to-zero — while the
+            // committed state is still an empty (balance-only) account.
+            for slot in account.storage.values_mut() {
+                slot.present_value = StorageValue::ZERO;
+            }
+
+            // Remove the self-destruct flags so the account is preserved instead of destroyed.
+            account.unmark_selfdestruct();
+            account.unmark_selfdestructed_locally();
         }
     }
 
@@ -308,11 +328,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.cfg.spec = spec;
     }
 
-    /// Sets EIP-7708 configuration flags.
+    /// Sets EIP-7708 and EIP-8246 configuration flags.
     #[inline]
-    pub const fn set_eip7708_config(&mut self, disabled: bool, delayed_burn_disabled: bool) {
+    pub const fn set_eip7708_config(
+        &mut self,
+        disabled: bool,
+        eip8246_delayed_clear_disabled: bool,
+    ) {
         self.cfg.eip7708_disabled = disabled;
-        self.cfg.eip7708_delayed_burn_disabled = delayed_burn_disabled;
+        self.cfg.eip8246_delayed_clear_disabled = eip8246_delayed_clear_disabled;
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -662,30 +686,41 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
-            // EIP-7708: Track first self-destruction for remaining balance log.
-            // Only track when account is actually destroyed and delayed burn is not disabled.
+            // EIP-8246: Track first self-destruction so the account can be cleared (code, storage
+            // and nonce) while preserving its balance at finalization.
+            // Only track when account is actually destroyed and delayed clearing is not disabled.
             if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed
-                && !self.cfg.eip7708_delayed_burn_disabled
+                && !self.cfg.eip8246_delayed_clear_disabled
             {
                 self.selfdestructed_addresses.push(address);
             }
 
             acc.mark_selfdestructed_locally();
-            acc.info.balance = U256::ZERO;
 
-            // EIP-7708: emit appropriate log for selfdestruct
-            if target != address {
-                // Transfer log for balance transferred to different address
+            // `had_balance` records the balance that left the account so it can be restored
+            // on revert.
+            let had_balance = if target != address {
+                // Balance was transferred to target above; zero out the source.
+                acc.info.balance = U256::ZERO;
+                // EIP-7708: transfer log for balance moved to a different address.
                 self.eip7708_transfer_log(address, target, balance);
+                balance
+            } else if spec.is_enabled_in(AMSTERDAM) {
+                // EIP-8246: self-destruct to self no longer burns the balance. The balance is
+                // kept and the account is cleared at finalization
+                // (see `eip8246_clear_selfdestructed_accounts`).
+                U256::ZERO
             } else {
-                // Burn log for selfdestruct to self
-                self.eip7708_burn_log(address, balance);
-            }
+                // Pre-EIP-8246: self-destruct to self burns the balance.
+                acc.info.balance = U256::ZERO;
+                balance
+            };
+
             Some(ENTRY::account_destroyed(
                 address,
                 target,
                 destroyed_status,
-                balance,
+                had_balance,
             ))
         } else if address != target {
             acc.info.balance = U256::ZERO;
@@ -1103,34 +1138,6 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         self.logs.push(Log {
             address: ETH_TRANSFER_LOG_ADDRESS,
             data: LogData::new(topics, data).expect("3 topics is valid"),
-        });
-    }
-
-    /// Creates and pushes an EIP-7708 burn log.
-    ///
-    /// This emits a LOG2 when a contract self-destructs to itself or when a
-    /// self-destructed account still has remaining balance at end of transaction.
-    /// Only emitted if EIP-7708 is enabled (Amsterdam and later) and balance is non-zero.
-    ///
-    /// [EIP-7708](https://eips.ethereum.org/EIPS/eip-7708)
-    #[inline]
-    pub fn eip7708_burn_log(&mut self, address: Address, balance: U256) {
-        // Only emit log if EIP-7708 is enabled and balance is non-zero
-        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip7708_disabled || balance.is_zero()
-        {
-            return;
-        }
-
-        // Create LOG2 with Burn(address,uint256) event signature
-        // Topic[0]: Burn event signature
-        // Topic[1]: account address (zero-padded to 32 bytes)
-        // Data: amount in wei (big-endian uint256)
-        let topics = std::vec![BURN_LOG_TOPIC, B256::left_padding_from(address.as_slice()),];
-        let data = Bytes::copy_from_slice(&balance.to_be_bytes::<32>());
-
-        self.logs.push(Log {
-            address: ETH_TRANSFER_LOG_ADDRESS,
-            data: LogData::new(topics, data).expect("2 topics is valid"),
         });
     }
 }

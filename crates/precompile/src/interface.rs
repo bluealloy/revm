@@ -212,7 +212,8 @@ pub trait Crypto: Send + Sync + Debug {
         hasher.update(input);
 
         let mut output = [0u8; 32];
-        hasher.finalize_into((&mut output[12..]).into());
+        let hash: &mut [u8; 20] = (&mut output[12..]).try_into().unwrap();
+        hasher.finalize_into(hash.into());
         output
     }
 

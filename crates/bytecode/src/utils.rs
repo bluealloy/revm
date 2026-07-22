@@ -26,7 +26,7 @@ pub mod test {
     use crate::opcode;
     use anyhow::Result;
     use primitives::U256;
-    use rand::Rng;
+    use rand::RngExt;
 
     /// Constructs bytecode for inserting input into memory
     pub fn build_memory_input_opcodes(start_offset: U256, input: &[u8]) -> Result<Vec<u8>> {

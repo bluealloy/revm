@@ -33,6 +33,10 @@ fn state_gas_evm(bytecode: Bytecode, cap: u64) -> MainEvm {
     Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            // EIP-2780 changes intrinsic gas independently of the EIP-8037
+            // reservoir model this test file exercises; disable it here to
+            // keep the comparisons focused on state-gas behaviour.
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(cap);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
@@ -51,6 +55,7 @@ fn baseline_evm(bytecode: Bytecode) -> MainEvm {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip8037 = false;
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(BenchmarkDB::new_bytecode(bytecode))
@@ -1043,6 +1048,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
@@ -1076,6 +1082,7 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
     let mut evm_no_state = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .modify_block_chained(|block| {
@@ -1451,11 +1458,13 @@ fn test_eip8037_spend_all_preserves_reservoir() {
         }
         _ => panic!("Expected Halt variant"),
     }
-    // On halt, state gas is refunded via reservoir, so tx_gas_used is reduced.
+    // On halt the SSTORE state gas had spilled into regular gas (the reservoir
+    // starts empty), so it is consumed like any other regular gas — tx_gas_used
+    // is the full gas limit, matching the non-state-gas baseline.
     assert_eq!(
         result.tx_gas_used(),
-        gas_limit - STATE_GAS_SSTORE_SET,
-        "Halt refunds state gas via reservoir"
+        gas_limit,
+        "Halt consumes spilled state gas (not refunded)"
     );
     // state_gas_spent_final is zeroed on halt (state changes rolled back).
     assert_eq!(result.gas().state_gas_spent_final(), 0);
@@ -2261,6 +2270,7 @@ fn test_eip8037_tx_create_collision() {
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
             cfg.enable_amsterdam_eip8037 = false;
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.tx_gas_limit_cap = Some(u64::MAX);
         })
         .with_db(build_db())
@@ -2272,6 +2282,7 @@ fn test_eip8037_tx_create_collision() {
     let mut evm = Context::mainnet()
         .modify_cfg_chained(|cfg| {
             cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
             cfg.gas_params.override_gas([
                 (GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET),
                 (GasId::new_account_state_gas(), STATE_GAS_NEW_ACCOUNT),

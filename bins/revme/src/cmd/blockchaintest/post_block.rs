@@ -59,6 +59,13 @@ pub fn post_block_transition<
         system_call_eip7251_consolidation_request(evm)?;
     }
 
+    // EIP-8282: Builder execution requests system calls (builder deposit and
+    // builder exit), introduced in Amsterdam.
+    if spec.is_enabled_in(SpecId::AMSTERDAM) {
+        system_call_eip8282_builder_deposit_request(evm)?;
+        system_call_eip8282_builder_exit_request(evm)?;
+    }
+
     Ok(())
 }
 
@@ -104,5 +111,31 @@ where
     EVM: SystemCallCommitEvm<Error: core::fmt::Debug>,
 {
     evm.system_call_commit(CONSOLIDATION_REQUEST_ADDRESS, Bytes::new())?;
+    Ok(())
+}
+
+pub const BUILDER_DEPOSIT_REQUEST_ADDRESS: Address =
+    address!("0x0000884d2AA32eAa155F59A2f24eFa73D9008282");
+
+/// EIP-8282: Builder deposit requests system call (request type `0x03`).
+pub(crate) fn system_call_eip8282_builder_deposit_request<EVM>(
+    evm: &mut EVM,
+) -> Result<(), EVM::Error>
+where
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>,
+{
+    evm.system_call_commit(BUILDER_DEPOSIT_REQUEST_ADDRESS, Bytes::new())?;
+    Ok(())
+}
+
+pub const BUILDER_EXIT_REQUEST_ADDRESS: Address =
+    address!("0x000014574A74c805590AFF9499fc7A690f008282");
+
+/// EIP-8282: Builder exit requests system call (request type `0x04`).
+pub(crate) fn system_call_eip8282_builder_exit_request<EVM>(evm: &mut EVM) -> Result<(), EVM::Error>
+where
+    EVM: SystemCallCommitEvm<Error: core::fmt::Debug>,
+{
+    evm.system_call_commit(BUILDER_EXIT_REQUEST_ADDRESS, Bytes::new())?;
     Ok(())
 }

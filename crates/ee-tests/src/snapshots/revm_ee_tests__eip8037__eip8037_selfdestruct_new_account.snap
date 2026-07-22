@@ -7,10 +7,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "SelfDestruct",
       "gas": {
-        "gas_spent": 28603,
+        "gas_spent": 37003,
         "state_gas_spent": 0,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": [
         {
@@ -32,10 +32,10 @@ expression: "&(baseline_result, result)"
     "Success": {
       "reason": "SelfDestruct",
       "gas": {
-        "gas_spent": 278603,
+        "gas_spent": 287003,
         "state_gas_spent": 250000,
         "gas_refunded": 0,
-        "floor_gas": 21000
+        "floor_gas": 12000
       },
       "logs": [
         {

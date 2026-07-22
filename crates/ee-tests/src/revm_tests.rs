@@ -279,12 +279,15 @@ fn test_eip7708_transfer_log_tx_value() {
 
     let tx_value = U256::from(1_000_000_000_000_000u128); // 0.001 ETH (within balance)
 
+    // ETH transfer creating new account costs ~207k gas under EIP-2780
+    // (TX_BASE_COST + COLD_ACCOUNT_ACCESS + ACCOUNT_WRITE + TRANSFER_LOG_COST
+    //  + STATE_BYTES_PER_NEW_ACCOUNT × CPSB at top-level execution).
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
                 .to(recipient)
                 .value(tx_value)
-                .gas_limit(100_000)
+                .gas_limit(300_000)
                 .gas_price(0) // Zero gas price to avoid balance issues
                 .build_fill(),
         )
@@ -432,11 +435,12 @@ const SELFDESTRUCT_TO_SELF_INIT_CODE: &[u8] = &[
     opcode::SELFDESTRUCT,
 ];
 
-/// Test EIP-7708 selfdestruct-to-self log emission
-/// This test creates a contract with value that selfdestructs to itself during construction,
-/// which should emit a SelfBalanceLog since the contract is created in the same tx.
+/// Test EIP-8246 selfdestruct-to-self balance preservation.
+/// This test creates a contract with value that selfdestructs to itself during construction.
+/// Before EIP-8246 this burned the balance and emitted a `Burn` log; with EIP-8246 the balance
+/// is preserved and the account is kept with cleared code, storage and nonce.
 #[test]
-fn test_eip7708_selfdestruct_to_self() {
+fn test_eip8246_selfdestruct_to_self_preserves_balance() {
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
         .modify_block_chained(|block| block.gas_limit = 100_000_000)
@@ -460,21 +464,29 @@ fn test_eip7708_selfdestruct_to_self() {
 
     assert!(result.is_success(), "Transaction should succeed");
 
-    // Find the burn log
+    // EIP-8246: self-destruct to self no longer burns the balance, so no `Burn` log is emitted.
     let logs = result.logs();
     let burn_log = logs
         .iter()
         .find(|log| log.data.topics().len() == 2 && log.data.topics()[0] == BURN_LOG_TOPIC);
-
     assert!(
-        burn_log.is_some(),
-        "Expected burn log, got logs: {:?}",
-        logs
+        burn_log.is_none(),
+        "Expected no burn log, got logs: {logs:?}"
     );
-    let log = burn_log.unwrap();
-    assert_eq!(log.address, ETH_TRANSFER_LOG_ADDRESS);
-    // The log data should contain the create value
-    assert_eq!(log.data.data.as_ref(), &create_value.to_be_bytes::<32>());
+
+    // The created account keeps its balance, while its code, storage and nonce are cleared
+    // and it is no longer marked self-destructed.
+    let created_address = result.created_address().unwrap();
+    let account = evm
+        .ctx
+        .journal_mut()
+        .state
+        .get(&created_address)
+        .expect("self-destructed account should be preserved");
+    assert_eq!(account.info.balance, create_value);
+    assert_eq!(account.info.nonce, 0);
+    assert_eq!(account.info.code_hash, KECCAK_EMPTY);
+    assert!(!account.is_selfdestructed());
 }
 
 /// Bytecode that performs a CALL with value to a specific address

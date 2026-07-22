@@ -139,20 +139,32 @@ pub struct CfgEnv<SPEC = SpecId> {
     ///
     /// By default, it is set to `false`.
     pub enable_amsterdam_eip8037: bool,
+    /// Enables EIP-2780 (Amsterdam) reduced intrinsic transaction gas.
+    ///
+    /// Replaces the legacy 21,000 base with the decomposed
+    /// `TX_BASE_COST + to-based + value-based` model and adds top-level
+    /// execution charges for empty recipients with value (state gas) and
+    /// EIP-7702-delegated recipients (extra cold access).
+    ///
+    /// By default, it is set to `false`.
+    pub enable_amsterdam_eip2780: bool,
     /// Disables EIP-7708 (ETH transfers emit logs).
     ///
     /// By default, it is set to `false`.
     pub amsterdam_eip7708_disabled: bool,
-    /// Disables EIP-7708 delayed burn logging.
+    /// Disables the EIP-8246 delayed clearing of self-destructed accounts.
     ///
-    /// When enabled, revm tracks all self-destructed addresses and emits logs for
-    /// accounts that still have remaining balance at the end of the transaction.
-    /// This can be disabled for performance reasons as it requires storing and
-    /// iterating over all self-destructed accounts. When disabled, the logging
-    /// can be done outside of revm when applying accounts to database state.
+    /// When enabled, revm tracks all self-destructed addresses and, at the end of the
+    /// transaction, clears the code, storage and nonce of any that still have a remaining
+    /// balance while preserving the balance ([EIP-8246]). This can be disabled for performance
+    /// reasons as it requires storing and iterating over all self-destructed accounts. When
+    /// disabled, this clearing can be done outside of revm when applying accounts to database
+    /// state.
     ///
     /// By default, it is set to `false`.
-    pub amsterdam_eip7708_delayed_burn_disabled: bool,
+    ///
+    /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
+    pub amsterdam_eip8246_delayed_clear_disabled: bool,
 }
 
 impl CfgEnv {
@@ -217,15 +229,17 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables EIP-8037 for AMSTERDAM and later.
+    /// Automatically enables EIP-8037 and EIP-2780 for AMSTERDAM and later.
     pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
         self,
         spec: OSPEC,
     ) -> CfgEnv<OSPEC> {
         let is_amsterdam = spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
         let enable_amsterdam_eip8037 = self.enable_amsterdam_eip8037 || is_amsterdam;
+        let enable_amsterdam_eip2780 = self.enable_amsterdam_eip2780 || is_amsterdam;
         let mut cfg = self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()));
         cfg.enable_amsterdam_eip8037 = enable_amsterdam_eip8037;
+        cfg.enable_amsterdam_eip2780 = enable_amsterdam_eip2780;
         cfg
     }
 
@@ -267,8 +281,9 @@ impl<SPEC> CfgEnv<SPEC> {
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: self.disable_fee_charge,
             enable_amsterdam_eip8037: self.enable_amsterdam_eip8037,
+            enable_amsterdam_eip2780: self.enable_amsterdam_eip2780,
             amsterdam_eip7708_disabled: self.amsterdam_eip7708_disabled,
-            amsterdam_eip7708_delayed_burn_disabled: self.amsterdam_eip7708_delayed_burn_disabled,
+            amsterdam_eip8246_delayed_clear_disabled: self.amsterdam_eip8246_delayed_clear_disabled,
         }
     }
 
@@ -314,6 +329,13 @@ impl<SPEC> CfgEnv<SPEC> {
         self.enable_amsterdam_eip8037 = enable;
         self
     }
+
+    /// Sets the enable EIP-2780 (Amsterdam) reduced intrinsic transaction
+    /// gas flag.
+    pub const fn with_enable_amsterdam_eip2780(mut self, enable: bool) -> Self {
+        self.enable_amsterdam_eip2780 = enable;
+        self
+    }
 }
 
 impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
@@ -350,8 +372,9 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
             #[cfg(feature = "optional_fee_charge")]
             disable_fee_charge: false,
             enable_amsterdam_eip8037: is_amsterdam,
+            enable_amsterdam_eip2780: is_amsterdam,
             amsterdam_eip7708_disabled: false,
-            amsterdam_eip7708_delayed_burn_disabled: false,
+            amsterdam_eip8246_delayed_clear_disabled: false,
         }
     }
 
@@ -390,14 +413,15 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables EIP-8037 for AMSTERDAM and later.
+    /// Automatically enables EIP-8037 and EIP-2780 for AMSTERDAM and later.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
         self.spec = spec.clone();
         self.set_gas_params(GasParams::new_spec(spec.clone().into()));
-        // EIP-8037: Enable EIP-8037 for AMSTERDAM and later
+        // EIP-8037/EIP-2780: Enable for AMSTERDAM and later
         if spec.into().is_enabled_in(SpecId::AMSTERDAM) {
             self.enable_amsterdam_eip8037 = true;
+            self.enable_amsterdam_eip2780 = true;
         }
     }
 }
@@ -549,8 +573,8 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
         self.amsterdam_eip7708_disabled
     }
 
-    fn is_eip7708_delayed_burn_disabled(&self) -> bool {
-        self.amsterdam_eip7708_delayed_burn_disabled
+    fn is_eip8246_delayed_clear_disabled(&self) -> bool {
+        self.amsterdam_eip8246_delayed_clear_disabled
     }
 
     fn memory_limit(&self) -> u64 {
@@ -570,6 +594,10 @@ impl<SPEC: Into<SpecId> + Clone> Cfg for CfgEnv<SPEC> {
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
         self.enable_amsterdam_eip8037
+    }
+
+    fn is_amsterdam_eip2780_enabled(&self) -> bool {
+        self.enable_amsterdam_eip2780
     }
 }
 
