@@ -986,4 +986,185 @@ mod tests {
             leftover.len(),
         );
     }
+
+    fn transfer_logs(events: &[InspectorEvent]) -> Vec<(Address, Address, U256)> {
+        events
+            .iter()
+            .filter_map(|event| {
+                let InspectorEvent::Log(log) = event else {
+                    return None;
+                };
+                if log.address != ETH_TRANSFER_LOG_ADDRESS
+                    || log.data.topics().first() != Some(&ETH_TRANSFER_LOG_TOPIC)
+                {
+                    return None;
+                }
+                Some((
+                    Address::from_word(log.data.topics()[1]),
+                    Address::from_word(log.data.topics()[2]),
+                    U256::from_be_slice(log.data.data.as_ref()),
+                ))
+            })
+            .collect()
+    }
+
+    const CALLEE: Address = address!("5000000000000000000000000000000000000000");
+
+    fn run_transfer_log_probe(
+        code: Vec<u8>,
+        callee_code: Option<Bytecode>,
+    ) -> Vec<(Address, Address, U256)> {
+        let mut db = database::CacheDB::<database::EmptyDB>::default();
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(1_000_000_000u64),
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            BENCH_TARGET,
+            AccountInfo {
+                balance: U256::from(1_000u64),
+                code_hash: Bytecode::new_legacy(Bytes::from(code.clone())).hash_slow(),
+                code: Some(Bytecode::new_legacy(Bytes::from(code))),
+                ..Default::default()
+            },
+        );
+        if let Some(callee_code) = callee_code {
+            db.insert_account_info(
+                CALLEE,
+                AccountInfo {
+                    code_hash: callee_code.hash_slow(),
+                    code: Some(callee_code),
+                    ..Default::default()
+                },
+            );
+        }
+
+        let ctx = Context::mainnet()
+            .with_cfg(CfgEnv::new_with_spec(SpecId::AMSTERDAM))
+            .with_db(db);
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+        let result = evm
+            .inspect_one_tx(
+                TxEnv::builder()
+                    .caller(BENCH_CALLER)
+                    .kind(TxKind::Call(BENCH_TARGET))
+                    .gas_limit(1_000_000)
+                    .gas_price(0)
+                    .build()
+                    .unwrap(),
+            )
+            .unwrap();
+        assert!(result.is_success(), "tx failed: {result:?}");
+        transfer_logs(&evm.inspector.get_events())
+    }
+
+    /// CALL with value into a code-bearing contract (new-frame path).
+    #[test]
+    fn test_eip7708_nested_call_transfer_log_is_inspected() {
+        let mut code = vec![
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x07,
+            opcode::PUSH20,
+        ];
+        code.extend_from_slice(CALLEE.as_slice());
+        code.extend_from_slice(&[opcode::PUSH2, 0xFF, 0xFF, opcode::CALL, opcode::STOP]);
+        let logs = run_transfer_log_probe(
+            code,
+            Some(Bytecode::new_legacy(Bytes::from(vec![opcode::STOP]))),
+        );
+        assert_eq!(
+            logs,
+            vec![(BENCH_TARGET, CALLEE, U256::from(7))],
+            "nested CALL transfer log missing"
+        );
+    }
+
+    /// CALL with value to an account with no code (immediate-result path).
+    #[test]
+    fn test_eip7708_call_to_eoa_transfer_log_is_inspected() {
+        let mut code = vec![
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x07,
+            opcode::PUSH20,
+        ];
+        code.extend_from_slice(CALLEE.as_slice());
+        code.extend_from_slice(&[opcode::PUSH2, 0xFF, 0xFF, opcode::CALL, opcode::STOP]);
+        let logs = run_transfer_log_probe(code, None);
+        assert_eq!(
+            logs,
+            vec![(BENCH_TARGET, CALLEE, U256::from(7))],
+            "EOA CALL transfer log missing"
+        );
+    }
+
+    /// CALL with value to a precompile (precompile path).
+    #[test]
+    fn test_eip7708_call_to_precompile_transfer_log_is_inspected() {
+        let identity = address!("0000000000000000000000000000000000000004");
+        let mut code = vec![
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x07,
+            opcode::PUSH20,
+        ];
+        code.extend_from_slice(identity.as_slice());
+        code.extend_from_slice(&[opcode::PUSH2, 0xFF, 0xFF, opcode::CALL, opcode::STOP]);
+        let logs = run_transfer_log_probe(code, None);
+        assert_eq!(
+            logs,
+            vec![(BENCH_TARGET, identity, U256::from(7))],
+            "precompile CALL transfer log missing"
+        );
+    }
+
+    /// CREATE with value (new-frame path via create_account_checkpoint).
+    #[test]
+    fn test_eip7708_create_transfer_log_is_inspected() {
+        // store a single STOP byte at memory[0], then CREATE(value=7, offset=0, size=1)
+        let code = vec![
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x00,
+            opcode::MSTORE8,
+            opcode::PUSH1,
+            0x01,
+            opcode::PUSH1,
+            0x00,
+            opcode::PUSH1,
+            0x07,
+            opcode::CREATE,
+            opcode::STOP,
+        ];
+        let logs = run_transfer_log_probe(code, None);
+        assert_eq!(logs.len(), 1, "CREATE transfer log missing: {logs:?}");
+        assert_eq!(logs[0].0, BENCH_TARGET);
+        assert_eq!(logs[0].2, U256::from(7));
+    }
 }

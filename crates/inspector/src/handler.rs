@@ -7,7 +7,7 @@ use handler::{
 };
 use interpreter::{
     instructions::{GasTable, InstructionTable},
-    interpreter_types::{Jumps, LoopControl},
+    interpreter_types::LoopControl,
     FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
@@ -16,7 +16,6 @@ use primitives::{
     hints_util::cold_path,
     Log,
 };
-use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -271,7 +270,6 @@ where
             break;
         }
 
-        let opcode = interpreter.bytecode.opcode();
         instruction_journal_i = Some(context.journal().journal().len());
         let logs_i = context.journal().logs().len();
         if let Err(e) = interpreter.step(instructions, gas_table, context) {
@@ -281,11 +279,7 @@ where
             }
         }
 
-        if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
-            inspect_log(interpreter, context, &mut inspector);
-        } else {
-            inspect_eip7708_transfer_logs(context, &mut inspector, logs_i);
-        }
+        inspect_step_logs(interpreter, context, &mut inspector, logs_i);
 
         inspector.step_end(interpreter, context);
 
@@ -309,6 +303,33 @@ where
     next_action
 }
 
+/// Forwards the logs journaled by the instruction that just ran to the inspector.
+///
+/// `logs_i` is the journal log count captured before the instruction, so this
+/// covers `LOG*` as well as the EIP-7708 transfer logs journaled by
+/// value-moving instructions, and reports nothing when the instruction failed
+/// before journaling its log.
+#[inline]
+pub(crate) fn inspect_step_logs<CTX, IT>(
+    interpreter: &mut Interpreter<IT>,
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+    logs_i: usize,
+) where
+    CTX: ContextTr<Journal: JournalExt> + Host,
+    IT: InterpreterTypes,
+{
+    // Most instructions journal no log; keep that path branch-only.
+    if context.journal().logs().len() == logs_i {
+        return;
+    }
+    inspect_step_logs_inner(interpreter, context, inspector, logs_i);
+}
+
+/// Forwards the EIP-7708 transfer logs journaled since `logs_i` to the inspector.
+///
+/// Used on the frame-init paths, where no interpreter is available for the
+/// value transfer being reported, so the logs go to [`Inspector::log`].
 #[inline]
 pub(crate) fn inspect_eip7708_transfer_logs<CTX, IT>(
     context: &mut CTX,
@@ -339,26 +360,19 @@ fn is_eip7708_transfer_log(log: &Log) -> bool {
 
 #[inline(never)]
 #[cold]
-fn inspect_log<CTX, IT>(
+fn inspect_step_logs_inner<CTX, IT>(
     interpreter: &mut Interpreter<IT>,
     context: &mut CTX,
     inspector: &mut impl Inspector<CTX, IT>,
+    logs_i: usize,
 ) where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
 {
-    // `LOG*` instruction reverted.
-    if interpreter
-        .bytecode
-        .action()
-        .as_ref()
-        .is_some_and(|x| x.is_return())
-    {
-        return;
+    let logs = context.journal_mut().logs()[logs_i..].to_vec();
+    for log in logs {
+        inspector.log_full(interpreter, context, log);
     }
-
-    let log = context.journal_mut().logs().last().unwrap().clone();
-    inspector.log_full(interpreter, context, log);
 }
 
 #[inline(never)]
