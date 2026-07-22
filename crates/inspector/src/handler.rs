@@ -11,7 +11,11 @@ use interpreter::{
     FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
-use primitives::hints_util::cold_path;
+use primitives::{
+    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
+    hints_util::cold_path,
+    Log,
+};
 use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
@@ -269,6 +273,7 @@ where
 
         let opcode = interpreter.bytecode.opcode();
         instruction_journal_i = Some(context.journal().journal().len());
+        let logs_i = context.journal().logs().len();
         if let Err(e) = interpreter.step(instructions, gas_table, context) {
             cold_path();
             if interpreter.bytecode.action().is_none() {
@@ -278,6 +283,8 @@ where
 
         if (opcode::LOG0..=opcode::LOG4).contains(&opcode) {
             inspect_log(interpreter, context, &mut inspector);
+        } else {
+            inspect_eip7708_transfer_logs(context, &mut inspector, logs_i);
         }
 
         inspector.step_end(interpreter, context);
@@ -300,6 +307,34 @@ where
     }
 
     next_action
+}
+
+#[inline]
+pub(crate) fn inspect_eip7708_transfer_logs<CTX, IT>(
+    context: &mut CTX,
+    inspector: &mut impl Inspector<CTX, IT>,
+    logs_i: usize,
+) where
+    CTX: ContextTr<Journal: JournalExt>,
+    IT: InterpreterTypes,
+{
+    let logs = context.journal().logs();
+    if logs_i >= logs.len() {
+        return;
+    }
+
+    let logs = logs[logs_i..].to_vec();
+    for log in logs {
+        if is_eip7708_transfer_log(&log) {
+            inspector.log(context, log);
+        }
+    }
+}
+
+#[inline]
+fn is_eip7708_transfer_log(log: &Log) -> bool {
+    log.address == ETH_TRANSFER_LOG_ADDRESS
+        && log.data.topics().first() == Some(&ETH_TRANSFER_LOG_TOPIC)
 }
 
 #[inline(never)]
