@@ -507,13 +507,17 @@ impl InitialAndFloorGas {
     ///
     /// On mainnet (state gas disabled), reservoir = 0 and gas_limit is unchanged.
     ///
+    /// All subtractions saturate at zero: callers normally guarantee
+    /// `tx_gas_limit >= initial_total_gas` via validation, but if that invariant
+    /// is violated the result clamps to `(0, 0)` instead of underflowing.
+    ///
     /// Returns `(gas_limit, reservoir)`.
     pub fn initial_gas_and_reservoir(
         &self,
         tx_gas_limit: u64,
         tx_gas_limit_cap: u64,
     ) -> (u64, u64) {
-        let execution_gas = tx_gas_limit - self.initial_regular_gas();
+        let execution_gas = tx_gas_limit.saturating_sub(self.initial_regular_gas());
 
         // System calls pass InitialAndFloorGas with all zeros and should not be
         // subject to the TX_MAX_GAS_LIMIT cap.
@@ -525,14 +529,15 @@ impl InitialAndFloorGas {
 
         let mut regular_gas_limit = core::cmp::min(tx_gas_limit, tx_gas_limit_cap)
             .saturating_sub(self.initial_regular_gas());
-        let mut reservoir = execution_gas - regular_gas_limit;
+        let mut reservoir = execution_gas.saturating_sub(regular_gas_limit);
 
         // Deduct initial state gas from the reservoir. When the reservoir is
         // insufficient, the deficit is charged from the regular gas budget.
         if reservoir >= self.initial_state_gas {
             reservoir -= self.initial_state_gas;
         } else {
-            regular_gas_limit -= self.initial_state_gas - reservoir;
+            regular_gas_limit =
+                regular_gas_limit.saturating_sub(self.initial_state_gas - reservoir);
             reservoir = 0;
         }
 
