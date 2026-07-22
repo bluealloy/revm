@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Version for the execution spec tests
 MAIN_VERSION="v5.4.0"
-DEVNET_VERSION="tests-glamsterdam-devnet%40v6.1.0"
+DEVNET_VERSION="tests-glamsterdam-devnet%40v7.2.0"
 
 ### Directories ###
 FIXTURES_DIR="test-fixtures"
