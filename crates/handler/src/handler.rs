@@ -247,7 +247,8 @@ pub trait Handler {
         // EIP-2780: the checkpoint spans the whole runtime gas phase.
         let checkpoint = evm.ctx().journal_mut().checkpoint();
 
-        let Some(eip7702_refund) = self.apply_eip7702_auth_list(evm, gas)? else {
+        let Some(eip7702_refund) = self.apply_eip7702_auth_list(evm, init_and_floor_gas, gas)?
+        else {
             // Out-of-gas while processing the authorizations: revert the
             // applied delegations; the transaction is included as an
             // out-of-gas halt. (An EIP-7702 transaction is always a call, so
@@ -435,9 +436,10 @@ pub trait Handler {
     fn apply_eip7702_auth_list(
         &self,
         evm: &mut Self::Evm,
+        init_and_floor_gas: &mut InitialAndFloorGas,
         gas: &mut GasTracker,
     ) -> Result<Option<u64>, Self::Error> {
-        apply_eip7702_auth_list(evm.ctx_mut(), gas)
+        apply_eip7702_auth_list(evm.ctx_mut(), init_and_floor_gas, gas)
     }
 
     /// Deducts the maximum possible fee from caller's balance.

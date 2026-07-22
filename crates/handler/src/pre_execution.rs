@@ -11,7 +11,7 @@ use context_interface::{
     Block, Cfg, ContextTr, Database,
 };
 use core::cmp::Ordering;
-use interpreter::GasTracker;
+use interpreter::{GasTracker, InitialAndFloorGas};
 use primitives::{hardfork::SpecId, Address, AddressMap, HashSet, StorageKey, TxKind, U256};
 use state::AccountInfo;
 
@@ -225,12 +225,18 @@ pub struct PreExecutionOutput {
 /// ran out of gas: the caller owns the runtime gas phase checkpoint and must
 /// revert it, dropping the applied delegations; the transaction stays valid
 /// but must be included as an out-of-gas halt without entering execution.
+///
+/// `init_and_floor_gas` is unused by this implementation — the EIP-2780
+/// charges are recorded on the transaction-level `gas` — and is kept in the
+/// signature so chain variants that meter the authorizations against the
+/// intrinsic/floor gas can reuse this entry point.
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: ContextTr,
     ERROR: From<InvalidTransaction> + From<<CTX::Db as Database>::Error>,
 >(
     context: &mut CTX,
+    _init_and_floor_gas: &mut InitialAndFloorGas,
     gas: &mut GasTracker,
 ) -> Result<Option<u64>, ERROR> {
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
