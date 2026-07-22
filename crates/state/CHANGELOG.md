@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.1.0](https://github.com/bluealloy/revm/compare/revm-state-v41.0.0...revm-state-v41.1.0) - 2026-07-22
+
+### Added
+
+- *(amsterdam)* glamsterdam devnet-7 alignment (EIP-2780 runtime gas phase, fixtures v7.0.0) ([#3795](https://github.com/bluealloy/revm/pull/3795))
+- *(state)* accept BAL account change slices ([#3762](https://github.com/bluealloy/revm/pull/3762))
+
+### Fixed
+
+- *(state)* re-baseline storage original_value only across tx boundaries ([#3746](https://github.com/bluealloy/revm/pull/3746))
+
+### Other
+
+- avoid intermediate BAL account allocation ([#3775](https://github.com/bluealloy/revm/pull/3775))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-state-v12.0.1...revm-state-v41.0.0) - 2026-06-11
 
 ### Added

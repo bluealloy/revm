@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v41.0.0...revm-interpreter-v42.0.0) - 2026-07-22
+
+### Added
+
+- *(amsterdam)* glamsterdam devnet-7 alignment (EIP-2780 runtime gas phase, fixtures v7.0.0) ([#3795](https://github.com/bluealloy/revm/pull/3795))
+- *(amsterdam)* glam devnet-6 gas accounting & EIP alignment ([#3782](https://github.com/bluealloy/revm/pull/3782))
+- make max refund quotient configurable ([#3757](https://github.com/bluealloy/revm/pull/3757))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v37.0.3...revm-interpreter-v41.0.0) - 2026-06-11
 
 ### Added

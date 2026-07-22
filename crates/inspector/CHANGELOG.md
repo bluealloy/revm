@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v41.0.0...revm-inspector-v42.0.0) - 2026-07-22
+
+### Added
+
+- *(amsterdam)* glamsterdam devnet-7 alignment (EIP-2780 runtime gas phase, fixtures v7.0.0) ([#3795](https://github.com/bluealloy/revm/pull/3795))
+
+### Fixed
+
+- *(inspector)* ignore stale selfdestruct journal entries ([#3805](https://github.com/bluealloy/revm/pull/3805))
+- *(inspect)* finalize journal on error to prevent EIP-2929 warm set leak ([#3780](https://github.com/bluealloy/revm/pull/3780))
+
+### Other
+
+- *(handler)* validate state before tracking gas ([#3815](https://github.com/bluealloy/revm/pull/3815))
+- clarify EIP-7702 regular-gas GasId names ([#3725](https://github.com/bluealloy/revm/pull/3725))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v21.0.3...revm-inspector-v41.0.0) - 2026-06-11
 
 ### Other

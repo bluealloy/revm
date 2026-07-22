@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [41.1.0](https://github.com/bluealloy/revm/compare/revm-database-v41.0.0...revm-database-v41.1.0) - 2026-07-22
+
+### Added
+
+- *(database)* add database fallback mode for BAL misses ([#3754](https://github.com/bluealloy/revm/pull/3754))
+
+### Other
+
+- *(database)* avoid double cloning in take_n_reverts ([#3539](https://github.com/bluealloy/revm/pull/3539))
+- *(database)* use Option::filter in BundleAccount::take_info_revert ([#3730](https://github.com/bluealloy/revm/pull/3730))
+
 ## [41.0.0](https://github.com/bluealloy/revm/compare/revm-database-v15.0.2...revm-database-v41.0.0) - 2026-06-11
 
 ### Added
