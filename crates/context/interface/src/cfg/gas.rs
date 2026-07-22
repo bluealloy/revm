@@ -50,9 +50,10 @@ impl GasTracker {
     }
 
     /// Creates a new `GasTracker` with the given used gas and reservoir.
+    /// Remaining gas saturates at zero when used gas exceeds the gas limit.
     #[inline]
     pub const fn new_used_gas(gas_limit: u64, used_gas: u64, reservoir: u64) -> Self {
-        Self::new(gas_limit, gas_limit - used_gas, reservoir)
+        Self::new(gas_limit, gas_limit.saturating_sub(used_gas), reservoir)
     }
 
     /// Returns the gas limit.
@@ -247,6 +248,27 @@ impl GasTracker {
     #[inline]
     pub const fn spend_all(&mut self) {
         self.remaining = 0;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GasTracker;
+
+    #[test]
+    fn new_used_gas_saturates_remaining_at_zero() {
+        assert_eq!(
+            GasTracker::new_used_gas(10, 9, 3),
+            GasTracker::new(10, 1, 3)
+        );
+        assert_eq!(
+            GasTracker::new_used_gas(10, 10, 3),
+            GasTracker::new(10, 0, 3)
+        );
+        assert_eq!(
+            GasTracker::new_used_gas(10, 11, 3),
+            GasTracker::new(10, 0, 3)
+        );
     }
 }
 

@@ -83,8 +83,6 @@ std = [
 	"primitives/std",
 	"context-interface/std",
 	"k256/std",
-	"ripemd/std",
-	"sha2/std",
 	"c-kzg?/std",
 	"secp256k1?/std",
 	"ark-bn254/std",
@@ -98,8 +96,6 @@ std = [
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
-asm-sha2 = ["sha2/asm"]
-
 
 # Enables the c-kzg point evaluation precompile. Enabled by default as most stable/used implementation.
 c-kzg = ["dep:c-kzg"]

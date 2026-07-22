@@ -376,17 +376,32 @@ pub fn apply_auth_list_eip2780<
             continue;
         }
 
+        // Refund-relevant facts for this accepted authorization (mirrors
+        // execution-specs `set_delegation` / evm2 `apply_one_auth`).
+        //   existed             — the authority account already existed in state.
+        //   delegated_now       — its current code is a delegation (non-empty code
+        //                          is necessarily EIP-7702 here, having passed the
+        //                          validity check above).
+        //   delegated_before_tx — its code at the start of the transaction was a
+        //                          delegation (may differ from `delegated_now` when
+        //                          an earlier authorization in this tx cleared it).
+        //                          Derived from the code hash because the original
+        //                          info carries no bytecode when the database serves
+        //                          code separately from the account; a non-empty
+        //                          hash is necessarily a delegation here, since code
+        //                          only changes within a transaction through earlier
+        //                          accepted authorizations, which keep it
+        //                          empty-or-delegation.
+        //   clearing            — this authorization clears the delegation.
         let existed = !(authority_acc_info.is_empty()
             && authority_acc
                 .account()
                 .is_loaded_as_not_existing_not_touched());
         let delegated_now = !authority_acc_info.is_code_hash_empty_or_zero();
-        let delegated_before_tx = authority_acc
+        let delegated_before_tx = !authority_acc
             .account()
             .original_info()
-            .code
-            .as_ref()
-            .is_some_and(Bytecode::is_eip7702);
+            .is_code_hash_empty_or_zero();
         let clearing = authorization.address().is_zero();
 
         // Non-existent authority: pay for the new account leaf's state bytes.

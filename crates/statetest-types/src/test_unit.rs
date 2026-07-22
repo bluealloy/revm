@@ -60,19 +60,26 @@ impl TestUnit {
     /// This function uses [`TestUnit::pre`] to prepare the pre-state from the test unit.
     /// It creates a new cache state and inserts the accounts from the test unit.
     ///
+    /// Bytecode is stored separately from the account (in the contracts map, keyed by
+    /// code hash) so that execution has to fetch it through `Database::code_by_hash`,
+    /// like a node's state provider would serve it.
+    ///
     /// # Returns
     ///
-    /// A [`CacheState`] object containing the pre-state accounts and storages.
+    /// A [`CacheState`] object containing the pre-state accounts, storages and contracts.
     pub fn state(&self) -> CacheState {
         let mut cache_state = CacheState::new();
         for (address, info) in &self.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = Bytecode::new_raw_checked(info.code.clone())
-                .unwrap_or(Bytecode::new_legacy(info.code.clone()));
+            if !info.code.is_empty() {
+                let bytecode = Bytecode::new_raw_checked(info.code.clone())
+                    .unwrap_or(Bytecode::new_legacy(info.code.clone()));
+                cache_state.contracts.insert(code_hash, bytecode);
+            }
             let acc_info = state::AccountInfo {
                 balance: info.balance,
                 code_hash,
-                code: Some(bytecode),
+                code: None,
                 nonce: info.nonce,
                 ..Default::default()
             };

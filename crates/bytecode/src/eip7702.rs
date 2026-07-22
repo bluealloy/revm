@@ -49,3 +49,19 @@ impl fmt::Display for Eip7702DecodeError {
 }
 
 impl core::error::Error for Eip7702DecodeError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::keccak256;
+
+    #[test]
+    fn verify_magic_hash() {
+        assert_eq!(keccak256(EIP7702_MAGIC_BYTES), EIP7702_MAGIC_HASH);
+    }
+
+    #[test]
+    fn verify_magic_bytes() {
+        assert_eq!(EIP7702_MAGIC.to_be_bytes(), EIP7702_MAGIC_BYTES);
+    }
+}

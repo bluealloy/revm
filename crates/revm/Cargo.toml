@@ -109,7 +109,6 @@ c-kzg = ["precompile/c-kzg"]
 # blst will be enabled both for bls precompiles and for kzg precompile.
 blst = ["precompile/blst"]
 bn = ["precompile/bn"]
-asm-sha2 = ["precompile/asm-sha2"]
 
 # Compile in portable mode, without ISA extensions.
 # Binary can be executed on all systems.
