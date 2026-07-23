@@ -283,11 +283,17 @@ impl SharedMemory {
     }
 
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint plus the new size overflows.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
-        self.buffer()
-            .dbg_borrow_mut()
-            .resize(self.my_checkpoint + new_size, 0);
+        let new_len = self
+            .my_checkpoint
+            .checked_add(new_size)
+            .expect("memory resize overflow");
+        self.buffer().dbg_borrow_mut().resize(new_len, 0);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -338,22 +344,20 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
-    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
-    /// memory.
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
+        let start = self
+            .my_checkpoint
+            .checked_add(offset)
+            .expect("memory write offset overflow");
+        let end = start
+            .checked_add(size)
+            .expect("memory write length overflow");
         let buffer = self.buffer_ref_mut();
         RefMut::map(buffer, |b| {
-            match b.get_mut(self.my_checkpoint + offset..self.my_checkpoint + offset + size) {
-                Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {offset}..{}", offset + size),
-            }
+            b.get_mut(start..end).expect("memory write out of bounds")
         })
     }
 
@@ -443,7 +447,7 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         let mut dst = self.context_memory_mut();
-        unsafe { set_data(dst.as_mut(), data, memory_offset, data_offset, len) };
+        set_data(dst.as_mut(), data, memory_offset, data_offset, len);
     }
 
     /// Set data from global memory to local memory. If global range is smaller than len, zeroes the rest.
@@ -463,7 +467,7 @@ impl SharedMemory {
         } else {
             src.get_mut(data_range).unwrap()
         };
-        unsafe { set_data(dst, src, memory_offset, data_offset, len) };
+        set_data(dst, src, memory_offset, data_offset, len);
     }
 
     /// Copies elements from one part of the memory to another part of itself.
@@ -520,37 +524,32 @@ impl SharedMemory {
 ///
 /// If src does not have enough data, it nullifies the rest of dst that is not copied.
 ///
-/// # Safety
-///
-/// Assumes that dst has enough space to copy the data.
-/// Assumes that src has enough data to copy.
-/// Assumes that dst_offset and src_offset are in bounds.
-/// Assumes that dst and src are valid.
-/// Assumes that dst and src do not overlap.
-unsafe fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, len: usize) {
+fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, len: usize) {
     if len == 0 {
         return;
     }
+    let dst_end = dst_offset
+        .checked_add(len)
+        .filter(|&end| end <= dst.len())
+        .expect("memory write out of bounds");
     if src_offset >= src.len() {
         // Nullify all memory slots
-        dst.get_mut(dst_offset..dst_offset + len).unwrap().fill(0);
+        dst[dst_offset..dst_end].fill(0);
         return;
     }
-    let src_end = min(src_offset + len, src.len());
+    let src_end = src_offset + min(len, src.len() - src_offset);
     let src_len = src_end - src_offset;
-    debug_assert!(src_offset < src.len() && src_end <= src.len());
+    debug_assert!(src_end <= src.len());
     let data = unsafe { src.get_unchecked(src_offset..src_end) };
+    // SAFETY: `dst_end` was checked against `dst.len()` above, and `src_len <= len`.
     unsafe {
         dst.get_unchecked_mut(dst_offset..dst_offset + src_len)
             .copy_from_slice(data)
     };
 
     // Nullify rest of memory slots
-    // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
-    unsafe {
-        dst.get_unchecked_mut(dst_offset + src_len..dst_offset + len)
-            .fill(0)
-    };
+    // SAFETY: `dst_end` was checked against `dst.len()` above.
+    unsafe { dst.get_unchecked_mut(dst_offset + src_len..dst_end).fill(0) };
 }
 
 /// Returns number of words what would fit to provided number of bytes,
@@ -688,6 +687,30 @@ mod tests {
         assert_eq!(sm1.buffer_ref().len(), 32);
         assert_eq!(sm1.len(), 32);
         assert_eq!(sm1.buffer_ref().get(0..32), Some(&[0_u8; 32] as &[u8]));
+    }
+
+    #[test]
+    #[should_panic(expected = "memory resize overflow")]
+    fn resize_overflow_panics() {
+        let mut parent = SharedMemory::new();
+        parent.resize(1);
+        parent.new_child_context().resize(usize::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory write out of bounds")]
+    fn set_out_of_bounds_panics() {
+        let mut memory = SharedMemory::new();
+        memory.resize(1);
+        memory.set(1, &[0xFF]);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory write out of bounds")]
+    fn set_data_out_of_bounds_panics() {
+        let mut memory = SharedMemory::new();
+        memory.resize(1);
+        memory.set_data(1, 0, 1, &[0xFF]);
     }
 
     #[cfg(feature = "memory_limit")]
