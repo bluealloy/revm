@@ -180,19 +180,26 @@ impl SharedMemory {
 
     #[inline]
     const fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
-        self.buffer
-            .as_ref()
-            .expect("cannot access invalid shared memory")
+        match self.buffer.as_ref() {
+            Some(buffer) => buffer,
+            None => panic!("cannot access invalid shared memory"),
+        }
     }
 
     #[inline]
     fn buffer_ref(&self) -> Ref<'_, Vec<u8>> {
-        self.buffer().borrow()
+        match self.buffer().try_borrow() {
+            Ok(buffer) => buffer,
+            Err(error) => panic!("{error}"),
+        }
     }
 
     #[inline]
     fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
-        self.buffer().borrow_mut()
+        match self.buffer().try_borrow_mut() {
+            Ok(buffer) => buffer,
+            Err(error) => panic!("{error}"),
+        }
     }
 
     /// Returns a byte slice of the backing buffer, applying `base` to `range`.
@@ -218,13 +225,18 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if this function was already called without freeing child context.
+    /// Panics if this function was already called without freeing child context or if
+    /// this context's checkpoint is beyond the shared buffer.
     #[inline]
     pub fn new_child_context(&mut self) -> SharedMemory {
         if self.child_checkpoint.is_some() {
             panic!("new_child_context was already called without freeing child context");
         }
         let new_checkpoint = self.full_len();
+        assert!(
+            new_checkpoint >= self.my_checkpoint,
+            "shared memory checkpoint out of bounds"
+        );
         self.child_checkpoint = Some(new_checkpoint);
         SharedMemory {
             buffer: Some(self.buffer().clone()),
@@ -286,21 +298,32 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint plus the new size overflows or if resizing would
-    /// invalidate the child checkpoint recorded by this handle.
+    /// Panics if the checkpoint plus the new size overflows, if a checkpoint is beyond
+    /// the shared buffer, or if resizing would invalidate the child checkpoint recorded
+    /// by this handle.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
-        let new_len = self
-            .my_checkpoint
+        let my_checkpoint = self.my_checkpoint;
+        let child_checkpoint = self.child_checkpoint;
+        let new_len = my_checkpoint
             .checked_add(new_size)
             .expect("memory resize overflow");
-        if self
-            .child_checkpoint
-            .is_some_and(|child_checkpoint| new_len < child_checkpoint)
-        {
-            panic!("memory resize below child checkpoint");
+        let mut buffer = self.buffer_ref_mut();
+        assert!(
+            buffer.len() >= my_checkpoint,
+            "shared memory checkpoint out of bounds"
+        );
+        if let Some(child_checkpoint) = child_checkpoint {
+            assert!(
+                buffer.len() >= child_checkpoint,
+                "shared memory buffer is below child checkpoint"
+            );
+            assert!(
+                new_len >= child_checkpoint,
+                "memory resize below child checkpoint"
+            );
         }
-        self.buffer_ref_mut().resize(new_len, 0);
+        buffer.resize(new_len, 0);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -630,7 +653,7 @@ mod tests {
         assert_eq!(sm1.buffer_ref().len(), 0);
         assert_eq!(sm1.my_checkpoint, 0);
 
-        unsafe { sm1.buffer_ref_mut().set_len(32) };
+        sm1.resize(32);
         assert_eq!(sm1.len(), 32);
         let mut sm2 = sm1.new_child_context();
 
@@ -638,7 +661,7 @@ mod tests {
         assert_eq!(sm2.my_checkpoint, 32);
         assert_eq!(sm2.len(), 0);
 
-        unsafe { sm2.buffer_ref_mut().set_len(96) };
+        sm2.resize(64);
         assert_eq!(sm2.len(), 64);
         let mut sm3 = sm2.new_child_context();
 
@@ -646,7 +669,7 @@ mod tests {
         assert_eq!(sm3.my_checkpoint, 96);
         assert_eq!(sm3.len(), 0);
 
-        unsafe { sm3.buffer_ref_mut().set_len(128) };
+        sm3.resize(32);
         let sm4 = sm3.new_child_context();
         assert_eq!(sm4.buffer_ref().len(), 128);
         assert_eq!(sm4.my_checkpoint, 128);
@@ -711,6 +734,55 @@ mod tests {
         assert_panic_message(result, "memory resize below child checkpoint");
         assert_eq!(parent.buffer_ref().as_slice(), &[0xA5]);
         assert_eq!(parent.child_checkpoint, Some(1));
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn stale_child_resize_is_atomic() {
+        let buffer = Rc::new(RefCell::new(vec![0xA5]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let mut child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let before = buffer.borrow().clone();
+
+        let result = catch_unwind(AssertUnwindSafe(|| child.resize(1)));
+
+        assert_panic_message(result, "shared memory checkpoint out of bounds");
+        assert_eq!(*buffer.borrow(), before);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn parent_resize_with_stale_child_checkpoint_is_atomic() {
+        let buffer = Rc::new(RefCell::new(vec![0xA5]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let _child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let before = buffer.borrow().clone();
+
+        let result = catch_unwind(AssertUnwindSafe(|| parent.resize(1)));
+
+        assert_panic_message(result, "shared memory buffer is below child checkpoint");
+        assert_eq!(*buffer.borrow(), before);
+        assert_eq!(parent.child_checkpoint, Some(1));
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn stale_handle_cannot_create_child() {
+        let buffer = Rc::new(RefCell::new(vec![0xA5]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let mut child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let before = buffer.borrow().clone();
+
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            child.new_child_context();
+        }));
+
+        assert_panic_message(result, "shared memory checkpoint out of bounds");
+        assert_eq!(*buffer.borrow(), before);
+        assert_eq!(child.child_checkpoint, None);
     }
 
     #[test]
