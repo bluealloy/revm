@@ -179,7 +179,7 @@ impl SharedMemory {
     }
 
     #[inline]
-    fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+    const fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
         self.buffer
             .as_ref()
             .expect("cannot access invalid shared memory")
