@@ -42,10 +42,11 @@ impl<T> RefcellExt<T> for RefCell<T> {
 pub struct SharedMemory {
     /// The underlying buffer.
     buffer: Option<Rc<RefCell<Vec<u8>>>>,
-    /// Memory checkpoints for each depth.
-    /// Invariant: these are always in bounds of `data`.
+    /// Memory checkpoint for this context.
+    /// This is in bounds during normal context sequencing. Shared aliases or externally
+    /// supplied buffers can invalidate it, so consumers validate it before use.
     my_checkpoint: usize,
-    /// Child checkpoint that we need to free context to.
+    /// Child checkpoint used to restore the parent context.
     child_checkpoint: Option<usize>,
     /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
@@ -302,7 +303,7 @@ impl SharedMemory {
     /// # Panics
     ///
     /// Panics if the checkpoint plus the new size overflows or if resizing would
-    /// invalidate a live child checkpoint.
+    /// invalidate the child checkpoint recorded by this handle.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
         let new_len = self
@@ -607,6 +608,18 @@ fn resize_memory_cold<Memory: MemoryTr>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "std")]
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    #[cfg(feature = "std")]
+    fn assert_panic_message(result: std::thread::Result<()>, expected: &str) {
+        let payload = result.expect_err("operation should panic");
+        let message = payload
+            .downcast_ref::<&str>()
+            .copied()
+            .or_else(|| payload.downcast_ref::<String>().map(String::as_str));
+        assert_eq!(message, Some(expected));
+    }
 
     #[test]
     fn test_num_words() {
@@ -698,13 +711,19 @@ mod tests {
         parent.new_child_context().resize(usize::MAX);
     }
 
+    #[cfg(feature = "std")]
     #[test]
-    #[should_panic(expected = "memory resize below child checkpoint")]
-    fn parent_resize_below_child_checkpoint_panics() {
+    fn parent_resize_below_child_checkpoint_is_atomic() {
         let mut parent = SharedMemory::new();
         parent.resize(1);
+        parent.set_byte(0, 0xA5);
         let _child = parent.new_child_context();
-        parent.resize(0);
+
+        let result = catch_unwind(AssertUnwindSafe(|| parent.resize(0)));
+
+        assert_panic_message(result, "memory resize below child checkpoint");
+        assert_eq!(parent.buffer_ref().as_slice(), &[0xA5]);
+        assert_eq!(parent.child_checkpoint, Some(1));
     }
 
     #[test]
@@ -717,14 +736,63 @@ mod tests {
         let _ = child.context_memory();
     }
 
+    #[cfg(feature = "std")]
     #[test]
-    #[should_panic(expected = "shared memory buffer is below child checkpoint")]
-    fn free_child_context_with_invalid_checkpoint_panics() {
+    fn free_child_context_with_invalid_checkpoint_is_retryable() {
         let buffer = Rc::new(RefCell::new(vec![0]));
         let mut parent = SharedMemory::new_with_buffer(buffer.clone());
         let _child = parent.new_child_context();
         *buffer.borrow_mut() = Vec::new();
+
+        let result = catch_unwind(AssertUnwindSafe(|| parent.free_child_context()));
+
+        assert_panic_message(result, "shared memory buffer is below child checkpoint");
+        assert_eq!(parent.child_checkpoint, Some(1));
+        assert!(buffer.borrow().is_empty());
+
+        buffer.borrow_mut().extend_from_slice(&[0xA5, 0x5A]);
         parent.free_child_context();
+
+        assert_eq!(parent.child_checkpoint, None);
+        assert_eq!(buffer.borrow().as_slice(), &[0xA5]);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory read offset overflow")]
+    fn child_slice_start_overflow_panics() {
+        let mut parent = SharedMemory::new();
+        parent.resize(1);
+        let child = parent.new_child_context();
+        let _ = child.slice_range(usize::MAX..usize::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory read length overflow")]
+    fn child_slice_end_overflow_panics() {
+        let mut parent = SharedMemory::new();
+        parent.resize(1);
+        let child = parent.new_child_context();
+        let _ = child.slice_range(0..usize::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "shared memory checkpoint out of bounds")]
+    fn invalid_checkpoint_len_panics() {
+        let buffer = Rc::new(RefCell::new(vec![0]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let _ = child.len();
+    }
+
+    #[test]
+    #[should_panic(expected = "shared memory checkpoint out of bounds")]
+    fn invalid_checkpoint_context_memory_mut_panics() {
+        let buffer = Rc::new(RefCell::new(vec![0]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let mut child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let _ = child.context_memory_mut();
     }
 
     #[test]
@@ -744,11 +812,38 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "memory write length overflow")]
+    fn set_offset_overflow_panics() {
+        let mut memory = SharedMemory::new();
+        memory.set(usize::MAX, &[0xFF; 8]);
+    }
+
+    #[test]
     #[should_panic(expected = "memory write out of bounds")]
     fn set_data_out_of_bounds_panics() {
         let mut memory = SharedMemory::new();
         memory.resize(1);
         memory.set_data(1, 0, 1, &[0xFF]);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory write out of bounds")]
+    fn set_data_range_overflow_panics() {
+        let mut memory = SharedMemory::new();
+        memory.set_data(usize::MAX, 0, usize::MAX, &[0xFF; 8]);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn set_data_out_of_bounds_is_atomic() {
+        let mut memory = SharedMemory::new();
+        memory.resize(2);
+        memory.set(0, &[0xA5, 0x5A]);
+
+        let result = catch_unwind(AssertUnwindSafe(|| memory.set_data(1, 0, 2, &[0xFF, 0xFF])));
+
+        assert_panic_message(result, "memory write out of bounds");
+        assert_eq!(&*memory.context_memory(), &[0xA5, 0x5A]);
     }
 
     #[cfg(feature = "memory_limit")]
