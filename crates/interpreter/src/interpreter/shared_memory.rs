@@ -107,12 +107,7 @@ impl MemoryTr for SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     fn global_slice(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -225,10 +220,18 @@ impl SharedMemory {
     fn slice_range_with_base(&self, range: Range<usize>, base: usize) -> Ref<'_, [u8]> {
         let buffer = self.buffer_ref();
         Ref::map(buffer, |b| {
-            let range = range.start + base..range.end + base;
+            let start = range
+                .start
+                .checked_add(base)
+                .expect("memory read offset overflow");
+            let end = range
+                .end
+                .checked_add(base)
+                .expect("memory read length overflow");
+            let range = start..end;
             match b.get(range.clone()) {
                 Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {range:?}; len: {}", self.len()),
+                None => panic!("slice OOB: {range:?}; len: {}", b.len()),
             }
         })
     }
@@ -256,20 +259,32 @@ impl SharedMemory {
     }
 
     /// Prepares the shared memory for returning from child context. Do nothing if there is no child context.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the shared buffer was truncated below the child checkpoint.
     #[inline]
     pub fn free_child_context(&mut self) {
-        let Some(child_checkpoint) = self.child_checkpoint.take() else {
+        let Some(child_checkpoint) = self.child_checkpoint else {
             return;
         };
-        unsafe {
-            self.buffer_ref_mut().set_len(child_checkpoint);
+        {
+            let mut buffer = self.buffer_ref_mut();
+            assert!(
+                buffer.len() >= child_checkpoint,
+                "shared memory buffer is below child checkpoint"
+            );
+            buffer.truncate(child_checkpoint);
         }
+        self.child_checkpoint = None;
     }
 
     /// Returns the length of the current memory range.
     #[inline]
     pub fn len(&self) -> usize {
-        self.full_len() - self.my_checkpoint
+        self.full_len()
+            .checked_sub(self.my_checkpoint)
+            .expect("shared memory checkpoint out of bounds")
     }
 
     fn full_len(&self) -> usize {
@@ -286,13 +301,20 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint plus the new size overflows.
+    /// Panics if the checkpoint plus the new size overflows or if resizing would
+    /// invalidate a live child checkpoint.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
         let new_len = self
             .my_checkpoint
             .checked_add(new_size)
             .expect("memory resize overflow");
+        if self
+            .child_checkpoint
+            .is_some_and(|child_checkpoint| new_len < child_checkpoint)
+        {
+            panic!("memory resize below child checkpoint");
+        }
         self.buffer().dbg_borrow_mut().resize(new_len, 0);
     }
 
@@ -311,13 +333,7 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
-    /// `range.end <= self.len()`).
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -328,12 +344,7 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -485,18 +496,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
+    /// Panics if the checkpoint is invalid.
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
         let buffer = self.buffer_ref();
         Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
             Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
+            None => panic!("shared memory checkpoint out of bounds"),
         })
     }
 
@@ -504,18 +510,13 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
+    /// Panics if the checkpoint is invalid.
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
         let buffer = self.buffer_ref_mut();
         RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
             Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
+            None => panic!("shared memory checkpoint out of bounds"),
         })
     }
 }
@@ -695,6 +696,43 @@ mod tests {
         let mut parent = SharedMemory::new();
         parent.resize(1);
         parent.new_child_context().resize(usize::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "memory resize below child checkpoint")]
+    fn parent_resize_below_child_checkpoint_panics() {
+        let mut parent = SharedMemory::new();
+        parent.resize(1);
+        let _child = parent.new_child_context();
+        parent.resize(0);
+    }
+
+    #[test]
+    #[should_panic(expected = "shared memory checkpoint out of bounds")]
+    fn external_buffer_truncation_panics() {
+        let buffer = Rc::new(RefCell::new(vec![0]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let child = parent.new_child_context();
+        buffer.borrow_mut().clear();
+        let _ = child.context_memory();
+    }
+
+    #[test]
+    #[should_panic(expected = "shared memory buffer is below child checkpoint")]
+    fn free_child_context_with_invalid_checkpoint_panics() {
+        let buffer = Rc::new(RefCell::new(vec![0]));
+        let mut parent = SharedMemory::new_with_buffer(buffer.clone());
+        let _child = parent.new_child_context();
+        *buffer.borrow_mut() = Vec::new();
+        parent.free_child_context();
+    }
+
+    #[test]
+    #[should_panic(expected = "slice OOB")]
+    fn slice_out_of_bounds_panics() {
+        let mut memory = SharedMemory::new();
+        memory.resize(1);
+        let _ = memory.slice_range(1..2);
     }
 
     #[test]
