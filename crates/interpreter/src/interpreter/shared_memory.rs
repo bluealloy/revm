@@ -449,8 +449,8 @@ impl SharedMemory {
         }
     }
 
-    /// Set memory from data. Our memory offset+len is expected to be correct but we
-    /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
+    /// Set memory from data. The destination range is validated, and source bytes outside
+    /// `data` are written as zeroes.
     ///
     /// # Panics
     ///
@@ -813,9 +813,23 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "memory write length overflow")]
-    fn set_offset_overflow_panics() {
+    fn set_length_overflow_panics() {
         let mut memory = SharedMemory::new();
         memory.set(usize::MAX, &[0xFF; 8]);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn child_set_offset_overflow_is_atomic() {
+        let mut parent = SharedMemory::new();
+        parent.resize(1);
+        parent.set_byte(0, 0xA5);
+        let mut child = parent.new_child_context();
+
+        let result = catch_unwind(AssertUnwindSafe(|| child.set(usize::MAX, &[0xFF])));
+
+        assert_eq!(&*parent.context_memory(), &[0xA5]);
+        assert_panic_message(result, "memory write offset overflow");
     }
 
     #[test]
