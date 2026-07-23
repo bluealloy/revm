@@ -10,7 +10,7 @@ use interpreter::{
 };
 
 use crate::{
-    handler::{frame_end, frame_start, inspect_eip7708_transfer_logs},
+    handler::{frame_end, frame_start, inspect_logs},
     inspect_instructions, Inspector, JournalExt,
 };
 
@@ -110,23 +110,21 @@ pub trait InspectorEvmTr:
         let logs_i = ctx.journal().logs().len();
         if let ItemOrResult::Result(mut output) = self.frame_init(frame_init)? {
             let (ctx, inspector) = self.ctx_inspector();
-            // for precompiles send logs to inspector.
+            // Logs journaled by the frame: the EIP-7708 transfer log, and the
+            // logs of a precompile when one was called.
+            if ctx.journal().logs().len() != logs_i {
+                inspect_logs(None, ctx, inspector, logs_i);
+            }
+            // Custom precompiles gather their logs outside the journal.
             if let FrameResult::Call(CallOutcome {
-                was_precompile_called,
+                was_precompile_called: true,
                 precompile_call_logs,
                 ..
-            }) = &mut output
+            }) = &output
             {
-                if *was_precompile_called {
-                    let logs = ctx.journal_mut().logs()[logs_i..].to_vec();
-                    for log in logs.into_iter().chain(precompile_call_logs.iter().cloned()) {
-                        inspector.log(ctx, log);
-                    }
-                } else {
-                    inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
+                for log in precompile_call_logs.clone() {
+                    inspector.log(ctx, log);
                 }
-            } else {
-                inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
             }
             frame_end(ctx, inspector, &frame_input, &mut output);
             return Ok(ItemOrResult::Result(output));
@@ -134,7 +132,9 @@ pub trait InspectorEvmTr:
 
         // if it is new frame, initialize the interpreter.
         let (ctx, inspector, frame) = self.ctx_inspector_frame();
-        inspect_eip7708_transfer_logs(ctx, inspector, logs_i);
+        if ctx.journal().logs().len() != logs_i {
+            inspect_logs(None, ctx, inspector, logs_i);
+        }
         if let Some(frame) = frame.eth_frame() {
             let interp = &mut frame.interpreter;
             inspector.initialize_interp(interp, ctx);

@@ -11,11 +11,7 @@ use interpreter::{
     FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
-use primitives::{
-    eip7708::{ETH_TRANSFER_LOG_ADDRESS, ETH_TRANSFER_LOG_TOPIC},
-    hints_util::cold_path,
-    Log,
-};
+use primitives::hints_util::cold_path;
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -279,7 +275,10 @@ where
             }
         }
 
-        inspect_step_logs(interpreter, context, &mut inspector, logs_i);
+        if context.journal().logs().len() != logs_i {
+            cold_path();
+            inspect_logs(Some(interpreter), context, &mut inspector, logs_i);
+        }
 
         inspector.step_end(interpreter, context);
 
@@ -303,35 +302,19 @@ where
     next_action
 }
 
-/// Forwards the logs journaled by the instruction that just ran to the inspector.
+/// Forwards the logs journaled since `logs_i` to the inspector.
 ///
-/// `logs_i` is the journal log count captured before the instruction, so this
-/// covers `LOG*` as well as the EIP-7708 transfer logs journaled by
-/// value-moving instructions, and reports nothing when the instruction failed
-/// before journaling its log.
-#[inline]
-pub(crate) fn inspect_step_logs<CTX, IT>(
-    interpreter: &mut Interpreter<IT>,
-    context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, IT>,
-    logs_i: usize,
-) where
-    CTX: ContextTr<Journal: JournalExt> + Host,
-    IT: InterpreterTypes,
-{
-    // Most instructions journal no log; keep that path branch-only.
-    if context.journal().logs().len() == logs_i {
-        return;
-    }
-    inspect_step_logs_inner(interpreter, context, inspector, logs_i);
-}
-
-/// Forwards the EIP-7708 transfer logs journaled since `logs_i` to the inspector.
+/// `interpreter` is `Some` on the instruction path, where the logs belong to
+/// the instruction that just ran and so go to [`Inspector::log_full`]; the
+/// frame-init paths report a value transfer that has no interpreter of its own
+/// and go to [`Inspector::log`].
 ///
-/// Used on the frame-init paths, where no interpreter is available for the
-/// value transfer being reported, so the logs go to [`Inspector::log`].
-#[inline]
-pub(crate) fn inspect_eip7708_transfer_logs<CTX, IT>(
+/// Cold: callers check `logs_i` against the journal length first, and most
+/// instructions journal no log at all.
+#[inline(never)]
+#[cold]
+pub(crate) fn inspect_logs<CTX, IT>(
+    interpreter: Option<&mut Interpreter<IT>>,
     context: &mut CTX,
     inspector: &mut impl Inspector<CTX, IT>,
     logs_i: usize,
@@ -339,39 +322,18 @@ pub(crate) fn inspect_eip7708_transfer_logs<CTX, IT>(
     CTX: ContextTr<Journal: JournalExt>,
     IT: InterpreterTypes,
 {
-    let logs = context.journal().logs();
-    if logs_i >= logs.len() {
-        return;
-    }
-
-    let logs = logs[logs_i..].to_vec();
-    for log in logs {
-        if is_eip7708_transfer_log(&log) {
-            inspector.log(context, log);
-        }
-    }
-}
-
-#[inline]
-fn is_eip7708_transfer_log(log: &Log) -> bool {
-    log.address == ETH_TRANSFER_LOG_ADDRESS
-        && log.data.topics().first() == Some(&ETH_TRANSFER_LOG_TOPIC)
-}
-
-#[inline(never)]
-#[cold]
-fn inspect_step_logs_inner<CTX, IT>(
-    interpreter: &mut Interpreter<IT>,
-    context: &mut CTX,
-    inspector: &mut impl Inspector<CTX, IT>,
-    logs_i: usize,
-) where
-    CTX: ContextTr<Journal: JournalExt> + Host,
-    IT: InterpreterTypes,
-{
     let logs = context.journal_mut().logs()[logs_i..].to_vec();
-    for log in logs {
-        inspector.log_full(interpreter, context, log);
+    match interpreter {
+        Some(interpreter) => {
+            for log in logs {
+                inspector.log_full(interpreter, context, log);
+            }
+        }
+        None => {
+            for log in logs {
+                inspector.log(context, log);
+            }
+        }
     }
 }
 
