@@ -278,6 +278,10 @@ impl SharedMemory {
     }
 
     /// Returns the length of the current memory range.
+    ///
+    /// # Panics
+    ///
+    /// Panics if this context's checkpoint is beyond the shared buffer.
     #[inline]
     pub fn len(&self) -> usize {
         self.full_len()
@@ -290,6 +294,10 @@ impl SharedMemory {
     }
 
     /// Returns `true` if the current memory range is empty.
+    ///
+    /// # Panics
+    ///
+    /// Panics under the same conditions as [`Self::len`].
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
@@ -459,7 +467,13 @@ impl SharedMemory {
         set_data(dst.as_mut(), data, memory_offset, data_offset, len);
     }
 
-    /// Set data from global memory to local memory. If global range is smaller than len, zeroes the rest.
+    /// Copies data from a global memory range to local memory, zero-filling the destination
+    /// if the selected source is shorter than `len`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the checkpoint, a non-empty global range, or the destination range is out
+    /// of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_to_local_set_data(
