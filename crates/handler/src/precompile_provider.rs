@@ -103,7 +103,8 @@ pub fn precompile_output_to_interpreter_result(
     // Gas used, refund, state gas (with its spilled portion, so a later rollback
     // credits it back to regular gas per EIP-8037) and the reservoir all come from
     // the precompile's own accounting.
-    let mut gas = Gas::from_tracker(output.to_gas_tracker(gas_limit));
+    let mut gas = Gas::new(gas_limit);
+    *gas.tracker_mut() = output.to_gas_tracker(gas_limit);
 
     // Only a success or revert returns output bytes and keeps its unspent gas.
     if result.is_halt() {

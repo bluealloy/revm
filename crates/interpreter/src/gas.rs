@@ -35,18 +35,6 @@ impl Gas {
         }
     }
 
-    /// Creates a new `Gas` struct from an existing [`GasTracker`].
-    ///
-    /// Used to lift gas accounting done outside the interpreter (a precompile,
-    /// for example) into a frame's gas.
-    #[inline]
-    pub const fn from_tracker(tracker: GasTracker) -> Self {
-        Self {
-            tracker,
-            memory: MemoryGas::new(),
-        }
-    }
-
     /// Returns the tracker for gas during execution.
     #[inline]
     pub const fn tracker(&self) -> &GasTracker {
