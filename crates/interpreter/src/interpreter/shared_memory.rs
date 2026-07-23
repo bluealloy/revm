@@ -33,10 +33,7 @@ impl<T> RefcellExt<T> for RefCell<T> {
     }
 }
 
-/// A sequential memory shared between calls, which uses
-/// a `Vec` for internal representation.
-/// A [SharedMemory] instance should always be obtained using
-/// the `new` static method to ensure memory safety.
+/// Sequential memory shared between call contexts and backed by a `Vec`.
 #[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedMemory {
@@ -152,7 +149,10 @@ impl SharedMemory {
         }
     }
 
-    /// Creates a new memory instance with a given shared buffer.
+    /// Creates a new memory instance with the given shared buffer.
+    ///
+    /// Other owners can shrink the buffer and invalidate context checkpoints. Operations
+    /// validate checkpoints before accessing the buffer.
     pub const fn new_with_buffer(buffer: Rc<RefCell<Vec<u8>>>) -> Self {
         Self {
             buffer: Some(buffer),
@@ -249,14 +249,13 @@ impl SharedMemory {
         SharedMemory {
             buffer: Some(self.buffer().clone()),
             my_checkpoint: new_checkpoint,
-            // child_checkpoint is same as my_checkpoint
             child_checkpoint: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: self.memory_limit,
         }
     }
 
-    /// Prepares the shared memory for returning from child context. Do nothing if there is no child context.
+    /// Restores the parent memory after a child context. Does nothing if there is no child.
     ///
     /// # Panics
     ///
@@ -303,7 +302,7 @@ impl SharedMemory {
         self.len() == 0
     }
 
-    /// Resizes the memory in-place so that `len` is equal to `new_len`.
+    /// Resizes the current memory range to `new_size` bytes.
     ///
     /// # Panics
     ///
@@ -454,12 +453,12 @@ impl SharedMemory {
         }
     }
 
-    /// Set memory from data. The destination range is validated, and source bytes outside
-    /// `data` are written as zeroes.
+    /// Copies `len` bytes from `data` into memory at `memory_offset`, starting at
+    /// `data_offset` and zero-filling the destination if the source is shorter.
     ///
     /// # Panics
     ///
-    /// Panics if memory is out of bounds.
+    /// Panics if the checkpoint or destination range is out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
@@ -533,10 +532,9 @@ impl SharedMemory {
     }
 }
 
-/// Copies data from src to dst taking into account the offsets and len.
+/// Copies `len` bytes from `src` to `dst`, applying both offsets.
 ///
-/// If src does not have enough data, it nullifies the rest of dst that is not copied.
-///
+/// Zero-fills the destination if the source is shorter than `len`.
 fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, len: usize) {
     if len == 0 {
         return;
@@ -546,7 +544,6 @@ fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, le
         .filter(|&end| end <= dst.len())
         .expect("memory write out of bounds");
     if src_offset >= src.len() {
-        // Nullify all memory slots
         dst[dst_offset..dst_end].fill(0);
         return;
     }
@@ -560,7 +557,6 @@ fn set_data(dst: &mut [u8], src: &[u8], dst_offset: usize, src_offset: usize, le
             .copy_from_slice(data)
     };
 
-    // Nullify rest of memory slots
     // SAFETY: `dst_end` was checked against `dst.len()` above.
     unsafe { dst.get_unchecked_mut(dst_offset + src_len..dst_end).fill(0) };
 }
