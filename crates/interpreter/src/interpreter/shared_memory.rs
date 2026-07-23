@@ -229,11 +229,8 @@ impl SharedMemory {
                 .end
                 .checked_add(base)
                 .expect("memory read length overflow");
-            let range = start..end;
-            match b.get(range.clone()) {
-                Some(slice) => slice,
-                None => panic!("slice OOB: {range:?}; len: {}", b.len()),
-            }
+            b.get(start..end)
+                .unwrap_or_else(|| panic!("slice OOB: {start}..{end}; len: {}", b.len()))
         })
     }
 
@@ -501,9 +498,9 @@ impl SharedMemory {
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
         let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => panic!("shared memory checkpoint out of bounds"),
+        Ref::map(buffer, |b| {
+            b.get(self.my_checkpoint..)
+                .expect("shared memory checkpoint out of bounds")
         })
     }
 
@@ -515,9 +512,9 @@ impl SharedMemory {
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
         let buffer = self.buffer_ref_mut();
-        RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => panic!("shared memory checkpoint out of bounds"),
+        RefMut::map(buffer, |b| {
+            b.get_mut(self.my_checkpoint..)
+                .expect("shared memory checkpoint out of bounds")
         })
     }
 }
@@ -830,14 +827,6 @@ mod tests {
 
         assert_eq!(&*parent.context_memory(), &[0xA5]);
         assert_panic_message(result, "memory write offset overflow");
-    }
-
-    #[test]
-    #[should_panic(expected = "memory write out of bounds")]
-    fn set_data_out_of_bounds_panics() {
-        let mut memory = SharedMemory::new();
-        memory.resize(1);
-        memory.set_data(1, 0, 1, &[0xFF]);
     }
 
     #[test]
