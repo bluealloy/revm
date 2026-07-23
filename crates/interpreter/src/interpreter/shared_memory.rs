@@ -10,29 +10,6 @@ use core::{
 use primitives::{hex, B256, U256};
 use std::{rc::Rc, vec::Vec};
 
-trait RefcellExt<T> {
-    fn dbg_borrow(&self) -> Ref<'_, T>;
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T>;
-}
-
-impl<T> RefcellExt<T> for RefCell<T> {
-    #[inline]
-    fn dbg_borrow(&self) -> Ref<'_, T> {
-        match self.try_borrow() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-
-    #[inline]
-    fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
-        match self.try_borrow_mut() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
-    }
-}
-
 /// Sequential memory shared between call contexts and backed by a `Vec`.
 #[derive(Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -138,6 +115,8 @@ impl SharedMemory {
     }
 
     /// Creates a new invalid memory instance.
+    ///
+    /// Memory accessors panic when called on this instance.
     #[inline]
     pub const fn invalid() -> Self {
         Self {
@@ -201,18 +180,19 @@ impl SharedMemory {
 
     #[inline]
     fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
-        debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
-        unsafe { self.buffer.as_ref().unwrap_unchecked() }
+        self.buffer
+            .as_ref()
+            .expect("cannot access invalid shared memory")
     }
 
     #[inline]
     fn buffer_ref(&self) -> Ref<'_, Vec<u8>> {
-        self.buffer().dbg_borrow()
+        self.buffer().borrow()
     }
 
     #[inline]
     fn buffer_ref_mut(&self) -> RefMut<'_, Vec<u8>> {
-        self.buffer().dbg_borrow_mut()
+        self.buffer().borrow_mut()
     }
 
     /// Returns a byte slice of the backing buffer, applying `base` to `range`.
@@ -320,7 +300,7 @@ impl SharedMemory {
         {
             panic!("memory resize below child checkpoint");
         }
-        self.buffer().dbg_borrow_mut().resize(new_len, 0);
+        self.buffer_ref_mut().resize(new_len, 0);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -741,6 +721,28 @@ mod tests {
         let child = parent.new_child_context();
         buffer.borrow_mut().clear();
         let _ = child.context_memory();
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn shared_alias_borrow_conflict_panics() {
+        let memory = SharedMemory::new();
+        let mut alias = memory.clone();
+        let _guard = memory.context_memory();
+
+        let result = catch_unwind(AssertUnwindSafe(|| alias.resize(1)));
+
+        assert!(result.is_err());
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn invalid_memory_access_panics() {
+        let memory = SharedMemory::invalid();
+
+        let result = catch_unwind(AssertUnwindSafe(|| memory.len()));
+
+        assert_panic_message(result.map(|_| ()), "cannot access invalid shared memory");
     }
 
     #[cfg(feature = "std")]
