@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.0...revm-precompile-v42.0.1) - 2026-07-23
+
+### Added
+
+- *(precompile)* track spilled state gas in `PrecompileOutput` ([#3821](https://github.com/bluealloy/revm/pull/3821))
+- *(precompile)* `PrecompileOutput::{from_gas_tracker, set_gas, to_gas_tracker}` ([#3821](https://github.com/bluealloy/revm/pull/3821))
+
 ## [42.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v41.0.0...revm-precompile-v42.0.0) - 2026-07-22
 
 ### Other
