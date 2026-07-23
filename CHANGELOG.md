@@ -1,5 +1,44 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v114
+date: 23.07.2026
+
+Glamsterdam devnet-7 support, with all crates bumped in lockstep to **42.0.0**.
+
+Highlights:
+* Glamsterdam devnet-7 alignment: EIP-2780 runtime gas phase, fixtures v7.0.0 ([#3795](https://github.com/bluealloy/revm/pull/3795))
+* Glamsterdam devnet-6 gas accounting & EIP alignment ([#3782](https://github.com/bluealloy/revm/pull/3782))
+* EIP-8246 delayed clear replaces the EIP-7708 delayed burn config ([#3782](https://github.com/bluealloy/revm/pull/3782))
+* Database fallback mode for BAL misses ([#3754](https://github.com/bluealloy/revm/pull/3754))
+* Configurable max refund quotient ([#3757](https://github.com/bluealloy/revm/pull/3757))
+* Fallible refund: `Handler::refund` now returns a value ([#3758](https://github.com/bluealloy/revm/pull/3758))
+* Validate state before tracking gas ([#3815](https://github.com/bluealloy/revm/pull/3815))
+* Forward EIP-7708 transfer logs to the inspector ([#3816](https://github.com/bluealloy/revm/pull/3816))
+* Fix gas tracker used-gas underflow ([#3813](https://github.com/bluealloy/revm/pull/3813))
+* Fix journal finalization on error to prevent EIP-2929 warm set leak ([#3780](https://github.com/bluealloy/revm/pull/3780))
+* Ignore stale selfdestruct journal entries in the inspector ([#3805](https://github.com/bluealloy/revm/pull/3805))
+* Keep `is_empty` on EIP-7702 accounts in `load_account_delegated` ([#3802](https://github.com/bluealloy/revm/pull/3802))
+* Bytecode iterator fixes for truncated pushes and legacy padding ([#3800](https://github.com/bluealloy/revm/pull/3800), [#3792](https://github.com/bluealloy/revm/pull/3792))
+* `asm-sha2` feature removed from `revm` and `revm-precompile`
+
+See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for the full list of breaking changes.
+
+* `revm-primitives`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-bytecode`: 41.0.0 -> 42.0.0 (✓ API compatible changes)
+* `revm-state`: 41.0.0 -> 42.0.0 (✓ API compatible changes)
+* `revm-database-interface`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-context-interface`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-context`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-database`: 41.0.0 -> 42.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-precompile`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-handler`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-statetest-types`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm`: 41.0.0 -> 42.0.0 (⚠ API breaking changes)
+* `revm-ee-tests`: 41.0.0 -> 42.0.0 (✓ dependency bump)
+* `revme`: 41.0.0 -> 42.0.0 (✓ API compatible changes)
+
 # v113
 date: 11.06.2026
 

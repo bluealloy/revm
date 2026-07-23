@@ -1,6 +1,34 @@
 
 # Unreleased
 
+# v114 tag (all crates v42.0.0)
+
+Released by [#3814](https://github.com/bluealloy/revm/pull/3814). Breaking changes below, grouped by crate; `revm-bytecode`, `revm-state`, `revm-database` and `revme` are API compatible with v41.
+
+### EIP-8246 replaces EIP-7708 delayed burn (`revm-context`, `revm-context-interface`)
+* `Cfg::is_eip7708_delayed_burn_disabled` → `Cfg::is_eip8246_delayed_clear_disabled`; `CfgEnv.amsterdam_eip7708_delayed_burn_disabled` → `amsterdam_eip8246_delayed_clear_disabled` and `JournalCfg.eip7708_delayed_burn_disabled` → `eip8246_delayed_clear_disabled` (breaks literal construction).
+* Removed `JournalInner::eip7708_emit_burn_remaining_balance_logs` and `JournalInner::eip7708_burn_log`.
+* New required `Cfg` method `is_amsterdam_eip2780_enabled` (implement it on custom `Cfg`s alongside the rename).
+
+### Gas API (`revm-primitives`, `revm-context-interface`, `revm-handler`)
+* Removed: `primitives::EIP7702_PER_EMPTY_ACCOUNT_REGULAR`; `GasParams::tx_eip7702_auth_refund` / `tx_eip7702_state_gas` / `tx_eip7702_state_refund` and the matching `GasId` variants; `InitialAndFloorGas.state_refund`.
+* Arity changes: `calculate_initial_tx_gas` 6→7, `calculate_initial_tx_gas_for_tx` 2→3, `GasParams::initial_tx_gas` 5→6, `GasParams::initial_tx_gas_for_tx` 1→2, `validate_initial_tx_gas` 5→6, `validate_initial_tx_gas_with_gas_params` 6→7.
+* `Handler::refund` now returns a value instead of `()` (fallible refund, [#3758](https://github.com/bluealloy/revm/pull/3758)).
+
+### Handler / inspector execution split
+* `Handler::execution` 2→3 params and `InspectorHandler::inspect_execution` 2→3; `Handler::first_frame_input` 3→2; `execution::create_init_frame` 3→2.
+
+### Journal code-change entry (`revm-context-interface`)
+* `JournalEntry::CodeChange` gained `had_code_hash` and `had_code` fields; `JournalEntryTr::code_changed` 1→3 params.
+
+### New struct fields (break literal construction)
+* `BalState.allow_db_fallback` (`revm-database-interface`) — database fallback for BAL misses ([#3754](https://github.com/bluealloy/revm/pull/3754)).
+* `CreateOutcome.charged_create_state_gas` (`revm-interpreter`).
+* `TransactionParts.chain_id` (`revm-statetest-types`).
+
+### Features
+* `asm-sha2` feature removed from `revm` and `revm-precompile`.
+
 ### EIP-2780 runtime gas phase (ethereum/EIPs#11844)
 
 Gated on `CfgEnv::enable_amsterdam_eip2780`; older forks and 2780-disabled configs are unchanged.

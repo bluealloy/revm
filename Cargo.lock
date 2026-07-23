@@ -3884,7 +3884,7 @@ dependencies = [
 
 [[package]]
 name = "revm-bytecode"
-version = "41.0.1"
+version = "42.0.0"
 dependencies = [
  "anyhow",
  "bitvec",
@@ -3928,7 +3928,7 @@ dependencies = [
 
 [[package]]
 name = "revm-database"
-version = "41.1.0"
+version = "42.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3959,7 +3959,7 @@ dependencies = [
 
 [[package]]
 name = "revm-ee-tests"
-version = "41.0.0"
+version = "42.0.0"
 dependencies = [
  "insta",
  "revm",
@@ -4055,7 +4055,7 @@ dependencies = [
 
 [[package]]
 name = "revm-state"
-version = "41.1.0"
+version = "42.0.0"
 dependencies = [
  "alloy-eip7928 0.4.0",
  "bitflags",
@@ -4084,7 +4084,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "41.1.0"
+version = "42.0.0"
 dependencies = [
  "alloy-rlp",
  "alloy-sol-types",
