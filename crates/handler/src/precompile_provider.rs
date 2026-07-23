@@ -71,60 +71,47 @@ impl Clone for EthPrecompiles {
     }
 }
 
-/// Converts a [`PrecompileOutput`] into an [`InterpreterResult`].
+/// Converts a [`PrecompileOutput`] into an [`InterpreterResult`] for a call frame
+/// with `gas_limit` regular gas.
 ///
 /// Maps precompile status to the corresponding instruction result:
-/// - `Success` → `InstructionResult::Return`
-/// - `Revert` → `InstructionResult::Revert`
-/// - `Halt(OOG)` → `InstructionResult::PrecompileOOG`
-/// - `Halt(other)` → `InstructionResult::PrecompileError`
+/// - `Success` -> [`InstructionResult::Return`]
+/// - `Revert` -> [`InstructionResult::Revert`]
+/// - `Halt(OOG)` -> [`InstructionResult::PrecompileOOG`]
+/// - `Halt(other)` -> [`InstructionResult::PrecompileError`]
+///
+/// A precompile that reports more gas than it was given is downgraded to
+/// [`InstructionResult::PrecompileOOG`]. Anything but a success or revert consumes
+/// all regular gas and returns no output bytes.
 pub fn precompile_output_to_interpreter_result(
     output: PrecompileOutput,
     gas_limit: u64,
 ) -> InterpreterResult {
-    // set output bytes
-    let bytes = if output.status.is_success_or_revert() {
-        output.bytes
+    // A precompile lying about its usage must not leave the frame with gas it
+    // never had: charging more regular gas than the limit is an OOG halt.
+    let result = if output.gas_used > gas_limit {
+        InstructionResult::PrecompileOOG
     } else {
-        Bytes::new()
-    };
-
-    let mut result = InterpreterResult {
-        result: InstructionResult::Return,
-        gas: Gas::new_with_regular_gas_and_reservoir(gas_limit, output.reservoir),
-        output: bytes,
-    };
-
-    // set state gas, reservoir is already set in the Gas constructor
-    result.gas.set_state_gas_spent(output.state_gas_used);
-    result.gas.record_refund(output.gas_refunded);
-
-    // spend used gas.
-    if output.status.is_success_or_revert() {
-        if !result.gas.record_regular_cost(output.gas_used) {
-            result.gas.spend_all();
-            result.output = Bytes::new();
-            result.result = InstructionResult::PrecompileOOG;
-            return result;
+        match &output.status {
+            PrecompileStatus::Success => InstructionResult::Return,
+            PrecompileStatus::Revert => InstructionResult::Revert,
+            PrecompileStatus::Halt(reason) if reason.is_oog() => InstructionResult::PrecompileOOG,
+            PrecompileStatus::Halt(_) => InstructionResult::PrecompileError,
         }
-    } else {
-        result.gas.spend_all();
+    };
+
+    // Gas used, refund, state gas (with its spilled portion, so a later rollback
+    // credits it back to regular gas per EIP-8037) and the reservoir all come from
+    // the precompile's own accounting.
+    let mut gas = Gas::from_tracker(output.to_gas_tracker(gas_limit));
+
+    // Only a success or revert returns output bytes and keeps its unspent gas.
+    if result.is_halt() {
+        gas.spend_all();
+        return InterpreterResult::new(result, Bytes::new(), gas);
     }
 
-    // set result
-    result.result = match output.status {
-        PrecompileStatus::Success => InstructionResult::Return,
-        PrecompileStatus::Revert => InstructionResult::Revert,
-        PrecompileStatus::Halt(halt_reason) => {
-            if halt_reason.is_oog() {
-                InstructionResult::PrecompileOOG
-            } else {
-                InstructionResult::PrecompileError
-            }
-        }
-    };
-
-    result
+    InterpreterResult::new(result, output.bytes, gas)
 }
 
 impl<CTX: ContextTr> PrecompileProvider<CTX> for EthPrecompiles {
@@ -243,6 +230,7 @@ mod tests {
                     gas_used: u64::MAX,
                     gas_refunded: 0,
                     state_gas_used: 0,
+                    state_gas_spilled: 0,
                     reservoir: inputs.reservoir,
                     bytes: Bytes::from_static(b"unreliable"),
                 };
@@ -257,6 +245,47 @@ mod tests {
         fn warm_addresses(&self) -> &AddressSet {
             &self.warm
         }
+    }
+
+    /// The spilled portion of a precompile's state gas must reach the frame's gas
+    /// tracker, otherwise a rollback credits it to the reservoir instead of regular
+    /// gas (EIP-8037).
+    #[test]
+    fn precompile_output_propagates_spilled_state_gas() {
+        let output = PrecompileOutput {
+            status: PrecompileStatus::Success,
+            // 10 regular + 30 state gas, of which 20 spilled out of the 10 gas reservoir
+            gas_used: 40,
+            gas_refunded: 0,
+            state_gas_used: 30,
+            state_gas_spilled: 20,
+            reservoir: 0,
+            bytes: Bytes::new(),
+        };
+        let mut result = precompile_output_to_interpreter_result(output, 100);
+
+        assert_eq!(result.result, InstructionResult::Return);
+        assert_eq!(result.gas.state_gas_spent(), 30);
+        assert_eq!(result.gas.state_gas_spilled(), 20);
+        assert_eq!(result.gas.remaining(), 60);
+
+        // rollback returns the spilled part to regular gas and the rest to the reservoir
+        result.gas.rollback_state_gas();
+        assert_eq!(result.gas.remaining(), 80);
+        assert_eq!(result.gas.reservoir(), 10);
+        assert_eq!(result.gas.state_gas_spent(), 0);
+        assert_eq!(result.gas.state_gas_spilled(), 0);
+    }
+
+    /// A precompile that reports more gas than its limit is turned into an OOG halt
+    /// with all gas consumed and no output bytes.
+    #[test]
+    fn precompile_output_overspend_is_oog() {
+        let output = PrecompileOutput::new(u64::MAX, Bytes::from_static(b"out"), 0);
+        let result = precompile_output_to_interpreter_result(output, 100);
+        assert_eq!(result.result, InstructionResult::PrecompileOOG);
+        assert_eq!(result.gas.remaining(), 0);
+        assert!(result.output.is_empty());
     }
 
     /// End-to-end regression test for Bug 3. A transaction targets a custom precompile

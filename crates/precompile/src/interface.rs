@@ -1,6 +1,6 @@
 //! Interface for the precompiles. It contains the precompile result type,
 //! the precompile output type, and the precompile error type.
-use context_interface::result::AnyError;
+use context_interface::{cfg::gas::GasTracker, result::AnyError};
 use core::fmt::{self, Debug};
 use primitives::{Bytes, OnceLock};
 use std::{borrow::Cow, boxed::Box, string::String, vec::Vec};
@@ -116,6 +116,14 @@ pub struct PrecompileOutput {
     pub gas_refunded: i64,
     /// State gas used by the precompile.
     pub state_gas_used: i64,
+    /// State gas that was drawn from regular gas because the reservoir was
+    /// empty (EIP-8037's `state_gas_from_gas_left`).
+    ///
+    /// Must be the portion of `state_gas_used` that did not fit in the
+    /// reservoir the precompile was given. It is propagated to the frame's gas
+    /// tracker so that a later revert or halt credits that portion back to
+    /// regular gas instead of the reservoir.
+    pub state_gas_spilled: u64,
     /// Reservoir gas for EIP-8037.
     pub reservoir: u64,
     /// Output bytes.
@@ -137,6 +145,7 @@ impl PrecompileOutput {
             gas_used,
             gas_refunded: 0,
             state_gas_used: 0,
+            state_gas_spilled: 0,
             reservoir,
             bytes,
         }
@@ -149,6 +158,7 @@ impl PrecompileOutput {
             gas_used: 0,
             gas_refunded: 0,
             state_gas_used: 0,
+            state_gas_spilled: 0,
             reservoir,
             bytes: Bytes::new(),
         }
@@ -161,9 +171,61 @@ impl PrecompileOutput {
             gas_used,
             gas_refunded: 0,
             state_gas_used: 0,
+            state_gas_spilled: 0,
             reservoir,
             bytes,
         }
+    }
+
+    /// Returns a precompile output that mirrors the gas accounting of `tracker`.
+    ///
+    /// The regular gas used is `tracker.limit() - tracker.remaining()`; the
+    /// refund, state gas (with its spilled portion) and the reservoir are taken
+    /// as-is. Use this when a precompile drives a [`GasTracker`] internally and
+    /// needs to hand the result back to the provider.
+    pub const fn from_gas_tracker(
+        status: PrecompileStatus,
+        bytes: Bytes,
+        tracker: GasTracker,
+    ) -> Self {
+        let mut output = Self {
+            status,
+            gas_used: 0,
+            gas_refunded: 0,
+            state_gas_used: 0,
+            state_gas_spilled: 0,
+            reservoir: 0,
+            bytes,
+        };
+        output.set_gas(tracker);
+        output
+    }
+
+    /// Overwrites the gas accounting fields from `tracker`, leaving status and
+    /// output bytes untouched.
+    ///
+    /// The regular gas used is `tracker.limit() - tracker.remaining()`; the
+    /// refund, state gas (with its spilled portion) and the reservoir are taken
+    /// as-is. All fields are replaced, not accumulated.
+    pub const fn set_gas(&mut self, tracker: GasTracker) {
+        self.gas_used = tracker.limit().saturating_sub(tracker.remaining());
+        self.gas_refunded = tracker.refunded();
+        self.state_gas_used = tracker.state_gas_spent();
+        self.state_gas_spilled = tracker.state_gas_spilled();
+        self.reservoir = tracker.reservoir();
+    }
+
+    /// Returns a [`GasTracker`] for `gas_limit` that reflects this output.
+    ///
+    /// Inverse of [`from_gas_tracker`](Self::from_gas_tracker): `gas_used` is
+    /// deducted from the regular gas (saturating at zero), and the refund, state
+    /// gas, spilled state gas and reservoir are restored.
+    pub const fn to_gas_tracker(&self, gas_limit: u64) -> GasTracker {
+        let mut tracker = GasTracker::new_used_gas(gas_limit, self.gas_used, self.reservoir);
+        tracker.set_refunded(self.gas_refunded);
+        tracker.set_state_gas_spent(self.state_gas_used);
+        tracker.set_state_gas_spilled(self.state_gas_spilled);
+        tracker
     }
 
     /// Returns `true` if the precompile execution was successful.
@@ -565,3 +627,59 @@ impl fmt::Display for PrecompileError {
 pub struct DefaultCrypto;
 
 impl Crypto for DefaultCrypto {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A tracker that spilled state gas must survive the round trip through
+    /// [`PrecompileOutput`] unchanged.
+    #[test]
+    fn gas_tracker_round_trip() {
+        // 100 regular gas, 10 reservoir. Charge 10 regular and 30 state gas,
+        // 20 of which spills out of the reservoir into regular gas.
+        let mut tracker = GasTracker::new(100, 100, 10);
+        assert!(tracker.record_regular_cost(10));
+        assert!(tracker.record_state_cost(30));
+        tracker.record_refund(5);
+        assert_eq!(
+            (tracker.remaining(), tracker.reservoir()),
+            (70, 0),
+            "10 regular + 20 spilled state gas"
+        );
+
+        let output =
+            PrecompileOutput::from_gas_tracker(PrecompileStatus::Success, Bytes::new(), tracker);
+        assert_eq!(output.gas_used, 30);
+        assert_eq!(output.gas_refunded, 5);
+        assert_eq!(output.state_gas_used, 30);
+        assert_eq!(output.state_gas_spilled, 20);
+        assert_eq!(output.reservoir, 0);
+
+        assert_eq!(output.to_gas_tracker(tracker.limit()), tracker);
+
+        // set_gas replaces the gas fields of an existing output, keeping the rest
+        let mut existing = PrecompileOutput::revert(1, Bytes::from_static(b"out"), 999);
+        existing.set_gas(tracker);
+        assert_eq!(existing.status, PrecompileStatus::Revert);
+        assert_eq!(existing.bytes, Bytes::from_static(b"out"));
+        assert_eq!(
+            (
+                existing.gas_used,
+                existing.gas_refunded,
+                existing.state_gas_used,
+                existing.state_gas_spilled,
+                existing.reservoir
+            ),
+            (30, 5, 30, 20, 0)
+        );
+    }
+
+    /// Gas used above the limit saturates instead of wrapping.
+    #[test]
+    fn to_gas_tracker_saturates_on_overspend() {
+        let mut output = PrecompileOutput::new(0, Bytes::new(), 0);
+        output.gas_used = u64::MAX;
+        assert_eq!(output.to_gas_tracker(100).remaining(), 0);
+    }
+}
