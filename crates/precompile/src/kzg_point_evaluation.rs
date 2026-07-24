@@ -146,4 +146,34 @@ mod tests {
         let t = verify_kzg_proof(&commitment, &z, &y, &proof);
         assert!(t);
     }
+
+    /// The proof of a constant polynomial p(x) = 5 is the point at infinity,
+    /// with commitment `[5]G1`. Exercises the infinity-pair handling in the
+    /// pairing check with a non-zero y.
+    #[test]
+    fn test_constant_polynomial_valid_proof() {
+        // [5]G1 compressed
+        let commitment = hex!("b0e7791fb972fe014159aa33a98622da3cdc98ff707965e536d8636b5fcc5ac7a91a8c46e59a00dca575af0f18fb13dc");
+        let z = hex!("0000000000000000000000000000000000000000000000000000000000000003");
+        let y = hex!("0000000000000000000000000000000000000000000000000000000000000005");
+        let proof = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+
+        let t = verify_kzg_proof(&commitment, &z, &y, &proof);
+        assert!(t);
+    }
+
+    /// An infinity proof point paired with a non-infinity `commitment - [y]G1`
+    /// is invalid and must be rejected. Exercises the mixed case where only
+    /// one pair of the pairing check contains a point at infinity.
+    #[test]
+    fn test_infinity_proof_invalid() {
+        // [5]G1 compressed
+        let commitment = hex!("b0e7791fb972fe014159aa33a98622da3cdc98ff707965e536d8636b5fcc5ac7a91a8c46e59a00dca575af0f18fb13dc");
+        let z = hex!("0000000000000000000000000000000000000000000000000000000000000001");
+        let y = hex!("0000000000000000000000000000000000000000000000000000000000000000");
+        let proof = hex!("c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+
+        let t = verify_kzg_proof(&commitment, &z, &y, &proof);
+        assert!(!t);
+    }
 }

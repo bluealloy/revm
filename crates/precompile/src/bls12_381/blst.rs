@@ -288,6 +288,11 @@ fn is_fp12_one(f: &blst_fp12) -> bool {
 
 /// pairing_check performs a pairing check on a list of G1 and G2 point pairs and
 /// returns true if the result is equal to the identity element.
+///
+/// Note: `pairs` must not contain points at infinity. Callers must skip such
+/// pairs (their pairing is the identity element): `blst_miller_loop_n`, unlike
+/// the per-pair `blst_miller_loop`, does not special-case infinity and would
+/// feed the all-zero point representation into the line evaluations.
 #[inline]
 pub(crate) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool {
     // When no inputs are given, we return true
@@ -304,8 +309,8 @@ pub(crate) fn pairing_check(pairs: &[(blst_p1_affine, blst_p2_affine)]) -> bool 
     // Fused multi-miller loop over all pairs, matching the arkworks backend's
     // `multi_pairing`. We use the raw FFI, not blst's `miller_loop_n` wrapper, which
     // threads (undesirable in a precompile, unavailable on no_std).
-    let g1_points: Vec<blst_p1_affine> = pairs.iter().map(|(g1, _)| *g1).collect();
-    let g2_points: Vec<blst_p2_affine> = pairs.iter().map(|(_, g2)| *g2).collect();
+    let (g1_points, g2_points): (Vec<blst_p1_affine>, Vec<blst_p2_affine>) =
+        pairs.iter().copied().unzip();
 
     // `blst_miller_loop_n` takes null-terminated arrays of pointers to point arrays.
     let qs: [*const blst_p2_affine; 2] = [g2_points.as_ptr(), core::ptr::null()];

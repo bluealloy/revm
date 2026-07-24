@@ -8,10 +8,12 @@ use crate::{
     PrecompileHalt,
 };
 use ::blst::{
-    blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve, blst_p2_affine, blst_scalar,
-    blst_scalar_fr_check, blst_scalar_from_bendian,
+    blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_is_inf, blst_p1_affine_on_curve,
+    blst_p2_affine, blst_p2_affine_is_inf, blst_scalar, blst_scalar_fr_check,
+    blst_scalar_from_bendian,
 };
 use primitives::OnceLock;
+use std::vec::Vec;
 
 /// Verify KZG proof using BLST BLS12-381 implementation.
 ///
@@ -61,7 +63,17 @@ pub fn verify_kzg_proof(
     // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
     let neg_g2 = p2_neg(&g2);
 
-    pairing_check(&[(p_minus_y, neg_g2), (proof_point, x_minus_z)])
+    // Skip pairs containing a point at infinity: their pairing is the identity,
+    // and `pairing_check` requires infinity-free inputs (`blst_miller_loop_n`,
+    // unlike the per-pair `blst_miller_loop`, does not special-case infinity).
+    // E.g. the proof of a constant polynomial is the point at infinity.
+    let pairs: Vec<_> = [(p_minus_y, neg_g2), (proof_point, x_minus_z)]
+        .into_iter()
+        // SAFETY: both arguments are valid blst types
+        .filter(|(g1, g2)| unsafe { !blst_p1_affine_is_inf(g1) && !blst_p2_affine_is_inf(g2) })
+        .collect();
+
+    pairing_check(&pairs)
 }
 
 /// Get the trusted setup G2 point `[τ]₂` from the Ethereum KZG ceremony.
