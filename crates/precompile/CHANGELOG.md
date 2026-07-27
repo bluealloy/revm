@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.2](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.1...revm-precompile-v42.0.2) - 2026-07-27
+
+### Other
+
+- *(precompile)* use fused multi-miller loop for BLS12-381 pairing ([#3823](https://github.com/bluealloy/revm/pull/3823))
+- *(precompile)* correct read_fp canonical-check comment ([#3824](https://github.com/bluealloy/revm/pull/3824))
+
 ## [42.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.0...revm-precompile-v42.0.1) - 2026-07-23
 
 ### Added
