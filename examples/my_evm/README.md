@@ -5,12 +5,13 @@ specifically by disabling the beneficiary reward mechanism.
 
 ## Core Components
 
-To implement a custom EVM variant, two key components are needed:
+To implement a custom EVM variant, three key components are needed:
 
-1. A custom EVM struct ([`crate::MyEvm`] in [`crate::evm`]) that implements [`revm::handler::EvmTr`]
-2. A custom handler ([`MyHandler`]) in [`crate::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
+1. A custom frame ([`crate::frame::MyFrame`]) that wraps [`revm::handler::EthFrame`] as a field and implements [`revm::handler::evm::FrameTr`]
+2. A custom EVM struct ([`crate::MyEvm`] in [`crate::evm`]) that implements [`revm::handler::EvmTr`] and drives the frame lifecycle by delegating to the wrapped [`revm::handler::EthFrame`]
+3. A custom handler ([`MyHandler`]) in [`crate::handler`] that controls execution behavior and implements [`revm::handler::Handler`]
 
-Basic usage after implementing these two components:
+Basic usage after implementing these three components:
 ```rust,ignore
 let mut my_evm = MyEvm::new(Context::mainnet(), ());
 let _res = MyHandler::default().run(&mut my_evm);
@@ -18,8 +19,9 @@ let _res = MyHandler::default().run(&mut my_evm);
 
 ## Adding Inspector Support
 
-To enable transaction inspection capabilities, implement two additional traits:
+To enable transaction inspection capabilities, implement three additional traits:
 
+- [`revm::inspector::InspectorFrame`] on [`crate::frame::MyFrame`], returning the wrapped [`revm::handler::EthFrame`] so the inspector machinery can trace through the custom frame
 - [`revm::inspector::InspectorEvmTr`] on [`MyEvm`]
 - [`revm::inspector::InspectorHandler`] on [`MyHandler`]
 
