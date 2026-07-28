@@ -210,6 +210,7 @@ pub trait Host {
 #[derive(Default, Debug)]
 pub struct DummyHost {
     gas_params: GasParams,
+    spec: SpecId,
 }
 
 impl DummyHost {
@@ -217,6 +218,7 @@ impl DummyHost {
     pub fn new(spec: SpecId) -> Self {
         Self {
             gas_params: GasParams::new_spec(spec),
+            spec,
         }
     }
 }
@@ -239,7 +241,7 @@ impl Host for DummyHost {
     }
 
     fn is_amsterdam_eip8037_enabled(&self) -> bool {
-        false
+        self.spec.is_enabled_in(SpecId::AMSTERDAM)
     }
 
     fn difficulty(&self) -> U256 {

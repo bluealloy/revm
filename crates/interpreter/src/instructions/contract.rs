@@ -15,7 +15,7 @@ use crate::{
     InstructionExecResult as Result, InstructionResult, InterpreterAction,
 };
 use context_interface::CreateScheme;
-use primitives::{hardfork::SpecId, Bytes, U256};
+use primitives::{constants::CALL_STACK_LIMIT, hardfork::SpecId, Bytes, U256};
 use std::boxed::Box;
 
 use crate::InstructionContext as Ictx;
@@ -102,16 +102,19 @@ pub fn create<const IS_CREATE2: bool, IT: ITy, H: Host + ?Sized>(
         // The charge is conditional at access, applied in
         // the creating frame before the 63/64 split. The destination is read
         // (and charged for) only after the pre-access checks — endowment
-        // balance and sender nonce overflow — pass; failing those pushes 0
-        // without touching the destination. (The call-depth pre-access check
-        // lives at frame creation; its failure path refunds the charge.)
+        // balance, sender nonce overflow, and call depth — pass; failing those
+        // pushes 0 without touching the destination, keeping it out of the
+        // EIP-7928 block access list and the warm set.
         let caller = create_inputs.caller();
         let caller_info = context
             .host
             .load_account_info_skip_cold_load(caller, false, false)?;
         let caller_balance = caller_info.account.balance;
         let caller_nonce = caller_info.account.nonce;
-        if caller_balance < value || caller_nonce == u64::MAX {
+        if caller_balance < value
+            || caller_nonce == u64::MAX
+            || context.interpreter.input.depth() + 1 > CALL_STACK_LIMIT as usize
+        {
             context.interpreter.return_data.clear();
             push!(context.interpreter, U256::ZERO);
             return Ok(());
@@ -241,4 +244,44 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
             },
         ))));
     Err(InstructionResult::Suspend)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        host::DummyHost,
+        instructions::{gas_table, instruction_table},
+        interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
+        Interpreter, InterpreterAction,
+    };
+    use bytecode::opcode::*;
+    use bytecode::Bytecode;
+    use primitives::{constants::CALL_STACK_LIMIT, hardfork::SpecId, Bytes, U256};
+
+    #[test]
+    fn create_too_deep_pushes_zero_without_destination_access_eip8037() {
+        // EIP-8037: the depth pre-check fails in the opcode itself, pushing 0 without
+        // requesting a create frame or reading the destination account, which would
+        // otherwise leak the address into the EIP-7928 block access list.
+        let bytecode =
+            Bytecode::new_raw(Bytes::copy_from_slice(&[PUSH0, PUSH0, PUSH0, CREATE, STOP]));
+        let mut interpreter = Interpreter::<EthInterpreter>::new(
+            SharedMemory::new(),
+            ExtBytecode::new(bytecode),
+            InputsImpl {
+                depth: CALL_STACK_LIMIT as usize,
+                ..Default::default()
+            },
+            false,
+            SpecId::AMSTERDAM,
+            1_000_000,
+        );
+        let table = instruction_table::<EthInterpreter, DummyHost>();
+        let gas = gas_table();
+        let mut host = DummyHost::new(SpecId::AMSTERDAM);
+        let action = interpreter.run_plain(&table, &gas, &mut host);
+        assert!(!matches!(action, InterpreterAction::NewFrame(_)));
+        assert_eq!(interpreter.stack.len(), 1);
+        assert_eq!(interpreter.stack.data()[0], U256::ZERO);
+    }
 }
