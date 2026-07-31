@@ -138,7 +138,10 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
         let _ = outcome;
     }
 
-    /// Called when a contract has been self-destructed with funds transferred to target.
+    /// Called after a contract successfully executes `SELFDESTRUCT`.
+    ///
+    /// `value` is the contract's balance immediately before the opcode executes. It can be
+    /// non-zero even when no funds move, such as a post-Cancun selfdestruct-to-self.
     #[inline]
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
         let _ = contract;
