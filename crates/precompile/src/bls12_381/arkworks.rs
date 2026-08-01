@@ -127,24 +127,30 @@ fn read_g1(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<G1Affine, Precomp
     Ok(point)
 }
 
-/// Reads a G1 point for use in an MSM, returning `None` for the point at infinity.
+/// A non-infinity G1 point proven to lie in the order-`r` subgroup.
 ///
-/// Infinity is the identity, lies in every subgroup, and contributes nothing to the MSM
-/// result, so it can be skipped after the on-curve validation. Non-infinity points still
-/// require a subgroup check, exactly like [`read_g1`].
-#[inline]
-fn read_g1_msm(
-    x: &[u8; FP_LENGTH],
-    y: &[u8; FP_LENGTH],
-) -> Result<Option<G1Affine>, PrecompileHalt> {
-    let point = read_g1_no_subgroup_check(x, y)?;
-    if point.is_zero() {
-        return Ok(None);
+/// MSM scalars are reduced modulo `r`, so keeping this proof in the type prevents an unchecked
+/// point reader from being wired into the MSM path accidentally.
+#[repr(transparent)]
+#[derive(Clone, Copy)]
+struct SubgroupCheckedG1(G1Affine);
+
+impl SubgroupCheckedG1 {
+    /// Reads a G1 MSM operand, returning `None` for the point at infinity.
+    ///
+    /// Infinity is the identity and contributes nothing to the MSM result, so it can be skipped
+    /// after the on-curve validation. Every returned point has passed the subgroup check.
+    #[inline]
+    fn read_msm(x: &[u8; FP_LENGTH], y: &[u8; FP_LENGTH]) -> Result<Option<Self>, PrecompileHalt> {
+        let point = read_g1_no_subgroup_check(x, y)?;
+        if point.is_zero() {
+            return Ok(None);
+        }
+        if !point.is_in_correct_subgroup_assuming_on_curve() {
+            return Err(PrecompileHalt::Bls12381G1NotInSubgroup);
+        }
+        Ok(Some(Self(point)))
     }
-    if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(PrecompileHalt::Bls12381G1NotInSubgroup);
-    }
-    Ok(Some(point))
 }
 
 /// Reads a G1 point without performing a subgroup check.
@@ -204,26 +210,35 @@ fn read_g2(
     Ok(point)
 }
 
-/// Reads a G2 point for use in an MSM, returning `None` for the point at infinity.
+/// A non-infinity G2 point proven to lie in the order-`r` subgroup.
 ///
-/// Infinity is the identity, lies in every subgroup, and contributes nothing to the MSM
-/// result, so it can be skipped after the on-curve validation. Non-infinity points still
-/// require a subgroup check, exactly like [`read_g2`].
-#[inline]
-fn read_g2_msm(
-    a_x_0: &[u8; FP_LENGTH],
-    a_x_1: &[u8; FP_LENGTH],
-    a_y_0: &[u8; FP_LENGTH],
-    a_y_1: &[u8; FP_LENGTH],
-) -> Result<Option<G2Affine>, PrecompileHalt> {
-    let point = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
-    if point.is_zero() {
-        return Ok(None);
+/// MSM scalars are reduced modulo `r`, so keeping this proof in the type prevents an unchecked
+/// point reader from being wired into the MSM path accidentally.
+#[repr(transparent)]
+#[derive(Clone, Copy)]
+struct SubgroupCheckedG2(G2Affine);
+
+impl SubgroupCheckedG2 {
+    /// Reads a G2 MSM operand, returning `None` for the point at infinity.
+    ///
+    /// Infinity is the identity and contributes nothing to the MSM result, so it can be skipped
+    /// after the on-curve validation. Every returned point has passed the subgroup check.
+    #[inline]
+    fn read_msm(
+        a_x_0: &[u8; FP_LENGTH],
+        a_x_1: &[u8; FP_LENGTH],
+        a_y_0: &[u8; FP_LENGTH],
+        a_y_1: &[u8; FP_LENGTH],
+    ) -> Result<Option<Self>, PrecompileHalt> {
+        let point = read_g2_no_subgroup_check(a_x_0, a_x_1, a_y_0, a_y_1)?;
+        if point.is_zero() {
+            return Ok(None);
+        }
+        if !point.is_in_correct_subgroup_assuming_on_curve() {
+            return Err(PrecompileHalt::Bls12381G2NotInSubgroup);
+        }
+        Ok(Some(Self(point)))
     }
-    if !point.is_in_correct_subgroup_assuming_on_curve() {
-        return Err(PrecompileHalt::Bls12381G2NotInSubgroup);
-    }
-    Ok(Some(point))
 }
 
 /// Reads a G2 point without performing a subgroup check.
@@ -274,7 +289,9 @@ fn encode_g2_point(input: &G2Affine) -> [u8; G2_LENGTH] {
 ///
 /// EIP-2537 does not require the corresponding integer to be less than the main subgroup order.
 /// Because every MSM input point is subgroup-checked (order `r`), reducing the scalar modulo `r`
-/// yields an identical result while letting callers cheaply skip scalars that reduce to zero.
+/// yields an identical result while letting callers cheaply skip scalars that reduce to zero. The
+/// MSM APIs accept only [`SubgroupCheckedG1`] or [`SubgroupCheckedG2`] operands so this invariant
+/// is enforced by the type system.
 #[inline]
 fn read_scalar(input: &[u8]) -> Result<Fr, PrecompileHalt> {
     if input.len() != SCALAR_LENGTH {
@@ -302,11 +319,12 @@ fn p2_add_affine(p1: &G2Affine, p2: &G2Affine) -> G2Affine {
 
 /// Performs multi-scalar multiplication (MSM) for G1 points
 ///
-/// Takes a vector of G1 points and corresponding scalars, and returns their weighted sum
+/// Takes a vector of subgroup-checked G1 points and corresponding scalars, and returns their
+/// weighted sum.
 ///
 /// Note: This method assumes that `g1_points` does not contain any points at infinity.
 #[inline]
-fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
+fn p1_msm(g1_points: Vec<SubgroupCheckedG1>, scalars: Vec<Fr>) -> G1Affine {
     assert_eq!(
         g1_points.len(),
         scalars.len(),
@@ -319,8 +337,11 @@ fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
 
     if g1_points.len() == 1 {
         let big_int = scalars[0].into_bigint();
-        return g1_points[0].mul_bigint(big_int).into_affine();
+        return g1_points[0].0.mul_bigint(big_int).into_affine();
     }
+
+    // Unwrap the subgroup proof only at the arkworks MSM boundary.
+    let g1_points: Vec<G1Affine> = g1_points.into_iter().map(|point| point.0).collect();
 
     // Perform multi-scalar multiplication
     G1Projective::msm(&g1_points, &scalars)
@@ -330,11 +351,12 @@ fn p1_msm(g1_points: Vec<G1Affine>, scalars: Vec<Fr>) -> G1Affine {
 
 /// Performs multi-scalar multiplication (MSM) for G2 points
 ///
-/// Takes a vector of G2 points and corresponding scalars, and returns their weighted sum
+/// Takes a vector of subgroup-checked G2 points and corresponding scalars, and returns their
+/// weighted sum.
 ///
 /// Note: This method assumes that `g2_points` does not contain any points at infinity.
 #[inline]
-fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
+fn p2_msm(g2_points: Vec<SubgroupCheckedG2>, scalars: Vec<Fr>) -> G2Affine {
     assert_eq!(
         g2_points.len(),
         scalars.len(),
@@ -347,8 +369,11 @@ fn p2_msm(g2_points: Vec<G2Affine>, scalars: Vec<Fr>) -> G2Affine {
 
     if g2_points.len() == 1 {
         let big_int = scalars[0].into_bigint();
-        return g2_points[0].mul_bigint(big_int).into_affine();
+        return g2_points[0].0.mul_bigint(big_int).into_affine();
     }
+
+    // Unwrap the subgroup proof only at the arkworks MSM boundary.
+    let g2_points: Vec<G2Affine> = g2_points.into_iter().map(|point| point.0).collect();
 
     // Perform multi-scalar multiplication
     G2Projective::msm(&g2_points, &scalars)
@@ -475,7 +500,7 @@ pub(crate) fn p1_msm_bytes(
         let ((x, y), scalar_bytes) = pair_result?;
 
         // Skip points at infinity after validating they are on-curve and in the subgroup.
-        let Some(point) = read_g1_msm(&x, &y)? else {
+        let Some(point) = SubgroupCheckedG1::read_msm(&x, &y)? else {
             continue;
         };
 
@@ -516,7 +541,7 @@ pub(crate) fn p2_msm_bytes(
         let ((x_0, x_1, y_0, y_1), scalar_bytes) = pair_result?;
 
         // Skip points at infinity after validating they are on-curve and in the subgroup.
-        let Some(point) = read_g2_msm(&x_0, &x_1, &y_0, &y_1)? else {
+        let Some(point) = SubgroupCheckedG2::read_msm(&x_0, &x_1, &y_0, &y_1)? else {
             continue;
         };
 
@@ -550,12 +575,14 @@ mod tests {
     #[test]
     fn read_g1_msm_skips_infinity() {
         let zero = [0u8; FP_LENGTH];
-        assert!(read_g1_msm(&zero, &zero).unwrap().is_none());
+        assert!(SubgroupCheckedG1::read_msm(&zero, &zero).unwrap().is_none());
     }
 
     #[test]
     fn read_g2_msm_skips_infinity() {
         let zero = [0u8; FP_LENGTH];
-        assert!(read_g2_msm(&zero, &zero, &zero, &zero).unwrap().is_none());
+        assert!(SubgroupCheckedG2::read_msm(&zero, &zero, &zero, &zero)
+            .unwrap()
+            .is_none());
     }
 }
