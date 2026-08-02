@@ -51,6 +51,10 @@ const SIGMA: [[u8; 16]; 10] = [
 /// BLAKE2b compression function F (EIP-152).
 ///
 /// Dispatches to the best available implementation (AVX2 or portable).
+// On targets with no SIMD path the cfgs below collapse to the single `portable::compress` call,
+// which is `const`, so clippy suggests making this `const` too. It cannot be: on x86 this performs
+// runtime AVX2 feature detection and calls an `unsafe` intrinsic implementation.
+#[allow(clippy::missing_const_for_fn)]
 pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {

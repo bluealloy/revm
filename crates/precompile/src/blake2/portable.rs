@@ -6,7 +6,9 @@
 // - Removed compress1_loop and all Finalize/LastNode/Stride/Count machinery.
 // - Changed compress_block signature for EIP-152: takes (rounds, words, m, t, f) with pre-parsed
 //   Word arrays instead of raw bytes, and variable round count.
-// - Replaced 12 hardcoded round() calls with a for loop.
+// - Replaced 12 hardcoded round() calls with a loop over 10 unrolled rounds using a remaining
+//   counter, mirroring avx2.rs. The round index stays a compile-time constant so that each
+//   round's SIGMA row const-folds into immediate message offsets.
 
 use super::{Word, IV, SIGMA};
 
@@ -28,10 +30,14 @@ const fn g(v: &mut [Word; 16], a: usize, b: usize, c: usize, d: usize, x: Word, 
     v[b] = (v[b] ^ v[c]).rotate_right(63);
 }
 
+// R is the *physical* round index, always a compile-time constant in the range 0..10. Keeping it
+// const is what lets the compiler fold `SIGMA[R]` into literals, so each `m[s[j]]` becomes a load
+// at an immediate offset instead of a byte load of the schedule followed by a dependent load of
+// the message word.
 #[inline(always)]
-const fn round(r: usize, m: &[Word; 16], v: &mut [Word; 16]) {
+const fn round<const R: usize>(m: &[Word; 16], v: &mut [Word; 16]) {
     // Select the message schedule based on the round.
-    let s = SIGMA[r % 10];
+    let s = SIGMA[R];
 
     // Mix the columns.
     g(v, 0, 4, 8, 12, m[s[0] as usize], m[s[1] as usize]);
@@ -46,7 +52,13 @@ const fn round(r: usize, m: &[Word; 16], v: &mut [Word; 16]) {
     g(v, 3, 4, 9, 14, m[s[14] as usize], m[s[15] as usize]);
 }
 
-pub(crate) fn compress(rounds: u32, words: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
+pub(crate) const fn compress(
+    rounds: u32,
+    words: &mut [Word; 8],
+    m: &[Word; 16],
+    t: &[Word; 2],
+    f: bool,
+) {
     // Initialize the compression state.
     let mut v = [
         words[0],
@@ -67,8 +79,71 @@ pub(crate) fn compress(rounds: u32, words: &mut [Word; 8], m: &[Word; 16], t: &[
         IV[7],
     ];
 
-    for i in 0..rounds as usize {
-        round(i, m, &mut v);
+    // SIGMA has spec period 10 (RFC 7693 §2.7), so ten physically distinct rounds tile any round
+    // count: the loop re-enters at R = 0, which is how standard BLAKE2b's rounds 10 and 11 reuse
+    // SIGMA rows 0 and 1. `remaining` is checked before each round so that EIP-152's arbitrary
+    // round count (including 0) terminates at the right point.
+    let mut remaining = rounds;
+    loop {
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<0>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<1>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<2>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<3>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<4>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<5>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<6>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<7>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<8>(m, &mut v);
+
+        if remaining == 0 {
+            break;
+        }
+        remaining -= 1;
+        round::<9>(m, &mut v);
     }
 
     words[0] ^= v[0] ^ v[8];
