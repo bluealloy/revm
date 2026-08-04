@@ -1,8 +1,8 @@
 pub mod post_block;
 pub mod pre_block;
-pub mod receipt;
 
 use crate::dir_utils::find_all_json_tests;
+use alloy_consensus::{proofs::calculate_receipt_root, Receipt, ReceiptEnvelope, TxType};
 use clap::Parser;
 
 use revm::statetest_types::blockchain::{
@@ -936,12 +936,16 @@ fn execute_blockchain_test(
                     cumulative_tx_gas_used += gas.tx_gas_used();
                     block_regular_gas_used += gas.block_regular_gas_used();
                     block_state_gas_used += gas.block_state_gas_used();
-                    receipts.push(receipt::Receipt {
-                        tx_type: tx_env.tx_type,
-                        success: result.result.is_success(),
-                        cumulative_gas_used: cumulative_tx_gas_used,
-                        logs: result.result.logs().to_vec(),
-                    });
+                    let tx_type = TxType::try_from(tx_env.tx_type)
+                        .expect("tests only contain known transaction types");
+                    receipts.push(ReceiptEnvelope::from_typed(
+                        tx_type,
+                        Receipt {
+                            status: result.result.is_success().into(),
+                            cumulative_gas_used: cumulative_tx_gas_used,
+                            logs: result.result.logs().to_vec(),
+                        },
+                    ));
                     evm.commit(result.state);
                 }
                 Err(e) => {
@@ -1026,7 +1030,7 @@ fn execute_blockchain_test(
                 // Pre-Byzantium receipts embed the intermediate state root
                 // instead of a status byte, so only check Byzantium+.
                 if spec_id.is_enabled_in(SpecId::BYZANTIUM) {
-                    let actual_receipt_root = receipt::receipts_root(&receipts);
+                    let actual_receipt_root = calculate_receipt_root(&receipts);
                     if actual_receipt_root != block_header.receipt_trie {
                         if print_env_on_error {
                             eprintln!(

@@ -25,6 +25,7 @@ revm = { workspace = true, features = [
 criterion.workspace = true
 
 # alloy
+alloy-consensus = { workspace = true, features = ["std"] }
 alloy-rlp = { workspace = true, features = ["arrayvec", "derive"] }
 alloy-sol-types.workspace = true
 alloy-trie = { workspace = true, features = ["ethereum"] }
