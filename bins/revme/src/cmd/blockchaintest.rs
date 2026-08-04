@@ -1,5 +1,6 @@
 pub mod post_block;
 pub mod pre_block;
+pub mod receipt;
 
 use crate::dir_utils::find_all_json_tests;
 use clap::Parser;
@@ -14,7 +15,7 @@ use revm::{
     database::{states::bundle_state::BundleRetention, EmptyDB, State},
     handler::EvmTr,
     inspector::inspectors::TracerEip3155,
-    primitives::{hardfork::SpecId, hex, Address, AddressMap, U256Map, U256},
+    primitives::{hardfork::SpecId, hex, Address, AddressMap, U256Map, B256, U256},
     state::{bal::Bal, AccountInfo},
     Context, Database, ExecuteCommitEvm, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
 };
@@ -796,6 +797,7 @@ fn execute_blockchain_test(
         let mut block_regular_gas_used: u64 = 0;
         let mut block_state_gas_used: u64 = 0;
         let mut block_completed = true;
+        let mut receipts = Vec::with_capacity(transactions.len());
 
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
@@ -934,6 +936,12 @@ fn execute_blockchain_test(
                     cumulative_tx_gas_used += gas.tx_gas_used();
                     block_regular_gas_used += gas.block_regular_gas_used();
                     block_state_gas_used += gas.block_state_gas_used();
+                    receipts.push(receipt::Receipt {
+                        tx_type: tx_env.tx_type,
+                        success: result.result.is_success(),
+                        cumulative_gas_used: cumulative_tx_gas_used,
+                        logs: result.result.logs().to_vec(),
+                    });
                     evm.commit(result.state);
                 }
                 Err(e) => {
@@ -1013,6 +1021,29 @@ fn execute_blockchain_test(
                         expected: expected_gas_used,
                         actual: actual_block_gas_used,
                     });
+                }
+
+                // Pre-Byzantium receipts embed the intermediate state root
+                // instead of a status byte, so only check Byzantium+.
+                if spec_id.is_enabled_in(SpecId::BYZANTIUM) {
+                    let actual_receipt_root = receipt::receipts_root(&receipts);
+                    if actual_receipt_root != block_header.receipt_trie {
+                        if print_env_on_error {
+                            eprintln!(
+                                "Receipt root mismatch at block {block_idx}: expected {}, got {actual_receipt_root}",
+                                block_header.receipt_trie
+                            );
+                            eprintln!(
+                                "gas counters: tx {cumulative_tx_gas_used}, regular {block_regular_gas_used}, state {block_state_gas_used}"
+                            );
+                            eprintln!("receipts: {receipts:#?}");
+                        }
+                        return Err(TestExecutionError::ReceiptRootMismatch {
+                            block_idx,
+                            expected: block_header.receipt_trie,
+                            actual: actual_receipt_root,
+                        });
+                    }
                 }
             }
         }
@@ -1212,6 +1243,13 @@ pub enum TestExecutionError {
         block_idx: usize,
         expected: u64,
         actual: u64,
+    },
+
+    #[error("Receipt root mismatch at block {block_idx}: expected {expected}, got {actual}")]
+    ReceiptRootMismatch {
+        block_idx: usize,
+        expected: B256,
+        actual: B256,
     },
 
     #[error("Pre-block system call failed at block {block_idx}: {error}")]
