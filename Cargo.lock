@@ -4100,6 +4100,7 @@ dependencies = [
 name = "revme"
 version = "42.0.1"
 dependencies = [
+ "alloy-consensus",
  "alloy-rlp",
  "alloy-sol-types",
  "alloy-trie",
