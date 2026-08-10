@@ -108,13 +108,11 @@ fn test_eip2780_call_empty_with_value() {
     let mut evm = evm();
     let to = address!("0x00000000000000000000000000000000000000ab");
     let gas = run(&mut evm, TxKind::Call(to), U256::from(1u64));
-    // Intrinsic regular: TX_BASE_COST + COLD_ACCOUNT_ACCESS + TRANSFER_LOG_COST + TX_VALUE_COST = 21_000.
+    // Intrinsic regular: TX_BASE_COST + COLD_ACCOUNT_ACCESS + TX_VALUE_COST = 21_000.
     // The ACCOUNT_WRITE for creating the empty recipient is not charged as regular
     // gas (only the NEW_ACCOUNT state gas is). Top-level state gas: 183_600.
-    let expected_regular = eip2780::TX_BASE_COST
-        + eip8038::COLD_ACCOUNT_ACCESS
-        + eip2780::TRANSFER_LOG_COST
-        + eip2780::TX_VALUE_COST;
+    let expected_regular =
+        eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip2780::TX_VALUE_COST;
     assert_eq!(regular_spent(&gas), expected_regular);
     assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
 }
@@ -123,7 +121,7 @@ fn test_eip2780_call_empty_with_value() {
 fn test_eip2780_create_no_value() {
     let mut evm = evm();
     let gas = run(&mut evm, TxKind::Create, U256::ZERO);
-    // Intrinsic regular: TX_BASE_COST + CREATE_ACCESS = 21_600.
+    // Intrinsic regular: TX_BASE_COST + CREATE_ACCESS = 24_000.
     // Intrinsic state gas: STATE_BYTES_PER_NEW_ACCOUNT × CPSB = 183_600.
     let expected_regular = eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS;
     assert_eq!(regular_spent(&gas), expected_regular);
@@ -134,10 +132,10 @@ fn test_eip2780_create_no_value() {
 fn test_eip2780_create_with_value() {
     let mut evm = evm();
     let gas = run(&mut evm, TxKind::Create, U256::from(1u64));
-    // Intrinsic regular: TX_BASE_COST + CREATE_ACCESS + TRANSFER_LOG_COST.
+    // Intrinsic regular: TX_BASE_COST + CREATE_ACCESS. Since glamsterdam
+    // devnet-8 a create transaction pays no value-based charge.
     // Intrinsic state gas: STATE_BYTES_PER_NEW_ACCOUNT × CPSB.
-    let expected_regular =
-        eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS + eip2780::TRANSFER_LOG_COST;
+    let expected_regular = eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS;
     assert_eq!(regular_spent(&gas), expected_regular);
     assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
 }
@@ -215,7 +213,7 @@ fn test_eip2780_create_to_existing_target_no_state_gas() {
 
 #[test]
 fn test_eip2780_create_runtime_state_gas_oog_is_included() {
-    // Gas covers the intrinsic cost (TX_BASE + CREATE_ACCESS = 23,000) but not
+    // Gas covers the intrinsic cost (TX_BASE + CREATE_ACCESS = 24,000) but not
     // the runtime new-account state gas: the transaction stays valid and is
     // included as an out-of-gas halt consuming all supplied gas.
     let gas_limit = eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS;
@@ -237,10 +235,7 @@ fn test_eip2780_call_runtime_state_gas_oog_is_included() {
     // Value transfer to a non-existent recipient funded only for the intrinsic
     // 21,000: valid, included, halts out-of-gas in the runtime phase.
     let to = address!("0x00000000000000000000000000000000000000ab");
-    let gas_limit = eip2780::TX_BASE_COST
-        + eip8038::COLD_ACCOUNT_ACCESS
-        + eip2780::TRANSFER_LOG_COST
-        + eip2780::TX_VALUE_COST;
+    let gas_limit = eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip2780::TX_VALUE_COST;
     let mut evm = evm();
 
     let tx = TxEnv::builder_for_bench()
@@ -499,7 +494,7 @@ fn test_eip2780_create_spilled_charge_reverted_initcode() {
     assert_eq!(gas.state_gas_spent_final(), 0);
     // TX_BASE_COST + CREATE_ACCESS + initcode words + REVERT-path costs; the
     // rolled-back spilled charge is returned as unused regular gas.
-    assert_eq!(gas.total_gas_spent(), 23_064);
+    assert_eq!(gas.total_gas_spent(), 24_064);
 }
 
 #[test]
@@ -526,7 +521,7 @@ fn test_eip2780_create_spilled_charge_laundering_success() {
     // Only the create charge remains as state gas: all three storage slots
     // were restored to zero, so their 0->x charges were refilled.
     assert_eq!(gas.state_gas_spent_final(), STATE_BYTES_PER_NEW_ACCOUNT);
-    assert_eq!(gas.total_gas_spent(), 249_563);
+    assert_eq!(gas.total_gas_spent(), 247_863);
 }
 
 #[test]
@@ -541,7 +536,7 @@ fn test_eip2780_create_spilled_charge_laundering_revert() {
     assert!(!result.is_halt());
     let gas = result.gas();
     assert_eq!(gas.state_gas_spent_final(), 0);
-    assert_eq!(gas.total_gas_spent(), 66_021);
+    assert_eq!(gas.total_gas_spent(), 64_321);
 }
 
 #[test]
