@@ -70,7 +70,13 @@ pub trait Database {
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
     /// Returns whether the account has any non-zero storage slots.
-    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error>;
+    ///
+    /// The default preserves the behavior from before EIP-7610 storage collisions were enforced.
+    /// Databases that can contain persisted account storage should override this method.
+    #[inline]
+    fn account_has_storage(&mut self, _address: Address) -> Result<bool, Self::Error> {
+        Ok(false)
+    }
 
     /// Gets account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
@@ -156,7 +162,13 @@ pub trait DatabaseRef {
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
     /// Returns whether the account has any non-zero storage slots.
-    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error>;
+    ///
+    /// The default preserves the behavior from before EIP-7610 storage collisions were enforced.
+    /// Databases that can contain persisted account storage should override this method.
+    #[inline]
+    fn account_has_storage_ref(&self, _address: Address) -> Result<bool, Self::Error> {
+        Ok(false)
+    }
 
     /// Gets account code by its hash.
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;

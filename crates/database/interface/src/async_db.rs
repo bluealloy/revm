@@ -478,10 +478,15 @@ pub trait DatabaseAsync {
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
     /// Returns whether the account has any non-zero storage slots.
+    ///
+    /// The default preserves the behavior from before EIP-7610 storage collisions were enforced.
+    /// Databases that can contain persisted account storage should override this method.
     fn account_has_storage_async(
         &mut self,
-        address: Address,
-    ) -> impl Future<Output = Result<bool, Self::Error>> + Send;
+        _address: Address,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send {
+        async { Ok(false) }
+    }
 
     /// Gets account code by its hash.
     fn code_by_hash_async(
@@ -533,10 +538,15 @@ pub trait DatabaseAsyncRef {
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
     /// Returns whether the account has any non-zero storage slots.
+    ///
+    /// The default preserves the behavior from before EIP-7610 storage collisions were enforced.
+    /// Databases that can contain persisted account storage should override this method.
     fn account_has_storage_async_ref(
         &self,
-        address: Address,
-    ) -> impl Future<Output = Result<bool, Self::Error>> + Send;
+        _address: Address,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send {
+        async { Ok(false) }
+    }
 
     /// Gets account code by its hash.
     fn code_by_hash_async_ref(
