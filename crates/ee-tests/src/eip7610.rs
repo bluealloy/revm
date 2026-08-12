@@ -94,7 +94,10 @@ fn tx_create_collides_with_storage_only_account() {
     funded_caller(&mut db, 0);
     storage_only_target(&mut db, target);
 
-    let mut evm = Context::mainnet().with_db(db).build_mainnet();
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::FRONTIER))
+        .with_db(db)
+        .build_mainnet();
     let result = evm
         .transact_one(
             TxEnv::builder_for_bench()
