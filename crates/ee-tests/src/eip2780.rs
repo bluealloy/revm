@@ -616,6 +616,10 @@ impl revm::Database for NoCodeInBasicDB {
         )
     }
 
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        revm::Database::account_has_storage(&mut self.0, address)
+    }
+
     fn code_by_hash(&mut self, code_hash: revm::primitives::B256) -> Result<Bytecode, Self::Error> {
         revm::Database::code_by_hash(&mut self.0, code_hash)
     }

@@ -65,32 +65,12 @@ pub enum TestErrorKind {
 /// Check if a test should be skipped based on its filename
 /// Some tests are known to be problematic or take too long
 fn skip_test(path: &Path) -> bool {
-    let path_str = path.to_str().unwrap_or_default();
-
-    // Skip tets that have storage for newly created account.
-    if path_str.contains("paris/eip7610_create_collision") {
-        return true;
-    }
-
     let name = path.file_name().unwrap().to_str().unwrap_or_default();
 
     matches!(
         name,
-        // Test with some storage check.
-        "RevertInCreateInInit_Paris.json"
-        | "RevertInCreateInInit.json"
-        | "dynamicAccountOverwriteEmpty.json"
-        | "dynamicAccountOverwriteEmpty_Paris.json"
-        | "RevertInCreateInInitCreate2Paris.json"
-        | "create2collisionStorage.json"
-        | "RevertInCreateInInitCreate2.json"
-        | "create2collisionStorageParis.json"
-        | "InitCollision.json"
-        | "InitCollisionParis.json"
-        | "test_init_collision_create_opcode.json"
-
         // Malformed value.
-        | "ValueOverflow.json"
+        "ValueOverflow.json"
         | "ValueOverflowParis.json"
 
         // These tests are passing, but they take a lot of time to execute so we are going to skip them.

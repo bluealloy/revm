@@ -168,6 +168,10 @@ impl JournalTr for Backend {
         self.journaled_state.load_account(address)
     }
 
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Infallible> {
+        self.journaled_state.account_has_storage(address)
+    }
+
     fn load_account_with_code(
         &mut self,
         address: Address,

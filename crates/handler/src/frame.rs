@@ -22,7 +22,7 @@ use interpreter::{
 use primitives::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-    Address, Bytes, U256,
+    Address, Bytes, KECCAK_EMPTY, U256,
 };
 use state::Bytecode;
 use std::{borrow::ToOwned, boxed::Box, vec::Vec};
@@ -316,8 +316,14 @@ impl EthFrame<EthInterpreter> {
 
         drop(caller_info); // Drop caller info to avoid borrow checker issues.
 
-        // warm load account.
-        journal.load_account(created_address)?;
+        // Warm load account and apply EIP-7610's storage collision check.
+        let target_has_code_or_nonce = {
+            let target = journal.load_account(created_address)?;
+            target.info.code_hash != KECCAK_EMPTY || target.info.nonce != 0
+        };
+        if !target_has_code_or_nonce && journal.account_has_storage(created_address)? {
+            return return_error(InstructionResult::CreateCollision);
+        }
 
         // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal_mut().create_account_checkpoint(

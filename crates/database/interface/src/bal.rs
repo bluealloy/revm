@@ -398,6 +398,13 @@ impl<DB: Database> Database for BalDatabase<DB> {
     }
 
     #[inline]
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        self.db
+            .account_has_storage(address)
+            .map_err(EvmDatabaseError::Database)
+    }
+
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         self.db
             .code_by_hash(code_hash)

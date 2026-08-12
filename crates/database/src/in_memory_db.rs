@@ -334,6 +334,21 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         Ok(self.load_account(address)?.info())
     }
 
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        if let Some(account) = self.cache.accounts.get(&address) {
+            if account.storage.values().any(|value| !value.is_zero()) {
+                return Ok(true);
+            }
+            if matches!(
+                account.account_state,
+                AccountState::StorageCleared | AccountState::NotExisting
+            ) {
+                return Ok(false);
+            }
+        }
+        self.db.account_has_storage_ref(address)
+    }
+
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         match self.cache.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
@@ -408,6 +423,21 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             Some(acc) => Ok(acc.info()),
             None => self.db.basic_ref(address),
         }
+    }
+
+    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        if let Some(account) = self.cache.accounts.get(&address) {
+            if account.storage.values().any(|value| !value.is_zero()) {
+                return Ok(true);
+            }
+            if matches!(
+                account.account_state,
+                AccountState::StorageCleared | AccountState::NotExisting
+            ) {
+                return Ok(false);
+            }
+        }
+        self.db.account_has_storage_ref(address)
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -570,6 +600,10 @@ impl Database for BenchmarkDB {
         Ok(None)
     }
 
+    fn account_has_storage(&mut self, _address: Address) -> Result<bool, Self::Error> {
+        Ok(false)
+    }
+
     /// Get account code by its hash
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         if code_hash == self.1 {
@@ -622,6 +656,7 @@ mod tests {
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key), Ok(value));
+        assert_eq!(new_state.account_has_storage(account), Ok(true));
     }
 
     #[test]
@@ -651,6 +686,12 @@ mod tests {
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(StorageValue::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
+        assert_eq!(new_state.account_has_storage(account), Ok(true));
+
+        new_state
+            .replace_account_storage(account, HashMap::default())
+            .unwrap();
+        assert_eq!(new_state.account_has_storage(account), Ok(false));
     }
 
     #[test]

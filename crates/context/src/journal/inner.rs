@@ -768,6 +768,34 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
+    /// Returns whether the loaded account's current state has any non-zero storage slots.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the account has not been loaded into the journal.
+    #[inline]
+    pub fn account_has_storage<DB: Database>(
+        &mut self,
+        db: &mut DB,
+        address: Address,
+    ) -> Result<bool, DB::Error> {
+        let account = self.state.get(&address).expect("account must be loaded");
+        if account
+            .storage
+            .values()
+            .any(|slot| !slot.present_value.is_zero())
+        {
+            return Ok(true);
+        }
+        if account.is_created()
+            || account.is_selfdestructed()
+            || account.is_loaded_as_not_existing()
+        {
+            return Ok(false);
+        }
+        db.account_has_storage(address)
+    }
+
     /// Loads account into memory. If account is EIP-7702 type it will additionally
     /// load delegated account.
     ///

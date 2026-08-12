@@ -1,5 +1,6 @@
 //! Alloy provider database implementation.
 
+use alloy_consensus::constants::EMPTY_ROOT_HASH;
 pub use alloy_eips::BlockId;
 use alloy_provider::{
     network::{primitives::HeaderResponse, BlockResponse},
@@ -104,6 +105,15 @@ impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
         let nonce = nonce?;
 
         Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
+    }
+
+    async fn account_has_storage_async_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        let proof = self
+            .provider
+            .get_proof(address, Vec::new())
+            .block_id(self.block_number)
+            .await?;
+        Ok(proof.storage_hash != EMPTY_ROOT_HASH)
     }
 
     async fn block_hash_async_ref(&self, number: u64) -> Result<B256, Self::Error> {

@@ -19,6 +19,13 @@ where
         }
     }
 
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        match self {
+            Self::Left(db) => db.account_has_storage(address),
+            Self::Right(db) => db.account_has_storage(address),
+        }
+    }
+
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         match self {
             Self::Left(db) => db.code_by_hash(code_hash),
@@ -88,6 +95,13 @@ where
         match self {
             Self::Left(db) => db.basic_ref(address),
             Self::Right(db) => db.basic_ref(address),
+        }
+    }
+
+    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        match self {
+            Self::Left(db) => db.account_has_storage_ref(address),
+            Self::Right(db) => db.account_has_storage_ref(address),
         }
     }
 

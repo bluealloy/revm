@@ -325,6 +325,25 @@ impl<DB: Database> Database for State<DB> {
         Ok(basic)
     }
 
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        let account = self
+            .load_cache_account(address)
+            .map_err(EvmDatabaseError::Database)?;
+        if account
+            .account
+            .as_ref()
+            .is_some_and(|account| account.storage.values().any(|value| !value.is_zero()))
+        {
+            return Ok(true);
+        }
+        if account.status.is_storage_known() {
+            return Ok(false);
+        }
+        self.database
+            .account_has_storage(address)
+            .map_err(EvmDatabaseError::Database)
+    }
+
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         let res = match self.cache.contracts.entry(code_hash) {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
@@ -500,6 +519,38 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         Ok(account)
     }
 
+    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        if let Some(account) = self.cache.accounts.get(&address) {
+            if account
+                .account
+                .as_ref()
+                .is_some_and(|account| account.storage.values().any(|value| !value.is_zero()))
+            {
+                return Ok(true);
+            }
+            if account.status.is_storage_known() {
+                return Ok(false);
+            }
+        }
+        if self.use_preloaded_bundle {
+            if let Some(account) = self.bundle_state.account(&address) {
+                if account
+                    .storage
+                    .values()
+                    .any(|slot| !slot.present_value.is_zero())
+                {
+                    return Ok(true);
+                }
+                if account.status.is_storage_known() {
+                    return Ok(false);
+                }
+            }
+        }
+        self.database
+            .account_has_storage_ref(address)
+            .map_err(EvmDatabaseError::Database)
+    }
+
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         // Check if code is in cache
         if let Some(code) = self.cache.contracts.get(&code_hash) {
@@ -564,7 +615,7 @@ mod tests {
     use super::*;
     use crate::{
         states::{reverts::AccountInfoRevert, StorageSlot},
-        AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
+        AccountRevert, AccountStatus, BundleAccount, CacheDB, RevertToSlot,
     };
     use primitives::{keccak256, Bytes, BLOCK_HASH_HISTORY, U256};
     use state::{EvmStorageSlot, TransactionId};
@@ -582,6 +633,23 @@ mod tests {
 
         let state = State::builder().with_bal(Arc::new(Bal::new())).build();
         assert!(state.has_bal());
+    }
+
+    #[test]
+    fn balance_change_preserves_unknown_backing_storage() {
+        let address = Address::with_last_byte(42);
+        let mut database = CacheDB::<EmptyDB>::default();
+        database.insert_account_info(address, AccountInfo::default());
+        database
+            .insert_account_storage(address, U256::ZERO, U256::from(1))
+            .unwrap();
+
+        let mut state = State::builder().with_database(database).build();
+        let account = state.load_cache_account(address).unwrap();
+        account.increment_balance(1);
+
+        assert_eq!(account.status, AccountStatus::Changed);
+        assert!(state.account_has_storage(address).unwrap());
     }
 
     #[test]

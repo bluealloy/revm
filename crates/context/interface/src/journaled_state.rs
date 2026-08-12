@@ -196,6 +196,12 @@ pub trait JournalTr {
         address: Address,
     ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
 
+    /// Returns whether the account's current state has any non-zero storage slots.
+    fn account_has_storage(
+        &mut self,
+        address: Address,
+    ) -> Result<bool, <Self::Database as Database>::Error>;
+
     /// Loads the account code, use `load_account_with_code` instead.
     #[inline]
     #[deprecated(note = "Use `load_account_with_code` instead")]

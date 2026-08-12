@@ -63,6 +63,11 @@ impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> Database for
     }
 
     #[inline]
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        <Self as DatabaseRef>::account_has_storage_ref(self, address)
+    }
+
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         <Self as DatabaseRef>::code_by_hash_ref(self, code_hash)
     }
@@ -90,6 +95,11 @@ impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> DatabaseRef
     #[inline]
     fn basic_ref(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
+    }
+
+    #[inline]
+    fn account_has_storage_ref(&self, _address: Address) -> Result<bool, Self::Error> {
+        Ok(false)
     }
 
     #[inline]

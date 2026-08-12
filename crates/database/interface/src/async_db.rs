@@ -477,6 +477,12 @@ pub trait DatabaseAsync {
         address: Address,
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
+    /// Returns whether the account has any non-zero storage slots.
+    fn account_has_storage_async(
+        &mut self,
+        address: Address,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send;
+
     /// Gets account code by its hash.
     fn code_by_hash_async(
         &mut self,
@@ -525,6 +531,12 @@ pub trait DatabaseAsyncRef {
         &self,
         address: Address,
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
+
+    /// Returns whether the account has any non-zero storage slots.
+    fn account_has_storage_async_ref(
+        &self,
+        address: Address,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send;
 
     /// Gets account code by its hash.
     fn code_by_hash_async_ref(
@@ -640,6 +652,15 @@ impl<T: DatabaseAsync> Database for AsyncDb<T> {
     }
 
     #[inline]
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        let Self { db, rt } = self;
+        block_on_runtime_result(
+            rt.as_ref().map(HandleOrRuntime::handle),
+            db.account_has_storage_async(address),
+        )
+    }
+
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         let Self { db, rt } = self;
         block_on_runtime_result(
@@ -693,6 +714,14 @@ impl<T: DatabaseAsyncRef> DatabaseRef for AsyncDb<T> {
         block_on_runtime_result(
             self.rt.as_ref().map(HandleOrRuntime::handle),
             self.db.basic_async_ref(address),
+        )
+    }
+
+    #[inline]
+    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        block_on_runtime_result(
+            self.rt.as_ref().map(HandleOrRuntime::handle),
+            self.db.account_has_storage_async_ref(address),
         )
     }
 
@@ -813,6 +842,11 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
     }
 
     #[inline]
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        self.0.account_has_storage(address)
+    }
+
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         self.0.code_by_hash(code_hash)
     }
@@ -849,6 +883,11 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     #[inline]
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.0.basic_ref(address)
+    }
+
+    #[inline]
+    fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        self.0.account_has_storage_ref(address)
     }
 
     #[inline]
@@ -1102,6 +1141,13 @@ mod tests {
             Ok(None)
         }
 
+        async fn account_has_storage_async(
+            &mut self,
+            _address: Address,
+        ) -> Result<bool, Self::Error> {
+            Ok(false)
+        }
+
         async fn code_by_hash_async(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
             Ok(Bytecode::default())
         }
@@ -1131,6 +1177,13 @@ mod tests {
             _address: Address,
         ) -> Result<Option<AccountInfo>, Self::Error> {
             Ok(None)
+        }
+
+        async fn account_has_storage_async(
+            &mut self,
+            _address: Address,
+        ) -> Result<bool, Self::Error> {
+            Ok(false)
         }
 
         async fn code_by_hash_async(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -1183,6 +1236,13 @@ mod tests {
             Ok(None)
         }
 
+        async fn account_has_storage_async(
+            &mut self,
+            _address: Address,
+        ) -> Result<bool, Self::Error> {
+            Ok(false)
+        }
+
         async fn code_by_hash_async(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
             Ok(Bytecode::default())
         }
@@ -1211,6 +1271,14 @@ mod tests {
         ) -> Result<Option<AccountInfo>, Self::Error> {
             tokio::task::yield_now().await;
             Ok(None)
+        }
+
+        async fn account_has_storage_async(
+            &mut self,
+            _address: Address,
+        ) -> Result<bool, Self::Error> {
+            tokio::task::yield_now().await;
+            Ok(false)
         }
 
         async fn code_by_hash_async(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {

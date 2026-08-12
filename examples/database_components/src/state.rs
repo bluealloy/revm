@@ -19,6 +19,9 @@ pub trait State {
     /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
+    /// Returns whether the account has any non-zero storage slots.
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error>;
+
     /// Gets account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
@@ -38,6 +41,9 @@ pub trait StateRef {
     /// Gets basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
+    /// Returns whether the account has any non-zero storage slots.
+    fn account_has_storage(&self, address: Address) -> Result<bool, Self::Error>;
+
     /// Gets account code by its hash.
     fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
@@ -53,6 +59,10 @@ where
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         StateRef::basic(*self, address)
+    }
+
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        StateRef::account_has_storage(*self, address)
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -76,6 +86,10 @@ where
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.deref().basic(address)
+    }
+
+    fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        self.deref().account_has_storage(address)
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
