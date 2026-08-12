@@ -399,6 +399,7 @@ impl<DB: Database> Database for BalDatabase<DB> {
 
     #[inline]
     fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        self.bal_state.get_account_id(&address)?;
         self.db
             .account_has_storage(address)
             .map_err(EvmDatabaseError::Database)
@@ -467,8 +468,43 @@ impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::convert::Infallible;
     use primitives::U256;
-    use state::bal::{AccountBal, BalWrites};
+    use state::{
+        bal::{AccountBal, BalWrites},
+        AccountInfo, Bytecode,
+    };
+
+    #[derive(Debug)]
+    struct StorageDb(bool);
+
+    impl Database for StorageDb {
+        type Error = Infallible;
+
+        fn basic(&mut self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+            Ok(None)
+        }
+
+        fn account_has_storage(&mut self, _address: Address) -> Result<bool, Self::Error> {
+            Ok(self.0)
+        }
+
+        fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+            Ok(Bytecode::default())
+        }
+
+        fn storage(
+            &mut self,
+            _address: Address,
+            _index: StorageKey,
+        ) -> Result<StorageValue, Self::Error> {
+            Ok(StorageValue::ZERO)
+        }
+
+        fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+            Ok(B256::ZERO)
+        }
+    }
 
     fn bal_with_account(address: Address, slot: StorageKey) -> Arc<Bal> {
         let mut account = AccountBal::default();
@@ -526,5 +562,26 @@ mod tests {
             bal_state.storage(&address, slot),
             Ok(Some(StorageValue::from(42u64)))
         );
+    }
+
+    #[test]
+    fn account_storage_check_honors_bal_coverage() {
+        let address = Address::with_last_byte(1);
+        let missing = Address::with_last_byte(2);
+        let bal = bal_with_account(address, U256::ZERO);
+        let mut db = BalDatabase::new(StorageDb(true)).with_bal_option(Some(bal.clone()));
+
+        assert_eq!(db.account_has_storage(address), Ok(true));
+        assert_eq!(
+            db.account_has_storage(missing),
+            Err(EvmDatabaseError::Bal(BalError::AccountNotFound {
+                address: missing
+            }))
+        );
+
+        let mut db = BalDatabase::new(StorageDb(true))
+            .with_bal_option(Some(bal))
+            .with_allow_bal_db_fallback(true);
+        assert_eq!(db.account_has_storage(missing), Ok(true));
     }
 }

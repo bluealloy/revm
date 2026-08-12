@@ -326,6 +326,9 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn account_has_storage(&mut self, address: Address) -> Result<bool, Self::Error> {
+        self.bal_state
+            .get_account_id(&address)
+            .map_err(EvmDatabaseError::Bal)?;
         let account = self
             .load_cache_account(address)
             .map_err(EvmDatabaseError::Database)?;
@@ -520,6 +523,9 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     }
 
     fn account_has_storage_ref(&self, address: Address) -> Result<bool, Self::Error> {
+        self.bal_state
+            .get_account_id(&address)
+            .map_err(EvmDatabaseError::Bal)?;
         if let Some(account) = self.cache.accounts.get(&address) {
             if account
                 .account
@@ -618,7 +624,7 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, CacheDB, RevertToSlot,
     };
     use primitives::{keccak256, Bytes, BLOCK_HASH_HISTORY, U256};
-    use state::{EvmStorageSlot, TransactionId};
+    use state::{bal::BalError, EvmStorageSlot, TransactionId};
 
     fn evm_storage<const N: usize>(
         slots: [(StorageKey, EvmStorageSlot); N],
@@ -650,6 +656,29 @@ mod tests {
 
         assert_eq!(account.status, AccountStatus::Changed);
         assert!(state.account_has_storage(address).unwrap());
+    }
+
+    #[test]
+    fn account_storage_check_honors_bal_coverage() {
+        let address = Address::with_last_byte(42);
+        let missing = Address::with_last_byte(43);
+        let mut database = CacheDB::<EmptyDB>::default();
+        database.insert_account_info(address, AccountInfo::default());
+        database
+            .insert_account_storage(address, U256::ZERO, U256::from(1))
+            .unwrap();
+        let bal = Arc::new(Bal::from_iter([(address, Default::default())]));
+        let mut state = State::builder()
+            .with_database(database)
+            .with_bal(bal)
+            .build();
+
+        assert!(state.account_has_storage(address).unwrap());
+        assert!(matches!(
+            state.account_has_storage(missing),
+            Err(EvmDatabaseError::Bal(BalError::AccountNotFound { address: error_address }))
+                if error_address == missing
+        ));
     }
 
     #[test]
