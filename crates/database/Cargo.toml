@@ -34,8 +34,8 @@ tokio = { workspace = true, features = [
 	"macros",
 ], optional = true }
 alloy-provider = { workspace = true, optional = true }
-alloy-consensus = { workspace = true, optional = true }
 alloy-eips = { workspace = true, optional = true }
+alloy-trie = { workspace = true, optional = true }
 alloy-transport = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -45,8 +45,8 @@ serde_json = { workspace = true, features = ["alloc"] }
 default = ["std"]
 std = [
 	"serde?/std",
-	"alloy-consensus?/std",
 	"alloy-eips?/std",
+	"alloy-trie?/std",
 	"bytecode/std",
 	"database-interface/std",
 	"derive_more/std",
@@ -57,8 +57,8 @@ std = [
 ]
 serde = [
 	"dep:serde",
-	"alloy-consensus?/serde",
 	"alloy-eips?/serde",
+	"alloy-trie?/serde",
 	"bytecode/serde",
 	"database-interface/serde",
 	"primitives/serde",
@@ -70,8 +70,8 @@ alloydb = [
 	"database-interface/asyncdb",
 	"dep:tokio",
 	"dep:alloy-provider",
-	"dep:alloy-consensus",
 	"dep:alloy-eips",
+	"dep:alloy-trie",
 	"dep:alloy-transport",
 ]
 map-foldhash = ["primitives/map-foldhash", "state/map-foldhash"]

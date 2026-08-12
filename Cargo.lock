@@ -3943,10 +3943,10 @@ dependencies = [
 name = "revm-database"
 version = "42.0.0"
 dependencies = [
- "alloy-consensus",
  "alloy-eips",
  "alloy-provider",
  "alloy-transport",
+ "alloy-trie",
  "derive_more",
  "either",
  "revm-bytecode",

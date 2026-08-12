@@ -1,12 +1,12 @@
 //! Alloy provider database implementation.
 
-use alloy_consensus::constants::EMPTY_ROOT_HASH;
 pub use alloy_eips::BlockId;
 use alloy_provider::{
     network::{primitives::HeaderResponse, BlockResponse},
     Network, Provider,
 };
 use alloy_transport::TransportError;
+use alloy_trie::EMPTY_ROOT_HASH;
 use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
 use primitives::{Address, StorageKey, StorageValue, B256};
