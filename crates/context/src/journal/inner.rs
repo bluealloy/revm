@@ -768,18 +768,15 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             .map_err(JournalLoadError::unwrap_db_error)
     }
 
-    /// Returns whether the loaded account's current state has any non-zero storage slots.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the account has not been loaded into the journal.
+    /// Returns whether the account's current state has any non-zero storage slots.
     #[inline]
     pub fn account_has_storage<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
     ) -> Result<bool, DB::Error> {
-        let account = self.state.get(&address).expect("account must be loaded");
+        self.load_account(db, address)?;
+        let account = self.state.get(&address).expect("account was just loaded");
         if account
             .storage
             .values()
@@ -1177,9 +1174,53 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 mod tests {
     use super::*;
     use context_interface::journaled_state::entry::JournalEntry;
-    use database_interface::EmptyDB;
+    use core::convert::Infallible;
+    use database_interface::{Database, EmptyDB};
     use primitives::{address, HashSet, U256};
     use state::AccountInfo;
+
+    struct StorageDb;
+
+    impl Database for StorageDb {
+        type Error = Infallible;
+
+        fn basic(&mut self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+            Ok(Some(AccountInfo::default()))
+        }
+
+        fn account_has_storage(&mut self, _address: Address) -> Result<bool, Self::Error> {
+            Ok(true)
+        }
+
+        fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+            Ok(Bytecode::default())
+        }
+
+        fn storage(
+            &mut self,
+            _address: Address,
+            _index: StorageKey,
+        ) -> Result<StorageValue, Self::Error> {
+            Ok(StorageValue::ZERO)
+        }
+
+        fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+            Ok(B256::ZERO)
+        }
+    }
+
+    #[test]
+    fn account_storage_check_loads_account() {
+        let mut journal = JournalInner::<JournalEntry>::new();
+        let address = Address::with_last_byte(1);
+
+        assert!(!journal.state.contains_key(&address));
+        assert_eq!(
+            journal.account_has_storage(&mut StorageDb, address),
+            Ok(true)
+        );
+        assert!(journal.state.contains_key(&address));
+    }
 
     #[test]
     fn test_sload_skip_cold_load() {
