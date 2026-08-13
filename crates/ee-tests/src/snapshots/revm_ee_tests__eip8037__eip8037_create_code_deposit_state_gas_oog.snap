@@ -7,7 +7,7 @@ expression: "&(baseline_result, baseline_tight_result, result)"
     "Success": {
       "reason": "Stop",
       "gas": {
-        "gas_spent": 32079,
+        "gas_spent": 33079,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 12000
@@ -22,7 +22,7 @@ expression: "&(baseline_result, baseline_tight_result, result)"
     "Success": {
       "reason": "Stop",
       "gas": {
-        "gas_spent": 32079,
+        "gas_spent": 33079,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 12000
@@ -39,7 +39,7 @@ expression: "&(baseline_result, baseline_tight_result, result)"
         "OutOfGas": "Basic"
       },
       "gas": {
-        "gas_spent": 32080,
+        "gas_spent": 33080,
         "state_gas_spent": 0,
         "gas_refunded": 0,
         "floor_gas": 12000
