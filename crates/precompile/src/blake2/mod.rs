@@ -83,7 +83,13 @@ pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f
 /// never timed.
 #[doc(hidden)]
 #[inline]
-pub fn compress_portable(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
+pub const fn compress_portable(
+    rounds: u32,
+    h: &mut [Word; 8],
+    m: &[Word; 16],
+    t: &[Word; 2],
+    f: bool,
+) {
     portable::compress(rounds, h, m, t, f);
 }
 

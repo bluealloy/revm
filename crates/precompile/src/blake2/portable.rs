@@ -84,66 +84,19 @@ pub(crate) const fn compress(
     // SIGMA rows 0 and 1. `remaining` is checked before each round so that EIP-152's arbitrary
     // round count (including 0) terminates at the right point.
     let mut remaining = rounds;
+    macro_rules! rounds {
+        ($($r:literal),*) => {
+            $(
+                if remaining == 0 {
+                    break;
+                }
+                remaining -= 1;
+                round::<$r>(m, &mut v);
+            )*
+        };
+    }
     loop {
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<0>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<1>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<2>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<3>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<4>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<5>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<6>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<7>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<8>(m, &mut v);
-
-        if remaining == 0 {
-            break;
-        }
-        remaining -= 1;
-        round::<9>(m, &mut v);
+        rounds!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     }
 
     words[0] ^= v[0] ^ v[8];
