@@ -317,14 +317,7 @@ impl GasParams {
         // once when building the gas table.
         if spec.is_enabled_in(SpecId::AMSTERDAM) {
             // Regular gas changes
-            table[GasId::create().as_usize()] = 9000;
-            table[GasId::tx_create_cost().as_usize()] = 9000;
             table[GasId::code_deposit_cost().as_usize()] = 0;
-            table[GasId::new_account_cost().as_usize()] = 0;
-            table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
-            // GAS_STORAGE_SET regular = GAS_STORAGE_UPDATE - GAS_COLD_SLOAD = 5000 - 2100 = 2900
-            // sstore_set_without_load_cost = 2900 - WARM_STORAGE_READ_COST(100) = 2800
-            table[GasId::sstore_set_without_load_cost().as_usize()] = 2800;
 
             // State gas values with Glamsterdam CPSB baked in.
             table[GasId::sstore_set_state_gas().as_usize()] =
@@ -338,11 +331,6 @@ impl GasParams {
             table[GasId::tx_eip7702_state_gas_bytecode().as_usize()] =
                 eip8037::AUTH_BASE_BYTES * eip8037::CPSB_GLAMSTERDAM;
 
-            // SSTORE refund for 0→X→0 restoration: regular gas only.
-            // The state-gas portion is restored directly
-            // to the reservoir via `GasParams::sstore_state_gas_refill`.
-            table[GasId::sstore_set_refund().as_usize()] = 2800;
-
             // EIP-2780: the floor base drops from 21,000 to TX_BASE (12,000).
             table[GasId::tx_floor_cost_base_gas().as_usize()] = eip2780::TX_BASE_COST;
 
@@ -355,27 +343,22 @@ impl GasParams {
                 table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
 
             // EIP-7981: Charge access list data at 64 gas per byte, matching
-            // calldata floor pricing. Per-item costs bake in the data charge:
-            //   address: 2400 + 20 * 64 = 3680
-            //   key:     1900 + 32 * 64 = 3948
-            // And every access-list byte contributes 4 floor tokens (16 * 4 = 64 gas).
-            table[GasId::tx_access_list_address_cost().as_usize()] =
-                gas::ACCESS_LIST_ADDRESS + 20 * 64;
-            table[GasId::tx_access_list_storage_key_cost().as_usize()] =
-                gas::ACCESS_LIST_STORAGE_KEY + 32 * 64;
+            // calldata floor pricing: every access-list byte contributes 4 floor
+            // tokens (16 * 4 = 64 gas). The per-item costs (with the data charge
+            // baked in) are set below on top of the EIP-8038 base.
             table[GasId::tx_access_list_floor_byte_multiplier().as_usize()] = 4;
 
-            // EIP-8038: State-access gas cost update (ethereum/EIPs#11802;
-            // preliminary draft values). Constants live in `primitives::eip8038`.
+            // EIP-8038: State-access gas cost update (glamsterdam devnet-8
+            // values). Constants live in `primitives::eip8038`.
             //   WARM_ACCESS                    100 ->    100  (unchanged)
             //   COLD_ACCOUNT_ACCESS          2,600 ->  3,000
-            //   ACCOUNT_WRITE                6,700 ->  8,000
-            //   COLD_STORAGE_ACCESS          2,100 ->  3,000
+            //   ACCOUNT_WRITE                6,700 ->  9,000
+            //   COLD_STORAGE_ACCESS          2,100 ->  2,100  (unchanged)
             //   STORAGE_WRITE                2,800 -> 10,000
-            //   STORAGE_CLEAR_REFUND         4,800 -> 12,480
-            //   CREATE_ACCESS                7,000 -> 11,000  (ACCOUNT_WRITE + COLD_STORAGE_ACCESS)
-            //   ACCESS_LIST_ADDRESS_COST     2,400 ->  3,000  (COLD_ACCOUNT_ACCESS)
-            //   ACCESS_LIST_STORAGE_KEY_COST 1,900 ->  3,000  (COLD_STORAGE_ACCESS)
+            //   STORAGE_CLEAR_REFUND         4,800 -> 11,616
+            //   CREATE_ACCESS                7,000 -> 12,000  (ACCOUNT_WRITE + COLD_ACCOUNT_ACCESS)
+            //   ACCESS_LIST_ADDRESS_COST     2,400 ->  2,900  (COLD_ACCOUNT_ACCESS - WARM_ACCESS)
+            //   ACCESS_LIST_STORAGE_KEY_COST 1,900 ->  2,000  (COLD_STORAGE_ACCESS - WARM_ACCESS)
             //
             // Account access table values.
             table[GasId::warm_storage_read_cost().as_usize()] = eip8038::WARM_ACCESS;
@@ -384,12 +367,11 @@ impl GasParams {
             table[GasId::cold_storage_additional_cost().as_usize()] =
                 eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
             // EIP-8038 folds the warm base into the cold cost: a cold SSTORE pays
-            // COLD_STORAGE_ACCESS (3000) total, not warm(100)+cold. Since
+            // COLD_STORAGE_ACCESS (2100) total, not warm(100)+cold. Since
             // `sstore_static` (warm, 100) is always charged in `sstore_dynamic_gas`,
-            // the cold add-on here is the premium above warm (2900), unlike pre-8038
+            // the cold add-on here is the premium above warm (2000), unlike pre-8038
             // forks which add the full `COLD_SLOAD_COST` on top of the warm base.
             table[GasId::cold_storage_cost().as_usize()] = eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
-            // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND.
             // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND. A value-bearing CALL already
             // pays the ACCOUNT_WRITE surcharge via `transfer_value_cost`, so creating
             // the target charges no extra regular gas — only the NEW_ACCOUNT state gas
@@ -440,7 +422,6 @@ impl GasParams {
             // entries for the additional `to`- and `value`-based charges.
             // ACCOUNT_WRITE / CREATE_ACCESS source from `eip8038` so a single
             // change to the placeholder TBD values propagates everywhere.
-            table[GasId::tx_transfer_log_cost().as_usize()] = eip2780::TRANSFER_LOG_COST;
             table[GasId::tx_account_write_cost().as_usize()] = eip8038::ACCOUNT_WRITE;
             table[GasId::tx_create_access_cost().as_usize()] = eip8038::CREATE_ACCESS;
         }
@@ -977,13 +958,6 @@ impl GasParams {
         self.get(GasId::tx_base_stipend())
     }
 
-    /// EIP-2780: regular gas cost of the EIP-7708 transfer log emitted on
-    /// every nonzero-value transfer to a different account. Zero before AMSTERDAM.
-    #[inline]
-    pub fn tx_transfer_log_cost(&self) -> u64 {
-        self.get(GasId::tx_transfer_log_cost())
-    }
-
     /// EIP-2780/EIP-8038: regular gas cost of an account-leaf write, added
     /// when `tx.value > 0` and the recipient differs from the sender.
     /// Zero before AMSTERDAM.
@@ -1116,16 +1090,14 @@ impl GasParams {
         let mut gas = eip2780::TX_BASE_COST;
 
         if is_create {
-            // tx.to charge: contract-creation access cost.
+            // tx.to charge: contract-creation access cost. Since glamsterdam
+            // devnet-8, creates pay no value-based charge.
             gas += self.tx_create_access_cost();
-            if !info.value.is_zero() {
-                gas += self.tx_transfer_log_cost();
-            }
         } else if !info.is_self_transfer {
             // tx.to charge: cold account access of the recipient.
             gas += eip8038::COLD_ACCOUNT_ACCESS;
             if !info.value.is_zero() {
-                gas += self.tx_transfer_log_cost() + eip2780::TX_VALUE_COST;
+                gas += eip2780::TX_VALUE_COST;
             }
         }
 
@@ -1292,7 +1264,6 @@ impl GasId {
             x if x == Self::tx_access_list_floor_byte_multiplier().as_u8() => {
                 "tx_access_list_floor_byte_multiplier"
             }
-            x if x == Self::tx_transfer_log_cost().as_u8() => "tx_transfer_log_cost",
             x if x == Self::tx_account_write_cost().as_u8() => "tx_account_write_cost",
             x if x == Self::tx_create_access_cost().as_u8() => "tx_create_access_cost",
             _ => "unknown",
@@ -1367,7 +1338,6 @@ impl GasId {
             "tx_access_list_floor_byte_multiplier" => {
                 Some(Self::tx_access_list_floor_byte_multiplier())
             }
-            "tx_transfer_log_cost" => Some(Self::tx_transfer_log_cost()),
             "tx_account_write_cost" => Some(Self::tx_account_write_cost()),
             "tx_create_access_cost" => Some(Self::tx_create_access_cost()),
             _ => None,
@@ -1634,24 +1604,18 @@ impl GasId {
         Self::new(46)
     }
 
-    /// EIP-2780: regular gas cost of the EIP-7708 transfer log emitted on every
-    /// nonzero-value transfer to a different account. Zero before AMSTERDAM.
-    pub const fn tx_transfer_log_cost() -> GasId {
-        Self::new(48)
-    }
-
     /// EIP-2780/EIP-8038: regular gas cost of an account-leaf write at the
     /// intrinsic level (added when `tx.value > 0` and the recipient differs
     /// from the sender). Zero before AMSTERDAM.
     pub const fn tx_account_write_cost() -> GasId {
-        Self::new(49)
+        Self::new(48)
     }
 
     /// EIP-2780/EIP-8038: regular gas cost of a top-level CREATE access, in
     /// addition to [`Self::tx_base_stipend`] and the EIP-8037 state gas.
     /// Zero before AMSTERDAM.
     pub const fn tx_create_access_cost() -> GasId {
-        Self::new(50)
+        Self::new(49)
     }
 }
 
@@ -1723,11 +1687,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 50 known GasIds (based on the indices 1-50 used)
+        // We should have exactly 49 known GasIds (based on the indices 1-49 used)
         assert_eq!(
             unique_names.len(),
-            50,
-            "Expected 50 unique GasIds, found {}",
+            49,
+            "Expected 49 unique GasIds, found {}",
             unique_names.len()
         );
     }
@@ -1869,15 +1833,16 @@ mod tests {
     fn test_eip7981_access_list_cost_amsterdam() {
         // EIP-7981 folds a 64 gas/byte data charge into the per-item access-list cost
         // and adds 4 floor tokens per access-list byte on top of the EIP-7976 floor.
-        // EIP-8038 sets the per-item base to COLD_ACCOUNT_ACCESS / COLD_STORAGE_ACCESS
-        // (both 3,000).
+        // EIP-8038 sets the per-item base to the cold-minus-warm premium:
+        // COLD_ACCOUNT_ACCESS - WARM_ACCESS (2,900) per address and
+        // COLD_STORAGE_ACCESS - WARM_ACCESS (2,000) per storage key.
         let params = GasParams::new_spec(SpecId::AMSTERDAM);
 
         // Per-item intrinsic cost: base + bytes * 64
-        assert_eq!(params.tx_access_list_address_cost(), 3000 + 20 * 64);
-        assert_eq!(params.tx_access_list_storage_key_cost(), 3000 + 32 * 64);
-        assert_eq!(params.tx_access_list_cost(1, 0), 3000 + 20 * 64);
-        assert_eq!(params.tx_access_list_cost(0, 1), 3000 + 32 * 64);
+        assert_eq!(params.tx_access_list_address_cost(), 2900 + 20 * 64);
+        assert_eq!(params.tx_access_list_storage_key_cost(), 2000 + 32 * 64);
+        assert_eq!(params.tx_access_list_cost(1, 0), 2900 + 20 * 64);
+        assert_eq!(params.tx_access_list_cost(0, 1), 2000 + 32 * 64);
 
         // Floor multiplier activates at AMSTERDAM.
         assert_eq!(params.tx_access_list_floor_byte_multiplier(), 4);

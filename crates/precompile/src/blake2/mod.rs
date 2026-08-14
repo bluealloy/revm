@@ -74,6 +74,19 @@ pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f
     portable::compress(rounds, h, m, t, f);
 }
 
+/// The portable (non-SIMD) compression function, reachable directly.
+///
+/// Not public API -- use [`compress`], which always selects the fastest implementation for the
+/// target. This exists so benchmarks can measure the portable path on any host: [`compress`]
+/// detects AVX2 at runtime, so on an x86_64 CI runner a benchmark going through it measures the
+/// AVX2 path only, and the portable code that `no_std`, zkVM and non-x86 builds actually run is
+/// never timed.
+#[doc(hidden)]
+#[inline]
+pub fn compress_portable(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
+    portable::compress(rounds, h, m, t, f);
+}
+
 eth_precompile_fn!(blake2_precompile, run);
 
 /// Blake2 precompile

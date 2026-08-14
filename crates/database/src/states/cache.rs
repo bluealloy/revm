@@ -235,7 +235,13 @@ impl CacheState {
         // by just setting storage inside CRATE constructor. Overlap of those contracts
         // is not possible because CREATE2 is introduced later.
         if is_created {
-            return Some(this_account.newly_created(account));
+            let transition = this_account.newly_created(account);
+            if let Some(info) = transition.info.as_ref() {
+                if let Some(code) = info.code.as_ref() {
+                    self.contracts.insert(info.code_hash, code.clone());
+                }
+            }
+            return Some(transition);
         }
 
         // Account is touched, but not selfdestructed or newly created.

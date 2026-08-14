@@ -279,8 +279,8 @@ fn test_eip7708_transfer_log_tx_value() {
 
     let tx_value = U256::from(1_000_000_000_000_000u128); // 0.001 ETH (within balance)
 
-    // ETH transfer creating new account costs ~207k gas under EIP-2780
-    // (TX_BASE_COST + COLD_ACCOUNT_ACCESS + ACCOUNT_WRITE + TRANSFER_LOG_COST
+    // ETH transfer creating new account costs ~205k gas under EIP-2780
+    // (TX_BASE_COST + COLD_ACCOUNT_ACCESS + TX_VALUE_COST
     //  + STATE_BYTES_PER_NEW_ACCOUNT × CPSB at top-level execution).
     let result = evm
         .transact_one(

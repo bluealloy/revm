@@ -1,10 +1,8 @@
 //! EIP-8038: State-Access Gas Cost Update
 //!
 //! Increases the gas cost of state-access operations to reflect Ethereum's
-//! larger state. The values below are the parameters proposed in
-//! [ethereum/EIPs#11802](https://github.com/ethereum/EIPs/pull/11802) (still a
-//! draft — treat as preliminary), superseding the earlier `previous_value + 1`
-//! placeholders.
+//! larger state. The values below match the glamsterdam devnet-8 numbers in
+//! execution-specs `forks/amsterdam` (`vm/gas.py::GasCosts`).
 //!
 //! Active alongside EIP-7904 and EIP-8037 starting at the Amsterdam hardfork.
 
@@ -13,10 +11,11 @@ pub const COLD_ACCOUNT_ACCESS: u64 = 3_000;
 
 /// Surcharge for writing to an account that changes one account leaf value for
 /// the first time (was 6,700 pre-EIP-8038).
-pub const ACCOUNT_WRITE: u64 = 8_000;
+pub const ACCOUNT_WRITE: u64 = 9_000;
 
-/// Cold touch of a storage slot (was 2,100 pre-EIP-8038).
-pub const COLD_STORAGE_ACCESS: u64 = 3_000;
+/// Cold touch of a storage slot. Unchanged from the pre-EIP-8038 cost, but
+/// under EIP-8038 it is the *total* cold charge (the warm base is folded in).
+pub const COLD_STORAGE_ACCESS: u64 = 2_100;
 
 /// Surcharge for writing to a storage slot that changes its value for the
 /// first time (was 2,800 pre-EIP-8038).
@@ -32,18 +31,21 @@ pub const STORAGE_CLEAR_REFUND: u64 = (STORAGE_WRITE + COLD_STORAGE_ACCESS) * 4_
 
 /// State access cost for contract deployment (was 7,000 pre-EIP-8038).
 ///
-/// Per the spec, `CREATE_ACCESS = ACCOUNT_WRITE + COLD_STORAGE_ACCESS`. This does
+/// Per the spec, `CREATE_ACCESS = ACCOUNT_WRITE + COLD_ACCOUNT_ACCESS`. This does
 /// not match the legacy decomposition (`GAS_CREATE - GAS_NEW_ACCOUNT = 7,000`); the
 /// EIP keeps that discrepancy rather than reconciling it.
-pub const CREATE_ACCESS: u64 = ACCOUNT_WRITE + COLD_STORAGE_ACCESS;
+pub const CREATE_ACCESS: u64 = ACCOUNT_WRITE + COLD_ACCOUNT_ACCESS;
 
 /// Gas charged per storage key included in a transaction's access list
-/// (was 1,900 pre-EIP-8038). Derived per the spec as `COLD_STORAGE_ACCESS`.
-pub const ACCESS_LIST_STORAGE_KEY_COST: u64 = COLD_STORAGE_ACCESS;
+/// (was 1,900 pre-EIP-8038). Derived per the spec as
+/// `COLD_STORAGE_ACCESS - WARM_ACCESS`: the access list pre-pays only the cold
+/// premium, the warm base is still charged at first use.
+pub const ACCESS_LIST_STORAGE_KEY_COST: u64 = COLD_STORAGE_ACCESS - WARM_ACCESS;
 
 /// Gas charged per address included in a transaction's access list
-/// (was 2,400 pre-EIP-8038). Derived per the spec as `COLD_ACCOUNT_ACCESS`.
-pub const ACCESS_LIST_ADDRESS_COST: u64 = COLD_ACCOUNT_ACCESS;
+/// (was 2,400 pre-EIP-8038). Derived per the spec as
+/// `COLD_ACCOUNT_ACCESS - WARM_ACCESS`.
+pub const ACCESS_LIST_ADDRESS_COST: u64 = COLD_ACCOUNT_ACCESS - WARM_ACCESS;
 
 /// Cold premium on top of `WARM_ACCESS` for account access.
 pub const COLD_ACCOUNT_ACCESS_ADDITIONAL: u64 = COLD_ACCOUNT_ACCESS - WARM_ACCESS;
@@ -85,19 +87,19 @@ pub const EIP7702_PER_AUTH_BASE_REGULAR: u64 = EIP7702_AUTH_TUPLE_BYTES * TX_DAT
 mod tests {
     use super::*;
 
-    /// Values must match the parameters table in ethereum/EIPs#11802.
+    /// Values must match execution-specs `forks/amsterdam` (glamsterdam devnet-8).
     #[test]
     fn constants_match_spec() {
         assert_eq!(WARM_ACCESS, 100); // unchanged by EIP-8038
         assert_eq!(COLD_ACCOUNT_ACCESS, 3_000);
-        assert_eq!(ACCOUNT_WRITE, 8_000);
-        assert_eq!(COLD_STORAGE_ACCESS, 3_000);
+        assert_eq!(ACCOUNT_WRITE, 9_000);
+        assert_eq!(COLD_STORAGE_ACCESS, 2_100);
         assert_eq!(STORAGE_WRITE, 10_000);
-        assert_eq!(STORAGE_CLEAR_REFUND, 12_480);
-        assert_eq!(CREATE_ACCESS, 11_000);
-        assert_eq!(ACCESS_LIST_ADDRESS_COST, 3_000);
-        assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, 3_000);
-        assert_eq!(CALL_VALUE, 10_300);
+        assert_eq!(STORAGE_CLEAR_REFUND, 11_616);
+        assert_eq!(CREATE_ACCESS, 12_000);
+        assert_eq!(ACCESS_LIST_ADDRESS_COST, 2_900);
+        assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, 2_000);
+        assert_eq!(CALL_VALUE, 11_300);
         assert_eq!(EIP7702_PER_AUTH_BASE_REGULAR, 7_816);
     }
 
@@ -105,10 +107,13 @@ mod tests {
     /// renumber of one base value propagates correctly).
     #[test]
     fn derived_relations() {
-        assert_eq!(CREATE_ACCESS, ACCOUNT_WRITE + COLD_STORAGE_ACCESS);
+        assert_eq!(CREATE_ACCESS, ACCOUNT_WRITE + COLD_ACCOUNT_ACCESS);
         assert_eq!(CALL_VALUE, ACCOUNT_WRITE + 2_300);
-        assert_eq!(ACCESS_LIST_ADDRESS_COST, COLD_ACCOUNT_ACCESS);
-        assert_eq!(ACCESS_LIST_STORAGE_KEY_COST, COLD_STORAGE_ACCESS);
+        assert_eq!(ACCESS_LIST_ADDRESS_COST, COLD_ACCOUNT_ACCESS - WARM_ACCESS);
+        assert_eq!(
+            ACCESS_LIST_STORAGE_KEY_COST,
+            COLD_STORAGE_ACCESS - WARM_ACCESS
+        );
         assert_eq!(
             STORAGE_CLEAR_REFUND,
             (STORAGE_WRITE + COLD_STORAGE_ACCESS) * 4_800 / 5_000
