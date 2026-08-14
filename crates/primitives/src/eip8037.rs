@@ -5,18 +5,6 @@
 //! a number of "state bytes" that get multiplied by `cost_per_state_byte` (CPSB).
 //! In Glamsterdam, CPSB is fixed at `1530`.
 
-/// Blocks per year at a 12-second block time (used by the CPSB formula).
-pub const BLOCKS_PER_YEAR: u64 = 2_628_000;
-
-/// Target yearly state growth budget, in bytes.
-pub const TARGET_STATE_GROWTH_PER_YEAR: u64 = 100 * 1024 * 1024 * 1024;
-
-/// Offset subtracted after rounding in the CPSB formula.
-pub const CPSB_OFFSET: u64 = 9578;
-
-/// Number of high-order bits retained when rounding CPSB.
-pub const CPSB_SIGNIFICANT_BITS: u32 = 5;
-
 /// State bytes charged per SSTORE 0→non-zero.
 pub const SSTORE_SET_BYTES: u64 = 64;
 
