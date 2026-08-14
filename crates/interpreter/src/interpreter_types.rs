@@ -52,6 +52,8 @@ pub trait InputsTr {
     fn input(&self) -> &CallInput;
     /// Returns call value of the call.
     fn call_value(&self) -> U256;
+    /// Returns the call depth of the frame this interpreter executes (0 for the first frame).
+    fn depth(&self) -> usize;
 }
 
 /// Trait needed for legacy bytecode.

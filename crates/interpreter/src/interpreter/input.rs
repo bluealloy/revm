@@ -18,11 +18,17 @@ pub struct InputsImpl {
     pub input: CallInput,
     /// Value of the call.
     pub call_value: U256,
+    /// Call depth of the frame this interpreter executes (0 for the first frame).
+    pub depth: usize,
 }
 
 impl InputsTr for InputsImpl {
     fn target_address(&self) -> Address {
         self.target_address
+    }
+
+    fn depth(&self) -> usize {
+        self.depth
     }
 
     fn caller_address(&self) -> Address {
