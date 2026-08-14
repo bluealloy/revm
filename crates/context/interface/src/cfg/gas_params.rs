@@ -317,14 +317,7 @@ impl GasParams {
         // once when building the gas table.
         if spec.is_enabled_in(SpecId::AMSTERDAM) {
             // Regular gas changes
-            table[GasId::create().as_usize()] = 9000;
-            table[GasId::tx_create_cost().as_usize()] = 9000;
             table[GasId::code_deposit_cost().as_usize()] = 0;
-            table[GasId::new_account_cost().as_usize()] = 0;
-            table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
-            // GAS_STORAGE_SET regular = GAS_STORAGE_UPDATE - GAS_COLD_SLOAD = 5000 - 2100 = 2900
-            // sstore_set_without_load_cost = 2900 - WARM_STORAGE_READ_COST(100) = 2800
-            table[GasId::sstore_set_without_load_cost().as_usize()] = 2800;
 
             // State gas values with Glamsterdam CPSB baked in.
             table[GasId::sstore_set_state_gas().as_usize()] =
@@ -338,11 +331,6 @@ impl GasParams {
             table[GasId::tx_eip7702_state_gas_bytecode().as_usize()] =
                 eip8037::AUTH_BASE_BYTES * eip8037::CPSB_GLAMSTERDAM;
 
-            // SSTORE refund for 0→X→0 restoration: regular gas only.
-            // The state-gas portion is restored directly
-            // to the reservoir via `GasParams::sstore_state_gas_refill`.
-            table[GasId::sstore_set_refund().as_usize()] = 2800;
-
             // EIP-2780: the floor base drops from 21,000 to TX_BASE (12,000).
             table[GasId::tx_floor_cost_base_gas().as_usize()] = eip2780::TX_BASE_COST;
 
@@ -355,14 +343,9 @@ impl GasParams {
                 table[GasId::tx_token_non_zero_byte_multiplier().as_usize()];
 
             // EIP-7981: Charge access list data at 64 gas per byte, matching
-            // calldata floor pricing. Per-item costs bake in the data charge:
-            //   address: 2400 + 20 * 64 = 3680
-            //   key:     1900 + 32 * 64 = 3948
-            // And every access-list byte contributes 4 floor tokens (16 * 4 = 64 gas).
-            table[GasId::tx_access_list_address_cost().as_usize()] =
-                gas::ACCESS_LIST_ADDRESS + 20 * 64;
-            table[GasId::tx_access_list_storage_key_cost().as_usize()] =
-                gas::ACCESS_LIST_STORAGE_KEY + 32 * 64;
+            // calldata floor pricing: every access-list byte contributes 4 floor
+            // tokens (16 * 4 = 64 gas). The per-item costs (with the data charge
+            // baked in) are set below on top of the EIP-8038 base.
             table[GasId::tx_access_list_floor_byte_multiplier().as_usize()] = 4;
 
             // EIP-8038: State-access gas cost update (glamsterdam devnet-8
@@ -389,7 +372,6 @@ impl GasParams {
             // the cold add-on here is the premium above warm (2000), unlike pre-8038
             // forks which add the full `COLD_SLOAD_COST` on top of the warm base.
             table[GasId::cold_storage_cost().as_usize()] = eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
-            // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND.
             // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND. A value-bearing CALL already
             // pays the ACCOUNT_WRITE surcharge via `transfer_value_cost`, so creating
             // the target charges no extra regular gas — only the NEW_ACCOUNT state gas
