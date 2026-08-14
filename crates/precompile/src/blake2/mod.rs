@@ -51,6 +51,10 @@ const SIGMA: [[u8; 16]; 10] = [
 /// BLAKE2b compression function F (EIP-152).
 ///
 /// Dispatches to the best available implementation (AVX2 or portable).
+// On targets with no SIMD path the cfgs below collapse to the single `portable::compress` call,
+// which is `const`, so clippy suggests making this `const` too. It cannot be: on x86 this performs
+// runtime AVX2 feature detection and calls an `unsafe` intrinsic implementation.
+#[allow(clippy::missing_const_for_fn)]
 pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -79,7 +83,13 @@ pub fn compress(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f
 /// never timed.
 #[doc(hidden)]
 #[inline]
-pub fn compress_portable(rounds: u32, h: &mut [Word; 8], m: &[Word; 16], t: &[Word; 2], f: bool) {
+pub const fn compress_portable(
+    rounds: u32,
+    h: &mut [Word; 8],
+    m: &[Word; 16],
+    t: &[Word; 2],
+    f: bool,
+) {
     portable::compress(rounds, h, m, t, f);
 }
 
@@ -144,4 +154,157 @@ pub fn run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     }
 
     Ok(EthPrecompileOutput::new(gas_used, out.into()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Reference implementation: the compression function written with a runtime round index,
+    /// as it stood before the rounds were unrolled with a constant schedule. Deliberately kept
+    /// naive so that it is easy to check against RFC 7693 §3.2 by eye.
+    fn reference_compress(
+        rounds: u32,
+        words: &mut [Word; 8],
+        m: &[Word; 16],
+        t: &[Word; 2],
+        f: bool,
+    ) {
+        fn g(v: &mut [Word; 16], a: usize, b: usize, c: usize, d: usize, x: Word, y: Word) {
+            v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
+            v[d] = (v[d] ^ v[a]).rotate_right(32);
+            v[c] = v[c].wrapping_add(v[d]);
+            v[b] = (v[b] ^ v[c]).rotate_right(24);
+            v[a] = v[a].wrapping_add(v[b]).wrapping_add(y);
+            v[d] = (v[d] ^ v[a]).rotate_right(16);
+            v[c] = v[c].wrapping_add(v[d]);
+            v[b] = (v[b] ^ v[c]).rotate_right(63);
+        }
+
+        let mut v = [
+            words[0],
+            words[1],
+            words[2],
+            words[3],
+            words[4],
+            words[5],
+            words[6],
+            words[7],
+            IV[0],
+            IV[1],
+            IV[2],
+            IV[3],
+            IV[4] ^ t[0],
+            IV[5] ^ t[1],
+            IV[6] ^ if f { !0 } else { 0 },
+            IV[7],
+        ];
+
+        for r in 0..rounds as usize {
+            let s = SIGMA[r % 10];
+            g(&mut v, 0, 4, 8, 12, m[s[0] as usize], m[s[1] as usize]);
+            g(&mut v, 1, 5, 9, 13, m[s[2] as usize], m[s[3] as usize]);
+            g(&mut v, 2, 6, 10, 14, m[s[4] as usize], m[s[5] as usize]);
+            g(&mut v, 3, 7, 11, 15, m[s[6] as usize], m[s[7] as usize]);
+            g(&mut v, 0, 5, 10, 15, m[s[8] as usize], m[s[9] as usize]);
+            g(&mut v, 1, 6, 11, 12, m[s[10] as usize], m[s[11] as usize]);
+            g(&mut v, 2, 7, 8, 13, m[s[12] as usize], m[s[13] as usize]);
+            g(&mut v, 3, 4, 9, 14, m[s[14] as usize], m[s[15] as usize]);
+        }
+
+        for i in 0..8 {
+            words[i] ^= v[i] ^ v[i + 8];
+        }
+    }
+
+    /// splitmix64, so the inputs are varied but the failures are reproducible.
+    struct Rng(u64);
+
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
+            let mut z = self.0;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+            z ^ (z >> 31)
+        }
+    }
+
+    /// The unrolled portable implementation must agree with the runtime-index reference for
+    /// every round count, not just multiples of ten. Round counts 0..=40 cover an empty run, a
+    /// partial first tile, the wraparound at ten, and a full second tile; the larger counts
+    /// check that nothing drifts after many tiles.
+    ///
+    /// Note this calls `portable::compress` directly rather than the `compress` dispatcher, so
+    /// the portable path is exercised on every target, including those that would otherwise
+    /// dispatch to AVX2.
+    #[test]
+    fn portable_matches_runtime_index_reference() {
+        let mut rng = Rng(0x0DDB_1A5E_5BAD_5EED);
+
+        for rounds in (0u32..=40).chain([100, 101, 109, 110, 111, 1000, 4096]) {
+            for _ in 0..64 {
+                let mut h = [0u64; 8];
+                for w in h.iter_mut() {
+                    *w = rng.next();
+                }
+                let mut m = [0u64; 16];
+                for w in m.iter_mut() {
+                    *w = rng.next();
+                }
+                let t = [rng.next(), rng.next()];
+                let f = rng.next() & 1 == 0;
+
+                let mut got = h;
+                let mut want = h;
+                portable::compress(rounds, &mut got, &m, &t, f);
+                reference_compress(rounds, &mut want, &m, &t, f);
+
+                assert_eq!(
+                    got, want,
+                    "mismatch at rounds={rounds} f={f} h={h:?} m={m:?} t={t:?}"
+                );
+            }
+        }
+    }
+
+    /// EIP-152 test vector 4: an oracle independent of both implementations above. Twelve
+    /// rounds over "abc", the standard BLAKE2b parameters.
+    #[test]
+    fn eip152_vector_4() {
+        let h_in: [u64; 8] = [
+            0x6a09_e667_f2bd_c948,
+            0xbb67_ae85_84ca_a73b,
+            0x3c6e_f372_fe94_f82b,
+            0xa54f_f53a_5f1d_36f1,
+            0x510e_527f_ade6_82d1,
+            0x9b05_688c_2b3e_6c1f,
+            0x1f83_d9ab_fb41_bd6b,
+            0x5be0_cd19_137e_2179,
+        ];
+        let mut m = [0u64; 16];
+        m[0] = 0x0000_0000_0063_6261; // "abc"
+        let t = [3u64, 0u64];
+
+        let expected: [u64; 8] = [
+            0x0d4d_1c98_3fa5_80ba,
+            0xe9f6_129f_b697_276a,
+            0xb7c4_5a68_142f_214c,
+            0xd1a2_ffdb_6fbb_124b,
+            0x2d79_ab2a_39c5_877d,
+            0x95cc_3345_ded5_52c2,
+            0x5a92_f1db_a88a_d318,
+            0x2399_00d4_ed86_23b9,
+        ];
+
+        let mut h = h_in;
+        portable::compress(12, &mut h, &m, &t, true);
+        assert_eq!(h, expected, "portable");
+
+        // And through the dispatcher, so whichever implementation this target selects is
+        // checked against the same vector.
+        let mut h = h_in;
+        compress(12, &mut h, &m, &t, true);
+        assert_eq!(h, expected, "dispatched");
+    }
 }
