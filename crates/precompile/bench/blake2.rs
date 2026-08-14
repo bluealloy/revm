@@ -69,4 +69,47 @@ pub fn add_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTi
         let input = black_box(&inputs[8]); // 200000 rounds
         b.iter(|| blake2::run(input, u64::MAX).unwrap());
     });
+
+    add_portable_benches(group);
+}
+
+/// Benches for the portable compression function, called directly.
+///
+/// The `blake2/*_rounds` benches above go through `blake2::run` -> `blake2::compress`, which
+/// detects AVX2 at runtime. On the x86_64 CI runner they therefore only ever measure the AVX2
+/// implementation, leaving the portable one -- what `no_std`, zkVM and non-x86 targets run --
+/// unmeasured. These call it directly so it is timed on every host.
+fn add_portable_benches(group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>) {
+    // EIP-152 test vector 4: BLAKE2b-512 of "abc", the standard 12-round case.
+    let h_in: [u64; 8] = [
+        0x6a09_e667_f2bd_c948,
+        0xbb67_ae85_84ca_a73b,
+        0x3c6e_f372_fe94_f82b,
+        0xa54f_f53a_5f1d_36f1,
+        0x510e_527f_ade6_82d1,
+        0x9b05_688c_2b3e_6c1f,
+        0x1f83_d9ab_fb41_bd6b,
+        0x5be0_cd19_137e_2179,
+    ];
+    let mut m = [0u64; 16];
+    m[0] = 0x0000_0000_0063_6261; // "abc"
+    let t = [3u64, 0u64];
+
+    // SIGMA has period 10, so the round count decides how the schedule tiles: 2 is a partial
+    // tile, 10 exactly one, 12 one plus a remainder (standard BLAKE2b), 64 several.
+    for rounds in [2u32, 10, 12, 64] {
+        group.bench_function(format!("blake2 portable/{rounds}_rounds"), |b| {
+            b.iter(|| {
+                let mut h = h_in;
+                blake2::compress_portable(
+                    black_box(rounds),
+                    &mut h,
+                    black_box(&m),
+                    black_box(&t),
+                    black_box(true),
+                );
+                h
+            });
+        });
+    }
 }
