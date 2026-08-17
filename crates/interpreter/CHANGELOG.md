@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v42.0.0...revm-interpreter-v43.0.0) - 2026-08-17
+
+### Fixed
+
+- check call depth in CREATE pre-access checks (EIP-8037) ([#3829](https://github.com/bluealloy/revm/pull/3829))
+
 ## [42.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v41.0.0...revm-interpreter-v42.0.0) - 2026-07-22
 
 ### Added

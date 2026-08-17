@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.1](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v42.0.1) - 2026-08-17
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-bytecode
+
 ## [41.1.0](https://github.com/bluealloy/revm/compare/revm-state-v41.0.0...revm-state-v41.1.0) - 2026-07-22
 
 ### Added

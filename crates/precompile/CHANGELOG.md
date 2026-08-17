@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.0.2](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.1...revm-precompile-v42.0.2) - 2026-08-17
+
+### Other
+
+- *(precompile)* port benchmarkoor bls12-381 benches from #3766 ([#3858](https://github.com/bluealloy/revm/pull/3858))
+- *(precompile)* unroll blake2 portable rounds to const-fold the message schedule ([#3840](https://github.com/bluealloy/revm/pull/3840))
+- *(precompile)* benchmark KZG verify arkworks/blst backends directly ([#3849](https://github.com/bluealloy/revm/pull/3849))
+- *(precompile)* measure the blake2 portable compression path ([#3848](https://github.com/bluealloy/revm/pull/3848))
+- *(precompile)* cover BLS MSM sizes where blst switches algorithm ([#3846](https://github.com/bluealloy/revm/pull/3846))
+- *(precompile)* use fused multi-miller loop for BLS12-381 pairing ([#3823](https://github.com/bluealloy/revm/pull/3823))
+- *(precompile)* correct read_fp canonical-check comment ([#3824](https://github.com/bluealloy/revm/pull/3824))
+
 ## [42.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.0...revm-precompile-v42.0.1) - 2026-07-23
 
 ### Added

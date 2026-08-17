@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.1.0](https://github.com/bluealloy/revm/compare/revm-handler-v42.0.1...revm-handler-v42.1.0) - 2026-08-17
+
+### Added
+
+- add async database fiber support ([#3709](https://github.com/bluealloy/revm/pull/3709))
+
+### Fixed
+
+- check call depth in CREATE pre-access checks (EIP-8037) ([#3829](https://github.com/bluealloy/revm/pull/3829))
+
 ## [42.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v42.0.0...revm-handler-v42.0.1) - 2026-07-23
 
 ### Fixed
