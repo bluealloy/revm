@@ -225,7 +225,6 @@ impl GasParams {
         table[GasId::selfdestruct_refund().as_usize()] = 24000;
         table[GasId::call_stipend().as_usize()] = gas::CALL_STIPEND;
         table[GasId::cold_storage_additional_cost().as_usize()] = 0;
-        table[GasId::cold_storage_cost().as_usize()] = 0;
         table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
         table[GasId::code_deposit_cost().as_usize()] = gas::CODEDEPOSIT;
         table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
@@ -265,7 +264,6 @@ impl GasParams {
                 gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
             table[GasId::cold_storage_additional_cost().as_usize()] =
                 gas::COLD_SLOAD_COST - gas::WARM_STORAGE_READ_COST;
-            table[GasId::cold_storage_cost().as_usize()] = gas::COLD_SLOAD_COST;
             table[GasId::warm_storage_read_cost().as_usize()] = gas::WARM_STORAGE_READ_COST;
 
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
@@ -366,12 +364,6 @@ impl GasParams {
                 eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL;
             table[GasId::cold_storage_additional_cost().as_usize()] =
                 eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
-            // EIP-8038 folds the warm base into the cold cost: a cold SSTORE pays
-            // COLD_STORAGE_ACCESS (2100) total, not warm(100)+cold. Since
-            // `sstore_static` (warm, 100) is always charged in `sstore_dynamic_gas`,
-            // the cold add-on here is the premium above warm (2000), unlike pre-8038
-            // forks which add the full `COLD_SLOAD_COST` on top of the warm base.
-            table[GasId::cold_storage_cost().as_usize()] = eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
             // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND. A value-bearing CALL already
             // pays the ACCOUNT_WRITE surcharge via `transfer_value_cost`, so creating
             // the target charges no extra regular gas — only the NEW_ACCOUNT state gas
@@ -541,8 +533,21 @@ impl GasParams {
     /// Dynamic gas cost for SSTORE opcode.
     ///
     /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
+    ///
+    /// The warm load part of the cost is always charged through
+    /// [`sstore_static_gas`](Self::sstore_static_gas). EIP-2929 charges the full
+    /// cold sload cost on top of it, while EIP-8038 (`is_amsterdam`) folds the
+    /// warm base into the cold cost, so a cold access adds only the premium above
+    /// warm ([`cold_storage_additional_cost`](Self::cold_storage_additional_cost)),
+    /// mirroring SLOAD accounting. See `report.md` for the full analysis.
     #[inline]
-    pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
+    pub fn sstore_dynamic_gas(
+        &self,
+        is_istanbul: bool,
+        is_amsterdam: bool,
+        vals: &SStoreResult,
+        is_cold: bool,
+    ) -> u64 {
         // frontier logic gets charged for every SSTORE operation if original value is zero.
         // this behaviour is fixed in istanbul fork.
         if !is_istanbul {
@@ -557,7 +562,14 @@ impl GasParams {
 
         // this will be zero before berlin fork.
         if is_cold {
-            gas += self.cold_storage_cost();
+            gas += if is_amsterdam {
+                self.cold_storage_additional_cost()
+            } else {
+                // Berlin..Osaka double charges the warm access on a cold SSTORE:
+                // the full cold cost (warm included) is added on top of the
+                // warm-inclusive base costs (EIP-2929). EIP-8038 removes this.
+                self.cold_storage_cost()
+            };
         }
 
         // if new values changed present value and present value is unchanged from original.
@@ -707,10 +719,12 @@ impl GasParams {
         self.get(GasId::cold_storage_additional_cost())
     }
 
-    /// Cold storage cost.
+    /// Cold storage cost: the cold premium plus the warm base, i.e.
+    /// [`cold_storage_additional_cost`](Self::cold_storage_additional_cost) +
+    /// [`warm_storage_read_cost`](Self::warm_storage_read_cost).
     #[inline]
     pub fn cold_storage_cost(&self) -> u64 {
-        self.get(GasId::cold_storage_cost())
+        self.cold_storage_additional_cost() + self.warm_storage_read_cost()
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.
@@ -1229,7 +1243,6 @@ impl GasId {
             x if x == Self::cold_storage_additional_cost().as_u8() => {
                 "cold_storage_additional_cost"
             }
-            x if x == Self::cold_storage_cost().as_u8() => "cold_storage_cost",
             x if x == Self::new_account_cost_for_selfdestruct().as_u8() => {
                 "new_account_cost_for_selfdestruct"
             }
@@ -1311,7 +1324,6 @@ impl GasId {
             "selfdestruct_refund" => Some(Self::selfdestruct_refund()),
             "call_stipend" => Some(Self::call_stipend()),
             "cold_storage_additional_cost" => Some(Self::cold_storage_additional_cost()),
-            "cold_storage_cost" => Some(Self::cold_storage_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
             "code_deposit_cost" => Some(Self::code_deposit_cost()),
             "tx_eip7702_regular_gas" => Some(Self::tx_eip7702_regular_gas()),
@@ -1465,11 +1477,6 @@ impl GasId {
     /// Cold storage additional cost.
     pub const fn cold_storage_additional_cost() -> GasId {
         Self::new(23)
-    }
-
-    /// Cold storage cost
-    pub const fn cold_storage_cost() -> GasId {
-        Self::new(24)
     }
 
     /// New account cost for selfdestruct.
@@ -1687,11 +1694,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 49 known GasIds (based on the indices 1-49 used)
+        // We should have exactly 48 known GasIds (based on the indices 1-49 used, 24 and 47 are unused)
         assert_eq!(
             unique_names.len(),
-            49,
-            "Expected 49 unique GasIds, found {}",
+            48,
+            "Expected 48 unique GasIds, found {}",
             unique_names.len()
         );
     }

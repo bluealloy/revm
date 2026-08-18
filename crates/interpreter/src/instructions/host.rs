@@ -233,8 +233,13 @@ where
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold_load =
-            context.interpreter.gas.remaining() < context.host.gas_params().cold_storage_cost();
+        // `cold_storage_additional_cost` is the exact cold surcharge from Amsterdam
+        // (EIP-8038) on. Pre-Amsterdam the cold surcharge also re-charges the warm
+        // base, but there the check can never trigger: the EIP-2200 sentry above
+        // guarantees `remaining > call_stipend` (2300), which always covers the
+        // full cold access (static 100 + cold 2100).
+        let skip_cold_load = context.interpreter.gas.remaining()
+            < context.host.gas_params().cold_storage_additional_cost();
         context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold_load)?
@@ -260,12 +265,14 @@ where
 {
     let spec_id = context.interpreter.runtime_flag.spec_id();
     let is_istanbul = spec_id.is_enabled_in(ISTANBUL);
+    let is_amsterdam = spec_id.is_enabled_in(AMSTERDAM);
 
     // dynamic gas
     gas!(
         context.interpreter,
         context.host.gas_params().sstore_dynamic_gas(
             is_istanbul,
+            is_amsterdam,
             &state_load.data,
             state_load.is_cold
         )
