@@ -17,7 +17,16 @@ pub trait PrecompileProvider<CTX: ContextTr> {
     /// Returns `true` if precompile addresses should be injected into the journal.
     fn set_spec(&mut self, spec: <CTX::Cfg as Cfg>::Spec) -> bool;
 
-    /// Run the precompile.
+    /// Runs the precompile for the given call inputs.
+    ///
+    /// Return values distinguish whether the provider handled the call:
+    /// - `Ok(Some(output))` means the call was executed by this provider.
+    /// - `Ok(None)` means this provider does not contain a precompile for the
+    ///   requested address, so the caller should continue with regular contract
+    ///   execution.
+    /// - `Err(error)` means execution failed with a provider error that should
+    ///   abort EVM execution. Non-fatal precompile failures, such as reverts,
+    ///   out-of-gas, or invalid input, should be encoded in `output` instead.
     fn run(
         &mut self,
         context: &mut CTX,
