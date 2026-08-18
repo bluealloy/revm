@@ -278,13 +278,14 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// the database and clearing the in-memory storage is sufficient. Pre-Cancun this function
     /// does nothing and destruction stays flag-based.
     ///
-    /// The self-destruct flags are removed from every tracked account: destruction is
-    /// finalized here and no account leaves the journal marked as self-destructed.
+    /// The self-destruct flags are removed and the nonce, code and storage are cleared for
+    /// every tracked account: destruction is finalized here and no account leaves the journal
+    /// marked as self-destructed.
     ///
-    /// When `eip8246_delayed_clear_disabled` is set, the account data (balance, code, nonce and
-    /// storage) of balance-carrying accounts is left untouched so the EIP-8246 clearing can be
-    /// applied outside of revm when accounts are written to database state. The in-place
-    /// destruction of the remaining (empty) accounts still happens.
+    /// The balance is the only field that is conditionally kept: with [EIP-8246] active
+    /// (Amsterdam and `eip8246_delayed_clear_disabled` unset) a remaining non-zero balance is
+    /// preserved instead of burned. In every other case the balance is zeroed with the rest of
+    /// the account.
     ///
     /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
@@ -296,8 +297,10 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         if !self.cfg.spec.is_enabled_in(CANCUN) {
             return;
         }
-        let is_amsterdam = self.cfg.spec.is_enabled_in(AMSTERDAM);
-        let delayed_clear_disabled = self.cfg.eip8246_delayed_clear_disabled;
+        // EIP-8246 (Amsterdam): a remaining non-zero balance is kept instead of being burned,
+        // unless the delayed clearing is disabled.
+        let preserve_balance =
+            self.cfg.spec.is_enabled_in(AMSTERDAM) && !self.cfg.eip8246_delayed_clear_disabled;
 
         for address in &self.selfdestructed_addresses {
             let Some(account) = self.state.get_mut(address) else {
@@ -309,15 +312,7 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
             account.unmark_selfdestruct();
             account.unmark_selfdestructed_locally();
 
-            if is_amsterdam {
-                // EIP-8246 (Amsterdam): a remaining non-zero balance is kept instead of being
-                // burned. If delayed clearing is disabled, leave the account data untouched so
-                // the clearing can be applied outside of revm.
-                if delayed_clear_disabled && !account.info.balance.is_zero() {
-                    continue;
-                }
-            } else {
-                // Pre-Amsterdam the balance is burned with the rest of the account.
+            if !preserve_balance {
                 account.info.balance = U256::ZERO;
             }
 
