@@ -539,7 +539,7 @@ impl GasParams {
     /// cold sload cost on top of it, while EIP-8038 (`is_amsterdam`) folds the
     /// warm base into the cold cost, so a cold access adds only the premium above
     /// warm ([`cold_storage_additional_cost`](Self::cold_storage_additional_cost)),
-    /// mirroring SLOAD accounting. See `report.md` for the full analysis.
+    /// mirroring SLOAD accounting.
     #[inline]
     pub fn sstore_dynamic_gas(
         &self,
