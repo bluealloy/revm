@@ -600,7 +600,9 @@ fn resize_memory_cold<Memory: MemoryTr>(
     if !gas.record_regular_cost(cost) {
         return Err(InstructionResult::MemoryOOG);
     }
-    memory.resize(new_num_words * 32);
+    if !memory.resize(new_num_words * 32) {
+        return Err(InstructionResult::MemoryOOG);
+    }
     Ok(())
 }
 
