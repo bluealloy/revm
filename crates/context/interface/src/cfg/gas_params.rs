@@ -225,6 +225,7 @@ impl GasParams {
         table[GasId::selfdestruct_refund().as_usize()] = 24000;
         table[GasId::call_stipend().as_usize()] = gas::CALL_STIPEND;
         table[GasId::cold_storage_additional_cost().as_usize()] = 0;
+        table[GasId::sstore_additional_cold_cost().as_usize()] = 0;
         table[GasId::new_account_cost_for_selfdestruct().as_usize()] = 0;
         table[GasId::code_deposit_cost().as_usize()] = gas::CODEDEPOSIT;
         table[GasId::tx_token_non_zero_byte_multiplier().as_usize()] =
@@ -264,6 +265,10 @@ impl GasParams {
                 gas::COLD_ACCOUNT_ACCESS_COST_ADDITIONAL;
             table[GasId::cold_storage_additional_cost().as_usize()] =
                 gas::COLD_SLOAD_COST - gas::WARM_STORAGE_READ_COST;
+            // EIP-2929 adds the full cold sload cost (warm included) on top of the
+            // warm-inclusive SSTORE base costs, double charging the warm access on
+            // a cold SSTORE. This is aligned in Amsterdam (EIP-8038).
+            table[GasId::sstore_additional_cold_cost().as_usize()] = gas::COLD_SLOAD_COST;
             table[GasId::warm_storage_read_cost().as_usize()] = gas::WARM_STORAGE_READ_COST;
 
             table[GasId::sstore_reset_without_cold_load_cost().as_usize()] =
@@ -363,6 +368,13 @@ impl GasParams {
             table[GasId::cold_account_additional_cost().as_usize()] =
                 eip8038::COLD_ACCOUNT_ACCESS_ADDITIONAL;
             table[GasId::cold_storage_additional_cost().as_usize()] =
+                eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
+            // EIP-8038 folds the warm base into the cold cost: a cold SSTORE pays
+            // COLD_STORAGE_ACCESS (2100) total, not warm(100)+cold. Since the warm
+            // base (`sstore_static`) is always charged, the cold add-on is only the
+            // premium above warm (2000), fixing the pre-Amsterdam double charge of
+            // the warm cost and mirroring SLOAD accounting.
+            table[GasId::sstore_additional_cold_cost().as_usize()] =
                 eip8038::COLD_STORAGE_ACCESS_ADDITIONAL;
             // CALL_VALUE = ACCOUNT_WRITE + CALL_STIPEND. A value-bearing CALL already
             // pays the ACCOUNT_WRITE surcharge via `transfer_value_cost`, so creating
@@ -535,19 +547,13 @@ impl GasParams {
     /// Dynamic gas cost is gas that needs input from SSTORE operation to be calculated.
     ///
     /// The warm load part of the cost is always charged through
-    /// [`sstore_static_gas`](Self::sstore_static_gas). EIP-2929 charges the full
-    /// cold sload cost on top of it, while EIP-8038 (`is_amsterdam`) folds the
-    /// warm base into the cold cost, so a cold access adds only the premium above
-    /// warm ([`cold_storage_additional_cost`](Self::cold_storage_additional_cost)),
-    /// mirroring SLOAD accounting.
+    /// [`sstore_static_gas`](Self::sstore_static_gas). A cold access additionally
+    /// charges [`sstore_additional_cold_cost`](Self::sstore_additional_cold_cost),
+    /// which from Berlin until Amsterdam double charges the warm cost (EIP-2929
+    /// adds the full cold sload cost on top of the warm base); Amsterdam
+    /// (EIP-8038) aligns this by adding only the cold premium above warm.
     #[inline]
-    pub fn sstore_dynamic_gas(
-        &self,
-        is_istanbul: bool,
-        is_amsterdam: bool,
-        vals: &SStoreResult,
-        is_cold: bool,
-    ) -> u64 {
+    pub fn sstore_dynamic_gas(&self, is_istanbul: bool, vals: &SStoreResult, is_cold: bool) -> u64 {
         // frontier logic gets charged for every SSTORE operation if original value is zero.
         // this behaviour is fixed in istanbul fork.
         if !is_istanbul {
@@ -562,14 +568,7 @@ impl GasParams {
 
         // this will be zero before berlin fork.
         if is_cold {
-            gas += if is_amsterdam {
-                self.cold_storage_additional_cost()
-            } else {
-                // Berlin..Osaka double charges the warm access on a cold SSTORE:
-                // the full cold cost (warm included) is added on top of the
-                // warm-inclusive base costs (EIP-2929). EIP-8038 removes this.
-                self.cold_storage_cost()
-            };
+            gas += self.sstore_additional_cold_cost();
         }
 
         // if new values changed present value and present value is unchanged from original.
@@ -719,12 +718,14 @@ impl GasParams {
         self.get(GasId::cold_storage_additional_cost())
     }
 
-    /// Cold storage cost: the cold premium plus the warm base, i.e.
-    /// [`cold_storage_additional_cost`](Self::cold_storage_additional_cost) +
-    /// [`warm_storage_read_cost`](Self::warm_storage_read_cost).
+    /// Additional cost charged by a cold SSTORE on top of its warm base cost.
+    ///
+    /// From Berlin until Amsterdam this is the full cold sload cost, so the warm
+    /// cost is double charged on a cold SSTORE (EIP-2929). Amsterdam (EIP-8038)
+    /// aligns this by charging only the cold premium above warm, mirroring SLOAD.
     #[inline]
-    pub fn cold_storage_cost(&self) -> u64 {
-        self.cold_storage_additional_cost() + self.warm_storage_read_cost()
+    pub fn sstore_additional_cold_cost(&self) -> u64 {
+        self.get(GasId::sstore_additional_cold_cost())
     }
 
     /// New account cost. New account cost is added to the gas cost if the account is empty.
@@ -1243,6 +1244,7 @@ impl GasId {
             x if x == Self::cold_storage_additional_cost().as_u8() => {
                 "cold_storage_additional_cost"
             }
+            x if x == Self::sstore_additional_cold_cost().as_u8() => "sstore_additional_cold_cost",
             x if x == Self::new_account_cost_for_selfdestruct().as_u8() => {
                 "new_account_cost_for_selfdestruct"
             }
@@ -1324,6 +1326,7 @@ impl GasId {
             "selfdestruct_refund" => Some(Self::selfdestruct_refund()),
             "call_stipend" => Some(Self::call_stipend()),
             "cold_storage_additional_cost" => Some(Self::cold_storage_additional_cost()),
+            "sstore_additional_cold_cost" => Some(Self::sstore_additional_cold_cost()),
             "new_account_cost_for_selfdestruct" => Some(Self::new_account_cost_for_selfdestruct()),
             "code_deposit_cost" => Some(Self::code_deposit_cost()),
             "tx_eip7702_regular_gas" => Some(Self::tx_eip7702_regular_gas()),
@@ -1477,6 +1480,15 @@ impl GasId {
     /// Cold storage additional cost.
     pub const fn cold_storage_additional_cost() -> GasId {
         Self::new(23)
+    }
+
+    /// Additional cost charged by a cold SSTORE on top of its warm base cost.
+    ///
+    /// From Berlin until Amsterdam this is the full cold sload cost, so the warm
+    /// cost is double charged on a cold SSTORE (EIP-2929). Amsterdam (EIP-8038)
+    /// aligns this by charging only the cold premium above warm, mirroring SLOAD.
+    pub const fn sstore_additional_cold_cost() -> GasId {
+        Self::new(24)
     }
 
     /// New account cost for selfdestruct.
@@ -1694,11 +1706,11 @@ mod tests {
             "Not all unique names are resolvable via from_str"
         );
 
-        // We should have exactly 48 known GasIds (based on the indices 1-49 used, 24 and 47 are unused)
+        // We should have exactly 49 known GasIds (based on the indices 1-49 used, 47 is unused)
         assert_eq!(
             unique_names.len(),
-            48,
-            "Expected 48 unique GasIds, found {}",
+            49,
+            "Expected 49 unique GasIds, found {}",
             unique_names.len()
         );
     }
