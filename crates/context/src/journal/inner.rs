@@ -258,45 +258,64 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
         state
     }
 
-    /// Apply [EIP-8246] to self-destructed accounts that still have a balance.
+    /// Finalize self-destructed accounts in place at the end of transaction execution.
     ///
     /// This should be called before `take_logs()` at the end of transaction execution.
-    /// It iterates over all accounts that were self-destructed in this transaction and,
-    /// for any that still hold a non-zero balance, clears the rest of the account instead
-    /// of letting the balance be burned: the nonce is reset to `0`, the code and storage are
-    /// cleared, the balance is left unchanged and the self-destruct flag is removed so the
-    /// account is preserved in state as a balance-only account.
+    /// It iterates over all accounts that were self-destructed in this transaction and applies
+    /// the destruction in place: the storage is wiped to zero, the nonce, code and balance are
+    /// cleared and the self-destruct flag is removed. The cleared account is an empty touched
+    /// account, so it is removed from state by [EIP-161] state clearing without downstream
+    /// layers needing to handle the self-destruct flag.
     ///
-    /// A non-zero balance can remain when an account receives ETH after being self-destructed
-    /// in the same transaction, or when a contract created in the same transaction
-    /// self-destructs to itself (see [`Self::selfdestruct`]).
+    /// From Amsterdam, [EIP-8246] additionally preserves a remaining non-zero balance instead
+    /// of burning it: the balance is left unchanged and the account survives in state as a
+    /// balance-only account. A non-zero balance can remain when an account receives ETH after
+    /// being self-destructed in the same transaction, or when a contract created in the same
+    /// transaction self-destructs to itself (see [`Self::selfdestruct`]).
     ///
-    /// Accounts with a zero balance keep their self-destruct flag and are removed from state as
-    /// before (they are *empty* and deleted by [EIP-161]).
+    /// In-place destruction is only possible with [EIP-6780] (Cancun): self-destructed accounts
+    /// were necessarily created in the same transaction, so they never have storage stored in
+    /// the database and clearing the in-memory storage is sufficient. Pre-Cancun this function
+    /// does nothing and destruction stays flag-based.
     ///
-    /// Self-destructed accounts can only reach this point if they were created in the same
-    /// transaction (EIP-6780 is always active alongside EIP-8246), so they never have storage
-    /// stored in the database and clearing the in-memory storage is sufficient.
+    /// The self-destruct flags are removed and the nonce, code and storage are cleared for
+    /// every tracked account: destruction is finalized here and no account leaves the journal
+    /// marked as self-destructed.
     ///
+    /// The balance is the only field that is conditionally kept: with [EIP-8246] active
+    /// (Amsterdam and `eip8246_delayed_clear_disabled` unset) a remaining non-zero balance is
+    /// preserved instead of burned. In every other case the balance is zeroed with the rest of
+    /// the account.
+    ///
+    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     /// [EIP-8246]: https://eips.ethereum.org/EIPS/eip-8246
     /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
     #[inline]
     pub fn eip8246_clear_selfdestructed_accounts(&mut self) {
-        if !self.cfg.spec.is_enabled_in(AMSTERDAM) || self.cfg.eip8246_delayed_clear_disabled {
+        // EIP-6780 (Cancun) guarantees self-destructed accounts were created in this
+        // transaction, so they have no database storage and can be destroyed in place.
+        if !self.cfg.spec.is_enabled_in(CANCUN) {
             return;
         }
+        // EIP-8246 (Amsterdam): a remaining non-zero balance is kept instead of being burned,
+        // unless the delayed clearing is disabled.
+        let preserve_balance =
+            self.cfg.spec.is_enabled_in(AMSTERDAM) && !self.cfg.eip8246_delayed_clear_disabled;
 
         for address in &self.selfdestructed_addresses {
             let Some(account) = self.state.get_mut(address) else {
                 continue;
             };
 
-            // Zero-balance accounts stay self-destructed and are removed from state (EIP-161).
-            if account.info.balance.is_zero() {
-                continue;
+            // Destruction is finalized here: no account leaves the journal with a
+            // self-destruct flag set.
+            account.unmark_selfdestruct();
+            account.unmark_selfdestructed_locally();
+
+            if !preserve_balance {
+                account.info.balance = U256::ZERO;
             }
 
-            // EIP-8246: keep the balance but clear the rest of the account.
             account.info.nonce = 0;
             account.info.code_hash = KECCAK_EMPTY;
             account.info.code = Some(Bytecode::default());
@@ -310,9 +329,13 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
                 slot.present_value = StorageValue::ZERO;
             }
 
-            // Remove the self-destruct flags so the account is preserved instead of destroyed.
-            account.unmark_selfdestruct();
-            account.unmark_selfdestructed_locally();
+            // A fully cleared account must also drop the created flag, otherwise the database
+            // layer commits it as a newly created (existing) empty account instead of removing
+            // it as an empty touched account (EIP-161, always active from Cancun).
+            if account.info.balance.is_zero() {
+                account.unmark_created();
+                account.unmark_created_locally();
+            }
         }
     }
 
@@ -689,12 +712,9 @@ impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created_locally() || !is_cancun_enabled {
-            // EIP-8246: Track first self-destruction so the account can be cleared (code, storage
-            // and nonce) while preserving its balance at finalization.
-            // Only track when account is actually destroyed and delayed clearing is not disabled.
-            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed
-                && !self.cfg.eip8246_delayed_clear_disabled
-            {
+            // Track first self-destruction so the account can be destroyed in place at
+            // finalization (see `eip8246_clear_selfdestructed_accounts`).
+            if destroyed_status == SelfdestructionRevertStatus::GloballySelfdestroyed {
                 self.selfdestructed_addresses.push(address);
             }
 
