@@ -207,7 +207,7 @@ where
             journaled_state,
             local: self.local,
             chain: self.chain,
-            error: Ok(()),
+            error: self.error,
         }
     }
 
