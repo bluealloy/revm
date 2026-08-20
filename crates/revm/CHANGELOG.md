@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [42.1.0](https://github.com/bluealloy/revm/compare/revm-v42.0.1...revm-v42.1.0) - 2026-08-20
+
+### Added
+
+- add async database fiber support ([#3709](https://github.com/bluealloy/revm/pull/3709))
+
 ## [42.0.1](https://github.com/bluealloy/revm/compare/revm-v42.0.0...revm-v42.0.1) - 2026-07-23
 
 ### Other
