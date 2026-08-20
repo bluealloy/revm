@@ -769,7 +769,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_account_bincode_round_trip() {
+    fn test_account_postcard_round_trip() {
         // Positional formats carry no field names, so a `Serialize`/`Deserialize` field-order
         // mismatch is invisible to the JSON tests above and a default account round-trips by
         // accident. Populate every field with a distinct non-default value, `original_info`
@@ -791,8 +791,8 @@ mod tests {
         );
         account.status = AccountStatus::Touched;
 
-        let bytes = bincode::serialize(&account).unwrap();
-        let decoded: Account = bincode::deserialize(&bytes).unwrap();
+        let bytes = postcard::to_allocvec(&account).unwrap();
+        let decoded: Account = postcard::from_bytes(&bytes).unwrap();
 
         assert_eq!(account, decoded);
     }
