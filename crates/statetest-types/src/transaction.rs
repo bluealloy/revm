@@ -159,4 +159,14 @@ mod test {
 
         let _: TransactionParts = serde_json::from_str(tx).unwrap();
     }
+
+    #[test]
+    fn transaction_parts_roundtrip_with_no_recipient() {
+        let expected = TransactionParts::default();
+        let json = serde_json::to_string(&expected).unwrap();
+
+        let actual: TransactionParts = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(actual, expected);
+    }
 }
