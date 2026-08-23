@@ -6,7 +6,9 @@ use revm::{
     handler::{precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
-    primitives::{address, hardfork::SpecId, keccak256, Address, AddressSet, Bytes, Log, B256, U256},
+    primitives::{
+        address, hardfork::SpecId, keccak256, Address, AddressSet, Bytes, Log, B256, U256,
+    },
 };
 use std::string::String;
 

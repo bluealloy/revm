@@ -359,8 +359,7 @@ impl Stack {
             let mut i = 0;
 
             // Write full words
-            let words = slice.chunks_exact(32);
-            let partial_last_word = words.remainder();
+            let (words, partial_last_word) = slice.as_chunks::<32>();
             for word in words {
                 // Note: We unroll `U256::from_be_bytes` here to write directly into the buffer,
                 // instead of creating a 32 byte array on the stack and then copying it over.
