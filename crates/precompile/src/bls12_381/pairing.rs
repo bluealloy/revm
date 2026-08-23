@@ -49,7 +49,7 @@ pub fn pairing(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
 
     // Collect pairs of points for the pairing check
     let mut pairs: Vec<PairingPair> = Vec::with_capacity(k);
-    for pair in input.chunks_exact(PAIRING_INPUT_LENGTH) {
+    for pair in input.as_chunks::<PAIRING_INPUT_LENGTH>().0 {
         let (encoded_g1_element, encoded_g2_element) = pair.split_at(PADDED_G1_LENGTH);
 
         let [a_x, a_y] = remove_g1_padding(encoded_g1_element)?;

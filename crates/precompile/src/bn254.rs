@@ -196,7 +196,7 @@ pub fn run_pair(
 
     let mut points = Vec::with_capacity(elements);
 
-    for pair in input.chunks_exact(PAIR_ELEMENT_LEN) {
+    for pair in input.as_chunks::<PAIR_ELEMENT_LEN>().0 {
         let (encoded_g1_element, encoded_g2_element) = pair.split_at(G1_LEN);
         points.push((encoded_g1_element, encoded_g2_element));
     }
