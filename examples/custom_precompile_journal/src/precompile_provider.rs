@@ -6,7 +6,7 @@ use revm::{
     handler::{precompile_output_to_interpreter_result, EthPrecompiles, PrecompileProvider},
     interpreter::{CallInputs, InterpreterResult},
     precompile::{EthPrecompileOutput, EthPrecompileResult, PrecompileHalt, PrecompileOutput},
-    primitives::{address, hardfork::SpecId, Address, AddressSet, Bytes, Log, B256, U256},
+    primitives::{address, hardfork::SpecId, keccak256, Address, AddressSet, Bytes, Log, B256, U256},
 };
 use std::string::String;
 
@@ -190,11 +190,7 @@ fn handle_write_storage<CTX: ContextTr>(
 
     // Create a log to record the storage write operation
     // Topic 0: keccak256("StorageWritten(address,uint256)")
-    let topic0 = B256::from_slice(&[
-        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
-        0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc,
-        0xde, 0xf0,
-    ]);
+    let topic0 = keccak256(b"StorageWritten(address,uint256)");
     // Topic 1: caller address (indexed) - left-padded to 32 bytes
     let mut topic1_bytes = [0u8; 32];
     topic1_bytes[12..32].copy_from_slice(caller.as_slice());
