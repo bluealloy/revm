@@ -154,9 +154,7 @@ impl<DB: Database> StateBuilder<DB> {
 
     /// Conditionally set BAL builder based on the flag.
     pub fn with_bal_builder_if(mut self, enable: bool) -> Self {
-        if enable {
-            self.bal_state.bal_builder = Some(Bal::new());
-        }
+        self.bal_state.bal_builder = enable.then(Bal::new);
         self
     }
 
