@@ -28,7 +28,9 @@ fn repeated(byte: u8, len: usize) -> Vec<u8> {
 fn hex_bytes(hex: &str) -> Vec<u8> {
     assert!(hex.len().is_multiple_of(2), "hex input length must be even");
     hex.as_bytes()
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|chunk| {
             let high = hex_value(chunk[0]);
             let low = hex_value(chunk[1]);

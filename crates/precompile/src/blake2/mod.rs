@@ -127,19 +127,23 @@ pub fn run(input: &[u8], gas_limit: u64) -> EthPrecompileResult {
     // Parse state vector h (8 × u64)
     let mut h = [0u64; 8];
     input[4..68]
-        .chunks_exact(8)
+        .as_chunks::<8>()
+        .0
+        .iter()
         .enumerate()
         .for_each(|(i, chunk)| {
-            h[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+            h[i] = u64::from_le_bytes(*chunk);
         });
 
     // Parse message block m (16 × u64)
     let mut m = [0u64; 16];
     input[68..196]
-        .chunks_exact(8)
+        .as_chunks::<8>()
+        .0
+        .iter()
         .enumerate()
         .for_each(|(i, chunk)| {
-            m[i] = u64::from_le_bytes(chunk.try_into().unwrap());
+            m[i] = u64::from_le_bytes(*chunk);
         });
 
     // Parse offset counters
