@@ -249,6 +249,11 @@ impl CallScheme {
         matches!(self, Self::CallCode)
     }
 
+    /// Returns true if the call executes code in the caller's context.
+    pub const fn is_delegate(&self) -> bool {
+        matches!(self, Self::CallCode | Self::DelegateCall)
+    }
+
     /// Returns true if it is `DELEGATECALL`.
     pub const fn is_delegate_call(&self) -> bool {
         matches!(self, Self::DelegateCall)
@@ -351,6 +356,14 @@ mod tests {
         fn take_precompile_error_context(&mut self) -> Option<String> {
             None
         }
+    }
+
+    #[test]
+    fn call_scheme_is_delegate() {
+        assert!(CallScheme::CallCode.is_delegate());
+        assert!(CallScheme::DelegateCall.is_delegate());
+        assert!(!CallScheme::Call.is_delegate());
+        assert!(!CallScheme::StaticCall.is_delegate());
     }
 
     #[test]
