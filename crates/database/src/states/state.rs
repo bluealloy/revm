@@ -2,7 +2,8 @@ use crate::states::block_hash_cache::BlockHashCache;
 
 use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
-    CacheAccount, StateBuilder, TransitionAccount, TransitionState,
+    CacheAccount, StateBuilder, StateOverrides, StorageOverrideMode, TransitionAccount,
+    TransitionState,
 };
 use bytecode::Bytecode;
 use database_interface::{
@@ -70,6 +71,8 @@ pub struct State<DB> {
     ///
     /// Can contain both the BAL for reads and BAL builder that is used to build BAL.
     pub bal_state: BalState,
+    /// State overrides that take precedence over BAL and database reads.
+    pub state_overrides: Option<StateOverrides>,
     /// Hook invoked whenever state changes are committed.
     #[debug(skip)]
     pub state_hook: Option<Box<dyn OnStateHook>>,
@@ -265,6 +268,32 @@ impl<DB: Database> State<DB> {
         self.bal_state.bal.is_some()
     }
 
+    /// Applies account and nested per-account storage overrides above BAL reads.
+    ///
+    /// Once overrides are installed, subsequently committed execution state is kept above the BAL
+    /// as well. A [`StorageOverrideMode::Replace`] entry makes unspecified slots read as zero;
+    /// [`StorageOverrideMode::Diff`] falls through to the BAL and underlying database.
+    pub fn apply_state_overrides(
+        &mut self,
+        accounts: impl IntoIterator<Item = (Address, Option<AccountInfo>)>,
+        storage: impl IntoIterator<
+            Item = (
+                Address,
+                StorageOverrideMode,
+                impl IntoIterator<Item = (StorageKey, StorageValue)>,
+            ),
+        >,
+    ) {
+        self.state_overrides
+            .get_or_insert_default()
+            .extend(accounts, storage);
+    }
+
+    /// Clears all state overrides and restores normal BAL/database precedence.
+    pub fn clear_state_overrides(&mut self) {
+        self.state_overrides = None;
+    }
+
     /// Gets storage value of address at index.
     #[inline]
     fn storage(&mut self, address: Address, index: StorageKey) -> Result<StorageValue, DB::Error> {
@@ -305,6 +334,14 @@ impl<DB: Database> Database for State<DB> {
     type Error = EvmDatabaseError<DB::Error>;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        if let Some(account) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.account(&address))
+        {
+            return Ok(account.clone());
+        }
+
         // if bal is existing but account is not found, error will be returned.
         let account_id = self
             .bal_state
@@ -326,6 +363,14 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        if let Some(code) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.code_by_hash(&code_hash))
+        {
+            return Ok(code.clone());
+        }
+
         let res = match self.cache.contracts.entry(code_hash) {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
             hash_map::Entry::Vacant(entry) => {
@@ -352,6 +397,14 @@ impl<DB: Database> Database for State<DB> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
+        if let Some(value) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.storage(&address, index))
+        {
+            return Ok(value);
+        }
+
         if let Some(storage) = self
             .bal_state
             .storage(&address, index)
@@ -370,6 +423,14 @@ impl<DB: Database> Database for State<DB> {
         account_id: AccountId,
         key: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
+        if let Some(value) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.storage(&address, key))
+        {
+            return Ok(value);
+        }
+
         if let Some(storage) = self.bal_state.storage_by_account_id(account_id, key)? {
             return Ok(storage);
         }
@@ -400,6 +461,9 @@ impl<DB: Database> Database for State<DB> {
 impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, changes: AddressMap<Account>) {
         self.bal_state.commit(&changes);
+        if let Some(overrides) = self.state_overrides.as_mut() {
+            overrides.commit(&changes);
+        }
 
         if let Some(hook) = self.state_hook.as_mut() {
             let transitions = self.cache.apply_evm_state_iter(
@@ -435,7 +499,7 @@ impl<DB: Database> DatabaseCommit for State<DB> {
     }
 
     fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
-        if self.state_hook.is_some() {
+        if self.state_hook.is_some() || self.state_overrides.is_some() {
             let changes = changes.collect::<AddressMap<_>>();
             self.commit(changes);
             return;
@@ -463,6 +527,14 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     type Error = EvmDatabaseError<DB::Error>;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        if let Some(account) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.account(&address))
+        {
+            return Ok(account.clone());
+        }
+
         // if bal is present and account is not found, error will be returned.
         let account_id = self.bal_state.get_account_id(&address)?;
 
@@ -501,6 +573,14 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
     }
 
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        if let Some(code) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.code_by_hash(&code_hash))
+        {
+            return Ok(code.clone());
+        }
+
         // Check if code is in cache
         if let Some(code) = self.cache.contracts.get(&code_hash) {
             return Ok(code.clone());
@@ -522,6 +602,14 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
         address: Address,
         index: StorageKey,
     ) -> Result<StorageValue, Self::Error> {
+        if let Some(value) = self
+            .state_overrides
+            .as_ref()
+            .and_then(|overrides| overrides.storage(&address, index))
+        {
+            return Ok(value);
+        }
+
         // if bal has storage value, return it
         if let Some(storage) = self.bal_state.storage(&address, index)? {
             return Ok(storage);
@@ -567,7 +655,10 @@ mod tests {
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
     use primitives::{keccak256, Bytes, BLOCK_HASH_HISTORY, U256};
-    use state::{EvmStorageSlot, TransactionId};
+    use state::{
+        bal::{AccountBal, BalWrites},
+        EvmStorageSlot, TransactionId,
+    };
 
     fn evm_storage<const N: usize>(
         slots: [(StorageKey, EvmStorageSlot); N],
@@ -582,6 +673,136 @@ mod tests {
 
         let state = State::builder().with_bal(Arc::new(Bal::new())).build();
         assert!(state.has_bal());
+    }
+
+    #[test]
+    fn state_overrides_take_precedence_over_bal() {
+        let address = Address::with_last_byte(1);
+        let (overridden_slot, bal_slot, fallback_slot) = (
+            StorageKey::from(1),
+            StorageKey::from(2),
+            StorageKey::from(3),
+        );
+
+        let mut db = crate::CacheDB::new(EmptyDB::default());
+        db.insert_account_info(
+            address,
+            AccountInfo::default()
+                .with_balance(U256::from(100))
+                .with_nonce(3),
+        );
+        db.insert_account_storage(address, overridden_slot, U256::from(10))
+            .unwrap();
+        db.insert_account_storage(address, bal_slot, U256::from(11))
+            .unwrap();
+        db.insert_account_storage(address, fallback_slot, U256::from(12))
+            .unwrap();
+
+        let mut bal_account = AccountBal::default();
+        bal_account.account_info.balance =
+            BalWrites::new(vec![(BlockAccessIndex::new(1), U256::from(500))]);
+        bal_account.storage.storage.insert(
+            overridden_slot,
+            BalWrites::new(vec![(BlockAccessIndex::new(1), U256::from(42))]),
+        );
+        bal_account.storage.storage.insert(
+            bal_slot,
+            BalWrites::new(vec![(BlockAccessIndex::new(1), U256::from(43))]),
+        );
+
+        let mut state = State::builder()
+            .with_database(db)
+            .with_bal(Arc::new(Bal::from_iter([(address, bal_account)])))
+            .build();
+        state.set_allow_bal_db_fallback(true);
+        state.set_bal_index(BlockAccessIndex::new(2));
+
+        let positioned = state.basic(address).unwrap().unwrap();
+        assert_eq!(positioned.balance, U256::from(500));
+        let override_code = Bytecode::new_raw(Bytes::from_static(&[0x00]));
+        let override_code_hash = override_code.hash_slow();
+
+        state.apply_state_overrides(
+            [(
+                address,
+                Some(
+                    AccountInfo {
+                        balance: U256::from(700),
+                        ..positioned.clone()
+                    }
+                    .with_code(override_code.clone()),
+                ),
+            )],
+            [(
+                address,
+                StorageOverrideMode::Diff,
+                [(overridden_slot, U256::from(99))],
+            )],
+        );
+
+        let overridden = state.basic(address).unwrap().unwrap();
+        assert_eq!(overridden.balance, U256::from(700));
+        assert_eq!(overridden.nonce, 3);
+        assert_eq!(
+            state.code_by_hash(override_code_hash).unwrap(),
+            override_code
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, overridden_slot).unwrap(),
+            U256::from(99)
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, bal_slot).unwrap(),
+            U256::from(43)
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, fallback_slot).unwrap(),
+            U256::from(12)
+        );
+
+        state.apply_state_overrides(
+            core::iter::empty(),
+            [(
+                address,
+                StorageOverrideMode::Replace,
+                [(overridden_slot, U256::from(101))],
+            )],
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, overridden_slot).unwrap(),
+            U256::from(101)
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, bal_slot).unwrap(),
+            U256::ZERO
+        );
+
+        let mut committed = Account::from(overridden);
+        committed.info.balance = U256::from(800);
+        committed.mark_touch();
+        committed.storage.insert(
+            overridden_slot,
+            EvmStorageSlot::new_changed(U256::from(101), U256::from(102), TransactionId::ZERO),
+        );
+        state.commit(HashMap::from_iter([(address, committed)]));
+        assert_eq!(
+            state.basic(address).unwrap().unwrap().balance,
+            U256::from(800)
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, overridden_slot).unwrap(),
+            U256::from(102)
+        );
+
+        state.clear_state_overrides();
+        assert_eq!(
+            state.basic(address).unwrap().unwrap().balance,
+            U256::from(500)
+        );
+        assert_eq!(
+            Database::storage(&mut state, address, overridden_slot).unwrap(),
+            U256::from(42)
+        );
     }
 
     #[test]

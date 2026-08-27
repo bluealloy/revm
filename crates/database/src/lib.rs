@@ -26,5 +26,6 @@ pub use in_memory_db::*;
 pub use states::{
     AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, DBBox,
     OriginalValuesKnown, PlainAccount, RevertToSlot, State, StateBuilder, StateDBBox,
-    StorageWithOriginalValues, TransitionAccount, TransitionState,
+    StateOverrides, StorageOverrideMode, StorageWithOriginalValues, TransitionAccount,
+    TransitionState,
 };

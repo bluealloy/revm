@@ -22,6 +22,8 @@ pub mod reverts;
 pub mod state;
 /// State builder utilities.
 pub mod state_builder;
+/// State overrides applied above block access list reads.
+pub mod state_overrides;
 /// Transition account representation.
 pub mod transition_account;
 /// Transition state management.
@@ -38,5 +40,6 @@ pub use plain_account::{PlainAccount, StorageSlot, StorageWithOriginalValues};
 pub use reverts::{AccountRevert, RevertToSlot};
 pub use state::{DBBox, State, StateDBBox};
 pub use state_builder::StateBuilder;
+pub use state_overrides::{StateOverrides, StorageOverrideMode};
 pub use transition_account::TransitionAccount;
 pub use transition_state::TransitionState;
