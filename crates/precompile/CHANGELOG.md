@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v43.0.0...revm-precompile-v43.0.1) - 2026-08-27
+
+### Other
+
+- fix clippy for Rust 1.98 ([#3884](https://github.com/bluealloy/revm/pull/3884))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v42.0.1...revm-precompile-v43.0.0) - 2026-08-20
 
 ### Other
