@@ -1,6 +1,34 @@
 
 # Unreleased
 
+# v116 tag (all crates v43.0.0)
+
+## Custom interpreter inputs (`revm-interpreter`)
+
+`InputsTr` gained a required `depth(&self) -> usize` method. Implement it on custom input types, returning the depth of the frame being executed (`0` for the initial frame). `InputsImpl` also gained a public `depth: usize` field, so update direct struct literals.
+
+## Glamsterdam devnet-8 gas API and behavior (`revm-primitives`, `revm-context-interface`)
+
+* Removed `eip2780::TRANSFER_LOG_COST`, `GasId::tx_transfer_log_cost`, and `GasParams::tx_transfer_log_cost`. For non-create, non-self value transfers, use `eip2780::TX_VALUE_COST`, which now includes the former transfer-log charge. Contract-creation transactions no longer receive a value-based intrinsic charge.
+* Removed unused EIP-8037 CPSB formula constants: `BLOCKS_PER_YEAR`, `TARGET_STATE_GROWTH_PER_YEAR`, `CPSB_OFFSET`, and `CPSB_SIGNIFICANT_BITS`.
+* Amsterdam now uses the Glamsterdam devnet-8 EIP-8038 prices. This changes transaction, account, storage, CREATE, access-list, refund, and state-gas accounting; integrations relying on exact gas results must update their expected values.
+
+## Async database feature (`revm-context`, `revm-database-interface`, `revm-handler`)
+
+With the `asyncdb` feature enabled, `Evm` gained the public `async_stack` field; direct `Evm { ... }` construction must initialize it with `FiberStack::default()` or move to the provided constructors/builders. `AsyncDb` is the new async-database adapter. `WrapDatabaseAsync` remains available, but both adapters now report `AsyncError<DB::Error>` rather than the database error directly; update error matching and propagation accordingly.
+
+## Cancun self-destruct finalization (`revm-context`, `revm-database`)
+
+At Cancun and later, journal finalization destroys self-destructed accounts in place: storage, nonce, code, and (unless EIP-8246 preserves it) balance are cleared and the self-destruct flags are removed. Consumers that inspected self-destruct flags after finalization must instead use the finalized account state. Pre-Cancun behavior remains flag-based.
+
+## Account serialization (`revm-state`)
+
+`Account` deserialization now matches its serialized field order for non-self-describing formats such as bincode and postcard. Re-encode any persisted binary `Account` values written by earlier releases before reading them with v43.
+
+# v115 tag (revm v42.0.1)
+
+`PrecompileOutput` gained the public `state_gas_spilled: u64` field. Add `state_gas_spilled: 0` to direct struct literals (or use the constructors), and preserve the value when implementing custom precompile providers. The field tracks state gas charged from regular gas after the reservoir is exhausted.
+
 # v114 tag (all crates v42.0.0)
 
 Released by [#3814](https://github.com/bluealloy/revm/pull/3814). Breaking changes below, grouped by crate; `revm-bytecode`, `revm-state`, `revm-database` and `revme` are API compatible with v41.

@@ -1,5 +1,54 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v116
+date: 26.08.2026
+
+All publishable workspace crates are now versioned in lockstep at **43.0.0**.
+
+Highlights:
+* Glamsterdam devnet-8 gas repricing ([#3850](https://github.com/bluealloy/revm/pull/3850))
+* Async database fiber support, including async transaction and system-call APIs ([#3709](https://github.com/bluealloy/revm/pull/3709))
+* Finalize Cancun self-destructed accounts in place; Amsterdam EIP-8246 preserves a remaining balance ([#3863](https://github.com/bluealloy/revm/pull/3863))
+* Correctly return `MemoryOOG` when memory growth fails ([#3864](https://github.com/bluealloy/revm/pull/3864))
+* Prevent failed CREATE pre-access checks from warming or adding the destination to the BAL ([#3829](https://github.com/bluealloy/revm/pull/3829))
+* Cache newly created contract code in `State` ([#3855](https://github.com/bluealloy/revm/pull/3855))
+* Validate receipt-trie roots in `revme` blockchain tests ([#3841](https://github.com/bluealloy/revm/pull/3841))
+* Faster BLS12-381 pairing through fused multi-Miller loops ([#3823](https://github.com/bluealloy/revm/pull/3823))
+
+See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for the full list of breaking changes.
+
+* `revm-bytecode`: 42.0.1 -> 43.0.0 (✓ dependency bump)
+* `revm-state`: 42.0.1 -> 43.0.0 (⚠ API breaking changes)
+* `revm-database-interface`: 42.1.0 -> 43.0.0 (⚠ API breaking changes)
+* `revm-database`: 42.0.1 -> 43.0.0 (✓ API compatible changes)
+* `revm-precompile`: 42.0.2 -> 43.0.0 (✓ API compatible changes)
+* `revm-handler`: 42.1.0 -> 43.0.0 (⚠ API breaking changes)
+* `revm-inspector`: 42.0.2 -> 43.0.0 (⚠ dependency bump)
+* `revm-statetest-types`: 42.0.1 -> 43.0.0 (⚠ dependency bump)
+* `revm`: 42.1.0 -> 43.0.0 (⚠ dependency bump)
+* `revm-ee-tests`: 42.0.0 -> 43.0.0 (✓ dependency bump)
+* `revme`: 42.1.0 -> 43.0.0 (⚠ dependency bump)
+
+`revm-primitives`, `revm-context`, `revm-context-interface`, and `revm-interpreter` were already at 43.0.0.
+
+# v115
+date: 23.07.2026
+
+Patch release for precompile state-gas accounting.
+
+Highlights:
+* Preserve spilled state gas when converting `PrecompileOutput` to frame gas, so rollback credits it back to regular gas correctly ([#3821](https://github.com/bluealloy/revm/pull/3821))
+* Add `PrecompileOutput::{from_gas_tracker, set_gas, to_gas_tracker}` helpers ([#3821](https://github.com/bluealloy/revm/pull/3821))
+* Treat a precompile reporting gas above its frame limit as precompile out-of-gas ([#3821](https://github.com/bluealloy/revm/pull/3821))
+
+See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for the breaking `PrecompileOutput` struct-literal change.
+
+* `revm-precompile`: 42.0.0 -> 42.0.1 (⚠ API breaking changes)
+* `revm-handler`: 42.0.0 -> 42.0.1 (✓ dependency bump)
+* `revm-inspector`: 42.0.0 -> 42.0.1 (✓ dependency bump)
+* `revm`: 42.0.0 -> 42.0.1 (✓ dependency bump)
+* `revme`: 42.0.0 -> 42.0.1 (✓ dependency bump)
+
 # v114
 date: 23.07.2026
 

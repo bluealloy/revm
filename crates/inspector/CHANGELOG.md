@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.0](https://github.com/bluealloy/revm/compare/revm-inspector-v42.0.1...revm-inspector-v43.0.0) - 2026-08-20
+
+### Other
+
+- updated the following local packages: revm-primitives, revm-state, revm-database-interface, revm-context, revm-database, revm-interpreter, revm-handler
+
 ## [42.0.1](https://github.com/bluealloy/revm/compare/revm-inspector-v42.0.0...revm-inspector-v42.0.1) - 2026-07-23
 
 ### Other

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.0](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v43.0.0) - 2026-08-20
+
+### Fixed
+
+- *(state)* align Account's manual Deserialize field order with derived Serialize ([#3870](https://github.com/bluealloy/revm/pull/3870))
+
+### Other
+
+- *(deps)* replace unmaintained bincode with postcard in tests ([#3874](https://github.com/bluealloy/revm/pull/3874))
+
 ## [41.1.0](https://github.com/bluealloy/revm/compare/revm-state-v41.0.0...revm-state-v41.1.0) - 2026-07-22
 
 ### Added
