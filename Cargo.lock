@@ -4132,7 +4132,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "alloy-consensus",
  "alloy-rlp",
