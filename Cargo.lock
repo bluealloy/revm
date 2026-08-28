@@ -3910,7 +3910,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "revm-bytecode",
  "revm-context",
@@ -3944,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -4014,7 +4014,7 @@ dependencies = [
 
 [[package]]
 name = "revm-handler"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "alloy-signer",
  "alloy-signer-local",
@@ -4034,7 +4034,7 @@ dependencies = [
 
 [[package]]
 name = "revm-inspector"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "auto_impl",
  "either",
@@ -4063,7 +4063,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",
@@ -4116,7 +4116,7 @@ dependencies = [
 
 [[package]]
 name = "revm-statetest-types"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "alloy-eip7928 0.4.0",
  "k256",
@@ -4132,7 +4132,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "alloy-consensus",
  "alloy-rlp",
