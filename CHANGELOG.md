@@ -1,5 +1,17 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v117
+date: 28.08.2026
+
+Patch release restoring flag-based selfdestruct finalization and Rust 1.98 clippy compatibility.
+
+Highlights:
+* Restore flag-based selfdestruct finalization while preserving EIP-8246 balance handling ([#3887](https://github.com/bluealloy/revm/pull/3887))
+* Fix clippy lints for Rust 1.98 ([#3884](https://github.com/bluealloy/revm/pull/3884))
+
+* `revm-context`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+* `revm-precompile`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+
 # v116
 date: 26.08.2026
 

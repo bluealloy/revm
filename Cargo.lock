@@ -3944,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "revm-context"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -4063,7 +4063,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "43.0.0"
+version = "43.0.1"
 dependencies = [
  "ark-bls12-381",
  "ark-bn254",

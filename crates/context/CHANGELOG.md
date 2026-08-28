@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revm-context-v43.0.0...revm-context-v43.0.1) - 2026-08-28
+
+### Fixed
+
+- *(journal)* restore flag-based selfdestruct finalization ([#3887](https://github.com/bluealloy/revm/pull/3887))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-context-v42.0.0...revm-context-v43.0.0) - 2026-08-20
 
 ### Added
