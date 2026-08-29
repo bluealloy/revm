@@ -102,7 +102,7 @@ pub trait Transaction {
     fn max_fee_per_blob_gas(&self) -> u128;
 
     /// Total gas for all blobs. Max number of blocks is already checked
-    /// so we dont need to check for overflow.
+    /// so we don't need to check for overflow.
     fn total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_versioned_hashes().len() as u64
     }
