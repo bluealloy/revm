@@ -3,7 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{B256, KECCAK_EMPTY, U256};
+use primitives::{Bytes, B256, KECCAK_EMPTY, U256};
 
 use nonmax::NonMaxU32;
 
@@ -54,6 +54,9 @@ pub struct AccountInfo {
     ///
     /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
+    /// Chain-specific account data carried through execution and state transitions.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub extension: Bytes,
 }
 
 impl Default for AccountInfo {
@@ -65,6 +68,7 @@ impl Default for AccountInfo {
             account_id: None,
             nonce: 0,
             code: Some(Bytecode::default()),
+            extension: Bytes::new(),
         }
     }
 }
@@ -75,6 +79,7 @@ impl PartialEq for AccountInfo {
         self.balance == other.balance
             && self.nonce == other.nonce
             && self.code_hash == other.code_hash
+            && self.extension == other.extension
     }
 }
 
@@ -84,6 +89,7 @@ impl Hash for AccountInfo {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
+        self.extension.hash(state);
     }
 }
 
@@ -101,6 +107,7 @@ impl Ord for AccountInfo {
             .cmp(&other.balance)
             .then_with(|| self.nonce.cmp(&other.nonce))
             .then_with(|| self.code_hash.cmp(&other.code_hash))
+            .then_with(|| self.extension.cmp(&other.extension))
     }
 }
 
@@ -114,6 +121,7 @@ impl AccountInfo {
             code: Some(code),
             code_hash,
             account_id: None,
+            extension: Bytes::new(),
         }
     }
 
@@ -240,13 +248,14 @@ impl AccountInfo {
     ///
     /// [`without_code`][Self::without_code] will modify and return the same instance.
     #[inline]
-    pub const fn copy_without_code(&self) -> Self {
+    pub fn copy_without_code(&self) -> Self {
         Self {
             balance: self.balance,
             nonce: self.nonce,
             code_hash: self.code_hash,
             account_id: self.account_id,
             code: None,
+            extension: self.extension.clone(),
         }
     }
 
@@ -276,7 +285,10 @@ impl AccountInfo {
     /// - nonce is zero
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.is_code_hash_empty_or_zero() && self.balance.is_zero() && self.nonce == 0
+        self.is_code_hash_empty_or_zero()
+            && self.balance.is_zero()
+            && self.nonce == 0
+            && self.extension.is_empty()
     }
 
     /// Optimization hint.
@@ -303,6 +315,19 @@ impl AccountInfo {
     #[inline]
     pub const fn code_hash(&self) -> B256 {
         self.code_hash
+    }
+
+    /// Returns this account with chain-specific extension data.
+    #[inline]
+    pub fn with_extension(mut self, extension: Bytes) -> Self {
+        self.extension = extension;
+        self
+    }
+
+    /// Replaces the chain-specific extension data.
+    #[inline]
+    pub const fn set_extension(&mut self, extension: Bytes) -> Bytes {
+        core::mem::replace(&mut self.extension, extension)
     }
 
     /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
@@ -347,6 +372,7 @@ impl AccountInfo {
             code: Some(bytecode),
             code_hash: hash,
             account_id: None,
+            extension: Bytes::new(),
         }
     }
 }
@@ -406,5 +432,26 @@ mod tests {
         let json = serde_json::to_string(&info).unwrap();
         let deser: AccountInfo = serde_json::from_str(&json).unwrap();
         assert!(deser.is_default());
+    }
+
+    #[test]
+    fn extension_participates_in_account_identity() {
+        let base = AccountInfo::default();
+        let extended = base
+            .clone()
+            .with_extension(Bytes::from_static(b"extension"));
+
+        assert_ne!(base, extended);
+        assert!(base.is_empty());
+        assert!(!extended.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn missing_extension_decodes_as_empty() {
+        let mut json = serde_json::to_value(AccountInfo::default()).unwrap();
+        json.as_object_mut().unwrap().remove("extension");
+        let decoded: AccountInfo = serde_json::from_value(json).unwrap();
+        assert!(decoded.extension.is_empty());
     }
 }
