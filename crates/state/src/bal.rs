@@ -332,6 +332,20 @@ mod tests {
     }
 
     #[test]
+    fn account_extension_roundtrips_through_bal() {
+        let original = AccountInfo::default();
+        let present = original
+            .clone()
+            .with_extension(Bytes::from_static(b"extension"));
+        let mut bal = AccountInfoBal::default();
+        bal.update(idx(1), &original, &present);
+
+        let mut replayed = original;
+        assert!(bal.populate_account_info(idx(2), &mut replayed));
+        assert_eq!(replayed.extension, present.extension);
+    }
+
+    #[test]
     fn into_alloy_bal_canonicalizes_eip_7928_ordering() {
         let low_address = Address::with_last_byte(1);
         let high_address = Address::with_last_byte(2);
@@ -347,6 +361,7 @@ mod tests {
                 code: BalWrites {
                     writes: vec![(idx(7), code(7)), (idx(3), code(3))],
                 },
+                extension: BalWrites::default(),
             },
             storage: StorageBal {
                 storage: BTreeMap::from([

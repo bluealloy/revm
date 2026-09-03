@@ -11,7 +11,7 @@ use alloy_eip7928::{
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, Bytes, StorageKey, StorageValue, B256, U256};
 use std::{
     collections::{btree_map::Entry, BTreeMap},
     vec::Vec,
@@ -89,6 +89,7 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes),
                     balance: BalWrites::from(alloy_account.balance_changes),
                     code: BalWrites::try_from(alloy_account.code_changes)?,
+                    extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
                     alloy_account
@@ -125,6 +126,7 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes.as_slice()),
                     balance: BalWrites::from(alloy_account.balance_changes.as_slice()),
                     code: BalWrites::try_from(alloy_account.code_changes.as_slice())?,
+                    extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
                     alloy_account
@@ -220,6 +222,8 @@ pub struct AccountInfoBal {
     pub balance: BalWrites<U256>,
     /// Code builder.
     pub code: BalWrites<(B256, Bytecode)>,
+    /// Chain-specific account extension builder.
+    pub extension: BalWrites<Bytes>,
 }
 
 impl AccountInfoBal {
@@ -241,6 +245,10 @@ impl AccountInfoBal {
         if let Some(code) = self.code.get(bal_index) {
             account.code_hash = code.0;
             account.code = Some(code.1);
+            changed = true;
+        }
+        if let Some(extension) = self.extension.get(bal_index) {
+            account.extension = extension;
             changed = true;
         }
         changed
@@ -265,6 +273,8 @@ impl AccountInfoBal {
                 |i| &i.0,
             );
         }
+        self.extension
+            .update(index, &original.extension, present.extension.clone());
     }
 
     /// Extend account info from another account info.
@@ -273,6 +283,7 @@ impl AccountInfoBal {
         self.nonce.extend(bal_account.nonce);
         self.balance.extend(bal_account.balance);
         self.code.extend(bal_account.code);
+        self.extension.extend(bal_account.extension);
     }
 
     /// Update account balance in BAL.
