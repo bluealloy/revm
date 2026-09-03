@@ -6,12 +6,13 @@ use handler::{
     FrameResult, Handler, ItemOrResult,
 };
 use interpreter::{
-    instructions::{GasTable, InstructionTable},
-    interpreter_types::LoopControl,
+    instructions::{utility::IntoAddress, GasTable, InstructionTable},
+    interpreter_types::{InputsTr, Jumps, LoopControl, StackTr},
     FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
     InterpreterAction, InterpreterTypes,
 };
-use primitives::hints_util::cold_path;
+use primitives::{hints_util::cold_path, Address, U256};
+use state::bytecode::opcode;
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -259,11 +260,25 @@ where
     IT: InterpreterTypes,
 {
     let mut instruction_journal_i = None;
+    let mut selfdestruct;
     loop {
+        selfdestruct = None;
         inspector.step(interpreter, context);
         if interpreter.bytecode.is_end() {
             cold_path();
             break;
+        }
+
+        if interpreter.bytecode.opcode() == opcode::SELFDESTRUCT {
+            cold_path();
+            // SELFDESTRUCT pops its beneficiary and the journal only records state changes. In
+            // particular, EIP-6780 selfdestruct-to-self leaves no journal entry, so preserve the
+            // complete tracing payload before executing the opcode.
+            let contract = interpreter.input.target_address();
+            selfdestruct = interpreter.stack.top().and_then(|beneficiary| {
+                let balance = context.journal().evm_state().get(&contract)?.info.balance;
+                Some((contract, beneficiary.into_address(), balance))
+            });
         }
 
         instruction_journal_i = Some(context.journal().journal().len());
@@ -294,7 +309,7 @@ where
     if let InterpreterAction::Return(result) = &next_action {
         if result.result == InstructionResult::SelfDestruct {
             if let Some(journal_i) = instruction_journal_i {
-                inspect_selfdestruct(context, &mut inspector, journal_i);
+                inspect_selfdestruct(context, &mut inspector, journal_i, selfdestruct);
             }
         }
     }
@@ -343,6 +358,7 @@ fn inspect_selfdestruct<CTX, IT>(
     context: &mut CTX,
     inspector: &mut impl Inspector<CTX, IT>,
     journal_i: usize,
+    selfdestruct: Option<(Address, Address, U256)>,
 ) where
     CTX: ContextTr<Journal: JournalExt> + Host,
     IT: InterpreterTypes,
@@ -353,7 +369,9 @@ fn inspect_selfdestruct<CTX, IT>(
         .get(journal_i..)
         .and_then(|entries| entries.last());
 
-    if let Some(
+    if let Some((contract, beneficiary, balance)) = selfdestruct {
+        inspector.selfdestruct(contract, beneficiary, balance);
+    } else if let Some(
         JournalEntry::AccountDestroyed {
             address: contract,
             target: to,
