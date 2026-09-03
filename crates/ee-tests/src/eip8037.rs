@@ -2051,6 +2051,37 @@ fn sstore_parent_then_delegatecall_clear_bytecode() -> Bytecode {
     Bytecode::new_legacy(bytecode.into())
 }
 
+/// Parent DELEGATECALLs sibling A to set slot 0, then sibling B to clear it,
+/// and returns the value observed by GAS after both children complete.
+fn sibling_set_then_clear_gas_bytecode(setter: [u8; 20], clearer: [u8; 20]) -> Bytecode {
+    let mut bytecode = Vec::new();
+    for target in [setter, clearer] {
+        // DELEGATECALL(gas, target, 0, 0, 0, 0).
+        for _ in 0..4 {
+            bytecode.extend_from_slice(&[opcode::PUSH1, 0]);
+        }
+        bytecode.push(opcode::PUSH20);
+        bytecode.extend_from_slice(&target);
+        bytecode.push(opcode::GAS);
+        bytecode.push(opcode::DELEGATECALL);
+        bytecode.push(opcode::POP);
+    }
+
+    // Return GAS as a 32-byte word.
+    bytecode.extend_from_slice(&[
+        opcode::GAS,
+        opcode::PUSH1,
+        0,
+        opcode::MSTORE,
+        opcode::PUSH1,
+        32,
+        opcode::PUSH1,
+        0,
+        opcode::RETURN,
+    ]);
+    Bytecode::new_legacy(bytecode.into())
+}
+
 /// EIP-8037 issue #2 — cross frame: parent charges state gas on SSTORE(0,1),
 /// then DELEGATECALLs a child that does SSTORE(0,0). Because DELEGATECALL
 /// shares the caller's storage, the child performs the 0→1→0 restoration
@@ -2078,6 +2109,81 @@ fn test_eip8037_sstore_refill_cross_frame() {
     // refills it on 1→0. Only the CREATE + code-deposit state gas remains.
     let expected_state_gas = STATE_GAS_CREATE + STATE_GAS_CODE_DEPOSIT * CHILD_RUNTIME_LEN;
     assert_eq!(result.gas().state_gas_spent_final(), expected_state_gas);
+}
+
+/// EIP-8037 issue #2 — sibling frames: A creates a slot using regular gas,
+/// then B clears it. B's refill initially lands in its reservoir because its
+/// local spill counter is zero. When B returns, P must absorb that reservoir
+/// against the spill inherited from A, making the gas available to GAS again.
+#[test]
+fn test_eip8037_sibling_refill_restores_parent_gas_left() {
+    use revm::{
+        database::{CacheDB, EmptyDB, BENCH_TARGET},
+        state::AccountInfo,
+    };
+
+    const SETTER: [u8; 20] = [0xa1; 20];
+    const CLEARER: [u8; 20] = [0xb2; 20];
+    const GAS_LIMIT: u64 = 1_000_000;
+
+    let parent_code = sibling_set_then_clear_gas_bytecode(SETTER, CLEARER);
+    let setter_code = sstore_bytecode(0, 1);
+    let clearer_code = sstore_bytecode(0, 0);
+    let build_db = || {
+        let mut db = CacheDB::<EmptyDB>::default();
+        for (address, code) in [
+            (BENCH_TARGET, parent_code.clone()),
+            (SETTER.into(), setter_code.clone()),
+            (CLEARER.into(), clearer_code.clone()),
+        ] {
+            db.insert_account_info(
+                address,
+                AccountInfo::new(U256::ZERO, 1, code.hash_slow(), code),
+            );
+        }
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(u64::MAX),
+                ..Default::default()
+            },
+        );
+        db
+    };
+    let build_tx = || {
+        TxEnv::builder_for_bench()
+            .gas_limit(GAS_LIMIT)
+            .gas_price(0)
+            .build_fill()
+    };
+
+    let mut baseline = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip8037 = false;
+            cfg.enable_amsterdam_eip2780 = false;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let baseline_result = baseline.transact_one(build_tx()).unwrap();
+
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+            cfg.enable_amsterdam_eip2780 = false;
+            cfg.tx_gas_limit_cap = Some(u64::MAX);
+            cfg.gas_params
+                .override_gas([(GasId::sstore_set_state_gas(), STATE_GAS_SSTORE_SET)]);
+        })
+        .with_db(build_db())
+        .build_mainnet();
+    let result = evm.transact_one(build_tx()).unwrap();
+
+    assert!(baseline_result.is_success());
+    assert!(result.is_success());
+    assert_eq!(result.gas().state_gas_spent_final(), 0);
+    assert_eq!(result.output(), baseline_result.output());
 }
 
 // ---- Tx-kind Create with initcode that halts / self-destructs ----
