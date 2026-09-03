@@ -39,12 +39,26 @@ pub const SYSTEM_ADDRESS: Address = address!("0xffffffffffffffffffffffffffffffff
 /// Maximum number of SSTOREs a system call reserves state gas for under EIP-8037.
 pub const SYSTEM_MAX_SSTORES_PER_CALL: u64 = 16;
 
+/// Regular-gas budget of a system call: the `gas_left` a system contract runs on.
+///
+/// This is the pre-EIP-8037 system call gas limit. Under EIP-8037 it stays the
+/// regular budget while state gas is provided through the reservoir.
+pub const SYSTEM_CALL_REGULAR_GAS_LIMIT: u64 = 30_000_000;
+
+/// State-gas reservoir of a system call under EIP-8037, sized for
+/// `SYSTEM_MAX_SSTORES_PER_CALL` fresh storage writes.
+pub const SYSTEM_CALL_STATE_GAS_RESERVOIR: u64 =
+    eip8037::SSTORE_SET_BYTES * eip8037::CPSB_GLAMSTERDAM * SYSTEM_MAX_SSTORES_PER_CALL;
+
 /// Gas limit for system calls under EIP-8037.
 ///
 /// System calls get the base 30M regular-gas budget plus
 /// a state-gas reservoir sized for `SYSTEM_MAX_SSTORES_PER_CALL` storage writes.
-pub const SYSTEM_CALL_GAS_LIMIT: u64 = 30_000_000
-    + eip8037::SSTORE_SET_BYTES * eip8037::CPSB_GLAMSTERDAM * SYSTEM_MAX_SSTORES_PER_CALL;
+/// The split between the two is applied by [`Handler::system_call_gas`].
+///
+/// [`Handler::system_call_gas`]: crate::Handler::system_call_gas
+pub const SYSTEM_CALL_GAS_LIMIT: u64 =
+    SYSTEM_CALL_REGULAR_GAS_LIMIT + SYSTEM_CALL_STATE_GAS_RESERVOIR;
 
 /// Creates the system transaction with default values and set data and tx call target to system contract address
 /// that is going to be called.
@@ -433,5 +447,45 @@ mod tests {
             "State is not updated {:?}",
             output.state
         );
+    }
+
+    /// EIP-8037: the 30M base budget of a system call is its regular gas
+    /// (`gas_left`), and the state-gas margin sized for
+    /// `SYSTEM_MAX_SSTORES_PER_CALL` writes lives in the reservoir.
+    /// `GAS` inside a system contract therefore reports the regular budget
+    /// only, and a fresh-slot `SSTORE` is paid from the reservoir.
+    #[test]
+    fn test_system_call_eip8037_state_gas_reservoir() {
+        use primitives::{eip8037, hardfork::SpecId};
+
+        const SYSTEM_CONTRACT: Address = address!("0x000000000000000000000000000000000000c0de");
+        // GAS PUSH0 SSTORE STOP: store gasleft() into fresh slot 0.
+        static CODE: Bytes = bytes!("0x5a5f5500");
+
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            SYSTEM_CONTRACT,
+            AccountInfo::default().with_code(Bytecode::new_legacy(CODE.clone())),
+        );
+
+        let mut evm = Context::mainnet()
+            .with_db(db)
+            .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM))
+            .build_mainnet();
+        let output = evm.system_call(SYSTEM_CONTRACT, Bytes::default()).unwrap();
+        assert!(output.result.is_success(), "{:?}", output.result);
+
+        let gas_seen = output.state[&SYSTEM_CONTRACT]
+            .storage
+            .get(&StorageKey::from(0))
+            .map(|slot| slot.present_value)
+            .unwrap_or_default();
+        // `GAS` charges its own 2 gas before pushing the remaining regular gas.
+        assert_eq!(gas_seen, U256::from(SYSTEM_CALL_REGULAR_GAS_LIMIT - 2));
+
+        // The fresh-slot SSTORE is a state-gas charge drawn from the reservoir.
+        let sstore_state_gas = eip8037::SSTORE_SET_BYTES * eip8037::CPSB_GLAMSTERDAM;
+        assert_eq!(output.result.gas().block_state_gas_used(), sstore_state_gas);
+        assert!(sstore_state_gas <= SYSTEM_CALL_STATE_GAS_RESERVOIR);
     }
 }
