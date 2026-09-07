@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revme-v43.0.0...revme-v43.0.1) - 2026-09-07
+
+### Fixed
+
+- *(revme)* lower evmrunner default gas_limit to 2^24 ([#3886](https://github.com/bluealloy/revm/pull/3886))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revme-v42.0.1...revme-v43.0.0) - 2026-08-20
 
 ### Added
