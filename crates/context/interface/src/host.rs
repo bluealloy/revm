@@ -7,7 +7,7 @@ use crate::{
 };
 use auto_impl::auto_impl;
 use primitives::{hardfork::SpecId, Address, Bytes, Log, StorageKey, StorageValue, B256, U256};
-use state::Bytecode;
+use state::{AccountExtension, Bytecode};
 
 /// Error that can happen when loading account info.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -26,6 +26,8 @@ pub enum LoadError {
 /// There are few groups of functions which are Block, Transaction, Config, Database and Journal functions.
 #[auto_impl(&mut, Box)]
 pub trait Host {
+    /// Chain-specific account data preserved by the host.
+    type AccountExtension: AccountExtension;
     /* Block */
 
     /// Block basefee, calls ContextTr::block().basefee()
@@ -138,7 +140,7 @@ pub trait Host {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad<'_>, LoadError>;
+    ) -> Result<AccountInfoLoad<'_, Self::AccountExtension>, LoadError>;
 
     /// Balance, calls `ContextTr::journal_mut().load_account(address)`
     #[inline]
@@ -224,6 +226,7 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
+    type AccountExtension = ();
     fn basefee(&self) -> U256 {
         U256::ZERO
     }
@@ -375,6 +378,7 @@ mod tests {
     }
 
     impl Host for Eip7702Host {
+        type AccountExtension = ();
         fn basefee(&self) -> U256 {
             self.dummy.basefee()
         }

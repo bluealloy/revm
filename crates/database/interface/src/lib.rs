@@ -9,7 +9,7 @@ use core::convert::Infallible;
 
 use auto_impl::auto_impl;
 use primitives::{address, Address, AddressMap, StorageKey, StorageValue, B256, U256};
-use state::{Account, AccountId, AccountInfo, Bytecode, TransactionId};
+use state::{Account, AccountExtension, AccountId, AccountInfo, Bytecode, TransactionId};
 use std::vec::Vec;
 
 /// Address with all `0xff..ff` in it. Used for testing.
@@ -65,9 +65,14 @@ impl DBErrorMarker for ErasedError {}
 pub trait Database {
     /// The database error type.
     type Error: DBErrorMarker;
+    /// Chain-specific account data preserved by the EVM.
+    type AccountExtension: AccountExtension;
 
     /// Gets basic account information.
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+    fn basic(
+        &mut self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error>;
 
     /// Gets account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
@@ -103,8 +108,11 @@ pub trait Database {
 /// which allows it to be called on trait objects while remaining in the vtable.
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
+    /// Chain-specific account data preserved by the EVM.
+    type AccountExtension: AccountExtension;
+
     /// Commit changes to the database.
-    fn commit(&mut self, changes: AddressMap<Account>);
+    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>);
 
     /// Commit changes to the database with an iterator.
     ///
@@ -117,8 +125,11 @@ pub trait DatabaseCommit {
     /// This method uses `&mut dyn Iterator` to remain object-safe and callable on trait objects.
     /// For ergonomic usage with `impl IntoIterator`, use the inherent method
     /// `commit_from_iter` on `dyn DatabaseCommit`.
-    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
-        let changes: AddressMap<Account> = changes.collect();
+    fn commit_iter(
+        &mut self,
+        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
+    ) {
+        let changes: AddressMap<Account<Self::AccountExtension>> = changes.collect();
         self.commit(changes);
     }
 }
@@ -127,13 +138,13 @@ pub trait DatabaseCommit {
 ///
 /// This provides `commit_from_iter` as an ergonomic wrapper around the trait's
 /// `commit_iter` method, accepting `impl IntoIterator` for convenience.
-impl dyn DatabaseCommit {
+impl<EXT: AccountExtension> dyn DatabaseCommit<AccountExtension = EXT> {
     /// Commit changes to the database with an iterator.
     ///
     /// This is an ergonomic wrapper that accepts `impl IntoIterator` and delegates
     /// to the trait's [`commit_iter`](DatabaseCommit::commit_iter) method.
     #[inline]
-    pub fn commit_from_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account)>) {
+    pub fn commit_from_iter(&mut self, changes: impl IntoIterator<Item = (Address, Account<EXT>)>) {
         self.commit_iter(&mut changes.into_iter())
     }
 }
@@ -148,9 +159,14 @@ impl dyn DatabaseCommit {
 pub trait DatabaseRef {
     /// The database error type.
     type Error: DBErrorMarker;
+    /// Chain-specific account data preserved by the EVM.
+    type AccountExtension: AccountExtension;
 
     /// Gets basic account information.
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+    fn basic_ref(
+        &self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error>;
 
     /// Gets account code by its hash.
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
@@ -190,9 +206,13 @@ impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
 
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;
+    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(
+        &mut self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
         self.0.basic_ref(address)
     }
 
@@ -228,22 +248,31 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 }
 
 impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
+    type AccountExtension = <T as DatabaseCommit>::AccountExtension;
+
     #[inline]
-    fn commit(&mut self, changes: AddressMap<Account>) {
+    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
         self.0.commit(changes)
     }
 
     #[inline]
-    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+    fn commit_iter(
+        &mut self,
+        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
+    ) {
         self.0.commit_iter(changes)
     }
 }
 
 impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     type Error = T::Error;
+    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic_ref(
+        &self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
         self.0.basic_ref(address)
     }
 
@@ -278,12 +307,17 @@ impl<T: DatabaseRef> DatabaseRef for WrapDatabaseRef<T> {
     }
 }
 
-impl<T: Database + DatabaseCommit> DatabaseCommitExt for T {
+impl<T> DatabaseCommitExt for T
+where
+    T: Database + DatabaseCommit<AccountExtension = <T as Database>::AccountExtension>,
+{
     // default implementation
 }
 
 /// EVM database commit interface.
-pub trait DatabaseCommitExt: Database + DatabaseCommit {
+pub trait DatabaseCommitExt:
+    Database + DatabaseCommit<AccountExtension = <Self as Database>::AccountExtension>
+{
     /// Iterates over received balances and increment all account balances.
     ///
     /// Update will create transitions for all accounts that are updated.
@@ -348,7 +382,7 @@ mod tests {
 
     /// Compile-time test that DatabaseCommit is dyn-compatible.
     /// This mirrors Foundry's approach: `struct _ObjectSafe(dyn DatabaseExt);`
-    struct _DatabaseCommitObjectSafe(dyn DatabaseCommit);
+    struct _DatabaseCommitObjectSafe(dyn DatabaseCommit<AccountExtension = ()>);
 
     /// Test that dyn DatabaseCommit works correctly.
     #[test]
@@ -360,6 +394,8 @@ mod tests {
         }
 
         impl DatabaseCommit for MockDb {
+            type AccountExtension = ();
+
             fn commit(&mut self, changes: AddressMap<Account>) {
                 let std_map: StdHashMap<_, _> = changes.into_iter().collect();
                 self.commits.push(std_map);
@@ -375,14 +411,14 @@ mod tests {
 
         // Test commit() on trait objects
         {
-            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            let db_dyn: &mut dyn DatabaseCommit<AccountExtension = ()> = &mut db;
             db_dyn.commit(AddressMap::default());
         }
         assert_eq!(db.commits.len(), 2);
 
         // Test commit_iter on trait objects (now works directly!)
         {
-            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            let db_dyn: &mut dyn DatabaseCommit<AccountExtension = ()> = &mut db;
             let items: Vec<(Address, Account)> = vec![];
             db_dyn.commit_iter(&mut items.into_iter());
         }
@@ -390,7 +426,7 @@ mod tests {
 
         // Test ergonomic commit_from_iter on trait objects
         {
-            let db_dyn: &mut dyn DatabaseCommit = &mut db;
+            let db_dyn: &mut dyn DatabaseCommit<AccountExtension = ()> = &mut db;
             db_dyn.commit_from_iter(vec![]);
         }
         assert_eq!(db.commits.len(), 4);
@@ -406,6 +442,8 @@ mod tests {
         }
 
         impl DatabaseCommit for MockDb {
+            type AccountExtension = ();
+
             fn commit(&mut self, changes: AddressMap<Account>) {
                 self.commits += 1;
                 self.committed_accounts += changes.len();
@@ -419,6 +457,7 @@ mod tests {
 
         impl DatabaseRef for MockDb {
             type Error = Infallible;
+            type AccountExtension = ();
 
             fn basic_ref(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
                 Ok(None)
@@ -464,11 +503,11 @@ mod tests {
         let mut account = Account::default();
         account.mark_touch();
 
-        let mut db = bal::BalDatabase::new(MockDb::default()).with_bal_builder();
+        let mut db = bal::BalDatabase::new(WrapDatabaseRef(MockDb::default())).with_bal_builder();
         db.commit_iter(&mut [(address, account)].into_iter());
-        assert_eq!(db.db.commits, 0);
-        assert_eq!(db.db.commit_iters, 1);
-        assert_eq!(db.db.committed_accounts, 1);
+        assert_eq!(db.db.0.commits, 0);
+        assert_eq!(db.db.0.commit_iters, 1);
+        assert_eq!(db.db.0.committed_accounts, 1);
 
         let bal = db.bal_state.take_built_bal().expect("BAL should be built");
         assert!(bal.accounts.get(&address).is_some());

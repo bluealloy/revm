@@ -3,7 +3,7 @@ use core::ops::{Deref, DerefMut};
 use primitives::{Address, AddressMap, StorageKey, StorageKeyMap, StorageValue};
 
 /// EVM State is a mapping from addresses to accounts.
-pub type EvmState = AddressMap<Account>;
+pub type EvmState<EXT = ()> = AddressMap<Account<EXT>>;
 
 /// An account's Storage is a mapping from 256-bit integer keys to [EvmStorageSlot]s.
 pub type EvmStorage = StorageKeyMap<EvmStorageSlot>;

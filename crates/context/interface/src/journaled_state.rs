@@ -17,6 +17,17 @@ use primitives::{
 };
 use state::{Account, AccountInfo, Bytecode};
 use std::{borrow::Cow, vec::Vec};
+
+/// Result of loading an account from a database-backed journal.
+pub type AccountLoadResult<'a, DB> =
+    Result<StateLoad<&'a Account<<DB as Database>::AccountExtension>>, <DB as Database>::Error>;
+
+/// Result of loading account information from a database-backed journal.
+pub type AccountInfoLoadResult<'a, DB> = Result<
+    AccountInfoLoad<'a, <DB as Database>::AccountExtension>,
+    JournalLoadError<<DB as Database>::Error>,
+>;
+
 /// Trait that contains database and journal of all changes that were made to the state.
 pub trait JournalTr {
     /// Database type that is used in the journal.
@@ -24,7 +35,7 @@ pub trait JournalTr {
     /// State type that is returned by the journal after finalization.
     type State;
     /// Journal account allows modification of account with all needed changes.
-    type JournaledAccount<'a>: JournaledAccountTr
+    type JournaledAccount<'a>: JournaledAccountTr<<Self::Database as Database>::AccountExtension>
     where
         Self: 'a;
 
@@ -191,26 +202,18 @@ pub trait JournalTr {
     fn nonce_bump_journal_entry(&mut self, address: Address);
 
     /// Loads the account.
-    fn load_account(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
+    fn load_account(&mut self, address: Address) -> AccountLoadResult<'_, Self::Database>;
 
     /// Loads the account code, use `load_account_with_code` instead.
     #[inline]
     #[deprecated(note = "Use `load_account_with_code` instead")]
-    fn load_account_code(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error> {
+    fn load_account_code(&mut self, address: Address) -> AccountLoadResult<'_, Self::Database> {
         self.load_account_with_code(address)
     }
 
     /// Loads the account with code.
-    fn load_account_with_code(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&Account>, <Self::Database as Database>::Error>;
+    fn load_account_with_code(&mut self, address: Address)
+        -> AccountLoadResult<'_, Self::Database>;
 
     /// Loads the account delegated.
     fn load_account_delegated(
@@ -337,7 +340,7 @@ pub trait JournalTr {
         _address: Address,
         _load_code: bool,
         _skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>>;
+    ) -> AccountInfoLoadResult<'_, Self::Database>;
 }
 
 /// Error that can happen when loading account info.
@@ -502,19 +505,19 @@ pub struct AccountLoad {
 /// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountInfoLoad<'a> {
+pub struct AccountInfoLoad<'a, EXT: state::AccountExtension = ()> {
     /// Account info
-    pub account: Cow<'a, AccountInfo>,
+    pub account: Cow<'a, AccountInfo<EXT>>,
     /// Is account cold loaded
     pub is_cold: bool,
     /// Is account empty, if `true` account is not created
     pub is_empty: bool,
 }
 
-impl<'a> AccountInfoLoad<'a> {
+impl<'a, EXT: state::AccountExtension> AccountInfoLoad<'a, EXT> {
     /// Creates new [`AccountInfoLoad`] with the given account info, cold load status and empty status.
     #[inline]
-    pub const fn new(account: &'a AccountInfo, is_cold: bool, is_empty: bool) -> Self {
+    pub const fn new(account: &'a AccountInfo<EXT>, is_cold: bool, is_empty: bool) -> Self {
         Self {
             account: Cow::Borrowed(account),
             is_cold,
@@ -528,14 +531,14 @@ impl<'a> AccountInfoLoad<'a> {
     #[inline]
     pub fn into_state_load<F, O>(self, f: F) -> StateLoad<O>
     where
-        F: FnOnce(Cow<'a, AccountInfo>) -> O,
+        F: FnOnce(Cow<'a, AccountInfo<EXT>>) -> O,
     {
         StateLoad::new(f(self.account), self.is_cold)
     }
 }
 
-impl<'a> Deref for AccountInfoLoad<'a> {
-    type Target = AccountInfo;
+impl<'a, EXT: state::AccountExtension> Deref for AccountInfoLoad<'a, EXT> {
+    type Target = AccountInfo<EXT>;
 
     fn deref(&self) -> &Self::Target {
         &self.account

@@ -3,7 +3,7 @@ use super::{
     StorageWithOriginalValues, TransitionAccount,
 };
 use primitives::{HashMap, StorageKey, StorageKeyMap, StorageValue};
-use state::AccountInfo;
+use state::{AccountExtension, AccountInfo};
 
 /// Account information focused on creating of database changesets
 /// and Reverts.
@@ -17,11 +17,11 @@ use state::AccountInfo;
 /// On selfdestruct storage original value is ignored.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BundleAccount {
+pub struct BundleAccount<EXT: AccountExtension = ()> {
     /// Current account information.
-    pub info: Option<AccountInfo>,
+    pub info: Option<AccountInfo<EXT>>,
     /// Original account information before modifications.
-    pub original_info: Option<AccountInfo>,
+    pub original_info: Option<AccountInfo<EXT>>,
     /// Contains both original and present state.
     /// When extracting changeset we compare if original value is different from present value.
     /// If it is different we add it to changeset.
@@ -32,11 +32,11 @@ pub struct BundleAccount {
     pub status: AccountStatus,
 }
 
-impl BundleAccount {
+impl<EXT: AccountExtension> BundleAccount<EXT> {
     /// Create new BundleAccount.
     pub const fn new(
-        original_info: Option<AccountInfo>,
-        present_info: Option<AccountInfo>,
+        original_info: Option<AccountInfo<EXT>>,
+        present_info: Option<AccountInfo<EXT>>,
         storage: StorageWithOriginalValues,
         status: AccountStatus,
     ) -> Self {
@@ -70,7 +70,7 @@ impl BundleAccount {
     }
 
     /// Fetch account info if it exists.
-    pub fn account_info(&self) -> Option<AccountInfo> {
+    pub fn account_info(&self) -> Option<AccountInfo<EXT>> {
         self.info.clone()
     }
 
@@ -90,7 +90,7 @@ impl BundleAccount {
     }
 
     /// Revert account to previous state and return true if account can be removed.
-    pub fn revert(&mut self, revert: AccountRevert) -> bool {
+    pub fn revert(&mut self, revert: AccountRevert<EXT>) -> bool {
         self.status = revert.previous_status;
 
         match revert.account {
@@ -136,8 +136,8 @@ impl BundleAccount {
     /// If no revert is present, update is noop.
     pub fn update_and_create_revert(
         &mut self,
-        transition: TransitionAccount,
-    ) -> Option<AccountRevert> {
+        transition: TransitionAccount<StorageWithOriginalValues, EXT>,
+    ) -> Option<AccountRevert<EXT>> {
         let updated_info = transition.info;
         let updated_storage = transition.storage;
         let updated_status = transition.status;

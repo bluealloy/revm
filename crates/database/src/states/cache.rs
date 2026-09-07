@@ -3,8 +3,10 @@ use super::{
 };
 use bytecode::Bytecode;
 use primitives::{hash_map, Address, AddressMap, B256Map, HashMap};
-use state::{Account, AccountInfo, EvmStorage};
+use state::{Account, AccountExtension, AccountInfo, EvmStorage};
 use std::{borrow::Cow, vec::Vec};
+
+type EvmStateTransition<'a, EXT> = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>);
 
 /// Cache state contains both modified and original values
 ///
@@ -15,20 +17,20 @@ use std::{borrow::Cow, vec::Vec};
 ///
 /// It generates transitions that is used to build BundleState.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CacheState {
+pub struct CacheState<EXT: AccountExtension = ()> {
     /// Block state account with account state
-    pub accounts: AddressMap<CacheAccount>,
+    pub accounts: AddressMap<CacheAccount<EXT>>,
     /// Created contracts
     pub contracts: B256Map<Bytecode>,
 }
 
-impl Default for CacheState {
+impl<EXT: AccountExtension> Default for CacheState<EXT> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl CacheState {
+impl<EXT: AccountExtension> CacheState<EXT> {
     /// Creates a new default state.
     pub fn new() -> Self {
         Self {
@@ -46,7 +48,7 @@ impl CacheState {
     /// Helper function that returns all accounts.
     ///
     /// Used inside tests to generate merkle tree.
-    pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount)> {
+    pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount<EXT>)> {
         self.accounts.iter().filter_map(|(address, account)| {
             account
                 .account
@@ -62,7 +64,7 @@ impl CacheState {
     }
 
     /// Inserts Loaded (Or LoadedEmptyEip161 if account is empty) account.
-    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo<EXT>) {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
         } else {
@@ -75,7 +77,7 @@ impl CacheState {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        info: AccountInfo,
+        info: AccountInfo<EXT>,
         storage: PlainStorage,
     ) {
         let account = if !info.is_empty() {
@@ -90,11 +92,11 @@ impl CacheState {
     #[inline]
     pub fn apply_evm_state<F>(
         &mut self,
-        evm_state: impl IntoIterator<Item = (Address, Account)>,
+        evm_state: impl IntoIterator<Item = (Address, Account<EXT>)>,
         mut inspect: F,
-    ) -> Vec<(Address, TransitionAccount<Option<Cow<'_, EvmStorage>>>)>
+    ) -> Vec<EvmStateTransition<'_, EXT>>
     where
-        F: FnMut(&Address, &Account),
+        F: FnMut(&Address, &Account<EXT>),
     {
         self.apply_evm_state_iter(
             evm_state
@@ -113,11 +115,10 @@ impl CacheState {
         &'b mut self,
         evm_state: T,
         mut inspect: F,
-    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>
-           + use<'a, 'b, F, T>
+    ) -> impl Iterator<Item = EvmStateTransition<'a, EXT>> + use<'a, 'b, F, T, EXT>
     where
-        F: FnMut(&Address, &Cow<'a, Account>),
-        T: IntoIterator<Item = (Address, Cow<'a, Account>)>,
+        F: FnMut(&Address, &Cow<'a, Account<EXT>>),
+        T: IntoIterator<Item = (Address, Cow<'a, Account<EXT>>)>,
     {
         evm_state.into_iter().filter_map(move |(address, account)| {
             inspect(&address, &account);
@@ -191,8 +192,8 @@ impl CacheState {
     pub(crate) fn apply_account_state<'a>(
         &mut self,
         address: Address,
-        account: Cow<'a, Account>,
-    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
+        account: Cow<'a, Account<EXT>>,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>> {
         // Not touched account are never changed.
         if !account.is_touched() {
             return None;

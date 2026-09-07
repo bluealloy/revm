@@ -3,20 +3,19 @@ use crate::{
     Inspector, InspectorEvmTr, InspectorHandler, JournalExt,
 };
 use context::{ContextSetters, ContextTr, Evm, FrameStack, JournalTr};
-use database_interface::DatabaseCommit;
+use database_interface::{Database, DatabaseCommit};
 use handler::{
     instructions::InstructionProvider, system_call::SystemCallTx, EthFrame, EvmTr, EvmTrError,
     Handler, MainnetHandler, PrecompileProvider,
 };
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{Address, Bytes};
-use state::EvmState;
 
 // Implementing InspectorHandler for MainnetHandler.
 impl<EVM, ERROR> InspectorHandler for MainnetHandler<EVM, ERROR, EthFrame<EthInterpreter>>
 where
     EVM: InspectorEvmTr<
-        Context: ContextTr<Journal: JournalTr<State = EvmState>>,
+        Context: ContextTr<Journal: JournalTr>,
         Frame = EthFrame<EthInterpreter>,
         Inspector: Inspector<<<Self as Handler>::Evm as EvmTr>::Context, EthInterpreter>,
     >,
@@ -29,7 +28,11 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> InspectEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextSetters + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt>,
+    CTX: ContextSetters
+        + ContextTr<
+            Journal: JournalTr<State = state::EvmState<<CTX::Db as Database>::AccountExtension>>
+                         + JournalExt,
+        >,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -51,7 +54,11 @@ impl<CTX, INSP, INST, PRECOMPILES> InspectCommitEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Db: DatabaseCommit>,
+        + ContextTr<
+            Journal: JournalTr<State = state::EvmState<<CTX::Db as Database>::AccountExtension>>
+                         + JournalExt,
+            Db: DatabaseCommit<AccountExtension = <CTX::Db as Database>::AccountExtension>,
+        >,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
@@ -63,7 +70,11 @@ impl<CTX, INSP, INST, PRECOMPILES> InspectSystemCallEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
     CTX: ContextSetters
-        + ContextTr<Journal: JournalTr<State = EvmState> + JournalExt, Tx: SystemCallTx>,
+        + ContextTr<
+            Journal: JournalTr<State = state::EvmState<<CTX::Db as Database>::AccountExtension>>
+                         + JournalExt,
+            Tx: SystemCallTx,
+        >,
     INSP: Inspector<CTX, EthInterpreter>,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,

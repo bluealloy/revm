@@ -1,28 +1,29 @@
 use super::{
-    plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount, TransitionAccount,
+    plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
+    StorageWithOriginalValues, TransitionAccount,
 };
 use primitives::{HashMap, StorageKey, StorageValue, U256};
-use state::{Account, AccountInfo, EvmStorage};
+use state::{Account, AccountExtension, AccountInfo, EvmStorage};
 use std::borrow::Cow;
 
 /// Cache account contains plain state that gets updated
 /// at every transaction when evm output is applied to CacheState.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CacheAccount {
+pub struct CacheAccount<EXT: AccountExtension = ()> {
     /// Account information and storage, if account exists.
-    pub account: Option<PlainAccount>,
+    pub account: Option<PlainAccount<EXT>>,
     /// Account status flags.
     pub status: AccountStatus,
 }
 
-impl From<BundleAccount> for CacheAccount {
-    fn from(account: BundleAccount) -> Self {
+impl<EXT: AccountExtension> From<BundleAccount<EXT>> for CacheAccount<EXT> {
+    fn from(account: BundleAccount<EXT>) -> Self {
         CacheAccount::from(&account)
     }
 }
 
-impl From<&BundleAccount> for CacheAccount {
-    fn from(account: &BundleAccount) -> Self {
+impl<EXT: AccountExtension> From<&BundleAccount<EXT>> for CacheAccount<EXT> {
+    fn from(account: &BundleAccount<EXT>) -> Self {
         let storage = account
             .storage
             .iter()
@@ -38,9 +39,9 @@ impl From<&BundleAccount> for CacheAccount {
     }
 }
 
-impl CacheAccount {
+impl<EXT: AccountExtension> CacheAccount<EXT> {
     /// Creates new account that is loaded from database.
-    pub const fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_loaded(info: AccountInfo<EXT>, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Loaded,
@@ -64,7 +65,7 @@ impl CacheAccount {
     }
 
     /// Creates new account that is newly created.
-    pub const fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_newly_created(info: AccountInfo<EXT>, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::InMemoryChange,
@@ -80,7 +81,7 @@ impl CacheAccount {
     }
 
     /// Creates changed account.
-    pub const fn new_changed(info: AccountInfo, storage: PlainStorage) -> Self {
+    pub const fn new_changed(info: AccountInfo<EXT>, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Changed,
@@ -107,12 +108,12 @@ impl CacheAccount {
     }
 
     /// Fetches account info if it exists.
-    pub fn account_info(&self) -> Option<AccountInfo> {
+    pub fn account_info(&self) -> Option<AccountInfo<EXT>> {
         self.account.as_ref().map(|a| a.info.clone())
     }
 
     /// Dissolves account into components.
-    pub fn into_components(self) -> (Option<(AccountInfo, PlainStorage)>, AccountStatus) {
+    pub fn into_components(self) -> (Option<(AccountInfo<EXT>, PlainStorage)>, AccountStatus) {
         (self.account.map(|a| a.into_components()), self.status)
     }
 
@@ -121,7 +122,7 @@ impl CacheAccount {
     /// This account returns the Transition that is used to create the BundleState.
     pub fn touch_empty_eip161<'a>(
         &mut self,
-    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>> {
         let previous_status = self.status;
 
         // Set account to None.
@@ -152,7 +153,9 @@ impl CacheAccount {
     /// Consumes self and make account as destroyed.
     ///
     /// Sets account as None and set status to Destroyer or DestroyedAgain.
-    pub fn selfdestruct<'a>(&mut self) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
+    pub fn selfdestruct<'a>(
+        &mut self,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>> {
         // Account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);
         let previous_status = self.status;
@@ -176,8 +179,8 @@ impl CacheAccount {
     /// Newly created account.
     pub fn newly_created<'a>(
         &mut self,
-        account: Cow<'a, Account>,
-    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>> {
+        account: Cow<'a, Account<EXT>>,
+    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT> {
         let previous_status = self.status;
         let previous_info = self.account.take().map(|a| a.info);
 
@@ -211,7 +214,10 @@ impl CacheAccount {
     /// overflow or be zero.
     ///
     /// Note: Only if balance is zero we would return None as no transition would be made.
-    pub fn increment_balance(&mut self, balance: u128) -> Option<TransitionAccount> {
+    pub fn increment_balance(
+        &mut self,
+        balance: u128,
+    ) -> Option<TransitionAccount<StorageWithOriginalValues, EXT>> {
         if balance == 0 {
             return None;
         }
@@ -221,10 +227,10 @@ impl CacheAccount {
         Some(transition)
     }
 
-    fn account_info_change<T, F: FnOnce(&mut AccountInfo) -> T>(
+    fn account_info_change<T, F: FnOnce(&mut AccountInfo<EXT>) -> T>(
         &mut self,
         change: F,
-    ) -> (T, TransitionAccount) {
+    ) -> (T, TransitionAccount<StorageWithOriginalValues, EXT>) {
         let previous_status = self.status;
         let previous_info = self.account_info();
         let mut account = self.account.take().unwrap_or_default();
@@ -253,7 +259,7 @@ impl CacheAccount {
     /// Drain balance from account and return drained amount and transition.
     ///
     /// Used for DAO hardfork transition.
-    pub fn drain_balance(&mut self) -> (u128, TransitionAccount) {
+    pub fn drain_balance(&mut self) -> (u128, TransitionAccount<StorageWithOriginalValues, EXT>) {
         self.account_info_change(|info| {
             let output = info.balance;
             info.balance = U256::ZERO;
@@ -266,8 +272,8 @@ impl CacheAccount {
     /// Merges the provided storage values with the existing storage and updates the account status.
     pub fn change<'a>(
         &mut self,
-        account: Cow<'a, Account>,
-    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>> {
+        account: Cow<'a, Account<EXT>>,
+    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT> {
         let previous_status = self.status;
         let (previous_info, mut this_storage) = if let Some(account) = self.account.take() {
             (Some(account.info), account.storage)

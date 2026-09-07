@@ -436,6 +436,8 @@ impl<
         LOCAL: LocalContextTr,
     > Host for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN, LOCAL>
 {
+    type AccountExtension = DB::AccountExtension;
+
     /* Block */
 
     fn basefee(&self) -> U256 {
@@ -608,7 +610,7 @@ impl<
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<AccountInfoLoad<'_>, LoadError> {
+    ) -> Result<AccountInfoLoad<'_, DB::AccountExtension>, LoadError> {
         match self.journaled_state.load_account_info_skip_cold_load(
             address,
             load_code,

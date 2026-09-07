@@ -1,16 +1,16 @@
 use primitives::{HashMap, StorageKeyMap, StorageValue};
-use state::{AccountInfo, EvmStorageSlot};
+use state::{AccountExtension, AccountInfo, EvmStorageSlot};
 
 /// Plain account of StateDatabase.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct PlainAccount {
+pub struct PlainAccount<EXT: AccountExtension = ()> {
     /// Account information.
-    pub info: AccountInfo,
+    pub info: AccountInfo<EXT>,
     /// Account storage.
     pub storage: PlainStorage,
 }
 
-impl PlainAccount {
+impl<EXT: AccountExtension> PlainAccount<EXT> {
     /// Creates a new empty account with the given storage.
     pub fn new_empty_with_storage(storage: PlainStorage) -> Self {
         Self {
@@ -20,7 +20,7 @@ impl PlainAccount {
     }
 
     /// Consumes the account and returns its components.
-    pub fn into_components(self) -> (AccountInfo, PlainStorage) {
+    pub fn into_components(self) -> (AccountInfo<EXT>, PlainStorage) {
         (self.info, self.storage)
     }
 }
@@ -90,8 +90,8 @@ pub type StorageWithOriginalValues = StorageKeyMap<StorageSlot>;
 /// This is used for loading from database, cache and for bundle state.
 pub type PlainStorage = StorageKeyMap<StorageValue>;
 
-impl From<AccountInfo> for PlainAccount {
-    fn from(info: AccountInfo) -> Self {
+impl<EXT: AccountExtension> From<AccountInfo<EXT>> for PlainAccount<EXT> {
+    fn from(info: AccountInfo<EXT>) -> Self {
         Self {
             info,
             storage: HashMap::default(),

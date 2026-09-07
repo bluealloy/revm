@@ -10,7 +10,7 @@ use primitives::{
     hash_map::Entry, Address, AddressMap, AddressSet, B256Map, HashMap, StorageKey, StorageKeyMap,
     StorageValue, B256, KECCAK_EMPTY,
 };
-use state::AccountInfo;
+use state::{AccountExtension, AccountInfo};
 use std::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
@@ -18,15 +18,15 @@ use std::{
 
 /// This builder is used to help to facilitate the initialization of `BundleState` struct
 #[derive(Debug)]
-pub struct BundleBuilder {
+pub struct BundleBuilder<EXT: AccountExtension = ()> {
     states: AddressSet,
-    state_original: AddressMap<AccountInfo>,
-    state_present: AddressMap<AccountInfo>,
+    state_original: AddressMap<AccountInfo<EXT>>,
+    state_present: AddressMap<AccountInfo<EXT>>,
     state_storage: AddressMap<StorageKeyMap<(StorageValue, StorageValue)>>,
 
     reverts: BTreeSet<(u64, Address)>,
     revert_range: RangeInclusive<u64>,
-    revert_account: HashMap<(u64, Address), Option<Option<AccountInfo>>>,
+    revert_account: HashMap<(u64, Address), Option<Option<AccountInfo<EXT>>>>,
     revert_storage: HashMap<(u64, Address), Vec<(StorageKey, StorageValue)>>,
 
     contracts: B256Map<Bytecode>,
@@ -54,7 +54,7 @@ impl OriginalValuesKnown {
     }
 }
 
-impl Default for BundleBuilder {
+impl<EXT: AccountExtension> Default for BundleBuilder<EXT> {
     fn default() -> Self {
         BundleBuilder {
             states: AddressSet::default(),
@@ -70,7 +70,7 @@ impl Default for BundleBuilder {
     }
 }
 
-impl BundleBuilder {
+impl<EXT: AccountExtension> BundleBuilder<EXT> {
     /// Creates builder instance.
     ///
     /// `revert_range` indicates the size of BundleState `reverts` field.
@@ -105,13 +105,21 @@ impl BundleBuilder {
     }
 
     /// Collects account info of BundleState state.
-    pub fn state_original_account_info(mut self, address: Address, original: AccountInfo) -> Self {
+    pub fn state_original_account_info(
+        mut self,
+        address: Address,
+        original: AccountInfo<EXT>,
+    ) -> Self {
         self.set_state_original_account_info(address, original);
         self
     }
 
     /// Collects account info of BundleState state.
-    pub fn state_present_account_info(mut self, address: Address, present: AccountInfo) -> Self {
+    pub fn state_present_account_info(
+        mut self,
+        address: Address,
+        present: AccountInfo<EXT>,
+    ) -> Self {
         self.set_state_present_account_info(address, present);
         self
     }
@@ -143,7 +151,7 @@ impl BundleBuilder {
         mut self,
         block_number: u64,
         address: Address,
-        account: Option<Option<AccountInfo>>,
+        account: Option<Option<AccountInfo<EXT>>>,
     ) -> Self {
         self.set_revert_account_info(block_number, address, account);
         self
@@ -179,7 +187,7 @@ impl BundleBuilder {
     pub fn set_state_original_account_info(
         &mut self,
         address: Address,
-        original: AccountInfo,
+        original: AccountInfo<EXT>,
     ) -> &mut Self {
         self.states.insert(address);
         self.state_original.insert(address, original);
@@ -190,7 +198,7 @@ impl BundleBuilder {
     pub fn set_state_present_account_info(
         &mut self,
         address: Address,
-        present: AccountInfo,
+        present: AccountInfo<EXT>,
     ) -> &mut Self {
         self.states.insert(address);
         self.state_present.insert(address, present);
@@ -219,7 +227,7 @@ impl BundleBuilder {
         &mut self,
         block_number: u64,
         address: Address,
-        account: Option<Option<AccountInfo>>,
+        account: Option<Option<AccountInfo<EXT>>>,
     ) -> &mut Self {
         self.reverts.insert((block_number, address));
         self.revert_account.insert((block_number, address), account);
@@ -245,7 +253,7 @@ impl BundleBuilder {
     }
 
     /// Creates `BundleState` instance based on collected information.
-    pub fn build(mut self) -> BundleState {
+    pub fn build(mut self) -> BundleState<EXT> {
         let mut state_size = 0;
         let state = self
             .states
@@ -330,12 +338,12 @@ impl BundleBuilder {
     }
 
     /// Mutable getter for `state_original` field
-    pub const fn get_state_original_mut(&mut self) -> &mut AddressMap<AccountInfo> {
+    pub const fn get_state_original_mut(&mut self) -> &mut AddressMap<AccountInfo<EXT>> {
         &mut self.state_original
     }
 
     /// Mutable getter for `state_present` field
-    pub const fn get_state_present_mut(&mut self) -> &mut AddressMap<AccountInfo> {
+    pub const fn get_state_present_mut(&mut self) -> &mut AddressMap<AccountInfo<EXT>> {
         &mut self.state_present
     }
 
@@ -359,7 +367,7 @@ impl BundleBuilder {
     /// Mutable getter for `revert_account` field
     pub const fn get_revert_account_mut(
         &mut self,
-    ) -> &mut HashMap<(u64, Address), Option<Option<AccountInfo>>> {
+    ) -> &mut HashMap<(u64, Address), Option<Option<AccountInfo<EXT>>>> {
         &mut self.revert_account
     }
 
@@ -403,9 +411,9 @@ impl BundleRetention {
 /// And can be used to revert BundleState to the state before transition.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BundleState {
+pub struct BundleState<EXT: AccountExtension = ()> {
     /// Account state
-    pub state: AddressMap<BundleAccount>,
+    pub state: AddressMap<BundleAccount<EXT>>,
     /// All created contracts in this block.
     pub contracts: B256Map<Bytecode>,
     /// Changes to revert
@@ -413,16 +421,16 @@ pub struct BundleState {
     /// **Note**: Inside vector is *not* sorted by address.
     ///
     /// But it is unique by address.
-    pub reverts: Reverts,
+    pub reverts: Reverts<EXT>,
     /// The size of the plain state in the bundle state
     pub state_size: usize,
     /// The size of reverts in the bundle state
     pub reverts_size: usize,
 }
 
-impl BundleState {
+impl<EXT: AccountExtension> BundleState<EXT> {
     /// Returns builder instance for further manipulation.
-    pub fn builder(revert_range: RangeInclusive<u64>) -> BundleBuilder {
+    pub fn builder(revert_range: RangeInclusive<u64>) -> BundleBuilder<EXT> {
         BundleBuilder::new(revert_range)
     }
 
@@ -431,8 +439,8 @@ impl BundleState {
         state: impl IntoIterator<
             Item = (
                 Address,
-                Option<AccountInfo>,
-                Option<AccountInfo>,
+                Option<AccountInfo<EXT>>,
+                Option<AccountInfo<EXT>>,
                 HashMap<StorageKey, (StorageValue, StorageValue)>,
             ),
         >,
@@ -440,7 +448,7 @@ impl BundleState {
             Item = impl IntoIterator<
                 Item = (
                     Address,
-                    Option<Option<AccountInfo>>,
+                    Option<Option<AccountInfo<EXT>>>,
                     impl IntoIterator<Item = (StorageKey, StorageValue)>,
                 ),
             >,
@@ -513,7 +521,7 @@ impl BundleState {
     }
 
     /// Returns reference to the state.
-    pub const fn state(&self) -> &AddressMap<BundleAccount> {
+    pub const fn state(&self) -> &AddressMap<BundleAccount<EXT>> {
         &self.state
     }
 
@@ -528,7 +536,7 @@ impl BundleState {
     }
 
     /// Gets account from state.
-    pub fn account(&self, address: &Address) -> Option<&BundleAccount> {
+    pub fn account(&self, address: &Address) -> Option<&BundleAccount<EXT>> {
         self.state.get(address)
     }
 
@@ -552,7 +560,7 @@ impl BundleState {
     /// be retained.
     pub fn apply_transitions_and_create_reverts(
         &mut self,
-        transitions: TransitionState,
+        transitions: TransitionState<EXT>,
         retention: BundleRetention,
     ) {
         let include_reverts = retention.includes_reverts();
@@ -605,7 +613,7 @@ impl BundleState {
 
     /// Generate a [`StateChangeset`] from the bundle state without consuming
     /// it.
-    pub fn to_plain_state(&self, is_value_known: OriginalValuesKnown) -> StateChangeset {
+    pub fn to_plain_state(&self, is_value_known: OriginalValuesKnown) -> StateChangeset<EXT> {
         // Pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
@@ -671,7 +679,7 @@ impl BundleState {
     pub fn to_plain_state_and_reverts(
         &self,
         is_value_known: OriginalValuesKnown,
-    ) -> (StateChangeset, PlainStateReverts) {
+    ) -> (StateChangeset<EXT>, PlainStateReverts<EXT>) {
         (
             self.to_plain_state(is_value_known),
             self.reverts.to_plain_state_reverts(),
@@ -684,14 +692,14 @@ impl BundleState {
     pub fn into_plain_state_and_reverts(
         self,
         is_value_known: OriginalValuesKnown,
-    ) -> (StateChangeset, PlainStateReverts) {
+    ) -> (StateChangeset<EXT>, PlainStateReverts<EXT>) {
         self.to_plain_state_and_reverts(is_value_known)
     }
 
     /// Extends the bundle with other state.
     ///
     /// Updates the `other` state only if `other` is not flagged as destroyed.
-    pub fn extend_state(&mut self, other_state: AddressMap<BundleAccount>) {
+    pub fn extend_state(&mut self, other_state: AddressMap<BundleAccount<EXT>>) {
         self.state.reserve(other_state.len());
         for (address, other_account) in other_state {
             match self.state.entry(address) {
@@ -774,7 +782,7 @@ impl BundleState {
     }
 
     /// Takes first N raw reverts from the [BundleState].
-    pub fn take_n_reverts(&mut self, reverts_to_take: usize) -> Reverts {
+    pub fn take_n_reverts(&mut self, reverts_to_take: usize) -> Reverts<EXT> {
         // Split is done as [0, num) and [num, len].
         if reverts_to_take > self.reverts.len() {
             return self.take_all_reverts();
@@ -788,7 +796,7 @@ impl BundleState {
     }
 
     /// Returns and clears all reverts from [BundleState].
-    pub fn take_all_reverts(&mut self) -> Reverts {
+    pub fn take_all_reverts(&mut self) -> Reverts<EXT> {
         self.reverts_size = 0;
         mem::take(&mut self.reverts)
     }
@@ -857,7 +865,7 @@ impl BundleState {
     /// It adds changes from the given state but does not override any existing changes.
     ///
     /// Reverts are not updated.
-    pub fn prepend_state(&mut self, mut other: BundleState) {
+    pub fn prepend_state(&mut self, mut other: BundleState<EXT>) {
         // Take this bundle
         let this_bundle = mem::take(self);
         // Extend other bundle state with this
@@ -879,7 +887,7 @@ mod tests {
     fn transition_states() {
         // Dummy data
         let address = Address::new([0x01; 20]);
-        let acc1 = AccountInfo {
+        let acc1 = AccountInfo::<()> {
             balance: U256::from(10),
             nonce: 1,
             ..Default::default()
@@ -1148,7 +1156,7 @@ mod tests {
 
     #[test]
     fn test_multi_reverts_with_delete() {
-        let mut state = BundleBuilder::new(0..=3)
+        let mut state = BundleBuilder::<()>::new(0..=3)
             .revert_address(0, account1())
             .revert_account_info(2, account1(), Some(Some(AccountInfo::default())))
             .revert_account_info(3, account1(), Some(None))
@@ -1173,7 +1181,7 @@ mod tests {
 
     #[test]
     fn test_revert_capacity() {
-        let state = BundleState::builder(0..=3)
+        let state = BundleState::<()>::builder(0..=3)
             .revert_address(0, account1())
             .revert_address(2, account2())
             .revert_account_info(0, account1(), Some(None))
@@ -1234,15 +1242,15 @@ mod tests {
         let address1 = account1();
         let address2 = account2();
 
-        let account1 = AccountInfo {
+        let account1 = AccountInfo::<()> {
             nonce: 1,
             ..Default::default()
         };
-        let account1_changed = AccountInfo {
+        let account1_changed = AccountInfo::<()> {
             nonce: 1,
             ..Default::default()
         };
-        let account2 = AccountInfo {
+        let account2 = AccountInfo::<()> {
             nonce: 1,
             ..Default::default()
         };
@@ -1275,7 +1283,7 @@ mod tests {
 
     #[test]
     fn test_getters() {
-        let mut builder = BundleBuilder::new(0..=3);
+        let mut builder = BundleBuilder::<()>::new(0..=3);
 
         // Test get_states and get_states_mut
         assert!(builder.get_states().is_empty());

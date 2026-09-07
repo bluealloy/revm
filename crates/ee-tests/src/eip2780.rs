@@ -601,6 +601,7 @@ struct NoCodeInBasicDB(CacheDB<EmptyDB>);
 
 impl revm::Database for NoCodeInBasicDB {
     type Error = <CacheDB<EmptyDB> as revm::Database>::Error;
+    type AccountExtension = ();
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(

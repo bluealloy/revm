@@ -26,7 +26,7 @@ use crate::{
 use context::{result::ExecResultAndState, ContextSetters, ContextTr, Evm, JournalTr, TxEnv};
 #[cfg(feature = "asyncdb")]
 use database_interface::async_db::{on_fiber_result_with_stack, AsyncResult};
-use database_interface::DatabaseCommit;
+use database_interface::{Database, DatabaseCommit};
 use interpreter::{interpreter::EthInterpreter, InterpreterResult};
 use primitives::{address, eip8037, Address, Bytes, TxKind};
 use state::EvmState;
@@ -293,7 +293,10 @@ pub trait SystemCallEvmAsync: SystemCallEvm {
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
+    CTX: ContextTr<
+            Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>,
+            Tx: SystemCallTx,
+        > + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
@@ -318,7 +321,10 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallEvmAsync
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Tx: SystemCallTx> + ContextSetters,
+    CTX: ContextTr<
+            Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>,
+            Tx: SystemCallTx,
+        > + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
     Self: ExecuteEvm,
@@ -368,8 +374,11 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> SystemCallCommitEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit, Tx: SystemCallTx>
-        + ContextSetters,
+    CTX: ContextTr<
+            Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>,
+            Db: DatabaseCommit<AccountExtension = <CTX::Db as Database>::AccountExtension>,
+            Tx: SystemCallTx,
+        > + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {

@@ -16,14 +16,14 @@ use primitives::{
     hash_map::Entry, Address, AddressMap, HashSet, StorageKey, StorageValue, B256, KECCAK_EMPTY,
     U256,
 };
-use state::{Account, Bytecode, EvmStorageSlot, TransactionId};
+use state::{Account, AccountExtension, Bytecode, EvmStorageSlot, TransactionId};
 use std::vec::Vec;
 
 /// Trait that contains database and journal of all changes that were made to the account.
 #[auto_impl(&mut, Box)]
-pub trait JournaledAccountTr {
+pub trait JournaledAccountTr<EXT: AccountExtension = ()> {
     /// Returns the account.
-    fn account(&self) -> &Account;
+    fn account(&self) -> &Account<EXT>;
 
     /// Sloads the storage slot and returns its mutable reference
     fn sload(
@@ -122,11 +122,11 @@ pub trait JournaledAccountTr {
 ///
 /// Useful to encapsulate account and journal entries together. So when account gets changed, we can add a journal entry for it.
 #[derive(Debug, PartialEq, Eq)]
-pub struct JournaledAccount<'a, DB, ENTRY: JournalEntryTr = JournalEntry> {
+pub struct JournaledAccount<'a, DB: Database, ENTRY: JournalEntryTr = JournalEntry> {
     /// Address of the account.
     address: Address,
     /// Mutable account.
-    account: &'a mut Account,
+    account: &'a mut Account<DB::AccountExtension>,
     /// Journal entries.
     journal_entries: &'a mut Vec<ENTRY>,
     /// Access list.
@@ -142,7 +142,7 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
     #[inline]
     pub const fn new(
         address: Address,
-        account: &'a mut Account,
+        account: &'a mut Account<DB::AccountExtension>,
         journal_entries: &'a mut Vec<ENTRY>,
         db: &'a mut DB,
         access_list: &'a AddressMap<HashSet<StorageKey>>,
@@ -286,16 +286,16 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccount<'a, DB, ENTRY> {
 
     /// Consumes the journaled account and returns the account.
     #[inline]
-    pub const fn into_account(self) -> &'a Account {
+    pub const fn into_account(self) -> &'a Account<DB::AccountExtension> {
         self.account
     }
 }
 
-impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
+impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr<DB::AccountExtension>
     for JournaledAccount<'a, DB, ENTRY>
 {
     /// Returns the account.
-    fn account(&self) -> &Account {
+    fn account(&self) -> &Account<DB::AccountExtension> {
         self.account
     }
 

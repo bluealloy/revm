@@ -81,6 +81,7 @@ impl<N: Network, P: Provider<N>> AlloyDB<N, P> {
 
 impl<N: Network, P: Provider<N>> DatabaseAsyncRef for AlloyDB<N, P> {
     type Error = AlloyDBError;
+    type AccountExtension = ();
 
     async fn basic_async_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let nonce = self

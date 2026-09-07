@@ -1,19 +1,22 @@
 use std::borrow::Cow;
 
-use super::{StorageSlot, TransitionAccount};
+use super::{StorageSlot, StorageWithOriginalValues, TransitionAccount};
 use primitives::{hash_map::Entry, Address, AddressMap, HashMap};
-use state::EvmStorage;
+use state::{AccountExtension, EvmStorage};
 
 /// State of accounts in transition between transaction executions.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
-pub struct TransitionState {
+pub struct TransitionState<EXT: AccountExtension = ()> {
     /// Block state account with account state
-    pub transitions: AddressMap<TransitionAccount>,
+    pub transitions: AddressMap<TransitionAccount<StorageWithOriginalValues, EXT>>,
 }
 
-impl TransitionState {
+impl<EXT: AccountExtension> TransitionState<EXT> {
     /// Create new transition state containing one [`TransitionAccount`].
-    pub fn single(address: Address, transition: TransitionAccount) -> Self {
+    pub fn single(
+        address: Address,
+        transition: TransitionAccount<StorageWithOriginalValues, EXT>,
+    ) -> Self {
         let mut transitions = HashMap::default();
         transitions.insert(address, transition);
         TransitionState { transitions }
@@ -23,7 +26,7 @@ impl TransitionState {
     /// empty one.
     ///
     /// See [core::mem::take].
-    pub fn take(&mut self) -> TransitionState {
+    pub fn take(&mut self) -> TransitionState<EXT> {
         core::mem::take(self)
     }
 
@@ -38,7 +41,9 @@ impl TransitionState {
     /// [`update`][TransitionAccount::update].
     pub fn add_transitions<'a>(
         &mut self,
-        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>,
+        transitions: impl IntoIterator<
+            Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>),
+        >,
     ) {
         let transitions = transitions.into_iter();
         if let Some(upper) = transitions.size_hint().1 {
@@ -53,7 +58,7 @@ impl TransitionState {
     pub fn add_transition(
         &mut self,
         address: Address,
-        account: TransitionAccount<Option<Cow<'_, EvmStorage>>>,
+        account: TransitionAccount<Option<Cow<'_, EvmStorage>>, EXT>,
     ) {
         match self.transitions.entry(address) {
             Entry::Occupied(entry) => entry.into_mut().update(account),

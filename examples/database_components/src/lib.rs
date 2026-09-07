@@ -56,6 +56,7 @@ unsafe impl<
 
 impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;
+    type AccountExtension = ();
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.state.basic(address).map_err(Self::Error::State)
@@ -86,6 +87,7 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
 
 impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;
+    type AccountExtension = ();
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.state.basic(address).map_err(Self::Error::State)
@@ -114,7 +116,10 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
     }
 }
 
-impl<S: DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<S, BH> {
+impl<S: DatabaseCommit<AccountExtension = ()>, BH: BlockHashRef> DatabaseCommit
+    for DatabaseComponents<S, BH>
+{
+    type AccountExtension = ();
     fn commit(&mut self, changes: AddressMap<Account>) {
         self.state.commit(changes);
     }

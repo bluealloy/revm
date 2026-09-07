@@ -7,7 +7,7 @@ use core::{
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
     bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
-    Account, AccountId, AccountInfo, Bytecode, EvmState,
+    Account, AccountExtension, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
 
@@ -16,12 +16,12 @@ use crate::{DBErrorMarker, Database, DatabaseCommit};
 /// Contains both the BAL for reads and BAL builders.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BalState {
+pub struct BalState<EXT: AccountExtension = ()> {
     /// BAL used to execute transactions.
-    pub bal: Option<Arc<Bal>>,
+    pub bal: Option<Arc<Bal<EXT>>>,
     /// BAL builder that is used to build BAL.
     /// It is create from State output of transaction execution.
-    pub bal_builder: Option<Bal>,
+    pub bal_builder: Option<Bal<EXT>>,
     /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
     /// to submit changes.
     pub bal_index: BlockAccessIndex,
@@ -36,7 +36,7 @@ pub struct BalState {
     pub allow_db_fallback: bool,
 }
 
-impl BalState {
+impl<EXT: AccountExtension> BalState<EXT> {
     /// Create a new BAL manager.
     #[inline]
     pub fn new() -> Self {
@@ -63,19 +63,19 @@ impl BalState {
 
     /// Get BAL.
     #[inline]
-    pub fn bal(&self) -> Option<Arc<Bal>> {
+    pub fn bal(&self) -> Option<Arc<Bal<EXT>>> {
         self.bal.clone()
     }
 
     /// Get BAL builder.
     #[inline]
-    pub fn bal_builder(&self) -> Option<Bal> {
+    pub fn bal_builder(&self) -> Option<Bal<EXT>> {
         self.bal_builder.clone()
     }
 
     /// Set BAL.
     #[inline]
-    pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
+    pub fn with_bal(mut self, bal: Arc<Bal<EXT>>) -> Self {
         self.bal = Some(bal);
         self
     }
@@ -106,7 +106,7 @@ impl BalState {
 
     /// Take BAL builder.
     #[inline]
-    pub const fn take_built_bal(&mut self) -> Option<Bal> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal<EXT>> {
         self.reset_bal_index();
         self.bal_builder.take()
     }
@@ -145,7 +145,7 @@ impl BalState {
     pub fn basic(
         &self,
         address: Address,
-        basic: &mut Option<AccountInfo>,
+        basic: &mut Option<AccountInfo<EXT>>,
     ) -> Result<bool, BalError> {
         let Some(account_id) = self.get_account_id(&address)? else {
             return Ok(false);
@@ -158,7 +158,7 @@ impl BalState {
     pub fn basic_by_account_id(
         &self,
         account_id: AccountId,
-        basic: &mut Option<AccountInfo>,
+        basic: &mut Option<AccountInfo<EXT>>,
     ) -> Result<bool, BalError> {
         let Some(bal) = &self.bal else {
             return Ok(false);
@@ -237,7 +237,7 @@ impl BalState {
 
     /// Apply changed from EvmState to the bal_builder
     #[inline]
-    pub fn commit(&mut self, changes: &EvmState) {
+    pub fn commit(&mut self, changes: &EvmState<EXT>) {
         if let Some(bal_builder) = &mut self.bal_builder {
             for (address, account) in changes.iter() {
                 bal_builder.update_account(self.bal_index, *address, account);
@@ -247,7 +247,7 @@ impl BalState {
 
     /// Commit one account to the BAL builder.
     #[inline]
-    pub fn commit_one(&mut self, address: Address, account: &Account) {
+    pub fn commit_one(&mut self, address: Address, account: &Account<EXT>) {
         if let Some(bal_builder) = &mut self.bal_builder {
             bal_builder.update_account(self.bal_index, address, account);
         }
@@ -257,14 +257,21 @@ impl BalState {
 /// Database implementation for BAL.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BalDatabase<DB> {
+#[cfg_attr(
+    feature = "serde",
+    serde(bound(
+        serialize = "DB: serde::Serialize, DB::AccountExtension: serde::Serialize",
+        deserialize = "DB: serde::Deserialize<'de>, DB::AccountExtension: serde::Deserialize<'de>"
+    ))
+)]
+pub struct BalDatabase<DB: Database> {
     /// BAL manager.
-    pub bal_state: BalState,
+    pub bal_state: BalState<DB::AccountExtension>,
     /// Database.
     pub db: DB,
 }
 
-impl<DB> Deref for BalDatabase<DB> {
+impl<DB: Database> Deref for BalDatabase<DB> {
     type Target = DB;
 
     fn deref(&self) -> &Self::Target {
@@ -272,13 +279,13 @@ impl<DB> Deref for BalDatabase<DB> {
     }
 }
 
-impl<DB> DerefMut for BalDatabase<DB> {
+impl<DB: Database> DerefMut for BalDatabase<DB> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.db
     }
 }
 
-impl<DB> BalDatabase<DB> {
+impl<DB: Database> BalDatabase<DB> {
     /// Create a new BAL database.
     #[inline]
     pub fn new(db: DB) -> Self {
@@ -290,7 +297,7 @@ impl<DB> BalDatabase<DB> {
 
     /// With BAL.
     #[inline]
-    pub fn with_bal_option(self, bal: Option<Arc<Bal>>) -> Self {
+    pub fn with_bal_option(self, bal: Option<Arc<Bal<DB::AccountExtension>>>) -> Self {
         Self {
             bal_state: BalState {
                 bal,
@@ -382,9 +389,13 @@ impl<ERROR> EvmDatabaseError<ERROR> {
 
 impl<DB: Database> Database for BalDatabase<DB> {
     type Error = EvmDatabaseError<DB::Error>;
+    type AccountExtension = <DB as Database>::AccountExtension;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(
+        &mut self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
         let account_id = self.bal_state.get_account_id(&address)?;
 
         let mut account = self.db.basic(address).map_err(EvmDatabaseError::Database)?;
@@ -441,13 +452,21 @@ impl<DB: Database> Database for BalDatabase<DB> {
     }
 }
 
-impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
-    fn commit(&mut self, changes: EvmState) {
+impl<DB> DatabaseCommit for BalDatabase<DB>
+where
+    DB: Database + DatabaseCommit<AccountExtension = <DB as Database>::AccountExtension>,
+{
+    type AccountExtension = <DB as Database>::AccountExtension;
+
+    fn commit(&mut self, changes: EvmState<Self::AccountExtension>) {
         self.bal_state.commit(&changes);
         self.db.commit(changes);
     }
 
-    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+    fn commit_iter(
+        &mut self,
+        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
+    ) {
         let bal_state = &mut self.bal_state;
         let mut changes = changes.map(|(address, account)| {
             bal_state.commit_one(address, &account);

@@ -6,7 +6,6 @@ use interpreter::{
     Interpreter, InterpreterTypes,
 };
 use primitives::{Address, Log, U256};
-use state::EvmState;
 
 /// EVM hooks into execution.
 ///
@@ -223,7 +222,7 @@ where
 
 /// Extends the journal with additional methods that are used by the inspector.
 #[auto_impl(&mut, Box)]
-pub trait JournalExt: JournalTr<State = EvmState> {
+pub trait JournalExt: JournalTr {
     /// Get the journal entries that are created from last checkpoint.
     /// new checkpoint is created when sub call is made.
     fn journal(&self) -> &[JournalEntry];

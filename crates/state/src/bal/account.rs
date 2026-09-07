@@ -2,7 +2,7 @@
 
 use crate::{
     bal::{writes::BalWrites, BalError, BlockAccessIndex},
-    Account, AccountInfo, EvmStorage,
+    Account, AccountExtension, AccountInfo, EvmStorage,
 };
 use alloy_eip7928::{
     AccountChanges as AlloyAccountChanges, BalanceChange as AlloyBalanceChange,
@@ -11,7 +11,7 @@ use alloy_eip7928::{
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, Bytes, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, StorageKey, StorageValue, B256, U256};
 use std::{
     collections::{btree_map::Entry, BTreeMap},
     vec::Vec,
@@ -20,40 +20,40 @@ use std::{
 /// Account BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountBal {
+pub struct AccountBal<EXT: AccountExtension = ()> {
     /// Account info bal.
-    pub account_info: AccountInfoBal,
+    pub account_info: AccountInfoBal<EXT>,
     /// Storage bal.
     pub storage: StorageBal,
 }
 
-impl Deref for AccountBal {
-    type Target = AccountInfoBal;
+impl<EXT: AccountExtension> Deref for AccountBal<EXT> {
+    type Target = AccountInfoBal<EXT>;
 
     fn deref(&self) -> &Self::Target {
         &self.account_info
     }
 }
 
-impl DerefMut for AccountBal {
+impl<EXT: AccountExtension> DerefMut for AccountBal<EXT> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.account_info
     }
 }
 
-impl AccountBal {
+impl<EXT: AccountExtension> AccountBal<EXT> {
     /// Populate account from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
         bal_index: BlockAccessIndex,
-        account: &mut AccountInfo,
+        account: &mut AccountInfo<EXT>,
     ) -> bool {
         self.account_info.populate_account_info(bal_index, account)
     }
 
     /// Extend account from another account.
     #[inline]
-    pub fn update(&mut self, bal_index: BlockAccessIndex, account: &Account) {
+    pub fn update(&mut self, bal_index: BlockAccessIndex, account: &Account<EXT>) {
         if account.is_selfdestructed_locally() {
             let empty_info = AccountInfo::default();
             self.account_info
@@ -215,7 +215,7 @@ impl AccountBal {
 /// Account info bal structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountInfoBal {
+pub struct AccountInfoBal<EXT: AccountExtension = ()> {
     /// Nonce builder.
     pub nonce: BalWrites<u64>,
     /// Balance builder.
@@ -223,15 +223,15 @@ pub struct AccountInfoBal {
     /// Code builder.
     pub code: BalWrites<(B256, Bytecode)>,
     /// Chain-specific account extension builder.
-    pub extension: BalWrites<Bytes>,
+    pub extension: BalWrites<EXT>,
 }
 
-impl AccountInfoBal {
+impl<EXT: AccountExtension> AccountInfoBal<EXT> {
     /// Populate account info from BAL. Return true if account info got changed
     pub fn populate_account_info(
         &self,
         bal_index: BlockAccessIndex,
-        account: &mut AccountInfo,
+        account: &mut AccountInfo<EXT>,
     ) -> bool {
         let mut changed = false;
         if let Some(nonce) = self.nonce.get(bal_index) {
@@ -259,8 +259,8 @@ impl AccountInfoBal {
     pub fn update(
         &mut self,
         index: BlockAccessIndex,
-        original: &AccountInfo,
-        present: &AccountInfo,
+        original: &AccountInfo<EXT>,
+        present: &AccountInfo<EXT>,
     ) {
         self.nonce.update(index, &original.nonce, present.nonce);
         self.balance
@@ -279,7 +279,7 @@ impl AccountInfoBal {
 
     /// Extend account info from another account info.
     #[inline]
-    pub fn extend(&mut self, bal_account: AccountInfoBal) {
+    pub fn extend(&mut self, bal_account: AccountInfoBal<EXT>) {
         self.nonce.extend(bal_account.nonce);
         self.balance.extend(bal_account.balance);
         self.code.extend(bal_account.code);

@@ -7,7 +7,7 @@ use primitives::{
     hash_map::Entry, Address, AddressMap, B256Map, HashMap, Log, StorageKey, StorageKeyMap,
     StorageValue, U256Map, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, AccountInfo, Bytecode};
+use state::{Account, AccountExtension, AccountInfo, Bytecode};
 use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
@@ -20,10 +20,10 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 /// The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Cache {
+pub struct Cache<EXT: AccountExtension = ()> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
-    pub accounts: AddressMap<DbAccount>,
+    pub accounts: AddressMap<DbAccount<EXT>>,
     /// Tracks all contracts by their code hash.
     pub contracts: B256Map<Bytecode>,
     /// All logs that were committed via [DatabaseCommit::commit].
@@ -32,7 +32,7 @@ pub struct Cache {
     pub block_hashes: U256Map<B256>,
 }
 
-impl Default for Cache {
+impl<EXT: AccountExtension> Default for Cache<EXT> {
     fn default() -> Self {
         let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
@@ -52,22 +52,29 @@ impl Default for Cache {
 /// This implementation wraps a [DatabaseRef] that is used to load data ([AccountInfo]).
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CacheDB<ExtDB> {
+#[cfg_attr(
+    feature = "serde",
+    serde(bound(
+        serialize = "ExtDB: serde::Serialize, ExtDB::AccountExtension: serde::Serialize",
+        deserialize = "ExtDB: serde::Deserialize<'de>, ExtDB::AccountExtension: serde::Deserialize<'de>"
+    ))
+)]
+pub struct CacheDB<ExtDB: DatabaseRef> {
     /// The cache that stores all state changes.
-    pub cache: Cache,
+    pub cache: Cache<ExtDB::AccountExtension>,
     /// The underlying database ([DatabaseRef]) that is used to load data.
     ///
     /// Note: This is read-only, data is never written to this database.
     pub db: ExtDB,
 }
 
-impl<ExtDB: Default> Default for CacheDB<ExtDB> {
+impl<ExtDB: DatabaseRef + Default> Default for CacheDB<ExtDB> {
     fn default() -> Self {
         Self::new(ExtDB::default())
     }
 }
 
-impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
+impl<ExtDb: DatabaseRef> CacheDB<CacheDB<ExtDb>> {
     /// Flattens a nested cache by applying the outer cache to the inner cache.
     ///
     /// The behavior is as follows:
@@ -101,7 +108,7 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
     }
 }
 
-impl<ExtDB> CacheDB<ExtDB> {
+impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     /// Creates a new cache with the given external database.
     pub fn new(db: ExtDB) -> Self {
         Self {
@@ -115,7 +122,7 @@ impl<ExtDB> CacheDB<ExtDB> {
     /// Accounts objects and code are stored separately in the cache, this will take the code from the account and instead map it to the code hash.
     ///
     /// Note: This will not insert into the underlying external database.
-    pub fn insert_contract(&mut self, account: &mut AccountInfo) {
+    pub fn insert_contract(&mut self, account: &mut AccountInfo<ExtDB::AccountExtension>) {
         if let Some(code) = &account.code {
             if !code.is_empty() {
                 if account.code_hash == KECCAK_EMPTY {
@@ -133,7 +140,11 @@ impl<ExtDB> CacheDB<ExtDB> {
     }
 
     /// Inserts account info but not override storage
-    pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
+    pub fn insert_account_info(
+        &mut self,
+        address: Address,
+        mut info: AccountInfo<ExtDB::AccountExtension>,
+    ) {
         self.insert_contract(&mut info);
         let account_entry = self.cache.accounts.entry(address).or_default();
         account_entry.update_info(info);
@@ -142,7 +153,7 @@ impl<ExtDB> CacheDB<ExtDB> {
         }
     }
 
-    fn commit_account(&mut self, address: Address, mut account: Account) {
+    fn commit_account(&mut self, address: Address, mut account: Account<ExtDB::AccountExtension>) {
         if !account.is_touched() {
             return;
         }
@@ -186,7 +197,10 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     /// Returns the account for the given address.
     ///
     /// If the account was not found in the cache, it will be loaded from the underlying database.
-    pub fn load_account(&mut self, address: Address) -> Result<&mut DbAccount, ExtDB::Error> {
+    pub fn load_account(
+        &mut self,
+        address: Address,
+    ) -> Result<&mut DbAccount<ExtDB::AccountExtension>, ExtDB::Error> {
         let db = &self.db;
         match self.cache.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
@@ -313,14 +327,19 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: AddressMap<Account>) {
+impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
+    type AccountExtension = ExtDB::AccountExtension;
+
+    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
         for (address, account) in changes {
             self.commit_account(address, account);
         }
     }
 
-    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
+    fn commit_iter(
+        &mut self,
+        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
+    ) {
         for (address, account) in changes {
             self.commit_account(address, account);
         }
@@ -329,8 +348,12 @@ impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
+    type AccountExtension = ExtDB::AccountExtension;
 
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(
+        &mut self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
         Ok(self.load_account(address)?.info())
     }
 
@@ -376,7 +399,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 let info = self.db.basic_ref(address)?;
                 let (account, value) = if info.is_some() {
                     let value = self.db.storage_ref(address, index)?;
-                    let mut account: DbAccount = info.into();
+                    let mut account: DbAccount<ExtDB::AccountExtension> = info.into();
                     account.storage.insert(index, value);
                     (account, value)
                 } else {
@@ -402,8 +425,12 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
+    type AccountExtension = ExtDB::AccountExtension;
 
-    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic_ref(
+        &self,
+        address: Address,
+    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
         match self.cache.accounts.get(&address) {
             Some(acc) => Ok(acc.info()),
             None => self.db.basic_ref(address),
@@ -451,16 +478,16 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 /// Database account representation.
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct DbAccount {
+pub struct DbAccount<EXT: AccountExtension = ()> {
     /// Basic account information.
-    pub info: AccountInfo,
+    pub info: AccountInfo<EXT>,
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// Storage slots
     pub storage: StorageKeyMap<StorageValue>,
 }
 
-impl DbAccount {
+impl<EXT: AccountExtension> DbAccount<EXT> {
     /// Creates a new non-existing account.
     pub fn new_not_existing() -> Self {
         Self {
@@ -470,7 +497,7 @@ impl DbAccount {
     }
 
     /// Returns account info if the account exists.
-    pub fn info(&self) -> Option<AccountInfo> {
+    pub fn info(&self) -> Option<AccountInfo<EXT>> {
         if matches!(self.account_state, AccountState::NotExisting) {
             None
         } else {
@@ -480,7 +507,7 @@ impl DbAccount {
 
     /// Updates the account information.
     #[inline(always)]
-    pub fn update_info(&mut self, info: AccountInfo) {
+    pub fn update_info(&mut self, info: AccountInfo<EXT>) {
         self.info = info;
     }
 
@@ -491,14 +518,14 @@ impl DbAccount {
     }
 }
 
-impl From<Option<AccountInfo>> for DbAccount {
-    fn from(from: Option<AccountInfo>) -> Self {
+impl<EXT: AccountExtension> From<Option<AccountInfo<EXT>>> for DbAccount<EXT> {
+    fn from(from: Option<AccountInfo<EXT>>) -> Self {
         from.map(Self::from).unwrap_or_else(Self::new_not_existing)
     }
 }
 
-impl From<AccountInfo> for DbAccount {
-    fn from(info: AccountInfo) -> Self {
+impl<EXT: AccountExtension> From<AccountInfo<EXT>> for DbAccount<EXT> {
+    fn from(info: AccountInfo<EXT>) -> Self {
         Self {
             info,
             account_state: AccountState::None,
@@ -547,6 +574,7 @@ impl BenchmarkDB {
 
 impl Database for BenchmarkDB {
     type Error = Infallible;
+    type AccountExtension = ();
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         if address == BENCH_TARGET {
