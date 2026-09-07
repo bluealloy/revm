@@ -50,3 +50,7 @@ map-foldhash = ["revm/map-foldhash"]
 [[bench]]
 name = "evm"
 harness = false
+
+[[bench]]
+name = "account_extension"
+harness = false
