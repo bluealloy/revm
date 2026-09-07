@@ -33,7 +33,7 @@ impl AccountId {
 ///
 /// Code is set as optional.
 #[derive(Clone, Debug, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
@@ -57,6 +57,28 @@ pub struct AccountInfo {
     /// Chain-specific account data carried through execution and state transitions.
     #[cfg_attr(feature = "serde", serde(default))]
     pub extension: Bytes,
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for AccountInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+
+        let include_extension = !serializer.is_human_readable() || !self.extension.0.is_empty();
+        let mut state =
+            serializer.serialize_struct("AccountInfo", 5 + usize::from(include_extension))?;
+        state.serialize_field("balance", &self.balance)?;
+        state.serialize_field("nonce", &self.nonce)?;
+        state.serialize_field("code_hash", &self.code_hash)?;
+        state.serialize_field("code", &self.code)?;
+        if include_extension {
+            state.serialize_field("extension", &self.extension)?;
+        }
+        state.end()
+    }
 }
 
 impl Default for AccountInfo {
@@ -453,5 +475,12 @@ mod tests {
         json.as_object_mut().unwrap().remove("extension");
         let decoded: AccountInfo = serde_json::from_value(json).unwrap();
         assert!(decoded.extension.is_empty());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn empty_extension_is_not_serialized() {
+        let json = serde_json::to_value(AccountInfo::default()).unwrap();
+        assert!(!json.as_object().unwrap().contains_key("extension"));
     }
 }
