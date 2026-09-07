@@ -695,6 +695,7 @@ fn execute_blockchain_test(
             code_hash,
             code: None,
             account_id: None,
+            extension: Default::default(),
         };
 
         if let Some(bytecode) = &bytecode {

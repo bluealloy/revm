@@ -1166,6 +1166,7 @@ mod tests {
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
             account_id: None,
+            extension: Default::default(),
         };
         journal
             .state

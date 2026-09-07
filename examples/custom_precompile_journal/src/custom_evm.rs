@@ -213,6 +213,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                extension: Default::default(),
             },
         );
 
@@ -225,6 +226,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                extension: Default::default(),
             },
         );
 
@@ -349,6 +351,7 @@ mod tests {
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
                 account_id: None,
+                extension: Default::default(),
             },
         );
 
