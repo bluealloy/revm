@@ -1,7 +1,7 @@
 use super::RevertToSlot;
 use bytecode::Bytecode;
 use primitives::{Address, StorageKey, StorageValue, B256};
-use state::{AccountExtension, AccountInfo};
+use state::AccountInfo;
 use std::vec::Vec;
 
 /// `accounts`/`storages`/`contracts` for inclusion into database.
@@ -12,9 +12,9 @@ use std::vec::Vec;
 /// **Note**: That data is **not** sorted. Some database benefit of faster inclusion
 /// and smaller footprint if data is inserted in sorted order.
 #[derive(Clone, Debug, Default)]
-pub struct StateChangeset<EXT: AccountExtension = ()> {
+pub struct StateChangeset {
     /// Vector of **not** sorted accounts information.
-    pub accounts: Vec<(Address, Option<AccountInfo<EXT>>)>,
+    pub accounts: Vec<(Address, Option<AccountInfo>)>,
     /// Vector of **not** sorted storage.
     pub storage: Vec<PlainStorageChangeset>,
     /// Vector of contracts by bytecode hash. **not** sorted.
@@ -56,16 +56,16 @@ pub struct PlainStorageRevert {
 ///
 /// Note that accounts are assumed **not** sorted.
 #[derive(Clone, Debug, Default)]
-pub struct PlainStateReverts<EXT: AccountExtension = ()> {
+pub struct PlainStateReverts {
     /// Vector of account with removed contracts bytecode.
     ///
     /// **Note**: If AccountInfo is None means that account needs to be removed.
-    pub accounts: Vec<Vec<(Address, Option<AccountInfo<EXT>>)>>,
+    pub accounts: Vec<Vec<(Address, Option<AccountInfo>)>>,
     /// Vector of storage with its address.
     pub storage: Vec<Vec<PlainStorageRevert>>,
 }
 
-impl<EXT: AccountExtension> PlainStateReverts<EXT> {
+impl PlainStateReverts {
     /// Constructs new [`PlainStateReverts`] with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {

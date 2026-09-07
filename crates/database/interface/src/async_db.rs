@@ -10,7 +10,7 @@ use core::{
 };
 use corosensei::{stack::DefaultStack, Coroutine, CoroutineResult, Yielder};
 use primitives::{Address, AddressMap, StorageKey, StorageValue, B256};
-use state::{Account, AccountExtension, AccountId, AccountInfo, Bytecode};
+use state::{Account, AccountId, AccountInfo, Bytecode};
 use std::{cell::Cell, fmt, io};
 use tokio::{
     runtime::{Handle, Runtime},
@@ -470,14 +470,12 @@ unsafe fn restore_context_lifetime<'a>(cx: &'a mut Context<'static>) -> &'a mut 
 pub trait DatabaseAsync {
     /// The database error type.
     type Error: DBErrorMarker;
-    /// Chain-specific account data preserved by the EVM.
-    type AccountExtension: AccountExtension;
 
     /// Gets basic account information.
     fn basic_async(
         &mut self,
         address: Address,
-    ) -> impl Future<Output = Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
     /// Gets account code by its hash.
     fn code_by_hash_async(
@@ -521,14 +519,12 @@ pub trait DatabaseAsync {
 pub trait DatabaseAsyncRef {
     /// The database error type.
     type Error: DBErrorMarker;
-    /// Chain-specific account data preserved by the EVM.
-    type AccountExtension: AccountExtension;
 
     /// Gets basic account information.
     fn basic_async_ref(
         &self,
         address: Address,
-    ) -> impl Future<Output = Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
     /// Gets account code by its hash.
     fn code_by_hash_async_ref(
@@ -633,13 +629,9 @@ impl<T> AsyncDb<T> {
 
 impl<T: DatabaseAsync> Database for AsyncDb<T> {
     type Error = AsyncError<T::Error>;
-    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic(
-        &mut self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let Self { db, rt } = self;
         block_on_runtime_result(
             rt.as_ref().map(HandleOrRuntime::handle),
@@ -695,13 +687,9 @@ impl<T: DatabaseAsync> Database for AsyncDb<T> {
 
 impl<T: DatabaseAsyncRef> DatabaseRef for AsyncDb<T> {
     type Error = AsyncError<T::Error>;
-    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic_ref(
-        &self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         block_on_runtime_result(
             self.rt.as_ref().map(HandleOrRuntime::handle),
             self.db.basic_async_ref(address),
@@ -752,18 +740,13 @@ impl<T: DatabaseAsyncRef> DatabaseRef for AsyncDb<T> {
 }
 
 impl<T: DatabaseAsync + DatabaseCommit> DatabaseCommit for AsyncDb<T> {
-    type AccountExtension = <T as DatabaseCommit>::AccountExtension;
-
     #[inline]
-    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.db.commit(changes);
     }
 
     #[inline]
-    fn commit_iter(
-        &mut self,
-        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
-    ) {
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
         self.db.commit_iter(changes);
     }
 }
@@ -823,13 +806,9 @@ impl<T> WrapDatabaseAsync<T> {
 
 impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
     type Error = AsyncError<T::Error>;
-    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic(
-        &mut self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.0.basic(address)
     }
 
@@ -866,13 +845,9 @@ impl<T: DatabaseAsync> Database for WrapDatabaseAsync<T> {
 
 impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
     type Error = AsyncError<T::Error>;
-    type AccountExtension = T::AccountExtension;
 
     #[inline]
-    fn basic_ref(
-        &self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.0.basic_ref(address)
     }
 
@@ -908,18 +883,13 @@ impl<T: DatabaseAsyncRef> DatabaseRef for WrapDatabaseAsync<T> {
 }
 
 impl<T: DatabaseAsync + DatabaseCommit> DatabaseCommit for WrapDatabaseAsync<T> {
-    type AccountExtension = <T as DatabaseCommit>::AccountExtension;
-
     #[inline]
-    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.0.commit(changes);
     }
 
     #[inline]
-    fn commit_iter(
-        &mut self,
-        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
-    ) {
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
         self.0.commit_iter(changes);
     }
 }
@@ -1124,7 +1094,6 @@ mod tests {
 
     impl DatabaseAsync for TestDb {
         type Error = Infallible;
-        type AccountExtension = ();
 
         async fn basic_async(
             &mut self,
@@ -1156,7 +1125,6 @@ mod tests {
 
     impl DatabaseAsync for PendingDb {
         type Error = Infallible;
-        type AccountExtension = ();
 
         async fn basic_async(
             &mut self,
@@ -1207,7 +1175,6 @@ mod tests {
 
     impl DatabaseAsync for FailingDb {
         type Error = TestError;
-        type AccountExtension = ();
 
         async fn basic_async(
             &mut self,
@@ -1237,7 +1204,6 @@ mod tests {
 
     impl DatabaseAsync for TokioDb {
         type Error = Infallible;
-        type AccountExtension = ();
 
         async fn basic_async(
             &mut self,

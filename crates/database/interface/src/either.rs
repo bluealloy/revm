@@ -8,15 +8,11 @@ use state::{Account, AccountId, AccountInfo, Bytecode};
 impl<L, R> Database for Either<L, R>
 where
     L: Database,
-    R: Database<Error = L::Error, AccountExtension = L::AccountExtension>,
+    R: Database<Error = L::Error>,
 {
     type Error = L::Error;
-    type AccountExtension = L::AccountExtension;
 
-    fn basic(
-        &mut self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         match self {
             Self::Left(db) => db.basic(address),
             Self::Right(db) => db.basic(address),
@@ -64,21 +60,16 @@ where
 impl<L, R> DatabaseCommit for Either<L, R>
 where
     L: DatabaseCommit,
-    R: DatabaseCommit<AccountExtension = L::AccountExtension>,
+    R: DatabaseCommit,
 {
-    type AccountExtension = L::AccountExtension;
-
-    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         match self {
             Self::Left(db) => db.commit(changes),
             Self::Right(db) => db.commit(changes),
         }
     }
 
-    fn commit_iter(
-        &mut self,
-        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
-    ) {
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
         match self {
             Self::Left(db) => db.commit_iter(changes),
             Self::Right(db) => db.commit_iter(changes),
@@ -89,15 +80,11 @@ where
 impl<L, R> DatabaseRef for Either<L, R>
 where
     L: DatabaseRef,
-    R: DatabaseRef<Error = L::Error, AccountExtension = L::AccountExtension>,
+    R: DatabaseRef<Error = L::Error>,
 {
     type Error = L::Error;
-    type AccountExtension = L::AccountExtension;
 
-    fn basic_ref(
-        &self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         match self {
             Self::Left(db) => db.basic_ref(address),
             Self::Right(db) => db.basic_ref(address),

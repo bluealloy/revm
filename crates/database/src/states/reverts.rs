@@ -7,31 +7,31 @@ use core::{
     ops::{Deref, DerefMut},
 };
 use primitives::{Address, StorageKeyMap, StorageValue};
-use state::{AccountExtension, AccountInfo};
+use state::AccountInfo;
 use std::vec::Vec;
 
 /// Contains reverts of multiple account in multiple transitions (Transitions as a block).
 #[derive(Clone, Debug, Default, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Reverts<EXT: AccountExtension = ()>(Vec<Vec<(Address, AccountRevert<EXT>)>>);
+pub struct Reverts(Vec<Vec<(Address, AccountRevert)>>);
 
-impl<EXT: AccountExtension> Deref for Reverts<EXT> {
-    type Target = Vec<Vec<(Address, AccountRevert<EXT>)>>;
+impl Deref for Reverts {
+    type Target = Vec<Vec<(Address, AccountRevert)>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<EXT: AccountExtension> DerefMut for Reverts<EXT> {
+impl DerefMut for Reverts {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<EXT: AccountExtension> Reverts<EXT> {
+impl Reverts {
     /// Creates new reverts.
-    pub const fn new(reverts: Vec<Vec<(Address, AccountRevert<EXT>)>>) -> Self {
+    pub const fn new(reverts: Vec<Vec<(Address, AccountRevert)>>) -> Self {
         Self(reverts)
     }
 
@@ -43,14 +43,14 @@ impl<EXT: AccountExtension> Reverts<EXT> {
     }
 
     /// Extends reverts with other reverts.
-    pub fn extend(&mut self, other: Reverts<EXT>) {
+    pub fn extend(&mut self, other: Reverts) {
         self.0.extend(other.0);
     }
 
     /// Generates a [`PlainStateReverts`].
     ///
     /// Note that account are sorted by address.
-    pub fn to_plain_state_reverts(&self) -> PlainStateReverts<EXT> {
+    pub fn to_plain_state_reverts(&self) -> PlainStateReverts {
         let mut state_reverts = PlainStateReverts::with_capacity(self.0.len());
         for reverts in &self.0 {
             // Pessimistically pre-allocate assuming _all_ accounts changed.
@@ -118,12 +118,12 @@ impl<EXT: AccountExtension> Reverts<EXT> {
     ///
     /// Note that account are sorted by address.
     #[deprecated = "Use `to_plain_state_reverts` instead"]
-    pub fn into_plain_state_reverts(self) -> PlainStateReverts<EXT> {
+    pub fn into_plain_state_reverts(self) -> PlainStateReverts {
         self.to_plain_state_reverts()
     }
 }
 
-impl<EXT: AccountExtension> PartialEq for Reverts<EXT> {
+impl PartialEq for Reverts {
     fn eq(&self, other: &Self) -> bool {
         self.content_eq(other)
     }
@@ -141,9 +141,9 @@ impl<EXT: AccountExtension> PartialEq for Reverts<EXT> {
 /// And we need to be able to read it from database.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountRevert<EXT: AccountExtension = ()> {
+pub struct AccountRevert {
     /// Account information revert.
-    pub account: AccountInfoRevert<EXT>,
+    pub account: AccountInfoRevert,
     /// Storage slots to revert.
     pub storage: StorageKeyMap<RevertToSlot>,
     /// Previous account status before the change.
@@ -152,7 +152,7 @@ pub struct AccountRevert<EXT: AccountExtension = ()> {
     pub wipe_storage: bool,
 }
 
-impl<EXT: AccountExtension> AccountRevert<EXT> {
+impl AccountRevert {
     /// The approximate size of changes needed to store this account revert.
     ///
     /// `1 + storage_reverts_len`
@@ -164,7 +164,7 @@ impl<EXT: AccountExtension> AccountRevert<EXT> {
     /// for the storage that are set if account is again created.
     pub fn new_selfdestructed_again(
         status: AccountStatus,
-        account: AccountInfoRevert<EXT>,
+        account: AccountInfoRevert,
         mut previous_storage: StorageWithOriginalValues,
         updated_storage: StorageWithOriginalValues,
     ) -> Self {
@@ -189,8 +189,8 @@ impl<EXT: AccountExtension> AccountRevert<EXT> {
 
     /// Creates revert for states that were before selfdestruct.
     pub fn new_selfdestructed_from_bundle(
-        account_info_revert: AccountInfoRevert<EXT>,
-        bundle_account: &mut BundleAccount<EXT>,
+        account_info_revert: AccountInfoRevert,
+        bundle_account: &mut BundleAccount,
         updated_storage: &StorageWithOriginalValues,
     ) -> Option<Self> {
         match bundle_account.status {
@@ -214,7 +214,7 @@ impl<EXT: AccountExtension> AccountRevert<EXT> {
     /// Create new selfdestruct revert.
     pub fn new_selfdestructed(
         status: AccountStatus,
-        account: AccountInfoRevert<EXT>,
+        account: AccountInfoRevert,
         mut storage: StorageWithOriginalValues,
     ) -> Self {
         // Zero all present storage values and save present values to AccountRevert.
@@ -246,14 +246,14 @@ impl<EXT: AccountExtension> AccountRevert<EXT> {
 }
 
 /// Implements partial ordering for AccountRevert
-impl<EXT: AccountExtension> PartialOrd for AccountRevert<EXT> {
+impl PartialOrd for AccountRevert {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 /// Implements total ordering for AccountRevert
-impl<EXT: AccountExtension> Ord for AccountRevert<EXT> {
+impl Ord for AccountRevert {
     fn cmp(&self, other: &Self) -> Ordering {
         // First compare accounts
         if let Some(ord) = self.account.partial_cmp(&other.account) {
@@ -295,14 +295,14 @@ impl<EXT: AccountExtension> Ord for AccountRevert<EXT> {
 /// will tell us what to do on revert.
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum AccountInfoRevert<EXT: AccountExtension = ()> {
+pub enum AccountInfoRevert {
     #[default]
     /// Nothing changed
     DoNothing,
     /// Account was created and on revert we need to remove it with all storage.
     DeleteIt,
     /// Account was changed and on revert we need to put old state.
-    RevertTo(AccountInfo<EXT>),
+    RevertTo(AccountInfo),
 }
 
 /// So storage can have multiple types:

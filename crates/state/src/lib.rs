@@ -11,7 +11,7 @@ mod types;
 
 pub use bytecode;
 
-pub use account_info::{AccountExtension, AccountId, AccountInfo};
+pub use account_info::{AccountId, AccountInfo};
 pub use bytecode::Bytecode;
 pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
@@ -76,9 +76,9 @@ impl TransactionId {
 ///     * Account is already up to date (uses present flow).
 #[derive(Debug, Clone, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-pub struct Account<EXT: AccountExtension = ()> {
+pub struct Account {
     /// Balance, nonce, and code
-    pub info: AccountInfo<EXT>,
+    pub info: AccountInfo,
     /// Transaction id, used to track when account was touched/loaded into journal.
     pub transaction_id: TransactionId,
     /// Storage cache
@@ -88,10 +88,10 @@ pub struct Account<EXT: AccountExtension = ()> {
 
     /// Original account info used by BAL, changed only on cold load by BAL.
     /// `None` means `Default::default()`, to avoid allocations.
-    original_info: Option<Box<AccountInfo<EXT>>>,
+    original_info: Option<Box<AccountInfo>>,
 }
 
-impl<EXT: AccountExtension> PartialEq for Account<EXT> {
+impl PartialEq for Account {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.info == other.info
@@ -102,7 +102,7 @@ impl<EXT: AccountExtension> PartialEq for Account<EXT> {
     }
 }
 
-impl<EXT: AccountExtension> Account<EXT> {
+impl Account {
     /// Creates new account and mark it as non existing.
     #[inline]
     pub fn new_not_existing(transaction_id: TransactionId) -> Self {
@@ -143,13 +143,13 @@ impl<EXT: AccountExtension> Account<EXT> {
 
     /// Returns the original account info.
     #[inline]
-    pub fn original_info(&self) -> AccountInfo<EXT> {
+    pub fn original_info(&self) -> AccountInfo {
         self.original_info.as_deref().cloned().unwrap_or_default()
     }
 
     /// Returns a mutable reference to the original account info.
     #[inline]
-    pub fn original_info_mut(&mut self) -> &mut AccountInfo<EXT> {
+    pub fn original_info_mut(&mut self) -> &mut AccountInfo {
         self.original_info.get_or_insert_default()
     }
 
@@ -334,7 +334,7 @@ impl<EXT: AccountExtension> Account<EXT> {
     }
 
     /// Sets account info and returns self for method chaining.
-    pub fn with_info(mut self, info: AccountInfo<EXT>) -> Self {
+    pub fn with_info(mut self, info: AccountInfo) -> Self {
         self.info = info;
         self
     }
@@ -388,8 +388,8 @@ impl<EXT: AccountExtension> Account<EXT> {
     }
 }
 
-impl<EXT: AccountExtension> From<AccountInfo<EXT>> for Account<EXT> {
-    fn from(info: AccountInfo<EXT>) -> Self {
+impl From<AccountInfo> for Account {
+    fn from(info: AccountInfo) -> Self {
         let original_info = if info.is_default() {
             None
         } else {
@@ -412,23 +412,20 @@ mod serde_impl {
 
     /// Distinguishes missing field (old format) from explicit `null` (new format).
     #[derive(Default)]
-    enum MaybeOriginalInfo<EXT: AccountExtension> {
+    enum MaybeOriginalInfo {
         /// Field was missing from JSON (old format).
         #[default]
         Missing,
         /// Present in JSON: `null` means default, `Some` is the value.
-        Present(Option<AccountInfo<EXT>>),
+        Present(Option<AccountInfo>),
     }
 
-    impl<'de, EXT> Deserialize<'de> for MaybeOriginalInfo<EXT>
-    where
-        EXT: AccountExtension + Deserialize<'de>,
-    {
+    impl<'de> Deserialize<'de> for MaybeOriginalInfo {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: serde::Deserializer<'de>,
         {
-            Option::<AccountInfo<EXT>>::deserialize(deserializer).map(MaybeOriginalInfo::Present)
+            Option::<AccountInfo>::deserialize(deserializer).map(MaybeOriginalInfo::Present)
         }
     }
 
@@ -436,19 +433,16 @@ mod serde_impl {
     // Field order must match `Account`'s declaration order: the derived `Serialize` emits
     // fields positionally, and non-self-describing formats (bincode, postcard) replay them in
     // this struct's declared order — only self-describing formats match fields by name.
-    struct AccountSerde<EXT: AccountExtension> {
-        info: AccountInfo<EXT>,
+    struct AccountSerde {
+        info: AccountInfo,
         transaction_id: TransactionId,
         storage: EvmStorage,
         status: AccountStatus,
         #[serde(default)]
-        original_info: MaybeOriginalInfo<EXT>,
+        original_info: MaybeOriginalInfo,
     }
 
-    impl<'de, EXT> Deserialize<'de> for super::Account<EXT>
-    where
-        EXT: AccountExtension + Deserialize<'de>,
-    {
+    impl<'de> Deserialize<'de> for super::Account {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: serde::Deserializer<'de>,
@@ -645,15 +639,12 @@ impl EvmStorageSlot {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    type DefaultAccount = Account<()>;
-    type DefaultAccountInfo = AccountInfo<()>;
     use crate::EvmStorageSlot;
     use primitives::{StorageKey, KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
         assert!(account.is_empty());
 
         account.info.balance = U256::from(1);
@@ -665,7 +656,7 @@ mod tests {
 
     #[test]
     fn account_is_empty_nonce() {
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
         assert!(account.is_empty());
 
         account.info.nonce = 1;
@@ -677,7 +668,7 @@ mod tests {
 
     #[test]
     fn account_is_empty_code_hash() {
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
         assert!(account.is_empty());
 
         account.info.code_hash = [1; 32].into();
@@ -692,7 +683,7 @@ mod tests {
 
     #[test]
     fn account_state() {
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
 
         assert!(!account.is_touched());
         assert!(!account.is_selfdestructed());
@@ -712,7 +703,7 @@ mod tests {
 
     #[test]
     fn account_is_cold() {
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
 
         // Account is not cold by default
         assert!(!account.status.contains(crate::AccountStatus::Cold));
@@ -732,8 +723,8 @@ mod tests {
 
     #[test]
     fn test_account_with_info() {
-        let info = DefaultAccountInfo::default();
-        let account = DefaultAccount::default().with_info(info.clone());
+        let info = AccountInfo::default();
+        let account = Account::default().with_info(info.clone());
 
         assert_eq!(account.info, info);
         assert_eq!(account.storage, HashMap::default());
@@ -751,7 +742,7 @@ mod tests {
         storage.insert(key1, slot1.clone());
         storage.insert(key2, slot2.clone());
 
-        let account = DefaultAccount::default().with_storage(storage.clone().into_iter());
+        let account = Account::default().with_storage(storage.clone().into_iter());
 
         assert_eq!(account.storage.len(), 2);
         assert_eq!(account.storage.get(&key1), Some(&slot1));
@@ -760,7 +751,7 @@ mod tests {
 
     #[test]
     fn test_account_with_selfdestruct_mark() {
-        let account = DefaultAccount::default().with_selfdestruct_mark();
+        let account = Account::default().with_selfdestruct_mark();
 
         assert!(account.is_selfdestructed());
         assert!(!account.is_touched());
@@ -770,7 +761,7 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn test_account_serialize_deserialize() {
-        let account = DefaultAccount::default().with_selfdestruct_mark();
+        let account = Account::default().with_selfdestruct_mark();
         let serialized = serde_json::to_string(&account).unwrap();
         let deserialized: Account = serde_json::from_str(&serialized).unwrap();
         assert_eq!(account, deserialized);
@@ -783,9 +774,9 @@ mod tests {
         // mismatch is invisible to the JSON tests above and a default account round-trips by
         // accident. Populate every field with a distinct non-default value, `original_info`
         // differing from `info`, to pin each field's position.
-        let mut account = DefaultAccount::from(DefaultAccountInfo {
+        let mut account = Account::from(AccountInfo {
             nonce: 5,
-            ..DefaultAccountInfo::default()
+            ..AccountInfo::default()
         });
         account.info.nonce = 7;
         account.transaction_id = TransactionId::new(3).unwrap();
@@ -852,7 +843,7 @@ mod tests {
 
     #[test]
     fn test_account_with_touched_mark() {
-        let account = DefaultAccount::default().with_touched_mark();
+        let account = Account::default().with_touched_mark();
 
         assert!(!account.is_selfdestructed());
         assert!(account.is_touched());
@@ -861,7 +852,7 @@ mod tests {
 
     #[test]
     fn test_account_with_created_mark() {
-        let account = DefaultAccount::default().with_created_mark();
+        let account = Account::default().with_created_mark();
 
         assert!(!account.is_selfdestructed());
         assert!(!account.is_touched());
@@ -870,7 +861,7 @@ mod tests {
 
     #[test]
     fn test_account_with_cold_mark() {
-        let account = DefaultAccount::default().with_cold_mark();
+        let account = Account::default().with_cold_mark();
 
         assert!(account.status.contains(AccountStatus::Cold));
     }
@@ -901,7 +892,7 @@ mod tests {
     #[test]
     fn test_account_with_warm_mark() {
         // Start with a cold account
-        let cold_account = DefaultAccount::default().with_cold_mark();
+        let cold_account = Account::default().with_cold_mark();
         assert!(cold_account.status.contains(AccountStatus::Cold));
 
         // Use with_warm_mark to warm it
@@ -920,7 +911,7 @@ mod tests {
     #[test]
     fn test_account_with_warm() {
         // Start with a cold account
-        let cold_account = DefaultAccount::default().with_cold_mark();
+        let cold_account = Account::default().with_cold_mark();
         assert!(cold_account.status.contains(AccountStatus::Cold));
 
         // Use with_warm to warm it
@@ -932,9 +923,9 @@ mod tests {
 
     #[test]
     fn test_account_builder_chaining() {
-        let info: DefaultAccountInfo = AccountInfo {
+        let info = AccountInfo {
             nonce: 5,
-            ..DefaultAccountInfo::default()
+            ..AccountInfo::default()
         };
 
         let slot_key = StorageKey::from(42);
@@ -943,7 +934,7 @@ mod tests {
         storage.insert(slot_key, slot_value.clone());
 
         // Chain multiple builder methods together
-        let account = DefaultAccount::default()
+        let account = Account::default()
             .with_info(info.clone())
             .with_storage(storage.into_iter())
             .with_created_mark()
@@ -963,7 +954,7 @@ mod tests {
     fn test_account_is_cold_transaction_id() {
         let tx_zero = TransactionId::ZERO;
         let tx_one = TransactionId::new(1).unwrap();
-        let mut account = DefaultAccount::default();
+        let mut account = Account::default();
         // only case where it is warm.
         assert!(!account.is_cold_transaction_id(tx_zero));
 

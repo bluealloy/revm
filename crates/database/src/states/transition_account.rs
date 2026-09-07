@@ -4,7 +4,7 @@ use super::{AccountRevert, AccountStatus, BundleAccount, StorageSlot, StorageWit
 use bytecode::Bytecode;
 use either::Either;
 use primitives::{hash_map, B256, U256};
-use state::{AccountExtension, AccountInfo, EvmStorage};
+use state::{AccountInfo, EvmStorage};
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is sent to Block state.
@@ -12,15 +12,15 @@ use state::{AccountExtension, AccountInfo, EvmStorage};
 /// It is used when block state gets merged to bundle state to
 /// create needed Reverts.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct TransitionAccount<S = StorageWithOriginalValues, EXT: AccountExtension = ()> {
+pub struct TransitionAccount<S = StorageWithOriginalValues> {
     /// Account information, if account exists.
-    pub info: Option<AccountInfo<EXT>>,
+    pub info: Option<AccountInfo>,
     /// Current account status.
     pub status: AccountStatus,
     /// Previous account info is needed for account that got initially loaded.
     /// Initially loaded account are not present inside bundle and are needed
     /// to generate Reverts.
-    pub previous_info: Option<AccountInfo<EXT>>,
+    pub previous_info: Option<AccountInfo>,
     /// Mostly needed when previous status Loaded/LoadedEmpty.
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
@@ -33,7 +33,7 @@ pub struct TransitionAccount<S = StorageWithOriginalValues, EXT: AccountExtensio
     pub storage_was_destroyed: bool,
 }
 
-impl<EXT: AccountExtension> TransitionAccount<StorageWithOriginalValues, EXT> {
+impl TransitionAccount {
     /// Create new LoadedEmpty account.
     pub fn new_empty_eip161(storage: StorageWithOriginalValues) -> Self {
         Self {
@@ -77,7 +77,7 @@ impl<EXT: AccountExtension> TransitionAccount<StorageWithOriginalValues, EXT> {
 
     /// Update new values of transition. Don't override old values.
     /// Both account info and old storages need to be left intact.
-    pub fn update(&mut self, other: TransitionAccount<Option<Cow<'_, EvmStorage>>, EXT>) {
+    pub fn update(&mut self, other: TransitionAccount<Option<Cow<'_, EvmStorage>>>) {
         self.info = other.info;
         self.status = other.status;
 
@@ -136,13 +136,13 @@ impl<EXT: AccountExtension> TransitionAccount<StorageWithOriginalValues, EXT> {
     }
 
     /// Consume Self and create account revert from it.
-    pub fn create_revert(self) -> Option<AccountRevert<EXT>> {
+    pub fn create_revert(self) -> Option<AccountRevert> {
         let mut previous_account = self.original_bundle_account();
         previous_account.update_and_create_revert(self)
     }
 
     /// Present bundle account
-    pub fn present_bundle_account(&self) -> BundleAccount<EXT> {
+    pub fn present_bundle_account(&self) -> BundleAccount {
         BundleAccount {
             info: self.info.clone(),
             original_info: self.previous_info.clone(),
@@ -152,7 +152,7 @@ impl<EXT: AccountExtension> TransitionAccount<StorageWithOriginalValues, EXT> {
     }
 
     /// Original bundle account
-    fn original_bundle_account(&self) -> BundleAccount<EXT> {
+    fn original_bundle_account(&self) -> BundleAccount {
         BundleAccount {
             info: self.previous_info.clone(),
             original_info: self.previous_info.clone(),
@@ -162,9 +162,9 @@ impl<EXT: AccountExtension> TransitionAccount<StorageWithOriginalValues, EXT> {
     }
 }
 
-impl<S, EXT: AccountExtension> TransitionAccount<S, EXT> {
+impl<S> TransitionAccount<S> {
     /// Map the storage of the transition account.
-    pub fn map_storage<F, N>(self, f: F) -> TransitionAccount<N, EXT>
+    pub fn map_storage<F, N>(self, f: F) -> TransitionAccount<N>
     where
         F: FnOnce(S) -> N,
     {

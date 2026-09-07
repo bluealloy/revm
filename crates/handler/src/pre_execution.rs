@@ -66,8 +66,8 @@ pub fn load_accounts<
 
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
-pub fn validate_account_nonce_and_code_with_components<EXT: state::AccountExtension>(
-    caller_info: &AccountInfo<EXT>,
+pub fn validate_account_nonce_and_code_with_components(
+    caller_info: &AccountInfo,
     tx: impl Transaction,
     cfg: impl Cfg,
 ) -> Result<(), InvalidTransaction> {
@@ -81,8 +81,8 @@ pub fn validate_account_nonce_and_code_with_components<EXT: state::AccountExtens
 
 /// Validates caller account nonce and code according to EIP-3607.
 #[inline]
-pub fn validate_account_nonce_and_code<EXT: state::AccountExtension>(
-    caller_info: &AccountInfo<EXT>,
+pub fn validate_account_nonce_and_code(
+    caller_info: &AccountInfo,
     tx_nonce: u64,
     is_eip3607_disabled: bool,
     is_nonce_check_disabled: bool,
@@ -530,7 +530,7 @@ mod tests {
 
     #[test]
     fn rejects_transactions_when_sender_nonce_is_max() {
-        let caller_info = AccountInfo::<()> {
+        let caller_info = AccountInfo {
             nonce: u64::MAX,
             ..AccountInfo::default()
         };
@@ -543,7 +543,7 @@ mod tests {
 
     #[test]
     fn allows_matching_non_max_nonce() {
-        let caller_info = AccountInfo::<()> {
+        let caller_info = AccountInfo {
             nonce: 7,
             ..AccountInfo::default()
         };

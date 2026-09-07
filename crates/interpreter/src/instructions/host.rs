@@ -23,7 +23,7 @@ fn load_account<'a, H: Host + ?Sized>(
     host: &'a mut H,
     address: primitives::Address,
     load_code: bool,
-) -> core::result::Result<AccountInfoLoad<'a, H::AccountExtension>, LoadError> {
+) -> core::result::Result<AccountInfoLoad<'a>, LoadError> {
     let cold_load_gas = host.gas_params().cold_account_additional_cost();
     let skip_cold_load = gas.remaining() < cold_load_gas;
     let account = host.load_account_info_skip_cold_load(address, load_code, skip_cold_load)?;

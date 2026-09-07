@@ -59,10 +59,7 @@ where
 // Trait allows replay_commit and transact_commit functionality.
 impl<CTX, INSP> ExecuteCommitEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<
-        Db: DatabaseCommit<AccountExtension = ()>,
-        Journal: JournalTr<State = EvmState>,
-    >,
+    CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState>>,
 {
     fn commit(&mut self, state: Self::State) {
         self.ctx().db_mut().commit(state);
@@ -91,10 +88,7 @@ where
 // Inspect
 impl<CTX, INSP> InspectCommitEvm for MyEvm<CTX, INSP>
 where
-    CTX: ContextSetters<
-        Db: DatabaseCommit<AccountExtension = ()>,
-        Journal: JournalTr<State = EvmState> + JournalExt,
-    >,
+    CTX: ContextSetters<Db: DatabaseCommit, Journal: JournalTr<State = EvmState> + JournalExt>,
     INSP: Inspector<CTX, EthInterpreter>,
 {
 }

@@ -17,26 +17,26 @@ use state::{
 use std::{borrow::Cow, boxed::Box, sync::Arc};
 
 /// Database boxed with a lifetime and Send
-pub type DBBox<'a, E, EXT = ()> = Box<dyn Database<Error = E, AccountExtension = EXT> + Send + 'a>;
+pub type DBBox<'a, E> = Box<dyn Database<Error = E> + Send + 'a>;
 
 /// More constrained version of State that uses Boxed database with a lifetime
 ///
 /// This is used to make it easier to use State.
-pub type StateDBBox<'a, E, EXT = ()> = State<DBBox<'a, E, EXT>>;
+pub type StateDBBox<'a, E> = State<DBBox<'a, E>>;
 
 /// State of blockchain
 ///
 /// State clear flag is handled by the EVM journal in `finalize()` based on
 /// the spec. The database layer always applies post-EIP-161 commit semantics.
 #[derive(derive_more::Debug)]
-pub struct State<DB: Database> {
+pub struct State<DB> {
     /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database
     ///
     /// This allows us to have only one layer of cache where we can fetch data.
     ///
     /// Additionally, we can introduce some preloading of data from database.
-    pub cache: CacheState<DB::AccountExtension>,
+    pub cache: CacheState,
     /// Optional database that we use to fetch data from
     ///
     /// If database is not present, we will return not existing account and storage.
@@ -46,13 +46,13 @@ pub struct State<DB: Database> {
     /// Block state, it aggregates transactions transitions into one state
     ///
     /// Build reverts and state that gets applied to the state.
-    pub transition_state: Option<TransitionState<DB::AccountExtension>>,
+    pub transition_state: Option<TransitionState>,
     /// After block finishes we merge those changes inside bundle
     ///
     /// Bundle is used to update database and create changesets.
     ///
     /// Bundle state can be set on initialization if we want to use preloaded bundle.
-    pub bundle_state: BundleState<DB::AccountExtension>,
+    pub bundle_state: BundleState,
     /// Additional layer that is going to be used to fetch values before fetching values
     /// from database
     ///
@@ -69,10 +69,10 @@ pub struct State<DB: Database> {
     /// BAL state.
     ///
     /// Can contain both the BAL for reads and BAL builder that is used to build BAL.
-    pub bal_state: BalState<DB::AccountExtension>,
+    pub bal_state: BalState,
     /// Hook invoked whenever state changes are committed.
     #[debug(skip)]
-    pub state_hook: Option<Box<dyn OnStateHook<DB::AccountExtension>>>,
+    pub state_hook: Option<Box<dyn OnStateHook>>,
 }
 
 // Have ability to call State::builder without having to specify the type.
@@ -97,7 +97,7 @@ impl<DB: Database> State<DB> {
     }
 
     /// Inserts an account into the state.
-    pub fn insert_account(&mut self, address: Address, info: AccountInfo<DB::AccountExtension>) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         self.cache.insert_account(address, info)
     }
 
@@ -105,7 +105,7 @@ impl<DB: Database> State<DB> {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        info: AccountInfo<DB::AccountExtension>,
+        info: AccountInfo,
         storage: PlainStorage,
     ) {
         self.cache
@@ -115,12 +115,7 @@ impl<DB: Database> State<DB> {
     /// Applies evm transitions to transition state.
     pub fn apply_transition<'a>(
         &mut self,
-        transitions: impl IntoIterator<
-            Item = (
-                Address,
-                TransitionAccount<Option<Cow<'a, EvmStorage>>, DB::AccountExtension>,
-            ),
-        >,
+        transitions: impl IntoIterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>,
     ) {
         // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
@@ -144,10 +139,7 @@ impl<DB: Database> State<DB> {
     ///
     /// If the account is not found in the cache, it will be loaded from the
     /// database and inserted into the cache.
-    pub fn load_cache_account(
-        &mut self,
-        address: Address,
-    ) -> Result<&mut CacheAccount<DB::AccountExtension>, DB::Error> {
+    pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DB::Error> {
         Self::load_cache_account_with(
             &mut self.cache,
             self.use_preloaded_bundle,
@@ -165,12 +157,12 @@ impl<DB: Database> State<DB> {
     /// This function accepts destructed fields of [`Self`] as arguments and
     /// returns a cached account with the lifetime of the provided cache reference.
     fn load_cache_account_with<'a>(
-        cache: &'a mut CacheState<DB::AccountExtension>,
+        cache: &'a mut CacheState,
         use_preloaded_bundle: bool,
-        bundle_state: &BundleState<DB::AccountExtension>,
+        bundle_state: &BundleState,
         database: &mut DB,
         address: Address,
-    ) -> Result<&'a mut CacheAccount<DB::AccountExtension>, DB::Error> {
+    ) -> Result<&'a mut CacheAccount, DB::Error> {
         Ok(match cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 if use_preloaded_bundle {
@@ -205,13 +197,13 @@ impl<DB: Database> State<DB> {
     /// If the `State` has been built with the
     /// [`StateBuilder::with_bundle_prestate`] option, the pre-state will be
     /// taken along with any changes made by [`State::merge_transitions`].
-    pub fn take_bundle(&mut self) -> BundleState<DB::AccountExtension> {
+    pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }
 
     /// Takes build bal from bal state.
     #[inline]
-    pub const fn take_built_bal(&mut self) -> Option<Bal<DB::AccountExtension>> {
+    pub const fn take_built_bal(&mut self) -> Option<Bal> {
         self.bal_state.take_built_bal()
     }
 
@@ -241,7 +233,7 @@ impl<DB: Database> State<DB> {
 
     /// Set BAL.
     #[inline]
-    pub fn set_bal(&mut self, bal: Option<Arc<Bal<DB::AccountExtension>>>) {
+    pub fn set_bal(&mut self, bal: Option<Arc<Bal>>) {
         self.bal_state.bal = bal;
     }
 
@@ -255,17 +247,14 @@ impl<DB: Database> State<DB> {
 
     /// Sets the hook invoked whenever state changes are committed.
     #[inline]
-    pub fn set_state_hook(&mut self, hook: Option<Box<dyn OnStateHook<DB::AccountExtension>>>) {
+    pub fn set_state_hook(&mut self, hook: Option<Box<dyn OnStateHook>>) {
         self.state_hook = hook;
     }
 
     /// Sets the hook invoked whenever state changes are committed.
     #[inline]
     #[must_use]
-    pub fn with_state_hook(
-        mut self,
-        hook: Option<Box<dyn OnStateHook<DB::AccountExtension>>>,
-    ) -> Self {
+    pub fn with_state_hook(mut self, hook: Option<Box<dyn OnStateHook>>) -> Self {
         self.set_state_hook(hook);
         self
     }
@@ -314,12 +303,8 @@ impl<DB: Database> State<DB> {
 
 impl<DB: Database> Database for State<DB> {
     type Error = EvmDatabaseError<DB::Error>;
-    type AccountExtension = <DB as Database>::AccountExtension;
 
-    fn basic(
-        &mut self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         // if bal is existing but account is not found, error will be returned.
         let account_id = self
             .bal_state
@@ -413,9 +398,7 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    type AccountExtension = DB::AccountExtension;
-
-    fn commit(&mut self, changes: AddressMap<Account<Self::AccountExtension>>) {
+    fn commit(&mut self, changes: AddressMap<Account>) {
         self.bal_state.commit(&changes);
 
         if let Some(hook) = self.state_hook.as_mut() {
@@ -451,10 +434,7 @@ impl<DB: Database> DatabaseCommit for State<DB> {
         }
     }
 
-    fn commit_iter(
-        &mut self,
-        changes: &mut dyn Iterator<Item = (Address, Account<Self::AccountExtension>)>,
-    ) {
+    fn commit_iter(&mut self, changes: &mut dyn Iterator<Item = (Address, Account)>) {
         if self.state_hook.is_some() {
             let changes = changes.collect::<AddressMap<_>>();
             self.commit(changes);
@@ -479,17 +459,10 @@ impl<DB: Database> DatabaseCommit for State<DB> {
     }
 }
 
-impl<DB> DatabaseRef for State<DB>
-where
-    DB: Database + DatabaseRef<AccountExtension = <DB as Database>::AccountExtension>,
-{
-    type Error = EvmDatabaseError<<DB as DatabaseRef>::Error>;
-    type AccountExtension = <DB as Database>::AccountExtension;
+impl<DB: DatabaseRef> DatabaseRef for State<DB> {
+    type Error = EvmDatabaseError<DB::Error>;
 
-    fn basic_ref(
-        &self,
-        address: Address,
-    ) -> Result<Option<AccountInfo<Self::AccountExtension>>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         // if bal is present and account is not found, error will be returned.
         let account_id = self.bal_state.get_account_id(&address)?;
 

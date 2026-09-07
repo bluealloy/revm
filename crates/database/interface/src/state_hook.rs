@@ -1,18 +1,18 @@
 //! State commit hook.
 
-use crate::state::{AccountExtension, EvmState};
+use crate::state::EvmState;
 
 /// A hook that is called when state changes are committed.
-pub trait OnStateHook<EXT: AccountExtension = ()>: Send + 'static {
+pub trait OnStateHook: Send + 'static {
     /// Invoked with the state being committed.
-    fn on_state(&mut self, state: EvmState<EXT>);
+    fn on_state(&mut self, state: EvmState);
 }
 
-impl<EXT: AccountExtension, F> OnStateHook<EXT> for F
+impl<F> OnStateHook for F
 where
-    F: FnMut(EvmState<EXT>) + Send + 'static,
+    F: FnMut(EvmState) + Send + 'static,
 {
-    fn on_state(&mut self, state: EvmState<EXT>) {
+    fn on_state(&mut self, state: EvmState) {
         self(state)
     }
 }
@@ -22,6 +22,6 @@ where
 #[non_exhaustive]
 pub struct NoopHook;
 
-impl<EXT: AccountExtension> OnStateHook<EXT> for NoopHook {
-    fn on_state(&mut self, _state: EvmState<EXT>) {}
+impl OnStateHook for NoopHook {
+    fn on_state(&mut self, _state: EvmState) {}
 }

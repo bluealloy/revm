@@ -3,10 +3,8 @@ use super::{
 };
 use bytecode::Bytecode;
 use primitives::{hash_map, Address, AddressMap, B256Map, HashMap};
-use state::{Account, AccountExtension, AccountInfo, EvmStorage};
+use state::{Account, AccountInfo, EvmStorage};
 use std::{borrow::Cow, vec::Vec};
-
-type EvmStateTransition<'a, EXT> = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>);
 
 /// Cache state contains both modified and original values
 ///
@@ -17,20 +15,20 @@ type EvmStateTransition<'a, EXT> = (Address, TransitionAccount<Option<Cow<'a, Ev
 ///
 /// It generates transitions that is used to build BundleState.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CacheState<EXT: AccountExtension = ()> {
+pub struct CacheState {
     /// Block state account with account state
-    pub accounts: AddressMap<CacheAccount<EXT>>,
+    pub accounts: AddressMap<CacheAccount>,
     /// Created contracts
     pub contracts: B256Map<Bytecode>,
 }
 
-impl<EXT: AccountExtension> Default for CacheState<EXT> {
+impl Default for CacheState {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<EXT: AccountExtension> CacheState<EXT> {
+impl CacheState {
     /// Creates a new default state.
     pub fn new() -> Self {
         Self {
@@ -48,7 +46,7 @@ impl<EXT: AccountExtension> CacheState<EXT> {
     /// Helper function that returns all accounts.
     ///
     /// Used inside tests to generate merkle tree.
-    pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount<EXT>)> {
+    pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
             account
                 .account
@@ -64,7 +62,7 @@ impl<EXT: AccountExtension> CacheState<EXT> {
     }
 
     /// Inserts Loaded (Or LoadedEmptyEip161 if account is empty) account.
-    pub fn insert_account(&mut self, address: Address, info: AccountInfo<EXT>) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
         } else {
@@ -77,7 +75,7 @@ impl<EXT: AccountExtension> CacheState<EXT> {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        info: AccountInfo<EXT>,
+        info: AccountInfo,
         storage: PlainStorage,
     ) {
         let account = if !info.is_empty() {
@@ -92,11 +90,11 @@ impl<EXT: AccountExtension> CacheState<EXT> {
     #[inline]
     pub fn apply_evm_state<F>(
         &mut self,
-        evm_state: impl IntoIterator<Item = (Address, Account<EXT>)>,
+        evm_state: impl IntoIterator<Item = (Address, Account)>,
         mut inspect: F,
-    ) -> Vec<EvmStateTransition<'_, EXT>>
+    ) -> Vec<(Address, TransitionAccount<Option<Cow<'_, EvmStorage>>>)>
     where
-        F: FnMut(&Address, &Account<EXT>),
+        F: FnMut(&Address, &Account),
     {
         self.apply_evm_state_iter(
             evm_state
@@ -115,10 +113,11 @@ impl<EXT: AccountExtension> CacheState<EXT> {
         &'b mut self,
         evm_state: T,
         mut inspect: F,
-    ) -> impl Iterator<Item = EvmStateTransition<'a, EXT>> + use<'a, 'b, F, T, EXT>
+    ) -> impl Iterator<Item = (Address, TransitionAccount<Option<Cow<'a, EvmStorage>>>)>
+           + use<'a, 'b, F, T>
     where
-        F: FnMut(&Address, &Cow<'a, Account<EXT>>),
-        T: IntoIterator<Item = (Address, Cow<'a, Account<EXT>>)>,
+        F: FnMut(&Address, &Cow<'a, Account>),
+        T: IntoIterator<Item = (Address, Cow<'a, Account>)>,
     {
         evm_state.into_iter().filter_map(move |(address, account)| {
             inspect(&address, &account);
@@ -192,8 +191,8 @@ impl<EXT: AccountExtension> CacheState<EXT> {
     pub(crate) fn apply_account_state<'a>(
         &mut self,
         address: Address,
-        account: Cow<'a, Account<EXT>>,
-    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>, EXT>> {
+        account: Cow<'a, Account>,
+    ) -> Option<TransitionAccount<Option<Cow<'a, EvmStorage>>>> {
         // Not touched account are never changed.
         if !account.is_touched() {
             return None;

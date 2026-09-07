@@ -9,14 +9,14 @@ use std::sync::Arc;
 
 /// Allows building of State and initializing it with different options.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct StateBuilder<DB: Database> {
+pub struct StateBuilder<DB> {
     /// Database that we use to fetch data from
     database: DB,
     /// If there is prestate that we want to use,
     /// this would mean that we have additional state layer between evm and disk/database.
-    with_bundle_prestate: Option<BundleState<DB::AccountExtension>>,
+    with_bundle_prestate: Option<BundleState>,
     /// This will initialize cache to this state.
-    with_cache_prestate: Option<CacheState<DB::AccountExtension>>,
+    with_cache_prestate: Option<CacheState>,
     /// Do we want to create reverts and update bundle state?
     ///
     /// Default is false.
@@ -24,7 +24,7 @@ pub struct StateBuilder<DB: Database> {
     /// If we want to set different block hashes,
     with_block_hashes: BlockHashCache,
     /// BAL state.
-    bal_state: BalState<DB::AccountExtension>,
+    bal_state: BalState,
 }
 
 impl StateBuilder<EmptyDB> {
@@ -57,10 +57,7 @@ impl<DB: Database> StateBuilder<DB> {
     }
 
     /// Set the database.
-    pub fn with_database<ODB>(self, database: ODB) -> StateBuilder<ODB>
-    where
-        ODB: Database<AccountExtension = DB::AccountExtension>,
-    {
+    pub fn with_database<ODB: Database>(self, database: ODB) -> StateBuilder<ODB> {
         // Cast to the different database.
         // Note that we return different type depending on the database NewDBError.
         StateBuilder {
@@ -74,18 +71,18 @@ impl<DB: Database> StateBuilder<DB> {
     }
 
     /// Takes [DatabaseRef] and wraps it with [WrapDatabaseRef].
-    pub fn with_database_ref<ODB>(self, database: ODB) -> StateBuilder<WrapDatabaseRef<ODB>>
-    where
-        ODB: DatabaseRef<AccountExtension = DB::AccountExtension>,
-    {
+    pub fn with_database_ref<ODB: DatabaseRef>(
+        self,
+        database: ODB,
+    ) -> StateBuilder<WrapDatabaseRef<ODB>> {
         self.with_database(WrapDatabaseRef(database))
     }
 
     /// With boxed version of database.
     pub fn with_database_boxed<Error: DBErrorMarker>(
         self,
-        database: DBBox<'_, Error, DB::AccountExtension>,
-    ) -> StateBuilder<DBBox<'_, Error, DB::AccountExtension>> {
+        database: DBBox<'_, Error>,
+    ) -> StateBuilder<DBBox<'_, Error>> {
         self.with_database(database)
     }
 
@@ -97,7 +94,7 @@ impl<DB: Database> StateBuilder<DB> {
     /// And State after not finding data inside StateCache will try to find it inside BundleState.
     ///
     /// On update Bundle state will be changed and updated.
-    pub fn with_bundle_prestate(self, bundle: BundleState<DB::AccountExtension>) -> Self {
+    pub fn with_bundle_prestate(self, bundle: BundleState) -> Self {
         Self {
             with_bundle_prestate: Some(bundle),
             ..self
@@ -128,7 +125,7 @@ impl<DB: Database> StateBuilder<DB> {
     /// **Note**: If set, it will ignore bundle prestate.
     ///
     /// This is useful for testing.
-    pub fn with_cached_prestate(self, cache: CacheState<DB::AccountExtension>) -> Self {
+    pub fn with_cached_prestate(self, cache: CacheState) -> Self {
         Self {
             with_cache_prestate: Some(cache),
             ..self
@@ -144,7 +141,7 @@ impl<DB: Database> StateBuilder<DB> {
     }
 
     /// With BAL.
-    pub fn with_bal(mut self, bal: Arc<Bal<DB::AccountExtension>>) -> Self {
+    pub fn with_bal(mut self, bal: Arc<Bal>) -> Self {
         self.bal_state.bal = Some(bal);
         self
     }

@@ -532,10 +532,7 @@ where
 
 /// Mimics <https://github.com/foundry-rs/foundry/blob/25cc1ac68b5f6977f23d713c01ec455ad7f03d21/crates/evm/core/src/backend/mod.rs#L1968>
 /// Omits persistent accounts (accounts that should be kept persistent when switching forks) for simplicity.
-fn update_state<DB: Database<AccountExtension = ()>>(
-    state: &mut EvmState,
-    db: &mut DB,
-) -> Result<(), DB::Error> {
+fn update_state<DB: Database>(state: &mut EvmState, db: &mut DB) -> Result<(), DB::Error> {
     for (addr, acc) in state.iter_mut() {
         acc.info = db.basic(*addr)?.unwrap_or_default();
         for (key, val) in acc.storage.iter_mut() {

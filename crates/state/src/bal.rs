@@ -20,27 +20,27 @@ pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use alloy_eip7928::BlockAccessIndex;
 pub use writes::BalWrites;
 
-use crate::{Account, AccountExtension, AccountId, AccountInfo};
+use crate::{Account, AccountId, AccountInfo};
 use alloy_eip7928::BlockAccessList as AlloyBal;
 use primitives::{Address, AddressIndexMap, StorageKey, StorageValue};
 
 /// BAL structure.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Bal<EXT: AccountExtension = ()> {
+pub struct Bal {
     /// Accounts bal.
-    pub accounts: AddressIndexMap<AccountBal<EXT>>,
+    pub accounts: AddressIndexMap<AccountBal>,
 }
 
-impl<EXT: AccountExtension> FromIterator<(Address, AccountBal<EXT>)> for Bal<EXT> {
-    fn from_iter<I: IntoIterator<Item = (Address, AccountBal<EXT>)>>(iter: I) -> Self {
+impl FromIterator<(Address, AccountBal)> for Bal {
+    fn from_iter<I: IntoIterator<Item = (Address, AccountBal)>>(iter: I) -> Self {
         Self {
             accounts: iter.into_iter().collect(),
         }
     }
 }
 
-impl<EXT: AccountExtension> Bal<EXT> {
+impl Bal {
     /// Create a new BAL builder.
     pub fn new() -> Self {
         Self {
@@ -133,7 +133,7 @@ impl<EXT: AccountExtension> Bal<EXT> {
         &mut self,
         bal_index: BlockAccessIndex,
         address: Address,
-        account: &Account<EXT>,
+        account: &Account,
     ) {
         let bal_account = self.accounts.entry(address).or_default();
         bal_account.update(bal_index, account);
@@ -144,7 +144,7 @@ impl<EXT: AccountExtension> Bal<EXT> {
         &self,
         account_id: AccountId,
         bal_index: BlockAccessIndex,
-        account: &mut AccountInfo<EXT>,
+        account: &mut AccountInfo,
     ) -> Result<bool, BalError> {
         let Some((_, bal_account)) = self.accounts.get_index(account_id.get()) else {
             return Err(BalError::InvalidAccountId { account_id });
@@ -333,11 +333,11 @@ mod tests {
 
     #[test]
     fn account_extension_roundtrips_through_bal() {
-        let original = AccountInfo::<Bytes>::default();
+        let original = AccountInfo::default();
         let present = original
             .clone()
             .with_extension(Bytes::from_static(b"extension"));
-        let mut bal = AccountInfoBal::<Bytes>::default();
+        let mut bal = AccountInfoBal::default();
         bal.update(idx(1), &original, &present);
 
         let mut replayed = original;
@@ -350,7 +350,7 @@ mod tests {
         let low_address = Address::with_last_byte(1);
         let high_address = Address::with_last_byte(2);
 
-        let unordered_account: AccountBal<()> = AccountBal {
+        let unordered_account = AccountBal {
             account_info: AccountInfoBal {
                 nonce: BalWrites {
                     writes: vec![(idx(9), 90), (idx(4), 40)],

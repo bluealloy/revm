@@ -204,13 +204,12 @@ pub trait ExecuteEvmAsync: ExecuteEvm {
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>>
-        + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {
     type ExecutionResult = ExecutionResult<HaltReason>;
-    type State = EvmState<<CTX::Db as Database>::AccountExtension>;
+    type State = EvmState;
     type Error = EVMError<<CTX::Db as Database>::Error, InvalidTransaction>;
     type Tx = <CTX as ContextTr>::Tx;
     type Block = <CTX as ContextTr>::Block;
@@ -232,7 +231,7 @@ where
     }
 
     #[inline]
-    fn replay(&mut self) -> Result<ResultAndState<HaltReason, Self::State>, Self::Error> {
+    fn replay(&mut self) -> Result<ResultAndState<HaltReason>, Self::Error> {
         MainnetHandler::default()
             .run(self)
             // finalize (clear) the journal on error; on success the `map`
@@ -251,12 +250,11 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteEvmAsync
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>>
-        + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
     ExecutionResult<HaltReason>: Send,
-    EvmState<<CTX::Db as Database>::AccountExtension>: Send,
+    EvmState: Send,
     EVMError<<CTX::Db as Database>::Error, InvalidTransaction>: Send,
     <CTX as ContextTr>::Tx: Send,
 {
@@ -290,10 +288,7 @@ where
 impl<CTX, INSP, INST, PRECOMPILES> ExecuteCommitEvm
     for Evm<CTX, INSP, INST, PRECOMPILES, EthFrame<EthInterpreter>>
 where
-    CTX: ContextTr<
-            Journal: JournalTr<State = EvmState<<CTX::Db as Database>::AccountExtension>>,
-            Db: DatabaseCommit<AccountExtension = <CTX::Db as Database>::AccountExtension>,
-        > + ContextSetters,
+    CTX: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit> + ContextSetters,
     INST: InstructionProvider<Context = CTX, InterpreterTypes = EthInterpreter>,
     PRECOMPILES: PrecompileProvider<CTX, Output = InterpreterResult>,
 {

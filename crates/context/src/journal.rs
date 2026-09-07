@@ -32,35 +32,28 @@ use std::vec::Vec;
 /// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(
-    feature = "serde",
-    serde(bound(
-        serialize = "DB: serde::Serialize, DB::AccountExtension: serde::Serialize, ENTRY: serde::Serialize",
-        deserialize = "DB: serde::Deserialize<'de>, DB::AccountExtension: serde::Deserialize<'de>, ENTRY: serde::Deserialize<'de>"
-    ))
-)]
-pub struct Journal<DB: Database, ENTRY = JournalEntry>
+pub struct Journal<DB, ENTRY = JournalEntry>
 where
     ENTRY: JournalEntryTr,
 {
     /// Database
     pub database: DB,
     /// Inner journal state.
-    pub inner: JournalInner<ENTRY, DB::AccountExtension>,
+    pub inner: JournalInner<ENTRY>,
 }
 
-impl<DB: Database, ENTRY> Deref for Journal<DB, ENTRY>
+impl<DB, ENTRY> Deref for Journal<DB, ENTRY>
 where
     ENTRY: JournalEntryTr,
 {
-    type Target = JournalInner<ENTRY, DB::AccountExtension>;
+    type Target = JournalInner<ENTRY>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<DB: Database, ENTRY> DerefMut for Journal<DB, ENTRY>
+impl<DB, ENTRY> DerefMut for Journal<DB, ENTRY>
 where
     ENTRY: JournalEntryTr,
 {
@@ -69,40 +62,37 @@ where
     }
 }
 
-impl<DB: Database, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
+impl<DB, ENTRY: JournalEntryTr> Journal<DB, ENTRY> {
     /// Creates a new JournaledState by copying state data from a JournalInit and provided database.
     /// This allows reusing the state, logs, and other data from a previous execution context while
     /// connecting it to a different database backend.
-    pub const fn new_with_inner(
-        database: DB,
-        inner: JournalInner<ENTRY, DB::AccountExtension>,
-    ) -> Self {
+    pub const fn new_with_inner(database: DB, inner: JournalInner<ENTRY>) -> Self {
         Self { database, inner }
     }
 
     /// Consumes the [`Journal`] and returns [`JournalInner`].
     ///
     /// If you need to preserve the original journal, use [`Self::to_inner`] instead which clones the state.
-    pub fn into_init(self) -> JournalInner<ENTRY, DB::AccountExtension> {
+    pub fn into_init(self) -> JournalInner<ENTRY> {
         self.inner
     }
 }
 
-impl<DB: Database, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
+impl<DB, ENTRY: JournalEntryTr + Clone> Journal<DB, ENTRY> {
     /// Creates a new [`JournalInner`] by cloning all internal state data (state, storage, logs, etc)
     /// This allows creating a new journaled state with the same state data but without
     /// carrying over the original database.
     ///
     /// This is useful when you want to reuse the current state for a new transaction or
     /// execution context, but want to start with a fresh database.
-    pub fn to_inner(&self) -> JournalInner<ENTRY, DB::AccountExtension> {
+    pub fn to_inner(&self) -> JournalInner<ENTRY> {
         self.inner.clone()
     }
 }
 
 impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     type Database = DB;
-    type State = EvmState<DB::AccountExtension>;
+    type State = EvmState;
     type JournaledAccount<'a>
         = JournaledAccount<'a, DB, ENTRY>
     where
@@ -274,10 +264,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     }
 
     #[inline]
-    fn load_account(
-        &mut self,
-        address: Address,
-    ) -> Result<StateLoad<&Account<DB::AccountExtension>>, DB::Error> {
+    fn load_account(&mut self, address: Address) -> Result<StateLoad<&Account>, DB::Error> {
         self.inner.load_account(&mut self.database, address)
     }
 
@@ -306,7 +293,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
     fn load_account_with_code(
         &mut self,
         address: Address,
-    ) -> Result<StateLoad<&Account<DB::AccountExtension>>, DB::Error> {
+    ) -> Result<StateLoad<&Account>, DB::Error> {
         self.inner.load_code(&mut self.database, address)
     }
 
@@ -404,10 +391,7 @@ impl<DB: Database, ENTRY: JournalEntryTr> JournalTr for Journal<DB, ENTRY> {
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<
-        AccountInfoLoad<'_, DB::AccountExtension>,
-        JournalLoadError<<Self::Database as Database>::Error>,
-    > {
+    ) -> Result<AccountInfoLoad<'_>, JournalLoadError<<Self::Database as Database>::Error>> {
         let spec = self.inner.cfg.spec;
         self.inner
             .load_account_optional(&mut self.database, address, load_code, skip_cold_load)

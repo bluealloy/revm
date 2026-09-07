@@ -18,7 +18,7 @@ use primitives::{
     hints_util::unlikely,
     Address, Bytes, HashMap, Log, LogData, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use state::{Account, AccountExtension, EvmState, TransactionId, TransientStorage};
+use state::{Account, EvmState, TransactionId, TransientStorage};
 use std::vec::Vec;
 
 /// Configuration for the journal that affects EVM execution behavior.
@@ -59,16 +59,9 @@ pub struct JournalCfg {
 /// Spec Id is a essential information for the Journal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(
-    feature = "serde",
-    serde(bound(
-        serialize = "EXT: serde::Serialize, ENTRY: serde::Serialize",
-        deserialize = "EXT: serde::Deserialize<'de>, ENTRY: serde::Deserialize<'de>"
-    ))
-)]
-pub struct JournalInner<ENTRY, EXT: AccountExtension = ()> {
+pub struct JournalInner<ENTRY> {
     /// The current state
-    pub state: EvmState<EXT>,
+    pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
     ///
     /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
@@ -101,18 +94,18 @@ pub struct JournalInner<ENTRY, EXT: AccountExtension = ()> {
     pub selfdestructed_addresses: Vec<Address>,
 }
 
-impl<ENTRY: JournalEntryTr, EXT: AccountExtension> Default for JournalInner<ENTRY, EXT> {
+impl<ENTRY: JournalEntryTr> Default for JournalInner<ENTRY> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
+impl<ENTRY: JournalEntryTr> JournalInner<ENTRY> {
     /// Creates new [`JournalInner`].
     ///
     /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
     /// In ordinary case this is precompile or beneficiary.
-    pub fn new() -> JournalInner<ENTRY, EXT> {
+    pub fn new() -> JournalInner<ENTRY> {
         Self {
             state: HashMap::default(),
             transient_storage: TransientStorage::default(),
@@ -211,7 +204,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     /// Note: Precompile addresses and spec are preserved and initial state of
     /// warm_preloaded_addresses will contain precompiles addresses.
     #[inline]
-    pub fn finalize(&mut self) -> EvmState<EXT> {
+    pub fn finalize(&mut self) -> EvmState {
         // Clears all field from JournalInner. Doing it this way to avoid
         // missing any field.
         let Self {
@@ -325,7 +318,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Return reference to state.
     #[inline]
-    pub const fn state(&mut self) -> &mut EvmState<EXT> {
+    pub const fn state(&mut self) -> &mut EvmState {
         &mut self.state
     }
 
@@ -358,7 +351,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Mark account as touched.
     #[inline]
-    fn touch_account(journal: &mut Vec<ENTRY>, address: Address, account: &mut Account<EXT>) {
+    fn touch_account(journal: &mut Vec<ENTRY>, address: Address, account: &mut Account) {
         if !account.is_touched() {
             journal.push(ENTRY::account_touched(address));
             account.mark_touch();
@@ -373,7 +366,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// Panics if the account has not been loaded and is missing from the state set.
     #[inline]
-    pub fn account(&self, address: Address) -> &Account<EXT> {
+    pub fn account(&self, address: Address) -> &Account {
         self.state
             .get(&address)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
@@ -439,7 +432,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// Mark account as touched.
     #[inline]
-    pub fn balance_incr<DB: Database<AccountExtension = EXT>>(
+    pub fn balance_incr<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -514,7 +507,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
-    pub fn transfer<DB: Database<AccountExtension = EXT>>(
+    pub fn transfer<DB: Database>(
         &mut self,
         db: &mut DB,
         from: Address,
@@ -659,7 +652,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449>
     ///  * <https://eips.ethereum.org/EIPS/eip-6780>
     #[inline]
-    pub fn selfdestruct<DB: Database<AccountExtension = EXT>>(
+    pub fn selfdestruct<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -763,11 +756,11 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
-    pub fn load_account<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_account<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
-    ) -> Result<StateLoad<&'a Account<EXT>>, DB::Error>
+    ) -> Result<StateLoad<&'a Account>, DB::Error>
     where
         'db: 'a,
     {
@@ -783,7 +776,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     /// Returns information about the account (If it is empty or cold loaded) and if present the information
     /// about the delegated account (If it is cold loaded).
     #[inline]
-    pub fn load_account_delegated<DB: Database<AccountExtension = EXT>>(
+    pub fn load_account_delegated<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -826,11 +819,11 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     /// In case of EIP-7702 delegated account will not be loaded,
     /// [`Self::load_account_delegated`] should be used instead.
     #[inline]
-    pub fn load_code<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_code<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
-    ) -> Result<StateLoad<&'a Account<EXT>>, DB::Error>
+    ) -> Result<StateLoad<&'a Account>, DB::Error>
     where
         'db: 'a,
     {
@@ -840,13 +833,13 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads account into memory. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_optional<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_account_optional<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
         load_code: bool,
         skip_cold_load: bool,
-    ) -> Result<StateLoad<&'a Account<EXT>>, JournalLoadError<DB::Error>>
+    ) -> Result<StateLoad<&'a Account>, JournalLoadError<DB::Error>>
     where
         'db: 'a,
     {
@@ -859,7 +852,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads account into memory. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_mut<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_account_mut<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
@@ -873,7 +866,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline]
-    pub fn load_account_mut_optional_code<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_account_mut_optional_code<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
@@ -900,7 +893,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// It is useful when we want to access storage from account that is currently being executed.
     #[inline]
-    pub fn get_account_mut<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn get_account_mut<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
@@ -921,7 +914,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads account. If account is already loaded it will be marked as warm.
     #[inline(never)]
-    pub fn load_account_mut_optional<'a, 'db, DB: Database<AccountExtension = EXT>>(
+    pub fn load_account_mut_optional<'a, 'db, DB: Database>(
         &'a mut self,
         db: &'db mut DB,
         address: Address,
@@ -969,7 +962,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
                     .check_is_cold(&address, skip_cold_load)?;
 
                 let account = if let Some(account) = db.basic(address)? {
-                    let mut account: Account<DB::AccountExtension> = account.into();
+                    let mut account: Account = account.into();
                     account.transaction_id = self.transaction_id;
                     account
                 } else {
@@ -1000,7 +993,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
 
     /// Loads storage slot.
     #[inline]
-    pub fn sload<DB: Database<AccountExtension = EXT>>(
+    pub fn sload<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -1016,7 +1009,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// If account is not present it will return [`JournalLoadError::ColdLoadSkipped`] error.
     #[inline]
-    pub fn sload_assume_account_present<DB: Database<AccountExtension = EXT>>(
+    pub fn sload_assume_account_present<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -1036,7 +1029,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// If account is not present it will load from database
     #[inline]
-    pub fn sstore<DB: Database<AccountExtension = EXT>>(
+    pub fn sstore<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,
@@ -1054,7 +1047,7 @@ impl<ENTRY: JournalEntryTr, EXT: AccountExtension> JournalInner<ENTRY, EXT> {
     ///
     /// **Note**: Account should already be present in our state.
     #[inline]
-    pub fn sstore_assume_account_present<DB: Database<AccountExtension = EXT>>(
+    pub fn sstore_assume_account_present<DB: Database>(
         &mut self,
         db: &mut DB,
         address: Address,

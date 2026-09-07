@@ -56,7 +56,6 @@ impl<E> EmptyDBTyped<E> {
 
 impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> Database for EmptyDBTyped<E> {
     type Error = E;
-    type AccountExtension = ();
 
     #[inline]
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
@@ -87,7 +86,6 @@ impl<E: DBErrorMarker + core::error::Error + Send + Sync + 'static> DatabaseRef
     for EmptyDBTyped<E>
 {
     type Error = E;
-    type AccountExtension = ();
 
     #[inline]
     fn basic_ref(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {

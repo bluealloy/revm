@@ -6,7 +6,7 @@
 //! or removal of the storage slot. Check [`JournalEntryTr`] for more details.
 
 use primitives::{Address, StorageKey, StorageValue, B256, PRECOMPILE3, U256};
-use state::{AccountExtension, Bytecode, EvmState, TransientStorage};
+use state::{Bytecode, EvmState, TransientStorage};
 
 /// Trait for tracking and reverting state changes in the EVM.
 /// Journal entry contains information about state changes that can be reverted.
@@ -87,9 +87,9 @@ pub trait JournalEntryTr {
     /// the call. Against the equation (209), this added 0x03 in the set of touched addresses, and this transaction turned σ[0x03]
     /// into ∅.
     /// ```
-    fn revert<EXT: AccountExtension>(
+    fn revert(
         self,
-        state: &mut EvmState<EXT>,
+        state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     );
@@ -321,9 +321,9 @@ impl JournalEntryTr for JournalEntry {
         }
     }
 
-    fn revert<EXT: AccountExtension>(
+    fn revert(
         self,
-        state: &mut EvmState<EXT>,
+        state: &mut EvmState,
         transient_storage: Option<&mut TransientStorage>,
         is_spurious_dragon_enabled: bool,
     ) {

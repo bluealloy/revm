@@ -46,10 +46,7 @@ pub fn transact_erc20evm_commit<EVM>(
 ) -> Result<ExecutionResult<HaltReason>, Erc20Error<EVM::Context>>
 where
     EVM: EvmTr<
-        Context: ContextTr<
-            Journal: JournalTr<State = EvmState>,
-            Db: DatabaseCommit<AccountExtension = ()>,
-        >,
+        Context: ContextTr<Journal: JournalTr<State = EvmState>, Db: DatabaseCommit>,
         Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
         Instructions: InstructionProvider<
             Context = EVM::Context,

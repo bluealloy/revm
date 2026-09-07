@@ -2,7 +2,7 @@
 use crate::DatabaseCommit;
 use core::{convert::Infallible, error::Error, fmt};
 use primitives::AddressMap;
-use state::{Account, AccountExtension};
+use state::Account;
 use std::sync::Arc;
 
 /// EVM database commit interface that can fail.
@@ -13,14 +13,9 @@ use std::sync::Arc;
 pub trait TryDatabaseCommit {
     /// Error type for when [`TryDatabaseCommit::try_commit`] fails.
     type Error: Error;
-    /// Chain-specific account data preserved by the EVM.
-    type AccountExtension: AccountExtension;
 
     /// Attempt to commit changes to the database.
-    fn try_commit(
-        &mut self,
-        changes: AddressMap<Account<Self::AccountExtension>>,
-    ) -> Result<(), Self::Error>;
+    fn try_commit(&mut self, changes: AddressMap<Account>) -> Result<(), Self::Error>;
 }
 
 impl<Db> TryDatabaseCommit for Db
@@ -28,13 +23,9 @@ where
     Db: DatabaseCommit,
 {
     type Error = Infallible;
-    type AccountExtension = Db::AccountExtension;
 
     #[inline]
-    fn try_commit(
-        &mut self,
-        changes: AddressMap<Account<Self::AccountExtension>>,
-    ) -> Result<(), Self::Error> {
+    fn try_commit(&mut self, changes: AddressMap<Account>) -> Result<(), Self::Error> {
         self.commit(changes);
         Ok(())
     }
@@ -58,13 +49,9 @@ where
     Db: DatabaseCommit,
 {
     type Error = ArcUpgradeError;
-    type AccountExtension = Db::AccountExtension;
 
     #[inline]
-    fn try_commit(
-        &mut self,
-        changes: AddressMap<Account<Self::AccountExtension>>,
-    ) -> Result<(), Self::Error> {
+    fn try_commit(&mut self, changes: AddressMap<Account>) -> Result<(), Self::Error> {
         Arc::get_mut(self)
             .map(|db| db.commit(changes))
             .ok_or(ArcUpgradeError)
@@ -80,7 +67,6 @@ mod test {
     struct MockDb;
 
     impl DatabaseCommit for MockDb {
-        type AccountExtension = ();
         fn commit(&mut self, _changes: AddressMap<Account>) {}
     }
 

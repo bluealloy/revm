@@ -3,7 +3,7 @@ use core::{
     cmp::Ordering,
     hash::{Hash, Hasher},
 };
-use primitives::{B256, KECCAK_EMPTY, U256};
+use primitives::{Bytes, B256, KECCAK_EMPTY, U256};
 
 use nonmax::NonMaxU32;
 
@@ -32,29 +32,9 @@ impl AccountId {
 /// Account information that contains balance, nonce, code hash and code
 ///
 /// Code is set as optional.
-/// Additional chain-specific account data carried through execution and state transitions.
-///
-/// Revm does not define a binary encoding for this data. Database implementations and their
-/// callers decide how it is persisted; the execution engine only preserves it.
-pub trait AccountExtension:
-    Clone + Default + core::fmt::Debug + Eq + Ord + Hash + Send + Sync + 'static
-{
-    /// Returns whether this is the extension's default value.
-    #[inline]
-    fn is_default(&self) -> bool {
-        self == &Self::default()
-    }
-}
-
-impl<T> AccountExtension for T where
-    T: Clone + Default + core::fmt::Debug + Eq + Ord + Hash + Send + Sync + 'static
-{
-}
-
-/// Account balance, nonce, code, and chain-specific extension data.
 #[derive(Clone, Debug, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountInfo<EXT: AccountExtension = ()> {
+pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
     /// Account nonce.
@@ -75,14 +55,11 @@ pub struct AccountInfo<EXT: AccountExtension = ()> {
     /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
     /// Chain-specific account data carried through execution and state transitions.
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, skip_serializing_if = "AccountExtension::is_default")
-    )]
-    pub extension: EXT,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub extension: Bytes,
 }
 
-impl<EXT: AccountExtension> Default for AccountInfo<EXT> {
+impl Default for AccountInfo {
     #[inline]
     fn default() -> Self {
         Self {
@@ -91,12 +68,12 @@ impl<EXT: AccountExtension> Default for AccountInfo<EXT> {
             account_id: None,
             nonce: 0,
             code: Some(Bytecode::default()),
-            extension: EXT::default(),
+            extension: Bytes::new(),
         }
     }
 }
 
-impl<EXT: AccountExtension> PartialEq for AccountInfo<EXT> {
+impl PartialEq for AccountInfo {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.balance == other.balance
@@ -106,7 +83,7 @@ impl<EXT: AccountExtension> PartialEq for AccountInfo<EXT> {
     }
 }
 
-impl<EXT: AccountExtension> Hash for AccountInfo<EXT> {
+impl Hash for AccountInfo {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.balance.hash(state);
@@ -116,14 +93,14 @@ impl<EXT: AccountExtension> Hash for AccountInfo<EXT> {
     }
 }
 
-impl<EXT: AccountExtension> PartialOrd for AccountInfo<EXT> {
+impl PartialOrd for AccountInfo {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<EXT: AccountExtension> Ord for AccountInfo<EXT> {
+impl Ord for AccountInfo {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         self.balance
@@ -134,17 +111,17 @@ impl<EXT: AccountExtension> Ord for AccountInfo<EXT> {
     }
 }
 
-impl<EXT: AccountExtension> AccountInfo<EXT> {
+impl AccountInfo {
     /// Creates a new [`AccountInfo`] with the given fields.
     #[inline]
-    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
+    pub const fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,
             code: Some(code),
             code_hash,
             account_id: None,
-            extension: EXT::default(),
+            extension: Bytes::new(),
         }
     }
 
@@ -311,7 +288,7 @@ impl<EXT: AccountExtension> AccountInfo<EXT> {
         self.is_code_hash_empty_or_zero()
             && self.balance.is_zero()
             && self.nonce == 0
-            && self.extension == EXT::default()
+            && self.extension.is_empty()
     }
 
     /// Optimization hint.
@@ -342,14 +319,14 @@ impl<EXT: AccountExtension> AccountInfo<EXT> {
 
     /// Returns this account with chain-specific extension data.
     #[inline]
-    pub fn with_extension(mut self, extension: EXT) -> Self {
+    pub fn with_extension(mut self, extension: Bytes) -> Self {
         self.extension = extension;
         self
     }
 
     /// Replaces the chain-specific extension data.
     #[inline]
-    pub const fn set_extension(&mut self, extension: EXT) -> EXT {
+    pub const fn set_extension(&mut self, extension: Bytes) -> Bytes {
         core::mem::replace(&mut self.extension, extension)
     }
 
@@ -395,7 +372,7 @@ impl<EXT: AccountExtension> AccountInfo<EXT> {
             code: Some(bytecode),
             code_hash: hash,
             account_id: None,
-            extension: EXT::default(),
+            extension: Bytes::new(),
         }
     }
 }
@@ -403,20 +380,17 @@ impl<EXT: AccountExtension> AccountInfo<EXT> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::Bytes;
     use std::collections::BTreeSet;
-
-    type DefaultAccountInfo = AccountInfo<()>;
 
     #[test]
     fn test_account_info_trait_consistency() {
         let bytecode = Bytecode::default();
-        let account1: DefaultAccountInfo = AccountInfo {
+        let account1 = AccountInfo {
             code: Some(bytecode),
             ..AccountInfo::default()
         };
 
-        let account2 = DefaultAccountInfo::default();
+        let account2 = AccountInfo::default();
 
         assert_eq!(account1, account2, "Accounts should be equal ignoring code");
 
@@ -448,21 +422,21 @@ mod tests {
 
     #[test]
     fn is_default() {
-        assert!(DefaultAccountInfo::default().is_default())
+        assert!(AccountInfo::default().is_default())
     }
 
     #[test]
     #[cfg(feature = "serde")]
     fn is_default_after_serde() {
-        let info = DefaultAccountInfo::default();
+        let info = AccountInfo::default();
         let json = serde_json::to_string(&info).unwrap();
-        let deser: DefaultAccountInfo = serde_json::from_str(&json).unwrap();
+        let deser: AccountInfo = serde_json::from_str(&json).unwrap();
         assert!(deser.is_default());
     }
 
     #[test]
     fn extension_participates_in_account_identity() {
-        let base = AccountInfo::<Bytes>::default();
+        let base = AccountInfo::default();
         let extended = base
             .clone()
             .with_extension(Bytes::from_static(b"extension"));
@@ -473,43 +447,11 @@ mod tests {
     }
 
     #[test]
-    fn unit_extension_has_no_account_info_storage_cost() {
-        assert!(
-            core::mem::size_of::<AccountInfo<()>>() < core::mem::size_of::<AccountInfo<Bytes>>()
-        );
-    }
-
-    #[test]
-    fn custom_extension_controls_account_emptiness() {
-        let mut account = AccountInfo::<u8>::default();
-        assert!(account.is_empty());
-
-        account.extension = 1;
-        assert!(!account.is_empty());
-    }
-
-    #[test]
     #[cfg(feature = "serde")]
     fn missing_extension_decodes_as_empty() {
-        let mut json = serde_json::to_value(AccountInfo::<Bytes>::default()).unwrap();
+        let mut json = serde_json::to_value(AccountInfo::default()).unwrap();
         json.as_object_mut().unwrap().remove("extension");
-        let decoded: AccountInfo<Bytes> = serde_json::from_value(json).unwrap();
+        let decoded: AccountInfo = serde_json::from_value(json).unwrap();
         assert!(decoded.extension.is_empty());
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    fn serde_skips_default_extension() {
-        let unit = serde_json::to_value(DefaultAccountInfo::default()).unwrap();
-        assert!(unit.get("extension").is_none());
-
-        let extended = serde_json::to_value(
-            AccountInfo::<Bytes>::default().with_extension(Bytes::from_static(b"extension")),
-        )
-        .unwrap();
-        assert_eq!(
-            extended.get("extension"),
-            Some(&serde_json::json!("0x657874656e73696f6e"))
-        );
     }
 }
