@@ -586,7 +586,8 @@ impl EthFrame<EthInterpreter> {
 ///   flows back to the parent on success or revert; a halt consumes it.
 /// - the reservoir, a shared state-gas pool the child inherited at call time, is
 ///   always adopted from the child (restored to the inherited value on
-///   revert/halt).
+///   revert/halt). Any returned reservoir first unwinds the parent's outstanding
+///   spilled state gas in LIFO order.
 /// - net state gas, its spilled portion, and the refund counter persist only on
 ///   success; on revert/halt the child's state changes roll back and contribute
 ///   nothing.
@@ -612,7 +613,6 @@ pub const fn handle_reservoir_remaining_gas(
     if instruction_result.is_ok_or_revert() {
         parent_gas.erase_cost(child_gas.remaining());
     }
-    parent_gas.set_reservoir(child_gas.reservoir());
     if instruction_result.is_ok() {
         // Parent may have already charged state gas (e.g. new_account + create)
         // before creating the child frame, so add rather than overwrite. The
@@ -627,6 +627,7 @@ pub const fn handle_reservoir_remaining_gas(
         parent_gas.add_state_gas_spilled(child_gas.state_gas_spilled());
         parent_gas.record_refund(child_gas.refunded());
     }
+    parent_gas.absorb_returned_reservoir(child_gas.reservoir());
 }
 
 /// Handles the result of a CREATE operation, including validation and state updates.
@@ -731,4 +732,44 @@ pub fn return_create<CTX: ContextTr>(
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sibling_refill_restores_parent_regular_gas() {
+        const STATE_GAS: u64 = 200;
+        const CHILD_GAS: u64 = 500;
+
+        let mut parent = GasTracker::new(1_000, 1_000, 0);
+
+        // P calls A. A creates a slot after the reservoir is exhausted, so the
+        // charge spills into regular gas and is absorbed by P on success.
+        assert!(parent.record_regular_cost(CHILD_GAS));
+        let mut child_a = GasTracker::new(CHILD_GAS, CHILD_GAS, 0);
+        assert!(child_a.record_state_cost(STATE_GAS));
+        handle_reservoir_remaining_gas(InstructionResult::Stop, &mut parent, &mut child_a);
+        assert_eq!(parent.remaining(), 800);
+        assert_eq!(parent.reservoir(), 0);
+        assert_eq!(parent.state_gas_spent(), STATE_GAS as i64);
+        assert_eq!(parent.state_gas_spilled(), STATE_GAS);
+
+        // P then calls B. B clears A's slot, but has no local spill counter, so
+        // its refill initially lands in its reservoir.
+        assert!(parent.record_regular_cost(CHILD_GAS));
+        let mut child_b = GasTracker::new(CHILD_GAS, CHILD_GAS, parent.reservoir());
+        child_b.refill_reservoir(STATE_GAS);
+        assert_eq!(child_b.reservoir(), STATE_GAS);
+        assert_eq!(child_b.state_gas_spilled(), 0);
+
+        // On success, P absorbs B's refill in global LIFO order: the reservoir
+        // is moved back to regular gas to unwind A's spilled charge.
+        handle_reservoir_remaining_gas(InstructionResult::Stop, &mut parent, &mut child_b);
+        assert_eq!(parent.remaining(), 1_000);
+        assert_eq!(parent.reservoir(), 0);
+        assert_eq!(parent.state_gas_spent(), 0);
+        assert_eq!(parent.state_gas_spilled(), 0);
+    }
 }
