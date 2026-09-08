@@ -198,53 +198,58 @@ fn execution(c: &mut Criterion) {
             }
         }
     }
-    for bal in [false, true] {
-        for distinct in [false, true] {
-            for storage in [false, true] {
-                let mut db = InMemoryDB::default();
-                db.insert_account_info(
-                    address(0),
-                    AccountInfo::from_balance(U256::MAX / U256::from(2)),
-                );
-                for i in 1..=256 {
-                    let account = if storage {
-                        // Increment slot zero, exercising original/present storage and transitions.
-                        info(i).with_code(Bytecode::new_raw(Bytes::from_static(&[
-                            0x5f, 0x54, 0x60, 1, 0x01, 0x5f, 0x55, 0x00,
-                        ])))
-                    } else {
-                        info(i)
-                    };
-                    db.insert_account_info(address(i), account);
-                }
-                let state = State::builder()
-                    .with_database(db)
-                    .with_bundle_update()
-                    .with_bal_builder_if(bal)
-                    .build();
-                let mut evm = Context::mainnet()
-                    .with_db(state)
-                    .modify_cfg_chained(|cfg| {
-                        cfg.spec = SpecId::CANCUN;
-                        cfg.disable_nonce_check = true;
-                    })
-                    .build_mainnet();
-                let txs: Vec<_> = (0..256)
-                    .map(|i| {
-                        TxEnv::builder()
-                            .caller(address(0))
-                            .kind(TxKind::Call(address(1 + if distinct { i } else { 0 })))
-                            .value(U256::from(1))
-                            .gas_limit(100_000)
-                            .build()
-                            .unwrap()
-                    })
-                    .collect();
-                for tx in &txs {
-                    assert!(evm.transact_commit(tx.clone()).unwrap().is_success());
-                }
-                c.bench_function(
-                    &format!("block/256/bal={bal}/distinct={distinct}/storage={storage}"),
+    for payload_len in [0, 32] {
+        for bal in [false, true] {
+            for distinct in [false, true] {
+                for storage in [false, true] {
+                    let mut db = InMemoryDB::default();
+                    db.insert_account_info(
+                        address(0),
+                        AccountInfo::from_balance(U256::MAX / U256::from(2))
+                            .with_extension(Bytes::from(vec![42; payload_len])),
+                    );
+                    for i in 1..=256 {
+                        let account = if storage {
+                            // Increment slot zero, exercising original/present storage and transitions.
+                            info(i).with_code(Bytecode::new_raw(Bytes::from_static(&[
+                                0x5f, 0x54, 0x60, 1, 0x01, 0x5f, 0x55, 0x00,
+                            ])))
+                        } else {
+                            info(i)
+                        };
+                        db.insert_account_info(
+                            address(i),
+                            account.with_extension(Bytes::from(vec![42; payload_len])),
+                        );
+                    }
+                    let state = State::builder()
+                        .with_database(db)
+                        .with_bundle_update()
+                        .with_bal_builder_if(bal)
+                        .build();
+                    let mut evm = Context::mainnet()
+                        .with_db(state)
+                        .modify_cfg_chained(|cfg| {
+                            cfg.spec = SpecId::CANCUN;
+                            cfg.disable_nonce_check = true;
+                        })
+                        .build_mainnet();
+                    let txs: Vec<_> = (0..256)
+                        .map(|i| {
+                            TxEnv::builder()
+                                .caller(address(0))
+                                .kind(TxKind::Call(address(1 + if distinct { i } else { 0 })))
+                                .value(U256::from(1))
+                                .gas_limit(100_000)
+                                .build()
+                                .unwrap()
+                        })
+                        .collect();
+                    for tx in &txs {
+                        assert!(evm.transact_commit(tx.clone()).unwrap().is_success());
+                    }
+                    c.bench_function(
+                    &format!("block/256/payload={payload_len}/bal={bal}/distinct={distinct}/storage={storage}"),
                     |b| {
                         b.iter(|| {
                             for tx in &txs {
@@ -262,6 +267,7 @@ fn execution(c: &mut Criterion) {
                         })
                     },
                 );
+                }
             }
         }
     }
@@ -352,6 +358,65 @@ fn populated_extension(c: &mut Criterion) {
     }
 }
 
+fn populated_accounts(c: &mut Criterion) {
+    use revm::context::{journal::JournalInner, JournalEntry};
+    let accounts: Vec<_> = (0..4096)
+        .map(|i| info(i).with_extension(Bytes::from(vec![42; 32])))
+        .collect();
+    c.bench_function("populated32/account/clone/4096", |b| {
+        b.iter(|| black_box(black_box(&accounts).clone()))
+    });
+    c.bench_function("populated32/account/copy_without_code/4096", |b| {
+        b.iter(|| {
+            for a in black_box(&accounts) {
+                black_box(a.copy_without_code());
+            }
+        })
+    });
+    let mut db = InMemoryDB::default();
+    for (i, a) in accounts.iter().enumerate() {
+        db.insert_account_info(address(i), a.clone());
+    }
+    c.bench_function("populated32/journal/cold_load/4096", |b| {
+        b.iter(|| {
+            let mut journal = JournalInner::<JournalEntry>::new();
+            journal.cfg.spec = SpecId::CANCUN;
+            for i in 0..4096 {
+                black_box(journal.load_account(&mut db, address(i)).unwrap());
+            }
+            black_box(journal)
+        })
+    });
+    let mut journal = JournalInner::<JournalEntry>::new();
+    journal.cfg.spec = SpecId::CANCUN;
+    for i in 0..4096 {
+        journal.load_account(&mut db, address(i)).unwrap();
+    }
+    c.bench_function("populated32/journal/warm_load/4096", |b| {
+        b.iter(|| {
+            for i in 0..4096 {
+                black_box(journal.load_account(&mut db, address(i)).unwrap());
+            }
+        })
+    });
+    let original = &accounts[0];
+    for writes in [0, 1, 4, 16] {
+        let mut bal = AccountInfoBal::default();
+        for i in 0..writes {
+            let present = info(0).with_extension(Bytes::from(vec![i as u8; 32]));
+            bal.update(BlockAccessIndex::new(i + 1), original, &present);
+        }
+        c.bench_function(&format!("populated32/bal/replay/{writes}"), |b| {
+            b.iter(|| {
+                let mut account = original.clone();
+                black_box(&bal)
+                    .populate_account_info(BlockAccessIndex::new(writes + 1), &mut account);
+                black_box(account)
+            })
+        });
+    }
+}
+
 fn transitions(c: &mut Criterion) {
     use revm::{
         state::{EvmState, EvmStorageSlot},
@@ -423,6 +488,7 @@ criterion_group!(
     execution,
     journal,
     populated_extension,
+    populated_accounts,
     transitions
 );
 criterion_main!(benches);

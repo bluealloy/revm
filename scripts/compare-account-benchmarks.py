@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--warmup", type=float, default=0.1)
     parser.add_argument("--measurement", type=float, default=0.2)
     parser.add_argument("--samples", type=int, default=20)
+    parser.add_argument("--baseline", help="Compare every other build to this label, instead of head to each build")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / "config.json").write_text(json.dumps(vars(args), default=str, indent=2))
@@ -43,13 +44,14 @@ def main():
         builds[label] = binaries
     rows = []
     labels = list(builds)
+    assert args.baseline is None or args.baseline in builds
     for repeat in range(args.rounds):
         # Rotate the starting revision; reverse every other round to reduce order bias.
         order = labels[repeat % len(labels):] + labels[:repeat % len(labels)]
         if repeat % 2:
             order.reverse()
         for label in order:
-            for suite, binary in builds[label].items():
+            for suite, binary in sorted(builds[label].items()):
                 folder = args.output / f"round-{repeat}" / label / suite
                 folder.mkdir(parents=True)
                 command = ["taskset", "-c", str(args.cpu), binary, "--bench", "--noplot",
@@ -74,19 +76,19 @@ def main():
     summaries = []
     rng = random.Random(17)
     for suite, name in sorted({(r["suite"], r["benchmark"]) for r in rows}):
-        for baseline in labels:
-            if baseline == "head":
-                continue
+        comparisons = ([(label, args.baseline) for label in labels if label != args.baseline]
+                       if args.baseline else [("head", label) for label in labels if label != "head"])
+        for candidate, baseline in comparisons:
             pairs = []
             for repeat in range(args.rounds):
                 values = {r["revision"]: r["mean_ns"] for r in rows
                           if r["round"] == repeat and r["suite"] == suite and r["benchmark"] == name}
-                if baseline in values and "head" in values:
-                    pairs.append(values["head"] / values[baseline])
+                if baseline in values and candidate in values:
+                    pairs.append(values[candidate] / values[baseline])
             if not pairs:
                 continue
             bootstrap = sorted(statistics.median(rng.choices(pairs, k=len(pairs))) for _ in range(2000))
-            summaries.append({"suite": suite, "benchmark": name, "baseline": baseline,
+            summaries.append({"suite": suite, "benchmark": name, "candidate": candidate, "baseline": baseline,
                               "pairs": len(pairs), "median_change_pct": (statistics.median(pairs)-1)*100,
                               "min_change_pct": (min(pairs)-1)*100, "max_change_pct": (max(pairs)-1)*100,
                               "bootstrap_low_pct": (bootstrap[50]-1)*100,
