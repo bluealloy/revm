@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# v118 tag (revm v43.0.1)
+
+No API migration is required for this patch release. Consumers that assert exact Glamsterdam gas results may need to update their expectations for corrected EIP-8037 system-call and sibling-frame state-gas accounting. The `revme evmrunner` default gas limit is now `2^24`; pass `--gas-limit` explicitly to retain a different limit.
+
 # v116 tag (all crates v43.0.0)
 
 ## Custom interpreter inputs (`revm-interpreter`)

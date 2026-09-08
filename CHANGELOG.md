@@ -1,5 +1,25 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v118
+date: 08.09.2026
+
+Small patch release fixing EIP-8037 state-gas accounting and aligning the `revme` gas-limit default with EIP-7825.
+
+Highlights:
+* Reconcile state-gas refills across sibling frames ([#3893](https://github.com/bluealloy/revm/pull/3893))
+* Place the EIP-8037 system-call state-gas margin in the reservoir ([#3892](https://github.com/bluealloy/revm/pull/3892))
+* Lower the `revme evmrunner` default gas limit to `2^24` ([#3886](https://github.com/bluealloy/revm/pull/3886))
+
+* `revm-context-interface`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+* `revm-handler`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+* `revm-inspector`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+* `revme`: 43.0.0 -> 43.0.1 (✓ API compatible changes)
+* `revm-context`: 43.0.1 -> 43.0.2 (✓ dependency bump)
+* `revm-interpreter`: 43.0.0 -> 43.0.1 (✓ dependency bump)
+* `revm-precompile`: 43.0.1 -> 43.0.2 (✓ dependency bump)
+* `revm-statetest-types`: 43.0.0 -> 43.0.1 (✓ dependency bump)
+* `revm`: 43.0.0 -> 43.0.1 (✓ dependency bump)
+
 # v117
 date: 28.08.2026
 
