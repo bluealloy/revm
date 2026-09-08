@@ -155,8 +155,14 @@ impl AccountBal {
     #[inline]
     pub fn into_alloy_account(self, address: Address) -> AlloyAccountChanges {
         let storage_len = self.storage.storage.len();
-        let mut storage_reads = Vec::with_capacity(storage_len);
-        let mut storage_changes = Vec::with_capacity(storage_len);
+        let read_len = self
+            .storage
+            .storage
+            .values()
+            .filter(|value| value.writes.is_empty())
+            .count();
+        let mut storage_reads = Vec::with_capacity(read_len);
+        let mut storage_changes = Vec::with_capacity(storage_len - read_len);
         for (key, value) in self.storage.storage {
             if value.writes.is_empty() {
                 storage_reads.push(key);
