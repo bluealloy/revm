@@ -160,6 +160,22 @@ impl<DB: Database> StateBuilder<DB> {
         self
     }
 
+    /// Applies a function to the builder, returning the modified builder.
+    pub fn apply<F>(self, f: F) -> Self
+    where
+        F: FnOnce(Self) -> Self,
+    {
+        f(self)
+    }
+
+    /// Applies a fallible function to the builder, returning the modified builder or an error.
+    pub fn try_apply<F, E>(self, f: F) -> Result<Self, E>
+    where
+        F: FnOnce(Self) -> Result<Self, E>,
+    {
+        f(self)
+    }
+
     /// Builds the State with the configured settings.
     pub fn build(mut self) -> State<DB> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
