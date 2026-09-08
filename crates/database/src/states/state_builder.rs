@@ -152,6 +152,16 @@ impl<DB: Database> StateBuilder<DB> {
         self
     }
 
+    /// Enables BAL construction with capacity for at least `capacity` accounts.
+    ///
+    /// Installs an empty builder, replacing any existing builder.
+    pub fn with_bal_builder_capacity(mut self, capacity: usize) -> Self {
+        let mut bal = Bal::new();
+        bal.accounts.reserve(capacity);
+        self.bal_state.bal_builder = Some(bal);
+        self
+    }
+
     /// Conditionally set BAL builder based on the flag.
     pub fn with_bal_builder_if(mut self, enable: bool) -> Self {
         if enable {
