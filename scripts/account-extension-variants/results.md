@@ -1,5 +1,7 @@
 # Account extension representation comparison — 2026-09-08
 
+Follow-up: [fresh comparison including extension-less main and merge base](nofield-results.md).
+
 ## Main results: 32-byte extensions
 
 Median time changes against current Bytes, five focused rounds:

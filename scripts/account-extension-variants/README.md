@@ -7,6 +7,8 @@ encoding, lexicographic ordering and hashing. Tests check these semantics.
 
 Representations:
 
+- `none`: actual extension-less source, with a benchmark-only setup shim that
+  discards extension inputs. Use an extension-less revision, not the PR revision.
 - `bytes`: current AccountInfo and BAL implementation, unchanged.
 - `wrapped`: a Bytes newtype with explicit empty-equality handling; an attribution
   control for the wrapper, not a smaller representation.
@@ -87,6 +89,39 @@ instead, omit `--filter`, set `--measurement 0.4`, and choose a new output direc
 For the original controls, use the original build files with
 `--filter '^analysis$|^burntpix$|^snailtracer$|^subcall_'` and `--measurement 0.4`.
 See [results](results.md) for the measured outcomes and saved CSVs.
+
+### Extension-less comparison
+
+The follow-up includes current main (`0837b5e`, fetched 2026-09-08) and the PR's
+merge base (`1382fa0`). Both have an actual 88-byte AccountInfo without the field.
+Main also contains an unrelated call-frame gas-accounting fix, so the merge-base
+control distinguishes that revision difference from extension overhead.
+
+```sh
+git worktree add --detach /tmp/revm-repr-nofield-main 0837b5e
+git worktree add --detach /tmp/revm-repr-nofield-base 1382fa0
+for revision in main base; do
+  python3 scripts/account-extension-variants/prepare.py /tmp/revm-repr-nofield-$revision none
+  cp /tmp/revm-repr-bytes/Cargo.lock /tmp/revm-repr-nofield-$revision/Cargo.lock
+done
+```
+
+Build these with `--bench evm --bench account_extension --bench
+account_extension_subcalls`, using the same profiling settings above. There is no
+storage benchmark for an absent field. Include all four benchmark targets when
+building extension-bearing variants, or combine their two existing compiler logs:
+
+```sh
+jq -c . /tmp/repr-bytes-build.jsonl /tmp/repr-bytes-calls-build.jsonl > /tmp/repr-bytes-combined-build.jsonl
+```
+
+Pass all seven builds to the comparison script with `--baseline main`. The exact
+filter and settings are recorded in `data/nofield-config.json`. All timing samples
+are fresh; previous-run timings are not reused. Extension-only BAL writes and
+storage operations are omitted for `none`, not timed as no-ops. The `payload=32`
+names identify corresponding fixtures: the extension-less versions execute the
+same transactions but cannot retain that payload. Zero-/32-byte setup is outside
+the timed loops.
 
 ## Scope
 

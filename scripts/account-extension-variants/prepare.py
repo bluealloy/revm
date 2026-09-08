@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Install an experimental representation in a clean, detached revm worktree.
 
-Usage: prepare.py WORKTREE bytes|wrapped|thinarc|ecobytes|arc
+Usage: prepare.py WORKTREE none|bytes|wrapped|thinarc|ecobytes|arc
 This deliberately rewrites only the named experimental checkout, not the PR source.
 """
 from pathlib import Path
@@ -13,10 +13,12 @@ root = Path(sys.argv[1]).resolve()
 variant = sys.argv[2]
 here = Path(__file__).resolve().parent
 repo = here.parents[1]
-assert variant in ("bytes", "wrapped", "thinarc", "ecobytes", "arc")
+assert variant in ("none", "bytes", "wrapped", "thinarc", "ecobytes", "arc")
 assert root != repo
 assert subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True) == ""
 assert subprocess.run(["git", "symbolic-ref", "-q", "HEAD"], cwd=root, capture_output=True).returncode != 0
+if variant == "none":
+    assert "pub extension:" not in (root / "crates/state/src/account_info.rs").read_text()
 
 def replace(path, old, new):
     path = root / path
@@ -34,6 +36,7 @@ storage = (here / "storage.rs").read_text()
 storage = storage.replace("EXTENSION_IMPORT", "use revm::primitives::Bytes as Extension;" if variant == "bytes" else "use revm::state::AccountExtension as Extension;")
 (root / "bins/revme/benches/account_extension_storage.rs").write_text(storage)
 allocations = (here / "allocations.rs").read_text().replace("EXTENSION_IMPORT", "use revm::primitives::Bytes as Extension;" if variant == "bytes" else "use revm::state::AccountExtension as Extension;")
+(root / "bins/revme/examples").mkdir(exist_ok=True)
 (root / "bins/revme/examples/account_extension_allocations.rs").write_text(allocations)
 subcalls = (repo / "bins/revme/src/cmd/bench/subcall.rs").read_text()
 subcalls = subcalls.replace("pub fn run(criterion: &mut Criterion)", "pub fn run(criterion: &mut Criterion, payload_len: usize)")
@@ -45,7 +48,36 @@ subcalls += '\nfn benches(c: &mut Criterion) { run(c, 0); run(c, 32); }\ncriteri
 (root / "bins/revme/benches/account_extension_subcalls.rs").write_text(subcalls)
 replace("bins/revme/Cargo.toml", '[[bench]]\nname = "evm"', '[[bench]]\nname = "account_extension_subcalls"\nharness = false\n\n[[bench]]\nname = "evm"')
 
-if variant != "bytes":
+if variant == "none":
+    # This benchmark-only trait discards setup data, without changing AccountInfo.
+    shim = '''
+trait ExtensionSetup {
+    fn with_extension(self, extension: revm::primitives::Bytes) -> Self;
+}
+impl ExtensionSetup for revm::state::AccountInfo {
+    fn with_extension(self, _: revm::primitives::Bytes) -> Self { self }
+}
+'''
+    account_path = root / "bins/revme/benches/account_extension.rs"
+    account = account_path.read_text()
+    # Extension-only equality/update/replay have no equivalent on this revision.
+    start = account.index("fn populated_extension(")
+    end = account.index("fn populated_accounts(", start)
+    account = account[:start] + account[end:]
+    start = account.index("    let original = &accounts[0];")
+    end = account.index("\nfn transitions(", start)
+    account = account[:start] + "}\n" + account[end:]
+    account = account.replace("    populated_extension,\n", "")
+    account_path.write_text(account + shim)
+    path = root / "bins/revme/benches/account_extension_subcalls.rs"
+    path.write_text(subcalls + shim)
+    replace("bins/revme/Cargo.toml", '[[bench]]\nname = "account_extension_storage"\nharness = false', '[[bench]]\nname = "account_extension"\nharness = false')
+    (root / "bins/revme/benches/account_extension_storage.rs").unlink()
+    # Only layouts are meaningful: there is no extension storage to allocate.
+    layout = allocations[allocations.index("    eprintln!"):allocations.index('    println!("case,')]
+    (root / "bins/revme/examples/account_extension_allocations.rs").write_text("fn main() {\n" + layout + "}\n")
+
+elif variant != "bytes":
     options = {
         "wrapped": ("Bytes", "Bytes::new()", "Self(Bytes::copy_from_slice(bytes))", "self.0.is_empty()", "self.0.as_ref()", "Self(bytes)", "Self(bytes.into())"),
         "thinarc": ("Option<triomphe::ThinArc<(), u8>>", "None", "Self((!bytes.is_empty()).then(|| triomphe::ThinArc::from_header_and_slice((), bytes)))", "self.0.is_none()", "self.0.as_ref().map_or(&[], |a| &a.slice)", "Self::copy_from_slice(&bytes)", "Self::copy_from_slice(&bytes)"),
