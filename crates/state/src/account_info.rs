@@ -98,8 +98,6 @@ impl Hash for AccountInfo {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
-        #[cfg(feature = "account-ext")]
-        self.extension.hash(state);
     }
 }
 
@@ -518,6 +516,7 @@ mod tests {
             .with_extension(AccountExtension::copy_from_slice(b"extension"));
 
         assert_ne!(base, extended);
+        assert_ne!(base.cmp(&extended), Ordering::Equal);
         assert!(base.is_empty());
         assert!(!extended.is_empty());
     }

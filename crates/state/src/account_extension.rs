@@ -1,10 +1,6 @@
 //! Shared chain-specific account payloads.
 
-use core::{
-    cmp::Ordering,
-    hash::{Hash, Hasher},
-    ops::Deref,
-};
+use core::{cmp::Ordering, ops::Deref};
 use primitives::Bytes;
 use std::vec::Vec;
 use triomphe::ThinArc;
@@ -91,12 +87,6 @@ impl Ord for AccountExtension {
     fn cmp(&self, other: &Self) -> Ordering {
         // Order payload bytes, not ThinArc's length header.
         self.as_ref().cmp(other.as_ref())
-    }
-}
-
-impl Hash for AccountExtension {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.as_ref().hash(state);
     }
 }
 
