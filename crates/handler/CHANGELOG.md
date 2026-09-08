@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revm-handler-v43.0.0...revm-handler-v43.0.1) - 2026-09-08
+
+### Fixed
+
+- reconcile sibling state gas refills ([#3893](https://github.com/bluealloy/revm/pull/3893))
+- *(eip8037)* place the system call state-gas margin in the reservoir ([#3892](https://github.com/bluealloy/revm/pull/3892))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-handler-v42.0.1...revm-handler-v43.0.0) - 2026-08-20
 
 ### Added
