@@ -47,7 +47,7 @@ pub struct Cmd {
     #[arg(long, default_value = "")]
     input: String,
     /// Gas limit
-    #[arg(long, default_value = "1000000000")]
+    #[arg(long, default_value = "16777216")]
     gas_limit: u64,
 
     /// Whether to print the state
