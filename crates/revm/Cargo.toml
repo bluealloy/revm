@@ -37,6 +37,7 @@ serde_json = { workspace = true, features = ["alloc", "preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 
 [features]
+account-ext = ["state/account-ext"]
 default = ["std", "secp256k1", "portable", "tracer", "c-kzg", "blst"]
 std = [
 	"interpreter/std",

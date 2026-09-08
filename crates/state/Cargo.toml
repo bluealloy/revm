@@ -28,6 +28,7 @@ alloy-eip7928.workspace = true
 # misc
 bitflags.workspace = true
 nonmax = { version = "0.5.5", default-features = false }
+triomphe = { version = "0.1.16", default-features = false, optional = true }
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
@@ -37,6 +38,8 @@ postcard = { workspace = true }
 serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
+# Enables chain-specific account payloads and their BAL history.
+account-ext = ["dep:triomphe"]
 default = ["std"]
 std = [
     "serde?/std",

@@ -5,7 +5,11 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+#[cfg(feature = "account-ext")]
+mod account_extension;
 mod account_info;
+#[cfg(feature = "account-ext")]
+pub use account_extension::AccountExtension;
 pub mod bal;
 mod types;
 

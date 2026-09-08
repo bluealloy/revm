@@ -332,6 +332,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "account-ext")]
     fn account_extension_roundtrips_through_bal() {
         let original = AccountInfo::default();
         let present = original
@@ -361,6 +362,7 @@ mod tests {
                 code: BalWrites {
                     writes: vec![(idx(7), code(7)), (idx(3), code(3))],
                 },
+                #[cfg(feature = "account-ext")]
                 extension: BalWrites::default(),
             },
             storage: StorageBal {

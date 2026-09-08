@@ -212,8 +212,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
-                account_id: None,
-                extension: Default::default(),
+                ..Default::default()
             },
         );
 
@@ -225,8 +224,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
-                account_id: None,
-                extension: Default::default(),
+                ..Default::default()
             },
         );
 
@@ -350,8 +348,7 @@ mod tests {
                 nonce: 0,
                 code_hash: revm::primitives::KECCAK_EMPTY,
                 code: None,
-                account_id: None,
-                extension: Default::default(),
+                ..Default::default()
             },
         );
 

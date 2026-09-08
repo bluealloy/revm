@@ -1,5 +1,7 @@
 //! BAL builder module
 
+#[cfg(feature = "account-ext")]
+use crate::AccountExtension;
 use crate::{
     bal::{writes::BalWrites, BalError, BlockAccessIndex},
     Account, AccountInfo, EvmStorage,
@@ -11,7 +13,7 @@ use alloy_eip7928::{
 };
 use bytecode::{Bytecode, BytecodeDecodeError};
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, Bytes, StorageKey, StorageValue, B256, U256};
+use primitives::{Address, StorageKey, StorageValue, B256, U256};
 use std::{
     collections::{btree_map::Entry, BTreeMap},
     vec::Vec,
@@ -89,6 +91,7 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes),
                     balance: BalWrites::from(alloy_account.balance_changes),
                     code: BalWrites::try_from(alloy_account.code_changes)?,
+                    #[cfg(feature = "account-ext")]
                     extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
@@ -126,6 +129,7 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes.as_slice()),
                     balance: BalWrites::from(alloy_account.balance_changes.as_slice()),
                     code: BalWrites::try_from(alloy_account.code_changes.as_slice())?,
+                    #[cfg(feature = "account-ext")]
                     extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
@@ -223,7 +227,8 @@ pub struct AccountInfoBal {
     /// Code builder.
     pub code: BalWrites<(B256, Bytecode)>,
     /// Chain-specific account extension builder.
-    pub extension: BalWrites<Bytes>,
+    #[cfg(feature = "account-ext")]
+    pub extension: BalWrites<AccountExtension>,
 }
 
 impl AccountInfoBal {
@@ -247,6 +252,7 @@ impl AccountInfoBal {
             account.code = Some(code.1);
             changed = true;
         }
+        #[cfg(feature = "account-ext")]
         if let Some(extension) = self.extension.get(bal_index) {
             account.extension = extension;
             changed = true;
@@ -273,6 +279,7 @@ impl AccountInfoBal {
                 |i| &i.0,
             );
         }
+        #[cfg(feature = "account-ext")]
         self.extension
             .update(index, &original.extension, present.extension.clone());
     }
@@ -283,6 +290,7 @@ impl AccountInfoBal {
         self.nonce.extend(bal_account.nonce);
         self.balance.extend(bal_account.balance);
         self.code.extend(bal_account.code);
+        #[cfg(feature = "account-ext")]
         self.extension.extend(bal_account.extension);
     }
 
