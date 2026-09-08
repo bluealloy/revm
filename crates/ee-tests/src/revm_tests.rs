@@ -54,7 +54,9 @@ fn test_selfdestruct_multi_tx() {
 
     let output = evm.finalize();
 
-    crate::assert_sorted_json_snapshot!(&(result1, result2, output));
+    insta::with_settings!({snapshot_suffix => if cfg!(feature = "account-ext") { "account_ext" } else { "" }}, {
+        crate::assert_sorted_json_snapshot!(&(result1, result2, output));
+    });
 }
 
 /// Tests multiple transactions with contract creation.
@@ -162,7 +164,9 @@ fn test_multi_tx_create() {
     );
     let output = evm.finalize();
 
-    crate::assert_sorted_json_snapshot!(&(result1, result2, result3, output));
+    insta::with_settings!({snapshot_suffix => if cfg!(feature = "account-ext") { "account_ext" } else { "" }}, {
+        crate::assert_sorted_json_snapshot!(&(result1, result2, result3, output));
+    });
 }
 
 /// Creates deployment bytecode for a contract.
