@@ -42,6 +42,7 @@ serde_json = { workspace = true, features = ["alloc"] }
 account-ext = ["dep:triomphe"]
 default = ["std"]
 std = [
+    "triomphe?/std",
     "serde?/std",
     "serde_json/std",
     "primitives/std",
@@ -52,6 +53,7 @@ std = [
 ]
 serde = [
     "dep:serde",
+    "triomphe?/serde",
     "primitives/serde",
     "bitflags/serde",
     "bytecode/serde",
