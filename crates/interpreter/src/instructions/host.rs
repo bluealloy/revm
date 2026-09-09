@@ -233,8 +233,13 @@ where
     );
 
     let state_load = if spec_id.is_enabled_in(BERLIN) {
-        let skip_cold_load =
-            context.interpreter.gas.remaining() < context.host.gas_params().cold_storage_cost();
+        // With the static warm base charged above, comparing remaining gas against
+        // the cold surcharge is EELS's `max(access_cost, CALL_STIPEND + 1)`
+        // BAL-recording rule on Amsterdam. Pre-Amsterdam the check can never
+        // trigger: the EIP-2200 sentry guarantees `remaining > call_stipend`
+        // (2300), which always covers the full cold access (static 100 + cold 2100).
+        let skip_cold_load = context.interpreter.gas.remaining()
+            < context.host.gas_params().sstore_additional_cold_cost();
         context
             .host
             .sstore_skip_cold_load(target, index, value, skip_cold_load)?
