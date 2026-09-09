@@ -93,10 +93,13 @@ fn run_custom_precompile<CTX: ContextTr>(
         handle_read_storage(context, inputs.gas_limit)
     } else if input_bytes.len() == 32 {
         if inputs.is_static {
-            return Err("Cannot modify state in static context".to_string());
+            Err(PrecompileHalt::Other(
+                "Cannot modify state in static context".into(),
+            ))
+        } else {
+            // Write storage operation
+            handle_write_storage(context, &input_bytes, inputs.gas_limit)
         }
-        // Write storage operation
-        handle_write_storage(context, &input_bytes, inputs.gas_limit)
     } else {
         Err(PrecompileHalt::Other("Invalid input length".into()))
     };
