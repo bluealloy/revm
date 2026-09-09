@@ -163,7 +163,7 @@ mod tests {
         handler::{Handler, MainnetHandler},
         inspector::{Inspector, JournalExt},
         interpreter::interpreter::EthInterpreter,
-        primitives::{address, Log, TxKind, U256},
+        primitives::{address, keccak256, Log, TxKind, U256},
         state::AccountInfo,
         MainContext,
     };
@@ -294,6 +294,14 @@ mod tests {
                 // Verify log structure
                 assert_eq!(log.address, CUSTOM_PRECOMPILE_ADDRESS);
                 assert_eq!(log.data.topics().len(), 2, "Should have 2 topics");
+
+                // Topic 0 must be the real Solidity event signature hash, not a placeholder.
+                let expected_topic0 = keccak256(b"StorageWritten(address,uint256)");
+                assert_eq!(
+                    log.data.topics()[0],
+                    expected_topic0,
+                    "topic0 must be keccak256(\"StorageWritten(address,uint256)\")"
+                );
 
                 // Topic 1 should be the caller address (left-padded to 32 bytes)
                 let topic1 = log.data.topics()[1];
