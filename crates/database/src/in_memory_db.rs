@@ -71,7 +71,9 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
     /// Flattens a nested cache by applying the outer cache to the inner cache.
     ///
     /// The behavior is as follows:
-    /// - Accounts are overridden with outer accounts
+    /// - Accounts are merged, with outer accounts taking precedence. Storage slots cached only
+    ///   by the inner account are kept, since the outer cache would have resolved them through
+    ///   the inner one. They are dropped when the outer account cleared its storage.
     /// - Contracts are overridden with outer contracts
     /// - Logs are appended
     /// - Block hashes are overridden with outer block hashes
@@ -88,7 +90,16 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
             ..
         } = self;
 
-        inner.cache.accounts.extend(accounts);
+        for (address, outer_account) in accounts {
+            match inner.cache.accounts.entry(address) {
+                Entry::Vacant(entry) => {
+                    entry.insert(outer_account);
+                }
+                Entry::Occupied(entry) => {
+                    merge_account(entry.into_mut(), outer_account);
+                }
+            }
+        }
         inner.cache.contracts.extend(contracts);
         inner.cache.logs.extend(logs);
         inner.cache.block_hashes.extend(block_hashes);
@@ -448,6 +459,39 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     }
 }
 
+/// Applies `outer` on top of `inner`, keeping storage slots that only `inner` knows about.
+///
+/// A nested [`CacheDB`] resolves a slot that is missing from the outer account by asking the
+/// inner cache for it, unless the outer account reports its storage as cleared or the account as
+/// not existing. Flattening has to reproduce exactly that, otherwise slots cached only by the
+/// inner account are lost.
+fn merge_account(inner: &mut DbAccount, outer: DbAccount) {
+    if matches!(
+        outer.account_state,
+        AccountState::StorageCleared | AccountState::NotExisting
+    ) {
+        // The outer account answers every unknown slot itself, so the inner slots are
+        // unreachable and must not survive the flattening.
+        *inner = outer;
+        return;
+    }
+
+    // Unknown slots would have fallen through to the inner account, so its state decides
+    // whether they resolve to zero or to a lookup in the external database.
+    let account_state = if matches!(
+        inner.account_state,
+        AccountState::StorageCleared | AccountState::NotExisting
+    ) {
+        AccountState::StorageCleared
+    } else {
+        outer.account_state
+    };
+
+    inner.info = outer.info;
+    inner.account_state = account_state;
+    inner.storage.extend(outer.storage);
+}
+
 /// Database account representation.
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -596,10 +640,107 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use super::{CacheDB, EmptyDB};
+    use super::{AccountState, CacheDB, EmptyDB};
     use database_interface::{Database, DatabaseCommit};
     use primitives::{Address, HashMap, StorageKey, StorageValue};
     use state::{Account, AccountInfo, EvmStorageSlot, TransactionId};
+
+    #[test]
+    fn test_flatten_keeps_storage_cached_only_by_the_inner_account() {
+        let account = Address::with_last_byte(42);
+        let (slot_a, value_a) = (StorageKey::from(1), StorageValue::from(10));
+        let (slot_b, value_b) = (StorageKey::from(2), StorageValue::from(20));
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .insert_account_storage(account, slot_a, value_a)
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .insert_account_storage(account, slot_b, value_b)
+            .unwrap();
+
+        let mut flat = outer.flatten();
+
+        assert_eq!(flat.storage(account, slot_a).unwrap(), value_a);
+        assert_eq!(flat.storage(account, slot_b).unwrap(), value_b);
+    }
+
+    #[test]
+    fn test_flatten_prefers_the_outer_value_of_a_shared_slot() {
+        let account = Address::with_last_byte(42);
+        let slot = StorageKey::from(1);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .insert_account_storage(account, slot, StorageValue::from(10))
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .insert_account_storage(account, slot, StorageValue::from(20))
+            .unwrap();
+
+        let mut flat = outer.flatten();
+
+        assert_eq!(flat.storage(account, slot).unwrap(), StorageValue::from(20));
+    }
+
+    #[test]
+    fn test_flatten_drops_inner_storage_when_the_outer_account_cleared_it() {
+        let account = Address::with_last_byte(42);
+        let (slot_a, value_a) = (StorageKey::from(1), StorageValue::from(10));
+        let (slot_b, value_b) = (StorageKey::from(2), StorageValue::from(20));
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .insert_account_storage(account, slot_a, value_a)
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .replace_account_storage(account, [(slot_b, value_b)].into_iter().collect())
+            .unwrap();
+
+        let mut flat = outer.flatten();
+
+        // The outer account resolves every unknown slot itself, so `slot_a` is gone.
+        assert_eq!(flat.storage(account, slot_a).unwrap(), StorageValue::ZERO);
+        assert_eq!(flat.storage(account, slot_b).unwrap(), value_b);
+    }
+
+    #[test]
+    fn test_flatten_keeps_cleared_storage_of_the_inner_account() {
+        let account = Address::with_last_byte(42);
+        let (slot_a, value_a) = (StorageKey::from(1), StorageValue::from(10));
+        let (slot_b, value_b) = (StorageKey::from(2), StorageValue::from(20));
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .replace_account_storage(account, [(slot_a, value_a)].into_iter().collect())
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .insert_account_storage(account, slot_b, value_b)
+            .unwrap();
+
+        let mut flat = outer.flatten();
+
+        assert_eq!(flat.storage(account, slot_a).unwrap(), value_a);
+        assert_eq!(flat.storage(account, slot_b).unwrap(), value_b);
+        // Unknown slots were answered by the inner account, so they must not reach the
+        // external database after flattening.
+        assert_eq!(
+            flat.cache.accounts.get(&account).unwrap().account_state,
+            AccountState::StorageCleared
+        );
+    }
 
     #[test]
     fn test_insert_account_storage() {
