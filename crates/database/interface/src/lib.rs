@@ -287,12 +287,23 @@ pub trait DatabaseCommitExt: Database + DatabaseCommit {
     /// Iterates over received balances and increment all account balances.
     ///
     /// Update will create transitions for all accounts that are updated.
+    ///
+    /// Duplicate addresses are merged before applying the increment so each
+    /// account is loaded once and increased by the summed amount.
     fn increment_balances(
         &mut self,
         balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), Self::Error> {
+        // Merge duplicate addresses. Without this, each occurrence reloads the
+        // original balance and `commit` keeps only the last write.
+        let mut amounts = AddressMap::<u128>::default();
+        for (address, balance) in balances {
+            let amount = amounts.entry(address).or_default();
+            *amount = amount.saturating_add(balance);
+        }
+
         // Make transition and update cache state
-        let transitions = balances
+        let transitions = amounts
             .into_iter()
             .map(|(address, balance)| {
                 let mut original_account = match self.basic(address)? {
@@ -472,5 +483,63 @@ mod tests {
 
         let bal = db.bal_state.take_built_bal().expect("BAL should be built");
         assert!(bal.accounts.get(&address).is_some());
+    }
+
+    #[test]
+    fn increment_balances_merges_duplicate_addresses() {
+        #[derive(Default)]
+        struct BalanceDb {
+            accounts: AddressMap<AccountInfo>,
+        }
+
+        impl Database for BalanceDb {
+            type Error = Infallible;
+
+            fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+                Ok(self.accounts.get(&address).cloned())
+            }
+
+            fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+                Ok(Bytecode::default())
+            }
+
+            fn storage(
+                &mut self,
+                _address: Address,
+                _index: StorageKey,
+            ) -> Result<StorageValue, Self::Error> {
+                Ok(StorageValue::ZERO)
+            }
+
+            fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
+                Ok(B256::ZERO)
+            }
+        }
+
+        impl DatabaseCommit for BalanceDb {
+            fn commit(&mut self, changes: AddressMap<Account>) {
+                for (address, account) in changes {
+                    self.accounts.insert(address, account.info);
+                }
+            }
+        }
+
+        let addr = Address::with_last_byte(1);
+        let other = Address::with_last_byte(2);
+        let mut db = BalanceDb::default();
+        db.accounts.insert(
+            addr,
+            AccountInfo {
+                balance: U256::from(10),
+                ..Default::default()
+            },
+        );
+
+        // 10 + 2 + 3 = 15. Without merging duplicates this would commit 10 + 3 = 13.
+        db.increment_balances([(addr, 2), (addr, 3), (other, 4)])
+            .unwrap();
+
+        assert_eq!(db.accounts[&addr].balance, U256::from(15));
+        assert_eq!(db.accounts[&other].balance, U256::from(4));
     }
 }
