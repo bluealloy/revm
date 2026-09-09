@@ -494,9 +494,11 @@ impl TxEnvBuilder {
                 Ok(_) => {}
                 Err(DeriveTxTypeError::MissingTargetForEip4844) => {
                     tx.kind = TxKind::Call(Address::default());
+                    tx.tx_type = TransactionType::Eip4844 as u8;
                 }
                 Err(DeriveTxTypeError::MissingTargetForEip7702) => {
                     tx.kind = TxKind::Call(Address::default());
+                    tx.tx_type = TransactionType::Eip7702 as u8;
                 }
                 Err(DeriveTxTypeError::MissingTargetForEip7873) => {
                     tx.kind = TxKind::Call(Address::default());
@@ -1007,6 +1009,99 @@ mod tests {
 
         assert_eq!(tx.tx_type, TransactionType::Eip7702);
         assert_eq!(tx.kind, TxKind::Call(Address::default()));
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_inferred_eip4844_create_to_call() {
+        let predecessor_cases = [
+            ("legacy", AccessList::default(), None),
+            (
+                "eip2930",
+                AccessList(vec![AccessListItem {
+                    address: Address::from([3u8; 20]),
+                    storage_keys: vec![B256::from([4u8; 32])],
+                }]),
+                None,
+            ),
+            ("eip1559", AccessList::default(), Some(10)),
+        ];
+
+        // Both fields independently select EIP-4844. The fee-only case remains invalid
+        // without blobs, but type inference must still classify it consistently.
+        let eip4844_trigger_cases = [
+            ("blob_hashes", vec![B256::from([5u8; 32])], 0),
+            ("max_fee_per_blob_gas", Vec::new(), 1),
+        ];
+
+        for (trigger, blob_hashes, max_fee_per_blob_gas) in eip4844_trigger_cases {
+            for (predecessor, access_list, gas_priority_fee) in predecessor_cases.clone() {
+                let build = |kind| {
+                    TxEnvBuilder::new()
+                        .access_list(access_list.clone())
+                        .gas_priority_fee(gas_priority_fee)
+                        .blob_hashes(blob_hashes.clone())
+                        .max_fee_per_blob_gas(max_fee_per_blob_gas)
+                        .kind(kind)
+                        .build_fill()
+                };
+                let repaired = build(TxKind::Create);
+                let control = build(TxKind::Call(Address::default()));
+
+                assert_eq!(
+                    repaired, control,
+                    "trigger={trigger}, predecessor={predecessor}"
+                );
+                assert_eq!(
+                    repaired.tx_type,
+                    TransactionType::Eip4844,
+                    "trigger={trigger}, predecessor={predecessor}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_tx_env_builder_build_fill_inferred_eip7702_create_to_call() {
+        let predecessor_cases = [
+            ("legacy", AccessList::default(), None),
+            (
+                "eip2930",
+                AccessList(vec![AccessListItem {
+                    address: Address::from([3u8; 20]),
+                    storage_keys: vec![B256::from([4u8; 32])],
+                }]),
+                None,
+            ),
+            ("eip1559", AccessList::default(), Some(10)),
+        ];
+
+        for (predecessor, access_list, gas_priority_fee) in predecessor_cases {
+            let build = |kind| {
+                let auth = RecoveredAuthorization::new_unchecked(
+                    Authorization {
+                        chain_id: U256::from(1),
+                        nonce: 0,
+                        address: Address::default(),
+                    },
+                    RecoveredAuthority::Valid(Address::default()),
+                );
+                TxEnvBuilder::new()
+                    .access_list(access_list.clone())
+                    .gas_priority_fee(gas_priority_fee)
+                    .authorization_list(vec![Either::Right(auth)])
+                    .kind(kind)
+                    .build_fill()
+            };
+            let repaired = build(TxKind::Create);
+            let control = build(TxKind::Call(Address::default()));
+
+            assert_eq!(repaired, control, "predecessor={predecessor}");
+            assert_eq!(
+                repaired.tx_type,
+                TransactionType::Eip7702,
+                "predecessor={predecessor}"
+            );
+        }
     }
 
     #[test]
