@@ -13,6 +13,16 @@ use triomphe::ThinArc;
 pub struct AccountExtension(Option<ThinArc<(), u8>>);
 
 impl AccountExtension {
+    /// Takes ownership of a shared payload without copying its bytes.
+    pub fn from_shared(payload: Option<ThinArc<(), u8>>) -> Self {
+        Self(payload.filter(|arc| !arc.slice.is_empty()))
+    }
+
+    /// Transfers the shared allocation without copying its bytes.
+    pub fn into_shared(self) -> Option<ThinArc<(), u8>> {
+        self.0
+    }
+
     /// Creates an empty payload without allocating.
     pub const fn new() -> Self {
         Self(None)
@@ -76,6 +86,12 @@ impl PartialEq for AccountExtension {
     }
 }
 impl Eq for AccountExtension {}
+
+impl core::hash::Hash for AccountExtension {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        core::hash::Hash::hash(self.as_ref(), state);
+    }
+}
 
 impl PartialOrd for AccountExtension {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {

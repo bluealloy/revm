@@ -37,6 +37,7 @@ serde = { workspace = true, features = ["derive", "rc"], optional = true }
 database.workspace = true
 
 [features]
+account-ext = ["context-interface/account-ext", "state/account-ext"]
 default = ["std"]
 std = [
 	"serde?/std",
