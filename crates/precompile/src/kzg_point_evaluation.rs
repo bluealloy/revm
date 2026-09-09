@@ -176,4 +176,46 @@ mod tests {
         let t = verify_kzg_proof(&commitment, &z, &y, &proof);
         assert!(!t);
     }
+
+    /// A correct proof with the claimed evaluation `y` perturbed by one bit must
+    /// be rejected. All points are finite, so both pairing pairs are non-trivial:
+    /// this pins the reformulated pairing check (`e(D, -G2)·e(proof, [τ]G2) == 1`,
+    /// `D = commitment - [y]G1 + [z]·proof`) to the exact correct relation, using
+    /// the c-kzg `basic_test` vector as an independent oracle.
+    #[test]
+    fn test_correct_vector_tampered_y_invalid() {
+        let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7");
+        let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000");
+        // basic_test's correct y (1522…49e9) with its lowest bit flipped. The
+        // result (…49e8) is still far below the modulus, hence canonical, so it is
+        // rejected by the pairing check and not by the canonical-scalar guard.
+        let mut y =
+            hex!("1522a4a7f34e1ea350ae07c29c96c7e79655aa926122e95fe69fcbd932ca49e9").to_vec();
+        y[31] ^= 0x01;
+        let y: [u8; 32] = y.try_into().unwrap();
+        let proof = hex!("a62ad71d14c5719385c0686f1871430475bf3a00f0aa3f7b8dd99a9abc2160744faf0070725e00b60ad9a026a15b1a8c");
+
+        assert!(!verify_kzg_proof(&commitment, &z, &y, &proof));
+    }
+
+    /// Mirror of [`test_infinity_proof_invalid`] for the reformulated check: here
+    /// `D = commitment - [y]G1 + [z]·proof` is the point at infinity while `proof`
+    /// is finite, so the *D* pair is the one filtered out and the *proof* pair is
+    /// kept. With commitment = proof = the compressed G1 generator, `y = 0` and
+    /// `z = r - 1`, we have `[z]·proof = [r-1]G1 = -G1`, hence `D = G1 - 0 + (-G1) = ∞`
+    /// but `proof = G1 ≠ ∞`. A `D = ∞` proof is only valid when `proof = ∞` too, so
+    /// this must be rejected. (Holds identically under the pre-reformulation form,
+    /// so it is also a regression guard.)
+    #[test]
+    fn test_d_infinity_finite_proof_invalid() {
+        // Compressed BLS12-381 G1 generator.
+        let g1 = hex!("97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb");
+        let commitment = g1;
+        let proof = g1;
+        // r - 1, canonical.
+        let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000");
+        let y = hex!("0000000000000000000000000000000000000000000000000000000000000000");
+
+        assert!(!verify_kzg_proof(&commitment, &z, &y, &proof));
+    }
 }
