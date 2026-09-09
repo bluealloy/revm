@@ -68,6 +68,7 @@ use aurora_engine_modexp as _;
 use p256 as _;
 
 use core::hash::Hash;
+use core::ops::{Deref, DerefMut};
 use primitives::{
     hardfork::SpecId, short_address, Address, AddressMap, AddressSet, HashMap, OnceLock,
     SHORT_ADDRESS_CAP,
@@ -103,6 +104,47 @@ impl Default for Precompiles {
             inner: HashMap::default(),
             addresses: AddressSet::default(),
             optimized_access: Box::new([const { None }; SHORT_ADDRESS_CAP]),
+        }
+    }
+}
+
+/// Mutable access to a [`Precompile`] held by [`Precompiles`].
+///
+/// [`Precompiles::get`] serves short addresses out of a cached clone, so a precompile that is
+/// replaced through [`Precompiles::get_mut`] has to be written back into that cache, otherwise
+/// later lookups keep returning the old one. The write-back happens when the guard is dropped,
+/// and only if the precompile was actually accessed mutably.
+#[derive(Debug)]
+pub struct PrecompileMut<'a> {
+    precompile: &'a mut Precompile,
+    cached: Option<&'a mut Option<Precompile>>,
+    modified: bool,
+}
+
+impl Deref for PrecompileMut<'_> {
+    type Target = Precompile;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.precompile
+    }
+}
+
+impl DerefMut for PrecompileMut<'_> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.modified = true;
+        self.precompile
+    }
+}
+
+impl Drop for PrecompileMut<'_> {
+    fn drop(&mut self) {
+        if !self.modified {
+            return;
+        }
+        if let Some(cached) = &mut self.cached {
+            **cached = Some(self.precompile.clone());
         }
     }
 }
@@ -192,9 +234,18 @@ impl Precompiles {
     }
 
     /// Returns the precompile for the given address.
+    ///
+    /// Returns a guard rather than a plain reference so that replacing a precompile on a short
+    /// address also refreshes the cache [`Precompiles::get`] reads from.
     #[inline]
-    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
-        self.inner.get_mut(address)
+    pub fn get_mut(&mut self, address: &Address) -> Option<PrecompileMut<'_>> {
+        let cached = short_address(address).map(|index| &mut self.optimized_access[index]);
+        let precompile = self.inner.get_mut(address)?;
+        Some(PrecompileMut {
+            precompile,
+            cached,
+            modified: false,
+        })
     }
 
     /// Is the precompiles list empty.
@@ -481,6 +532,64 @@ mod test {
 
     fn temp_precompile(_input: &[u8], _gas_limit: u64, reservoir: u64) -> PrecompileResult {
         Ok(PrecompileOutput::halt(PrecompileHalt::OutOfGas, reservoir))
+    }
+
+    #[test]
+    fn test_get_mut_refreshes_short_address_lookup() {
+        let address = u64_to_address(4);
+        let mut precompiles = Precompiles::istanbul().clone();
+
+        *precompiles.get_mut(&address).unwrap() = Precompile::new(
+            PrecompileId::Custom("replacement".into()),
+            address,
+            temp_precompile,
+        );
+
+        // `get` reads short addresses from the cached clone, `inner` is the authoritative map.
+        assert_eq!(
+            precompiles.get(&address).unwrap().id(),
+            &PrecompileId::Custom("replacement".into())
+        );
+        assert_eq!(
+            precompiles.inner().get(&address).unwrap().id(),
+            &PrecompileId::Custom("replacement".into())
+        );
+    }
+
+    #[test]
+    fn test_get_mut_replaces_long_address() {
+        // 1000 is past SHORT_ADDRESS_CAP, so this address is not cached.
+        let address = u64_to_address(1000);
+        let mut precompiles = Precompiles::istanbul().clone();
+        precompiles.extend([Precompile::new(
+            PrecompileId::Custom("original".into()),
+            address,
+            temp_precompile,
+        )]);
+
+        *precompiles.get_mut(&address).unwrap() = Precompile::new(
+            PrecompileId::Custom("replacement".into()),
+            address,
+            temp_precompile,
+        );
+
+        assert_eq!(
+            precompiles.get(&address).unwrap().id(),
+            &PrecompileId::Custom("replacement".into())
+        );
+    }
+
+    #[test]
+    fn test_get_mut_without_mutation_leaves_the_precompile_alone() {
+        let address = u64_to_address(4);
+        let mut precompiles = Precompiles::istanbul().clone();
+        let expected = precompiles.get(&address).unwrap().id().clone();
+
+        let guard = precompiles.get_mut(&address).unwrap();
+        assert_eq!(guard.address(), &address);
+        drop(guard);
+
+        assert_eq!(precompiles.get(&address).unwrap().id(), &expected);
     }
 
     #[test]
