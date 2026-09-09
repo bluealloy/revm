@@ -74,6 +74,10 @@ pub enum SpecId {
     ///
     /// Activated at block TBD
     AMSTERDAM,
+    /// Bogota
+    ///
+    /// Activated at block TBD
+    BOGOTA,
 }
 
 impl SpecId {
@@ -83,7 +87,7 @@ impl SpecId {
     /// **Warning**: This value will change between minor versions as new hard forks are added.
     /// Do not rely on it for stable behavior.
     #[doc(alias = "MAX")]
-    pub const NEXT: Self = Self::AMSTERDAM;
+    pub const NEXT: Self = Self::BOGOTA;
 
     /// Returns the [`SpecId`] for the given [`u8`].
     #[inline]
@@ -151,6 +155,8 @@ pub mod name {
     pub const OSAKA: &str = "Osaka";
     /// String identifier for the Amsterdam hardfork
     pub const AMSTERDAM: &str = "Amsterdam";
+    /// String identifier for the Bogota hardfork
+    pub const BOGOTA: &str = "Bogota";
     /// String identifier for the latest hardfork
     pub const LATEST: &str = "Latest";
 }
@@ -179,6 +185,7 @@ impl FromStr for SpecId {
             name::PRAGUE => Ok(Self::PRAGUE),
             name::OSAKA => Ok(Self::OSAKA),
             name::AMSTERDAM => Ok(Self::AMSTERDAM),
+            name::BOGOTA => Ok(Self::BOGOTA),
             _ => Err(UnknownHardfork),
         }
     }
@@ -202,6 +209,7 @@ impl From<SpecId> for &'static str {
             SpecId::PRAGUE => name::PRAGUE,
             SpecId::OSAKA => name::OSAKA,
             SpecId::AMSTERDAM => name::AMSTERDAM,
+            SpecId::BOGOTA => name::BOGOTA,
         }
     }
 }

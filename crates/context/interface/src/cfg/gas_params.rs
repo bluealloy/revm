@@ -177,7 +177,7 @@ impl GasParams {
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
             // New fork.
-            SpecId::AMSTERDAM => {
+            AMSTERDAM | BOGOTA => {
                 static TABLE: OnceLock<GasParams> = OnceLock::new();
                 TABLE.get_or_init(|| Self::new_spec_inner(spec))
             }
