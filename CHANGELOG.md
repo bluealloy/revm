@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v119
+date: 09.09.2026
+
+Patch release reverting the EIP-8037 system-call gas-reservoir change from v118.
+
+Highlights:
+* Restore the pre-v118 system-call gas-tracking behavior ([#3903](https://github.com/bluealloy/revm/pull/3903))
+
+See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for the reverted handler API and gas-accounting behavior.
+
+* `revm-handler`: 43.0.1 -> 43.0.2 (⚠ API breaking changes)
+* `revm-inspector`: 43.0.1 -> 43.0.2 (✓ API compatible changes)
+* `revm`: 43.0.1 -> 43.0.2 (✓ dependency bump)
+* `revme`: 43.0.1 -> 43.0.2 (✓ dependency bump)
+
 # v118
 date: 08.09.2026
 
