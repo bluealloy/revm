@@ -1,0 +1,7 @@
+name: Verify Socket Cargo interception
+description: Fail if Cargo resolves to an unprotected binary.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: test "$(command -v cargo)" = "${SFW_SHIM_DIR:?Socket shims are missing}/cargo"

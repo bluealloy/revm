@@ -10,8 +10,17 @@ on:
     branches:
       - main
 
+env:
+  NODE_OPTIONS: --no-network-family-autoselection
+  SFW_UNKNOWN_HOST_ACTION: ignore
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+
 jobs:
   release-plz:
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
     name: Release-plz
     runs-on: ubuntu-latest
     steps:
@@ -21,7 +30,13 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-        # Commits the cargo lock (generally a good practice for upstream libraries)
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
+      # Commits the cargo lock (generally a good practice for upstream libraries)
       - name: Commit Cargo.lock
         run: |
           git config --local user.email "action@github.com"
