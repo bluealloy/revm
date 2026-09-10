@@ -127,10 +127,7 @@ pub enum JournalEntry {
         /// Account whose extension changed.
         address: Address,
         /// Payload before the change.
-        #[cfg_attr(
-            feature = "serde",
-            serde(default, skip_serializing_if = "state::AccountExtension::is_empty")
-        )]
+        #[cfg_attr(feature = "serde", serde(default))]
         old_extension: state::AccountExtension,
     },
     /// Used to mark account that is warm inside EVM in regard to EIP-2929 AccessList.
