@@ -228,6 +228,10 @@ pub struct AccountInfoBal {
     pub code: BalWrites<(B256, Bytecode)>,
     /// Chain-specific account extension builder.
     #[cfg(feature = "account-ext")]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "BalWrites::is_empty")
+    )]
     pub extension: BalWrites<AccountExtension>,
 }
 

@@ -327,6 +327,29 @@ mod tests {
         (bytecode.hash_slow(), bytecode)
     }
 
+    #[test]
+    #[cfg(all(feature = "serde", feature = "account-ext"))]
+    fn extension_history_messagepack_roundtrip() {
+        let mut account = AccountInfoBal::default();
+        let legacy = (&account.nonce, &account.balance, &account.code);
+        let encoded = rmp_serde::to_vec(&account).unwrap();
+        assert_eq!(encoded, rmp_serde::to_vec(&legacy).unwrap());
+        assert_eq!(
+            rmp_serde::from_slice::<AccountInfoBal>(&encoded).unwrap(),
+            account
+        );
+
+        // Clearing an extension is a write, not an empty history.
+        account
+            .extension
+            .force_update(idx(1), crate::AccountExtension::default());
+        let encoded = rmp_serde::to_vec(&account).unwrap();
+        assert_eq!(
+            rmp_serde::from_slice::<AccountInfoBal>(&encoded).unwrap(),
+            account
+        );
+    }
+
     const fn idx(index: u64) -> BlockAccessIndex {
         BlockAccessIndex::new(index)
     }

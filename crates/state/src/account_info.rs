@@ -60,7 +60,10 @@ pub struct AccountInfo {
     /// By default, this is `Some(Bytecode::default())`.
     pub code: Option<Bytecode>,
     /// Chain-specific account data carried through execution and state transitions.
-    #[cfg_attr(feature = "serde", serde(default))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "AccountExtension::is_empty")
+    )]
     #[cfg(feature = "account-ext")]
     pub extension: AccountExtension,
 }
@@ -425,8 +428,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "serde", not(feature = "account-ext")))]
-    fn extension_disabled_preserves_legacy_serde() {
+    #[cfg(feature = "serde")]
+    fn empty_extension_preserves_legacy_serde() {
         #[derive(serde::Serialize, serde::Deserialize)]
         struct LegacyAccountInfo {
             balance: U256,
@@ -447,12 +450,35 @@ mod tests {
             serde_json::from_slice::<AccountInfo>(&json).unwrap(),
             account
         );
+        let encoded = rmp_serde::to_vec(&account).unwrap();
+        assert_eq!(encoded, rmp_serde::to_vec(&legacy).unwrap());
+        assert_eq!(
+            rmp_serde::from_slice::<AccountInfo>(&encoded).unwrap(),
+            account
+        );
+        let decoded: LegacyAccountInfo = rmp_serde::from_slice(&encoded).unwrap();
+        assert_eq!(rmp_serde::to_vec(&decoded).unwrap(), encoded);
         let binary = postcard::to_allocvec(&legacy).unwrap();
         assert_eq!(postcard::to_allocvec(&account).unwrap(), binary);
+        #[cfg(not(feature = "account-ext"))]
         assert_eq!(
             postcard::from_bytes::<AccountInfo>(&binary).unwrap(),
             account
         );
+    }
+
+    #[test]
+    #[cfg(all(feature = "serde", feature = "account-ext"))]
+    fn account_info_messagepack_roundtrip() {
+        let accounts = vec![
+            AccountInfo::default(),
+            AccountInfo::default().with_extension(vec![0x82, 0xaa]),
+            AccountInfo::default(),
+        ];
+        let record = (accounts, 99u64);
+        let encoded = rmp_serde::to_vec(&record).unwrap();
+        let decoded: (Vec<AccountInfo>, u64) = rmp_serde::from_slice(&encoded).unwrap();
+        assert_eq!(decoded, record);
     }
 
     #[test]

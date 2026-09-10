@@ -9,6 +9,9 @@ use triomphe::ThinArc;
 ///
 /// Empty payloads allocate nothing. Nonempty payloads store their length and bytes
 /// in one reference-counted allocation; cloning shares that allocation.
+///
+/// Accounts omit empty extensions in Serde. Their binary representation requires
+/// struct boundaries, as in MessagePack; bincode and Postcard are not supported.
 #[derive(Clone, Debug, Default)]
 pub struct AccountExtension(Option<ThinArc<(), u8>>);
 
@@ -112,13 +115,7 @@ impl serde::Serialize for AccountExtension {
         if serializer.is_human_readable() {
             primitives::hex::serialize(self.as_ref(), serializer)
         } else {
-            use serde::ser::{Error, SerializeTuple};
-            let len = u16::try_from(self.len()).map_err(S::Error::custom)?;
-            // A tuple avoids the serializer's native sequence-length prefix.
-            let mut tuple = serializer.serialize_tuple(2)?;
-            tuple.serialize_element(&len.to_be_bytes())?;
-            tuple.serialize_element(&RawBytes(self.as_ref()))?;
-            tuple.end()
+            serializer.serialize_bytes(self.as_ref())
         }
     }
 }
@@ -126,86 +123,7 @@ impl serde::Serialize for AccountExtension {
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for AccountExtension {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        if deserializer.is_human_readable() {
-            Bytes::deserialize(deserializer).map(Self::from)
-        } else {
-            deserializer.deserialize_tuple(2, ExtensionVisitor)
-        }
-    }
-}
-
-// Binary extensions use a fixed big-endian u16 length followed by raw bytes, including
-// a zero length for empty payloads so fields embedded in larger records stay delimited.
-#[cfg(feature = "serde")]
-struct RawBytes<'a>(&'a [u8]);
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for RawBytes<'_> {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeTuple;
-        let mut tuple = serializer.serialize_tuple(self.0.len())?;
-        for byte in self.0 {
-            tuple.serialize_element(byte)?;
-        }
-        tuple.end()
-    }
-}
-
-#[cfg(feature = "serde")]
-struct ExtensionVisitor;
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Visitor<'de> for ExtensionVisitor {
-    type Value = AccountExtension;
-
-    fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str("a u16 length followed by raw account extension bytes")
-    }
-
-    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-        use serde::de::Error;
-        let len = u16::from_be_bytes(
-            seq.next_element()?
-                .ok_or_else(|| A::Error::custom("missing extension length"))?,
-        );
-        seq.next_element_seed(PayloadVisitor(usize::from(len)))?
-            .ok_or_else(|| A::Error::custom("missing extension payload"))
-    }
-}
-
-#[cfg(feature = "serde")]
-struct PayloadVisitor(usize);
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::DeserializeSeed<'de> for PayloadVisitor {
-    type Value = AccountExtension;
-
-    fn deserialize<D: serde::Deserializer<'de>>(
-        self,
-        deserializer: D,
-    ) -> Result<Self::Value, D::Error> {
-        deserializer.deserialize_tuple(self.0, self)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::de::Visitor<'de> for PayloadVisitor {
-    type Value = AccountExtension;
-
-    fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{} raw account extension bytes", self.0)
-    }
-
-    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-        use serde::de::Error;
-        let mut bytes = Vec::with_capacity(self.0);
-        for i in 0..self.0 {
-            bytes.push(
-                seq.next_element()?
-                    .ok_or_else(|| A::Error::invalid_length(i, &self))?,
-            );
-        }
-        Ok(AccountExtension::from(bytes))
+        Bytes::deserialize(deserializer).map(Self::from)
     }
 }
 
@@ -239,8 +157,7 @@ mod tests {
                 serde_json::from_slice::<AccountExtension>(&json).unwrap(),
                 extension
             );
-            let mut binary = (payload.len() as u16).to_be_bytes().to_vec();
-            binary.extend_from_slice(payload);
+            let binary = postcard::to_allocvec(&bytes).unwrap();
             assert_eq!(postcard::to_allocvec(&extension).unwrap(), binary);
             assert_eq!(
                 postcard::from_bytes::<AccountExtension>(&binary).unwrap(),
@@ -258,7 +175,5 @@ mod tests {
                 );
             }
         }
-        let oversized = AccountExtension::from(vec![0; usize::from(u16::MAX) + 1]);
-        assert!(postcard::to_allocvec(&oversized).is_err());
     }
 }
