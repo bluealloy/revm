@@ -1153,6 +1153,47 @@ mod tests {
     use primitives::{address, HashSet, U256};
     use state::AccountInfo;
 
+    #[cfg(feature = "account-ext")]
+    #[test]
+    fn extension_checkpoint_reverts_nested_changes() {
+        use state::AccountExtension;
+        let address = Address::repeat_byte(1);
+        let original = AccountExtension::copy_from_slice(&[1; 32]);
+        let mut journal = JournalInner::<JournalEntry>::new();
+        journal.state.insert(
+            address,
+            AccountInfo::default()
+                .with_extension(original.clone())
+                .into(),
+        );
+        let mut db = EmptyDB::new();
+        let outer = journal.checkpoint();
+        let outer_value = AccountExtension::copy_from_slice(&[2; 32]);
+        journal
+            .get_account_mut(&mut db, address)
+            .unwrap()
+            .set_extension(outer_value.clone());
+        assert!(journal.state[&address].is_touched());
+        let inner = journal.checkpoint();
+        journal
+            .get_account_mut(&mut db, address)
+            .unwrap()
+            .set_extension(AccountExtension::new());
+        journal.checkpoint_revert(inner);
+        assert_eq!(journal.state[&address].info.extension, outer_value);
+        // A committed child must still revert if its caller later reverts.
+        let _child = journal.checkpoint();
+        journal
+            .get_account_mut(&mut db, address)
+            .unwrap()
+            .set_extension(AccountExtension::copy_from_slice(&[3; 32]));
+        journal.checkpoint_commit();
+        journal.checkpoint_revert(outer);
+        assert_eq!(journal.state[&address].info.extension, original);
+        assert!(!journal.state[&address].is_touched());
+        assert!(journal.journal.is_empty());
+    }
+
     #[test]
     fn test_sload_skip_cold_load() {
         let mut journal = JournalInner::<JournalEntry>::new();
@@ -1165,7 +1206,7 @@ mod tests {
             nonce: 1,
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
-            account_id: None,
+            ..Default::default()
         };
         journal
             .state

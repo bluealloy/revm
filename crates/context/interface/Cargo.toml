@@ -33,6 +33,7 @@ either.workspace = true
 serde = { workspace = true, optional = true }
 
 [features]
+account-ext = ["state/account-ext"]
 default = ["std"]
 std = [
 	"serde?/std",

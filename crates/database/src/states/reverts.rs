@@ -201,7 +201,7 @@ impl AccountRevert {
                 let mut ret = AccountRevert::new_selfdestructed_again(
                     bundle_account.status,
                     account_info_revert,
-                    bundle_account.storage.drain().collect(),
+                    core::mem::take(&mut bundle_account.storage),
                     updated_storage.clone(),
                 );
                 ret.wipe_storage = true;

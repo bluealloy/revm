@@ -18,6 +18,53 @@ const SELFDESTRUCT_BYTECODE: &[u8] = &[
 ];
 
 #[test]
+#[cfg(feature = "account-ext")]
+fn extension_only_changes_are_persisted_and_reverted() {
+    use revm::{
+        database::{
+            states::TransitionAccount, AccountStatus, BundleAccount, BundleState,
+            OriginalValuesKnown,
+        },
+        state::{AccountExtension, AccountInfo},
+    };
+
+    let original = AccountInfo::from_balance(U256::from(1))
+        .with_extension(AccountExtension::copy_from_slice(&[1; 32]));
+    let present = original
+        .clone()
+        .with_extension(AccountExtension::copy_from_slice(&[2; 32]));
+    let mut account = BundleAccount::new(
+        Some(original.clone()),
+        Some(original.clone()),
+        Default::default(),
+        AccountStatus::Loaded,
+    );
+    let revert = account
+        .update_and_create_revert(TransitionAccount {
+            info: Some(present.clone()),
+            status: AccountStatus::Changed,
+            previous_info: Some(original.clone()),
+            previous_status: AccountStatus::Loaded,
+            ..Default::default()
+        })
+        .expect("an extension-only change needs account revert data");
+    assert!(account.is_info_changed());
+
+    let mut bundle = BundleState::default();
+    bundle.state.insert(BENCH_TARGET, account.clone());
+    let changes = bundle.to_plain_state(OriginalValuesKnown::Yes);
+    assert_eq!(changes.accounts.len(), 1);
+    assert_eq!(
+        changes.accounts[0].1.as_ref().unwrap().extension,
+        present.extension
+    );
+
+    account.revert(revert);
+    assert_eq!(account.info.as_ref().unwrap().extension, original.extension);
+    assert!(!account.is_info_changed());
+}
+
+#[test]
 fn test_selfdestruct_multi_tx() {
     let mut evm = Context::mainnet()
         .with_cfg(CfgEnv::new_with_spec(SpecId::BERLIN))
