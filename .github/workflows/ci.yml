@@ -12,11 +12,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  NODE_OPTIONS: --no-network-family-autoselection
+  SFW_UNKNOWN_HOST_ACTION: ignore
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
 
 permissions: {}
 
 jobs:
   test:
+    permissions:
+      contents: read
+      id-token: write
     name: test ${{ matrix.rust }} ${{ matrix.flags }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -32,6 +38,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: taiki-e/install-action@nextest
       - name: Install GMP (all-features)
@@ -42,6 +54,9 @@ jobs:
       - run: cargo nextest run --workspace ${{ matrix.flags }}
 
   ethereum-tests:
+    permissions:
+      contents: read
+      id-token: write
     name: eth ${{ matrix.profile }} ${{ matrix.target }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -55,6 +70,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
@@ -64,6 +85,9 @@ jobs:
         run: ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}
 
   check-no-std:
+    permissions:
+      contents: read
+      id-token: write
     name: check no_std ${{ matrix.target }} ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -79,11 +103,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - run: |
           cargo check --target ${{ matrix.target }} --no-default-features --features=${{ matrix.features }}
           cargo check --target ${{ matrix.target }} -p revm-database --no-default-features
 
   check:
+    permissions:
+      contents: read
+      id-token: write
     name: check ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -96,9 +129,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - run: cargo check --no-default-features -p revm --features=${{ matrix.features }}
 
   feature-checks:
+    permissions:
+      contents: read
+      id-token: write
     name: features
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -107,6 +149,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: taiki-e/install-action@cargo-hack
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
@@ -119,6 +167,9 @@ jobs:
         run: cargo hack check --feature-powerset --depth 1
 
   clippy:
+    permissions:
+      contents: read
+      id-token: write
     name: clippy
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -126,18 +177,27 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - name: Install GMP
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
-      - run: cargo clippy --workspace --all-targets --all-features
+      - run: cargo +nightly clippy --workspace --all-targets --all-features
         env:
           RUSTFLAGS: -Dwarnings
 
   docs:
+    permissions:
+      contents: read
+      id-token: write
     name: docs
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -148,6 +208,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-docs
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - name: Install GMP
         run: |
           sudo apt-get update
@@ -157,6 +223,9 @@ jobs:
           RUSTDOCFLAGS: "--cfg docsrs -D warnings"
 
   doctest:
+    permissions:
+      contents: read
+      id-token: write
     name: doctest
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -165,12 +234,21 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
       - run: cargo test --workspace --doc
 
   fmt:
+    permissions:
+      contents: read
+      id-token: write
     name: fmt
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -178,12 +256,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
-      - run: cargo fmt --all --check
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
+      - run: cargo +nightly fmt --all --check
 
   feature-propagation:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -191,8 +278,15 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
+      - run: sccache --start-server
       - uses: taiki-e/cache-cargo-install-action@9ee83daaa7b96a6fab930949ecf1122bba04a389 # v3.0.8
         with:
           tool: zepter

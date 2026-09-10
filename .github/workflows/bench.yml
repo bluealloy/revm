@@ -8,11 +8,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  NODE_OPTIONS: --no-network-family-autoselection
+  SFW_UNKNOWN_HOST_ACTION: ignore
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
 
 permissions: {}
 
 jobs:
   codspeed:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -20,6 +26,12 @@ jobs:
           submodules: true
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@5338a3746a2ac2ddd88cbede733c79f907aca3a0
+        with:
+          egress-policy: audit
+      - name: Verify Socket Cargo interception
+        uses: ./.github/actions/check-socket-shim
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
