@@ -1,6 +1,6 @@
 //! Global constants for the EVM
 //!
-//! Here you can find constants that dont belong to any EIP and are there for the genesis.
+//! Here you can find constants that don't belong to any EIP and are there for the genesis.
 
 use alloy_primitives::{b256, Address, B256};
 
