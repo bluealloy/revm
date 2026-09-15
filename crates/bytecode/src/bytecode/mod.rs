@@ -181,6 +181,22 @@ impl Bytecode {
         }
     }
 
+    /// Creates a new raw [`Bytecode`] with a precomputed hash.
+    ///
+    /// Validates the bytecode format like [`Self::new_raw_checked`], but does not
+    /// verify the hash. The caller must ensure `hash` is the Keccak-256 hash of
+    /// `bytes`, without any analysis padding. An incorrect hash can cause invalid
+    /// EVM state. Empty bytecode retains its canonical empty-code hash.
+    #[inline]
+    pub fn new_raw_checked_with_hash(
+        bytes: Bytes,
+        hash: B256,
+    ) -> Result<Self, BytecodeDecodeError> {
+        let bytecode = Self::new_raw_checked(bytes)?;
+        let _ = bytecode.0.hash.set(hash);
+        Ok(bytecode)
+    }
+
     /// Creates a new EIP-7702 [`Bytecode`] from raw bytes.
     ///
     /// Returns an error if the bytes are not valid EIP-7702 bytecode.
@@ -373,6 +389,40 @@ mod tests {
     use crate::{eip7702::Eip7702DecodeError, opcode};
     use bitvec::{bitvec, order::Lsb0};
     use primitives::bytes;
+
+    #[test]
+    fn new_raw_checked_with_hash() {
+        for raw in [
+            Bytes::new(),
+            Bytes::from_static(&[0x60, 0x01, 0x5b, 0x61]),
+            Bytecode::new_eip7702(Address::ZERO).original_bytes(),
+        ] {
+            let hash = keccak256(&raw);
+            let bytecode = Bytecode::new_raw_checked_with_hash(raw.clone(), hash).unwrap();
+            let expected = Bytecode::new_raw_checked(raw.clone()).unwrap();
+            assert_eq!(bytecode.0.hash.get(), Some(&hash));
+            assert_eq!(bytecode.original_bytes(), raw);
+            assert_eq!(bytecode.kind(), expected.kind());
+            assert_eq!(bytecode.legacy_jump_table(), expected.legacy_jump_table());
+            assert_eq!(bytecode.bytes_slice(), expected.bytes_slice());
+            let cloned = bytecode.clone();
+            drop(bytecode);
+            assert_eq!(cloned.hash_slow(), hash);
+        }
+    }
+
+    #[test]
+    fn new_raw_checked_with_hash_rejects_invalid_format() {
+        for raw in [
+            Bytes::from_static(&[0xef, 0x01]),
+            Bytes::from([&[0xef, 0x01, 0x01][..], &[0; 20]].concat()),
+        ] {
+            assert_eq!(
+                Bytecode::new_raw_checked_with_hash(raw.clone(), keccak256(&raw)),
+                Bytecode::new_raw_checked(raw),
+            );
+        }
+    }
 
     #[test]
     fn test_new_empty() {
