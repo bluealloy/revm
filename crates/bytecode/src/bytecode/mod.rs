@@ -181,26 +181,6 @@ impl Bytecode {
         }
     }
 
-    /// Creates a new raw [`Bytecode`] with a precomputed hash.
-    ///
-    /// Validates the bytecode format like [`Self::new_raw_checked`], but does not
-    /// verify the hash. Empty bytecode retains its canonical empty-code hash.
-    ///
-    /// # Safety
-    ///
-    /// `hash` must be the Keccak-256 hash of `bytes`, without any analysis padding.
-    /// An incorrect hash violates the bytecode/hash invariant and can cause invalid
-    /// EVM state.
-    #[inline]
-    pub unsafe fn new_raw_checked_with_hash(
-        bytes: Bytes,
-        hash: B256,
-    ) -> Result<Self, BytecodeDecodeError> {
-        let bytecode = Self::new_raw_checked(bytes)?;
-        let _ = bytecode.0.hash.set(hash);
-        Ok(bytecode)
-    }
-
     /// Creates a new EIP-7702 [`Bytecode`] from raw bytes.
     ///
     /// Returns an error if the bytes are not valid EIP-7702 bytecode.
@@ -309,6 +289,20 @@ impl Bytecode {
         }
     }
 
+    /// Sets the cached bytecode hash if it has not already been computed.
+    ///
+    /// The cache is shared with all clones of this bytecode.
+    ///
+    /// # Safety
+    ///
+    /// `hash` must be the Keccak-256 hash of [`Self::original_byte_slice`], without
+    /// any analysis padding. An incorrect hash violates the bytecode/hash invariant
+    /// and can cause invalid EVM state.
+    #[inline]
+    pub unsafe fn set_bytecode_hash(&self, hash: B256) {
+        let _ = self.0.hash.set(hash);
+    }
+
     /// Calculates or returns cached hash of the bytecode.
     #[inline]
     pub fn hash_slow(&self) -> B256 {
@@ -395,39 +389,22 @@ mod tests {
     use primitives::bytes;
 
     #[test]
-    fn new_raw_checked_with_hash() {
+    fn set_bytecode_hash() {
         for raw in [
             Bytes::new(),
             Bytes::from_static(&[0x60, 0x01, 0x5b, 0x61]),
             Bytecode::new_eip7702(Address::ZERO).original_bytes(),
         ] {
+            let bytecode = Bytecode::new_raw_checked(raw.clone()).unwrap();
+            let cloned = bytecode.clone();
             let hash = keccak256(&raw);
             // SAFETY: the hash was computed from the same original bytes above.
-            let bytecode =
-                unsafe { Bytecode::new_raw_checked_with_hash(raw.clone(), hash) }.unwrap();
-            let expected = Bytecode::new_raw_checked(raw.clone()).unwrap();
-            assert_eq!(bytecode.0.hash.get(), Some(&hash));
-            assert_eq!(bytecode.original_bytes(), raw);
-            assert_eq!(bytecode.kind(), expected.kind());
-            assert_eq!(bytecode.legacy_jump_table(), expected.legacy_jump_table());
-            assert_eq!(bytecode.bytes_slice(), expected.bytes_slice());
-            let cloned = bytecode.clone();
-            drop(bytecode);
+            unsafe { bytecode.set_bytecode_hash(hash) };
+            assert_eq!(cloned.0.hash.get(), Some(&hash));
             assert_eq!(cloned.hash_slow(), hash);
-        }
-    }
-
-    #[test]
-    fn new_raw_checked_with_hash_rejects_invalid_format() {
-        for raw in [
-            Bytes::from_static(&[0xef, 0x01]),
-            Bytes::from([&[0xef, 0x01, 0x01][..], &[0; 20]].concat()),
-        ] {
-            assert_eq!(
-                // SAFETY: the hash is computed from the same original bytes.
-                unsafe { Bytecode::new_raw_checked_with_hash(raw.clone(), keccak256(&raw)) },
-                Bytecode::new_raw_checked(raw),
-            );
+            // SAFETY: setting the same valid hash again is allowed.
+            unsafe { cloned.set_bytecode_hash(hash) };
+            assert_eq!(bytecode.hash_slow(), hash);
         }
     }
 

@@ -59,7 +59,7 @@ ee-tests = { path = "crates/ee-tests", package = "revm-ee-tests", version = "43.
 # alloy
 alloy-eip2930 = { version = "0.2.3", default-features = false }
 alloy-eip7702 = { version = "0.6.3", default-features = false }
-alloy-eip7928 = { version = "0.4.0", default-features = false }
+alloy-eip7928 = { git = "https://github.com/alloy-rs/eips", rev = "d62432daaccc21f1a49731e5a3508f773f35e631", default-features = false }
 alloy-primitives = { version = "1.5.2", default-features = false }
 
 # alloy in examples, revme or feature flagged.
@@ -184,3 +184,6 @@ inherits = "profiling"
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
+
+[patch.crates-io]
+alloy-eip7928 = { git = "https://github.com/alloy-rs/eips", rev = "d62432daaccc21f1a49731e5a3508f773f35e631" }
