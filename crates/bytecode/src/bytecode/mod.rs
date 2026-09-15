@@ -184,11 +184,15 @@ impl Bytecode {
     /// Creates a new raw [`Bytecode`] with a precomputed hash.
     ///
     /// Validates the bytecode format like [`Self::new_raw_checked`], but does not
-    /// verify the hash. The caller must ensure `hash` is the Keccak-256 hash of
-    /// `bytes`, without any analysis padding. An incorrect hash can cause invalid
-    /// EVM state. Empty bytecode retains its canonical empty-code hash.
+    /// verify the hash. Empty bytecode retains its canonical empty-code hash.
+    ///
+    /// # Safety
+    ///
+    /// `hash` must be the Keccak-256 hash of `bytes`, without any analysis padding.
+    /// An incorrect hash violates the bytecode/hash invariant and can cause invalid
+    /// EVM state.
     #[inline]
-    pub fn new_raw_checked_with_hash(
+    pub unsafe fn new_raw_checked_with_hash(
         bytes: Bytes,
         hash: B256,
     ) -> Result<Self, BytecodeDecodeError> {
@@ -398,7 +402,9 @@ mod tests {
             Bytecode::new_eip7702(Address::ZERO).original_bytes(),
         ] {
             let hash = keccak256(&raw);
-            let bytecode = Bytecode::new_raw_checked_with_hash(raw.clone(), hash).unwrap();
+            // SAFETY: the hash was computed from the same original bytes above.
+            let bytecode =
+                unsafe { Bytecode::new_raw_checked_with_hash(raw.clone(), hash) }.unwrap();
             let expected = Bytecode::new_raw_checked(raw.clone()).unwrap();
             assert_eq!(bytecode.0.hash.get(), Some(&hash));
             assert_eq!(bytecode.original_bytes(), raw);
@@ -418,7 +424,8 @@ mod tests {
             Bytes::from([&[0xef, 0x01, 0x01][..], &[0; 20]].concat()),
         ] {
             assert_eq!(
-                Bytecode::new_raw_checked_with_hash(raw.clone(), keccak256(&raw)),
+                // SAFETY: the hash is computed from the same original bytes.
+                unsafe { Bytecode::new_raw_checked_with_hash(raw.clone(), keccak256(&raw)) },
                 Bytecode::new_raw_checked(raw),
             );
         }
