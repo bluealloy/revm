@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revm-state-v43.0.0...revm-state-v43.0.1) - 2026-09-16
+
+### Other
+
+- *(state)* use CodeChange accessors ([#3916](https://github.com/bluealloy/revm/pull/3916))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v43.0.0) - 2026-08-20
 
 ### Fixed
