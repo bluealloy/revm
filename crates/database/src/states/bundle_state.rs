@@ -746,6 +746,9 @@ impl BundleState {
                 // If there is wipe storage in `other` revert
                 // we need to move storage from present state.
                 if let Some(this_account) = self.state.get_mut(address) {
+                    // Slots move to the revert, so drop their size here.
+                    // `extend_state` would only see an already drained account.
+                    self.state_size -= this_account.storage.len();
                     // As this account was destroyed inside `other` bundle.
                     // We are fine to wipe/drain this storage and put it inside revert.
                     for (key, value) in this_account.storage.drain() {
@@ -1076,6 +1079,23 @@ mod tests {
         assert_eq!(reverted, BundleState::default());
     }
 
+    fn assert_sizes_match(bundle: &BundleState) {
+        let state: usize = bundle
+            .state
+            .values()
+            .map(|account| account.size_hint())
+            .sum();
+        assert_eq!(bundle.state_size, state, "state_size");
+
+        let reverts: usize = bundle
+            .reverts
+            .iter()
+            .flatten()
+            .map(|(_, revert)| revert.size_hint())
+            .sum();
+        assert_eq!(bundle.reverts_size, reverts, "reverts_size");
+    }
+
     #[test]
     fn extend_on_destroyed_values() {
         let base_bundle1 = test_bundle1();
@@ -1138,6 +1158,33 @@ mod tests {
             b1.state.get_mut(&account1()).unwrap().status,
             AccountStatus::InMemoryChange
         );
+    }
+
+    #[test]
+    fn extend_sizes_on_wiped_storage() {
+        let mut b1 = test_bundle1();
+        let mut b2 = test_bundle2();
+        // The wipe moves `b1`'s slots into `b2`'s revert.
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b2.reverts[0][0].1.wipe_storage = true;
+
+        b1.extend(b2);
+
+        assert_sizes_match(&b1);
+    }
+
+    #[test]
+    fn extend_sizes_without_state_entry() {
+        let mut b1 = test_bundle1();
+        let mut b2 = test_bundle2();
+        b2.reverts[0][0].1.wipe_storage = true;
+        // Only the revert names account1, so `extend_state` skips it.
+        let dropped = b2.state.remove(&account1()).unwrap();
+        b2.state_size -= dropped.size_hint();
+
+        b1.extend(b2);
+
+        assert_sizes_match(&b1);
     }
 
     #[test]
