@@ -33,7 +33,7 @@ jobs:
           git diff --exit-code -- Cargo.lock
       # release-pr may update workspace versions in its generated PR.
       - name: Run release-plz
-        uses: MarcoIeni/release-plz-action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5.131
+        uses: MarcoIeni/release-plz-action@346832d73e3415c2ebd0432cba3a2bf5881e5f7d # v0.5.135
         with:
           command: release-pr
           version: 0.3.160
