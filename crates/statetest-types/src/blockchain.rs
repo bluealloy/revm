@@ -366,7 +366,11 @@ impl Transaction {
     /// Note: The 'to' and 'sender' fields need to be provided separately in TxEnv
     pub fn to_tx_env(&self) -> Result<TxEnv, String> {
         // Determine transaction type
-        let tx_type = self.transaction_type.map(|t| t.to::<u8>()).unwrap_or(0);
+        let tx_type = self
+            .transaction_type
+            .map(|t| u8::try_from(t).map_err(|_| "Transaction type overflow".to_string()))
+            .transpose()?
+            .unwrap_or(0);
 
         // Set transaction kind (to address)
         let kind = if let Some(to_addr) = self.to {
@@ -379,17 +383,28 @@ impl Transaction {
             return Err("Sender is required".to_string());
         };
 
+        // Convert nonce with overflow check
+        let nonce = u64::try_from(self.nonce).map_err(|_| "Nonce overflow".to_string())?;
+
+        // Convert gas_limit with overflow check
+        let gas_limit =
+            u64::try_from(self.gas_limit).map_err(|_| "Gas limit overflow".to_string())?;
+
+        // Convert max_fee_per_blob_gas with overflow check
+        let max_fee_per_blob_gas = u128::try_from(self.max_fee_per_blob_gas.unwrap_or_default())
+            .map_err(|_| "Max fee per blob gas overflow".to_string())?;
+
         // Build the base transaction
         let mut builder = TxEnv::builder()
             .tx_type(Some(tx_type))
             .caller(sender)
-            .gas_limit(self.gas_limit.to::<u64>())
-            .nonce(self.nonce.to::<u64>())
+            .gas_limit(gas_limit)
+            .nonce(nonce)
             .value(self.value)
             .data(self.data.clone())
             .access_list(self.access_list.clone().unwrap_or_default())
             .blob_hashes(self.blob_versioned_hashes.clone().unwrap_or_default())
-            .max_fee_per_blob_gas(self.max_fee_per_blob_gas.unwrap_or_default().to::<u128>())
+            .max_fee_per_blob_gas(max_fee_per_blob_gas)
             .authorization_list_signed(
                 self.authorization_list
                     .clone()
@@ -398,21 +413,23 @@ impl Transaction {
             )
             .kind(kind);
 
-        // Set chain ID if present
+        // Set chain ID if present with overflow check
         if let Some(chain_id) = self.chain_id {
-            let chain_id = chain_id.to::<u64>();
+            let chain_id = u64::try_from(chain_id).map_err(|_| "Chain ID overflow".to_string())?;
             // 0 chain id is considered as no chain id
             if chain_id != 0 {
                 builder = builder.chain_id(Some(chain_id));
             }
         }
 
-        // Handle gas pricing based on transaction type
+        // Handle gas pricing based on transaction type with overflow checks
         builder = match tx_type {
             0 | 1 => {
                 // Legacy or EIP-2930 transaction
                 if let Some(gas_price) = self.gas_price {
-                    builder.gas_price(gas_price.to::<u128>())
+                    let gas_price =
+                        u128::try_from(gas_price).map_err(|_| "Gas price overflow".to_string())?;
+                    builder.gas_price(gas_price)
                 } else {
                     builder
                 }
@@ -421,17 +438,23 @@ impl Transaction {
                 // EIP-1559 or EIP-4844 transaction
                 let mut b = builder;
                 if let Some(max_fee) = self.max_fee_per_gas {
-                    b = b.gas_price(max_fee.to::<u128>());
+                    let max_fee = u128::try_from(max_fee)
+                        .map_err(|_| "Max fee per gas overflow".to_string())?;
+                    b = b.gas_price(max_fee);
                 }
                 if let Some(priority_fee) = self.max_priority_fee_per_gas {
-                    b = b.gas_priority_fee(Some(priority_fee.to::<u128>()));
+                    let priority_fee = u128::try_from(priority_fee)
+                        .map_err(|_| "Max priority fee per gas overflow".to_string())?;
+                    b = b.gas_priority_fee(Some(priority_fee));
                 }
                 b
             }
             _ => {
                 // For unknown types, try to use gas_price if available
                 if let Some(gas_price) = self.gas_price {
-                    builder.gas_price(gas_price.to::<u128>())
+                    let gas_price =
+                        u128::try_from(gas_price).map_err(|_| "Gas price overflow".to_string())?;
+                    builder.gas_price(gas_price)
                 } else {
                     builder
                 }
@@ -560,6 +583,147 @@ mod test {
         assert_eq!(tx_env.gas_limit, 21000);
         assert_eq!(tx_env.gas_price, 1000000000);
         assert_eq!(tx_env.value, U256::from(1000));
+    }
+
+    #[test]
+    fn test_transaction_overflow_detection() {
+        use crate::blockchain::Transaction;
+        use primitives::{Bytes, U256};
+
+        // Test nonce overflow
+        let tx_nonce_overflow = Transaction {
+            transaction_type: Some(U256::from(0)),
+            sender: Some(address!("0x1000000000000000000000000000000000000000")),
+            data: Bytes::default(),
+            gas_limit: U256::from(21000),
+            gas_price: Some(U256::from(1000000000)),
+            nonce: U256::MAX, // Exceeds u64::MAX
+            r: U256::from(1),
+            s: U256::from(2),
+            v: U256::from(27),
+            value: U256::from(1000),
+            chain_id: Some(U256::from(1)),
+            access_list: None,
+            max_fee_per_gas: None,
+            max_priority_fee_per_gas: None,
+            max_fee_per_blob_gas: None,
+            hash: None,
+            to: None,
+            authorization_list: None,
+            blob_versioned_hashes: None,
+        };
+
+        let result = tx_nonce_overflow.to_tx_env();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Nonce overflow");
+
+        // Test gas_limit overflow
+        let tx_gas_limit_overflow = Transaction {
+            transaction_type: Some(U256::from(0)),
+            sender: Some(address!("0x1000000000000000000000000000000000000000")),
+            data: Bytes::default(),
+            gas_limit: U256::MAX, // Exceeds u64::MAX
+            gas_price: Some(U256::from(1000000000)),
+            nonce: U256::from(0),
+            r: U256::from(1),
+            s: U256::from(2),
+            v: U256::from(27),
+            value: U256::from(1000),
+            chain_id: Some(U256::from(1)),
+            access_list: None,
+            max_fee_per_gas: None,
+            max_priority_fee_per_gas: None,
+            max_fee_per_blob_gas: None,
+            hash: None,
+            to: None,
+            authorization_list: None,
+            blob_versioned_hashes: None,
+        };
+
+        let result = tx_gas_limit_overflow.to_tx_env();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Gas limit overflow");
+
+        // Test chain_id overflow
+        let tx_chain_id_overflow = Transaction {
+            transaction_type: Some(U256::from(0)),
+            sender: Some(address!("0x1000000000000000000000000000000000000000")),
+            data: Bytes::default(),
+            gas_limit: U256::from(21000),
+            gas_price: Some(U256::from(1000000000)),
+            nonce: U256::from(0),
+            r: U256::from(1),
+            s: U256::from(2),
+            v: U256::from(27),
+            value: U256::from(1000),
+            chain_id: Some(U256::MAX), // Exceeds u64::MAX
+            access_list: None,
+            max_fee_per_gas: None,
+            max_priority_fee_per_gas: None,
+            max_fee_per_blob_gas: None,
+            hash: None,
+            to: None,
+            authorization_list: None,
+            blob_versioned_hashes: None,
+        };
+
+        let result = tx_chain_id_overflow.to_tx_env();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Chain ID overflow");
+
+        // Test gas_price overflow for legacy tx
+        let tx_gas_price_overflow = Transaction {
+            transaction_type: Some(U256::from(0)),
+            sender: Some(address!("0x1000000000000000000000000000000000000000")),
+            data: Bytes::default(),
+            gas_limit: U256::from(21000),
+            gas_price: Some(U256::MAX), // Exceeds u128::MAX
+            nonce: U256::from(0),
+            r: U256::from(1),
+            s: U256::from(2),
+            v: U256::from(27),
+            value: U256::from(1000),
+            chain_id: Some(U256::from(1)),
+            access_list: None,
+            max_fee_per_gas: None,
+            max_priority_fee_per_gas: None,
+            max_fee_per_blob_gas: None,
+            hash: None,
+            to: None,
+            authorization_list: None,
+            blob_versioned_hashes: None,
+        };
+
+        let result = tx_gas_price_overflow.to_tx_env();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Gas price overflow");
+
+        // Test max_fee_per_gas overflow for EIP-1559 tx
+        let tx_max_fee_overflow = Transaction {
+            transaction_type: Some(U256::from(2)),
+            sender: Some(address!("0x1000000000000000000000000000000000000000")),
+            data: Bytes::default(),
+            gas_limit: U256::from(21000),
+            gas_price: None,
+            nonce: U256::from(0),
+            r: U256::from(1),
+            s: U256::from(2),
+            v: U256::from(27),
+            value: U256::from(1000),
+            chain_id: Some(U256::from(1)),
+            access_list: None,
+            max_fee_per_gas: Some(U256::MAX), // Exceeds u128::MAX
+            max_priority_fee_per_gas: None,
+            max_fee_per_blob_gas: None,
+            hash: None,
+            to: None,
+            authorization_list: None,
+            blob_versioned_hashes: None,
+        };
+
+        let result = tx_max_fee_overflow.to_tx_env();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Max fee per gas overflow");
     }
 
     const SAMPLE: &str = r#"
