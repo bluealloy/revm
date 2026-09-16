@@ -21,10 +21,10 @@ pub fn deserialize_maybe_empty<'de, D>(deserializer: D) -> Result<Option<Address
 where
     D: de::Deserializer<'de>,
 {
-    let string = String::deserialize(deserializer)?;
-    if string.is_empty() {
-        Ok(None)
-    } else {
-        string.parse().map_err(de::Error::custom).map(Some)
+    let string = Option::<String>::deserialize(deserializer)?;
+
+    match string.as_deref() {
+        None | Some("") => Ok(None),
+        Some(address) => address.parse().map(Some).map_err(de::Error::custom),
     }
 }
