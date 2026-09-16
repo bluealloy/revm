@@ -139,10 +139,11 @@ impl TryFrom<Vec<AlloyCodeChange>> for BalWrites<(B256, Bytecode)> {
             writes: value
                 .into_iter()
                 .map(|change| {
+                    let block_access_index = change.block_access_index;
                     // convert bytes to bytecode.
-                    Bytecode::new_raw_checked(change.new_code).map(|bytecode| {
+                    Bytecode::new_raw_checked(change.into_code()).map(|bytecode| {
                         let hash = bytecode.hash_slow();
-                        (change.block_access_index, (hash, bytecode))
+                        (block_access_index, (hash, bytecode))
                     })
                 })
                 .collect::<Result<Vec<_>, Self::Error>>()?,
@@ -158,7 +159,7 @@ impl TryFrom<&[AlloyCodeChange]> for BalWrites<(B256, Bytecode)> {
             writes: value
                 .iter()
                 .map(|change| {
-                    Bytecode::new_raw_checked(change.new_code.clone()).map(|bytecode| {
+                    Bytecode::new_raw_checked(change.new_code().clone()).map(|bytecode| {
                         let hash = bytecode.hash_slow();
                         (change.block_access_index, (hash, bytecode))
                     })
