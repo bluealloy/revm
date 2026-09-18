@@ -25,21 +25,31 @@ jobs:
       matrix:
         rust: ["1.91", "stable", "nightly"]
         flags: ["--no-default-features", "", "--all-features"]
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: taiki-e/install-action@nextest
+      - name: Install cargo-nextest
+        uses: tempoxyz/gh-actions/vendor/taiki-e/install-action@25cce154e7fb10f99361a166468a6c56b9c31aa3
+        with:
+          tool: nextest@0.9.140
+          checksum: true
+          fallback: none
       - name: Install GMP (all-features)
         if: contains(matrix.flags, '--all-features')
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
-      - run: cargo nextest run --workspace ${{ matrix.flags }}
+      - run: cargo nextest run --locked --workspace ${{ matrix.flags }}
 
   ethereum-tests:
     name: eth ${{ matrix.profile }} ${{ matrix.target }}
@@ -50,16 +60,24 @@ jobs:
       matrix:
         profile: [ethtests, release]
         target: [i686-unknown-linux-gnu, x86_64-unknown-linux-gnu]
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
       - name: Install cross
-        run: cargo install cross --locked
+        run: cargo install --locked --version 0.2.5 cross
+      # Aegis covers the host install above, not Cargo inside cross containers.
       - name: Run tests
         run: ./scripts/run-tests.sh clean cross ${{ matrix.profile }} ${{ matrix.target }}
 
@@ -72,16 +90,22 @@ jobs:
       matrix:
         target: ["riscv32imac-unknown-none-elf", "riscv64imac-unknown-none-elf"]
         features: [""]
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
+          toolchain: stable
           targets: ${{ matrix.target }}
       - run: |
-          cargo check --target ${{ matrix.target }} --no-default-features --features=${{ matrix.features }}
-          cargo check --target ${{ matrix.target }} -p revm-database --no-default-features
+          cargo check --locked --target ${{ matrix.target }} --no-default-features --features=${{ matrix.features }}
+          cargo check --locked --target ${{ matrix.target }} -p revm-database --no-default-features
 
   check:
     name: check ${{ matrix.features }}
@@ -91,23 +115,42 @@ jobs:
       fail-fast: false
       matrix:
         features: ["", "serde", "std", "std,map-foldhash", "account-ext", "account-ext,serde"]
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo check --no-default-features -p revm --features=${{ matrix.features }}
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
+      - run: cargo check --locked --no-default-features -p revm --features=${{ matrix.features }}
 
   feature-checks:
     name: features
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
+      - name: Install cargo-hack
+        uses: tempoxyz/gh-actions/vendor/taiki-e/install-action@25cce154e7fb10f99361a166468a6c56b9c31aa3
+        with:
+          tool: cargo-hack@0.6.45
+          checksum: true
+          fallback: none
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
@@ -116,24 +159,30 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
       - name: cargo hack
-        run: cargo hack check --feature-powerset --depth 1
+        run: cargo hack check --locked --feature-powerset --depth 1
 
   clippy:
     name: clippy
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
+          toolchain: stable
           components: clippy
       - name: Install GMP
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
-      - run: cargo clippy --workspace --all-targets --all-features
+      - run: cargo clippy --locked --workspace --all-targets --all-features
         env:
           RUSTFLAGS: -Dwarnings
       - run: cargo clippy --workspace --all-targets
@@ -144,18 +193,24 @@ jobs:
     name: docs
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
+          toolchain: stable
           components: rust-docs
       - name: Install GMP
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
-      - run: cargo doc --workspace --all-features --no-deps --document-private-items
+      - run: cargo doc --locked --workspace --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: "--cfg docsrs -D warnings"
 
@@ -163,42 +218,65 @@ jobs:
     name: doctest
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
-      - run: cargo test --workspace --doc
+      - run: cargo test --locked --workspace --doc
 
   fmt:
     name: fmt
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
+          toolchain: stable
           components: rustfmt
       - run: cargo fmt --all --check
 
   feature-propagation:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        with:
+          toolchain: stable
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: rui314/setup-mold@7e4f20ad28a2e8ca6fd0892ccf72e2abb706b9c3 # v1
-      - uses: taiki-e/cache-cargo-install-action@9ee83daaa7b96a6fab930949ecf1122bba04a389 # v3.0.8
+      - name: Install Zepter
+        uses: tempoxyz/gh-actions/vendor/taiki-e/install-action@25cce154e7fb10f99361a166468a6c56b9c31aa3
         with:
-          tool: zepter
+          tool: zepter@1.88.1
+          checksum: true
+          fallback: cargo-binstall
       - name: Eagerly pull dependencies
         run: cargo metadata --format-version=1 --locked > /dev/null
       - run: zepter run check
@@ -206,22 +284,39 @@ jobs:
   deny:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
         with:
-          command: check all
+          toolchain: stable
+      - name: Install cargo-deny
+        uses: tempoxyz/gh-actions/vendor/taiki-e/install-action@25cce154e7fb10f99361a166468a6c56b9c31aa3
+        with:
+          tool: cargo-deny@0.20.2
+          checksum: true
+          fallback: none
+      - run: cargo deny --locked --all-features check all
 
   typos:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@e080a269a3d37e571ad64e94f72536b48eb9921c # main
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: crate-ci/typos@4d9c206a77c041268485162b8e2579ad7a5cb9a3 # v1.50.0
+      - uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
 
   ci-success:
     name: ci success
