@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- *(bal)* use the stateful BAL builder for repeated same-index commits
-
-### Changed
-
-- **Breaking:** `State::take_built_bal` is no longer `const`, matching the underlying builder extraction.
-
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-database-v42.0.0...revm-database-v43.0.0) - 2026-08-20
 
 ### Fixed
