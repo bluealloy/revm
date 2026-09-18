@@ -5,7 +5,11 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+#[cfg(feature = "account-ext")]
+mod account_extension;
 mod account_info;
+#[cfg(feature = "account-ext")]
+pub use account_extension::AccountExtension;
 pub mod bal;
 mod types;
 
@@ -769,7 +773,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_account_postcard_round_trip() {
+    fn test_account_binary_round_trip() {
         // Positional formats carry no field names, so a `Serialize`/`Deserialize` field-order
         // mismatch is invisible to the JSON tests above and a default account round-trips by
         // accident. Populate every field with a distinct non-default value, `original_info`
@@ -791,8 +795,13 @@ mod tests {
         );
         account.status = AccountStatus::Touched;
 
-        let bytes = postcard::to_allocvec(&account).unwrap();
-        let decoded: Account = postcard::from_bytes(&bytes).unwrap();
+        // MessagePack delimits structs, so omitted account extensions cannot consume later fields.
+        #[cfg(feature = "account-ext")]
+        let decoded: Account =
+            rmp_serde::from_slice(&rmp_serde::to_vec(&account).unwrap()).unwrap();
+        #[cfg(not(feature = "account-ext"))]
+        let decoded: Account =
+            postcard::from_bytes(&postcard::to_allocvec(&account).unwrap()).unwrap();
 
         assert_eq!(account, decoded);
     }

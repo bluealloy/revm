@@ -35,6 +35,10 @@ pub trait JournalEntryTr {
     /// Creates a journal entry for when an account's balance is changed.
     fn balance_changed(address: Address, old_balance: U256) -> Self;
 
+    /// Records the previous extension so a reverted call restores it.
+    #[cfg(feature = "account-ext")]
+    fn extension_changed(address: Address, old_extension: state::AccountExtension) -> Self;
+
     /// Creates a journal entry for when an account's nonce is changed.
     fn nonce_changed(address: Address, previous_nonce: u64) -> Self;
 
@@ -117,6 +121,15 @@ pub enum SelfdestructionRevertStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
+    /// Restore an account's previous chain-specific payload.
+    #[cfg(feature = "account-ext")]
+    ExtensionChange {
+        /// Account whose extension changed.
+        address: Address,
+        /// Payload before the change.
+        #[cfg_attr(feature = "serde", serde(default))]
+        old_extension: state::AccountExtension,
+    },
     /// Used to mark account that is warm inside EVM in regard to EIP-2929 AccessList.
     /// Action: We will add Account to state.
     /// Revert: we will remove account from state.
@@ -238,6 +251,13 @@ pub enum JournalEntry {
 }
 
 impl JournalEntryTr for JournalEntry {
+    #[cfg(feature = "account-ext")]
+    fn extension_changed(address: Address, old_extension: state::AccountExtension) -> Self {
+        Self::ExtensionChange {
+            address,
+            old_extension,
+        }
+    }
     fn account_warmed(address: Address) -> Self {
         JournalEntry::AccountWarmed { address }
     }
@@ -328,6 +348,13 @@ impl JournalEntryTr for JournalEntry {
         is_spurious_dragon_enabled: bool,
     ) {
         match self {
+            #[cfg(feature = "account-ext")]
+            Self::ExtensionChange {
+                address,
+                old_extension,
+            } => {
+                state.get_mut(&address).unwrap().info.extension = old_extension;
+            }
             JournalEntry::AccountWarmed { address } => {
                 state.get_mut(&address).unwrap().mark_cold();
             }

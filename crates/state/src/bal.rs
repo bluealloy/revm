@@ -327,8 +327,46 @@ mod tests {
         (bytecode.hash_slow(), bytecode)
     }
 
+    #[test]
+    #[cfg(all(feature = "serde", feature = "account-ext"))]
+    fn extension_history_messagepack_roundtrip() {
+        let mut account = AccountInfoBal::default();
+        let legacy = (&account.nonce, &account.balance, &account.code);
+        let encoded = rmp_serde::to_vec(&account).unwrap();
+        assert_eq!(encoded, rmp_serde::to_vec(&legacy).unwrap());
+        assert_eq!(
+            rmp_serde::from_slice::<AccountInfoBal>(&encoded).unwrap(),
+            account
+        );
+
+        // Clearing an extension is a write, not an empty history.
+        account
+            .extension
+            .force_update(idx(1), crate::AccountExtension::default());
+        let encoded = rmp_serde::to_vec(&account).unwrap();
+        assert_eq!(
+            rmp_serde::from_slice::<AccountInfoBal>(&encoded).unwrap(),
+            account
+        );
+    }
+
     const fn idx(index: u64) -> BlockAccessIndex {
         BlockAccessIndex::new(index)
+    }
+
+    #[test]
+    #[cfg(feature = "account-ext")]
+    fn account_extension_roundtrips_through_bal() {
+        let original = AccountInfo::default();
+        let present = original
+            .clone()
+            .with_extension(Bytes::from_static(b"extension"));
+        let mut bal = AccountInfoBal::default();
+        bal.update(idx(1), &original, &present);
+
+        let mut replayed = original;
+        assert!(bal.populate_account_info(idx(2), &mut replayed));
+        assert_eq!(replayed.extension, present.extension);
     }
 
     #[test]
@@ -347,6 +385,8 @@ mod tests {
                 code: BalWrites {
                     writes: vec![(idx(7), code(7)), (idx(3), code(3))],
                 },
+                #[cfg(feature = "account-ext")]
+                extension: BalWrites::default(),
             },
             storage: StorageBal {
                 storage: BTreeMap::from([
