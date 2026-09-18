@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `BalBuilder` retains per-index original values when merging multiple execution results, including rebased originals; cloning and serialization preserve in-progress construction state.
+
+### Fixed
+
+- *(bal)* preserve earlier same-index writes when merging later read-only state
+- *(bal)* omit net-zero storage and account field changes after repeated commits, retaining storage accesses and earlier-index writes
+- *(bal)* allow code restoration to a fixed index baseline and preserve recorded bytecode when later reads provide only its hash
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v43.0.0) - 2026-08-20
 
 ### Fixed

@@ -7,6 +7,7 @@
 //!
 //! - [`BlockAccessIndex`]: block access index
 //! - **`Bal`**: Main BAL structure containing a map of accounts
+//! - **`BalBuilder`**: Construction state for merging sequential execution results
 //! - **`BalWrites<T>`**: Array of (index, value) pairs representing sequential writes to a state item
 //! - **`AccountBal`**: Complete BAL structure for an account (balance, nonce, code, and storage)
 //! - **`AccountInfoBal`**: Account info BAL data (nonce, balance, code)
@@ -14,10 +15,12 @@
 
 pub mod account;
 pub mod alloy;
+pub mod builder;
 pub mod writes;
 
 pub use account::{AccountBal, AccountInfoBal, StorageBal};
 pub use alloy_eip7928::BlockAccessIndex;
+pub use builder::BalBuilder;
 pub use writes::BalWrites;
 
 use crate::{Account, AccountId, AccountInfo};
@@ -41,7 +44,7 @@ impl FromIterator<(Address, AccountBal)> for Bal {
 }
 
 impl Bal {
-    /// Create a new BAL builder.
+    /// Create an empty BAL. Use [`BalBuilder`] to merge execution results.
     pub fn new() -> Self {
         Self {
             accounts: AddressIndexMap::default(),
@@ -128,7 +131,10 @@ impl Bal {
     }
 
     #[inline]
-    /// Extend BAL with account.
+    /// Extend BAL with an account using originals fixed at the start of the index.
+    ///
+    /// For repeated commits with rebased originals, use [`BalBuilder::update_account`].
+    /// This output type does not retain the first original values.
     pub fn update_account(
         &mut self,
         bal_index: BlockAccessIndex,

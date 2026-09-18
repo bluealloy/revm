@@ -1,6 +1,33 @@
 
 # Unreleased
 
+## BAL construction (`revm-state`, `revm-database-interface`, `revm-database`)
+
+`BalBuilder` now owns the temporary per-index baselines needed to merge multiple
+execution results. Use it instead of `Bal::update_account` when original values
+are rebased after each commit. `Bal` and `BalWrites` remain output types with the
+same public fields and serialization; their low-level updates require original
+values fixed at the start of the index.
+
+- `BalState::bal_builder` changes from `Option<Bal>` to `Option<BalBuilder>`.
+  Prefer `with_bal_builder()`; replace direct `Some(Bal::new())` assignments with
+  `Some(BalBuilder::new())`.
+- `bal_builder()` still returns an output snapshot, `Option<Bal>`.
+  `take_built_bal()` still returns `Option<Bal>` and disables recording, but is
+  no longer `const` on either `BalState` or `State`. Code taking the public
+  builder field directly must call `into_bal()` to obtain output.
+- Builder indices must be nondecreasing; a decrease panics. To start a new
+  block, take the completed output (which resets the index), then enable a fresh
+  builder. `reset_bal_index()` alone does not clear construction state.
+- Cloning or serializing an in-progress builder retains its baselines. Its
+  serialization, including the `BalState::bal_builder` field, differs from the
+  old `Bal` snapshot format. Old snapshots cannot resume same-index aggregation
+  because the required original values were never stored. Rebuild those from
+  execution; persisted final `Bal` values remain compatible.
+
+See [BAL construction](book/src/block_access_lists.md) for the input contract
+and the distinction between execution originals and index originals.
+
 # v119 tag (revm v43.0.2)
 
 This release reverts the EIP-8037 system-call gas change from [#3892](https://github.com/bluealloy/revm/pull/3892) in [#3903](https://github.com/bluealloy/revm/pull/3903).

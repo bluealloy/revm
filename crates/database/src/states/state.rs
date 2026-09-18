@@ -203,7 +203,7 @@ impl<DB: Database> State<DB> {
 
     /// Takes build bal from bal state.
     #[inline]
-    pub const fn take_built_bal(&mut self) -> Option<Bal> {
+    pub fn take_built_bal(&mut self) -> Option<Bal> {
         self.bal_state.take_built_bal()
     }
 

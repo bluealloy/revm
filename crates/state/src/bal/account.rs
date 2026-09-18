@@ -51,7 +51,9 @@ impl AccountBal {
         self.account_info.populate_account_info(bal_index, account)
     }
 
-    /// Extend account from another account.
+    /// Extend an account using originals fixed at the start of the index.
+    ///
+    /// Use [`super::BalBuilder`] for repeated execution results with rebased originals.
     #[inline]
     pub fn update(&mut self, bal_index: BlockAccessIndex, account: &Account) {
         if account.is_selfdestructed_locally() {
@@ -246,7 +248,9 @@ impl AccountInfoBal {
         changed
     }
 
-    /// Extend account info from another account info.
+    /// Update account fields using originals fixed at the start of the index.
+    ///
+    /// Changed code must include its bytecode. Unchanged code may omit it.
     #[inline]
     pub fn update(
         &mut self,
@@ -257,7 +261,12 @@ impl AccountInfoBal {
         self.nonce.update(index, &original.nonce, present.nonce);
         self.balance
             .update(index, &original.balance, present.balance);
-        if original.code_hash != present.code_hash {
+        // A read may supply only the hash. Keep the bytecode already recorded
+        // for that hash, while still allowing a return to the index's baseline.
+        let last_code = self.code.writes.last();
+        let matches_last = last_code.is_some_and(|(_, (hash, _))| *hash == present.code_hash);
+        let changed_at_index = last_code.is_some_and(|(last_index, _)| *last_index == index);
+        if !matches_last && (original.code_hash != present.code_hash || changed_at_index) {
             self.code.update_with_key(
                 index,
                 &original.code_hash,
@@ -357,6 +366,9 @@ impl StorageBal {
     }
 
     /// Update storage from [`EvmStorage`].
+    ///
+    /// Originals must remain fixed at the start of the index. Use [`super::BalBuilder`]
+    /// to merge storage from separately committed executions with rebased originals.
     #[inline]
     pub fn update(&mut self, bal_index: BlockAccessIndex, storage: &EvmStorage) {
         for (key, value) in storage {
@@ -371,6 +383,7 @@ impl StorageBal {
     /// Update storage for a selfdestructed account.
     ///
     /// All accessed slots are recorded as written to zero since selfdestruct wipes storage.
+    /// Original values must follow the same contract as [`Self::update`].
     #[inline]
     pub fn update_selfdestruct(&mut self, bal_index: BlockAccessIndex, storage: &EvmStorage) {
         for (key, value) in storage {

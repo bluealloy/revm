@@ -82,6 +82,9 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     /// Insert a value into the builder.
     ///
     /// If [`BlockAccessIndex`] is same as last it will override the value.
+    /// `original_value` must be the value before the current index, and indices
+    /// must be nondecreasing. For rebased execution results, use [`super::BalBuilder`].
+    /// This output type does not retain an initial baseline.
     pub fn update(&mut self, index: BlockAccessIndex, original_value: &T, value: T) {
         self.update_with_key(index, original_value, value, |i| i);
     }
@@ -90,7 +93,10 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ///
     /// If [`BlockAccessIndex`] is same as last it will override the value.
     ///
-    /// Assumes that index is always greater than last one and that Writes are updated in proper order.
+    /// Indices must be nondecreasing. `original_subvalue` must remain the value
+    /// before the current index. An unchanged rebased update matching the last
+    /// write is also supported, but general rebased aggregation requires
+    /// [`super::BalBuilder`], which retains the initial baseline.
     #[inline]
     pub fn update_with_key<K: PartialEq, F>(
         &mut self,
@@ -108,6 +114,11 @@ impl<T: PartialEq + Clone> BalWrites<T> {
                 if f(&last.1) != f(&value) {
                     self.writes.push((index, value));
                 }
+                return;
+            }
+
+            // An unchanged update that agrees with the recorded value must not remove it.
+            if original_subvalue == f(&value) && f(&last.1) == f(&value) {
                 return;
             }
         }
@@ -184,5 +195,37 @@ mod tests {
         get_binary_search(5);
         get_binary_search(6);
         get_binary_search(7);
+    }
+
+    #[test]
+    fn update_same_index_preserves_write_after_read() {
+        let index = idx(1);
+        let mut writes = BalWrites::default();
+        writes.update(index, &0, 42);
+        writes.update(index, &42, 42);
+
+        assert_eq!(writes.writes, vec![(index, 42)]);
+    }
+
+    #[test]
+    fn update_same_index_removes_reverted_write() {
+        let index = idx(1);
+        let mut writes = BalWrites::default();
+        writes.update(index, &0, 42);
+        writes.update(index, &0, 0);
+
+        assert!(writes.is_empty());
+    }
+
+    #[test]
+    fn update_same_index_restores_previous_index_value() {
+        for original in [7, 42] {
+            let mut writes = BalWrites::default();
+            writes.update(idx(0), &0, 7);
+            writes.update(idx(1), &7, 42);
+            writes.update(idx(1), &original, 7);
+
+            assert_eq!(writes.writes, vec![(idx(0), 7)]);
+        }
     }
 }

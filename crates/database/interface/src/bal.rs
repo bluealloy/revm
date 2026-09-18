@@ -6,7 +6,7 @@ use core::{
 };
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
+    bal::{alloy::AlloyBal, Bal, BalBuilder, BalError, BlockAccessIndex},
     Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
@@ -19,9 +19,10 @@ use crate::{DBErrorMarker, Database, DatabaseCommit};
 pub struct BalState {
     /// BAL used to execute transactions.
     pub bal: Option<Arc<Bal>>,
-    /// BAL builder that is used to build BAL.
-    /// It is create from State output of transaction execution.
-    pub bal_builder: Option<Bal>,
+    /// Builds BAL output from sequential execution results, retaining original
+    /// values across commits at the same index. Its serialized form includes
+    /// these baselines; use [`Self::take_built_bal`] for the output alone.
+    pub bal_builder: Option<BalBuilder>,
     /// BAL index, used by bal to fetch appropriate values and used by bal_builder on commit
     /// to submit changes.
     pub bal_index: BlockAccessIndex,
@@ -44,6 +45,9 @@ impl BalState {
     }
 
     /// Reset BAL index to pre-execution.
+    ///
+    /// This only resets the cursor. To build a new block, first take the previous
+    /// output and enable a fresh builder with [`Self::with_bal_builder`].
     #[inline]
     pub const fn reset_bal_index(&mut self) {
         self.bal_index = BlockAccessIndex::PRE_EXECUTION;
@@ -67,10 +71,12 @@ impl BalState {
         self.bal.clone()
     }
 
-    /// Get BAL builder.
+    /// Clone the current BAL output without the builder's construction state.
     #[inline]
     pub fn bal_builder(&self) -> Option<Bal> {
-        self.bal_builder.clone()
+        self.bal_builder
+            .as_ref()
+            .map(|builder| builder.bal().clone())
     }
 
     /// Set BAL.
@@ -80,10 +86,10 @@ impl BalState {
         self
     }
 
-    /// Set BAL builder.
+    /// Start a fresh BAL builder, discarding any previous output and baselines.
     #[inline]
     pub fn with_bal_builder(mut self) -> Self {
-        self.bal_builder = Some(Bal::new());
+        self.bal_builder = Some(BalBuilder::new());
         self
     }
 
@@ -104,11 +110,11 @@ impl BalState {
         self.allow_db_fallback = allow;
     }
 
-    /// Take BAL builder.
+    /// Take the BAL output, discard its construction state and reset the index.
     #[inline]
-    pub const fn take_built_bal(&mut self) -> Option<Bal> {
+    pub fn take_built_bal(&mut self) -> Option<Bal> {
         self.reset_bal_index();
-        self.bal_builder.take()
+        self.bal_builder.take().map(BalBuilder::into_bal)
     }
 
     /// Take built BAL as AlloyBAL.
@@ -235,7 +241,11 @@ impl BalState {
         }
     }
 
-    /// Apply changed from EvmState to the bal_builder
+    /// Merge an execution result into the BAL builder.
+    ///
+    /// Originals may be rebased before each execution sharing an index. The
+    /// builder retains the first originals and records only net changes at that
+    /// index. Submit every result in execution order with nondecreasing indices.
     #[inline]
     pub fn commit(&mut self, changes: &EvmState) {
         if let Some(bal_builder) = &mut self.bal_builder {
@@ -246,6 +256,7 @@ impl BalState {
     }
 
     /// Commit one account to the BAL builder.
+    /// Uses the same original-value and ordering contract as [`Self::commit`].
     #[inline]
     pub fn commit_one(&mut self, address: Address, account: &Account) {
         if let Some(bal_builder) = &mut self.bal_builder {
