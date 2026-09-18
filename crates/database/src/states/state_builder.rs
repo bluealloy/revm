@@ -148,14 +148,14 @@ impl<DB: Database> StateBuilder<DB> {
 
     /// With BAL builder.
     pub fn with_bal_builder(mut self) -> Self {
-        self.bal_state = self.bal_state.with_bal_builder();
+        self.bal_state.bal_builder = Some(Bal::new());
         self
     }
 
     /// Conditionally set BAL builder based on the flag.
     pub fn with_bal_builder_if(mut self, enable: bool) -> Self {
         if enable {
-            self.bal_state = self.bal_state.with_bal_builder();
+            self.bal_state.bal_builder = Some(Bal::new());
         }
         self
     }
