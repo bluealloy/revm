@@ -127,7 +127,7 @@ impl TestUnit {
         // Use spec-aware blob fee fraction: Cancun uses 3338477, Prague/Osaka use 5007716
         if let Some(current_excess_blob_gas) = self.env.current_excess_blob_gas {
             block.set_blob_excess_gas_and_price(
-                current_excess_blob_gas.to(),
+                current_excess_blob_gas.try_into().unwrap_or(u64::MAX),
                 cfg.blob_base_fee_update_fraction(),
             );
         }
@@ -287,5 +287,23 @@ mod tests {
             max_fee_per_blob_gas >= prague_price,
             "Tx should succeed with Prague fraction"
         );
+    }
+
+    /// `current_excess_blob_gas` comes straight from untrusted JSON test fixtures
+    /// and must not panic when it does not fit into a `u64`, matching the
+    /// `.try_into().unwrap_or(u64::MAX)` handling already used by the other
+    /// fields in `block_env` (`current_gas_limit`, `current_base_fee`, `slot_number`).
+    #[test]
+    fn test_block_env_excess_blob_gas_overflow_does_not_panic() {
+        let mut unit = create_test_unit_with_excess_blob_gas(0);
+        unit.env.current_excess_blob_gas = Some(U256::MAX);
+
+        let mut cfg = CfgEnv::new_with_spec(SpecId::CANCUN);
+        let block = unit.block_env(&mut cfg);
+
+        let blob_info = block
+            .blob_excess_gas_and_price
+            .expect("blob info should be set");
+        assert_eq!(blob_info.excess_blob_gas, u64::MAX);
     }
 }
