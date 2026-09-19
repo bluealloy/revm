@@ -564,7 +564,7 @@ mod tests {
     use super::*;
     use crate::{
         states::{reverts::AccountInfoRevert, StorageSlot},
-        AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
+        AccountRevert, AccountStatus, BundleAccount, OriginalValuesKnown, RevertToSlot,
     };
     use primitives::{keccak256, Bytes, BLOCK_HASH_HISTORY, U256};
     use state::{EvmStorageSlot, TransactionId};
@@ -573,6 +573,21 @@ mod tests {
         slots: [(StorageKey, EvmStorageSlot); N],
     ) -> Option<Cow<'static, EvmStorage>> {
         Some(Cow::Owned(HashMap::from_iter(slots)))
+    }
+
+    /// `StateChangeset` doesn't implement `PartialEq` and its vectors are
+    /// explicitly unordered, so sort everything and compare the `Debug`
+    /// representation instead.
+    fn normalize_plain_state_debug(
+        mut changeset: crate::states::changes::StateChangeset,
+    ) -> String {
+        changeset.accounts.sort_by_key(|(address, _)| *address);
+        changeset.storage.sort_by_key(|entry| entry.address);
+        for entry in &mut changeset.storage {
+            entry.storage.sort_by_key(|(key, _)| *key);
+        }
+        changeset.contracts.sort_by_key(|(hash, _)| *hash);
+        format!("{changeset:?}")
     }
 
     #[test]
@@ -818,6 +833,7 @@ mod tests {
                             RevertToSlot::Some(StorageValue::ZERO)
                         )]),
                         wipe_storage: false,
+                        wiped_storage_originals: HashMap::default(),
                     }
                 ),
                 (
@@ -841,6 +857,7 @@ mod tests {
                             (slot3, RevertToSlot::Some(StorageValue::ZERO))
                         ]),
                         wipe_storage: false,
+                        wiped_storage_originals: HashMap::default(),
                     }
                 ),
             ])]),
@@ -1154,8 +1171,363 @@ mod tests {
                     previous_status: AccountStatus::Loaded,
                     storage: HashMap::from_iter([(slot2, RevertToSlot::Destroyed)]),
                     wipe_storage: true,
+                    wiped_storage_originals: HashMap::default(),
                 }
             )])])
         )
+    }
+
+    /// Reproduces a running `State` merging one "block" of transitions at a
+    /// time (the pattern reth uses: `merge_transitions(BundleRetention::Reverts)`
+    /// after every block on one long-lived `State`).
+    ///
+    /// Block 1 changes a storage slot. Block 2 selfdestructs the account. If we
+    /// then revert only block 2 (`BundleState::revert(1)`), the bundle should be
+    /// byte-for-byte equivalent -- for diffing purposes -- to the bundle we would
+    /// have gotten by stopping right after block 1. It is not: the slot's
+    /// `previous_or_original_value` is corrupted, so it looks unchanged and
+    /// silently disappears from `to_plain_state(OriginalValuesKnown::Yes)`.
+    #[test]
+    fn revert_after_selfdestruct_loses_original_storage_value_for_diffing() {
+        let mut state = State::builder().with_bundle_update().build();
+
+        let address = Address::from_slice(&[0x9; 20]);
+        let slot1 = StorageKey::from(1);
+        let info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+
+        // Block 1: Loaded -> Changed, slot1 0 -> 5.
+        state.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Changed,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(info.clone()),
+                storage: evm_storage([(
+                    slot1,
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(5),
+                        TransactionId::ZERO,
+                    ),
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        // Reference: exactly what block 1 alone produces.
+        let block1_only_plain_state = normalize_plain_state_debug(
+            state.bundle_state.to_plain_state(OriginalValuesKnown::Yes),
+        );
+
+        // Block 2: the account selfdestructs.
+        state.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Destroyed,
+                info: None,
+                previous_status: AccountStatus::Changed,
+                previous_info: Some(info),
+                storage: Some(Cow::Owned(HashMap::default())),
+                storage_was_destroyed: true,
+            },
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        let mut bundle_state = state.take_bundle();
+        assert_eq!(
+            bundle_state.reverts.len(),
+            2,
+            "expected one revert group per merged block"
+        );
+
+        // Undo block 2 only.
+        bundle_state.revert(1);
+
+        let reverted_plain_state =
+            normalize_plain_state_debug(bundle_state.to_plain_state(OriginalValuesKnown::Yes));
+        assert_eq!(
+            reverted_plain_state, block1_only_plain_state,
+            "reverting the selfdestruct must reproduce block 1's plain-state diff \
+             (slot1's write is instead silently dropped)"
+        );
+    }
+
+    /// Same root cause as above, reproduced the way `reth`'s
+    /// `ExecutionOutcome::extend` + `ExecutionOutcome::revert_to` combine
+    /// independently-built per-block bundles: block 1 and block 2 are each
+    /// executed in their own `State` (block 2 continuing from block 1's bundle
+    /// via `with_bundle_prestate`), the resulting bundles are joined with
+    /// `BundleState::extend`, and then the joined bundle is reverted by one
+    /// transition.
+    #[test]
+    fn revert_after_selfdestruct_matches_prior_block_bundle_across_extend() {
+        let address = Address::from_slice(&[0x9; 20]);
+        let slot1 = StorageKey::from(1);
+        let info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+
+        // Block 1, in its own `State`.
+        let mut state1 = State::builder().with_bundle_update().build();
+        state1.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Changed,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(info.clone()),
+                storage: evm_storage([(
+                    slot1,
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(5),
+                        TransactionId::ZERO,
+                    ),
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state1.merge_transitions(BundleRetention::Reverts);
+        let bundle1 = state1.take_bundle();
+        let block1_only_plain_state =
+            normalize_plain_state_debug(bundle1.to_plain_state(OriginalValuesKnown::Yes));
+
+        // Block 2, in a fresh `State` that continues from block 1's bundle.
+        let mut state2 = State::builder()
+            .with_bundle_update()
+            .with_bundle_prestate(bundle1.clone())
+            .build();
+        state2.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Destroyed,
+                info: None,
+                previous_status: AccountStatus::Changed,
+                previous_info: Some(info),
+                storage: Some(Cow::Owned(HashMap::default())),
+                storage_was_destroyed: true,
+            },
+        )]));
+        state2.merge_transitions(BundleRetention::Reverts);
+        let bundle2 = state2.take_bundle();
+
+        // Join the two block bundles, as `ExecutionOutcome::extend` does.
+        let mut joined = bundle1;
+        joined.extend(bundle2);
+
+        // Undo block 2, as `ExecutionOutcome::revert_to` does.
+        joined.revert(1);
+
+        let reverted_plain_state =
+            normalize_plain_state_debug(joined.to_plain_state(OriginalValuesKnown::Yes));
+        assert_eq!(
+            reverted_plain_state, block1_only_plain_state,
+            "reverting block 2 across an extend()ed bundle must reproduce block 1's plain-state diff"
+        );
+    }
+
+    /// Variant of the above where the account is destroyed in block 2 and then
+    /// re-created with *different* storage in block 3. Reverting block 3 alone
+    /// should restore the (empty, destroyed) block-2 state; reverting both
+    /// block 3 and block 2 should restore block 1's state again.
+    #[test]
+    fn revert_after_selfdestruct_then_recreate_restores_each_prior_block() {
+        let mut state = State::builder().with_bundle_update().build();
+
+        let address = Address::from_slice(&[0x9; 20]);
+        let slot1 = StorageKey::from(1);
+        let slot2 = StorageKey::from(2);
+        let info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+
+        // Block 1: Loaded -> Changed, slot1 0 -> 5.
+        state.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Changed,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(info.clone()),
+                storage: evm_storage([(
+                    slot1,
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(5),
+                        TransactionId::ZERO,
+                    ),
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+        let block1_only_plain_state = normalize_plain_state_debug(
+            state.bundle_state.to_plain_state(OriginalValuesKnown::Yes),
+        );
+
+        // Block 2: the account selfdestructs.
+        state.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Destroyed,
+                info: None,
+                previous_status: AccountStatus::Changed,
+                previous_info: Some(info.clone()),
+                storage: Some(Cow::Owned(HashMap::default())),
+                storage_was_destroyed: true,
+            },
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+        let block1_and_2_plain_state = normalize_plain_state_debug(
+            state.bundle_state.to_plain_state(OriginalValuesKnown::Yes),
+        );
+
+        // Block 3: the account is re-created with a different slot (slot2).
+        state.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::DestroyedChanged,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Destroyed,
+                previous_info: None,
+                storage: evm_storage([(
+                    slot2,
+                    EvmStorageSlot::new_changed(
+                        StorageValue::ZERO,
+                        StorageValue::from(9),
+                        TransactionId::ZERO,
+                    ),
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        let mut bundle_state = state.take_bundle();
+        assert_eq!(bundle_state.reverts.len(), 3);
+
+        // Revert block 3: should match the state right after block 2.
+        bundle_state.revert(1);
+        assert_eq!(
+            normalize_plain_state_debug(bundle_state.to_plain_state(OriginalValuesKnown::Yes)),
+            block1_and_2_plain_state,
+            "reverting block 3 must reproduce the post-block-2 (destroyed) plain-state diff"
+        );
+
+        // Revert block 2 as well: should match the state right after block 1.
+        bundle_state.revert(1);
+        assert_eq!(
+            normalize_plain_state_debug(bundle_state.to_plain_state(OriginalValuesKnown::Yes)),
+            block1_only_plain_state,
+            "reverting block 2 as well must reproduce block 1's plain-state diff"
+        );
+    }
+
+    /// Across `extend`: the second bundle changes a slot (so its own original for that
+    /// slot is the first bundle's present value) before destroying the account. Reverting
+    /// the destroy must restore the original of the *joined* bundle, i.e. the value the
+    /// first bundle started from.
+    #[test]
+    fn revert_after_selfdestruct_across_extend_keeps_first_bundle_originals() {
+        let address = Address::from_slice(&[0x9; 20]);
+        let slot1 = StorageKey::from(1);
+        let slot2 = StorageKey::from(2);
+        let info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let changed = |from: u64, to: u64| {
+            EvmStorageSlot::new_changed(
+                StorageValue::from(from),
+                StorageValue::from(to),
+                TransactionId::ZERO,
+            )
+        };
+
+        // Bundle 1: slot1 3 -> 5, slot2 4 -> 6.
+        let mut state1 = State::builder().with_bundle_update().build();
+        state1.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Changed,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(info.clone()),
+                storage: evm_storage([(slot1, changed(3, 5)), (slot2, changed(4, 6))]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state1.merge_transitions(BundleRetention::Reverts);
+        let bundle1 = state1.take_bundle();
+        let bundle1_plain_state =
+            normalize_plain_state_debug(bundle1.to_plain_state(OriginalValuesKnown::Yes));
+
+        // Bundle 2, built in its own `State` on top of a database that already has
+        // bundle 1 applied (so slot1 is loaded as 5): block A: slot1 5 -> 8; block B:
+        // destroyed.
+        let mut state2 = State::builder().with_bundle_update().build();
+        state2.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Changed,
+                info: Some(info.clone()),
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(info.clone()),
+                storage: evm_storage([(slot1, changed(5, 8))]),
+                storage_was_destroyed: false,
+            },
+        )]));
+        state2.merge_transitions(BundleRetention::Reverts);
+        let bundle1_and_a_plain_state = {
+            let mut joined = bundle1.clone();
+            joined.extend(state2.bundle_state.clone());
+            normalize_plain_state_debug(joined.to_plain_state(OriginalValuesKnown::Yes))
+        };
+        state2.apply_transition(Vec::from([(
+            address,
+            TransitionAccount {
+                status: AccountStatus::Destroyed,
+                info: None,
+                previous_status: AccountStatus::Changed,
+                previous_info: Some(info),
+                storage: Some(Cow::Owned(HashMap::default())),
+                storage_was_destroyed: true,
+            },
+        )]));
+        state2.merge_transitions(BundleRetention::Reverts);
+
+        let mut joined = bundle1;
+        joined.extend(state2.take_bundle());
+        assert_eq!(joined.reverts.len(), 3);
+
+        // Undo the destroy: slot1 must be 3 -> 8 and slot2 4 -> 6 again.
+        joined.revert(1);
+        let account = joined.account(&address).unwrap();
+        assert_eq!(
+            account.storage[&slot1],
+            StorageSlot::new_changed(StorageValue::from(3), StorageValue::from(8))
+        );
+        assert_eq!(
+            account.storage[&slot2],
+            StorageSlot::new_changed(StorageValue::from(4), StorageValue::from(6))
+        );
+        assert_eq!(
+            normalize_plain_state_debug(joined.to_plain_state(OriginalValuesKnown::Yes)),
+            bundle1_and_a_plain_state
+        );
+
+        // Undo block A as well: back to exactly bundle 1.
+        joined.revert(1);
+        assert_eq!(
+            normalize_plain_state_debug(joined.to_plain_state(OriginalValuesKnown::Yes)),
+            bundle1_plain_state
+        );
     }
 }

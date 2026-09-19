@@ -150,6 +150,14 @@ pub struct AccountRevert {
     pub previous_status: AccountStatus,
     /// Whether to wipe the storage.
     pub wipe_storage: bool,
+    /// Original values (as seen at the start of the bundle) of the storage slots that this
+    /// transition removed from the [`BundleAccount`] by wiping its storage.
+    ///
+    /// [`RevertToSlot::Some`] only carries the value to restore. Without the original value the
+    /// restored slot would look unchanged and be dropped from
+    /// [`BundleState::to_plain_state`](super::BundleState::to_plain_state).
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub wiped_storage_originals: StorageKeyMap<StorageValue>,
 }
 
 impl AccountRevert {
@@ -170,9 +178,13 @@ impl AccountRevert {
     ) -> Self {
         // Take present storage values as the storages that we are going to revert to.
         // As those values got destroyed.
+        let mut wiped_storage_originals = StorageKeyMap::default();
         let mut previous_storage: StorageKeyMap<RevertToSlot> = previous_storage
             .drain()
-            .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+            .map(|(key, value)| {
+                wiped_storage_originals.insert(key, value.previous_or_original_value);
+                (key, RevertToSlot::Some(value.present_value))
+            })
             .collect();
         for (key, _) in updated_storage {
             previous_storage
@@ -184,6 +196,7 @@ impl AccountRevert {
             storage: previous_storage,
             previous_status: status,
             wipe_storage: false,
+            wiped_storage_originals,
         }
     }
 
@@ -218,9 +231,11 @@ impl AccountRevert {
         mut storage: StorageWithOriginalValues,
     ) -> Self {
         // Zero all present storage values and save present values to AccountRevert.
+        let mut wiped_storage_originals = StorageKeyMap::default();
         let previous_storage = storage
             .iter_mut()
             .map(|(key, value)| {
+                wiped_storage_originals.insert(*key, value.previous_or_original_value);
                 // Take previous value and set ZERO as storage got destroyed.
                 (*key, RevertToSlot::Some(value.present_value))
             })
@@ -231,6 +246,7 @@ impl AccountRevert {
             storage: previous_storage,
             previous_status: status,
             wipe_storage: true,
+            wiped_storage_originals,
         }
     }
 
@@ -288,6 +304,13 @@ impl Ord for AccountRevert {
             .cmp(&other_storage.len())
             .then_with(|| self.previous_status.cmp(&other.previous_status))
             .then_with(|| self.wipe_storage.cmp(&other.wipe_storage))
+            .then_with(|| {
+                let mut self_originals: Vec<_> = self.wiped_storage_originals.iter().collect();
+                let mut other_originals: Vec<_> = other.wiped_storage_originals.iter().collect();
+                self_originals.sort();
+                other_originals.sort();
+                self_originals.cmp(&other_originals)
+            })
     }
 }
 

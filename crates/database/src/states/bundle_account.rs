@@ -116,10 +116,16 @@ impl BundleAccount {
                 RevertToSlot::Some(value) => {
                     // Don't overwrite original values if present
                     // if storage is not present set original value as current value.
-                    self.storage
+                    let slot = self
+                        .storage
                         .entry(key)
-                        .or_insert_with(|| StorageSlot::new(value))
-                        .present_value = value;
+                        .or_insert_with(|| StorageSlot::new(value));
+                    slot.present_value = value;
+                    // If the slot was wiped by the reverted transition, restore the original
+                    // value it had before the wipe so the slot is still seen as changed.
+                    if let Some(original) = revert.wiped_storage_originals.get(&key) {
+                        slot.previous_or_original_value = *original;
+                    }
                 }
                 RevertToSlot::Destroyed => {
                     // If it was destroyed this means that storage was created and we need to remove it.
@@ -193,6 +199,7 @@ impl BundleAccount {
                     storage: previous_storage,
                     previous_status,
                     wipe_storage: false,
+                    wiped_storage_originals: HashMap::default(),
                 })
             }
             AccountStatus::InMemoryChange => {
@@ -222,6 +229,7 @@ impl BundleAccount {
                     storage: previous_storage,
                     previous_status,
                     wipe_storage: false,
+                    wiped_storage_originals: HashMap::default(),
                 })
             }
             AccountStatus::Loaded
@@ -279,16 +287,22 @@ impl BundleAccount {
                                 storage: previous_storage_from_update(&updated_storage),
                                 previous_status: self.status,
                                 wipe_storage: false,
+                                wiped_storage_originals: HashMap::default(),
                             })
                         }
                         AccountStatus::DestroyedChanged => {
                             // Account was destroyed in this transition. So we should clear present storage
                             // and insert it inside revert.
 
+                            let mut wiped_storage_originals = HashMap::default();
                             let previous_storage = if transition.storage_was_destroyed {
                                 let mut storage = core::mem::take(&mut self.storage)
                                     .into_iter()
-                                    .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
+                                    .map(|t| {
+                                        wiped_storage_originals
+                                            .insert(t.0, t.1.previous_or_original_value);
+                                        (t.0, RevertToSlot::Some(t.1.present_value))
+                                    })
                                     .collect::<StorageKeyMap<_>>();
                                 for key in updated_storage.keys() {
                                     // As it is not existing inside Destroyed storage this means
@@ -305,6 +319,7 @@ impl BundleAccount {
                                 storage: previous_storage,
                                 previous_status: AccountStatus::DestroyedChanged,
                                 wipe_storage: false,
+                                wiped_storage_originals,
                             })
                         }
                         AccountStatus::DestroyedAgain => {

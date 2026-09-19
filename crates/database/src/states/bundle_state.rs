@@ -302,6 +302,7 @@ impl BundleBuilder {
                     storage,
                     previous_status: AccountStatus::Changed,
                     wipe_storage: false,
+                    wiped_storage_originals: HashMap::default(),
                 };
 
                 if let Some(vec) = reverts_map.get_mut(&block_number) {
@@ -487,6 +488,7 @@ impl BundleState {
                                 .collect(),
                             previous_status: AccountStatus::Changed,
                             wipe_storage: false,
+                            wiped_storage_originals: HashMap::default(),
                         };
                         reverts_size += revert.size_hint();
                         (address, revert)
@@ -753,6 +755,10 @@ impl BundleState {
                             .storage
                             .entry(key)
                             .or_insert(RevertToSlot::Some(value.present_value));
+                        // The original value of the joined bundle is the one from `this`.
+                        revert
+                            .wiped_storage_originals
+                            .insert(key, value.previous_or_original_value);
                     }
 
                     // Nullify `other` wipe as primary database wipe is done in `this`.
@@ -1118,6 +1124,11 @@ mod tests {
             .1
             .storage
             .insert(slot2(), RevertToSlot::Some(StorageValue::from(15)));
+        // and the original values of the b1 slots that were moved into the revert.
+        revert1
+            .1
+            .wiped_storage_originals
+            .extend([(slot1(), StorageValue::ZERO), (slot2(), StorageValue::ZERO)]);
 
         assert_eq!(
             b1.reverts.as_ref(),
