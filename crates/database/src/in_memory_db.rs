@@ -162,8 +162,15 @@ impl<ExtDB> CacheDB<ExtDB> {
         db_account.account_state = if is_newly_created {
             db_account.storage.clear();
             AccountState::StorageCleared
-        } else if db_account.account_state.is_storage_cleared() {
-            // Preserve old account state if it already exists
+        } else if db_account.account_state.is_storage_cleared()
+            || db_account.account_state == AccountState::NotExisting
+        {
+            // Preserve the "storage is known to be empty" invariant: `NotExisting`
+            // is set right after a selfdestruct, which also clears `storage`, so a
+            // later commit that merely touches this account (e.g. a plain value
+            // transfer, not a CREATE) must not downgrade it to `Touched`. Otherwise
+            // `storage`/`storage_ref` would stop treating the slots as known-empty
+            // and fall through to the (stale, pre-selfdestruct) inner database.
             AccountState::StorageCleared
         } else {
             AccountState::Touched
@@ -596,8 +603,8 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use super::{CacheDB, EmptyDB};
-    use database_interface::{Database, DatabaseCommit};
+    use super::{AccountState, CacheDB, EmptyDB};
+    use database_interface::{Database, DatabaseCommit, DatabaseRef};
     use primitives::{Address, HashMap, StorageKey, StorageValue};
     use state::{Account, AccountInfo, EvmStorageSlot, TransactionId};
 
@@ -754,6 +761,63 @@ mod tests {
                 .info
                 .nonce,
             nonce
+        );
+    }
+
+    #[test]
+    fn selfdestructed_account_touched_again_does_not_resurrect_inner_db_storage() {
+        // Inner database represents already-on-chain state: an account with a
+        // non-zero storage slot (as e.g. a fork/RPC-backed database would return).
+        let address = Address::with_last_byte(42);
+        let key = StorageKey::from(123);
+        let value = StorageValue::from(456);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(address, AccountInfo::default());
+        inner.insert_account_storage(address, key, value).unwrap();
+
+        let mut db = CacheDB::new(inner);
+
+        // Commit 1: the account selfdestructs (always also `touched`, since it
+        // has to be `CALL`ed into to run the `SELFDESTRUCT` opcode).
+        let selfdestructed = Account::from(AccountInfo::default())
+            .with_selfdestruct_mark()
+            .with_touched_mark();
+        db.commit_iter(&mut [(address, selfdestructed)].into_iter());
+        assert_eq!(db.storage(address, key), Ok(StorageValue::ZERO));
+
+        // Commit 2: a later, unrelated transaction merely touches the address
+        // again (e.g. it is the target of a plain value transfer). It is not
+        // recreated via CREATE/CREATE2, and it is not selfdestructed again.
+        let touched_again = Account::from(AccountInfo {
+            balance: StorageValue::from(1),
+            ..Default::default()
+        })
+        .with_touched_mark();
+        db.commit_iter(&mut [(address, touched_again)].into_iter());
+
+        // The pre-selfdestruct slot must stay zero: it must not be resurrected
+        // by falling through to the (stale) inner database.
+        assert_eq!(
+            db.storage(address, key),
+            Ok(StorageValue::ZERO),
+            "storage slot resurrected from inner DB after selfdestruct + touch"
+        );
+        assert_eq!(
+            db.storage_ref(address, key),
+            Ok(StorageValue::ZERO),
+            "storage_ref slot resurrected from inner DB after selfdestruct + touch"
+        );
+        // The account itself exists again with the committed info, and is
+        // flagged as storage-cleared rather than merely touched.
+        let info = db
+            .basic(address)
+            .unwrap()
+            .expect("touched account must exist");
+        assert_eq!(info.balance, StorageValue::from(1));
+        assert_eq!(
+            db.cache.accounts[&address].account_state,
+            AccountState::StorageCleared
         );
     }
 }
