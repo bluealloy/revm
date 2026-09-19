@@ -5,10 +5,10 @@ use interpreter::{
 };
 use primitives::{Address, Log, U256};
 
-impl<CTX, INTR: InterpreterTypes, L, R> Inspector<CTX, INTR> for Either<L, R>
+impl<CTX, INTR: InterpreterTypes, FI, FR, L, R> Inspector<CTX, INTR, FI, FR> for Either<L, R>
 where
-    L: Inspector<CTX, INTR>,
-    R: Inspector<CTX, INTR>,
+    L: Inspector<CTX, INTR, FI, FR>,
+    R: Inspector<CTX, INTR, FI, FR>,
 {
     #[inline]
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
@@ -47,6 +47,22 @@ where
         match self {
             Either::Left(inspector) => inspector.log_full(interp, context, log),
             Either::Right(inspector) => inspector.log_full(interp, context, log),
+        }
+    }
+
+    #[inline]
+    fn frame_start(&mut self, context: &mut CTX, frame_input: &mut FI) -> Option<FR> {
+        match self {
+            Either::Left(inspector) => inspector.frame_start(context, frame_input),
+            Either::Right(inspector) => inspector.frame_start(context, frame_input),
+        }
+    }
+
+    #[inline]
+    fn frame_end(&mut self, context: &mut CTX, frame_input: &FI, frame_result: &mut FR) {
+        match self {
+            Either::Left(inspector) => inspector.frame_end(context, frame_input, frame_result),
+            Either::Right(inspector) => inspector.frame_end(context, frame_input, frame_result),
         }
     }
 
@@ -121,5 +137,74 @@ mod tests {
         // These calls should compile successfully, proving that the Inspector trait is implemented
         let _left = _requires_inspector(left_inspector);
         let _right = _requires_inspector(right_inspector);
+    }
+
+    /// An inspector whose `frame_start`/`frame_end` hooks are observable via counters.
+    #[derive(Default)]
+    struct FrameHookCounter {
+        frame_start_calls: u32,
+        frame_end_calls: u32,
+    }
+
+    impl<CTX> Inspector<CTX, EthInterpreter> for FrameHookCounter {
+        fn frame_start(
+            &mut self,
+            _context: &mut CTX,
+            _frame_input: &mut interpreter::FrameInput,
+        ) -> Option<handler::FrameResult> {
+            self.frame_start_calls += 1;
+            None
+        }
+
+        fn frame_end(
+            &mut self,
+            _context: &mut CTX,
+            _frame_input: &interpreter::FrameInput,
+            _frame_result: &mut handler::FrameResult,
+        ) {
+            self.frame_end_calls += 1;
+        }
+    }
+
+    #[test]
+    fn test_either_forwards_frame_start_and_frame_end() {
+        let mut wrapped: Either<FrameHookCounter, FrameHookCounter> =
+            Either::Left(FrameHookCounter::default());
+        let mut ctx = ();
+        let mut frame_input = interpreter::FrameInput::Empty;
+
+        let _ =
+            Inspector::<(), EthInterpreter>::frame_start(&mut wrapped, &mut ctx, &mut frame_input);
+
+        let Either::Left(inner) = &wrapped else {
+            unreachable!("wrapped is always Either::Left in this test")
+        };
+        assert_eq!(
+            inner.frame_start_calls, 1,
+            "Either<L, R> must forward frame_start to the wrapped inspector"
+        );
+
+        let mut frame_result = handler::FrameResult::Call(interpreter::CallOutcome::new(
+            interpreter::InterpreterResult {
+                result: interpreter::InstructionResult::Stop,
+                output: Default::default(),
+                gas: Default::default(),
+            },
+            0..0,
+        ));
+        Inspector::<(), EthInterpreter>::frame_end(
+            &mut wrapped,
+            &mut ctx,
+            &frame_input,
+            &mut frame_result,
+        );
+
+        let Either::Left(inner) = &wrapped else {
+            unreachable!("wrapped is always Either::Left in this test")
+        };
+        assert_eq!(
+            inner.frame_end_calls, 1,
+            "Either<L, R> must forward frame_end to the wrapped inspector"
+        );
     }
 }
