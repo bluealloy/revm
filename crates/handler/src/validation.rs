@@ -323,7 +323,7 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
+    use primitives::{address, eip3860, eip7825, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -782,5 +782,39 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn test_eip7825_gas_cap_survives_spec_downgrade_to_non_amsterdam() {
+        // Re-spec AMSTERDAM -> OSAKA on the same CfgEnv, e.g. a harness that
+        // reuses one CfgEnv while iterating over multiple forks. The
+        // EIP-8037 state-gas flag must not stay enabled once the spec is
+        // back below AMSTERDAM, otherwise EIP-7825's 2^24 tx gas-limit cap
+        // is silently skipped for a non-Amsterdam spec.
+        let ctx = Context::mainnet()
+            .modify_cfg_chained(|c| {
+                c.set_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+                c.set_spec_and_mainnet_gas_params(SpecId::OSAKA);
+            })
+            .with_db(CacheDB::<EmptyDB>::default());
+
+        let mut evm = ctx.build_mainnet();
+        let result = evm.transact_commit(
+            TxEnv::builder()
+                .gas_limit(eip7825::TX_GAS_LIMIT_CAP + 1)
+                .build()
+                .unwrap(),
+        );
+
+        assert!(
+            matches!(
+                result,
+                Err(EVMError::Transaction(
+                    InvalidTransaction::TxGasLimitGreaterThanCap { .. }
+                ))
+            ),
+            "OSAKA must enforce the EIP-7825 gas-limit cap even after a prior \
+             AMSTERDAM re-spec on the same CfgEnv, got {result:?}"
+        );
     }
 }

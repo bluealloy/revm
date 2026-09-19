@@ -229,17 +229,16 @@ impl<SPEC> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables EIP-8037 and EIP-2780 for AMSTERDAM and later.
+    /// Enables EIP-8037 and EIP-2780 for AMSTERDAM and later, and disables them
+    /// otherwise, so re-specing to an earlier hardfork always clears the flags.
     pub fn with_spec_and_mainnet_gas_params<OSPEC: Into<SpecId> + Clone>(
         self,
         spec: OSPEC,
     ) -> CfgEnv<OSPEC> {
         let is_amsterdam = spec.clone().into().is_enabled_in(SpecId::AMSTERDAM);
-        let enable_amsterdam_eip8037 = self.enable_amsterdam_eip8037 || is_amsterdam;
-        let enable_amsterdam_eip2780 = self.enable_amsterdam_eip2780 || is_amsterdam;
         let mut cfg = self.with_spec_and_gas_params(spec.clone(), GasParams::new_spec(spec.into()));
-        cfg.enable_amsterdam_eip8037 = enable_amsterdam_eip8037;
-        cfg.enable_amsterdam_eip2780 = enable_amsterdam_eip2780;
+        cfg.enable_amsterdam_eip8037 = is_amsterdam;
+        cfg.enable_amsterdam_eip2780 = is_amsterdam;
         cfg
     }
 
@@ -413,16 +412,16 @@ impl<SPEC: Into<SpecId> + Clone> CfgEnv<SPEC> {
 
     /// Sets the spec for the `CfgEnv` and the gas params to the mainnet gas params.
     ///
-    /// Automatically enables EIP-8037 and EIP-2780 for AMSTERDAM and later.
+    /// Enables EIP-8037 and EIP-2780 for AMSTERDAM and later, and disables them
+    /// otherwise, so re-specing to an earlier hardfork always clears the flags.
     #[inline]
     pub fn set_spec_and_mainnet_gas_params(&mut self, spec: SPEC) {
         self.spec = spec.clone();
         self.set_gas_params(GasParams::new_spec(spec.clone().into()));
-        // EIP-8037/EIP-2780: Enable for AMSTERDAM and later
-        if spec.into().is_enabled_in(SpecId::AMSTERDAM) {
-            self.enable_amsterdam_eip8037 = true;
-            self.enable_amsterdam_eip2780 = true;
-        }
+        // EIP-8037/EIP-2780: Enable for AMSTERDAM and later, disable otherwise.
+        let is_amsterdam = spec.into().is_enabled_in(SpecId::AMSTERDAM);
+        self.enable_amsterdam_eip8037 = is_amsterdam;
+        self.enable_amsterdam_eip2780 = is_amsterdam;
     }
 }
 
@@ -618,5 +617,29 @@ mod test {
     fn blob_max_and_target_count() {
         let cfg: CfgEnv = Default::default();
         assert_eq!(cfg.max_blobs_per_tx(), None);
+    }
+
+    #[test]
+    fn amsterdam_flags_follow_spec_on_downgrade() {
+        // `set_` path: re-spec an existing CfgEnv below AMSTERDAM.
+        let mut cfg = CfgEnv::new_with_spec(SpecId::AMSTERDAM);
+        assert!(cfg.is_amsterdam_eip8037_enabled());
+        assert!(cfg.is_amsterdam_eip2780_enabled());
+        cfg.set_spec_and_mainnet_gas_params(SpecId::OSAKA);
+        assert!(!cfg.is_amsterdam_eip8037_enabled());
+        assert!(!cfg.is_amsterdam_eip2780_enabled());
+        assert_eq!(cfg.gas_params(), &GasParams::new_spec(SpecId::OSAKA));
+
+        // `with_` path: same thing through the consuming builder.
+        let cfg = CfgEnv::new_with_spec(SpecId::AMSTERDAM)
+            .with_spec_and_mainnet_gas_params(SpecId::OSAKA);
+        assert!(!cfg.is_amsterdam_eip8037_enabled());
+        assert!(!cfg.is_amsterdam_eip2780_enabled());
+
+        // Upgrading still enables both.
+        let cfg = CfgEnv::new_with_spec(SpecId::OSAKA)
+            .with_spec_and_mainnet_gas_params(SpecId::AMSTERDAM);
+        assert!(cfg.is_amsterdam_eip8037_enabled());
+        assert!(cfg.is_amsterdam_eip2780_enabled());
     }
 }
