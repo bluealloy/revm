@@ -146,9 +146,12 @@ pub fn calculate_caller_fee(
         tx.ensure_enough_balance(balance)?;
     }
 
-    let effective_balance_spending = tx
-        .effective_balance_spending(basefee, blob_price)
-        .expect("effective balance is always smaller than max balance so it can't overflow");
+    // `ensure_enough_balance` above (via `max_balance_spending`) is what normally
+    // guarantees `gas_limit * gas_price` fits in u128, but it is skipped when the
+    // balance check is disabled. In that mode the caller may still request an
+    // overflowing gas cost, so this has to be a proper error instead of an
+    // `.expect()`.
+    let effective_balance_spending = tx.effective_balance_spending(basefee, blob_price)?;
 
     let gas_balance_spending = effective_balance_spending - tx.value();
 

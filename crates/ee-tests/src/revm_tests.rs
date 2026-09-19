@@ -260,6 +260,43 @@ fn test_disable_balance_check() {
     assert_eq!(returned_balance, expected_balance);
 }
 
+/// Reproduction: with the balance check disabled, a legacy tx whose
+/// `gas_limit * gas_price` overflows u128 must not panic inside
+/// `calculate_caller_fee`; it should surface as an ordinary
+/// `InvalidTransaction` instead.
+#[test]
+#[cfg(feature = "optional_balance_check")]
+fn test_disable_balance_check_overflowing_gas_cost_does_not_panic() {
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.disable_balance_check = true)
+        .with_db(BenchmarkDB::new_bytecode(
+            Bytecode::new_legacy(Bytes::new()),
+        ))
+        .build_mainnet();
+
+    // gas_limit is kept within the EIP-7825 per-tx cap (so validation doesn't
+    // reject it before reaching fee calculation); gas_price alone is enough
+    // to overflow `gas_limit * gas_price` in u128.
+    let result = evm.transact_one(
+        TxEnv::builder_for_bench()
+            .gas_price(u128::MAX)
+            .gas_limit(16_777_216)
+            .value(U256::ZERO)
+            .build_fill(),
+    );
+
+    let err = result.expect_err("expected InvalidTransaction, got Ok");
+    assert!(
+        matches!(
+            err,
+            revm::context::result::EVMError::Transaction(
+                revm::context::result::InvalidTransaction::OverflowPaymentInTransaction
+            )
+        ),
+        "expected OverflowPaymentInTransaction, got {err:?}"
+    );
+}
+
 // ============================================================================
 // EIP-7708: ETH transfers emit a log
 // ============================================================================
