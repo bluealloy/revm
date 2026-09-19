@@ -115,7 +115,18 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         // extract previous (Can be original_subvalue or previous value) and last value.
         let (previous, last) = match self.writes.as_mut_slice() {
             [.., previous, last] => (f(&previous.1), last),
-            [last] => (original_subvalue, last),
+            [last] => {
+                // A caller whose baseline already equals the write recorded at this index was
+                // rebased on top of it (a later commit at the same block access index, e.g. a
+                // post-block system call after the withdrawals) and does not know the value
+                // from before the index began, so its update can only refresh the entry,
+                // never erase it.
+                if original_subvalue == f(&last.1) {
+                    last.1 = value;
+                    return;
+                }
+                (original_subvalue, last)
+            }
             [] => {
                 // if writes are empty check if original value is same as newly set value.
                 if original_subvalue != f(&value) {
@@ -184,5 +195,40 @@ mod tests {
         get_binary_search(5);
         get_binary_search(6);
         get_binary_search(7);
+    }
+
+    /// A later commit at the same index whose baseline is the already recorded write
+    /// (a rebased no-op) must not erase that write.
+    #[test]
+    fn same_index_rebased_noop_keeps_earlier_write() {
+        let mut w: BalWrites<u64> = BalWrites::default();
+        w.update(idx(1), &0, 42);
+        w.update(idx(1), &42, 42);
+        assert_eq!(w.writes, vec![(idx(1), 42)]);
+    }
+
+    /// A later commit at the same index that changes the value again refreshes the entry.
+    #[test]
+    fn same_index_rebased_change_updates_value() {
+        let mut w: BalWrites<u64> = BalWrites::default();
+        w.update(idx(1), &0, 42);
+        w.update(idx(1), &42, 7);
+        assert_eq!(w.writes, vec![(idx(1), 7)]);
+    }
+
+    /// Restoring the pre-index value with the pre-index baseline still drops the entry.
+    #[test]
+    fn same_index_revert_to_pre_index_value_pops_entry() {
+        let mut w: BalWrites<u64> = BalWrites::default();
+        w.update(idx(1), &0, 42);
+        w.update(idx(1), &0, 0);
+        assert!(w.writes.is_empty());
+
+        // Same with an earlier index present: the previous entry is the baseline.
+        let mut w: BalWrites<u64> = BalWrites::default();
+        w.update(idx(0), &0, 7);
+        w.update(idx(1), &7, 42);
+        w.update(idx(1), &42, 7);
+        assert_eq!(w.writes, vec![(idx(0), 7)]);
     }
 }

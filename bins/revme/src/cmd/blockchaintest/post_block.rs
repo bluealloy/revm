@@ -139,3 +139,76 @@ where
     evm.system_call_commit(BUILDER_EXIT_REQUEST_ADDRESS, Bytes::new())?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::{
+        bytecode::{opcode, Bytecode},
+        context::BlockEnv,
+        database::{EmptyDB, State},
+        state::{bal::BlockAccessIndex, AccountInfo},
+        Context, Database, MainBuilder, MainContext,
+    };
+
+    /// Withdrawals and the post-block system calls share one `BlockAccessIndex`. A
+    /// withdrawal to a system contract address must keep its balance change in the BAL
+    /// even though the system call that follows commits that account again (unchanged
+    /// relative to its own, already-withdrawn baseline).
+    #[test]
+    fn withdrawal_to_system_contract_keeps_bal_balance_change() {
+        // Stand-in for the EIP-7002 contract: `SSTORE(0, 1); STOP`.
+        let code = Bytecode::new_raw(
+            [
+                opcode::PUSH1,
+                0x01,
+                opcode::PUSH1,
+                0x00,
+                opcode::SSTORE,
+                opcode::STOP,
+            ]
+            .into(),
+        );
+        let mut state = State::<EmptyDB>::builder().with_bal_builder().build();
+        state.insert_account(
+            WITHDRAWAL_REQUEST_ADDRESS,
+            AccountInfo {
+                nonce: 1,
+                code_hash: code.hash_slow(),
+                code: Some(code),
+                ..Default::default()
+            },
+        );
+        // Post-execution index of a block without transactions.
+        state.set_bal_index(BlockAccessIndex::new(1));
+
+        let withdrawal = Withdrawal {
+            index: U256::ZERO,
+            validator_index: U256::ZERO,
+            address: WITHDRAWAL_REQUEST_ADDRESS,
+            amount: U256::from(1),
+        };
+        let block = BlockEnv {
+            number: U256::from(1),
+            ..Default::default()
+        };
+        {
+            let mut evm = Context::mainnet().with_db(&mut state).build_mainnet();
+            post_block_transition(&mut evm, &block, &[withdrawal], SpecId::PRAGUE).unwrap();
+        }
+
+        let balance = state
+            .basic(WITHDRAWAL_REQUEST_ADDRESS)
+            .unwrap()
+            .unwrap()
+            .balance;
+        assert_eq!(balance, U256::from(ONE_GWEI));
+
+        let bal = state.bal_state.bal_builder.as_ref().unwrap();
+        let account = bal.accounts.get(&WITHDRAWAL_REQUEST_ADDRESS).unwrap();
+        assert_eq!(
+            account.account_info.balance.writes,
+            vec![(BlockAccessIndex::new(1), balance)]
+        );
+    }
+}
