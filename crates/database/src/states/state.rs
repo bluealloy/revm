@@ -529,15 +529,29 @@ impl<DB: DatabaseRef> DatabaseRef for State<DB> {
 
         // Check if account is in cache, the account is not guaranteed to be loaded
         if let Some(account) = self.cache.accounts.get(&address) {
-            if let Some(plain_account) = &account.account {
-                // If storage is known, we can return it
-                if let Some(storage_value) = plain_account.storage.get(&index) {
-                    return Ok(*storage_value);
-                }
-                // If account was destroyed or account is newly built
-                // we return zero and don't ask database.
-                if account.status.is_storage_known() {
-                    return Ok(StorageValue::ZERO);
+            // Account is known to not exist (loaded as not existing or destroyed),
+            // so its storage is empty. This mirrors `storage`, which never asks
+            // the database for an account that is `None`.
+            let Some(plain_account) = &account.account else {
+                return Ok(StorageValue::ZERO);
+            };
+            // If storage is known, we can return it
+            if let Some(storage_value) = plain_account.storage.get(&index) {
+                return Ok(*storage_value);
+            }
+            // If account was destroyed or account is newly built
+            // we return zero and don't ask database.
+            if account.status.is_storage_known() {
+                return Ok(StorageValue::ZERO);
+            }
+        } else if self.use_preloaded_bundle {
+            // Account is not yet in cache. If a preloaded bundle is used, consult
+            // it before falling back to the database, mirroring `basic_ref` above
+            // and what `storage` (the mutable `Database` counterpart) does once the
+            // account gets loaded through `load_cache_account_with`.
+            if let Some(bundle_account) = self.bundle_state.account(&address) {
+                if let Some(storage_value) = bundle_account.storage_slot(index) {
+                    return Ok(storage_value);
                 }
             }
         }
@@ -1157,5 +1171,92 @@ mod tests {
                 }
             )])])
         )
+    }
+
+    #[test]
+    fn storage_ref_inconsistent_with_mutable_storage_for_preloaded_bundle() {
+        // Bundle prestate carries an account with one non-zero, changed slot
+        // (as would happen after State::merge_transitions + take_bundle on a
+        // prior block, then reusing that bundle as prestate for the next one).
+        let address = Address::from_slice(&[7u8; 20]);
+        let slot = StorageKey::from(U256::from(9));
+        let value = StorageValue::from(777);
+
+        let bundle_state = BundleState::new(
+            [(
+                address,
+                Some(AccountInfo::default()),
+                Some(AccountInfo::default()),
+                HashMap::from_iter([(slot, (StorageValue::ZERO, value))]),
+            )],
+            Vec::<
+                Vec<(
+                    Address,
+                    Option<Option<AccountInfo>>,
+                    Vec<(StorageKey, StorageValue)>,
+                )>,
+            >::new(),
+            [],
+        );
+
+        // Mutable path: State::storage (Database trait) DOES consult the bundle
+        // for an account that was never explicitly loaded/cached first.
+        let mut mutable_state = State::builder()
+            .with_bundle_prestate(bundle_state.clone())
+            .build();
+        let via_mutable = mutable_state.storage(address, slot).unwrap();
+        assert_eq!(
+            via_mutable, value,
+            "mutable Database::storage should read the preloaded bundle value"
+        );
+
+        // Immutable path: State::storage_ref (DatabaseRef trait), same bundle,
+        // same address, never loaded into cache first.
+        let ref_state = State::builder().with_bundle_prestate(bundle_state).build();
+        let via_ref = ref_state.storage_ref(address, slot).unwrap();
+        assert_eq!(
+            via_ref, value,
+            "storage_ref is inconsistent with the mutable storage() path for the same State"
+        );
+    }
+
+    #[test]
+    fn storage_ref_does_not_resurrect_storage_of_destroyed_cached_account() {
+        let address = Address::from_slice(&[8u8; 20]);
+        let slot = StorageKey::from(U256::from(3));
+        let value = StorageValue::from(5);
+
+        // Database holds the account with one non-zero slot.
+        let mut db = crate::CacheDB::new(EmptyDB::default());
+        db.insert_account_info(
+            address,
+            AccountInfo {
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        db.insert_account_storage(address, slot, value).unwrap();
+
+        let mut state = State::builder().with_database(db).build();
+        assert_eq!(state.storage(address, slot).unwrap(), value);
+
+        // The account selfdestructs; the cache now holds it as destroyed (`account: None`).
+        let destroyed = Account::from(AccountInfo::default())
+            .with_selfdestruct_mark()
+            .with_touched_mark();
+        state.commit(HashMap::from_iter([(address, destroyed)]));
+        assert_eq!(
+            state.cache.accounts[&address].status,
+            AccountStatus::Destroyed
+        );
+
+        // Both the mutable and the immutable path must report the slot as cleared
+        // instead of falling through to the database.
+        assert_eq!(state.storage(address, slot).unwrap(), StorageValue::ZERO);
+        assert_eq!(
+            state.storage_ref(address, slot).unwrap(),
+            StorageValue::ZERO,
+            "storage_ref resurrected the storage of a destroyed account from the database"
+        );
     }
 }
