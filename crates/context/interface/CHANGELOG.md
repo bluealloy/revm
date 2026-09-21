@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v43.0.1...revm-context-interface-v43.1.0) - 2026-09-21
+
+### Added
+
+- *(state)* carry account extension data ([#3894](https://github.com/bluealloy/revm/pull/3894))
+
 ## [43.0.1](https://github.com/bluealloy/revm/compare/revm-context-interface-v43.0.0...revm-context-interface-v43.0.1) - 2026-09-08
 
 ### Fixed
