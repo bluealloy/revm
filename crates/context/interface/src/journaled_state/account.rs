@@ -73,6 +73,10 @@ pub trait JournaledAccountTr {
     /// Touches the account in all cases.
     fn set_balance(&mut self, balance: U256);
 
+    /// Sets the chain-specific payload, touching the account and journaling the previous value.
+    #[cfg(feature = "account-ext")]
+    fn set_extension(&mut self, extension: state::AccountExtension);
+
     /// Increments the balance of the account.
     ///
     /// Touches the account in all cases.
@@ -358,6 +362,16 @@ impl<'a, DB: Database, ENTRY: JournalEntryTr> JournaledAccountTr
                 self.account.info.balance,
             ));
             self.account.info.set_balance(balance);
+        }
+    }
+
+    #[cfg(feature = "account-ext")]
+    fn set_extension(&mut self, extension: state::AccountExtension) {
+        self.touch();
+        if self.account.info.extension != extension {
+            let old_extension = self.account.info.set_extension(extension);
+            self.journal_entries
+                .push(ENTRY::extension_changed(self.address, old_extension));
         }
     }
 

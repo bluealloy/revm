@@ -114,7 +114,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "serde", "std", "std,map-foldhash"]
+        features: ["", "serde", "std", "std,map-foldhash", "account-ext", "account-ext,serde"]
     permissions:
       contents: read
       id-token: write
@@ -183,6 +183,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgmp-dev
       - run: cargo clippy --locked --workspace --all-targets --all-features
+        env:
+          RUSTFLAGS: -Dwarnings
+      - run: cargo clippy --workspace --all-targets
         env:
           RUSTFLAGS: -Dwarnings
 

@@ -1,5 +1,7 @@
 //! BAL builder module
 
+#[cfg(feature = "account-ext")]
+use crate::AccountExtension;
 use crate::{
     bal::{writes::BalWrites, BalError, BlockAccessIndex},
     Account, AccountInfo, EvmStorage,
@@ -89,6 +91,8 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes),
                     balance: BalWrites::from(alloy_account.balance_changes),
                     code: BalWrites::try_from(alloy_account.code_changes)?,
+                    #[cfg(feature = "account-ext")]
+                    extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
                     alloy_account
@@ -125,6 +129,8 @@ impl AccountBal {
                     nonce: BalWrites::from(alloy_account.nonce_changes.as_slice()),
                     balance: BalWrites::from(alloy_account.balance_changes.as_slice()),
                     code: BalWrites::try_from(alloy_account.code_changes.as_slice())?,
+                    #[cfg(feature = "account-ext")]
+                    extension: BalWrites::default(),
                 },
                 storage: StorageBal::from_iter(
                     alloy_account
@@ -220,6 +226,13 @@ pub struct AccountInfoBal {
     pub balance: BalWrites<U256>,
     /// Code builder.
     pub code: BalWrites<(B256, Bytecode)>,
+    /// Chain-specific account extension builder.
+    #[cfg(feature = "account-ext")]
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "BalWrites::is_empty")
+    )]
+    pub extension: BalWrites<AccountExtension>,
 }
 
 impl AccountInfoBal {
@@ -241,6 +254,11 @@ impl AccountInfoBal {
         if let Some(code) = self.code.get(bal_index) {
             account.code_hash = code.0;
             account.code = Some(code.1);
+            changed = true;
+        }
+        #[cfg(feature = "account-ext")]
+        if let Some(extension) = self.extension.get(bal_index) {
+            account.extension = extension;
             changed = true;
         }
         changed
@@ -265,6 +283,9 @@ impl AccountInfoBal {
                 |i| &i.0,
             );
         }
+        #[cfg(feature = "account-ext")]
+        self.extension
+            .update(index, &original.extension, present.extension.clone());
     }
 
     /// Extend account info from another account info.
@@ -273,6 +294,8 @@ impl AccountInfoBal {
         self.nonce.extend(bal_account.nonce);
         self.balance.extend(bal_account.balance);
         self.code.extend(bal_account.code);
+        #[cfg(feature = "account-ext")]
+        self.extension.extend(bal_account.extension);
     }
 
     /// Update account balance in BAL.

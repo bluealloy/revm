@@ -20,6 +20,7 @@ revm = { workspace = true, features = ["serde", "std"] }
 insta.workspace = true
 
 [features]
+account-ext = ["revm/account-ext"]
 default = []
 optional_balance_check = [
     "revm/optional_balance_check",
