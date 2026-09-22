@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.1.0](https://github.com/bluealloy/revm/compare/revm-state-v43.0.0...revm-state-v43.1.0) - 2026-09-22
+
+### Added
+
+- *(state)* carry account extension data ([#3894](https://github.com/bluealloy/revm/pull/3894))
+
+### Other
+
+- *(state)* use CodeChange accessors ([#3916](https://github.com/bluealloy/revm/pull/3916))
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v43.0.0) - 2026-08-20
 
 ### Fixed
