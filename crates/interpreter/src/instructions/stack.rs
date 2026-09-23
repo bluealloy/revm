@@ -63,6 +63,9 @@ pub fn dupn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
     check!(context.interpreter, AMSTERDAM);
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
+        if context.interpreter.stack.len() < n {
+            return Err(InstructionResult::StackUnderflow);
+        }
         if !context.interpreter.stack.dup(n) {
             return Err(InstructionResult::StackOverflow);
         }
@@ -136,13 +139,17 @@ mod tests {
         instructions::{gas_table, instruction_table},
         interpreter::{EthInterpreter, ExtBytecode, InputsImpl, SharedMemory},
         interpreter_types::LoopControl,
-        Interpreter,
+        InstructionResult, Interpreter, InterpreterAction, STACK_LIMIT,
     };
     use bytecode::opcode::*;
     use bytecode::Bytecode;
     use primitives::{hardfork::SpecId, Bytes, U256};
 
     fn run_bytecode(code: &[u8]) -> Interpreter {
+        run_bytecode_with_stack(code, 0).0
+    }
+
+    fn run_bytecode_with_stack(code: &[u8], stack_len: usize) -> (Interpreter, InterpreterAction) {
         let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(code));
         let mut interpreter = Interpreter::<EthInterpreter>::new(
             SharedMemory::new(),
@@ -152,11 +159,14 @@ mod tests {
             SpecId::AMSTERDAM,
             u64::MAX,
         );
+        for value in 0..stack_len {
+            assert!(interpreter.stack.push(U256::from(value)));
+        }
         let table = instruction_table::<EthInterpreter, DummyHost>();
         let gas = gas_table();
         let mut host = DummyHost::new(SpecId::AMSTERDAM);
-        interpreter.run_plain(&table, &gas, &mut host);
-        interpreter
+        let action = interpreter.run_plain(&table, &gas, &mut host);
+        (interpreter, action)
     }
 
     #[test]
@@ -170,6 +180,54 @@ mod tests {
         assert_eq!(interpreter.stack.data()[0], U256::from(1));
         for i in 1..17 {
             assert_eq!(interpreter.stack.data()[i], U256::ZERO);
+        }
+    }
+
+    #[test]
+    fn test_dupn_stack_bounds() {
+        for immediate in 0..=u8::MAX {
+            if immediate > 90 && immediate < 128 {
+                continue;
+            }
+            let depth = immediate.wrapping_add(145) as usize;
+            for (stack_len, expected) in [
+                (0, InstructionResult::StackUnderflow),
+                (depth - 1, InstructionResult::StackUnderflow),
+                (depth, InstructionResult::Stop),
+                (STACK_LIMIT - 1, InstructionResult::Stop),
+                (STACK_LIMIT, InstructionResult::StackOverflow),
+            ] {
+                let (interpreter, action) = run_bytecode_with_stack(&[DUPN, immediate], stack_len);
+                assert_eq!(
+                    action.instruction_result(),
+                    Some(expected),
+                    "immediate={immediate:#x}, stack_len={stack_len}"
+                );
+                if expected == InstructionResult::Stop {
+                    assert_eq!(interpreter.stack.len(), stack_len + 1);
+                    assert_eq!(
+                        interpreter.stack.data()[stack_len],
+                        U256::from(stack_len - depth)
+                    );
+                } else {
+                    assert_eq!(interpreter.stack.len(), stack_len);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_dupn_invalid_immediate_precedes_stack_errors() {
+        for immediate in 91..128 {
+            for stack_len in [0, STACK_LIMIT] {
+                let (interpreter, action) = run_bytecode_with_stack(&[DUPN, immediate], stack_len);
+                assert_eq!(
+                    action.instruction_result(),
+                    Some(InstructionResult::InvalidImmediateEncoding),
+                    "immediate={immediate:#x}, stack_len={stack_len}"
+                );
+                assert_eq!(interpreter.stack.len(), stack_len);
+            }
         }
     }
 
