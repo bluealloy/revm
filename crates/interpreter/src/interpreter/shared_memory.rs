@@ -228,7 +228,7 @@ impl SharedMemory {
             let range = range.start + base..range.end + base;
             match b.get(range.clone()) {
                 Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {range:?}; len: {}", self.len()),
+                None => panic!("slice OOB: {range:?}; len: {}", self.len()),
             }
         })
     }
