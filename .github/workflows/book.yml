@@ -23,7 +23,7 @@ jobs:
       id-token: write
     steps:
       - name: Secure runner
-        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959
+        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959 # 2026-09-23T05-09-41Z-117919c9
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -32,13 +32,13 @@ jobs:
         run: |
           mkdir mdbook
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.14/mdbook-v0.4.14-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+          echo "$PWD/mdbook" >> "$GITHUB_PATH"
 
       - name: Install mdbook-template
         run: |
           mkdir mdbook-template
           curl -sSL https://github.com/sgoudham/mdbook-template/releases/download/v1.1.0/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
-          echo `pwd`/mdbook-template >> $GITHUB_PATH
+          echo "$PWD/mdbook-template" >> "$GITHUB_PATH"
 
       - name: Run tests
         run: |
@@ -55,7 +55,7 @@ jobs:
       id-token: write
     steps:
       - name: Secure runner
-        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959
+        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959 # 2026-09-23T05-09-41Z-117919c9
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -65,8 +65,8 @@ jobs:
           mkdir mdbook-linkcheck
           curl -sSL -o mdbook-linkcheck.zip https://github.com/Michael-F-Bryan/mdbook-linkcheck/releases/download/v0.7.7/mdbook-linkcheck.x86_64-unknown-linux-gnu.zip
           unzip mdbook-linkcheck.zip -d ./mdbook-linkcheck
-          chmod +x `pwd`/mdbook-linkcheck/mdbook-linkcheck
-          echo `pwd`/mdbook-linkcheck >> $GITHUB_PATH
+          chmod +x "$PWD/mdbook-linkcheck/mdbook-linkcheck"
+          echo "$PWD/mdbook-linkcheck" >> "$GITHUB_PATH"
 
       - name: Run linkcheck
         run: mdbook-linkcheck --standalone
@@ -78,14 +78,14 @@ jobs:
       id-token: write
     steps:
       - name: Secure runner
-        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959
+        uses: tempoxyz/gh-actions/actions/secure-runner@117919c943b804057be733b0c4034c5542e58959 # 2026-09-23T05-09-41Z-117919c9
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: nightly
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
@@ -96,13 +96,13 @@ jobs:
         run: |
           mkdir mdbook
           curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.14/mdbook-v0.4.14-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+          echo "$PWD/mdbook" >> "$GITHUB_PATH"
 
       - name: Install mdbook-template
         run: |
           mkdir mdbook-template
           curl -sSL https://github.com/sgoudham/mdbook-template/releases/download/v1.1.0/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=./mdbook-template
-          echo `pwd`/mdbook-template >> $GITHUB_PATH
+          echo "$PWD/mdbook-template" >> "$GITHUB_PATH"
 
       - name: Build book
         run: |
@@ -122,7 +122,7 @@ jobs:
         shell: sh
         run: |
           chmod -c -R +rX "book/book" |
-          while read line; do
+          while IFS= read -r line; do
              echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
           tar \
