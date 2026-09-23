@@ -92,6 +92,80 @@ mod test {
     use primitives::{hardfork::SpecId, StorageKey, StorageValue, TxKind, U256};
 
     #[test]
+    fn eip8024_can_be_enabled_independently_of_amsterdam() {
+        use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
+        use context::{
+            result::{ExecutionResult, HaltReason},
+            CfgEnv,
+        };
+        use primitives::Bytes;
+        use std::vec;
+
+        for opcode in [DUPN, SWAPN, EXCHANGE] {
+            let (mut code, expected) = if opcode == EXCHANGE {
+                // Exchange the bottom two values and pop the unchanged top value.
+                (
+                    vec![0x60, 0, 0x60, 1, 0x60, 2, EXCHANGE, 0x8e, 0x50],
+                    U256::ZERO,
+                )
+            } else {
+                let mut code = vec![0x60, 1];
+                code.extend([0x5f; 16]);
+                if opcode == SWAPN {
+                    code.extend([0x60, 2]);
+                }
+                code.extend([opcode, 0x80]);
+                (code, U256::from(1))
+            };
+            code.extend([0x5f, 0x52, 0x60, 0x20, 0x5f, 0xf3]);
+
+            for (spec, override_flag, enabled) in [
+                (SpecId::OSAKA, None, false),
+                (SpecId::OSAKA, Some(true), true),
+                (SpecId::AMSTERDAM, None, true),
+                (SpecId::AMSTERDAM, Some(false), false),
+            ] {
+                let mut cfg = CfgEnv::new_with_spec(spec);
+                if let Some(enable) = override_flag {
+                    cfg = cfg.with_enable_amsterdam_eip8024(enable);
+                }
+                let mut evm = Context::mainnet()
+                    .with_cfg(cfg)
+                    .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+                        Bytes::copy_from_slice(&code),
+                    )))
+                    .build_mainnet();
+                let result = evm
+                    .transact(
+                        TxEnv::builder()
+                            .caller(EEADDRESS)
+                            .kind(TxKind::Call(FFADDRESS))
+                            .gas_limit(100_000)
+                            .build()
+                            .unwrap(),
+                    )
+                    .unwrap()
+                    .result;
+                if enabled {
+                    assert!(result.is_success(), "{spec:?}, {opcode:x}: {result:?}");
+                    assert_eq!(U256::from_be_slice(result.output().unwrap()), expected);
+                } else {
+                    assert!(
+                        matches!(
+                            result,
+                            ExecutionResult::Halt {
+                                reason: HaltReason::NotActivated,
+                                ..
+                            }
+                        ),
+                        "{spec:?}, {opcode:x}: {result:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn sanity_eip7702_tx() {
         let signer = PrivateKeySigner::random();
         let auth = Authorization {

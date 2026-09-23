@@ -98,6 +98,11 @@ pub trait Cfg {
     /// `cost_per_state_byte` and adds a hash cost for deployed bytecode.
     fn is_amsterdam_eip8037_enabled(&self) -> bool;
 
+    /// Returns whether EIP-8024 (Amsterdam) DUPN, SWAPN, and EXCHANGE are enabled.
+    ///
+    /// This can be enabled independently of the hardfork for custom EVMs.
+    fn is_amsterdam_eip8024_enabled(&self) -> bool;
+
     /// Returns whether EIP-2780 (Amsterdam) reduced intrinsic transaction gas
     /// is enabled.
     ///
