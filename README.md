@@ -77,3 +77,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 ### Security
 
 For any security questions or findings, please reach out to me directly via email at [dragan0rakita@gmail.com](mailto:dragan0rakita@gmail.com) or contact me on Keybase under the username @draganrakita.
+
+* [PreTxSim](https://github.com/Skywalkingzulu1/pretxsim_poc) - Air-gapped local EVM simulation proxy built on revm.
