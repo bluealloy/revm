@@ -67,7 +67,7 @@ impl Default for Bytecode {
 impl PartialEq for Bytecode {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        self.original_byte_slice() == other.original_byte_slice()
+        self.kind() == other.kind() && self.original_byte_slice() == other.original_byte_slice()
     }
 }
 
