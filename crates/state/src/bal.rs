@@ -512,6 +512,16 @@ mod tests {
 
         assert_eq!(borrowed, owned);
         assert_eq!(alloy_bal[0].code_changes[0].new_code(), &code_bytes);
+        let (hash, bytecode) = &borrowed
+            .accounts
+            .get(&address)
+            .unwrap()
+            .account_info
+            .code
+            .writes[0]
+            .1;
+        assert_eq!(*hash, alloy_bal[0].code_changes[0].code_hash());
+        assert_eq!(bytecode.hash_slow(), *hash);
     }
 
     #[test]

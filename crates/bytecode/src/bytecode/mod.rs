@@ -289,6 +289,20 @@ impl Bytecode {
         }
     }
 
+    /// Sets the cached bytecode hash if it has not already been computed.
+    ///
+    /// The cache is shared with all clones of this bytecode.
+    ///
+    /// # Safety
+    ///
+    /// `hash` must be the Keccak-256 hash of [`Self::original_byte_slice`], without
+    /// any analysis padding. An incorrect hash violates the bytecode/hash invariant
+    /// and can cause invalid EVM state.
+    #[inline]
+    pub unsafe fn set_bytecode_hash(&self, hash: B256) {
+        let _ = self.0.hash.set(hash);
+    }
+
     /// Calculates or returns cached hash of the bytecode.
     #[inline]
     pub fn hash_slow(&self) -> B256 {
@@ -373,6 +387,26 @@ mod tests {
     use crate::{eip7702::Eip7702DecodeError, opcode};
     use bitvec::{bitvec, order::Lsb0};
     use primitives::bytes;
+
+    #[test]
+    fn set_bytecode_hash() {
+        for raw in [
+            Bytes::new(),
+            Bytes::from_static(&[0x60, 0x01, 0x5b, 0x61]),
+            Bytecode::new_eip7702(Address::ZERO).original_bytes(),
+        ] {
+            let bytecode = Bytecode::new_raw_checked(raw.clone()).unwrap();
+            let cloned = bytecode.clone();
+            let hash = keccak256(&raw);
+            // SAFETY: the hash was computed from the same original bytes above.
+            unsafe { bytecode.set_bytecode_hash(hash) };
+            assert_eq!(cloned.0.hash.get(), Some(&hash));
+            assert_eq!(cloned.hash_slow(), hash);
+            // SAFETY: setting the same valid hash again is allowed.
+            unsafe { cloned.set_bytecode_hash(hash) };
+            assert_eq!(bytecode.hash_slow(), hash);
+        }
+    }
 
     #[test]
     fn test_new_empty() {
