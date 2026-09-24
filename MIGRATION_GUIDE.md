@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# v120 tag (revm v43.0.3)
+
+The new `account-ext` feature is disabled by default. Existing feature selections require no API migration unless they enable all features.
+
+When enabling `account-ext` (including through `--all-features`):
+
+* Initialize the new `AccountInfo::extension` and `AccountInfoBal::extension` fields in direct struct literals, for example with `Default::default()`, or use the provided constructors.
+* Implement `JournalEntryTr::extension_changed` for custom journal entry types and handle `JournalEntry::ExtensionChange` in exhaustive matches.
+* `AccountInfo::copy_without_code` is no longer `const` with this feature enabled. Extension bytes participate in account equality, ordering, and emptiness checks.
+* Account serialization omits empty extensions. For binary account serialization, use a format with struct boundaries, such as MessagePack; Postcard and bincode are not supported with account extensions.
+
 # v119 tag (revm v43.0.2)
 
 This release reverts the EIP-8037 system-call gas change from [#3892](https://github.com/bluealloy/revm/pull/3892) in [#3903](https://github.com/bluealloy/revm/pull/3903).

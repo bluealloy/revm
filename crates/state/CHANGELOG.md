@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.1](https://github.com/bluealloy/revm/compare/revm-state-v43.0.0...revm-state-v43.0.1) - 2026-09-24
+
+### Added
+
+- Opt-in `account-ext` feature for shared chain-specific account payloads and their BAL history ([#3894](https://github.com/bluealloy/revm/pull/3894)). Enabling it adds fields to `AccountInfo` and `AccountInfoBal`; binary account serialization requires struct boundaries, as in MessagePack.
+
+### Other
+
+- Use `CodeChange` accessors with `alloy-eip7928` 0.4.11 ([#3916](https://github.com/bluealloy/revm/pull/3916)).
+
 ## [43.0.0](https://github.com/bluealloy/revm/compare/revm-state-v42.0.0...revm-state-v43.0.0) - 2026-08-20
 
 ### Fixed
