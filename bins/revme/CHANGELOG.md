@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.3](https://github.com/bluealloy/revm/compare/revme-v43.0.2...revme-v43.0.3) - 2026-09-24
+
+### Other
+
+- Update local REVM dependencies and locked dependencies, including the `rustls` fix for RUSTSEC-2026-0285 ([#3917](https://github.com/bluealloy/revm/pull/3917)).
+
 ## [43.0.2](https://github.com/bluealloy/revm/compare/revme-v43.0.0...revme-v43.0.2) - 2026-09-08
 
 ### Fixed

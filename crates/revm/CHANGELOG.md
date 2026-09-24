@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.3](https://github.com/bluealloy/revm/compare/revm-v43.0.2...revm-v43.0.3) - 2026-09-24
+
+### Added
+
+- Expose the opt-in `account-ext` feature for chain-specific account payloads, journal rollback, and BAL history ([#3894](https://github.com/bluealloy/revm/pull/3894)).
+
+### Other
+
+- updated the following local packages: revm-state, revm-statetest-types, revm-database-interface, revm-context-interface, revm-context, revm-database, revm-interpreter, revm-precompile, revm-handler, revm-inspector
+
 ## [43.0.2](https://github.com/bluealloy/revm/compare/revm-v43.0.0...revm-v43.0.2) - 2026-09-08
 
 ### Other
