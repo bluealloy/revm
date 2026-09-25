@@ -43,8 +43,8 @@ impl<'de> Deserialize<'de> for Bytecode {
                         "original_len is greater than bytecode length",
                     ));
                 }
-                // Retain only original bytes so padding and analysis are rebuilt
-                // on demand rather than trusting the serialized form.
+                // Rebuild padding from original bytes and defer jump analysis
+                // rather than trusting the serialized form.
                 Ok(Self::new_legacy(bytecode.slice(..original_len)))
             }
             BytecodeSerde::Eip7702 { delegated_address } => {
