@@ -1,6 +1,6 @@
 //! Crate that contains bytecode types and opcode constants.
 //!
-//! Legacy bytecode initializes its jump table on first access.
+//! Legacy bytecode initializes padding and its jump table together on first access.
 //!
 //! While EIP-7702 bytecode must contains a Address.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]

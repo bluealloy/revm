@@ -4,10 +4,15 @@ use bitvec::{bitvec, order::Lsb0, vec::BitVec};
 use primitives::Bytes;
 use std::vec::Vec;
 
-/// Pads bytecode as needed for safe instruction and immediate reads.
+/// Analyzes the bytecode to produce a jump table and potentially padded bytecode.
 ///
 /// Prefer using [`Bytecode::new_legacy`](crate::Bytecode::new_legacy) instead.
-pub(crate) fn pad_legacy(bytecode: Bytes) -> Bytes {
+pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
+    if bytecode.is_empty() {
+        return (JumpTable::default(), Bytes::from_static(&[opcode::STOP]));
+    }
+
+    let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
     let range = bytecode.as_ptr_range();
     let start = range.start;
     let mut iterator = start;
@@ -18,15 +23,21 @@ pub(crate) fn pad_legacy(bytecode: Bytes) -> Bytes {
     while iterator < end {
         prev_byte = last_byte;
         last_byte = unsafe { *iterator };
-        let push_offset = last_byte.wrapping_sub(opcode::PUSH1);
-        if push_offset < 32 {
-            // A trailing PUSH can advance the iterator past the end of the
-            // bytecode allocation; `wrapping_add` keeps that offset
-            // computation defined (the `< end` guard prevents any OOB read).
-            iterator = iterator.wrapping_add(push_offset as usize + 2);
-        } else {
-            // SAFETY: Iterator access range is checked in the while loop
+        if last_byte == opcode::JUMPDEST {
+            // SAFETY: Jumps are max length of the code
+            unsafe { jumps.set_unchecked(iterator.offset_from_unsigned(start), true) }
             iterator = unsafe { iterator.add(1) };
+        } else {
+            let push_offset = last_byte.wrapping_sub(opcode::PUSH1);
+            if push_offset < 32 {
+                // A trailing PUSH can advance the iterator past the end of the
+                // bytecode allocation; `wrapping_add` keeps that offset
+                // computation defined (the `< end` guard prevents any OOB read).
+                iterator = iterator.wrapping_add(push_offset as usize + 2);
+            } else {
+                // SAFETY: Iterator access range is checked in the while loop
+                iterator = unsafe { iterator.add(1) };
+            }
         }
     }
 
@@ -44,14 +55,16 @@ pub(crate) fn pad_legacy(bytecode: Bytes) -> Bytes {
         padding += 1 + is_dupn_swapn_exchange(last_byte) as usize;
     }
 
-    if padding > 0 {
+    let bytecode = if padding > 0 {
         let mut padded = Vec::with_capacity(bytecode.len() + padding);
         padded.extend_from_slice(&bytecode);
         padded.resize(padded.len() + padding, 0);
         Bytes::from(padded)
     } else {
         bytecode
-    }
+    };
+
+    (JumpTable::new(jumps), bytecode)
 }
 
 /// Returns true if the opcode is DUPN, SWAPN, or EXCHANGE.
@@ -59,32 +72,9 @@ const fn is_dupn_swapn_exchange(opcode: u8) -> bool {
     opcode.wrapping_sub(opcode::DUPN) < 3
 }
 
-/// Analyzes the original bytecode to find valid jump destinations.
-pub(crate) fn analyze_jump_table(bytecode: &[u8]) -> JumpTable {
-    let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
-    let mut pc = 0;
-    while pc < bytecode.len() {
-        let opcode = bytecode[pc];
-        if opcode == opcode::JUMPDEST {
-            jumps.set(pc, true);
-        }
-        let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-        pc += if push_offset < 32 {
-            push_offset as usize + 2
-        } else {
-            1
-        };
-    }
-    JumpTable::new(jumps)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
-        (analyze_jump_table(&bytecode), pad_legacy(bytecode))
-    }
 
     #[test]
     fn test_bytecode_ends_with_stop_no_padding_needed() {
