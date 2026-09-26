@@ -11,6 +11,7 @@ use revm::{
 
 pub fn run(criterion: &mut Criterion) {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
+    let _ = bytecode.legacy_jump_table();
 
     let mut evm = Context::mainnet()
         .with_db(BenchmarkDB::new_bytecode(bytecode))

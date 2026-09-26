@@ -47,12 +47,16 @@ fn make_loop_call_bytecode(target: Address, value: u8) -> Bytecode {
         opcode::POP,   // clean up remaining counter (0)
         opcode::STOP,
     ]);
-    Bytecode::new_raw(code.into())
+    let bytecode = Bytecode::new_raw(code.into());
+    let _ = bytecode.legacy_jump_table();
+    bytecode
 }
 
 /// Minimal contract that just STOPs.
 fn make_stop_bytecode() -> Bytecode {
-    Bytecode::new_raw([opcode::STOP].into())
+    let bytecode = Bytecode::new_raw([opcode::STOP].into());
+    let _ = bytecode.legacy_jump_table();
+    bytecode
 }
 
 /// Constructs bytecode that does a single CALL (no value) to `target`, then STOPs.
@@ -72,7 +76,9 @@ fn make_subcall_bytecode(target: Address) -> Bytecode {
     ];
     code.extend_from_slice(target.as_slice());
     code.extend_from_slice(&[opcode::GAS, opcode::CALL, opcode::POP, opcode::STOP]);
-    Bytecode::new_raw(code.into())
+    let bytecode = Bytecode::new_raw(code.into());
+    let _ = bytecode.legacy_jump_table();
+    bytecode
 }
 
 pub fn run(criterion: &mut Criterion) {

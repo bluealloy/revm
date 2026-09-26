@@ -18,9 +18,9 @@ impl Serialize for Bytecode {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let repr = match self.kind() {
             BytecodeKind::LegacyAnalyzed => BytecodeSerde::LegacyAnalyzed {
-                bytecode: self.0.bytecode.clone(),
-                original_len: self.0.original_len,
-                jump_table: self.0.jump_table.clone(),
+                bytecode: self.bytecode().clone(),
+                original_len: self.len(),
+                jump_table: self.legacy_jump_table().unwrap().clone(),
             },
             BytecodeKind::Eip7702 => BytecodeSerde::Eip7702 {
                 delegated_address: self.eip7702_address().unwrap(),
@@ -43,8 +43,8 @@ impl<'de> Deserialize<'de> for Bytecode {
                         "original_len is greater than bytecode length",
                     ));
                 }
-                // Re-analyze from original bytes to ensure padding invariants
-                // are satisfied, rather than trusting the serialized form.
+                // Rebuild padding from original bytes and defer jump analysis
+                // rather than trusting the serialized form.
                 Ok(Self::new_legacy(bytecode.slice(..original_len)))
             }
             BytecodeSerde::Eip7702 { delegated_address } => {

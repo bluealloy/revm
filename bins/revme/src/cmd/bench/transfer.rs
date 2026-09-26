@@ -9,8 +9,10 @@ use revm::{
 };
 
 pub fn run(criterion: &mut Criterion) {
+    let bytecode = Bytecode::new();
+    let _ = bytecode.legacy_jump_table();
     let mut evm = Context::mainnet()
-        .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_cfg_chained(|cfg| cfg.disable_nonce_check = true)
         .build_mainnet();
 

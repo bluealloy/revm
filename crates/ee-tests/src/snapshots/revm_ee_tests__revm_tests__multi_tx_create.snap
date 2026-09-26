@@ -114,7 +114,7 @@ expression: "&(result1, result2, result3, output)"
         "code_hash": "0x9125466aa9ef15459d85e7318f6d3bdc5f6978c0565bee37a8e768d7c202a67a",
         "code": {
           "LegacyAnalyzed": {
-            "bytecode": "0x61ffffff00",
+            "bytecode": "0x61ffffff00000000000000000000000000000000000000000000000000000000000000000000",
             "original_len": 5,
             "jump_table": {
               "order": "bitvec::order::Lsb0",
