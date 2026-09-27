@@ -3,7 +3,7 @@
 #[cfg(feature = "account-ext")]
 use crate::AccountExtension;
 use crate::{
-    bal::{writes::BalWrites, BalError, BlockAccessIndex},
+    bal::{writes::BalWrites, BalAccountInfo, BalAccountLookup, BalError, BlockAccessIndex},
     Account, AccountInfo, EvmStorage,
 };
 use alloy_eip7928::{
@@ -262,6 +262,34 @@ impl AccountInfoBal {
             changed = true;
         }
         changed
+    }
+
+    /// Looks up account fields written strictly before `bal_index`.
+    ///
+    /// Returns [`BalAccountLookup::Complete`] when balance, nonce, and code are all written, and
+    /// [`BalAccountLookup::Partial`] with the written fields otherwise. With the `account-ext`
+    /// feature, a complete account also requires an extension write, since [`BalAccountInfo`]
+    /// cannot carry the extension.
+    pub fn account_info_lookup(&self, bal_index: BlockAccessIndex) -> BalAccountLookup {
+        let code = self.code.get(bal_index);
+        let info = BalAccountInfo {
+            balance: self.balance.get(bal_index),
+            nonce: self.nonce.get(bal_index),
+            code_hash: code.as_ref().map(|(hash, _)| *hash),
+        };
+        let (Some(balance), Some(nonce), Some((code_hash, code))) =
+            (info.balance, info.nonce, code)
+        else {
+            return BalAccountLookup::Partial(info);
+        };
+        #[cfg(feature = "account-ext")]
+        let Some(extension) = self.extension.get(bal_index) else {
+            return BalAccountLookup::Partial(info);
+        };
+        let account = AccountInfo::new(balance, nonce, code_hash, code);
+        #[cfg(feature = "account-ext")]
+        let account = account.with_extension(extension);
+        BalAccountLookup::Complete(account)
     }
 
     /// Extend account info from another account info.
