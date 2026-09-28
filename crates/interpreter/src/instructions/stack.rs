@@ -1,6 +1,6 @@
 use crate::{
     interpreter_types::{Immediates, InterpreterTypes as ITy, Jumps, RuntimeFlag, StackTr},
-    InstructionContext as Ictx, InstructionExecResult as Result, InstructionResult,
+    Host, InstructionContext as Ictx, InstructionExecResult as Result, InstructionResult,
 };
 use primitives::U256;
 
@@ -59,8 +59,10 @@ pub fn swap<const N: usize, IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Res
 /// Implements the DUPN instruction.
 ///
 /// Duplicates the Nth stack item to the top of the stack, with N given by an immediate.
-pub fn dupn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, AMSTERDAM);
+pub fn dupn<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+    if !context.host.is_amsterdam_eip8024_enabled() {
+        return Err(InstructionResult::NotActivated);
+    }
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
         if !context.interpreter.stack.dup(n) {
@@ -76,8 +78,10 @@ pub fn dupn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// Implements the SWAPN instruction.
 ///
 /// Swaps the top stack item with the N+1th stack item, with N given by an immediate.
-pub fn swapn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, AMSTERDAM);
+pub fn swapn<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+    if !context.host.is_amsterdam_eip8024_enabled() {
+        return Err(InstructionResult::NotActivated);
+    }
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some(n) = decode_single(x) {
         if !context.interpreter.stack.exchange(0, n) {
@@ -93,8 +97,10 @@ pub fn swapn<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
 /// Implements the EXCHANGE instruction.
 ///
 /// Swaps the N+1th stack item with the M+1th stack item, with N, M given by an immediate.
-pub fn exchange<IT: ITy, H: ?Sized>(context: Ictx<'_, H, IT>) -> Result {
-    check!(context.interpreter, AMSTERDAM);
+pub fn exchange<IT: ITy, H: Host + ?Sized>(context: Ictx<'_, H, IT>) -> Result {
+    if !context.host.is_amsterdam_eip8024_enabled() {
+        return Err(InstructionResult::NotActivated);
+    }
     let x: usize = context.interpreter.bytecode.read_u8().into();
     if let Some((n, m)) = decode_pair(x) {
         if !context.interpreter.stack.exchange(n, m - n) {
