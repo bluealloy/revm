@@ -20,6 +20,7 @@ pub fn run(criterion: &mut Criterion) {
             continue;
         };
         let bytecode = Bytecode::new_raw(Bytes::from(hex));
+        let _ = bytecode.legacy_jump_table();
 
         let mut evm = Context::mainnet()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
