@@ -6,7 +6,7 @@ use core::{
 };
 use primitives::{Address, StorageKey, StorageValue, B256};
 use state::{
-    bal::{alloy::AlloyBal, Bal, BalError, BlockAccessIndex},
+    bal::{alloy::AlloyBal, Bal, BalAccountLookup, BalError, BlockAccessIndex},
     Account, AccountId, AccountInfo, Bytecode, EvmState,
 };
 use std::sync::Arc;
@@ -174,6 +174,40 @@ impl BalState {
 
         *basic = Some(bal_basic);
         Ok(true)
+    }
+
+    /// Looks up account fields visible strictly before the current [`Self::bal_index`].
+    ///
+    /// Returns [`BalAccountLookup::Complete`] when the BAL supplies balance, nonce, and code,
+    /// allowing the caller to skip the account read from its backing database. Otherwise,
+    /// [`BalAccountLookup::Partial`] carries the available fields as [`BalAccountInfo`]: `None`
+    /// means the field must come from the backing account, not that it is zero or empty.
+    /// Read-only entries and entries with no writes before the index are partial with no fields.
+    /// With the `account-ext` feature, a complete lookup also requires an extension write, and
+    /// partial lookups do not carry it; [`Self::basic`] applies every write to the backing account.
+    ///
+    /// Unlike [`BalAccountInfo::from_changes`], this observes the configured read position rather
+    /// than taking the block's final values. To include post-execution writes for a block with
+    /// `n` transactions, set the index to `n + 2`, past the post-execution index `n + 1`.
+    ///
+    /// Returns [`BalAccountLookup::NotCovered`] when no BAL is attached, or when the address is
+    /// missing and [`Self::allow_db_fallback`] is enabled. A missing address with fallback
+    /// disabled returns [`BalError::AccountNotFound`], just like [`Self::get_account_id`].
+    ///
+    /// [`BalAccountInfo`]: state::bal::BalAccountInfo
+    /// [`BalAccountInfo::from_changes`]: state::bal::BalAccountInfo::from_changes
+    #[inline]
+    pub fn get_bal_account_info(&self, address: &Address) -> Result<BalAccountLookup, BalError> {
+        let Some(bal) = &self.bal else {
+            return Ok(BalAccountLookup::NotCovered);
+        };
+        let Some(bal_account) = bal.accounts.get(address) else {
+            if self.allow_db_fallback {
+                return Ok(BalAccountLookup::NotCovered);
+            }
+            return Err(BalError::AccountNotFound { address: *address });
+        };
+        Ok(bal_account.account_info.account_info_lookup(self.bal_index))
     }
 
     /// Get storage value from BAL.
@@ -461,7 +495,7 @@ impl<DB: DatabaseCommit> DatabaseCommit for BalDatabase<DB> {
 mod tests {
     use super::*;
     use primitives::U256;
-    use state::bal::{AccountBal, BalWrites};
+    use state::bal::{AccountBal, BalAccountInfo, BalWrites};
 
     fn bal_with_account(address: Address, slot: StorageKey) -> Arc<Bal> {
         let mut account = AccountBal::default();
@@ -518,6 +552,35 @@ mod tests {
         assert_eq!(
             bal_state.storage(&address, slot),
             Ok(Some(StorageValue::from(42u64)))
+        );
+    }
+
+    #[test]
+    fn account_info_lookup_obeys_coverage_and_fallback() {
+        let address = Address::with_last_byte(1);
+        let mut bal_state = BalState::new();
+        assert_eq!(
+            bal_state.get_bal_account_info(&address),
+            Ok(BalAccountLookup::NotCovered)
+        );
+
+        bal_state.bal = Some(Arc::new(Bal::new()));
+        assert_eq!(
+            bal_state.get_bal_account_info(&address),
+            Err(BalError::AccountNotFound { address })
+        );
+        bal_state.set_allow_db_fallback(true);
+        assert_eq!(
+            bal_state.get_bal_account_info(&address),
+            Ok(BalAccountLookup::NotCovered)
+        );
+
+        // Read-only entries are covered but supply no fields.
+        bal_state.bal = Some(Arc::new(Bal::from_iter([(address, AccountBal::default())])));
+        bal_state.set_allow_db_fallback(false);
+        assert_eq!(
+            bal_state.get_bal_account_info(&address),
+            Ok(BalAccountLookup::Partial(BalAccountInfo::default()))
         );
     }
 }
