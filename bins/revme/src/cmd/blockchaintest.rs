@@ -25,7 +25,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::Arc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 use thiserror::Error;
 
@@ -798,6 +798,7 @@ fn execute_blockchain_test(
         let mut block_state_gas_used: u64 = 0;
         let mut block_completed = true;
         let mut receipts = Vec::with_capacity(transactions.len());
+        let mut block_execution_elapsed = Duration::ZERO;
 
         // Execute each transaction in the block
         for (tx_idx, tx) in transactions.iter().enumerate() {
@@ -878,11 +879,21 @@ fn execute_blockchain_test(
             evm.db_mut().bump_bal_index();
 
             // If JSON output requested, output transaction details
+            let execution_tx = tx_env.clone();
+            let execution_start = Instant::now();
             let execution_result = if json_output {
-                evm.inspect_tx(tx_env.clone())
+                evm.inspect_tx(execution_tx)
             } else {
-                evm.transact(tx_env.clone())
+                evm.transact(execution_tx)
             };
+            let execution_elapsed = execution_start.elapsed();
+            block_execution_elapsed += execution_elapsed;
+            if !json_output {
+                println!(
+                    "  Block {block_idx}, tx {tx_idx}: execution took {:.3} ms",
+                    execution_elapsed.as_secs_f64() * 1_000.0
+                );
+            }
 
             match execution_result {
                 Ok(result) => {
@@ -1091,6 +1102,12 @@ fn execute_blockchain_test(
         }
 
         state.merge_transitions(BundleRetention::Reverts);
+        if !json_output {
+            println!(
+                "  Block {block_idx}: total transaction execution took {:.3} ms",
+                block_execution_elapsed.as_secs_f64() * 1_000.0
+            );
+        }
     }
 
     // Validate post state if present

@@ -24,3 +24,13 @@ cargo run -p revme statetest tests/GeneralStateTests
 is ignored so it won't be checked into git.*
 
 [et]: https://github.com/ethereum/tests
+
+## Jumpdest analysis benchmark fixtures
+
+The [CREATE jumpdest-analysis fixtures](fixtures/jumpdest-analysis/README.md)
+reproduce execution-specs PR #3631 on Amsterdam, including all four randomized
+patterns and nine periodic controls:
+
+```shell
+cargo run --release -p revme -- btest bins/revme/fixtures/jumpdest-analysis
+```
