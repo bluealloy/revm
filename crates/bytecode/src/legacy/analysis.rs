@@ -9,56 +9,29 @@ mod aarch64;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod x86;
 
-/// Number of trailing bytes the SIMD prefix leaves to the scalar loop.
-///
-/// When the prefix ends on an instruction boundary, the scalar loop then sees either two
-/// instructions or one PUSH, so it knows the last two instructions whenever the padding depends on
-/// both. Otherwise, the instruction before the scalar loop is a PUSH, which may also run past the
-/// end.
-const SCALAR_TAIL: usize = 2;
-
-/// Analyzes the bytecode to produce a jump table and potentially padded bytecode.
-///
-/// Prefer using [`Bytecode::new_legacy`](crate::Bytecode::new_legacy) instead.
+/// Analyzes the original bytecode to produce a jump table.
 #[inline]
-pub(crate) fn analyze_legacy(bytecode: Bytes) -> (JumpTable, Bytes) {
+pub(crate) fn analyze_legacy(bytecode: &[u8]) -> JumpTable {
     let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; bytecode.len()];
     let table = jumps.as_raw_mut_slice();
-    let pc = analyze_simd(&bytecode, table);
-    let padding = analyze_scalar(&bytecode, table, pc);
-
-    let bytecode = if padding > 0 {
-        let mut padded = Vec::with_capacity(bytecode.len() + padding);
-        padded.extend_from_slice(&bytecode);
-        padded.resize(padded.len() + padding, 0);
-        Bytes::from(padded)
-    } else {
-        bytecode
-    };
-
-    (JumpTable::new(jumps), bytecode)
+    let pc = analyze_simd(bytecode, table);
+    analyze_scalar(bytecode, table, pc);
+    JumpTable::new(jumps)
 }
 
-/// Marks the jump destinations of `code` from the instruction at `pc` on, and returns the padding
-/// the bytecode needs.
+/// Marks the jump destinations of `code` from the instruction at `pc` on.
 ///
-/// `pc` must be zero, or the first instruction after a prefix that ends at least [`SCALAR_TAIL`]
-/// bytes before the end of `code`.
+/// `pc` must be zero or the first instruction after an already analyzed prefix.
 #[inline]
-fn analyze_scalar(code: &[u8], table: &mut [u8], pc: usize) -> usize {
+fn analyze_scalar(code: &[u8], table: &mut [u8], pc: usize) {
     let range = code.as_ptr_range();
     let start = range.start;
     // A PUSH from the prefix can run past the end, so `wrapping_add` keeps this defined.
     let mut iterator = start.wrapping_add(pc);
     let end = range.end;
-    let mut prev_byte: u8 = 0;
-    // Stands in for the instruction before a nonzero `pc`. It is a PUSH, or the loop below sees
-    // two more instructions or a PUSH, so the padding never depends on its opcode otherwise.
-    let mut last_byte = if pc == 0 { opcode::STOP } else { opcode::PUSH1 };
 
     while iterator < end {
-        prev_byte = last_byte;
-        last_byte = unsafe { *iterator };
+        let last_byte = unsafe { *iterator };
         if last_byte == opcode::JUMPDEST {
             // SAFETY: Jumps are max length of the code.
             let offset = unsafe { iterator.offset_from_unsigned(start) };
@@ -77,29 +50,13 @@ fn analyze_scalar(code: &[u8], table: &mut [u8], pc: usize) -> usize {
             }
         }
     }
-
-    // Calculate padding needed:
-    // push_overflow: bytes needed for incomplete PUSH immediate data
-    let push_overflow = (iterator as usize) - (end as usize);
-    let mut padding = push_overflow;
-
-    if last_byte == opcode::STOP {
-        // DUPN/SWAPN/EXCHANGE have 1-byte immediates that aren't handled by the loop above,
-        // so we need extra padding to ensure safe execution.
-        padding += is_dupn_swapn_exchange(prev_byte) as usize;
-    } else {
-        // Add final STOP instruction and immediate for DUPN/SWAPN/EXCHANGE
-        padding += 1 + is_dupn_swapn_exchange(last_byte) as usize;
-    }
-
-    padding
 }
 
-/// Marks the jump destinations of a bytecode prefix that ends at least [`SCALAR_TAIL`] bytes
-/// before the end, and returns the offset of the first instruction after it.
+/// Marks the jump destinations of complete SIMD blocks and returns the offset of the first
+/// instruction after them.
 #[inline]
 fn analyze_simd(code: &[u8], table: &mut [u8]) -> usize {
-    if code.len() < 16 + SCALAR_TAIL {
+    if code.len() < 16 {
         return 0;
     }
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -134,8 +91,8 @@ trait Kernel {
     unsafe fn block(ptr: *const u8, entry: &mut Self::Entry) -> Self::Bits;
 }
 
-/// Analyzes blocks with `K` from the block at `pc`, entered at `entry`, while they end at
-/// least [`SCALAR_TAIL`] bytes before the end of `code`, and returns the next block and its entry.
+/// Analyzes complete blocks with `K` from the block at `pc`, entered at `entry`, and returns
+/// the next block and its entry.
 ///
 /// # Safety
 ///
@@ -149,7 +106,7 @@ unsafe fn analyze_blocks<K: Kernel>(
     (mut pc, entry): (usize, usize),
 ) -> (usize, usize) {
     let mut entry = unsafe { K::Entry::new(entry) };
-    while pc + K::LEN + SCALAR_TAIL <= code.len() {
+    while pc + K::LEN <= code.len() {
         // SAFETY: the block and its bits are in bounds.
         unsafe {
             let bits = K::block(code.as_ptr().add(pc), &mut entry)
@@ -204,9 +161,31 @@ unsafe fn uncarried<E: Entry>(jumpdests: u64, entry: &mut E) -> u64 {
     jumpdests >> carried << carried
 }
 
-/// Returns true if the opcode is DUPN, SWAPN, or EXCHANGE.
-const fn is_dupn_swapn_exchange(opcode: u8) -> bool {
-    opcode.wrapping_sub(opcode::DUPN) < 3
+/// Maximum PUSH immediate length plus a terminating STOP.
+const PADDING: usize = 33;
+
+/// Appends zero padding unless the bytecode already ends with 33 zeros.
+pub(crate) fn pad_legacy(bytecode: Bytes) -> Bytes {
+    if bytecode.is_empty() {
+        return Bytes::from_static(&[opcode::STOP]);
+    }
+    if bytecode.ends_with(&[0; PADDING]) {
+        return bytecode;
+    }
+
+    let padded_len = bytecode.len() + PADDING;
+    match bytecode.0.try_into_mut() {
+        Ok(mut bytecode) => {
+            bytecode.resize(padded_len, 0);
+            bytecode.freeze().into()
+        }
+        Err(bytecode) => {
+            let mut padded = Vec::with_capacity(padded_len);
+            padded.extend_from_slice(&bytecode);
+            padded.resize(padded_len, 0);
+            padded.into()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -216,12 +195,12 @@ mod tests {
     use rand::{rngs::StdRng, RngExt, SeedableRng};
     use std::vec;
 
-    /// Returns the jump table and padding of `code`, one instruction at a time.
-    fn reference(code: &[u8]) -> (Vec<u8>, usize) {
+    /// Returns the jump table of `code`, one instruction at a time.
+    fn reference(code: &[u8]) -> Vec<u8> {
         let mut table = vec![0; code.len().div_ceil(8)];
-        let (mut pc, mut prev, mut last) = (0, 0, 0);
+        let mut pc = 0;
         while pc < code.len() {
-            (prev, last) = (last, code[pc]);
+            let last = code[pc];
             if last == opcode::JUMPDEST {
                 table[pc / 8] |= 1 << (pc % 8);
             }
@@ -232,13 +211,7 @@ mod tests {
                 0
             };
         }
-        let padding = pc - code.len()
-            + if last == opcode::STOP {
-                is_dupn_swapn_exchange(prev) as usize
-            } else {
-                1 + is_dupn_swapn_exchange(last) as usize
-            };
-        (table, padding)
+        table
     }
 
     /// Returns random bytecode of `len` bytes, drawn from one of several opcode mixes.
@@ -299,16 +272,11 @@ mod tests {
         let check = |code: &[u8]| {
             let mut table = vec![0; code.len().div_ceil(8)];
             let pc = simd(code, &mut table);
-            let padding = analyze_scalar(code, &mut table, pc);
-            assert_eq!(
-                (table, padding),
-                reference(code),
-                "{}",
-                primitives::hex::encode(code)
-            );
+            analyze_scalar(code, &mut table, pc);
+            assert_eq!(table, reference(code), "{}", primitives::hex::encode(code));
         };
 
-        // Every PUSH near the end, followed by the endings the padding depends on.
+        // Every PUSH near the end, followed by different instruction endings.
         let endings: [&[u8]; 4] = [
             &[],
             &[opcode::STOP],
@@ -352,7 +320,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bytecode_ends_with_stop_no_padding_needed() {
+    fn test_bytecode_ends_with_stop_still_padded() {
         let bytecode = vec![
             opcode::PUSH1,
             0x01,
@@ -361,42 +329,42 @@ mod tests {
             opcode::ADD,
             opcode::STOP,
         ];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
-        assert_eq!(padded_bytecode.len(), bytecode.len());
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
+        assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
     }
 
     #[test]
     fn test_bytecode_ends_without_stop_requires_padding() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::PUSH1, 0x02, opcode::ADD];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
-        assert_eq!(padded_bytecode.len(), bytecode.len() + 1);
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
+        assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
     }
 
     #[test]
-    fn test_bytecode_ends_with_push16_requires_17_bytes_padding() {
+    fn test_bytecode_ends_with_push16() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::PUSH16];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
-        assert_eq!(padded_bytecode.len(), bytecode.len() + 17);
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
+        assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
     }
 
     #[test]
-    fn test_bytecode_ends_with_push2_requires_2_bytes_padding() {
+    fn test_bytecode_ends_with_push2() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::PUSH2, 0x02];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
-        assert_eq!(padded_bytecode.len(), bytecode.len() + 2);
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
+        assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
     }
 
     #[test]
     fn test_bytecode_with_jumpdest_at_start() {
         let bytecode = vec![opcode::JUMPDEST, opcode::PUSH1, 0x01, opcode::STOP];
-        let (jump_table, _) = analyze_legacy(bytecode.into());
+        let jump_table = analyze_legacy(&bytecode);
         assert!(jump_table.is_valid(0)); // First byte should be a valid jumpdest
     }
 
     #[test]
     fn test_bytecode_with_jumpdest_after_push() {
         let bytecode = vec![opcode::PUSH1, 0x01, opcode::JUMPDEST, opcode::STOP];
-        let (jump_table, _) = analyze_legacy(bytecode.into());
+        let jump_table = analyze_legacy(&bytecode);
         assert!(jump_table.is_valid(2)); // JUMPDEST should be at position 2
     }
 
@@ -409,7 +377,7 @@ mod tests {
             opcode::JUMPDEST,
             opcode::STOP,
         ];
-        let (jump_table, _) = analyze_legacy(bytecode.into());
+        let jump_table = analyze_legacy(&bytecode);
         assert!(jump_table.is_valid(0)); // First JUMPDEST
         assert!(jump_table.is_valid(3)); // Second JUMPDEST
     }
@@ -417,7 +385,7 @@ mod tests {
     #[test]
     fn test_bytecode_with_max_push32() {
         let bytecode = vec![opcode::PUSH32];
-        let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
         assert_eq!(padded_bytecode.len(), bytecode.len() + 33); // PUSH32 + 32 bytes + STOP
     }
 
@@ -425,19 +393,17 @@ mod tests {
     fn test_truncated_pushes_are_padded_without_inbounds_pointer_advance() {
         for push in opcode::PUSH1..=opcode::PUSH32 {
             let bytecode = vec![push];
-            let (_, padded_bytecode) = analyze_legacy(bytecode.clone().into());
+            let padded_bytecode = pad_legacy(bytecode.clone().into());
             let push_immediate_len = (push - opcode::PUSH1 + 1) as usize;
-            assert_eq!(
-                padded_bytecode.len(),
-                bytecode.len() + push_immediate_len + 1
-            );
+            assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
+            assert!(padded_bytecode.len() > bytecode.len() + push_immediate_len);
         }
     }
 
     #[test]
     fn test_bytecode_with_invalid_opcode() {
         let bytecode = vec![0xFF, opcode::STOP]; // 0xFF is an invalid opcode
-        let (jump_table, _) = analyze_legacy(bytecode.into());
+        let jump_table = analyze_legacy(&bytecode);
         assert!(!jump_table.is_valid(0)); // Invalid opcode should not be a jumpdest
     }
 
@@ -456,8 +422,9 @@ mod tests {
             0x07,
             opcode::STOP,
         ];
-        let (jump_table, padded_bytecode) = analyze_legacy(bytecode.clone().into());
-        assert_eq!(padded_bytecode.len(), bytecode.len());
+        let jump_table = analyze_legacy(&bytecode);
+        let padded_bytecode = pad_legacy(bytecode.clone().into());
+        assert_eq!(padded_bytecode.len(), bytecode.len() + 33);
         assert!(!jump_table.is_valid(0)); // PUSH1
         assert!(!jump_table.is_valid(2)); // PUSH2
         assert!(!jump_table.is_valid(5)); // PUSH4
@@ -471,7 +438,7 @@ mod tests {
             0x02,
             opcode::STOP,
         ];
-        let (jump_table, _) = analyze_legacy(bytecode.into());
+        let jump_table = analyze_legacy(&bytecode);
         assert!(!jump_table.is_valid(1)); // JUMPDEST in push data should not be valid
     }
 
@@ -479,16 +446,64 @@ mod tests {
     fn test_bytecode_ends_with_immediate_opcode_and_stop_requires_padding() {
         // For SWAPN/DUPN/EXCHANGE, the STOP (0x00) is consumed as the immediate operand,
         // not as an actual STOP instruction, so padding is needed.
-        // [OPCODE]       -> [OPCODE, STOP, STOP] (3 bytes)
-        // [OPCODE, STOP] -> [OPCODE, STOP, STOP] (3 bytes)
+        // The fixed padding supplies both the immediate and a terminating STOP.
         for op in [opcode::SWAPN, opcode::DUPN, opcode::EXCHANGE] {
             for bytecode in [vec![op], vec![op, opcode::STOP]] {
-                let (_, padded_bytecode) = analyze_legacy(bytecode.into());
-                assert_eq!(padded_bytecode.len(), 3);
+                let original_len = bytecode.len();
+                let padded_bytecode = pad_legacy(bytecode.into());
+                assert_eq!(padded_bytecode.len(), original_len + 33);
                 assert_eq!(padded_bytecode[0], op);
                 assert_eq!(padded_bytecode[1], opcode::STOP);
                 assert_eq!(padded_bytecode[2], opcode::STOP);
             }
         }
+    }
+
+    #[test]
+    fn padding_zero_suffix_boundary() {
+        for len in [1, 32, 33, 34, 65] {
+            let raw = Bytes::from(vec![0; len]);
+            let padded = pad_legacy(raw.clone());
+            if len >= 33 {
+                assert_eq!(padded.len(), len);
+                assert_eq!(padded.as_ptr(), raw.as_ptr());
+            } else {
+                assert_eq!(padded.len(), len + 33);
+            }
+            assert!(padded.iter().all(|&byte| byte == 0));
+        }
+
+        // Every byte of the suffix must be zero to skip padding.
+        for nonzero in 0..33 {
+            let mut raw = vec![0; 33];
+            raw[nonzero] = opcode::JUMPDEST;
+            let padded = pad_legacy(raw.clone().into());
+            assert_eq!(padded.len(), 66);
+            assert_eq!(&padded[..33], &raw);
+            assert_eq!(&padded[33..], &[0; 33]);
+        }
+    }
+
+    #[test]
+    fn padding_reuses_owned_capacity() {
+        let mut raw = Vec::with_capacity(34);
+        raw.push(opcode::PUSH32);
+        let raw = Bytes::from(raw);
+        let ptr = raw.as_ptr();
+        let padded = pad_legacy(raw);
+        assert_eq!(padded.as_ptr(), ptr);
+        assert_eq!(padded.len(), 34);
+        assert_eq!(&padded[1..], &[0; 33]);
+    }
+
+    #[test]
+    fn padding_releases_shared_input() {
+        let raw = Bytes::copy_from_slice(&[opcode::PUSH32]);
+        let padded = pad_legacy(raw.clone());
+        assert!(raw.is_unique());
+        assert_ne!(padded.as_ptr(), raw.as_ptr());
+        assert_eq!(&raw[..], &[opcode::PUSH32]);
+        assert_eq!(padded.len(), 34);
+        assert_eq!(&padded[1..], &[0; 33]);
     }
 }

@@ -123,11 +123,13 @@ fn try_from_hex_to_u32(hex: &str) -> Result<u32, Box<dyn Error>> {
 fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: &str) {
     let code = Bytes::from(hex::decode(code).unwrap());
     let code_hash = hex::encode(keccak256(&code));
+    let bytecode = Bytecode::new_raw(code);
+    let _ = bytecode.legacy_jump_table();
     let account_info = AccountInfo::new(
         U256::from(0),
         0,
         B256::from_str(&code_hash).unwrap(),
-        Bytecode::new_raw(code),
+        bytecode,
     );
     cache_db.insert_account_info(addr, account_info);
 }
