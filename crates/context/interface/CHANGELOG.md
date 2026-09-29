@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.1.0](https://github.com/bluealloy/revm/compare/revm-context-interface-v43.0.2...revm-context-interface-v43.1.0) - 2026-09-29
+
+### Added
+
+- add EIP-8024 configuration flag ([#3942](https://github.com/bluealloy/revm/pull/3942))
+
 ## [43.0.2](https://github.com/bluealloy/revm/compare/revm-context-interface-v43.0.1...revm-context-interface-v43.0.2) - 2026-09-24
 
 ### Added
