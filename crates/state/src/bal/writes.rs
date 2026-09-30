@@ -101,6 +101,11 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ) where
         F: Fn(&T) -> &K,
     {
+        // Unchanged value: nothing to record, and a write made earlier at this index must be kept.
+        if original_subvalue == f(&value) {
+            return;
+        }
+
         // if index is different, we push the new value.
         if let Some(last) = self.writes.last_mut() {
             if last.0 != index {
@@ -117,10 +122,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
             [.., previous, last] => (f(&previous.1), last),
             [last] => (original_subvalue, last),
             [] => {
-                // if writes are empty check if original value is same as newly set value.
-                if original_subvalue != f(&value) {
-                    self.writes.push((index, value));
-                }
+                self.writes.push((index, value));
                 return;
             }
         };
@@ -184,5 +186,67 @@ mod tests {
         get_binary_search(5);
         get_binary_search(6);
         get_binary_search(7);
+    }
+
+    /// Applies `(index, value)` incorporations in order, each starting from the current value.
+    fn apply(start: u64, steps: &[(u64, u64)]) -> BalWrites<u64> {
+        let mut writes = BalWrites::default();
+        let mut current = start;
+        for &(index, value) in steps {
+            writes.update(idx(index), &current, value);
+            current = value;
+        }
+        writes
+    }
+
+    /// A later incorporation at the same index that only reads the item (e.g. a system call
+    /// reading an account a withdrawal credited at index n+1) must keep the earlier write.
+    #[test]
+    fn test_update_read_after_write_at_same_index_keeps_write() {
+        assert_eq!(apply(0, &[(1, 1), (1, 1)]).writes, vec![(idx(1), 1)]);
+    }
+
+    /// Every sequence of up to five incorporations over indices 1..=3 and values 0..=2:
+    /// unchanged incorporations are no-ops, and `get(i + 1)` returns the value at the end of
+    /// index `i`.
+    #[test]
+    fn test_update_all_short_sequences() {
+        fn check(start: u64, seq: &mut Vec<(u64, u64)>) {
+            let writes = apply(start, seq);
+
+            let mut current = start;
+            let changed: Vec<_> = seq
+                .iter()
+                .copied()
+                .filter(|&(_, value)| core::mem::replace(&mut current, value) != value)
+                .collect();
+            assert_eq!(
+                writes,
+                apply(start, &changed),
+                "start {start}, steps {seq:?}"
+            );
+
+            for (i, &(index, value)) in seq.iter().enumerate() {
+                if seq.get(i + 1).is_none_or(|&(next, _)| next != index) {
+                    let got = writes.get(idx(index + 1)).unwrap_or(start);
+                    assert_eq!(got, value, "start {start}, steps {seq:?}, index {index}");
+                }
+            }
+
+            if seq.len() < 5 {
+                let min_index = seq.last().map_or(1, |&(index, _)| index);
+                for index in min_index..=3 {
+                    for value in 0..=2 {
+                        seq.push((index, value));
+                        check(start, seq);
+                        seq.pop();
+                    }
+                }
+            }
+        }
+
+        for start in 0..=1 {
+            check(start, &mut Vec::new());
+        }
     }
 }
