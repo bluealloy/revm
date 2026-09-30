@@ -647,6 +647,26 @@ mod tests {
         assert_eq!(state.code_by_hash(code_hash).unwrap(), bytecode);
     }
 
+    #[test]
+    fn delegated_code_is_available_before_transition_merge() {
+        // EIP-7702 sets code on an existing account without the `Created` flag.
+        let eoa = Address::with_last_byte(1);
+        let original = AccountInfo::from_balance(U256::from(1)).with_nonce(1);
+        let delegation = Bytecode::new_eip7702(Address::with_last_byte(2));
+        let code_hash = delegation.hash_slow();
+
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(eoa, original.clone());
+        let mut account = Account::from(original);
+        account.info.nonce = 2;
+        account.info.set_code(delegation.clone());
+        account.mark_touch();
+
+        state.commit(HashMap::from_iter([(eoa, account)]));
+
+        assert_eq!(state.code_by_hash(code_hash).unwrap(), delegation);
+    }
+
     /// Checks that if accounts is touched multiple times in the same block,
     /// then the old values from the first change are preserved and not overwritten.
     ///
