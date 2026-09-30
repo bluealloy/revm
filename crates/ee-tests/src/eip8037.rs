@@ -9,7 +9,10 @@ use revm::{
     context_interface::{cfg::GasId, result::HaltReason},
     database::{BenchmarkDB, BENCH_CALLER},
     handler::{MainnetContext, MainnetEvm},
-    primitives::{address, eip7825::TX_GAS_LIMIT_CAP, hardfork::SpecId, TxKind, U256},
+    primitives::{
+        address, eip7825::TX_GAS_LIMIT_CAP, eip8037::TX_MAX_TOTAL_GAS_LIMIT, hardfork::SpecId,
+        TxKind, U256,
+    },
     state::Bytecode,
     Context, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -1130,6 +1133,44 @@ fn test_eip8037_block_gas_limit_enforced_with_state_gas() {
         .unwrap();
     assert!(result_fits.is_success());
     crate::assert_sorted_json_snapshot!(&result_fits);
+}
+
+/// 4.6 Total tx gas limit is capped at `TX_MAX_TOTAL_GAS_LIMIT` even with state gas enabled.
+#[test]
+fn test_eip8037_total_gas_limit_cap() {
+    use revm::context_interface::result::{EVMError, InvalidTransaction};
+
+    let evm = || {
+        let mut evm = state_gas_evm(sstore_bytecode(0, 1), TX_GAS_LIMIT_CAP);
+        evm.ctx.block.gas_limit = u64::MAX;
+        evm
+    };
+
+    let err = evm()
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(TX_MAX_TOTAL_GAS_LIMIT + 1)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .expect_err("Expected validation error when tx gas_limit exceeds the total cap");
+    match err {
+        EVMError::Transaction(InvalidTransaction::TxGasLimitGreaterThanCap { gas_limit, cap }) => {
+            assert_eq!(gas_limit, TX_MAX_TOTAL_GAS_LIMIT + 1);
+            assert_eq!(cap, TX_MAX_TOTAL_GAS_LIMIT);
+        }
+        other => panic!("Expected TxGasLimitGreaterThanCap, got {other:?}"),
+    }
+
+    let result = evm()
+        .transact_one(
+            TxEnv::builder_for_bench()
+                .gas_limit(TX_MAX_TOTAL_GAS_LIMIT)
+                .gas_price(0)
+                .build_fill(),
+        )
+        .unwrap();
+    assert!(result.is_success());
 }
 
 // ---- Category 5: State Gas Propagation ----
