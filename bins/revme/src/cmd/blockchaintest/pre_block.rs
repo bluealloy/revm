@@ -28,16 +28,17 @@ pub fn pre_block_transition<
         return Ok(());
     }
 
+    // beacon root system call, which runs before the blockhash one
+    if let Some(parent_beacon_block_root) = parent_beacon_block_root {
+        if spec.is_enabled_in(SpecId::CANCUN) {
+            system_call_eip4788_beacon_root(evm, parent_beacon_block_root)?;
+        }
+    }
+
     // blockhash system call
     if let Some(parent_block_hash) = parent_block_hash {
         if spec.is_enabled_in(SpecId::PRAGUE) {
             system_call_eip2935_blockhash(evm, parent_block_hash)?;
-        }
-    }
-
-    if let Some(parent_beacon_block_root) = parent_beacon_block_root {
-        if spec.is_enabled_in(SpecId::CANCUN) {
-            system_call_eip4788_beacon_root(evm, parent_beacon_block_root)?;
         }
     }
 
