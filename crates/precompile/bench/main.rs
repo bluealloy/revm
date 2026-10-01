@@ -6,6 +6,7 @@ pub mod ecrecover;
 pub mod eip1962;
 pub mod eip2537;
 pub mod eip4844;
+pub mod lookup;
 pub mod modexp;
 pub mod secp256r1;
 
@@ -44,7 +45,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 criterion_group! {
     name = benches;
     config = Criterion::default();
-    targets = benchmark_crypto_precompiles
+    targets = benchmark_crypto_precompiles, lookup::benchmark_precompile_lookup
 }
 
 criterion_main!(benches);
