@@ -70,7 +70,7 @@ pub trait InspectEvm: ExecuteEvm {
 ///
 /// Functions return CommitOutput from [`ExecuteCommitEvm`] trait.
 pub trait InspectCommitEvm: InspectEvm + ExecuteCommitEvm {
-    /// Inspect the EVM with the current inspector and previous transaction by replaying, similar to [`InspectEvm::inspect_tx`]
+    /// Inspect the EVM with the current inspector and given transaction, similar to [`InspectEvm::inspect_tx`]
     /// and commit the state diff to the database.
     ///
     /// # Outcome of Error
