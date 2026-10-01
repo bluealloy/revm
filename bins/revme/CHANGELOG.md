@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.4](https://github.com/bluealloy/revm/compare/revme-v43.0.3...revme-v43.0.4) - 2026-10-01
+
+### Other
+
+- *(bytecode)* use fixed padding and lazy jump tables ([#3945](https://github.com/bluealloy/revm/pull/3945))
+
 ## [43.0.3](https://github.com/bluealloy/revm/compare/revme-v43.0.2...revme-v43.0.3) - 2026-09-24
 
 ### Other

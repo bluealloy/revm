@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.1.0](https://github.com/bluealloy/revm/compare/revm-database-interface-v43.0.1...revm-database-interface-v43.1.0) - 2026-10-01
+
+### Added
+
+- expose BAL account lookup completeness ([#3948](https://github.com/bluealloy/revm/pull/3948))
+
 ## [43.0.1](https://github.com/bluealloy/revm/compare/revm-database-interface-v43.0.0...revm-database-interface-v43.0.1) - 2026-09-24
 
 ### Other
