@@ -191,8 +191,8 @@ run_tests() {
     echo "Running $MAIN_LABEL blockchain tests..."
     $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$MAIN_DIR/blockchain_tests"
 
-    echo "SKIP Running devnet blockchain tests..."
-    #$RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$DEVNET_DIR/blockchain_tests"
+    echo "Running devnet blockchain tests..."
+    $RUST_RUNNER run $CARGO_OPTS -p revme -- btest $KEEP_GOING_FLAG "$DEVNET_DIR/blockchain_tests"
 }
 
 ##############################
