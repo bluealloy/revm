@@ -6,7 +6,7 @@ use context_interface::{
 };
 use core::cmp;
 use interpreter::InitialAndFloorGas;
-use primitives::{eip4844, hardfork::SpecId, B256};
+use primitives::{eip4844, eip8037, hardfork::SpecId, B256};
 
 /// Validates the execution environment including block and transaction parameters.
 pub fn validate_env<CTX: ContextTr, ERROR: From<InvalidHeader> + From<InvalidTransaction>>(
@@ -147,8 +147,14 @@ pub fn validate_tx_env<CTX: ContextTr>(
         }
     }
 
-    // tx gas cap is not enforced if state gas is enabled.
-    if !context.cfg().is_amsterdam_eip8037_enabled() {
+    if context.cfg().is_amsterdam_eip8037_enabled() {
+        if tx.gas_limit() > eip8037::TX_MAX_TOTAL_GAS_LIMIT {
+            return Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+                gas_limit: tx.gas_limit(),
+                cap: eip8037::TX_MAX_TOTAL_GAS_LIMIT,
+            });
+        }
+    } else {
         // EIP-7825: Transaction Gas Limit Cap
         let cap = context.cfg().tx_gas_limit_cap();
         if tx.gas_limit() > cap {
@@ -323,7 +329,9 @@ mod tests {
         Context, ContextTr, TxEnv,
     };
     use database::{CacheDB, EmptyDB};
-    use primitives::{address, eip3860, eip7954, hardfork::SpecId, Bytes, TxKind, B256};
+    use primitives::{
+        address, eip3860, eip7825, eip7954, eip8037, hardfork::SpecId, Bytes, TxKind, B256,
+    };
     use state::{AccountInfo, Bytecode};
 
     fn deploy_contract(
@@ -648,6 +656,60 @@ mod tests {
             }
             _ => panic!("execution result is not Success"),
         }
+    }
+
+    /// Builds a context with the given spec and a transaction with `gas_limit`,
+    /// then runs [`validate_tx_env`] on it.
+    fn validate_gas_limit(spec_id: SpecId, gas_limit: u64) -> Result<(), InvalidTransaction> {
+        let mut ctx = Context::mainnet()
+            .modify_cfg_chained(|c| c.set_spec_and_mainnet_gas_params(spec_id))
+            .modify_block_chained(|b| b.gas_limit = u64::MAX)
+            .with_tx(TxEnv::builder().gas_limit(gas_limit).build().unwrap())
+            .with_db(CacheDB::<EmptyDB>::default());
+        super::validate_tx_env(&mut ctx, spec_id)
+    }
+
+    #[test]
+    fn test_eip8037_tx_max_total_gas_limit_exceeded() {
+        // EIP-8037: `tx.gas` as a whole is bounded by TX_MAX_TOTAL_GAS_LIMIT (2^32 - 1).
+        for gas_limit in [eip8037::TX_MAX_TOTAL_GAS_LIMIT + 1, 1 << 33, u64::MAX] {
+            assert_eq!(
+                validate_gas_limit(SpecId::AMSTERDAM, gas_limit),
+                Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+                    gas_limit,
+                    cap: eip8037::TX_MAX_TOTAL_GAS_LIMIT,
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn test_eip8037_tx_max_total_gas_limit_at_limit() {
+        // Exactly TX_MAX_TOTAL_GAS_LIMIT is valid
+        for gas_limit in [
+            eip8037::TX_MAX_TOTAL_GAS_LIMIT,
+            eip7825::TX_GAS_LIMIT_CAP + 1,
+            eip7825::TX_GAS_LIMIT_CAP,
+        ] {
+            assert_eq!(validate_gas_limit(SpecId::AMSTERDAM, gas_limit), Ok(()));
+        }
+    }
+
+    #[test]
+    fn test_eip7825_tx_gas_limit_cap_pre_amsterdam() {
+        // Without EIP-8037 the EIP-7825 cap applies to the whole `tx.gas`.
+        let gas_limit = eip7825::TX_GAS_LIMIT_CAP + 1;
+        assert_eq!(
+            validate_gas_limit(SpecId::OSAKA, gas_limit),
+            Err(InvalidTransaction::TxGasLimitGreaterThanCap {
+                gas_limit,
+                cap: eip7825::TX_GAS_LIMIT_CAP,
+            })
+        );
+        assert_eq!(
+            validate_gas_limit(SpecId::OSAKA, eip7825::TX_GAS_LIMIT_CAP),
+            Ok(())
+        );
     }
 
     #[test]
