@@ -20,6 +20,13 @@ pub struct CacheState {
     pub accounts: AddressMap<CacheAccount>,
     /// Created contracts
     pub contracts: B256Map<Bytecode>,
+    /// Keeps a touched empty account as an empty account instead of removing it.
+    ///
+    /// Must be unset while transactions execute, so that EIP-161 state clear removes touched
+    /// empty accounts. State overrides set it only while they are applied, through
+    /// [`State::with_empty_accounts_kept`](super::State::with_empty_accounts_kept): an account
+    /// that an override leaves empty stays in the state, with its storage, as in other clients.
+    pub keep_empty_accounts: bool,
 }
 
 impl Default for CacheState {
@@ -34,6 +41,7 @@ impl CacheState {
         Self {
             accounts: HashMap::default(),
             contracts: HashMap::default(),
+            keep_empty_accounts: false,
         }
     }
 
@@ -249,9 +257,13 @@ impl CacheState {
         // And when empty account is touched it needs to be removed from database.
         // EIP-161 state clear
         if is_empty {
-            // EIP-161 state clear: touch empty account to mark for removal.
-            // Pre-EIP-161 behavior is handled by the journal in `finalize()`.
-            this_account.touch_empty_eip161()
+            if self.keep_empty_accounts {
+                Some(this_account.keep_empty(account))
+            } else {
+                // EIP-161 state clear: touch empty account to mark for removal.
+                // Pre-EIP-161 behavior is handled by the journal in `finalize()`.
+                this_account.touch_empty_eip161()
+            }
         } else {
             Some(this_account.change(account))
         }
