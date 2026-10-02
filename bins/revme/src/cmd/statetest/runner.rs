@@ -191,13 +191,21 @@ fn validate_output(
     expected_output: Option<&Bytes>,
     actual_result: &ExecutionResult<HaltReason>,
 ) -> Result<(), TestErrorKind> {
-    if let Some((expected, actual)) = expected_output.zip(actual_result.output()) {
-        if expected != actual {
-            return Err(TestErrorKind::UnexpectedOutput {
-                expected_output: Some(expected.clone()),
-                got_output: actual_result.output().cloned(),
-            });
-        }
+    // `out` is an assertion only when the test vector declares it. A vector
+    // without `out` does not constrain the returned data.
+    let Some(expected) = expected_output else {
+        return Ok(());
+    };
+
+    // `ExecutionResult::output` is `None` when execution halted, so a vector
+    // that declares `out` must fail when nothing was returned. Zipping the two
+    // `Option`s would turn that case into a silent pass.
+    let actual = actual_result.output();
+    if actual != Some(expected) {
+        return Err(TestErrorKind::UnexpectedOutput {
+            expected_output: Some(expected.clone()),
+            got_output: actual.cloned(),
+        });
     }
     Ok(())
 }
@@ -670,5 +678,72 @@ pub fn run(
             }
         }
         Err(thread_errors.swap_remove(0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::context_interface::result::ResultGas;
+
+    /// Execution result that carries returned data (`REVERT` with a reason).
+    fn revert_with(output: &'static [u8]) -> ExecutionResult<HaltReason> {
+        ExecutionResult::Revert {
+            gas: ResultGas::default(),
+            logs: Vec::new(),
+            output: Bytes::from_static(output),
+        }
+    }
+
+    /// Execution result that carries no returned data at all.
+    fn halted() -> ExecutionResult<HaltReason> {
+        ExecutionResult::Halt {
+            reason: HaltReason::OpcodeNotFound,
+            gas: ResultGas::default(),
+            logs: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn validate_output_accepts_matching_output() {
+        let expected = Bytes::from_static(&[0xaa]);
+        assert!(validate_output(Some(&expected), &revert_with(&[0xaa])).is_ok());
+    }
+
+    #[test]
+    fn validate_output_rejects_different_output() {
+        let expected = Bytes::from_static(&[0xaa]);
+        let err = validate_output(Some(&expected), &revert_with(&[0xbb])).unwrap_err();
+
+        match err {
+            TestErrorKind::UnexpectedOutput {
+                expected_output,
+                got_output,
+            } => {
+                assert_eq!(expected_output, Some(Bytes::from_static(&[0xaa])));
+                assert_eq!(got_output, Some(Bytes::from_static(&[0xbb])));
+            }
+            other => panic!("expected UnexpectedOutput, got {other:?}"),
+        }
+    }
+
+    /// A test vector that declares `out` must not pass when execution returned
+    /// nothing. This is the case `Option::zip` used to swallow.
+    #[test]
+    fn validate_output_rejects_missing_output() {
+        let expected = Bytes::from_static(&[0xaa]);
+        let err = validate_output(Some(&expected), &halted()).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "unexpected output: got None, expected Some(0xaa)"
+        );
+    }
+
+    /// Without `out` the vector does not constrain the returned data.
+    #[test]
+    fn validate_output_accepts_absent_expectation() {
+        assert!(validate_output(None, &revert_with(&[0xbb])).is_ok());
+        assert!(validate_output(None, &halted()).is_ok());
     }
 }
