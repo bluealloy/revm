@@ -52,10 +52,14 @@ impl<'a> BytecodeIterator<'a> {
 
     #[inline]
     fn skip_immediate(&mut self, opcode: u8) {
-        // Get base immediate size from opcode info
-        let immediate_size = opcode::OPCODE_INFO[opcode as usize]
-            .map(|info| info.immediate_size() as usize)
-            .unwrap_or_default();
+        let immediate_size = match (opcode, self.bytes.as_slice().first()) {
+            (opcode::DUPN | opcode::SWAPN, Some(&x)) if valid_single(x) => 1,
+            (opcode::EXCHANGE, Some(&x)) if valid_pair(x) => 1,
+            (opcode::DUPN | opcode::SWAPN | opcode::EXCHANGE, _) => 0,
+            _ => opcode::OPCODE_INFO[opcode as usize]
+                .map(|info| info.immediate_size() as usize)
+                .unwrap_or_default(),
+        };
 
         // Advance the iterator by the immediate size
         if immediate_size > 0 {
@@ -97,6 +101,16 @@ impl Iterator for BytecodeIterator<'_> {
 }
 
 impl core::iter::FusedIterator for BytecodeIterator<'_> {}
+
+#[inline]
+const fn valid_single(x: u8) -> bool {
+    x <= 90 || x >= 128
+}
+
+#[inline]
+const fn valid_pair(x: u8) -> bool {
+    x <= 81 || x >= 128
+}
 
 #[cfg(test)]
 mod tests {
@@ -252,6 +266,13 @@ mod tests {
         let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::PUSH1]));
         let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
         assert_eq!(opcodes, vec![opcode::PUSH1]);
+    }
+
+    #[test]
+    fn invalid_dupn_keeps_jumpdest() {
+        let bytecode = Bytecode::new_legacy(Bytes::from_static(&[opcode::DUPN, opcode::JUMPDEST]));
+        let opcodes: Vec<u8> = bytecode.iter_opcodes().collect();
+        assert_eq!(opcodes, vec![opcode::DUPN, opcode::JUMPDEST]);
     }
 
     #[test]
