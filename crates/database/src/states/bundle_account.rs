@@ -179,9 +179,9 @@ impl BundleAccount {
                         extend_storage(&mut self.storage, updated_storage);
                     }
                     AccountStatus::LoadedEmptyEIP161 => {
-                        // Do nothing.
-                        // Only change that can happen from LoadedEmpty to Changed is if balance
-                        // is send to account. So we are only checking account change here.
+                        // Execution only changes the balance of an empty account. A state
+                        // override that keeps an emptied account can also change its storage.
+                        extend_storage(&mut self.storage, updated_storage);
                     }
                     _ => unreachable!("Invalid state transfer to Changed from {self:?}"),
                 };
@@ -198,9 +198,13 @@ impl BundleAccount {
             AccountStatus::InMemoryChange => {
                 let previous_storage = previous_storage_from_update(&updated_storage);
                 let in_memory_info_revert = match self.status {
-                    AccountStatus::Loaded | AccountStatus::InMemoryChange => {
+                    AccountStatus::Loaded
+                    | AccountStatus::Changed
+                    | AccountStatus::InMemoryChange => {
                         // From loaded (Or LoadedEmpty) to InMemoryChange can happen if there is balance change
                         // or new created account but Loaded didn't have contract.
+                        // From Changed it happens when a contract is created at an account that
+                        // a state override emptied, which keeps the account as Changed.
                         extend_storage(&mut self.storage, updated_storage);
                         info_revert
                     }
