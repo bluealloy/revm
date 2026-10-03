@@ -6,18 +6,33 @@ use std::vec::Vec;
 /// Use to store values
 ///
 /// If empty it means that this item was read from database.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BalWrites<T: PartialEq + Clone> {
     /// List of writes with [`BlockAccessIndex`].
     pub writes: Vec<(BlockAccessIndex, T)>,
+    /// Value before the first write, used to net a write that is reverted at its own index by a
+    /// later commit, whose original value is the one this write set.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub(crate) prior: Option<T>,
 }
+
+impl<T: PartialEq + Clone> PartialEq for BalWrites<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.writes == other.writes
+    }
+}
+
+impl<T: PartialEq + Clone + Eq> Eq for BalWrites<T> {}
 
 impl<T: PartialEq + Clone> BalWrites<T> {
     /// Create a new BalWrites.
     pub fn new(mut writes: Vec<(BlockAccessIndex, T)>) -> Self {
         writes.sort_by_key(|(index, _)| *index);
-        Self { writes }
+        Self {
+            writes,
+            prior: None,
+        }
     }
 
     /// Linear search is used for small number of writes. It is faster than binary search.
@@ -83,7 +98,12 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ///
     /// If [`BlockAccessIndex`] is same as last it will override the value.
     pub fn update(&mut self, index: BlockAccessIndex, original_value: &T, value: T) {
-        self.update_with_key(index, original_value, value, |i| i);
+        if self.writes.is_empty() {
+            self.prior = Some(original_value.clone());
+        }
+        let prior = self.prior.take();
+        self.update_inner(index, original_value, prior.as_ref(), value, |i| i);
+        self.prior = prior;
     }
 
     /// Insert a value into the builder.
@@ -96,6 +116,21 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         &mut self,
         index: BlockAccessIndex,
         original_subvalue: &K,
+        value: T,
+        f: F,
+    ) where
+        F: Fn(&T) -> &K,
+    {
+        self.update_inner(index, original_subvalue, None, value, f);
+    }
+
+    /// Insert a value into the builder, with `prior` as the value before the first write if known.
+    #[inline]
+    fn update_inner<K: PartialEq, F>(
+        &mut self,
+        index: BlockAccessIndex,
+        original_subvalue: &K,
+        prior: Option<&K>,
         value: T,
         f: F,
     ) where
@@ -120,7 +155,7 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         // extract previous (Can be original_subvalue or previous value) and last value.
         let (previous, last) = match self.writes.as_mut_slice() {
             [.., previous, last] => (f(&previous.1), last),
-            [last] => (original_subvalue, last),
+            [last] => (prior.unwrap_or(original_subvalue), last),
             [] => {
                 self.writes.push((index, value));
                 return;
@@ -248,5 +283,22 @@ mod tests {
         for start in 0..=1 {
             check(start, &mut Vec::new());
         }
+    }
+
+    #[test]
+    fn write_reverted_by_later_commit_at_same_index() {
+        // Two commits at the same index: the first writes 0 -> 1, the second 1 -> 0. The value
+        // is unchanged over the index, so no write is recorded.
+        let mut writes = BalWrites::<u64>::default();
+        writes.update(idx(1), &0, 1);
+        writes.update(idx(1), &1, 0);
+        assert!(writes.is_empty());
+
+        // A write from an earlier index is kept.
+        let mut writes = BalWrites::<u64>::default();
+        writes.update(idx(1), &0, 5);
+        writes.update(idx(2), &5, 6);
+        writes.update(idx(2), &6, 5);
+        assert_eq!(writes.writes, vec![(idx(1), 5)]);
     }
 }
