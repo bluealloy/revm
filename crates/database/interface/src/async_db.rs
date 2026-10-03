@@ -114,6 +114,7 @@ struct CurrentFiber {
     suspend: NonNull<Yielder<Resume, Yield>>,
     future_cx: NonNull<Context<'static>>,
     cancelled: bool,
+    previous: Option<NonNull<CurrentFiber>>,
 }
 
 impl CurrentFiber {
@@ -124,7 +125,12 @@ impl CurrentFiber {
 
     #[inline]
     fn suspend(&mut self) -> AsyncResult<()> {
-        match unsafe { self.suspend.as_ref() }.suspend(()) {
+        // The caller is no longer executing this fiber while it is suspended.
+        CURRENT.set(self.previous);
+        let resume = unsafe { self.suspend.as_ref() }.suspend(());
+        // Resuming may happen on another thread or inside a different parent fiber.
+        self.previous = CURRENT.replace(Some(NonNull::from(&mut *self)));
+        match resume {
             Ok(cx) => {
                 self.future_cx = cx;
                 Ok(())
@@ -142,11 +148,12 @@ impl CurrentFiber {
     }
 }
 
-struct ResetCurrentFiber(Option<NonNull<CurrentFiber>>);
+struct ResetCurrentFiber(NonNull<CurrentFiber>);
 
 impl Drop for ResetCurrentFiber {
     fn drop(&mut self) {
-        CURRENT.set(self.0);
+        // SAFETY: The guard is dropped before its fiber-local `CurrentFiber`.
+        CURRENT.set(unsafe { self.0.as_ref() }.previous);
     }
 }
 
@@ -292,10 +299,11 @@ impl<'a, R> FiberFuture<'a, R> {
                 suspend: NonNull::from(suspend),
                 future_cx,
                 cancelled: false,
+                previous: CURRENT.get(),
             };
             let current = NonNull::from(&mut current);
-            let previous = CURRENT.replace(Some(current));
-            let _reset = ResetCurrentFiber(previous);
+            CURRENT.set(Some(current));
+            let _reset = ResetCurrentFiber(current);
             Ok(func())
         };
         // SAFETY: The coroutine is stored inside `FiberFuture<'a, R>`, which is tied to the
@@ -940,6 +948,107 @@ mod tests {
 
         assert!(matches!(future.as_mut().poll(&mut cx), Poll::Pending));
         assert!(matches!(future.as_mut().poll(&mut cx), Poll::Ready(Ok(3))));
+    }
+
+    #[test]
+    fn suspended_fiber_restores_current_context() {
+        let mut future = core::pin::pin!(on_fiber(|| {
+            block_on_current(PendingOnce { pending: true })
+        }));
+        let mut cx = Context::from_waker(Waker::noop());
+
+        assert!(matches!(future.as_mut().poll(&mut cx), Poll::Pending));
+        assert!(super::CURRENT.get().is_none());
+        assert!(matches!(
+            block_on_current(core::future::ready(())),
+            Err(AsyncError::NotOnFiber)
+        ));
+        assert!(matches!(
+            future.as_mut().poll(&mut cx),
+            Poll::Ready(Ok(Ok(2)))
+        ));
+        assert!(super::CURRENT.get().is_none());
+    }
+
+    #[test]
+    fn interleaved_fibers_restore_their_own_context() {
+        let run = || {
+            let first = block_on_current(PendingOnce { pending: true })?;
+            let second = block_on_current(PendingOnce { pending: true })?;
+            Ok::<_, AsyncError>(first + second)
+        };
+        let mut first = core::pin::pin!(on_fiber(run));
+        let mut second = core::pin::pin!(on_fiber(run));
+        let mut cx = Context::from_waker(Waker::noop());
+
+        for _ in 0..2 {
+            assert!(matches!(first.as_mut().poll(&mut cx), Poll::Pending));
+            assert!(super::CURRENT.get().is_none());
+            assert!(matches!(second.as_mut().poll(&mut cx), Poll::Pending));
+            assert!(super::CURRENT.get().is_none());
+        }
+        assert!(matches!(
+            first.as_mut().poll(&mut cx),
+            Poll::Ready(Ok(Ok(4)))
+        ));
+        assert!(super::CURRENT.get().is_none());
+        assert!(matches!(
+            second.as_mut().poll(&mut cx),
+            Poll::Ready(Ok(Ok(4)))
+        ));
+        assert!(super::CURRENT.get().is_none());
+    }
+
+    #[test]
+    fn fiber_restores_context_after_moving_threads() {
+        let mut future = Box::pin(on_fiber(|| {
+            let first = block_on_current(PendingOnce { pending: true })?;
+            let second = block_on_current(PendingOnce { pending: true })?;
+            Ok::<_, AsyncError>(first + second)
+        }));
+        let mut cx = Context::from_waker(Waker::noop());
+        assert!(matches!(future.as_mut().poll(&mut cx), Poll::Pending));
+        assert!(super::CURRENT.get().is_none());
+
+        std::thread::scope(|scope| {
+            scope
+                .spawn(move || {
+                    let mut cx = Context::from_waker(Waker::noop());
+                    assert!(matches!(future.as_mut().poll(&mut cx), Poll::Pending));
+                    assert!(super::CURRENT.get().is_none());
+                    assert!(matches!(
+                        future.as_mut().poll(&mut cx),
+                        Poll::Ready(Ok(Ok(4)))
+                    ));
+                    assert!(super::CURRENT.get().is_none());
+                })
+                .join()
+                .unwrap();
+        });
+        assert!(super::CURRENT.get().is_none());
+    }
+
+    #[test]
+    fn nested_fibers_restore_parent_context() {
+        let mut future = core::pin::pin!(on_fiber(|| {
+            let parent = super::CURRENT.get();
+            let child = on_fiber(|| block_on_current(PendingOnce { pending: true }));
+            let first = block_on_current(child)???;
+            assert_eq!(super::CURRENT.get(), parent);
+            let second = block_on_current(PendingOnce { pending: true })?;
+            Ok::<_, AsyncError>(first + second)
+        }));
+        let mut cx = Context::from_waker(Waker::noop());
+
+        for _ in 0..2 {
+            assert!(matches!(future.as_mut().poll(&mut cx), Poll::Pending));
+            assert!(super::CURRENT.get().is_none());
+        }
+        assert!(matches!(
+            future.as_mut().poll(&mut cx),
+            Poll::Ready(Ok(Ok(4)))
+        ));
+        assert!(super::CURRENT.get().is_none());
     }
 
     #[test]
