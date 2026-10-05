@@ -420,9 +420,9 @@ mod tests {
         assert_eq!(
             size_of::<AccountInfo>(),
             if cfg!(feature = "account-ext") {
-                96
+                104
             } else {
-                88
+                96
             }
         );
     }
