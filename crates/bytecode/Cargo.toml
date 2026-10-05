@@ -34,7 +34,7 @@ phf = { workspace = true, features = ["macros"], optional = true }
 [dev-dependencies]
 anyhow.workspace = true
 rand.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["alloc"] }
 
 [features]
 default = ["std", "parse"]
