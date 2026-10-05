@@ -416,6 +416,7 @@ mod tests {
             assert!(bytecode.0.is_none());
             assert!(bytecode.is_default());
             assert_eq!(bytecode.kind(), BytecodeKind::LegacyAnalyzed);
+            assert!(bytecode.is_default());
             assert_eq!(bytecode.len(), 0);
             assert_eq!(bytecode.bytes_slice(), [opcode::STOP]);
             assert!(bytecode.is_empty());
@@ -427,6 +428,8 @@ mod tests {
             assert!(bytecode.original_byte_slice().is_empty());
             assert_eq!(bytecode.hash_slow(), KECCAK_EMPTY);
             assert!(bytecode.legacy_jump_table().unwrap().is_empty());
+            assert!(bytecode.is_default());
+            assert!(bytecode.clone().is_default());
             assert_eq!(bytecode, analyzed);
             assert_eq!(bytecode.cmp(&analyzed), core::cmp::Ordering::Equal);
             assert_eq!(hasher.hash_one(&bytecode), hasher.hash_one(&analyzed));
