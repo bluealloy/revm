@@ -91,6 +91,8 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
 
     /// Called whenever a call to a contract is about to start.
     ///
+    /// Root calls are also reported when runtime gas charges halt before frame initialization.
+    ///
     /// Returning `CallOutcome` will override the result of the call.
     #[inline]
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
@@ -112,6 +114,8 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
     }
 
     /// Called when a contract is about to be created.
+    ///
+    /// Root creates are also reported when runtime gas charges halt before frame initialization.
     ///
     /// If this returns `Some` then the [CreateOutcome] is used to override the result of the creation.
     ///
