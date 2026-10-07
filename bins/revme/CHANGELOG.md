@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.4](https://github.com/bluealloy/revm/compare/revme-v43.0.3...revme-v43.0.4) - 2026-10-07
+
+### Fixed
+
+- *(revme)* run EIP-4788 call before EIP-2935 ([#3959](https://github.com/bluealloy/revm/pull/3959))
+
+### Other
+
+- *(bytecode)* use fixed padding and lazy jump tables ([#3945](https://github.com/bluealloy/revm/pull/3945))
+
 ## [43.0.3](https://github.com/bluealloy/revm/compare/revme-v43.0.2...revme-v43.0.3) - 2026-09-24
 
 ### Other
