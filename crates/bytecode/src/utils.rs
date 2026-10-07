@@ -27,6 +27,7 @@ pub mod test {
     use anyhow::Result;
     use primitives::U256;
     use rand::RngExt;
+    use std::{vec, vec::Vec};
 
     /// Constructs bytecode for inserting input into memory
     pub fn build_memory_input_opcodes(start_offset: U256, input: &[u8]) -> Result<Vec<u8>> {

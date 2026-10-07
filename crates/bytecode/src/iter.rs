@@ -102,6 +102,7 @@ impl core::iter::FusedIterator for BytecodeIterator<'_> {}
 mod tests {
     use super::*;
     use primitives::Bytes;
+    use std::{vec, vec::Vec};
 
     #[test]
     fn test_simple_bytecode_iteration() {
