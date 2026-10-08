@@ -149,6 +149,28 @@ impl CacheAccount {
         }
     }
 
+    /// Keeps a touched empty account as an empty account, for state overrides.
+    ///
+    /// Like [`Self::change`], except that an account loaded from the database becomes
+    /// [`AccountStatus::Changed`] even when it had no nonce and no code. `change` would make it
+    /// [`AccountStatus::InMemoryChange`], whose storage counts as fully known, and storage the
+    /// database holds for the account would no longer be read.
+    pub fn keep_empty<'a>(
+        &mut self,
+        account: Cow<'a, Account>,
+    ) -> TransitionAccount<Option<Cow<'a, EvmStorage>>> {
+        let loaded = matches!(
+            self.status,
+            AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161
+        );
+        let mut transition = self.change(account);
+        if loaded {
+            self.status = AccountStatus::Changed;
+            transition.status = AccountStatus::Changed;
+        }
+        transition
+    }
+
     /// Consumes self and make account as destroyed.
     ///
     /// Sets account as None and set status to Destroyer or DestroyedAgain.
