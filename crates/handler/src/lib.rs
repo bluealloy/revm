@@ -57,4 +57,7 @@ pub use precompile_provider::{
 };
 #[cfg(feature = "asyncdb")]
 pub use system_call::SystemCallEvmAsync;
-pub use system_call::{SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS};
+pub use system_call::{
+    SystemCallCommitEvm, SystemCallEvm, SystemCallTx, SYSTEM_ADDRESS, SYSTEM_CALL_GAS_LIMIT,
+    SYSTEM_CALL_REGULAR_GAS_LIMIT, SYSTEM_CALL_STATE_GAS_RESERVOIR, SYSTEM_MAX_SSTORES_PER_CALL,
+};
