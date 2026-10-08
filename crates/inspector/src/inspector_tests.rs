@@ -4,7 +4,7 @@ mod tests {
         InspectCommitEvm, InspectEvm, InspectSystemCallEvm, InspectorEvent, TestInspector,
     };
     use context::{CfgEnv, Context, TxEnv};
-    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
+    use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET, BENCH_TARGET_BALANCE};
     use handler::{ExecuteEvm, MainBuilder, MainContext};
     use primitives::{
         address,
@@ -534,19 +534,20 @@ mod tests {
     }
 
     #[test]
-    fn cancun_selfdestruct_to_self_does_not_reuse_prior_journal_entry() {
+    fn cancun_selfdestruct_to_self_reports_pre_opcode_balance() {
         let code = Bytes::from(vec![opcode::ADDRESS, opcode::SELFDESTRUCT]);
         let ctx = Context::mainnet()
             .with_cfg(CfgEnv::new_with_spec(SpecId::CANCUN))
             .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(code)));
         let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+        let tx_value = U256::from(459);
 
         let result = evm
             .inspect_one_tx(
                 TxEnv::builder()
                     .caller(BENCH_CALLER)
                     .kind(TxKind::Call(BENCH_TARGET))
-                    .value(U256::from(459))
+                    .value(tx_value)
                     .gas_limit(100_000)
                     .gas_price(0)
                     .build()
@@ -555,13 +556,92 @@ mod tests {
             .unwrap();
         assert!(result.is_success());
 
-        assert!(
-            !evm.inspector
-                .get_events()
-                .iter()
-                .any(|event| matches!(event, InspectorEvent::Selfdestruct { .. })),
-            "Cancun selfdestruct-to-self must not reuse the transaction value-transfer journal entry"
+        let events = selfdestruct_events(&evm.inspector);
+        assert_eq!(events.len(), 1);
+        assert_eq!(
+            events[0],
+            (BENCH_TARGET, BENCH_TARGET, BENCH_TARGET_BALANCE + tx_value),
+            "must report the pre-opcode balance, not the transaction value-transfer journal entry"
         );
+    }
+
+    #[test]
+    fn cancun_delegatecall_selfdestruct_to_self_is_reported() {
+        let implementation = address!("1000000000000000000000000000000000000000");
+        let implementation_code = Bytes::from(vec![opcode::ADDRESS, opcode::SELFDESTRUCT]);
+
+        // DELEGATECALL with empty input/output. The implementation executes ADDRESS, so the
+        // beneficiary is the delegator whose storage and balance are in use.
+        let mut delegator_code = vec![
+            opcode::PUSH0,
+            opcode::PUSH0,
+            opcode::PUSH0,
+            opcode::PUSH0,
+            opcode::PUSH20,
+        ];
+        delegator_code.extend_from_slice(implementation.as_slice());
+        delegator_code.extend_from_slice(&[
+            opcode::PUSH2,
+            0xff,
+            0xff,
+            opcode::DELEGATECALL,
+            opcode::STOP,
+        ]);
+        let delegator_code = Bytes::from(delegator_code);
+
+        let mut db = database::InMemoryDB::default();
+        db.insert_account_info(BENCH_TARGET, account_with_code(delegator_code, U256::ZERO));
+        db.insert_account_info(
+            implementation,
+            account_with_code(implementation_code, U256::ZERO),
+        );
+
+        let ctx = Context::mainnet()
+            .with_cfg(CfgEnv::new_with_spec(SpecId::CANCUN))
+            .with_db(db);
+        let mut evm = ctx.build_mainnet_with_inspector(TestInspector::new());
+
+        let result = evm
+            .inspect_one_tx(
+                TxEnv::builder()
+                    .caller(BENCH_CALLER)
+                    .kind(TxKind::Call(BENCH_TARGET))
+                    .gas_limit(100_000)
+                    .gas_price(0)
+                    .build()
+                    .unwrap(),
+            )
+            .unwrap();
+        assert!(result.is_success());
+
+        let events = selfdestruct_events(&evm.inspector);
+        assert_eq!(events, [(BENCH_TARGET, BENCH_TARGET, U256::ZERO)]);
+    }
+
+    fn account_with_code(code: Bytes, balance: U256) -> AccountInfo {
+        AccountInfo {
+            balance,
+            nonce: 1,
+            code_hash: primitives::keccak256(&code),
+            code: Some(Bytecode::new_raw(code)),
+            ..Default::default()
+        }
+    }
+
+    /// Collects every selfdestruct the inspector was told about.
+    fn selfdestruct_events(inspector: &TestInspector) -> Vec<(Address, Address, U256)> {
+        inspector
+            .get_events()
+            .iter()
+            .filter_map(|event| match event {
+                InspectorEvent::Selfdestruct {
+                    address,
+                    beneficiary,
+                    value,
+                } => Some((*address, *beneficiary, *value)),
+                _ => None,
+            })
+            .collect()
     }
 
     #[test]
