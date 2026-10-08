@@ -28,13 +28,14 @@ bytecode.workspace = true
 # misc
 derive-where.workspace = true
 cfg-if.workspace = true
-bitvec.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
 
 [dev-dependencies]
 database.workspace = true
+bitvec.workspace = true
+serde_json.workspace = true
 
 [features]
 account-ext = ["context-interface/account-ext", "state/account-ext"]
@@ -48,6 +49,7 @@ std = [
 	"primitives/std",
 	"state/std",
 	"bitvec/std",
+	"serde_json/std"
 ]
 serde = [
 	"dep:serde",
@@ -58,7 +60,7 @@ serde = [
 	"database/serde",
 	"database-interface/serde",
 	"derive-where/serde",
-	"bitvec/serde",
+	"bitvec/serde"
 ]
 dev = [
 	"memory_limit",
