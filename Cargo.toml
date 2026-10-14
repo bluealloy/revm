@@ -85,11 +85,11 @@ gmp-mpfr-sys = { version = "1.6", default-features = false }
 blst = "0.3.15"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 c-kzg = { version = "2.1.8", default-features = false }
-k256 = { version = "0.13.4", default-features = false }
-secp256k1 = { version = "0.31.1", default-features = false }
+k256 = { version = "0.14.0", default-features = false }
+secp256k1 = { version = "0.33.1", default-features = false }
 sha2 = { version = "0.11", default-features = false }
 ripemd = { version = "0.2", default-features = false }
-p256 = { version = "0.13.2", default-features = false }
+p256 = { version = "0.14.0", default-features = false }
 aws-lc-rs = { version = "1.16.2", default-features = false, features = [
     "aws-lc-sys",
 ] }
@@ -132,7 +132,7 @@ either = { version = "1.15.0", default-features = false }
 # dev-dependencies
 anyhow = "1.0"
 indicatif = "0.18"
-rstest = "0.26.0"
+rstest = "0.27.0"
 thiserror = { version = "2.0", default-features = false }
 walkdir = "2.5"
 similar-asserts = "2.0"
