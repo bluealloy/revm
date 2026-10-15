@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [43.0.4](https://github.com/bluealloy/revm/compare/revm-precompile-v43.0.3...revm-precompile-v43.0.4) - 2026-10-15
+
+### Other
+
+- *(precompile)* use GLV for arkworks bn254 mul ([#3976](https://github.com/bluealloy/revm/pull/3976))
+- release v120 ([#3941](https://github.com/bluealloy/revm/pull/3941))
+
 ## [43.0.3](https://github.com/bluealloy/revm/compare/revm-precompile-v43.0.2...revm-precompile-v43.0.3) - 2026-09-24
 
 ### Other
