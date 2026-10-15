@@ -1,11 +1,12 @@
 //! Integration tests for the `revm` crate.
 
+use revm::handler::{MainnetContext, MainnetEvm};
 use revm::{
     bytecode::opcode,
     context::{CfgEnv, ContextTr, TxEnv},
-    database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
-    state::{AccountStatus, Bytecode},
+    database::{BenchmarkDB, InMemoryDB, BENCH_CALLER, BENCH_TARGET},
+    primitives::{address, b256, hardfork::SpecId, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
+    state::{AccountInfo, AccountStatus, Bytecode},
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
 
@@ -841,5 +842,165 @@ fn test_custom_opcode_transaction() {
         slot0.present_value(),
         U256::from(14),
         "DOUBLE(7) should store 14 in slot 0"
+    );
+}
+
+/// Identity precompile address, used as an EIP-7702 delegated account.
+const IDENTITY_PRECOMPILE: Address = address!("0x0000000000000000000000000000000000000004");
+/// Delegate contract that returns the single byte `0xAA`.
+const DELEGATE_TARGET: Address = address!("0x00000000000000000000000000000000000000bb");
+/// Contract that `CALL`s the identity precompile with `0x1122` and returns its output.
+const PROXY_CALLER: Address = address!("0x00000000000000000000000000000000000000cc");
+/// Contract that `DELEGATECALL`s the identity precompile with `0x1122` and returns its output.
+const PROXY_DELEGATECALLER: Address = address!("0x00000000000000000000000000000000000000dd");
+
+type DelegatedPrecompileEvm = MainnetEvm<MainnetContext<InMemoryDB>>;
+
+/// Bytecode that forwards `0x1122` to the identity precompile with `call_opcode` and returns
+/// whatever the callee returned.
+fn proxy_code(call_opcode: u8) -> Bytecode {
+    let mut code = vec![
+        // mstore8(0, 0x11); mstore8(1, 0x22)
+        opcode::PUSH1,
+        0x11,
+        opcode::PUSH1,
+        0x00,
+        opcode::MSTORE8,
+        opcode::PUSH1,
+        0x22,
+        opcode::PUSH1,
+        0x01,
+        opcode::MSTORE8,
+        // retSize = 0, retOffset = 0, argsSize = 2, argsOffset = 0
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x02,
+        opcode::PUSH1,
+        0x00,
+    ];
+    if call_opcode == opcode::CALL {
+        // value = 0
+        code.extend([opcode::PUSH1, 0x00]);
+    }
+    code.extend([
+        // address = identity precompile, gas = all
+        opcode::PUSH1,
+        0x04,
+        opcode::GAS,
+        call_opcode,
+        opcode::POP,
+        // return(returndata)
+        opcode::RETURNDATASIZE,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURNDATACOPY,
+        opcode::RETURNDATASIZE,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURN,
+    ]);
+    Bytecode::new_legacy(Bytes::from(code))
+}
+
+/// Builds a Prague EVM where the identity precompile holds an EIP-7702 designator pointing to
+/// `delegate`.
+fn delegated_precompile_evm(delegate: Address) -> DelegatedPrecompileEvm {
+    let delegate_code = Bytecode::new_legacy(Bytes::from_static(&[
+        opcode::PUSH1,
+        0xAA,
+        opcode::PUSH1,
+        0x00,
+        opcode::MSTORE8,
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURN,
+    ]));
+
+    let mut db = InMemoryDB::default();
+    db.insert_account_info(
+        DELEGATE_TARGET,
+        AccountInfo::default().with_code(delegate_code),
+    );
+    db.insert_account_info(
+        PROXY_CALLER,
+        AccountInfo::default().with_code(proxy_code(opcode::CALL)),
+    );
+    db.insert_account_info(
+        PROXY_DELEGATECALLER,
+        AccountInfo::default().with_code(proxy_code(opcode::DELEGATECALL)),
+    );
+    db.insert_account_info(
+        IDENTITY_PRECOMPILE,
+        AccountInfo::default().with_code(Bytecode::new_eip7702(delegate)),
+    );
+
+    Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
+        .with_db(db)
+        .build_mainnet()
+}
+
+fn transact_output(evm: &mut DelegatedPrecompileEvm, to: Address) -> Bytes {
+    let result = evm
+        .transact(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(to))
+                .data(Bytes::from_static(&[0x11, 0x22]))
+                .gas_limit(100_000)
+                .build()
+                .unwrap(),
+        )
+        .unwrap()
+        .result;
+    assert!(result.is_success(), "call should succeed: {result:?}");
+    result.output().cloned().unwrap_or_default()
+}
+
+#[test]
+fn test_eip7702_tx_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, IDENTITY_PRECOMPILE),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+#[test]
+fn test_eip7702_call_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, PROXY_CALLER),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+/// `DELEGATECALL` is the one scheme where `bytecode_address` differs from `target_address`,
+/// so this proves the precompile skip keys on the code address.
+#[test]
+fn test_eip7702_delegatecall_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, PROXY_DELEGATECALLER),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+#[test]
+fn test_eip7702_delegated_precompile_to_precompile_runs_empty_code() {
+    // SHA256 precompile as the delegate: its (empty) account code runs instead.
+    let mut evm = delegated_precompile_evm(address!("0x0000000000000000000000000000000000000002"));
+    assert_eq!(transact_output(&mut evm, IDENTITY_PRECOMPILE), Bytes::new());
+    assert_eq!(transact_output(&mut evm, PROXY_CALLER), Bytes::new());
+    assert_eq!(
+        transact_output(&mut evm, PROXY_DELEGATECALLER),
+        Bytes::new()
     );
 }
