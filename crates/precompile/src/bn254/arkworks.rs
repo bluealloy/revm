@@ -207,8 +207,8 @@ pub(crate) fn g1_point_mul(
     let p = read_g1_point(point_bytes)?;
     let fr = read_scalar(fr_bytes);
 
-    let big_int = fr.into_bigint();
-    let result = p.mul_bigint(big_int);
+    // Multiply in projective form so that arkworks uses the GLV endomorphism.
+    let result = G1Projective::from(p) * fr;
 
     let output = encode_g1_point(result.into_affine());
 
