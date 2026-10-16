@@ -1,6 +1,9 @@
+extern crate alloc;
+
 use crate::{Inspector, InspectorEvmTr, JournalExt};
+use alloc::boxed::Box;
 use context::journaled_state::JournalCheckpoint;
-use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr};
+use context::{result::ExecutionResult, ContextTr, JournalEntry, JournalTr, Transaction};
 use handler::{
     evm::FrameTr, execution::runtime_oog_unwind, post_execution::build_result_gas, EvmTr,
     FrameResult, Handler, ItemOrResult,
@@ -8,10 +11,11 @@ use handler::{
 use interpreter::{
     instructions::{GasTable, InstructionTable},
     interpreter_types::LoopControl,
-    FrameInput, GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter,
-    InterpreterAction, InterpreterTypes,
+    CallInput, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, FrameInput,
+    GasTracker, Host, InitialAndFloorGas, InstructionResult, Interpreter, InterpreterAction,
+    InterpreterTypes,
 };
-use primitives::hints_util::cold_path;
+use primitives::{hints_util::cold_path, TxKind, KECCAK_EMPTY};
 
 /// Trait that extends [`Handler`] with inspection functionality.
 ///
@@ -31,6 +35,7 @@ use primitives::hints_util::cold_path;
 /// * [`Handler::run_exec_loop`] replaced with [`InspectorHandler::inspect_run_exec_loop`]
 ///   * `run_exec_loop` calls `inspect_frame_init` and `inspect_frame_run` that call inspector inside.
 /// * [`Handler::run_system_call`] replaced with [`InspectorHandler::inspect_run_system_call`]
+/// * [`Handler::runtime_oog_result`] replaced with [`InspectorHandler::inspect_runtime_oog_result`]
 pub trait InspectorHandler: Handler
 where
     Self::Evm:
@@ -77,7 +82,7 @@ where
         }
         let mut frame_result = match exec_result {
             Some(exec_result) => exec_result,
-            None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
+            None => self.inspect_runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
         };
         let result_gas = self.post_execution(evm, &mut frame_result, init_and_floor_gas, refund)?;
         self.execution_result(evm, frame_result, result_gas)
@@ -176,7 +181,7 @@ where
                     // Unreachable in practice: system calls carry no value and
                     // target non-delegated system contracts, so no runtime
                     // charges apply.
-                    None => self.runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
+                    None => self.inspect_runtime_oog_result(evm, &init_and_floor_gas, &mut gas)?,
                 };
                 // System calls have no intrinsic gas; build ResultGas from frame result.
                 let gas = exec_result.gas();
@@ -186,6 +191,79 @@ where
             out @ Ok(_) => out,
             Err(e) => self.catch_error(evm, e),
         }
+    }
+
+    /// Reports a runtime gas halt through the root frame hooks without creating an interpreter.
+    ///
+    /// This method acts as [`Handler::runtime_oog_result`] for inspection. Runtime changes have
+    /// already been reverted; rebuilding the inputs must not load accounts or apply charges.
+    /// Inspector overrides and end hooks run before the result's gas is settled, as for a frame
+    /// that returns immediately from initialization.
+    fn inspect_runtime_oog_result(
+        &mut self,
+        evm: &mut Self::Evm,
+        init_and_floor_gas: &InitialAndFloorGas,
+        gas: &mut GasTracker,
+    ) -> Result<FrameResult, Self::Error> {
+        *gas = self.tx_gas(evm, init_and_floor_gas);
+        let tx_gas_limit = evm.ctx().tx().gas_limit();
+        let reservoir = gas.reservoir();
+        let (ctx, inspector) = evm.ctx_inspector();
+        let tx = ctx.tx();
+        let mut frame_input = match tx.kind() {
+            TxKind::Call(target_address) => {
+                // Use only code already loaded by the runtime phase. Authorization OOG may
+                // precede loading the recipient, and tracing must not extend the access list.
+                let known_bytecode = ctx
+                    .journal()
+                    .evm_state()
+                    .get(&target_address)
+                    .map(|account| {
+                        (
+                            account.info.code_hash(),
+                            account.info.code.clone().unwrap_or_default(),
+                        )
+                    })
+                    .unwrap_or_else(|| (KECCAK_EMPTY, Default::default()));
+                FrameInput::Call(Box::new(CallInputs {
+                    input: CallInput::Bytes(tx.input().clone()),
+                    gas_limit: gas.remaining(),
+                    reservoir,
+                    bytecode_address: target_address,
+                    known_bytecode,
+                    target_address,
+                    caller: tx.caller(),
+                    value: CallValue::Transfer(tx.value()),
+                    scheme: CallScheme::Call,
+                    is_static: false,
+                    return_memory_offset: 0..0,
+                    charged_new_account_state_gas: false,
+                }))
+            }
+            TxKind::Create => {
+                let inputs = CreateInputs::new(
+                    tx.caller(),
+                    CreateScheme::Create,
+                    tx.value(),
+                    tx.input().clone(),
+                    gas.remaining(),
+                    reservoir,
+                );
+                // Runtime unwind has already bumped the sender nonce. Cache the address from
+                // the original transaction nonce before the create hook observes the account.
+                inputs.created_address(tx.nonce());
+                FrameInput::Create(Box::new(inputs))
+            }
+        };
+        let mut result = frame_start::<_, Self::IT>(ctx, inspector, &mut frame_input)
+            .unwrap_or_else(|| match &frame_input {
+                FrameInput::Call(_) => FrameResult::new_call_oog(tx_gas_limit, 0..0, reservoir),
+                FrameInput::Create(_) => FrameResult::new_create_oog(tx_gas_limit, reservoir),
+                FrameInput::Empty => unreachable!(),
+            });
+        frame_end::<_, Self::IT>(ctx, inspector, &frame_input, &mut result);
+        self.last_frame_result(evm, &mut result, gas)?;
+        Ok(result)
     }
 }
 
