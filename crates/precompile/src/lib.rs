@@ -192,6 +192,11 @@ impl Precompiles {
     }
 
     /// Returns the precompile for the given address.
+    ///
+    /// Mutating a precompile through this reference does not update the short-address
+    /// lookup cache used by [`Self::get`], so a replaced precompile keeps being served from
+    /// the old entry. Use [`Self::insert`] to replace a precompile instead.
+    #[deprecated(note = "mutations bypass the lookup cache used by `get`; use `insert` instead")]
     #[inline]
     pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
         self.inner.get_mut(address)
@@ -215,6 +220,18 @@ impl Precompiles {
         &self.addresses
     }
 
+    /// Inserts a precompile, overwriting any precompile registered at the same address.
+    ///
+    /// Returns the precompile that was previously registered at that address, if any.
+    pub fn insert(&mut self, precompile: Precompile) -> Option<Precompile> {
+        let address = *precompile.address();
+        if let Some(short_idx) = short_address(&address) {
+            self.optimized_access[short_idx] = Some(precompile.clone());
+        }
+        self.addresses.insert(address);
+        self.inner.insert(address, precompile)
+    }
+
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
@@ -224,12 +241,7 @@ impl Precompiles {
         self.addresses.reserve(lower);
         self.inner.reserve(lower);
         for item in iter {
-            let address = *item.address();
-            if let Some(short_idx) = short_address(&address) {
-                self.optimized_access[short_idx] = Some(item.clone());
-            }
-            self.addresses.insert(address);
-            self.inner.insert(address, item);
+            self.insert(item);
         }
     }
 
@@ -519,6 +531,53 @@ mod test {
             output.status,
             PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
         ));
+    }
+
+    #[test]
+    fn test_insert_replaces_short_address_precompile() {
+        let mut precompiles = Precompiles::istanbul().clone();
+        let address = u64_to_address(4);
+        let identity = precompiles.get(&address).unwrap();
+        assert_eq!(*identity.id(), PrecompileId::Identity);
+
+        let replaced = precompiles.insert(Precompile::new(
+            PrecompileId::Custom("replacement".into()),
+            address,
+            temp_precompile,
+        ));
+        assert_eq!(*replaced.unwrap().id(), PrecompileId::Identity);
+
+        // Both the lookup cache used by `get` and the address map agree on the new entry.
+        assert_eq!(
+            *precompiles.get(&address).unwrap().id(),
+            PrecompileId::Custom("replacement".into())
+        );
+        assert_eq!(
+            *precompiles.inner().get(&address).unwrap().id(),
+            PrecompileId::Custom("replacement".into())
+        );
+        assert!(precompiles.addresses_set().contains(&address));
+        assert_eq!(precompiles.len(), Precompiles::istanbul().len());
+    }
+
+    #[test]
+    fn test_insert_new_precompile_past_short_address_cap() {
+        let mut precompiles = Precompiles::istanbul().clone();
+        let address = u64_to_address(SHORT_ADDRESS_CAP as u64 + 1);
+        assert!(precompiles.get(&address).is_none());
+
+        let replaced = precompiles.insert(Precompile::new(
+            PrecompileId::Custom("far".into()),
+            address,
+            temp_precompile,
+        ));
+        assert!(replaced.is_none());
+        assert_eq!(
+            *precompiles.get(&address).unwrap().id(),
+            PrecompileId::Custom("far".into())
+        );
+        assert!(precompiles.addresses_set().contains(&address));
+        assert_eq!(precompiles.len(), Precompiles::istanbul().len() + 1);
     }
 
     #[test]
