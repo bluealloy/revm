@@ -253,6 +253,14 @@ impl CacheState {
             // Pre-EIP-161 behavior is handled by the journal in `finalize()`.
             this_account.touch_empty_eip161()
         } else {
+            // Code can also change without the `Created` flag (EIP-7702 delegation),
+            // cache it for the same reason as for newly created accounts.
+            let previous_code_hash = this_account.account.as_ref().map(|a| a.info.code_hash);
+            if previous_code_hash != Some(account.info.code_hash) {
+                if let Some(code) = account.info.code.as_ref() {
+                    self.contracts.insert(account.info.code_hash, code.clone());
+                }
+            }
             Some(this_account.change(account))
         }
     }
