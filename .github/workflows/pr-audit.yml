@@ -2,31 +2,66 @@ name: Pull request audit
 
 on:
   pull_request:
-    types: [labeled]
+    types: [labeled, opened, synchronize, reopened, ready_for_review]
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
 
 permissions: {}
 
 jobs:
   publish:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+      id-token: write
+    uses: tempoxyz/gh-actions/.github/workflows/pr-audit.yml@252d87d9636b94551796b4b8a5cb4e27b8916cf6 # 2026-10-12T22-06-06Z-252d87d9
+    with:
+      required-label: cyclops
+      audit-on-push: true
+      audit-on-command: true
+    secrets:
+      EVENTS_KEY: ${{ secrets.EVENTS_KEY }}
+      EVENTS_CERT: ${{ secrets.EVENTS_CERT }}
+      EVENTS_ARGS: ${{ secrets.EVENTS_ARGS }}
+
+  pr-audit-comment:
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      (
+        startsWith(github.event.comment.body, 'cyclops audit') ||
+        startsWith(github.event.comment.body, 'cyclops private audit') ||
+        startsWith(github.event.comment.body, '@decofe cyclops audit') ||
+        startsWith(github.event.comment.body, '@decofe cyclops private audit') ||
+        startsWith(github.event.comment.body, 'derek audit')
+      )
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'cyclops'
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
-      - name: Publish event
-        run: |
-          set -euo pipefail
+      - name: Secure runner
+        uses: tempoxyz/gh-actions/actions/secure-runner@252d87d9636b94551796b4b8a5cb4e27b8916cf6 # 2026-10-12T22-06-06Z-252d87d9
 
-          echo "${{ secrets.EVENTS_KEY }}" > ${{ runner.temp }}/key
-          echo "${{ secrets.EVENTS_CERT }}" > ${{ runner.temp }}/cert
-
-          curl -sf -o /dev/null -X POST ${{ secrets.EVENTS_ARGS }} \
-            -H "Content-Type: application/json" \
-            --key ${{ runner.temp }}/key \
-            --cert ${{ runner.temp }}/cert \
-            -d '{
-              "repository": "${{ github.repository }}",
-              "event": "pr_audit",
-              "data": {
-                "pr_number": ${{ github.event.pull_request.number }},
-                "sha": "${{ github.event.pull_request.head.sha }}"
-              }
-            }'
+      - name: Handle audit command
+        uses: tempoxyz/gh-actions/actions/pr-audit-comment@252d87d9636b94551796b4b8a5cb4e27b8916cf6 # 2026-10-12T22-06-06Z-252d87d9
+        with:
+          command-regex: '^(?:@decofe\s+)?(?:cyclops\s+(?:private\s+)?audit|derek\s+audit)\b'
+          permission-check-mode: association
+          allowed-associations: OWNER,MEMBER
+          organization: bluealloy
+          events-key: ${{ secrets.EVENTS_KEY }}
+          events-cert: ${{ secrets.EVENTS_CERT }}
+          events-args: ${{ secrets.EVENTS_ARGS }}
+          github-token: ${{ github.token }}
