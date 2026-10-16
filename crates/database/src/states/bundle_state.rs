@@ -73,7 +73,10 @@ impl Default for BundleBuilder {
 impl BundleBuilder {
     /// Creates builder instance.
     ///
-    /// `revert_range` indicates the size of BundleState `reverts` field.
+    /// `revert_range` is the inclusive range of block numbers that get an entry in
+    /// [`BundleState::reverts`], one per block in ascending order. A block in the range with
+    /// no reverts added still gets an empty entry, and reverts added for a block outside the
+    /// range are dropped by [`build`](Self::build). Use `n..=n` for a single block.
     pub fn new(revert_range: RangeInclusive<u64>) -> Self {
         BundleBuilder {
             revert_range,
@@ -392,15 +395,18 @@ impl BundleRetention {
     }
 }
 
-/// Bundle state contain only values that got changed
+/// State changes accumulated over one or more blocks.
 ///
-/// For every account it contains both original and present state.
+/// Only accounts, storage slots and contracts that some block touched are kept. These are
+/// the "changed values". For each account the bundle holds the value from before the first
+/// block ([`BundleAccount::original_info`] and each slot's `previous_or_original_value`) and
+/// the value after the last block ([`BundleAccount::info`] and each slot's `present_value`).
+/// Comparing the two is how the bundle decides whether an account really changed.
 ///
-/// This is needed to decide if there were any changes to the account.
-///
-/// Changes are applied and reverts are created when TransitionState is applied to BundleState.
-///
-/// And can be used to revert BundleState to the state before transition.
+/// Reverts are the undo log. Each [`TransitionState`] applied with
+/// [`BundleRetention::Reverts`] pushes one entry onto [`reverts`](Self::reverts) holding the
+/// values the touched accounts and slots had before that transition, so the bundle can be
+/// rolled back one block at a time with [`revert_latest`](Self::revert_latest).
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleState {
@@ -408,7 +414,10 @@ pub struct BundleState {
     pub state: AddressMap<BundleAccount>,
     /// All created contracts in this block.
     pub contracts: B256Map<Bytecode>,
-    /// Changes to revert
+    /// Changes to revert, one entry per block, oldest first.
+    ///
+    /// Entry `i` holds the values needed to undo block `i`: the account info and storage
+    /// values each touched account had before that block.
     ///
     /// **Note**: Inside vector is *not* sorted by address.
     ///
@@ -422,11 +431,22 @@ pub struct BundleState {
 
 impl BundleState {
     /// Returns builder instance for further manipulation.
+    ///
+    /// See [`BundleBuilder::new`] for what `revert_range` means.
     pub fn builder(revert_range: RangeInclusive<u64>) -> BundleBuilder {
         BundleBuilder::new(revert_range)
     }
 
     /// Creates it with new and old values of both Storage and AccountInfo.
+    ///
+    /// `state` items are `(address, original_info, present_info, storage)` where `storage`
+    /// maps each slot to `(original, present)`.
+    ///
+    /// `reverts` has one item per block, oldest first. Each holds
+    /// `(address, account, storage)` with the values to restore when that block is undone.
+    /// `account` is `None` to leave the account info alone, `Some(None)` if the block created
+    /// the account and undoing it deletes it, or `Some(Some(info))` to restore `info`.
+    /// `storage` lists `(slot, value)` pairs to restore.
     pub fn new(
         state: impl IntoIterator<
             Item = (
