@@ -4014,6 +4014,7 @@ dependencies = [
 name = "revm-ee-tests"
 version = "43.0.0"
 dependencies = [
+ "alloy-eips",
  "insta",
  "revm",
 ]
