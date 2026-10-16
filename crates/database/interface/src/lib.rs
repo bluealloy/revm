@@ -50,7 +50,7 @@ pub use try_commit::{ArcUpgradeError, TryDatabaseCommit};
 pub trait DBErrorMarker: core::error::Error + Send + Sync + 'static {
     /// Returns `true` if the error is fatal and execution cannot recover from it.
     ///
-    /// Defaults to `true`. Implementors can override this to signal recoverable errors.
+    /// Defaults to `true`. Implementers can override this to signal recoverable errors.
     fn is_fatal(&self) -> bool {
         true
     }
@@ -108,7 +108,7 @@ pub trait DatabaseCommit {
 
     /// Commit changes to the database with an iterator.
     ///
-    /// Implementors of [`DatabaseCommit`] should override this method when possible for efficiency.
+    /// Implementers of [`DatabaseCommit`] should override this method when possible for efficiency.
     ///
     /// Callers should prefer using [`DatabaseCommit::commit`] when they already have a [`AddressMap`].
     ///
