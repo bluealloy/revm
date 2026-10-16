@@ -71,7 +71,7 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
     /// Flattens a nested cache by applying the outer cache to the inner cache.
     ///
     /// The behavior is as follows:
-    /// - Accounts are overridden with outer accounts
+    /// - Accounts are merged, with outer account info and storage entries taking precedence
     /// - Contracts are overridden with outer contracts
     /// - Logs are appended
     /// - Block hashes are overridden with outer block hashes
@@ -88,7 +88,14 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
             ..
         } = self;
 
-        inner.cache.accounts.extend(accounts);
+        for (address, account) in accounts {
+            match inner.cache.accounts.entry(address) {
+                Entry::Occupied(mut entry) => entry.get_mut().merge(account),
+                Entry::Vacant(entry) => {
+                    entry.insert(account);
+                }
+            }
+        }
         inner.cache.contracts.extend(contracts);
         inner.cache.logs.extend(logs);
         inner.cache.block_hashes.extend(block_hashes);
@@ -489,6 +496,36 @@ impl DbAccount {
     pub const fn update_account_state(&mut self, account_state: AccountState) {
         self.account_state = account_state;
     }
+
+    /// Merges an outer account into this inner account.
+    fn merge(&mut self, outer: Self) {
+        let Self {
+            info,
+            account_state: outer_state,
+            storage,
+        } = outer;
+
+        self.info = info;
+        let outer_clears_storage = matches!(
+            outer_state,
+            AccountState::StorageCleared | AccountState::NotExisting
+        );
+        self.account_state = match (&self.account_state, &outer_state) {
+            (_, AccountState::NotExisting) => AccountState::NotExisting,
+            (_, AccountState::StorageCleared) | (AccountState::StorageCleared, _) => {
+                AccountState::StorageCleared
+            }
+            (AccountState::NotExisting, _) => AccountState::StorageCleared,
+            (AccountState::Touched, _) | (_, AccountState::Touched) => AccountState::Touched,
+            _ => AccountState::None,
+        };
+
+        if outer_clears_storage {
+            self.storage = storage;
+        } else {
+            self.storage.extend(storage);
+        }
+    }
 }
 
 impl From<Option<AccountInfo>> for DbAccount {
@@ -596,7 +633,7 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use super::{CacheDB, EmptyDB};
+    use super::{AccountState, CacheDB, DbAccount, EmptyDB};
     use database_interface::{Database, DatabaseCommit};
     use primitives::{Address, HashMap, StorageKey, StorageValue};
     use state::{Account, AccountInfo, EvmStorageSlot, TransactionId};
@@ -651,6 +688,150 @@ mod tests {
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(StorageValue::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
+    }
+
+    #[test]
+    fn flatten_merges_storage_for_accounts_present_in_both_caches() {
+        let account = Address::with_last_byte(43);
+        let slot_a = StorageKey::from(1);
+        let value_a = StorageValue::from(10);
+        let slot_b = StorageKey::from(2);
+        let value_b = StorageValue::from(20);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(
+            account,
+            AccountInfo {
+                nonce: 1,
+                ..Default::default()
+            },
+        );
+        inner
+            .insert_account_storage(account, slot_a, value_a)
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer.insert_account_info(
+            account,
+            AccountInfo {
+                nonce: 2,
+                ..Default::default()
+            },
+        );
+        outer
+            .insert_account_storage(account, slot_b, value_b)
+            .unwrap();
+
+        let mut flattened = outer.flatten();
+        assert_eq!(flattened.basic(account).unwrap().unwrap().nonce, 2);
+        assert_eq!(flattened.storage(account, slot_a), Ok(value_a));
+        assert_eq!(flattened.storage(account, slot_b), Ok(value_b));
+    }
+
+    #[test]
+    fn flatten_prefers_outer_storage_for_the_same_slot() {
+        let account = Address::with_last_byte(44);
+        let slot = StorageKey::from(1);
+        let inner_value = StorageValue::from(10);
+        let outer_value = StorageValue::from(20);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .insert_account_storage(account, slot, inner_value)
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .insert_account_storage(account, slot, outer_value)
+            .unwrap();
+
+        let mut flattened = outer.flatten();
+        assert_eq!(flattened.storage(account, slot), Ok(outer_value));
+    }
+
+    #[test]
+    fn flatten_preserves_storage_cleared_semantics() {
+        let account = Address::with_last_byte(45);
+        let slot_a = StorageKey::from(1);
+        let value_a = StorageValue::from(10);
+        let slot_b = StorageKey::from(2);
+        let value_b = StorageValue::from(20);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .replace_account_storage(account, HashMap::from_iter([(slot_a, value_a)]))
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .insert_account_storage(account, slot_b, value_b)
+            .unwrap();
+
+        let mut flattened = outer.flatten();
+        assert_eq!(
+            flattened.cache.accounts[&account].account_state,
+            AccountState::StorageCleared
+        );
+        assert_eq!(flattened.storage(account, slot_a), Ok(value_a));
+        assert_eq!(flattened.storage(account, slot_b), Ok(value_b));
+    }
+
+    #[test]
+    fn flatten_uses_outer_storage_when_outer_cleared_it() {
+        let account = Address::with_last_byte(46);
+        let slot_a = StorageKey::from(1);
+        let value_a = StorageValue::from(10);
+        let slot_b = StorageKey::from(2);
+        let value_b = StorageValue::from(20);
+
+        let mut inner = CacheDB::new(EmptyDB::default());
+        inner.insert_account_info(account, AccountInfo::default());
+        inner
+            .insert_account_storage(account, slot_a, value_a)
+            .unwrap();
+
+        let mut outer = inner.nest();
+        outer
+            .replace_account_storage(account, HashMap::from_iter([(slot_b, value_b)]))
+            .unwrap();
+
+        let mut flattened = outer.flatten();
+        assert_eq!(
+            flattened.cache.accounts[&account].account_state,
+            AccountState::StorageCleared
+        );
+        assert_eq!(flattened.storage(account, slot_a), Ok(StorageValue::ZERO));
+        assert_eq!(flattened.storage(account, slot_b), Ok(value_b));
+    }
+
+    #[test]
+    fn flatten_does_not_restore_storage_after_inner_account_was_removed() {
+        let account = Address::with_last_byte(47);
+        let old_slot = StorageKey::from(1);
+        let old_value = StorageValue::from(10);
+
+        let mut base = CacheDB::new(EmptyDB::default());
+        base.insert_account_info(account, AccountInfo::default());
+        base.insert_account_storage(account, old_slot, old_value)
+            .unwrap();
+
+        let mut inner = CacheDB::new(base);
+        inner
+            .cache
+            .accounts
+            .insert(account, DbAccount::new_not_existing());
+
+        let mut outer = inner.nest();
+        outer.insert_account_info(account, AccountInfo::default());
+
+        let mut flattened = outer.flatten();
+        assert_eq!(
+            flattened.cache.accounts[&account].account_state,
+            AccountState::StorageCleared
+        );
+        assert_eq!(flattened.storage(account, old_slot), Ok(StorageValue::ZERO));
     }
 
     #[test]
