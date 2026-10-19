@@ -1,4 +1,4 @@
-use crate::{Gas, InstructionResult, InterpreterResult};
+use crate::{CallInputs, Gas, InstructionResult, InterpreterResult};
 use core::ops::Range;
 use primitives::{Bytes, Log};
 use std::vec::Vec;
@@ -64,6 +64,44 @@ impl CallOutcome {
         )
     }
 
+    /// Constructs a [`CallOutcome`] that answers the call described by `inputs` without
+    /// running it, for example from an inspector's `call` hook.
+    ///
+    /// The outcome carries the call's whole gas limit unspent, the state gas reservoir the call
+    /// inherited (EIP-8037), the call's return memory range and its
+    /// [`charged_new_account_state_gas`](Self::charged_new_account_state_gas) flag.
+    ///
+    /// The caller settles the outcome exactly like the outcome of a call that ran:
+    ///
+    /// - It adopts the outcome's reservoir as its own. This is why the outcome must carry the
+    ///   reservoir the call inherited: an outcome built with [`Gas::new`] has none, and the
+    ///   caller would lose the reservoir it forwarded.
+    /// - The gas limit returns to the caller on success or revert. A halt consumes it.
+    /// - When the call transfers value into an empty account, the caller charged the new-account
+    ///   state gas upfront. If the outcome is not a success, the caller refunds that charge. If
+    ///   it is a success, the caller keeps it, as for a call that ran and created the account.
+    ///   That is correct when the answer moved the value itself, as a mocked call that transfers
+    ///   the value does.
+    ///
+    /// An outcome that stands for real execution, for example a call that the inspector ran
+    /// elsewhere and merged into the state, should carry the gas of that execution instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `inputs` - The inputs of the call that is answered.
+    /// * `result` - The result the call reports.
+    /// * `output` - The output data the call returns.
+    pub fn new_answer(inputs: &CallInputs, result: InstructionResult, output: Bytes) -> Self {
+        let gas = Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit, inputs.reservoir);
+        Self {
+            charged_new_account_state_gas: inputs.charged_new_account_state_gas,
+            ..Self::new(
+                InterpreterResult::new(result, output, gas),
+                inputs.return_memory_offset.clone(),
+            )
+        }
+    }
+
     /// Returns a reference to the instruction result.
     ///
     /// Provides access to the result of the executed instruction.
@@ -117,5 +155,68 @@ impl CallOutcome {
     /// The length of the memory range as [`usize`].
     pub fn memory_length(&self) -> usize {
         self.memory_offset.len()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{CallInput, CallScheme, CallValue};
+    use primitives::{Address, B256, U256};
+    use state::Bytecode;
+
+    fn call_inputs(reservoir: u64, charged_new_account_state_gas: bool) -> CallInputs {
+        CallInputs {
+            input: CallInput::default(),
+            return_memory_offset: 4..36,
+            gas_limit: 50_000,
+            reservoir,
+            bytecode_address: Address::ZERO,
+            known_bytecode: (B256::ZERO, Bytecode::default()),
+            target_address: Address::ZERO,
+            caller: Address::ZERO,
+            value: CallValue::Transfer(U256::from(1)),
+            scheme: CallScheme::Call,
+            is_static: false,
+            charged_new_account_state_gas,
+        }
+    }
+
+    #[test]
+    fn test_new_answer_carries_the_inherited_reservoir_and_flag() {
+        let output = Bytes::from_static(&[1, 2]);
+        let outcome = CallOutcome::new_answer(
+            &call_inputs(7_000, true),
+            InstructionResult::Revert,
+            output.clone(),
+        );
+        let mut expected = CallOutcome::new(
+            InterpreterResult::new(
+                InstructionResult::Revert,
+                output,
+                Gas::new_with_regular_gas_and_reservoir(50_000, 7_000),
+            ),
+            4..36,
+        );
+        expected.charged_new_account_state_gas = true;
+        assert_eq!(outcome, expected);
+        assert_eq!(outcome.gas().remaining(), 50_000);
+        assert_eq!(outcome.gas().reservoir(), 7_000);
+        assert_eq!(outcome.gas().state_gas_spent(), 0);
+    }
+
+    #[test]
+    fn test_new_answer_without_reservoir_equals_gas_new() {
+        let output = Bytes::from_static(&[1, 2]);
+        let outcome = CallOutcome::new_answer(
+            &call_inputs(0, false),
+            InstructionResult::Return,
+            output.clone(),
+        );
+        let expected = CallOutcome::new(
+            InterpreterResult::new(InstructionResult::Return, output, Gas::new(50_000)),
+            4..36,
+        );
+        assert_eq!(outcome, expected);
     }
 }

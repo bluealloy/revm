@@ -1,4 +1,4 @@
-use crate::{Gas, InstructionResult, InterpreterResult};
+use crate::{CreateInputs, Gas, InstructionResult, InterpreterResult};
 use primitives::{Address, Bytes};
 
 /// Represents the outcome of a create operation in an interpreter.
@@ -51,6 +51,47 @@ impl CreateOutcome {
         Self::new(InterpreterResult::new_oog(gas_limit, reservoir), None)
     }
 
+    /// Constructs a [`CreateOutcome`] that answers the creation described by `inputs` without
+    /// running it, for example from an inspector's `create` hook.
+    ///
+    /// The outcome carries the creation's whole gas limit unspent, the state gas reservoir the
+    /// creation inherited (EIP-8037), the given `address` and the creation's
+    /// [`charged_create_state_gas`](Self::charged_create_state_gas) flag.
+    ///
+    /// The caller settles the outcome exactly like the outcome of a creation that ran:
+    ///
+    /// - It adopts the outcome's reservoir as its own. This is why the outcome must carry the
+    ///   reservoir the creation inherited: an outcome built with [`Gas::new`] has none, and the
+    ///   caller would lose the reservoir it forwarded.
+    /// - The gas limit returns to the caller on success or revert. A halt consumes it.
+    /// - When no account existed at the address being created, the caller charged the
+    ///   account-creation state gas upfront. If the outcome is not a success, or has no address,
+    ///   the caller refunds that charge. If it is a success with an address, the caller keeps it,
+    ///   as for a creation that ran and created the account. That is correct when the answer
+    ///   created the account itself.
+    ///
+    /// An outcome that stands for real execution, for example a creation that the inspector ran
+    /// elsewhere and merged into the state, should carry the gas of that execution instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `inputs` - The inputs of the creation that is answered.
+    /// * `result` - The result the creation reports.
+    /// * `output` - The output data the creation returns.
+    /// * `address` - The address of the created contract, if any.
+    pub fn new_answer(
+        inputs: &CreateInputs,
+        result: InstructionResult,
+        output: Bytes,
+        address: Option<Address>,
+    ) -> Self {
+        let gas = Gas::new_with_regular_gas_and_reservoir(inputs.gas_limit(), inputs.reservoir());
+        Self {
+            charged_create_state_gas: inputs.charged_create_state_gas(),
+            ..Self::new(InterpreterResult::new(result, output, gas), address)
+        }
+    }
+
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].
     ///
     /// This method provides access to the [`InstructionResult`] which represents the
@@ -92,5 +133,68 @@ impl CreateOutcome {
     /// A reference to the [`Gas`] details.
     pub const fn gas(&self) -> &Gas {
         &self.result.gas
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use context_interface::CreateScheme;
+    use primitives::U256;
+
+    fn create_inputs(reservoir: u64, charged_create_state_gas: bool) -> CreateInputs {
+        let mut inputs = CreateInputs::new(
+            Address::ZERO,
+            CreateScheme::Create,
+            U256::ZERO,
+            Bytes::new(),
+            50_000,
+            reservoir,
+        );
+        inputs.set_charged_create_state_gas(charged_create_state_gas);
+        inputs
+    }
+
+    #[test]
+    fn test_new_answer_carries_the_inherited_reservoir_and_flag() {
+        let address = Some(Address::with_last_byte(1));
+        let outcome = CreateOutcome::new_answer(
+            &create_inputs(7_000, true),
+            InstructionResult::Return,
+            Bytes::new(),
+            address,
+        );
+        let mut expected = CreateOutcome::new(
+            InterpreterResult::new(
+                InstructionResult::Return,
+                Bytes::new(),
+                Gas::new_with_regular_gas_and_reservoir(50_000, 7_000),
+            ),
+            address,
+        );
+        expected.charged_create_state_gas = true;
+        assert_eq!(outcome, expected);
+        assert_eq!(outcome.gas().remaining(), 50_000);
+        assert_eq!(outcome.gas().reservoir(), 7_000);
+        assert_eq!(outcome.gas().state_gas_spent(), 0);
+    }
+
+    #[test]
+    fn test_new_answer_without_reservoir_equals_gas_new() {
+        let outcome = CreateOutcome::new_answer(
+            &create_inputs(0, false),
+            InstructionResult::Revert,
+            Bytes::from_static(&[1]),
+            None,
+        );
+        let expected = CreateOutcome::new(
+            InterpreterResult::new(
+                InstructionResult::Revert,
+                Bytes::from_static(&[1]),
+                Gas::new(50_000),
+            ),
+            None,
+        );
+        assert_eq!(outcome, expected);
     }
 }
