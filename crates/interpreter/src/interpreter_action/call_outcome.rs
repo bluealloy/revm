@@ -65,13 +65,19 @@ impl CallOutcome {
     }
 
     /// Constructs a [`CallOutcome`] that answers the call described by `inputs` without
-    /// running it, for example from an inspector's `call` hook.
+    /// running it and at no gas cost, for example a mocked result returned from an inspector's
+    /// `call` hook.
     ///
     /// The outcome carries the call's whole gas limit unspent, the state gas reservoir the call
     /// inherited (EIP-8037), the call's return memory range and its
-    /// [`charged_new_account_state_gas`](Self::charged_new_account_state_gas) flag.
+    /// [`charged_new_account_state_gas`](Self::charged_new_account_state_gas) flag. They are
+    /// copied from `inputs` as given: if an inspector rewrote the gas limit, the reservoir or the
+    /// flag, the outcome carries the rewritten values. The outcome is not marked as a precompile
+    /// call; an answer that should be reported as one must set
+    /// [`was_precompile_called`](Self::was_precompile_called) itself.
     ///
-    /// The caller settles the outcome exactly like the outcome of a call that ran:
+    /// The standard handler settles the outcome exactly like the outcome of a call that ran, from
+    /// the outcome the end hooks leave:
     ///
     /// - It adopts the outcome's reservoir as its own. This is why the outcome must carry the
     ///   reservoir the call inherited: an outcome built with [`Gas::new`] has none, and the
@@ -79,12 +85,15 @@ impl CallOutcome {
     /// - The gas limit returns to the caller on success or revert. A halt consumes it.
     /// - When the call transfers value into an empty account, the caller charged the new-account
     ///   state gas upfront. If the outcome is not a success, the caller refunds that charge. If
-    ///   it is a success, the caller keeps it, as for a call that ran and created the account.
-    ///   That is correct when the answer moved the value itself, as a mocked call that transfers
-    ///   the value does.
+    ///   it is a success, the caller keeps it, whether or not the answer moved the value: a
+    ///   successful mock that transfers nothing still pays for the account. Keeping the charge is
+    ///   correct when the answer moved the value itself, as a mocked call that transfers the
+    ///   value does.
     ///
-    /// An outcome that stands for real execution, for example a call that the inspector ran
-    /// elsewhere and merged into the state, should carry the gas of that execution instead.
+    /// The constructor changes no state: it moves no value. An outcome that stands for real
+    /// execution, for example a call that the inspector ran elsewhere and merged into the state,
+    /// should carry the gas of that execution instead, including its reservoir and state gas
+    /// charges.
     ///
     /// # Arguments
     ///

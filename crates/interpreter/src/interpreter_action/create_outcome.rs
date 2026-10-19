@@ -52,13 +52,17 @@ impl CreateOutcome {
     }
 
     /// Constructs a [`CreateOutcome`] that answers the creation described by `inputs` without
-    /// running it, for example from an inspector's `create` hook.
+    /// running it and at no gas cost, for example a mocked result returned from an inspector's
+    /// `create` hook.
     ///
     /// The outcome carries the creation's whole gas limit unspent, the state gas reservoir the
     /// creation inherited (EIP-8037), the given `address` and the creation's
-    /// [`charged_create_state_gas`](Self::charged_create_state_gas) flag.
+    /// [`charged_create_state_gas`](Self::charged_create_state_gas) flag. They are copied from
+    /// `inputs` as given: if an inspector rewrote the gas limit, the reservoir or the flag, the
+    /// outcome carries the rewritten values.
     ///
-    /// The caller settles the outcome exactly like the outcome of a creation that ran:
+    /// The standard handler settles the outcome exactly like the outcome of a creation that ran,
+    /// from the outcome the end hooks leave:
     ///
     /// - It adopts the outcome's reservoir as its own. This is why the outcome must carry the
     ///   reservoir the creation inherited: an outcome built with [`Gas::new`] has none, and the
@@ -67,11 +71,14 @@ impl CreateOutcome {
     /// - When no account existed at the address being created, the caller charged the
     ///   account-creation state gas upfront. If the outcome is not a success, or has no address,
     ///   the caller refunds that charge. If it is a success with an address, the caller keeps it,
-    ///   as for a creation that ran and created the account. That is correct when the answer
-    ///   created the account itself.
+    ///   whether or not the answer created the account: a successful answer that creates nothing
+    ///   still pays for the account. Keeping the charge is correct when the answer created the
+    ///   account itself.
     ///
-    /// An outcome that stands for real execution, for example a creation that the inspector ran
-    /// elsewhere and merged into the state, should carry the gas of that execution instead.
+    /// The constructor changes no state: it creates no account and bumps no nonce. An outcome
+    /// that stands for real execution, for example a creation that the inspector ran elsewhere
+    /// and merged into the state, should carry the gas of that execution instead, including its
+    /// reservoir and state gas charges.
     ///
     /// # Arguments
     ///

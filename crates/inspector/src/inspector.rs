@@ -73,10 +73,16 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
     /// Returning `Some(FrameResult)` will skip execution of the frame entirely,
     /// and also skips calling `call()`/`create()`. `frame_end` will still be called.
     ///
-    /// The caller settles the returned result like the result of a frame that ran. Under
-    /// EIP-8037 it adopts the result's state gas reservoir as its own, so a result for a frame
-    /// that did not run must carry the reservoir the frame inherited, or the caller loses it.
-    /// [`CallOutcome::new_answer`] and [`CreateOutcome::new_answer`] build such results.
+    /// With the standard handler, the returned result goes through the end hooks and is then
+    /// settled like the result of a frame that ran. Under EIP-8037 the caller adopts the
+    /// result's state gas reservoir as its own:
+    ///
+    /// - A result that costs no gas, such as a mocked one, must carry the reservoir the frame
+    ///   inherited, or the caller loses it. [`CallOutcome::new_answer`] and
+    ///   [`CreateOutcome::new_answer`] build such results.
+    /// - A result that carries accounted state effects, such as a frame the inspector executed
+    ///   elsewhere and merged into the state, must keep that execution's gas: its reservoir and
+    ///   its state gas charges.
     #[inline]
     fn frame_start(&mut self, context: &mut CTX, frame_input: &mut FI) -> Option<FR> {
         let _ = context;
@@ -98,11 +104,16 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
     ///
     /// Returning `CallOutcome` will override the result of the call.
     ///
-    /// The caller settles the returned outcome like the outcome of a call that ran. Under
-    /// EIP-8037 it adopts the outcome's state gas reservoir as its own, so an outcome for a call
-    /// that did not run must carry the reservoir the call inherited
-    /// ([`CallInputs::reservoir`]), or the caller loses it. [`CallOutcome::new_answer`] builds
-    /// such an outcome.
+    /// With the standard handler, the returned outcome goes through `call_end` and `frame_end`
+    /// and is then settled like the outcome of a call that ran. Under EIP-8037 the caller adopts
+    /// the outcome's state gas reservoir as its own:
+    ///
+    /// - An outcome that costs no gas, such as a mocked one, must carry the reservoir the call
+    ///   inherited ([`CallInputs::reservoir`]), or the caller loses it.
+    ///   [`CallOutcome::new_answer`] builds such an outcome.
+    /// - An outcome that carries accounted state effects, such as a call the inspector executed
+    ///   elsewhere and merged into the state, must keep that execution's gas: its reservoir and
+    ///   its state gas charges.
     #[inline]
     fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
         let _ = context;
@@ -126,11 +137,16 @@ pub trait Inspector<CTX, INTR: InterpreterTypes = EthInterpreter, FI = FrameInpu
     ///
     /// If this returns `Some` then the [CreateOutcome] is used to override the result of the creation.
     ///
-    /// The caller settles the returned outcome like the outcome of a creation that ran. Under
-    /// EIP-8037 it adopts the outcome's state gas reservoir as its own, so an outcome for a
-    /// creation that did not run must carry the reservoir the creation inherited
-    /// ([`CreateInputs::reservoir`]), or the caller loses it. [`CreateOutcome::new_answer`]
-    /// builds such an outcome.
+    /// With the standard handler, the returned outcome goes through `create_end` and
+    /// `frame_end` and is then settled like the outcome of a creation that ran. Under EIP-8037
+    /// the caller adopts the outcome's state gas reservoir as its own:
+    ///
+    /// - An outcome that costs no gas, such as a mocked one, must carry the reservoir the
+    ///   creation inherited ([`CreateInputs::reservoir`]), or the caller loses it.
+    ///   [`CreateOutcome::new_answer`] builds such an outcome.
+    /// - An outcome that carries accounted state effects, such as a creation the inspector
+    ///   executed elsewhere and merged into the state, must keep that execution's gas: its
+    ///   reservoir and its state gas charges.
     ///
     /// If this returns `None` then the creation proceeds as normal.
     #[inline]
