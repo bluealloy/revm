@@ -1172,9 +1172,12 @@ mod tests {
     /// `CreateOutcome::new_answer`, under EIP-8037.
     mod answered_frames {
         use crate::{InspectEvm, Inspector};
-        use context::{result::ExecutionResult, CfgEnv, Context, ContextTr, JournalTr, TxEnv};
+        use context::{
+            journaled_state::account::JournaledAccountTr, result::ExecutionResult, Cfg, CfgEnv,
+            Context, ContextTr, JournalTr, TxEnv,
+        };
         use database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET};
-        use handler::{FrameResult, MainBuilder, MainContext};
+        use handler::{ExecuteEvm, FrameResult, MainBuilder, MainContext};
         use interpreter::{
             interpreter_types::Jumps, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
             FrameInput, Gas, InstructionResult, Interpreter, InterpreterResult, InterpreterTypes,
@@ -1206,6 +1209,20 @@ mod tests {
         /// Stipend a value call receives on top of the gas it forwards.
         const CALL_STIPEND: u64 = 2_300;
 
+        /// Regular gas of the transaction running [`create_code`] when the
+        /// creation returns all its gas: the intrinsic gas of a call without
+        /// value to an existing account, the creation's access cost, and 11
+        /// for the pushes and the `POP`.
+        const CREATE_TX_REGULAR_GAS: u64 =
+            eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip8038::CREATE_ACCESS + 11;
+
+        /// Intrinsic gas of a value transfer to another account.
+        const TRANSFER_INTRINSIC_GAS: u64 =
+            eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip2780::TX_VALUE_COST;
+
+        /// Intrinsic gas of a creation transaction with empty init code.
+        const CREATE_INTRINSIC_GAS: u64 = eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS;
+
         /// How the [`AnsweringInspector`] builds its answers.
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         enum Build {
@@ -1215,11 +1232,19 @@ mod tests {
             GasNew,
         }
 
+        /// A rewrite of an answered frame's outcome in an end hook.
+        #[derive(Clone, Copy, Debug)]
+        struct Rewrite {
+            /// Rewrites in the generic `frame_end` instead of `call_end` or
+            /// `create_end`.
+            in_frame_end: bool,
+            result: InstructionResult,
+            /// Address of a rewritten creation outcome.
+            address: Option<Address>,
+        }
+
         /// Answers every call to [`ANSWERED`] and every creation without
         /// running them, and records the gas before each instruction.
-        ///
-        /// A successful answer to a call with value moves the value itself, as
-        /// a mocked call does.
         struct AnsweringInspector {
             build: Build,
             result: InstructionResult,
@@ -1227,6 +1252,15 @@ mod tests {
             created_address: Option<Address>,
             /// Answers from `frame_start` instead of `call` and `create`.
             from_frame_start: bool,
+            /// A successful answer to a call with value moves the value
+            /// itself, as a mocked call does.
+            moves_value: bool,
+            /// A successful answer to a creation with an address creates the
+            /// account itself, with the journal changes the handler makes for
+            /// a creation that runs.
+            creates_account: bool,
+            /// Rewrites the outcome of each answered frame in an end hook.
+            rewrite: Option<Rewrite>,
             /// `(opcode, remaining, reservoir)` before each instruction.
             steps: Vec<(u8, u64, u64)>,
             /// Gas limit of each answered frame.
@@ -1242,6 +1276,9 @@ mod tests {
                     result,
                     created_address: None,
                     from_frame_start: false,
+                    moves_value: true,
+                    creates_account: false,
+                    rewrite: None,
                     steps: Vec::new(),
                     answered_gas_limits: Vec::new(),
                     equals_gas_new: Vec::new(),
@@ -1257,7 +1294,7 @@ mod tests {
                     return None;
                 }
                 self.answered_gas_limits.push(inputs.gas_limit);
-                if self.result.is_ok() {
+                if self.moves_value && self.result.is_ok() {
                     if let Some(value) = inputs.transfer_value() {
                         let error = context.journal_mut().transfer_loaded(
                             inputs.caller,
@@ -1279,8 +1316,34 @@ mod tests {
                 })
             }
 
-            fn answer_create(&mut self, inputs: &CreateInputs) -> CreateOutcome {
+            fn answer_create<CTX: ContextTr>(
+                &mut self,
+                context: &mut CTX,
+                inputs: &CreateInputs,
+            ) -> CreateOutcome {
                 self.answered_gas_limits.push(inputs.gas_limit());
+                if self.creates_account && self.result.is_ok() {
+                    if let Some(address) = self.created_address {
+                        // Bump the creator's nonce and create the account, as
+                        // the handler does before it runs the init code.
+                        let spec: SpecId = context.cfg().spec().into();
+                        let journal = context.journal_mut();
+                        let Ok(mut creator) = journal.load_account_mut(inputs.caller()) else {
+                            panic!("the creator loads");
+                        };
+                        assert!(creator.bump_nonce());
+                        drop(creator);
+                        assert!(journal.load_account(address).is_ok());
+                        let checkpoint = journal.create_account_checkpoint(
+                            inputs.caller(),
+                            address,
+                            inputs.value(),
+                            spec,
+                        );
+                        assert!(checkpoint.is_ok());
+                        journal.checkpoint_commit();
+                    }
+                }
                 let answer = CreateOutcome::new_answer(
                     inputs,
                     self.result,
@@ -1334,9 +1397,32 @@ mod tests {
                         self.answer_call(context, inputs).map(FrameResult::Call)
                     }
                     FrameInput::Create(inputs) => {
-                        Some(FrameResult::Create(self.answer_create(inputs)))
+                        Some(FrameResult::Create(self.answer_create(context, inputs)))
                     }
                     FrameInput::Empty => None,
+                }
+            }
+
+            fn frame_end(
+                &mut self,
+                _context: &mut CTX,
+                frame_input: &FrameInput,
+                frame_result: &mut FrameResult,
+            ) {
+                let Some(rewrite) = self.rewrite.filter(|rewrite| rewrite.in_frame_end) else {
+                    return;
+                };
+                match (frame_input, frame_result) {
+                    (FrameInput::Call(inputs), FrameResult::Call(outcome))
+                        if inputs.target_address == ANSWERED =>
+                    {
+                        outcome.result.result = rewrite.result;
+                    }
+                    (FrameInput::Create(_), FrameResult::Create(outcome)) => {
+                        outcome.result.result = rewrite.result;
+                        outcome.address = rewrite.address;
+                    }
+                    _ => {}
                 }
             }
 
@@ -1347,16 +1433,62 @@ mod tests {
                 self.answer_call(context, inputs)
             }
 
-            fn create(
+            fn call_end(
                 &mut self,
                 _context: &mut CTX,
+                inputs: &CallInputs,
+                outcome: &mut CallOutcome,
+            ) {
+                if let Some(rewrite) = self.rewrite.filter(|rewrite| !rewrite.in_frame_end) {
+                    if inputs.target_address == ANSWERED {
+                        outcome.result.result = rewrite.result;
+                    }
+                }
+            }
+
+            fn create(
+                &mut self,
+                context: &mut CTX,
                 inputs: &mut CreateInputs,
             ) -> Option<CreateOutcome> {
                 if self.from_frame_start {
                     return None;
                 }
-                Some(self.answer_create(inputs))
+                Some(self.answer_create(context, inputs))
             }
+
+            fn create_end(
+                &mut self,
+                _context: &mut CTX,
+                _inputs: &CreateInputs,
+                outcome: &mut CreateOutcome,
+            ) {
+                if let Some(rewrite) = self.rewrite.filter(|rewrite| !rewrite.in_frame_end) {
+                    outcome.result.result = rewrite.result;
+                    outcome.address = rewrite.address;
+                }
+            }
+        }
+
+        /// Configuration under `spec`, with a regular gas cap of
+        /// [`REGULAR_GAS_CAP`].
+        fn cfg(spec: SpecId) -> CfgEnv {
+            let mut cfg = CfgEnv::new_with_spec(spec);
+            cfg.tx_gas_limit_cap = Some(REGULAR_GAS_CAP);
+            cfg
+        }
+
+        /// A transaction of `kind` with `value`. Under Amsterdam it starts with
+        /// a state gas reservoir of `reservoir`.
+        fn tx(kind: TxKind, value: U256, reservoir: u64) -> TxEnv {
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(kind)
+                .value(value)
+                .gas_limit(REGULAR_GAS_CAP + reservoir)
+                .gas_price(0)
+                .build()
+                .unwrap()
         }
 
         /// Runs a transaction of `kind` with `value` under `spec`, with `code`
@@ -1370,24 +1502,11 @@ mod tests {
             reservoir: u64,
             inspector: AnsweringInspector,
         ) -> (ExecutionResult, EvmState, AnsweringInspector) {
-            let mut cfg = CfgEnv::new_with_spec(spec);
-            cfg.tx_gas_limit_cap = Some(REGULAR_GAS_CAP);
-            let ctx = Context::mainnet()
-                .with_cfg(cfg)
-                .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(code.into())));
-            let mut evm = ctx.build_mainnet_with_inspector(inspector);
-            let output = evm
-                .inspect_tx(
-                    TxEnv::builder()
-                        .caller(BENCH_CALLER)
-                        .kind(kind)
-                        .value(value)
-                        .gas_limit(REGULAR_GAS_CAP + reservoir)
-                        .gas_price(0)
-                        .build()
-                        .unwrap(),
-                )
-                .unwrap();
+            let mut evm = Context::mainnet()
+                .with_cfg(cfg(spec))
+                .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(code.into())))
+                .build_mainnet_with_inspector(inspector);
+            let output = evm.inspect_tx(tx(kind, value, reservoir)).unwrap();
             (output.result, output.state, evm.inspector)
         }
 
@@ -1465,6 +1584,14 @@ mod tests {
             eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + 23 + call_cost(value)
         }
 
+        /// Gas limit of the creation in [`create_code`], given the gas
+        /// remaining before the `CREATE`: all but one 64th of what is left
+        /// after the access cost.
+        fn create_gas_limit(remaining: u64) -> u64 {
+            let gas_limit = remaining - eip8038::CREATE_ACCESS;
+            gas_limit - gas_limit / 64
+        }
+
         /// An answer built with the constructor keeps the caller's reservoir,
         /// whatever its result. An answer built with `Gas::new` loses it.
         #[test]
@@ -1506,41 +1633,51 @@ mod tests {
 
         /// A value call into an absent account is charged the new-account
         /// state gas upfront. A failed answer gets the charge refunded. A
-        /// successful one, which moved the value itself, keeps it.
+        /// successful one keeps it, whether or not it moved the value.
         #[test]
         fn test_answer_to_value_call_into_absent_account() {
             let regular = call_tx_regular_gas(1);
-            for (result, charged, consumed) in [
-                (InstructionResult::Stop, NEW_ACCOUNT_STATE_GAS, 0),
-                (InstructionResult::Revert, 0, 0),
-                (InstructionResult::OutOfGas, 0, CALL_GAS + CALL_STIPEND),
+            for (result, moves_value, charged, consumed) in [
+                (InstructionResult::Stop, true, NEW_ACCOUNT_STATE_GAS, 0),
+                (InstructionResult::Stop, false, NEW_ACCOUNT_STATE_GAS, 0),
+                (InstructionResult::Revert, true, 0, 0),
+                (
+                    InstructionResult::OutOfGas,
+                    true,
+                    0,
+                    CALL_GAS + CALL_STIPEND,
+                ),
             ] {
+                let case = format!("{result:?}, moves value: {moves_value}");
                 let (outcome, state, inspector) = run_code(
                     call_to_answered(1),
                     RESERVOIR,
-                    AnsweringInspector::new(Build::NewAnswer, result),
+                    AnsweringInspector {
+                        moves_value,
+                        ..AnsweringInspector::new(Build::NewAnswer, result)
+                    },
                 );
                 let ((_, before), (_, after)) = inspector.gas_around(opcode::CALL);
                 assert_eq!(
                     inspector.answered_gas_limits,
                     [CALL_GAS + CALL_STIPEND],
-                    "{result:?}"
+                    "{case}"
                 );
-                assert_eq!(before, RESERVOIR, "{result:?}");
-                assert_eq!(after, RESERVOIR - charged, "{result:?}");
-                assert!(outcome.is_success(), "{result:?}: {outcome:?}");
+                assert_eq!(before, RESERVOIR, "{case}");
+                assert_eq!(after, RESERVOIR - charged, "{case}");
+                assert!(outcome.is_success(), "{case}: {outcome:?}");
                 assert_eq!(
                     outcome.gas().total_gas_spent(),
                     regular + charged + consumed,
-                    "{result:?}"
+                    "{case}"
                 );
-                assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{result:?}");
-                // Only the successful answer moved the value.
+                assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
+                // Only a successful answer that moves the value credits it.
                 let balance = state.get(&ANSWERED).map(|account| account.info.balance);
                 assert_eq!(
                     balance.is_some_and(|balance| balance == U256::from(1)),
-                    result.is_ok(),
-                    "{result:?}"
+                    result.is_ok() && moves_value,
+                    "{case}"
                 );
             }
         }
@@ -1550,22 +1687,14 @@ mod tests {
         /// the charge refunded. A successful one with an address keeps it.
         #[test]
         fn test_answer_to_create() {
-            // Intrinsic gas of a call without value to an existing account,
-            // the creation's access cost, and 11 for the pushes and the `POP`.
-            let regular =
-                eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip8038::CREATE_ACCESS + 11;
             let created = Some(BENCH_TARGET.create(1));
-            for (result, address, charged, halts) in [
-                (
-                    InstructionResult::Return,
-                    created,
-                    NEW_ACCOUNT_STATE_GAS,
-                    false,
-                ),
-                (InstructionResult::Return, None, 0, false),
-                (InstructionResult::Revert, created, 0, false),
-                (InstructionResult::Revert, None, 0, false),
-                (InstructionResult::OutOfGas, None, 0, true),
+            for (result, address, charged) in [
+                (InstructionResult::Return, created, NEW_ACCOUNT_STATE_GAS),
+                (InstructionResult::Return, None, 0),
+                (InstructionResult::Revert, created, 0),
+                (InstructionResult::Revert, None, 0),
+                (InstructionResult::OutOfGas, created, 0),
+                (InstructionResult::OutOfGas, None, 0),
             ] {
                 let case = format!("{result:?} {address:?}");
                 let (outcome, _, inspector) = run_code(
@@ -1577,103 +1706,299 @@ mod tests {
                     },
                 );
                 let ((remaining, before), (_, after)) = inspector.gas_around(opcode::CREATE);
-                // All but one 64th of the remaining gas, after the access cost.
-                let gas_limit = remaining - eip8038::CREATE_ACCESS;
-                let gas_limit = gas_limit - gas_limit / 64;
+                let gas_limit = create_gas_limit(remaining);
                 assert_eq!(inspector.answered_gas_limits, [gas_limit], "{case}");
-                let consumed = if halts { gas_limit } else { 0 };
+                let consumed = if result.is_halt() { gas_limit } else { 0 };
                 assert_eq!(before, RESERVOIR, "{case}");
                 assert_eq!(after, RESERVOIR - charged, "{case}");
                 assert!(outcome.is_success(), "{case}: {outcome:?}");
                 assert_eq!(
                     outcome.gas().total_gas_spent(),
-                    regular + charged + consumed,
+                    CREATE_TX_REGULAR_GAS + charged + consumed,
                     "{case}"
                 );
                 assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
             }
         }
 
+        /// A successful answer to a creation that creates the account itself,
+        /// with the journal changes the handler makes for a creation that
+        /// runs, keeps the upfront charge and settles like the real `CREATE`
+        /// of empty init code.
+        #[test]
+        fn test_answer_to_create_that_creates_the_account() {
+            let created = BENCH_TARGET.create(1);
+            let (outcome, state, inspector) = run_code(
+                create_code(),
+                RESERVOIR,
+                AnsweringInspector {
+                    created_address: Some(created),
+                    creates_account: true,
+                    ..AnsweringInspector::new(Build::NewAnswer, InstructionResult::Return)
+                },
+            );
+            let ((_, before), (_, after)) = inspector.gas_around(opcode::CREATE);
+            assert_eq!(before, RESERVOIR);
+            assert_eq!(after, RESERVOIR - NEW_ACCOUNT_STATE_GAS);
+            assert!(outcome.is_success(), "{outcome:?}");
+            assert_eq!(
+                outcome.gas().total_gas_spent(),
+                CREATE_TX_REGULAR_GAS + NEW_ACCOUNT_STATE_GAS
+            );
+            assert_eq!(outcome.gas().state_gas_spent_final(), NEW_ACCOUNT_STATE_GAS);
+            assert!(state[&created].is_created());
+            assert_eq!(state[&created].info.nonce, 1);
+            assert_eq!(state[&BENCH_TARGET].info.nonce, 2);
+
+            // The same creation, run.
+            let mut evm = Context::mainnet()
+                .with_cfg(cfg(SpecId::AMSTERDAM))
+                .with_db(BenchmarkDB::new_bytecode(Bytecode::new_legacy(
+                    create_code().into(),
+                )))
+                .build_mainnet();
+            let ran = evm
+                .transact(tx(TxKind::Call(BENCH_TARGET), U256::ZERO, RESERVOIR))
+                .unwrap();
+            assert!(ran.result.is_success(), "{:?}", ran.result);
+            assert_eq!(ran.result.gas(), outcome.gas());
+            assert!(ran.state[&created].is_created());
+            assert_eq!(ran.state[&created].info.nonce, 1);
+            assert_eq!(ran.state[&BENCH_TARGET].info.nonce, 2);
+        }
+
+        /// The caller settles an answered call from the outcome the end hooks
+        /// leave: a result rewritten in `call_end` or in `frame_end` decides
+        /// whether the upfront charge is refunded, and it is refunded at most
+        /// once.
+        #[test]
+        fn test_end_hook_rewrite_of_answered_call() {
+            let regular = call_tx_regular_gas(1);
+            for in_frame_end in [false, true] {
+                for (answered, rewritten, charged, consumed) in [
+                    (
+                        InstructionResult::Revert,
+                        InstructionResult::Stop,
+                        NEW_ACCOUNT_STATE_GAS,
+                        0,
+                    ),
+                    (
+                        InstructionResult::OutOfGas,
+                        InstructionResult::Stop,
+                        NEW_ACCOUNT_STATE_GAS,
+                        0,
+                    ),
+                    (InstructionResult::Stop, InstructionResult::Revert, 0, 0),
+                    (
+                        InstructionResult::Stop,
+                        InstructionResult::OutOfGas,
+                        0,
+                        CALL_GAS + CALL_STIPEND,
+                    ),
+                ] {
+                    let case = format!("{answered:?} -> {rewritten:?}, frame_end: {in_frame_end}");
+                    let (outcome, _, inspector) = run_code(
+                        call_to_answered(1),
+                        RESERVOIR,
+                        AnsweringInspector {
+                            moves_value: false,
+                            rewrite: Some(Rewrite {
+                                in_frame_end,
+                                result: rewritten,
+                                address: None,
+                            }),
+                            ..AnsweringInspector::new(Build::NewAnswer, answered)
+                        },
+                    );
+                    let ((_, before), (_, after)) = inspector.gas_around(opcode::CALL);
+                    assert_eq!(before, RESERVOIR, "{case}");
+                    assert_eq!(after, RESERVOIR - charged, "{case}");
+                    assert!(outcome.is_success(), "{case}: {outcome:?}");
+                    assert_eq!(
+                        outcome.gas().total_gas_spent(),
+                        regular + charged + consumed,
+                        "{case}"
+                    );
+                    assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
+                }
+            }
+        }
+
+        /// The caller settles an answered creation from the outcome the end
+        /// hooks leave: a result or address rewritten in `create_end` or in
+        /// `frame_end` decides whether the upfront charge is refunded, and it
+        /// is refunded at most once.
+        #[test]
+        fn test_end_hook_rewrite_of_answered_create() {
+            let created = Some(BENCH_TARGET.create(1));
+            for in_frame_end in [false, true] {
+                for (answered, answered_address, rewritten, rewritten_address, charged) in [
+                    (
+                        InstructionResult::Return,
+                        created,
+                        InstructionResult::Return,
+                        None,
+                        0,
+                    ),
+                    (
+                        InstructionResult::Return,
+                        None,
+                        InstructionResult::Return,
+                        created,
+                        NEW_ACCOUNT_STATE_GAS,
+                    ),
+                    (
+                        InstructionResult::Revert,
+                        None,
+                        InstructionResult::Return,
+                        created,
+                        NEW_ACCOUNT_STATE_GAS,
+                    ),
+                    (
+                        InstructionResult::Return,
+                        created,
+                        InstructionResult::Revert,
+                        created,
+                        0,
+                    ),
+                    (
+                        InstructionResult::Return,
+                        created,
+                        InstructionResult::OutOfGas,
+                        created,
+                        0,
+                    ),
+                ] {
+                    let case = format!(
+                        "{answered:?} {answered_address:?} -> {rewritten:?} \
+                         {rewritten_address:?}, frame_end: {in_frame_end}"
+                    );
+                    let (outcome, _, inspector) = run_code(
+                        create_code(),
+                        RESERVOIR,
+                        AnsweringInspector {
+                            created_address: answered_address,
+                            rewrite: Some(Rewrite {
+                                in_frame_end,
+                                result: rewritten,
+                                address: rewritten_address,
+                            }),
+                            ..AnsweringInspector::new(Build::NewAnswer, answered)
+                        },
+                    );
+                    let ((remaining, before), (_, after)) = inspector.gas_around(opcode::CREATE);
+                    let consumed = if rewritten.is_halt() {
+                        create_gas_limit(remaining)
+                    } else {
+                        0
+                    };
+                    assert_eq!(before, RESERVOIR, "{case}");
+                    assert_eq!(after, RESERVOIR - charged, "{case}");
+                    assert!(outcome.is_success(), "{case}: {outcome:?}");
+                    assert_eq!(
+                        outcome.gas().total_gas_spent(),
+                        CREATE_TX_REGULAR_GAS + charged + consumed,
+                        "{case}"
+                    );
+                    assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
+                }
+            }
+        }
+
         /// The transaction's own frame, answered from `frame_start`, settles
-        /// the same way: the sender is not billed for the reservoir, and the
+        /// the same way. The sender is not billed for the reservoir. The
         /// upfront state gas of a value transfer into an absent account, or of
         /// a creation at an absent address, is refunded unless the answer
-        /// succeeds (with an address, for a creation).
+        /// succeeds (with an address, for a creation). When the reservoir does
+        /// not cover the charge, the rest spills into regular gas: a halt
+        /// still gets the charge refunded, and then consumes all regular gas,
+        /// the refunded spill included.
         #[test]
         fn test_answer_to_transaction_frame() {
-            // Intrinsic gas of a value transfer to another account.
-            let transfer_intrinsic =
-                eip2780::TX_BASE_COST + eip8038::COLD_ACCOUNT_ACCESS + eip2780::TX_VALUE_COST;
-            // Intrinsic gas of a creation with empty init code.
-            let create_intrinsic = eip2780::TX_BASE_COST + eip8038::CREATE_ACCESS;
             let created = Some(BENCH_CALLER.create(0));
-            for (kind, address, result, intrinsic, charged) in [
-                (
-                    TxKind::Call(ANSWERED),
-                    None,
-                    InstructionResult::Stop,
-                    transfer_intrinsic,
-                    NEW_ACCOUNT_STATE_GAS,
-                ),
-                (
-                    TxKind::Call(ANSWERED),
-                    None,
-                    InstructionResult::Revert,
-                    transfer_intrinsic,
-                    0,
-                ),
-                (
-                    TxKind::Call(ANSWERED),
-                    None,
-                    InstructionResult::OutOfGas,
-                    transfer_intrinsic,
-                    0,
-                ),
-                (
-                    TxKind::Create,
-                    created,
-                    InstructionResult::Return,
-                    create_intrinsic,
-                    NEW_ACCOUNT_STATE_GAS,
-                ),
-                (
-                    TxKind::Create,
-                    None,
-                    InstructionResult::Return,
-                    create_intrinsic,
-                    0,
-                ),
-                (
-                    TxKind::Create,
-                    created,
-                    InstructionResult::Revert,
-                    create_intrinsic,
-                    0,
-                ),
-            ] {
-                let case = format!("{kind:?} {result:?} {address:?}");
-                let (outcome, _, inspector) = run(
-                    SpecId::AMSTERDAM,
-                    Vec::new(),
-                    kind,
-                    U256::from(1),
-                    RESERVOIR,
-                    AnsweringInspector {
-                        created_address: address,
-                        from_frame_start: true,
-                        ..AnsweringInspector::new(Build::NewAnswer, result)
-                    },
-                );
-                assert_eq!(inspector.answered_gas_limits.len(), 1, "{case}");
-                // A halt consumes all regular gas.
-                let total = if result.is_halt() {
-                    REGULAR_GAS_CAP
-                } else {
-                    intrinsic + charged
-                };
-                assert_eq!(outcome.is_success(), result.is_ok(), "{case}: {outcome:?}");
-                assert_eq!(outcome.gas().total_gas_spent(), total, "{case}");
-                assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
+            for reservoir in [RESERVOIR, NEW_ACCOUNT_STATE_GAS / 2, 0] {
+                for (kind, address, result, intrinsic, charged) in [
+                    (
+                        TxKind::Call(ANSWERED),
+                        None,
+                        InstructionResult::Stop,
+                        TRANSFER_INTRINSIC_GAS,
+                        NEW_ACCOUNT_STATE_GAS,
+                    ),
+                    (
+                        TxKind::Call(ANSWERED),
+                        None,
+                        InstructionResult::Revert,
+                        TRANSFER_INTRINSIC_GAS,
+                        0,
+                    ),
+                    (
+                        TxKind::Call(ANSWERED),
+                        None,
+                        InstructionResult::OutOfGas,
+                        TRANSFER_INTRINSIC_GAS,
+                        0,
+                    ),
+                    (
+                        TxKind::Create,
+                        created,
+                        InstructionResult::Return,
+                        CREATE_INTRINSIC_GAS,
+                        NEW_ACCOUNT_STATE_GAS,
+                    ),
+                    (
+                        TxKind::Create,
+                        None,
+                        InstructionResult::Return,
+                        CREATE_INTRINSIC_GAS,
+                        0,
+                    ),
+                    (
+                        TxKind::Create,
+                        created,
+                        InstructionResult::Revert,
+                        CREATE_INTRINSIC_GAS,
+                        0,
+                    ),
+                    (
+                        TxKind::Create,
+                        created,
+                        InstructionResult::OutOfGas,
+                        CREATE_INTRINSIC_GAS,
+                        0,
+                    ),
+                ] {
+                    let case = format!("reservoir {reservoir} {kind:?} {result:?} {address:?}");
+                    let (outcome, _, inspector) = run(
+                        SpecId::AMSTERDAM,
+                        Vec::new(),
+                        kind,
+                        U256::from(1),
+                        reservoir,
+                        AnsweringInspector {
+                            created_address: address,
+                            from_frame_start: true,
+                            ..AnsweringInspector::new(Build::NewAnswer, result)
+                        },
+                    );
+                    // The frame inherits the reservoir left after the charge,
+                    // and all regular gas left after it.
+                    let spilled = NEW_ACCOUNT_STATE_GAS.saturating_sub(reservoir);
+                    assert_eq!(
+                        inspector.answered_gas_limits,
+                        [REGULAR_GAS_CAP - intrinsic - spilled],
+                        "{case}"
+                    );
+                    // A halt consumes all regular gas.
+                    let total = if result.is_halt() {
+                        REGULAR_GAS_CAP
+                    } else {
+                        intrinsic + charged
+                    };
+                    assert_eq!(outcome.is_success(), result.is_ok(), "{case}: {outcome:?}");
+                    assert_eq!(outcome.gas().total_gas_spent(), total, "{case}");
+                    assert_eq!(outcome.gas().state_gas_spent_final(), charged, "{case}");
+                }
             }
         }
 
