@@ -163,7 +163,7 @@ where
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        let mut gas = self.tx_gas(evm, &init_and_floor_gas);
+        let mut gas = self.system_call_gas(evm);
         // System calls skip pre-execution, so the checkpoint that
         // `inspect_execution` settles is opened here.
         let checkpoint = evm.ctx().journal_mut().checkpoint();
