@@ -351,6 +351,12 @@ mod tests {
         fn take_precompile_error_context(&mut self) -> Option<String> {
             None
         }
+
+        fn set_eip7702_refund(&mut self, _refund: u64) {}
+
+        fn eip7702_refund(&self) -> u64 {
+            0
+        }
     }
 
     #[test]
