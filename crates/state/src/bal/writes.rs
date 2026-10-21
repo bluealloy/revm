@@ -6,18 +6,33 @@ use std::vec::Vec;
 /// Use to store values
 ///
 /// If empty it means that this item was read from database.
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BalWrites<T: PartialEq + Clone> {
     /// List of writes with [`BlockAccessIndex`].
     pub writes: Vec<(BlockAccessIndex, T)>,
+    /// Value before the first write, used to net a write that is reverted at its own index by a
+    /// later commit, whose original value is the one this write set.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub(crate) prior: Option<T>,
 }
+
+impl<T: PartialEq + Clone> PartialEq for BalWrites<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.writes == other.writes
+    }
+}
+
+impl<T: PartialEq + Clone + Eq> Eq for BalWrites<T> {}
 
 impl<T: PartialEq + Clone> BalWrites<T> {
     /// Create a new BalWrites.
     pub fn new(mut writes: Vec<(BlockAccessIndex, T)>) -> Self {
         writes.sort_by_key(|(index, _)| *index);
-        Self { writes }
+        Self {
+            writes,
+            prior: None,
+        }
     }
 
     /// Linear search is used for small number of writes. It is faster than binary search.
@@ -83,7 +98,12 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ///
     /// If [`BlockAccessIndex`] is same as last it will override the value.
     pub fn update(&mut self, index: BlockAccessIndex, original_value: &T, value: T) {
-        self.update_with_key(index, original_value, value, |i| i);
+        if self.writes.is_empty() {
+            self.prior = Some(original_value.clone());
+        }
+        let prior = self.prior.take();
+        self.update_inner(index, original_value, prior.as_ref(), value, |i| i);
+        self.prior = prior;
     }
 
     /// Insert a value into the builder.
@@ -101,6 +121,26 @@ impl<T: PartialEq + Clone> BalWrites<T> {
     ) where
         F: Fn(&T) -> &K,
     {
+        self.update_inner(index, original_subvalue, None, value, f);
+    }
+
+    /// Insert a value into the builder, with `prior` as the value before the first write if known.
+    #[inline]
+    fn update_inner<K: PartialEq, F>(
+        &mut self,
+        index: BlockAccessIndex,
+        original_subvalue: &K,
+        prior: Option<&K>,
+        value: T,
+        f: F,
+    ) where
+        F: Fn(&T) -> &K,
+    {
+        // Unchanged value: nothing to record, and a write made earlier at this index must be kept.
+        if original_subvalue == f(&value) {
+            return;
+        }
+
         // if index is different, we push the new value.
         if let Some(last) = self.writes.last_mut() {
             if last.0 != index {
@@ -115,12 +155,9 @@ impl<T: PartialEq + Clone> BalWrites<T> {
         // extract previous (Can be original_subvalue or previous value) and last value.
         let (previous, last) = match self.writes.as_mut_slice() {
             [.., previous, last] => (f(&previous.1), last),
-            [last] => (original_subvalue, last),
+            [last] => (prior.unwrap_or(original_subvalue), last),
             [] => {
-                // if writes are empty check if original value is same as newly set value.
-                if original_subvalue != f(&value) {
-                    self.writes.push((index, value));
-                }
+                self.writes.push((index, value));
                 return;
             }
         };
@@ -184,5 +221,84 @@ mod tests {
         get_binary_search(5);
         get_binary_search(6);
         get_binary_search(7);
+    }
+
+    /// Applies `(index, value)` incorporations in order, each starting from the current value.
+    fn apply(start: u64, steps: &[(u64, u64)]) -> BalWrites<u64> {
+        let mut writes = BalWrites::default();
+        let mut current = start;
+        for &(index, value) in steps {
+            writes.update(idx(index), &current, value);
+            current = value;
+        }
+        writes
+    }
+
+    /// A later incorporation at the same index that only reads the item (e.g. a system call
+    /// reading an account a withdrawal credited at index n+1) must keep the earlier write.
+    #[test]
+    fn test_update_read_after_write_at_same_index_keeps_write() {
+        assert_eq!(apply(0, &[(1, 1), (1, 1)]).writes, vec![(idx(1), 1)]);
+    }
+
+    /// Every sequence of up to five incorporations over indices 1..=3 and values 0..=2:
+    /// unchanged incorporations are no-ops, and `get(i + 1)` returns the value at the end of
+    /// index `i`.
+    #[test]
+    fn test_update_all_short_sequences() {
+        fn check(start: u64, seq: &mut Vec<(u64, u64)>) {
+            let writes = apply(start, seq);
+
+            let mut current = start;
+            let changed: Vec<_> = seq
+                .iter()
+                .copied()
+                .filter(|&(_, value)| core::mem::replace(&mut current, value) != value)
+                .collect();
+            assert_eq!(
+                writes,
+                apply(start, &changed),
+                "start {start}, steps {seq:?}"
+            );
+
+            for (i, &(index, value)) in seq.iter().enumerate() {
+                if seq.get(i + 1).is_none_or(|&(next, _)| next != index) {
+                    let got = writes.get(idx(index + 1)).unwrap_or(start);
+                    assert_eq!(got, value, "start {start}, steps {seq:?}, index {index}");
+                }
+            }
+
+            if seq.len() < 5 {
+                let min_index = seq.last().map_or(1, |&(index, _)| index);
+                for index in min_index..=3 {
+                    for value in 0..=2 {
+                        seq.push((index, value));
+                        check(start, seq);
+                        seq.pop();
+                    }
+                }
+            }
+        }
+
+        for start in 0..=1 {
+            check(start, &mut Vec::new());
+        }
+    }
+
+    #[test]
+    fn write_reverted_by_later_commit_at_same_index() {
+        // Two commits at the same index: the first writes 0 -> 1, the second 1 -> 0. The value
+        // is unchanged over the index, so no write is recorded.
+        let mut writes = BalWrites::<u64>::default();
+        writes.update(idx(1), &0, 1);
+        writes.update(idx(1), &1, 0);
+        assert!(writes.is_empty());
+
+        // A write from an earlier index is kept.
+        let mut writes = BalWrites::<u64>::default();
+        writes.update(idx(1), &0, 5);
+        writes.update(idx(2), &5, 6);
+        writes.update(idx(2), &6, 5);
+        assert_eq!(writes.writes, vec![(idx(1), 5)]);
     }
 }
