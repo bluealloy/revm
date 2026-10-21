@@ -1,13 +1,14 @@
 //! KZG point evaluation precompile using Arkworks BLS12-381 implementation.
-use crate::{
-    bls12_381::arkworks::pairing_check, bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES, PrecompileHalt,
-};
-use ark_bls12_381::{Fr, G1Affine, G2Affine};
-use ark_ec::{AffineRepr, CurveGroup};
-use ark_ff::{BigInteger, PrimeField};
+use crate::{bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES, PrecompileHalt};
+use ark_bls12_381::{Bls12_381, Fr, G1Affine, G2Affine};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
+use ark_ff::{BigInteger, One, PrimeField};
 use ark_serialize::CanonicalDeserialize;
 use core::ops::Neg;
 use primitives::OnceLock;
+
+/// Miller-loop-prepared G2 point (the `Pairing` associated type; not a root export).
+type G2Prepared = <Bls12_381 as Pairing>::G2Prepared;
 
 /// Verify KZG proof using BLS12-381 implementation.
 ///
@@ -20,18 +21,15 @@ pub fn verify_kzg_proof(
     y: &[u8; 32],
     proof: &[u8; 48],
 ) -> bool {
-    // Parse the commitment (G1 point)
+    // Parse the commitment and proof (G1 points)
     let Ok(commitment_point) = parse_g1_compressed(commitment) else {
         return false;
     };
-
-    // Parse the proof (G1 point)
     let Ok(proof_point) = parse_g1_compressed(proof) else {
         return false;
     };
 
-    // Parse z and y as field elements (Fr, scalar field)
-    // We expect 32-byte big-endian scalars that must be canonical
+    // Parse z and y as canonical scalar field elements (Fr)
     let Ok(z_fr) = read_scalar_canonical(z) else {
         return false;
     };
@@ -39,26 +37,42 @@ pub fn verify_kzg_proof(
         return false;
     };
 
-    // Get the trusted setup G2 point [τ]₂
-    let tau_g2 = get_trusted_setup_g2();
+    // Reformulated single-proof KZG check. Starting from the standard
+    //   e(commitment - [y]G1, -G2) · e(proof, [τ]G2 - [z]G2) == 1
+    // and applying bilinearity `e(proof, -[z]G2) = e([z]·proof, -G2)` to move z
+    // out of G2, both G2 pairing inputs collapse to the compile-time constants
+    // -G2 and [τ]G2:
+    //   e(D, -G2) · e(proof, [τ]G2) == 1,   D = commitment - [y]G1 + [z]·proof
+    // This trades the per-call G2 scalar multiplication for a cheaper G1 one and
+    // lets the two constant G2 points be prepared for the Miller loop just once.
+    let g1 = G1Affine::generator();
+    let y_g1 = g1.mul_bigint(y_fr.into_bigint());
+    let z_proof = proof_point.mul_bigint(z_fr.into_bigint());
+    // Accumulate in projective coordinates and normalize to affine exactly once.
+    let d = (commitment_point.into_group() - y_g1 + z_proof).into_affine();
 
-    // Get generators
-    let g1 = get_g1_generator();
-    let g2 = get_g2_generator();
+    // `multi_miller_loop` drops any pair whose G1 or G2 point is the identity, so
+    // an infinity `d` or `proof` is handled here (the two G2 points are never
+    // infinity). One shared final exponentiation covers both pairs.
+    let mll = Bls12_381::multi_miller_loop(
+        [d, proof_point],
+        [neg_g2_prepared().clone(), tau_g2_prepared().clone()],
+    );
+    Bls12_381::final_exponentiation(mll)
+        .map(|out| out.0.is_one())
+        .unwrap_or(false)
+}
 
-    // Compute P_minus_y = commitment - [y]G₁
-    let y_g1 = p1_scalar_mul(&g1, &y_fr);
-    let p_minus_y = p1_sub_affine(&commitment_point, &y_g1);
+/// Miller-loop preparation of the constant `-G2` generator, computed once.
+fn neg_g2_prepared() -> &'static G2Prepared {
+    static NEG_G2: OnceLock<G2Prepared> = OnceLock::new();
+    NEG_G2.get_or_init(|| G2Prepared::from(G2Affine::generator().neg()))
+}
 
-    // Compute X_minus_z = [τ]G₂ - [z]G₂
-    let z_g2 = p2_scalar_mul(&g2, &z_fr);
-    let x_minus_z = p2_sub_affine(tau_g2, &z_g2);
-
-    // Verify: P - y = Q * (X - z)
-    // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
-    let neg_g2 = p2_neg(&g2);
-
-    pairing_check(&[(p_minus_y, neg_g2), (proof_point, x_minus_z)])
+/// Miller-loop preparation of the trusted-setup point `[τ]G2`, computed once.
+fn tau_g2_prepared() -> &'static G2Prepared {
+    static TAU_G2: OnceLock<G2Prepared> = OnceLock::new();
+    TAU_G2.get_or_init(|| G2Prepared::from(*get_trusted_setup_g2()))
 }
 
 /// Get the trusted setup G2 point `[τ]₂` from the Ethereum KZG ceremony.
@@ -66,8 +80,8 @@ pub fn verify_kzg_proof(
 fn get_trusted_setup_g2() -> &'static G2Affine {
     static TAU_G2: OnceLock<G2Affine> = OnceLock::new();
     TAU_G2.get_or_init(|| {
-        // Parse the compressed G2 point using unchecked deserialization since we trust this point
-        // This should never fail since we're using a known valid point from the trusted setup
+        // Parse the compressed G2 point using unchecked deserialization since we trust this point.
+        // This should never fail since we're using a known valid point from the trusted setup.
         G2Affine::deserialize_compressed_unchecked(&TRUSTED_SETUP_TAU_G2_BYTES[..])
             .expect("Failed to parse trusted setup G2 point")
     })
@@ -90,46 +104,4 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<Fr, PrecompileHalt> {
     }
 
     Ok(fr)
-}
-
-/// Get G1 generator point
-#[inline]
-fn get_g1_generator() -> G1Affine {
-    G1Affine::generator()
-}
-
-/// Get G2 generator point
-#[inline]
-fn get_g2_generator() -> G2Affine {
-    G2Affine::generator()
-}
-
-/// Scalar multiplication for G1 points
-#[inline]
-fn p1_scalar_mul(point: &G1Affine, scalar: &Fr) -> G1Affine {
-    point.mul_bigint(scalar.into_bigint()).into_affine()
-}
-
-/// Scalar multiplication for G2 points
-#[inline]
-fn p2_scalar_mul(point: &G2Affine, scalar: &Fr) -> G2Affine {
-    point.mul_bigint(scalar.into_bigint()).into_affine()
-}
-
-/// Subtract two G1 points in affine form
-#[inline]
-fn p1_sub_affine(a: &G1Affine, b: &G1Affine) -> G1Affine {
-    (a.into_group() - b.into_group()).into_affine()
-}
-
-/// Subtract two G2 points in affine form
-#[inline]
-fn p2_sub_affine(a: &G2Affine, b: &G2Affine) -> G2Affine {
-    (a.into_group() - b.into_group()).into_affine()
-}
-
-/// Negate a G2 point
-#[inline]
-fn p2_neg(p: &G2Affine) -> G2Affine {
-    p.neg()
 }
