@@ -251,6 +251,24 @@ impl<DB: Database> State<DB> {
         self.state_hook = hook;
     }
 
+    /// Runs `f` with touched empty accounts kept instead of removed on commit.
+    ///
+    /// For applying state overrides: an account that an override leaves empty stays in the
+    /// state, with its storage. Transactions must not execute inside `f`, since EIP-161 state
+    /// clear is off. See [`CacheState::keep_empty_accounts`].
+    pub fn with_empty_accounts_kept<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        struct Restore<'a, DB>(&'a mut State<DB>, bool);
+        impl<DB> Drop for Restore<'_, DB> {
+            fn drop(&mut self) {
+                self.0.cache.keep_empty_accounts = self.1;
+            }
+        }
+
+        let previous = core::mem::replace(&mut self.cache.keep_empty_accounts, true);
+        let restore = Restore(self, previous);
+        f(restore.0)
+    }
+
     /// Sets the hook invoked whenever state changes are committed.
     #[inline]
     #[must_use]
@@ -564,7 +582,7 @@ mod tests {
     use super::*;
     use crate::{
         states::{reverts::AccountInfoRevert, StorageSlot},
-        AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
+        AccountRevert, AccountStatus, BundleAccount, CacheDB, RevertToSlot,
     };
     use primitives::{keccak256, Bytes, BLOCK_HASH_HISTORY, U256};
     use state::{EvmStorageSlot, TransactionId};
@@ -573,6 +591,373 @@ mod tests {
         slots: [(StorageKey, EvmStorageSlot); N],
     ) -> Option<Cow<'static, EvmStorage>> {
         Some(Cow::Owned(HashMap::from_iter(slots)))
+    }
+
+    fn touched(info: AccountInfo) -> Account {
+        let mut account = Account::from(info);
+        account.status = state::AccountStatus::Touched;
+        account
+    }
+
+    #[test]
+    fn touched_empty_account_is_removed_by_default() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+        );
+
+        state.commit(HashMap::from_iter([(
+            address,
+            touched(AccountInfo::default()),
+        )]));
+
+        assert!(state.basic(address).unwrap().is_none());
+        state.merge_transitions(BundleRetention::Reverts);
+        assert_eq!(
+            state.take_bundle().account(&address).map(|a| a.status),
+            Some(AccountStatus::Destroyed)
+        );
+    }
+
+    #[test]
+    fn keep_empty_accounts_keeps_emptied_account_and_its_storage() {
+        let address = Address::with_last_byte(1);
+        let slot = StorageKey::from(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account_with_storage(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+            HashMap::from_iter([(slot, StorageValue::from(7))]),
+        );
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        assert_eq!(state.storage(address, slot).unwrap(), StorageValue::from(7));
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        let account = bundle.account(&address).unwrap();
+        assert!(account.info.as_ref().is_some_and(|info| info.is_empty()));
+        assert_eq!(account.status, AccountStatus::Changed);
+    }
+
+    #[test]
+    fn keep_empty_accounts_reads_database_storage_of_emptied_account() {
+        let address = Address::with_last_byte(1);
+        let slot = StorageKey::from(1);
+        let mut db = CacheDB::new(EmptyDB::default());
+        db.insert_account_info(address, AccountInfo::default());
+        db.insert_account_storage(address, slot, StorageValue::from(7))
+            .unwrap();
+        let mut state = State::builder()
+            .with_database(db)
+            .with_bundle_update()
+            .build();
+        assert!(state.basic(address).unwrap().is_some());
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        assert_eq!(state.storage(address, slot).unwrap(), StorageValue::from(7));
+        // Nothing changed, so the bundle records nothing.
+        state.merge_transitions(BundleRetention::Reverts);
+        assert!(state.take_bundle().account(&address).is_none());
+    }
+
+    #[test]
+    fn keep_empty_accounts_allows_later_creation_at_emptied_account() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+        );
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+        state.merge_transitions(BundleRetention::Reverts);
+
+        let mut created = Account::from(AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        });
+        created.mark_created();
+        created.mark_touch();
+        state.commit(HashMap::from_iter([(address, created)]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        let bundle = state.take_bundle();
+        let account = bundle.account(&address).unwrap();
+        assert_eq!(account.info.as_ref().map(|info| info.nonce), Some(1));
+        assert_eq!(account.status, AccountStatus::InMemoryChange);
+    }
+
+    #[test]
+    fn bundle_records_storage_change_of_kept_empty_account() {
+        let slot = StorageKey::from(1);
+        let mut account = BundleAccount::new(
+            Some(AccountInfo::default()),
+            Some(AccountInfo::default()),
+            HashMap::from_iter([(slot, StorageSlot::new(StorageValue::from(7)))]),
+            AccountStatus::LoadedEmptyEIP161,
+        );
+
+        let revert = account.update_and_create_revert(TransitionAccount {
+            info: Some(AccountInfo::default()),
+            status: AccountStatus::Changed,
+            previous_info: Some(AccountInfo::default()),
+            previous_status: AccountStatus::LoadedEmptyEIP161,
+            storage: HashMap::from_iter([(
+                slot,
+                StorageSlot::new_changed(StorageValue::from(7), StorageValue::from(8)),
+            )]),
+            storage_was_destroyed: false,
+        });
+
+        assert!(revert.is_some());
+        assert_eq!(account.status, AccountStatus::Changed);
+        assert_eq!(
+            account.storage.get(&slot).map(|s| s.present_value),
+            Some(StorageValue::from(8))
+        );
+    }
+
+    #[test]
+    fn with_empty_accounts_kept_restores_state_clear() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+        );
+        assert!(!state.cache.keep_empty_accounts);
+        state.with_empty_accounts_kept(|state| assert!(state.cache.keep_empty_accounts));
+        assert!(!state.cache.keep_empty_accounts);
+
+        state.commit(HashMap::from_iter([(
+            address,
+            touched(AccountInfo::default()),
+        )]));
+        assert!(state.basic(address).unwrap().is_none());
+    }
+
+    #[test]
+    fn keep_empty_accounts_reads_database_storage_of_emptied_eoa() {
+        let address = Address::with_last_byte(1);
+        let slot = StorageKey::from(1);
+        let mut db = CacheDB::new(EmptyDB::default());
+        db.insert_account_info(
+            address,
+            AccountInfo {
+                balance: U256::from(9),
+                ..Default::default()
+            },
+        );
+        db.insert_account_storage(address, slot, StorageValue::from(7))
+            .unwrap();
+        let mut state = State::builder()
+            .with_database(db)
+            .with_bundle_update()
+            .build();
+        assert!(state.basic(address).unwrap().is_some());
+
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        assert_eq!(state.storage(address, slot).unwrap(), StorageValue::from(7));
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        let account = bundle.account(&address).unwrap();
+        assert_eq!(account.status, AccountStatus::Changed);
+        let reverts = &bundle.reverts[0];
+        let (_, revert) = reverts.iter().find(|(a, _)| *a == address).unwrap();
+        assert_eq!(
+            revert.account,
+            AccountInfoRevert::RevertTo(AccountInfo {
+                balance: U256::from(9),
+                ..Default::default()
+            })
+        );
+    }
+
+    #[test]
+    fn keep_empty_accounts_keeps_account_destroyed_earlier_in_block() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+        );
+        let mut destroyed = Account::from(AccountInfo::default());
+        destroyed.mark_selfdestruct();
+        destroyed.mark_touch();
+        state.commit(HashMap::from_iter([(address, destroyed)]));
+
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        assert_eq!(
+            bundle.account(&address).map(|a| a.status),
+            Some(AccountStatus::DestroyedChanged)
+        );
+    }
+
+    /// Pins the current result of a creation at an emptied account that still has storage.
+    /// EIP-7610 forbids this creation, but revm does not check it, so the created account
+    /// reads empty storage while the bundle keeps the slots the database holds.
+    #[test]
+    fn creation_at_emptied_account_with_storage_keeps_bundle_slots() {
+        let address = Address::with_last_byte(1);
+        let slot = StorageKey::from(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account_with_storage(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+            HashMap::from_iter([(slot, StorageValue::from(7))]),
+        );
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+        state.merge_transitions(BundleRetention::Reverts);
+
+        let mut created = Account::from(AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        });
+        created.mark_created();
+        created.mark_touch();
+        state.commit(HashMap::from_iter([(address, created)]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        assert_eq!(state.storage(address, slot).unwrap(), StorageValue::ZERO);
+        let bundle = state.take_bundle();
+        assert_eq!(
+            bundle.account(&address).map(|a| a.status),
+            Some(AccountStatus::InMemoryChange)
+        );
+    }
+
+    #[test]
+    fn keep_empty_accounts_creates_missing_empty_account() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        assert!(state.basic(address).unwrap().is_none());
+        state.with_empty_accounts_kept(|state| {
+            state.commit(HashMap::from_iter([(
+                address,
+                touched(AccountInfo::default()),
+            )]))
+        });
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        state.merge_transitions(BundleRetention::Reverts);
+        let bundle = state.take_bundle();
+        let account = bundle.account(&address).unwrap();
+        assert!(account.info.as_ref().is_some_and(|info| info.is_empty()));
+        assert_eq!(account.status, AccountStatus::InMemoryChange);
+        let (_, revert) = bundle.reverts[0]
+            .iter()
+            .find(|(a, _)| *a == address)
+            .unwrap();
+        assert_eq!(revert.account, AccountInfoRevert::DeleteIt);
+    }
+
+    #[test]
+    fn keep_empty_accounts_merges_after_earlier_change() {
+        let address = Address::with_last_byte(1);
+        let mut state = State::builder().with_bundle_update().build();
+        state.insert_account(
+            address,
+            AccountInfo {
+                nonce: 5,
+                ..Default::default()
+            },
+        );
+        state.cache.keep_empty_accounts = true;
+
+        let changed = AccountInfo {
+            nonce: 5,
+            balance: U256::from(1),
+            ..Default::default()
+        };
+        state.commit(HashMap::from_iter([(address, touched(changed))]));
+        state.merge_transitions(BundleRetention::Reverts);
+        state.commit(HashMap::from_iter([(
+            address,
+            touched(AccountInfo::default()),
+        )]));
+        state.merge_transitions(BundleRetention::Reverts);
+
+        assert!(state
+            .basic(address)
+            .unwrap()
+            .is_some_and(|info| info.is_empty()));
+        let bundle = state.take_bundle();
+        assert!(bundle
+            .account(&address)
+            .and_then(|a| a.info.as_ref())
+            .is_some_and(|i| i.is_empty()));
     }
 
     #[test]
