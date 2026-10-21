@@ -23,6 +23,9 @@ mod traits;
 #[cfg(test)]
 mod inspector_tests;
 
+#[cfg(test)]
+mod runtime_oog_tests;
+
 /// Inspector implementations.
 pub mod inspectors {
     #[cfg(feature = "tracer")]
