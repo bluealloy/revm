@@ -18,14 +18,14 @@ jobs:
       id-token: write
     steps:
       - name: Secure runner
-        uses: tempoxyz/gh-actions/actions/secure-runner@d5402286a7abdfb7232173b3228d56473feb8a66 # 2026-09-29T02-04-45Z-d5402286
+        uses: tempoxyz/gh-actions/actions/secure-runner@545ea7b097e391a3a698b9d756d3263f10c7cd8b # 2026-10-20T20-48-18Z-545ea7b0
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # v1
+        uses: tempoxyz/gh-actions/vendor/dtolnay/rust-toolchain@545ea7b097e391a3a698b9d756d3263f10c7cd8b # 2026-10-20T20-48-18Z-545ea7b0
         with:
           toolchain: stable
       - name: Validate committed lockfile
