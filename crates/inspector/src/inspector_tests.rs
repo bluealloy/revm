@@ -1338,6 +1338,56 @@ mod eip7702_refund_tests {
         assert_eq!(evm.inspector.on_step, [0]);
     }
 
+    /// The EIP-3155 tracer reports the refund on every step, like geth.
+    #[cfg(feature = "tracer")]
+    #[test]
+    fn eip3155_tracer_reports_the_refund() {
+        use crate::inspectors::TracerEip3155;
+        use std::{cell::RefCell, io::Write, rc::Rc};
+
+        #[derive(Clone, Default)]
+        struct SharedBuffer(Rc<RefCell<Vec<u8>>>);
+
+        impl Write for SharedBuffer {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                self.0.borrow_mut().extend_from_slice(buf);
+                Ok(buf.len())
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        fn step_refunds(authority_exists: bool) -> Vec<String> {
+            let output = SharedBuffer::default();
+            let tracer = TracerEip3155::new(Box::new(output.clone())).without_summary();
+            let mut evm = Context::mainnet()
+                .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
+                .with_db(db(vec![opcode::STOP], authority_exists))
+                .build_mainnet_with_inspector(tracer);
+
+            let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+            assert!(result.is_success(), "{result:?}");
+
+            let output = output.0.borrow();
+            let trace = core::str::from_utf8(&output).unwrap();
+            trace
+                .lines()
+                .map(|line| {
+                    let step: serde_json::Value = serde_json::from_str(line).unwrap();
+                    step["refund"].as_str().unwrap().to_string()
+                })
+                .collect()
+        }
+
+        let evm = build_evm(SpecId::PRAGUE, db(vec![], true));
+        let refund = evm.ctx.cfg().gas_params().tx_eip7702_auth_refund_regular();
+
+        assert_eq!(step_refunds(true), [format!("{refund:#x}")]);
+        assert_eq!(step_refunds(false), ["0x0"]);
+    }
+
     #[test]
     fn amsterdam_has_no_refund() {
         // EIP-2780 charges the authorizations at runtime: nothing to refund.
