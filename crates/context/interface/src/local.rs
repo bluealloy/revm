@@ -234,6 +234,25 @@ pub trait LocalContextTr {
     ///
     /// Returns `Some(String)` if a precompile error message was recorded.
     fn take_precompile_error_context(&mut self) -> Option<String>;
+
+    /// Sets the EIP-7702 authorization refund of the current transaction.
+    ///
+    /// Recorded by the pre-execution phase once the authorization list has
+    /// been applied, so that it is observable during execution.
+    fn set_eip7702_refund(&mut self, refund: u64);
+
+    /// EIP-7702 regular gas refund of the current transaction: the refund
+    /// granted for each applied authorization whose authority already existed.
+    ///
+    /// It is computed in the pre-execution phase, before the first frame runs,
+    /// and is added to the transaction refund counter in the post-execution
+    /// phase. Unlike a frame's refund counter it survives a top-level revert.
+    /// It is zero for non-EIP-7702 transactions and from Amsterdam on
+    /// (EIP-2780 charges the authorizations at runtime instead).
+    ///
+    /// Inspectors can read it to report the transaction-wide refund during
+    /// execution.
+    fn eip7702_refund(&self) -> u64;
 }
 
 #[cfg(test)]

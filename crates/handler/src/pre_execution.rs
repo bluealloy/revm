@@ -8,7 +8,7 @@ use context_interface::{
     journaled_state::{account::JournaledAccountTr, JournalCheckpoint, JournalTr},
     result::InvalidTransaction,
     transaction::{AccessListItemTr, AuthorizationTr, Transaction, TransactionType},
-    Block, Cfg, ContextTr, Database,
+    Block, Cfg, ContextTr, Database, LocalContextTr,
 };
 use core::cmp::Ordering;
 use interpreter::GasTracker;
@@ -226,6 +226,12 @@ pub struct PreExecutionOutput {
 /// revert it, dropping the applied delegations; the transaction stays valid
 /// but must be included as an out-of-gas halt without entering execution.
 ///
+/// The returned refund is also recorded on the local context
+/// ([`LocalContextTr::set_eip7702_refund`]) so that inspectors can observe it
+/// during execution: it is only added to the transaction refund counter in the
+/// post-execution phase, and it survives a top-level revert. It is set to zero
+/// when there is no refund (non-EIP-7702 transaction, EIP-2780, or out of gas).
+///
 /// `init_and_floor_gas` is unused by this implementation — the EIP-2780
 /// charges are recorded on the transaction-level `gas` — and is kept in the
 /// signature so chain variants that meter the authorizations against the
@@ -238,6 +244,9 @@ pub fn apply_eip7702_auth_list<
     context: &mut CTX,
     gas: &mut GasTracker,
 ) -> Result<Option<u64>, ERROR> {
+    // Every path that does not grant a refund leaves this at zero.
+    context.local_mut().set_eip7702_refund(0);
+
     // EIP-2780: state-dependent charges (authority creation, delegation bytes,
     // delegation-target access, recipient new-account state gas) are charged at
     // the runtime phase instead of pessimistically at the intrinsic phase.
@@ -300,6 +309,9 @@ pub fn apply_eip7702_auth_list<
     let regular_gas_refund = params
         .tx_eip7702_auth_refund_regular()
         .saturating_mul(number_of_refunded_accounts);
+
+    // Make the refund observable to inspectors during execution.
+    context.local_mut().set_eip7702_refund(regular_gas_refund);
 
     Ok(Some(regular_gas_refund))
 }
