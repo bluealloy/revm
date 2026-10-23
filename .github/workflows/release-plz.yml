@@ -32,12 +32,13 @@ jobs:
         run: |
           cargo metadata --locked --format-version=1 > /dev/null
           git diff --exit-code -- Cargo.lock
+      - name: Install release-plz
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: release-plz@0.3.160
+          fallback: none
       # release-pr may update workspace versions in its generated PR.
       - name: Run release-plz
-        uses: MarcoIeni/release-plz-action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5.131
-        with:
-          command: release-pr
-          version: 0.3.160
+        run: release-plz release-pr --git-token "$GITHUB_TOKEN" --repo-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
         env:
-        # The admin of the repository with need to configure the following secrets:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
