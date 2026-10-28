@@ -671,6 +671,10 @@ pub trait Handler {
         evm: &mut Self::Evm,
         error: Self::Error,
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
+        // A database error recorded during execution is taken only when the result is built;
+        // when another error is returned first (e.g. from post-execution), drop it here so the
+        // next transaction on this EVM does not fail with it.
+        *evm.ctx().error() = Ok(());
         // clean up local context. Initcode cache needs to be discarded.
         evm.ctx().local_mut().clear();
         evm.ctx().journal_mut().discard_tx();

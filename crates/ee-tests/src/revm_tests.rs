@@ -843,3 +843,117 @@ fn test_custom_opcode_transaction() {
         "DOUBLE(7) should store 14 in slot 0"
     );
 }
+
+/// A database that fails every account read of one address, counting the failures.
+#[derive(Debug, Default)]
+struct FailingAccountDb {
+    inner: revm::database::InMemoryDB,
+    fail_on: Option<revm::primitives::Address>,
+    failures: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct AccountReadError(usize);
+
+impl core::fmt::Display for AccountReadError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "account read failure {}", self.0)
+    }
+}
+
+impl core::error::Error for AccountReadError {}
+
+impl revm::database_interface::DBErrorMarker for AccountReadError {}
+
+impl revm::Database for FailingAccountDb {
+    type Error = AccountReadError;
+
+    fn basic(
+        &mut self,
+        address: revm::primitives::Address,
+    ) -> Result<Option<revm::state::AccountInfo>, Self::Error> {
+        if self.fail_on == Some(address) {
+            self.failures += 1;
+            return Err(AccountReadError(self.failures));
+        }
+        Ok(self.inner.basic(address).unwrap())
+    }
+
+    fn code_by_hash(&mut self, code_hash: revm::primitives::B256) -> Result<Bytecode, Self::Error> {
+        Ok(self.inner.code_by_hash(code_hash).unwrap())
+    }
+
+    fn storage(
+        &mut self,
+        address: revm::primitives::Address,
+        index: revm::primitives::StorageKey,
+    ) -> Result<revm::primitives::StorageValue, Self::Error> {
+        Ok(self.inner.storage(address, index).unwrap())
+    }
+
+    fn block_hash(&mut self, number: u64) -> Result<revm::primitives::B256, Self::Error> {
+        Ok(self.inner.block_hash(number).unwrap())
+    }
+}
+
+/// A database error recorded in the context during a frame must not outlive the transaction
+/// when the handler returns another error before taking it.
+///
+/// `BALANCE` of the beneficiary records the first read failure in the context. Post-execution
+/// rewards the same beneficiary, whose read fails again and is returned before
+/// `execution_result` takes the recorded error. The next transaction on the same EVM, with the
+/// database healthy again, must not fail with the old error.
+#[test]
+fn test_catch_error_clears_a_recorded_database_error() {
+    use revm::{context::result::EVMError, state::AccountInfo};
+
+    let caller = address!("0x0000000000000000000000000000000000001000");
+    let contract = address!("0x0000000000000000000000000000000000002000");
+    let beneficiary = address!("0x0000000000000000000000000000000000003000");
+    let recipient = address!("0x0000000000000000000000000000000000004000");
+
+    let mut db = FailingAccountDb::default();
+    db.inner
+        .insert_account_info(caller, AccountInfo::from_balance(U256::from(1_000_000)));
+    let mut code = vec![opcode::PUSH20];
+    code.extend_from_slice(beneficiary.as_slice());
+    code.extend_from_slice(&[opcode::BALANCE, opcode::POP, opcode::STOP]);
+    db.inner.insert_account_info(
+        contract,
+        AccountInfo::default().with_code(Bytecode::new_legacy(code.into())),
+    );
+    db.fail_on = Some(beneficiary);
+
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
+        .modify_block_chained(|block| block.beneficiary = beneficiary)
+        .with_db(db)
+        .build_mainnet();
+
+    let call = TxEnv::builder()
+        .caller(caller)
+        .kind(TxKind::Call(contract))
+        .gas_limit(100_000)
+        .build()
+        .unwrap();
+    assert_eq!(
+        evm.transact(call).unwrap_err(),
+        EVMError::Database(AccountReadError(2)),
+        "post-execution's read fails before the recorded error is taken"
+    );
+    assert!(evm.ctx.error.is_ok(), "the recorded error is cleared");
+
+    evm.ctx.journaled_state.database.fail_on = None;
+    let transfer = TxEnv::builder()
+        .caller(caller)
+        .kind(TxKind::Call(recipient))
+        .value(U256::from(1))
+        .gas_limit(100_000)
+        .build()
+        .unwrap();
+    let next = evm.transact(transfer);
+    assert!(
+        next.as_ref().is_ok_and(|out| out.result.is_success()),
+        "the next transaction runs as on a fresh EVM: {next:?}"
+    );
+}
