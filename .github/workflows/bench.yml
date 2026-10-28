@@ -27,7 +27,7 @@ jobs:
       - uses: tempoxyz/gh-actions/vendor/dtolnay/rust-toolchain@545ea7b097e391a3a698b9d756d3263f10c7cd8b # 2026-10-20T20-48-18Z-545ea7b0
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           cache-on-failure: true
       - name: Install cargo-codspeed
@@ -39,7 +39,7 @@ jobs:
       - name: Build the benchmark target(s)
         run: cargo codspeed build --locked --profile profiling --workspace --exclude '*example*'
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
+        uses: CodSpeedHQ/action@821a40cd6c80e3cfe387caf55668287addd808da # v5.5.0
         with:
           run: cargo codspeed run --workspace
           token: ${{ secrets.CODSPEED_TOKEN }}
