@@ -129,15 +129,20 @@ pub trait SystemCallEvm: ExecuteEvm {
     }
 
     /// Internally calls [`SystemCallEvm::system_call_one`] and [`ExecuteEvm::finalize`] functions to obtain the changed state.
+    ///
+    /// The journal is finalized whether or not the call succeeds, as in [`ExecuteEvm::transact`].
     fn system_call_with_caller(
         &mut self,
         caller: Address,
         system_contract_address: Address,
         data: Bytes,
     ) -> Result<ExecResultAndState<Self::ExecutionResult, Self::State>, Self::Error> {
-        let result = self.system_call_one_with_caller(caller, system_contract_address, data)?;
+        let output_or_error =
+            self.system_call_one_with_caller(caller, system_contract_address, data);
+        // finalize will clear the journal
         let state = self.finalize();
-        Ok(ExecResultAndState::new(result, state))
+        let output = output_or_error?;
+        Ok(ExecResultAndState::new(output, state))
     }
 
     /// System call is a special transaction call that is used to call a system contract.
@@ -432,6 +437,111 @@ mod tests {
             U256::from_be_bytes(block_hash.0),
             "State is not updated {:?}",
             output.state
+        );
+    }
+
+    /// A database that fails every account read of one address.
+    #[derive(Debug, Default)]
+    struct FailingAccountDb {
+        inner: InMemoryDB,
+        fail_on: Option<Address>,
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    struct AccountReadError;
+
+    impl core::fmt::Display for AccountReadError {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            f.write_str("account read failure")
+        }
+    }
+
+    impl core::error::Error for AccountReadError {}
+
+    impl database_interface::DBErrorMarker for AccountReadError {}
+
+    impl database_interface::Database for FailingAccountDb {
+        type Error = AccountReadError;
+
+        fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+            if self.fail_on == Some(address) {
+                return Err(AccountReadError);
+            }
+            Ok(self.inner.basic(address).unwrap())
+        }
+
+        fn code_by_hash(&mut self, code_hash: primitives::B256) -> Result<Bytecode, Self::Error> {
+            Ok(self.inner.code_by_hash(code_hash).unwrap())
+        }
+
+        fn storage(
+            &mut self,
+            address: Address,
+            index: StorageKey,
+        ) -> Result<primitives::StorageValue, Self::Error> {
+            Ok(self.inner.storage(address, index).unwrap())
+        }
+
+        fn block_hash(&mut self, number: u64) -> Result<primitives::B256, Self::Error> {
+            Ok(self.inner.block_hash(number).unwrap())
+        }
+    }
+
+    /// `system_call_with_caller` finalizes the journal when the call fails, as
+    /// [`ExecuteEvm::transact`] does, so nothing the journal held is handed to the next call.
+    ///
+    /// A `transact_one` call leaves its nonce bump in the journal. A system call that then fails
+    /// on a database read must still finalize, or the next `transact` of the same sender would
+    /// see the nonce bump of a transaction that was never committed.
+    #[test]
+    fn test_system_call_with_caller_finalizes_on_error() {
+        use context::{result::EVMError, TxEnv};
+        use primitives::TxKind;
+
+        let caller = address!("0x0000000000000000000000000000000000001000");
+        let contract = address!("0x0000000000000000000000000000000000002000");
+        let unreadable = address!("0x0000000000000000000000000000000000003000");
+        let recipient = address!("0x0000000000000000000000000000000000004000");
+
+        let mut db = FailingAccountDb::default();
+        db.inner
+            .insert_account_info(caller, AccountInfo::from_balance(U256::from(1_000_000)));
+        let mut code = vec![bytecode::opcode::PUSH20];
+        code.extend_from_slice(unreadable.as_slice());
+        code.extend_from_slice(&[
+            bytecode::opcode::BALANCE,
+            bytecode::opcode::POP,
+            bytecode::opcode::STOP,
+        ]);
+        db.inner.insert_account_info(
+            contract,
+            AccountInfo::default().with_code(Bytecode::new_legacy(code.into())),
+        );
+        db.fail_on = Some(unreadable);
+
+        let mut evm = Context::mainnet().with_db(db).build_mainnet();
+        let transfer = || {
+            TxEnv::builder()
+                .caller(caller)
+                .kind(TxKind::Call(recipient))
+                .value(U256::from(1))
+                .gas_limit(100_000)
+                .build()
+                .unwrap()
+        };
+        assert!(evm.transact_one(transfer()).unwrap().is_success());
+
+        assert_eq!(
+            evm.system_call_with_caller(caller, contract, Bytes::new())
+                .unwrap_err(),
+            EVMError::Database(AccountReadError)
+        );
+
+        evm.ctx.journaled_state.database.fail_on = None;
+        let next = evm.transact(transfer());
+        assert!(
+            next.as_ref().is_ok_and(|out| out.result.is_success()),
+            "the failed system call finalized the journal: {next:?}"
         );
     }
 }
