@@ -322,7 +322,18 @@ pub(crate) fn inspect_logs<CTX, IT>(
     CTX: ContextTr<Journal: JournalExt>,
     IT: InterpreterTypes,
 {
-    let logs = context.journal_mut().logs()[logs_i..].to_vec();
+    // A LOG instruction normally emits one log. Keep that snapshot on the stack;
+    // callbacks can mutate the journal, so both paths must clone before calling.
+    let logs = &context.journal_mut().logs()[logs_i..];
+    if let [log] = logs {
+        let log = log.clone();
+        match interpreter {
+            Some(interpreter) => inspector.log_full(interpreter, context, log),
+            None => inspector.log(context, log),
+        }
+        return;
+    }
+    let logs = logs.to_vec();
     match interpreter {
         Some(interpreter) => {
             for log in logs {
