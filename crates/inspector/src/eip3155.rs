@@ -208,7 +208,7 @@ impl TracerEip3155 {
         let value = Summary {
             state_root: B256::ZERO.to_string(),
             output: result.output.to_string(),
-            gas_used: gas_limit - self.gas_inspector.gas_remaining(),
+            gas_used: gas_limit - result.gas.remaining(),
             pass: result.is_ok(),
             time: None,
             fork: Some(spec.to_string()),
@@ -325,4 +325,36 @@ fn write_value(
 
 fn serde_hex_u64<S: serde::Serializer>(n: &u64, serializer: S) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(&format!("{:#x}", *n))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::InspectEvm;
+    use context::{Context, TxEnv};
+    use handler::{MainBuilder, MainContext};
+    use std::{cell::RefCell, rc::Rc};
+
+    #[derive(Clone, Default)]
+    struct SharedBuf(Rc<RefCell<Vec<u8>>>);
+
+    impl Write for SharedBuf {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.borrow_mut().write(buf)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn summary_gas_used_without_bytecode() {
+        let buf = SharedBuf::default();
+        let mut evm = Context::mainnet()
+            .build_mainnet_with_inspector(TracerEip3155::new(Box::new(buf.clone())));
+        let tx = TxEnv::builder().gas_limit(100_000).build().unwrap();
+        evm.inspect_one_tx(tx).unwrap();
+        let output = String::from_utf8(buf.0.take()).unwrap();
+        assert!(output.contains(r#""gasUsed":"0x5208""#), "{output}");
+    }
 }
