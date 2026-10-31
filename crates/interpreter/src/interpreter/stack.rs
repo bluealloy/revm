@@ -304,7 +304,10 @@ impl Stack {
     pub fn exchange(&mut self, n: usize, m: usize) -> bool {
         assume!(m > 0, "overlapping exchange");
         let len = self.len();
-        let n_m_index = n + m;
+        let Some(n_m_index) = n.checked_add(m) else {
+            cold_path();
+            return false;
+        };
         if n_m_index >= len {
             cold_path();
             return false;
@@ -453,6 +456,45 @@ mod tests {
             stack.data.set_len(0);
         }
         f(&mut stack);
+    }
+
+    #[test]
+    fn exchange_overflow() {
+        let mut stack = Stack::new();
+        let values = [1, 2, 3].map(U256::from);
+        stack.data.extend_from_slice(&values);
+
+        for (n, m) in [(usize::MAX, 1), (1, usize::MAX), (usize::MAX - 1, 2)] {
+            assert!(!stack.exchange(n, m));
+            assert_eq!(stack.len(), values.len());
+            assert_eq!(stack.data, values);
+        }
+    }
+
+    #[test]
+    fn exchange_valid() {
+        let mut stack = Stack::new();
+        stack.data.extend([1, 2, 3].map(U256::from));
+
+        assert!(stack.exchange(0, 2));
+        assert_eq!(stack.data, [3, 2, 1].map(U256::from));
+        assert!(stack.exchange(1, 1));
+        assert_eq!(stack.data, [2, 3, 1].map(U256::from));
+    }
+
+    #[test]
+    fn exchange_underflow() {
+        let mut stack = Stack::new();
+        assert!(!stack.exchange(0, 1));
+        assert!(stack.is_empty());
+
+        let values = [1, 2, 3].map(U256::from);
+        stack.data.extend_from_slice(&values);
+        for (n, m) in [(0, 3), (1, 2), (3, 1), (0, usize::MAX)] {
+            assert!(!stack.exchange(n, m));
+            assert_eq!(stack.len(), values.len());
+            assert_eq!(stack.data, values);
+        }
     }
 
     #[test]
