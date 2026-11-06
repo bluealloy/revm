@@ -479,86 +479,8 @@ impl EthFrame<EthInterpreter> {
 
         // Insert result to the top frame.
         match result {
-            FrameResult::Call(outcome) => {
-                let mut out_gas = outcome.gas();
-                let ins_result = *outcome.instruction_result();
-                let returned_len = outcome.result.output.len();
-
-                let interpreter = &mut self.interpreter;
-                let mem_length = outcome.memory_length();
-                let mem_start = outcome.memory_start();
-                interpreter.return_data.set_buffer(outcome.result.output);
-
-                let target_len = min(mem_length, returned_len);
-
-                if ins_result == InstructionResult::FatalExternalError {
-                    panic!("Fatal external error in insert_call_outcome");
-                }
-
-                let item = if ins_result.is_ok() {
-                    U256::from(1)
-                } else {
-                    U256::ZERO
-                };
-                // Safe to push without stack limit check
-                let _ = interpreter.stack.push(item);
-
-                // Copy returned data into the parent's memory on success or revert.
-                if ins_result.is_ok_or_revert() {
-                    interpreter
-                        .memory
-                        .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
-                }
-
-                // Settle the child's gas and merge it into the parent (returns
-                // unused regular gas, adopts the reservoir, and propagates state
-                // gas / refunds on success).
-                handle_reservoir_remaining_gas(
-                    ins_result,
-                    interpreter.gas.tracker_mut(),
-                    out_gas.tracker_mut(),
-                );
-            }
-            FrameResult::Create(outcome) => {
-                let instruction_result = *outcome.instruction_result();
-                let interpreter = &mut self.interpreter;
-
-                if instruction_result == InstructionResult::Revert {
-                    // Save data to return data buffer if the create reverted
-                    interpreter
-                        .return_data
-                        .set_buffer(outcome.output().to_owned());
-                } else {
-                    // Otherwise clear it. Note that RETURN opcode should abort.
-                    interpreter.return_data.clear();
-                };
-
-                assert_ne!(
-                    instruction_result,
-                    InstructionResult::FatalExternalError,
-                    "Fatal external error in insert_eofcreate_outcome"
-                );
-
-                let mut create_gas = *outcome.gas();
-
-                // Settle the child's gas and merge it into the parent (returns
-                // unused regular gas, adopts the reservoir, and propagates state
-                // gas / refunds on success).
-                handle_reservoir_remaining_gas(
-                    instruction_result,
-                    interpreter.gas.tracker_mut(),
-                    create_gas.tracker_mut(),
-                );
-
-                let stack_item = if instruction_result.is_ok() {
-                    outcome.address.unwrap_or_default().into_word().into()
-                } else {
-                    U256::ZERO
-                };
-
-                // Safe to push without stack limit check
-                let _ = interpreter.stack.push(stack_item);
-            }
+            FrameResult::Call(outcome) => self.return_call_result(outcome),
+            FrameResult::Create(outcome) => self.return_create_result(outcome),
         }
 
         // Refund the upfront state charge after the child's gas is settled
@@ -568,6 +490,90 @@ impl EthFrame<EthInterpreter> {
         }
 
         Ok(())
+    }
+
+    /// Returns the result of a call frame to the parent interpreter.
+    pub fn return_call_result(&mut self, outcome: CallOutcome) {
+        let mut out_gas = outcome.gas();
+        let ins_result = *outcome.instruction_result();
+        let returned_len = outcome.result.output.len();
+
+        let interpreter = &mut self.interpreter;
+        let mem_length = outcome.memory_length();
+        let mem_start = outcome.memory_start();
+        interpreter.return_data.set_buffer(outcome.result.output);
+
+        let target_len = min(mem_length, returned_len);
+
+        if ins_result == InstructionResult::FatalExternalError {
+            panic!("Fatal external error in insert_call_outcome");
+        }
+
+        let item = if ins_result.is_ok() {
+            U256::from(1)
+        } else {
+            U256::ZERO
+        };
+        // Safe to push without stack limit check
+        let _ = interpreter.stack.push(item);
+
+        // Copy returned data into the parent's memory on success or revert.
+        if ins_result.is_ok_or_revert() {
+            interpreter
+                .memory
+                .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
+        }
+
+        // Settle the child's gas and merge it into the parent (returns
+        // unused regular gas, adopts the reservoir, and propagates state
+        // gas / refunds on success).
+        handle_reservoir_remaining_gas(
+            ins_result,
+            interpreter.gas.tracker_mut(),
+            out_gas.tracker_mut(),
+        );
+    }
+
+    /// Returns the result of a create frame to the parent interpreter.
+    pub fn return_create_result(&mut self, outcome: CreateOutcome) {
+        let instruction_result = *outcome.instruction_result();
+        let interpreter = &mut self.interpreter;
+
+        if instruction_result == InstructionResult::Revert {
+            // Save data to return data buffer if the create reverted
+            interpreter
+                .return_data
+                .set_buffer(outcome.output().to_owned());
+        } else {
+            // Otherwise clear it. Note that RETURN opcode should abort.
+            interpreter.return_data.clear();
+        };
+
+        assert_ne!(
+            instruction_result,
+            InstructionResult::FatalExternalError,
+            "Fatal external error in insert_eofcreate_outcome"
+        );
+
+        let mut create_gas = *outcome.gas();
+
+        // Settle the child's gas and merge it into the parent (returns
+        // unused regular gas, adopts the reservoir, and propagates state
+        // gas / refunds on success).
+        handle_reservoir_remaining_gas(
+            instruction_result,
+            interpreter.gas.tracker_mut(),
+            create_gas.tracker_mut(),
+        );
+
+        let stack_item = if instruction_result.is_ok() {
+            outcome.address.unwrap_or_default().into_word().into()
+        } else {
+            U256::ZERO
+        };
+
+        // Safe to push without stack limit check
+        let _ = interpreter.stack.push(stack_item);
     }
 }
 
