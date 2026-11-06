@@ -9,18 +9,26 @@ Currently it is mainly used to run ethereum tests with the `statetest` subcomman
 `statetest` takes a path to the directory where ethereum statetest json can be found.
 It recursively parses all json files in the specified directory and executes them.
 
-Running all [ethereum tests][et] checks that revm is compliant to the ethereum specs.
+Running Ethereum execution-spec tests (EEST) checks that revm is compliant to the ethereum specs.
 
-To run [ethereum tests][et] locally, clone the [tests][et] repository and provide the
-test directory. Below, we clone the repo and execute the `GeneralStateTests` suite of
-tests.
+To download fixtures and run them locally, use the repo helper script (downloads EEST
+fixtures into `test-fixtures/` by default):
 
 ```shell
-git clone https://github.com/ethereum/tests
-cargo run -p revme statetest tests/GeneralStateTests
+./scripts/run-tests.sh
 ```
 
-*Notice, in the [`.gitignore`](../../.gitignore), the `bins/revme/tests` directory
-is ignored so it won't be checked into git.*
+For older hardfork coverage, clone [legacytests][legacytests] and point `statetest` at a
+`GeneralStateTests` tree:
 
-[et]: https://github.com/ethereum/tests
+```shell
+git clone https://github.com/ethereum/legacytests
+cargo run -p revme -- statetest legacytests/Cancun/GeneralStateTests
+```
+
+See also the [revme book page](https://bluealloy.github.io/revm/revme.html#running-eth-tests).
+
+*Notice, in the [`.gitignore`](../../.gitignore), `bins/revme/tests` and `/test-fixtures`
+are ignored so fixtures won't be checked into git.*
+
+[legacytests]: https://github.com/ethereum/legacytests
