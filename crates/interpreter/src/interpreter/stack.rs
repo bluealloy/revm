@@ -127,9 +127,9 @@ impl Stack {
         &self.data
     }
 
-    /// Returns a mutable reference to the underlying data buffer.
+    /// Returns a mutable slice of the stack data.
     #[inline]
-    pub const fn data_mut(&mut self) -> &mut Vec<U256> {
+    pub fn data_mut(&mut self) -> &mut [U256] {
         &mut self.data
     }
 
@@ -539,5 +539,18 @@ mod tests {
         // Test push to the full original or cloned stack should return StackOverflow
         assert!(!full_stack.push(U256::from(100)));
         assert!(!cloned_full.push(U256::from(100)));
+    }
+
+    #[test]
+    fn test_data_mut_slice_invariance() {
+        let mut stack = Stack::new();
+        assert!(stack.push(U256::from(1)));
+        assert!(stack.push(U256::from(2)));
+
+        let slice = stack.data_mut();
+        slice[0] = U256::from(42);
+
+        assert_eq!(stack.peek(1), Ok(U256::from(42)));
+        assert_eq!(stack.data().capacity(), STACK_LIMIT);
     }
 }
