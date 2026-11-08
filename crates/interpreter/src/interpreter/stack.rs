@@ -221,6 +221,14 @@ impl Stack {
         unsafe { (self.popn_unchecked(), self.top_unchecked()) }
     }
 
+    #[inline(always)]
+    fn ensure_capacity(&mut self) {
+        if self.data.capacity() < STACK_LIMIT {
+            cold_path();
+            self.data.reserve(STACK_LIMIT - self.len());
+        }
+    }
+
     /// Push a new value onto the stack.
     ///
     /// If it will exceed the stack limit, returns false and leaves the stack
@@ -229,13 +237,12 @@ impl Stack {
     #[must_use]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
-        // In debug builds, verify we have sufficient capacity provisioned.
-        debug_assert!(self.data.capacity() >= STACK_LIMIT);
         let len = self.len();
         if len == STACK_LIMIT {
             cold_path();
             return false;
         }
+        self.ensure_capacity();
         unsafe {
             let end = self.data.as_mut_ptr().add(len);
             core::ptr::write(end, value);
@@ -272,6 +279,7 @@ impl Stack {
             cold_path();
             return false;
         }
+        self.ensure_capacity();
         // SAFETY: Check for out of bounds is done above and it makes this safe to do.
         unsafe {
             let ptr = self.data.as_mut_ptr().add(len);
@@ -304,7 +312,10 @@ impl Stack {
     pub fn exchange(&mut self, n: usize, m: usize) -> bool {
         assume!(m > 0, "overlapping exchange");
         let len = self.len();
-        let n_m_index = n + m;
+        let Some(n_m_index) = n.checked_add(m) else {
+            cold_path();
+            return false;
+        };
         if n_m_index >= len {
             cold_path();
             return false;
@@ -348,8 +359,7 @@ impl Stack {
             return false;
         }
 
-        // In debug builds, ensure underlying capacity is sufficient for the write.
-        debug_assert!(self.data.capacity() >= new_len);
+        self.ensure_capacity();
 
         // SAFETY: Length checked above.
         unsafe {

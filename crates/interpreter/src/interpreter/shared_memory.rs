@@ -18,18 +18,12 @@ trait RefcellExt<T> {
 impl<T> RefcellExt<T> for RefCell<T> {
     #[inline]
     fn dbg_borrow(&self) -> Ref<'_, T> {
-        match self.try_borrow() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
+        self.borrow()
     }
 
     #[inline]
     fn dbg_borrow_mut(&self) -> RefMut<'_, T> {
-        match self.try_borrow_mut() {
-            Ok(b) => b,
-            Err(e) => debug_unreachable!("{e}"),
-        }
+        self.borrow_mut()
     }
 }
 
@@ -204,9 +198,11 @@ impl SharedMemory {
     }
 
     #[inline]
-    fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
-        debug_assert!(self.buffer.is_some(), "cannot use SharedMemory::empty");
-        unsafe { self.buffer.as_ref().unwrap_unchecked() }
+    const fn buffer(&self) -> &Rc<RefCell<Vec<u8>>> {
+        match self.buffer.as_ref() {
+            Some(b) => b,
+            None => panic!("cannot use invalid SharedMemory without initialization"),
+        }
     }
 
     #[inline]
@@ -225,10 +221,13 @@ impl SharedMemory {
     fn slice_range_with_base(&self, range: Range<usize>, base: usize) -> Ref<'_, [u8]> {
         let buffer = self.buffer_ref();
         Ref::map(buffer, |b| {
-            let range = range.start + base..range.end + base;
-            match b.get(range.clone()) {
+            let b_len = b.len();
+            let resolved_range = base
+                .checked_add(range.start)
+                .and_then(|start| base.checked_add(range.end).map(|end| start..end));
+            match resolved_range.and_then(|r| b.get(r)) {
                 Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {range:?}; len: {}", self.len()),
+                None => panic!("slice OOB: {range:?}; len: {b_len}"),
             }
         })
     }
@@ -305,13 +304,9 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
+    /// # Panics
     ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the memory (i.e.,
-    /// `range.end <= self.len()`).
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -322,12 +317,7 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an out-of-bounds range triggers undefined
-    /// behavior. Callers must ensure that the range is within the bounds of the buffer.
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn global_slice_range(&self, range: Range<usize>) -> Ref<'_, [u8]> {
@@ -338,21 +328,20 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds access in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with out-of-bounds parameters triggers undefined
-    /// behavior. Callers must ensure that `offset + size` does not exceed the length of the
-    /// memory.
+    /// Panics on out of bounds access.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> RefMut<'_, [u8]> {
+        let checkpoint = self.my_checkpoint;
         let buffer = self.buffer_ref_mut();
         RefMut::map(buffer, |b| {
-            match b.get_mut(self.my_checkpoint + offset..self.my_checkpoint + offset + size) {
+            let b_len = b.len();
+            let resolved_range = checkpoint
+                .checked_add(offset)
+                .and_then(|start| start.checked_add(size).map(|end| start..end));
+            match resolved_range.and_then(|r| b.get_mut(r)) {
                 Some(slice) => slice,
-                None => debug_unreachable!("slice OOB: {offset}..{}", offset + size),
+                None => panic!("slice OOB: {offset}..{}; len: {b_len}", offset.saturating_add(size)),
             }
         })
     }
@@ -481,18 +470,17 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
+    /// Panics if the checkpoint is invalid.
     #[inline]
     pub fn context_memory(&self) -> Ref<'_, [u8]> {
+        let checkpoint = self.my_checkpoint;
         let buffer = self.buffer_ref();
-        Ref::map(buffer, |b| match b.get(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
+        Ref::map(buffer, |b| {
+            let b_len = b.len();
+            match b.get(checkpoint..) {
+                Some(slice) => slice,
+                None => panic!("Context memory checkpoint OOB: {checkpoint}; len: {b_len}"),
+            }
         })
     }
 
@@ -500,18 +488,17 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics if the checkpoint is invalid in debug builds only.
-    ///
-    /// # Safety
-    ///
-    /// In release builds, calling this method with an invalid checkpoint triggers undefined
-    /// behavior. The checkpoint must be within the bounds of the buffer.
+    /// Panics if the checkpoint is invalid.
     #[inline]
     pub fn context_memory_mut(&mut self) -> RefMut<'_, [u8]> {
+        let checkpoint = self.my_checkpoint;
         let buffer = self.buffer_ref_mut();
-        RefMut::map(buffer, |b| match b.get_mut(self.my_checkpoint..) {
-            Some(slice) => slice,
-            None => debug_unreachable!("Context memory should be always valid"),
+        RefMut::map(buffer, |b| {
+            let b_len = b.len();
+            match b.get_mut(checkpoint..) {
+                Some(slice) => slice,
+                None => panic!("Context memory checkpoint OOB: {checkpoint}; len: {b_len}"),
+            }
         })
     }
 }

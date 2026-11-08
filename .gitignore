@@ -3,7 +3,6 @@
 **/.DS_Store
 
 target
-.vscode
 .idea
 pkg/
 
@@ -26,3 +25,5 @@ rustc-ice-*
 
 # Fixtures
 /test-fixtures
+config.bat
+node_modules
