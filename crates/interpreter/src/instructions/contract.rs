@@ -196,8 +196,14 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
         get_memory_input_and_out_ranges(context.interpreter, context.host.gas_params())?;
 
     let is_call = KIND == CALL;
-    let (gas_limit, bytecode, bytecode_hash, charged_new_account_state_gas) =
-        load_acc_and_calc_gas(&mut context, to, has_transfer, is_call, local_gas_limit)?;
+    let (
+        gas_limit,
+        bytecode,
+        bytecode_hash,
+        charged_new_account_state_gas,
+        bytecode_address,
+        disable_precompiles,
+    ) = load_acc_and_calc_gas(&mut context, to, has_transfer, is_call, local_gas_limit)?;
 
     let target_address = if matches!(KIND, CALLCODE | DELEGATECALL) {
         context.interpreter.input.target_address()
@@ -233,7 +239,7 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
                 gas_limit,
                 target_address,
                 caller,
-                bytecode_address: to,
+                bytecode_address,
                 known_bytecode: (bytecode_hash, bytecode),
                 value,
                 scheme,
@@ -241,6 +247,7 @@ pub fn call<const KIND: u8, IT: ITy, H: Host + ?Sized>(mut context: Ictx<'_, H, 
                 return_memory_offset,
                 reservoir: context.interpreter.gas.reservoir(),
                 charged_new_account_state_gas,
+                disable_precompiles,
             },
         ))));
     Err(InstructionResult::Suspend)
