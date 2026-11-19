@@ -1,6 +1,12 @@
 
 # Unreleased
 
+## EIP-7702 precompile bypass (`revm-interpreter`)
+
+* `CallInputs` gained the `disable_precompiles: bool` field, set when resolving an EIP-7702 delegation designator to align precompile dispatch with execution-specs (`eoa_delegation.py`). Direct struct literals must initialize `disable_precompiles`.
+* `load_account_delegated` and `load_account_delegated_handle_error` in `revm-interpreter::instructions::contract` now return `(regular_gas_cost, state_gas_cost, bytecode, code_hash, bytecode_address, is_delegated)`.
+* `load_acc_and_calc_gas` now returns `(gas_limit, bytecode, code_hash, charged_new_account_state_gas, bytecode_address, disable_precompiles)`.
+
 # v120 tag (revm v43.0.3)
 
 The new `account-ext` feature is disabled by default. Existing feature selections require no API migration unless they enable all features.

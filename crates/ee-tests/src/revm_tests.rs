@@ -4,7 +4,7 @@ use revm::{
     bytecode::opcode,
     context::{CfgEnv, ContextTr, TxEnv},
     database::{BenchmarkDB, BENCH_CALLER, BENCH_TARGET},
-    primitives::{address, b256, hardfork::SpecId, Bytes, TxKind, KECCAK_EMPTY, U256},
+    primitives::{address, b256, hardfork::SpecId, Address, Bytes, TxKind, KECCAK_EMPTY, U256},
     state::{AccountStatus, Bytecode},
     Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
 };
@@ -841,5 +841,150 @@ fn test_custom_opcode_transaction() {
         slot0.present_value(),
         U256::from(14),
         "DOUBLE(7) should store 14 in slot 0"
+    );
+}
+
+const IDENTITY_PRECOMPILE: Address = address!("0x0000000000000000000000000000000000000004");
+const DELEGATE_TARGET: Address = address!("0x00000000000000000000000000000000000000bb");
+const PROXY_CALLER: Address = address!("0x00000000000000000000000000000000000000cc");
+const PROXY_DELEGATECALLER: Address = address!("0x00000000000000000000000000000000000000dd");
+
+type DelegatedPrecompileEvm =
+    revm::handler::MainnetEvm<revm::handler::MainnetContext<revm::database::InMemoryDB>>;
+
+fn proxy_code(call_opcode: u8) -> Bytecode {
+    let mut code = vec![
+        opcode::PUSH1,
+        0x11,
+        opcode::PUSH1,
+        0x00,
+        opcode::MSTORE8,
+        opcode::PUSH1,
+        0x22,
+        opcode::PUSH1,
+        0x01,
+        opcode::MSTORE8,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x02,
+        opcode::PUSH1,
+        0x00,
+    ];
+    if call_opcode == opcode::CALL {
+        code.extend([opcode::PUSH1, 0x00]);
+    }
+    code.extend([
+        opcode::PUSH1,
+        0x04,
+        opcode::GAS,
+        call_opcode,
+        opcode::POP,
+        opcode::RETURNDATASIZE,
+        opcode::PUSH1,
+        0x00,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURNDATACOPY,
+        opcode::RETURNDATASIZE,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURN,
+    ]);
+    Bytecode::new_legacy(Bytes::from(code))
+}
+
+fn delegated_precompile_evm(delegate: Address) -> DelegatedPrecompileEvm {
+    let delegate_code = Bytecode::new_legacy(Bytes::from_static(&[
+        opcode::PUSH1,
+        0xAA,
+        opcode::PUSH1,
+        0x00,
+        opcode::MSTORE8,
+        opcode::PUSH1,
+        0x01,
+        opcode::PUSH1,
+        0x00,
+        opcode::RETURN,
+    ]));
+
+    let mut db = revm::database::InMemoryDB::default();
+    db.insert_account_info(
+        DELEGATE_TARGET,
+        revm::state::AccountInfo::default().with_code(delegate_code),
+    );
+    db.insert_account_info(
+        PROXY_CALLER,
+        revm::state::AccountInfo::default().with_code(proxy_code(opcode::CALL)),
+    );
+    db.insert_account_info(
+        PROXY_DELEGATECALLER,
+        revm::state::AccountInfo::default().with_code(proxy_code(opcode::DELEGATECALL)),
+    );
+    db.insert_account_info(
+        IDENTITY_PRECOMPILE,
+        revm::state::AccountInfo::default().with_code(Bytecode::new_eip7702(delegate)),
+    );
+
+    Context::mainnet()
+        .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
+        .with_db(db)
+        .build_mainnet()
+}
+
+fn transact_output(evm: &mut DelegatedPrecompileEvm, to: Address) -> Bytes {
+    let result = evm
+        .transact(
+            TxEnv::builder()
+                .caller(BENCH_CALLER)
+                .kind(TxKind::Call(to))
+                .data(Bytes::from_static(&[0x11, 0x22]))
+                .gas_limit(100_000)
+                .build()
+                .unwrap(),
+        )
+        .unwrap()
+        .result;
+    assert!(result.is_success(), "call should succeed: {result:?}");
+    result.output().cloned().unwrap_or_default()
+}
+
+#[test]
+fn test_eip7702_tx_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, IDENTITY_PRECOMPILE),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+#[test]
+fn test_eip7702_call_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, PROXY_CALLER),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+#[test]
+fn test_eip7702_delegatecall_to_delegated_precompile_runs_delegate_code() {
+    let mut evm = delegated_precompile_evm(DELEGATE_TARGET);
+    assert_eq!(
+        transact_output(&mut evm, PROXY_DELEGATECALLER),
+        Bytes::from_static(&[0xAA])
+    );
+}
+
+#[test]
+fn test_eip7702_delegated_precompile_to_precompile_runs_empty_code() {
+    let mut evm = delegated_precompile_evm(address!("0x0000000000000000000000000000000000000002"));
+    assert_eq!(transact_output(&mut evm, IDENTITY_PRECOMPILE), Bytes::new());
+    assert_eq!(transact_output(&mut evm, PROXY_CALLER), Bytes::new());
+    assert_eq!(
+        transact_output(&mut evm, PROXY_DELEGATECALLER),
+        Bytes::new()
     );
 }

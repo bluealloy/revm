@@ -174,6 +174,12 @@ pub struct CallInputs {
     /// On revert/halt of the resulting frame the parent must refund this charge
     /// to the reservoir, matching the CREATE pattern.
     pub charged_new_account_state_gas: bool,
+    /// Whether precompile execution is disabled for this call.
+    ///
+    /// Set when resolving an EIP-7702 delegation designator, matching execution-specs
+    /// (`disable_precompiles = True`).
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub disable_precompiles: bool,
 }
 
 impl CallInputs {

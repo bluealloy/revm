@@ -63,6 +63,8 @@ pub fn create_init_frame<CTX: ContextTr>(
             let account = &journal.load_account_with_code(target_address)?.info;
             let recipient_is_empty = account.is_empty();
             let delegated_address = account.code.as_ref().and_then(Bytecode::eip7702_address);
+            let mut bytecode_address = target_address;
+            let disable_precompiles = delegated_address.is_some();
             let mut known_bytecode = (
                 account.code_hash(),
                 account.code.clone().unwrap_or_default(),
@@ -77,6 +79,7 @@ pub fn create_init_frame<CTX: ContextTr>(
             }
 
             if let Some(delegated_address) = delegated_address {
+                bytecode_address = delegated_address;
                 if is_eip2780 {
                     // Charge the warm access upfront and the cold difference
                     // after the load. Charges made before an out-of-gas bail
@@ -113,7 +116,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 input: CallInput::Bytes(input),
                 gas_limit: gas.remaining(),
                 target_address,
-                bytecode_address: target_address,
+                bytecode_address,
                 known_bytecode,
                 caller: tx.caller(),
                 value: CallValue::Transfer(tx.value()),
@@ -122,6 +125,7 @@ pub fn create_init_frame<CTX: ContextTr>(
                 return_memory_offset: 0..0,
                 reservoir: gas.reservoir(),
                 charged_new_account_state_gas,
+                disable_precompiles,
             }))))
         }
         TxKind::Create => {
