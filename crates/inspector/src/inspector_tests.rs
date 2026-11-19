@@ -15,6 +15,59 @@ mod tests {
     use state::{bytecode::opcode, AccountInfo, Bytecode};
 
     #[test]
+    fn log_callbacks_keep_snapshot_when_journal_changes() {
+        use crate::Inspector;
+        use context::{ContextTr, JournalTr};
+        use interpreter::Interpreter;
+        use primitives::Log;
+
+        #[derive(Default)]
+        struct MutatingLogs {
+            seen: Vec<Log>,
+            full: usize,
+        }
+        impl<CTX: ContextTr> Inspector<CTX> for MutatingLogs {
+            fn log(&mut self, ctx: &mut CTX, log: Log) {
+                self.seen.push(log);
+                // Removing existing logs and adding new ones must not change
+                // which logs the remaining callbacks receive.
+                ctx.journal_mut().take_logs();
+                ctx.journal_mut().log(Log::default());
+            }
+            fn log_full(&mut self, _: &mut Interpreter, ctx: &mut CTX, log: Log) {
+                self.full += 1;
+                self.log(ctx, log);
+            }
+        }
+
+        for count in [0, 1, 3] {
+            for with_interpreter in [false, true] {
+                let mut ctx = Context::mainnet();
+                ctx.journal_mut().log(Log::default()); // An earlier, excluded log.
+                let expected: Vec<Log> = (0..count)
+                    .map(|i| Log {
+                        address: Address::from_word(U256::from(i + 1).into()),
+                        ..Default::default()
+                    })
+                    .collect();
+                for log in &expected {
+                    ctx.journal_mut().log(log.clone());
+                }
+                let mut inspector = MutatingLogs::default();
+                let mut interpreter = Interpreter::default();
+                crate::handler::inspect_logs(
+                    with_interpreter.then_some(&mut interpreter),
+                    &mut ctx,
+                    &mut inspector,
+                    1,
+                );
+                assert_eq!(inspector.seen, expected);
+                assert_eq!(inspector.full, if with_interpreter { count } else { 0 });
+            }
+        }
+    }
+
+    #[test]
     fn test_push_opcodes_and_stack_operations() {
         // PUSH1 0x42, PUSH2 0x1234, ADD, PUSH1 0x00, MSTORE, STOP
         let code = Bytes::from(vec![
