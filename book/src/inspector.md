@@ -95,10 +95,12 @@ Modify execution by returning custom outcomes:
 ```rust,ignore
 fn call(&mut self, _context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
     if inputs.target_address == SPECIAL_ADDRESS {
-        // Override this call with custom logic
-        return Some(CallOutcome::new(
-            InterpreterResult::new(InstructionResult::Return, Bytes::from("custom")),
-            0..0
+        // Answer this call without running it. The outcome returns the call's gas
+        // unspent and keeps the EIP-8037 state gas reservoir the call inherited.
+        return Some(CallOutcome::new_answer(
+            inputs,
+            InstructionResult::Return,
+            Bytes::from("custom"),
         ));
     }
     None // Let normal execution continue
