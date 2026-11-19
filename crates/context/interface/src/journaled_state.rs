@@ -30,7 +30,7 @@ pub trait JournalTr {
 
     /// Creates new Journaled state.
     ///
-    /// Dont forget to set spec_id.
+    /// Don't forget to set spec_id.
     fn new(database: Self::Database) -> Self;
 
     /// Returns a mutable reference to the database.
