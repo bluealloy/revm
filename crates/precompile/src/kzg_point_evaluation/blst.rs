@@ -1,8 +1,8 @@
 //! KZG point evaluation precompile using BLST BLS12-381 implementation.
 use crate::{
     bls12_381::blst::{
-        p1_add_or_double, p1_from_affine, p1_scalar_mul, p1_to_affine, p2_add_or_double,
-        p2_from_affine, p2_scalar_mul, p2_to_affine, pairing_check,
+        p1_add_or_double, p1_from_affine, p1_scalar_mul, p1_to_affine, p2_from_affine,
+        p2_to_affine, pairing_check,
     },
     bls12_381_const::TRUSTED_SETUP_TAU_G2_BYTES,
     PrecompileHalt,
@@ -26,17 +26,15 @@ pub fn verify_kzg_proof(
     y: &[u8; 32],
     proof: &[u8; 48],
 ) -> bool {
-    // Parse the commitment (G1 point)
+    // Parse the commitment and proof (G1 points)
     let Ok(commitment_point) = parse_g1_compressed(commitment) else {
         return false;
     };
-
-    // Parse the proof (G1 point)
     let Ok(proof_point) = parse_g1_compressed(proof) else {
         return false;
     };
 
-    // Parse z and y as field elements (Fr, scalar field)
+    // Parse z and y as canonical scalar field elements (Fr)
     let Ok(z_scalar) = read_scalar_canonical(z) else {
         return false;
     };
@@ -44,30 +42,40 @@ pub fn verify_kzg_proof(
         return false;
     };
 
-    // Get the trusted setup G2 point [τ]₂
-    let tau_g2 = get_trusted_setup_g2();
-
-    // Get generators
+    // Get generators and the trusted setup point [τ]G₂.
     let g1 = get_g1_generator();
     let g2 = get_g2_generator();
+    let tau_g2 = get_trusted_setup_g2();
 
-    // Compute P_minus_y = commitment - [y]G₁
+    // Reformulated single-proof KZG check. Starting from the standard
+    //   e(commitment - [y]G1, -G2) · e(proof, [τ]G2 - [z]G2) == 1
+    // and applying bilinearity `e(proof, -[z]G2) = e([z]·proof, -G2)` to move z
+    // out of G2, both G2 pairing inputs become the constants -G2 and [τ]G2:
+    //   e(D, -G2) · e(proof, [τ]G2) == 1,   D = commitment - [y]G1 + [z]·proof
+    // This replaces the per-call G2 scalar multiplication (and the G2 subtraction
+    // and its Fp2 inversion) with a single cheaper G1 scalar multiplication,
+    // while still feeding the fused `pairing_check` (`blst_miller_loop_n`).
     let y_g1 = p1_scalar_mul(&g1, &y_scalar);
-    let p_minus_y = p1_sub_affine(&commitment_point, &y_g1);
+    let z_proof = p1_scalar_mul(&proof_point, &z_scalar);
+    let neg_y_g1 = p1_neg(&y_g1);
 
-    // Compute X_minus_z = [τ]G₂ - [z]G₂
-    let z_g2 = p2_scalar_mul(&g2, &z_scalar);
-    let x_minus_z = p2_sub_affine(tau_g2, &z_g2);
+    // D = commitment + (-[y]G1) + [z]·proof, accumulated in Jacobian coordinates
+    // with a single normalization to affine. `blst_p1_add_or_double_affine`
+    // handles infinity operands (e.g. y = 0 gives [y]G1 = ∞).
+    let mut acc = p1_from_affine(&commitment_point);
+    acc = p1_add_or_double(&acc, &neg_y_g1);
+    acc = p1_add_or_double(&acc, &z_proof);
+    let d = p1_to_affine(&acc);
 
-    // Verify: P - y = Q * (X - z)
-    // Using pairing check: e(P - y, -G₂) * e(proof, X - z) == 1
     let neg_g2 = p2_neg(&g2);
 
     // Skip pairs containing a point at infinity: their pairing is the identity,
     // and `pairing_check` requires infinity-free inputs (`blst_miller_loop_n`,
     // unlike the per-pair `blst_miller_loop`, does not special-case infinity).
-    // E.g. the proof of a constant polynomial is the point at infinity.
-    let pairs: Vec<_> = [(p_minus_y, neg_g2), (proof_point, x_minus_z)]
+    // Only `d`/`proof` (G1) can be infinity here; the G2 points -G2 and [τ]G2 are
+    // fixed and never infinity, but the check stays uniform with the general
+    // `pairing_check` contract.
+    let pairs: Vec<_> = [(d, neg_g2), (proof_point, *tau_g2)]
         .into_iter()
         // SAFETY: both arguments are valid blst types
         .filter(|(g1, g2)| unsafe { !blst_p1_affine_is_inf(g1) && !blst_p2_affine_is_inf(g2) })
@@ -142,34 +150,6 @@ fn read_scalar_canonical(bytes: &[u8; 32]) -> Result<blst_scalar, PrecompileHalt
     }
 
     Ok(scalar)
-}
-
-/// Subtract two G1 points in affine form
-fn p1_sub_affine(a: &blst_p1_affine, b: &blst_p1_affine) -> blst_p1_affine {
-    // Convert first point to Jacobian
-    let a_jacobian = p1_from_affine(a);
-
-    // Negate second point
-    let neg_b = p1_neg(b);
-
-    // Add a + (-b)
-    let result = p1_add_or_double(&a_jacobian, &neg_b);
-
-    p1_to_affine(&result)
-}
-
-/// Subtract two G2 points in affine form
-fn p2_sub_affine(a: &blst_p2_affine, b: &blst_p2_affine) -> blst_p2_affine {
-    // Convert first point to Jacobian
-    let a_jacobian = p2_from_affine(a);
-
-    // Negate second point
-    let neg_b = p2_neg(b);
-
-    // Add a + (-b)
-    let result = p2_add_or_double(&a_jacobian, &neg_b);
-
-    p2_to_affine(&result)
 }
 
 /// Negate a G1 point
