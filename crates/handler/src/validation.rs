@@ -651,6 +651,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_transact_many_with_transaction_index_error() {
         use context::result::TransactionIndexedError;
 
@@ -688,6 +689,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_transact_many_success() {
         use primitives::{address, U256};
 
@@ -733,6 +735,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_transact_many_finalize_with_error() {
         use context::result::TransactionIndexedError;
 
@@ -759,6 +762,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_transact_many_commit_with_error() {
         use context::result::TransactionIndexedError;
 

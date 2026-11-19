@@ -89,6 +89,9 @@ pub trait ExecuteEvm {
     ///
     /// If any transaction fails, the journal is finalized and the error is returned with the
     /// transaction index that failed.
+    #[deprecated(
+        note = "batched execution is unused and will be removed; call `transact` or `transact_commit` for each transaction instead"
+    )]
     #[inline]
     fn transact_many(
         &mut self,
@@ -111,7 +114,11 @@ pub trait ExecuteEvm {
     /// Execute multiple transactions and finalize the state in a single operation.
     ///
     /// Internally calls [`ExecuteEvm::transact_many`] followed by [`ExecuteEvm::finalize`].
+    #[deprecated(
+        note = "batched execution is unused and will be removed; call `transact` or `transact_commit` for each transaction instead"
+    )]
     #[inline]
+    #[allow(deprecated)]
     fn transact_many_finalize(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
@@ -161,7 +168,11 @@ pub trait ExecuteCommitEvm: ExecuteEvm {
     /// Transact multiple transactions and commit to the state.
     ///
     /// Internally calls `transact_many` and `commit_inner` functions.
+    #[deprecated(
+        note = "batched execution is unused and will be removed; call `transact` or `transact_commit` for each transaction instead"
+    )]
     #[inline]
+    #[allow(deprecated)]
     fn transact_many_commit(
         &mut self,
         txs: impl Iterator<Item = Self::Tx>,
