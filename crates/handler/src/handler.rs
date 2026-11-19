@@ -4,6 +4,7 @@ use crate::{
     frame::handle_reservoir_remaining_gas,
     post_execution::{self, build_result_gas},
     pre_execution::{self, apply_eip7702_auth_list, PreExecutionOutput},
+    system_call::SYSTEM_CALL_STATE_GAS_RESERVOIR,
     validation, EvmTr, FrameResult, ItemOrResult,
 };
 use context::{
@@ -129,7 +130,7 @@ pub trait Handler {
     ) -> Result<ExecutionResult<Self::HaltReason>, Self::Error> {
         // dummy values that are not used.
         let init_and_floor_gas = InitialAndFloorGas::new(0, 0);
-        let mut gas = self.tx_gas(evm, &init_and_floor_gas);
+        let mut gas = self.system_call_gas(evm);
         // System calls skip pre-execution, so the checkpoint that
         // [`Handler::execution`] settles is opened here.
         let checkpoint = evm.ctx().journal_mut().checkpoint();
@@ -218,6 +219,32 @@ pub trait Handler {
         let (remaining, reservoir) = init_and_floor_gas
             .initial_gas_and_reservoir(tx_gas_limit, ctx.cfg().tx_gas_limit_cap());
         GasTracker::new(tx_gas_limit, remaining, reservoir)
+    }
+
+    /// Creates the transaction-level [`GasTracker`] for a system call.
+    ///
+    /// System calls have no intrinsic gas and are not subject to the EIP-7825
+    /// `TX_MAX_GAS_LIMIT` cap. The gas limit carries the
+    /// [`SYSTEM_CALL_STATE_GAS_RESERVOIR`] margin on top of the regular budget
+    /// (`gas_left`), as in [`SYSTEM_CALL_GAS_LIMIT`]. Under EIP-8037 the margin
+    /// is placed in the state-gas reservoir, so `GAS` inside a system contract
+    /// reports the regular budget only. Without EIP-8037 there is no reservoir
+    /// and the system call runs on the regular budget alone, the 30M of
+    /// EIP-4788, EIP-2935, EIP-7002 and EIP-7251.
+    ///
+    /// [`SYSTEM_CALL_GAS_LIMIT`]: crate::system_call::SYSTEM_CALL_GAS_LIMIT
+    /// [`SYSTEM_CALL_STATE_GAS_RESERVOIR`]: crate::system_call::SYSTEM_CALL_STATE_GAS_RESERVOIR
+    #[inline]
+    fn system_call_gas(&self, evm: &mut Self::Evm) -> GasTracker {
+        let ctx = evm.ctx_ref();
+        let gas_limit = ctx.tx().gas_limit();
+        let regular = gas_limit.saturating_sub(SYSTEM_CALL_STATE_GAS_RESERVOIR);
+        let reservoir = if ctx.cfg().is_amsterdam_eip8037_enabled() {
+            gas_limit - regular
+        } else {
+            0
+        };
+        GasTracker::new(regular + reservoir, regular, reservoir)
     }
 
     /// Prepares the EVM state for execution.
