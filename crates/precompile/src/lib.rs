@@ -86,6 +86,35 @@ pub const fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     calc_linear_cost(len, base, word)
 }
 
+const SHORT_ADDRESS_WORDS: usize = SHORT_ADDRESS_CAP.div_ceil(usize::BITS as usize);
+
+#[derive(Clone, Debug, Default)]
+struct ShortAddressBitmap([usize; SHORT_ADDRESS_WORDS]);
+
+impl ShortAddressBitmap {
+    #[inline]
+    const fn location(index: usize) -> (usize, usize) {
+        let bits = usize::BITS as usize;
+        (index / bits, 1 << (index % bits))
+    }
+
+    #[inline]
+    const fn contains(&self, index: usize) -> bool {
+        let (word, mask) = Self::location(index);
+        self.0[word] & mask != 0
+    }
+
+    const fn insert(&mut self, index: usize) {
+        let (word, mask) = Self::location(index);
+        self.0[word] |= mask;
+    }
+
+    const fn remove(&mut self, index: usize) {
+        let (word, mask) = Self::location(index);
+        self.0[word] &= !mask;
+    }
+}
+
 /// Precompiles contain map of precompile addresses to functions and AddressSet of precompile addresses.
 #[derive(Clone, Debug)]
 pub struct Precompiles {
@@ -95,6 +124,8 @@ pub struct Precompiles {
     addresses: AddressSet,
     /// Optimized addresses filter.
     optimized_access: Box<[Option<Precompile>; SHORT_ADDRESS_CAP]>,
+    /// Short-address cache slots invalidated by mutable access.
+    dirty_short_addresses: ShortAddressBitmap,
 }
 
 impl Default for Precompiles {
@@ -103,6 +134,7 @@ impl Default for Precompiles {
             inner: HashMap::default(),
             addresses: AddressSet::default(),
             optimized_access: Box::new([const { None }; SHORT_ADDRESS_CAP]),
+            dirty_short_addresses: ShortAddressBitmap::default(),
         }
     }
 }
@@ -186,15 +218,26 @@ impl Precompiles {
     #[inline]
     pub fn get(&self, address: &Address) -> Option<&Precompile> {
         if let Some(short_address) = short_address(address) {
-            return self.optimized_access[short_address].as_ref();
+            let cached = self.optimized_access[short_address].as_ref();
+            if cached.is_some() || !self.dirty_short_addresses.contains(short_address) {
+                return cached;
+            }
         }
         self.inner.get(address)
     }
 
-    /// Returns the precompile for the given address.
+    /// Returns a mutable precompile for the given address.
+    ///
+    /// Mutably accessing a short-address precompile invalidates its cached value. Calling
+    /// [`Self::extend`] with a replacement restores the fast path.
     #[inline]
     pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
-        self.inner.get_mut(address)
+        let precompile = self.inner.get_mut(address)?;
+        if let Some(short_address) = short_address(address) {
+            self.dirty_short_addresses.insert(short_address);
+            self.optimized_access[short_address] = None;
+        }
+        Some(precompile)
     }
 
     /// Is the precompiles list empty.
@@ -227,6 +270,7 @@ impl Precompiles {
             let address = *item.address();
             if let Some(short_idx) = short_address(&address) {
                 self.optimized_access[short_idx] = Some(item.clone());
+                self.dirty_short_addresses.remove(short_idx);
             }
             self.addresses.insert(address);
             self.inner.insert(address, item);
@@ -519,6 +563,81 @@ mod test {
             output.status,
             PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
         ));
+    }
+
+    #[test]
+    fn get_mut_invalidates_short_address_cache() {
+        let mut precompiles = Precompiles::istanbul().clone();
+        let address = u64_to_address(4);
+        assert!(!precompiles.dirty_short_addresses.contains(4));
+
+        let replacement = Precompile::new(
+            PrecompileId::Custom("test".into()),
+            address,
+            temp_precompile,
+        );
+
+        *precompiles.get_mut(&address).unwrap() = replacement.clone();
+
+        assert!(precompiles.optimized_access[4].is_none());
+        assert!(precompiles.dirty_short_addresses.contains(4));
+
+        let precompile = precompiles.get(&address).unwrap();
+        assert_eq!(precompile.id(), &PrecompileId::Custom("test".into()));
+        assert_eq!(precompile.address(), &address);
+
+        let output = precompile.execute(&[], u64::MAX, 0).unwrap();
+        assert!(matches!(
+            output.status,
+            PrecompileStatus::Halt(PrecompileHalt::OutOfGas)
+        ));
+
+        assert_eq!(
+            precompiles.clone().get(&address).unwrap().id(),
+            precompile.id()
+        );
+        precompiles.extend([replacement]);
+        assert!(precompiles.optimized_access[4].is_some());
+        assert!(!precompiles.dirty_short_addresses.contains(4));
+    }
+
+    #[test]
+    fn dirty_short_address_bitmap_boundaries() {
+        let boundaries = [
+            usize::BITS as usize - 1,
+            usize::BITS as usize,
+            SHORT_ADDRESS_CAP - 1,
+        ];
+
+        for short_address in boundaries {
+            let address = u64_to_address(short_address as u64);
+            let replacement = Precompile::new(
+                PrecompileId::Custom("test".into()),
+                address,
+                temp_precompile,
+            );
+            let mut precompiles = Precompiles::default();
+            precompiles.extend([replacement.clone()]);
+
+            assert!(precompiles.get_mut(&address).is_some());
+            assert!(precompiles.dirty_short_addresses.contains(short_address));
+            assert!(precompiles.get(&address).is_some());
+
+            precompiles.extend([replacement]);
+            assert!(!precompiles.dirty_short_addresses.contains(short_address));
+            assert!(precompiles.optimized_access[short_address].is_some());
+        }
+    }
+
+    #[test]
+    fn missing_get_mut_preserves_absent_short_address() {
+        let mut precompiles = Precompiles::istanbul().clone();
+        let short_address = SHORT_ADDRESS_CAP - 1;
+        let address = u64_to_address(short_address as u64);
+
+        assert!(precompiles.get_mut(&address).is_none());
+        assert!(!precompiles.dirty_short_addresses.contains(short_address));
+        assert!(precompiles.get(&address).is_none());
     }
 
     #[test]
