@@ -204,7 +204,30 @@ impl EthFrame<EthInterpreter> {
         let is_static = inputs.is_static;
         let gas_limit = inputs.gas_limit;
 
-        if let Some(result) = precompiles.run(ctx, &inputs).map_err(ERROR::from_string)? {
+        let precompile_result = if precompiles.contains(&inputs.bytecode_address) {
+            // EIP-7702: a precompile address holding a delegation designator runs the
+            // delegate's code, which the caller already resolved into `known_bytecode`.
+            //
+            // Frame creators load `bytecode_address` with code, so this is a cache hit.
+            // Even if it were not, precompile addresses are always warm in the journal,
+            // so the load can only cost a database read and never a cold access charge.
+            let is_delegated = ctx
+                .journal_mut()
+                .load_account_with_code(inputs.bytecode_address)?
+                .info
+                .code
+                .as_ref()
+                .is_some_and(Bytecode::is_eip7702);
+            if is_delegated {
+                None
+            } else {
+                precompiles.run(ctx, &inputs).map_err(ERROR::from_string)?
+            }
+        } else {
+            None
+        };
+
+        if let Some(result) = precompile_result {
             let mut logs = Vec::new();
             if result.result.is_ok() {
                 // Preserve the reservoir on the result gas so it can be reimbursed.
