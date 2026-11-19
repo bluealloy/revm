@@ -29,9 +29,8 @@ pub trait InspectorEvmTr:
     /// The inspector type used for EVM execution inspection.
     type Inspector: Inspector<Self::Context, EthInterpreter, FrameInput, FrameResult>;
 
-    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
-    ///
-    /// This is one of two functions that need to be implemented for Evm. Second one is `all_mut`.
+    /// Returns shared references to the context, instructions, precompiles,
+    /// frame stack, and inspector, in that order.
     #[expect(clippy::type_complexity)]
     fn all_inspector(
         &self,
@@ -43,9 +42,8 @@ pub trait InspectorEvmTr:
         &Self::Inspector,
     );
 
-    /// Returns a tuple of mutable references to the context, the inspector, the frame and the instructions.
-    ///
-    /// This is one of two functions that need to be implemented for Evm. Second one is `all`.
+    /// Returns mutable references to the context, instructions, precompiles,
+    /// frame stack, and inspector, in that order.
     #[expect(clippy::type_complexity)]
     fn all_mut_inspector(
         &mut self,

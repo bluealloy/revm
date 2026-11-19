@@ -39,7 +39,8 @@ pub trait EvmTr {
     /// The type containing the frame
     type Frame: FrameTr;
 
-    /// Returns a tuple of references to the context, the frame and the instructions.
+    /// Returns shared references to the context, instructions, precompiles, and
+    /// frame stack, in that order.
     #[expect(clippy::type_complexity)]
     fn all(
         &self,
@@ -50,7 +51,8 @@ pub trait EvmTr {
         &FrameStack<Self::Frame>,
     );
 
-    /// Returns a tuple of mutable references to the context, the frame and the instructions.
+    /// Returns mutable references to the context, instructions, precompiles,
+    /// and frame stack, in that order.
     #[expect(clippy::type_complexity)]
     fn all_mut(
         &mut self,
