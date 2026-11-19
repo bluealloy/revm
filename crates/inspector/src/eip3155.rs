@@ -1,5 +1,5 @@
 use crate::{inspectors::GasInspector, Inspector};
-use context::{Cfg, ContextTr, JournalTr, Transaction};
+use context::{Cfg, ContextTr, JournalTr, LocalContextTr, Transaction};
 use interpreter::{
     interpreter_types::{Jumps, LoopControl, MemoryTr, StackTr},
     CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
@@ -240,7 +240,7 @@ where
         self.gas_inspector.initialize_interp(&interp.gas);
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step(&interp.gas);
         self.stack.clear();
         interp.stack.clone_into(&mut self.stack);
@@ -260,7 +260,9 @@ where
         // within a child frame (0→x→0 restoration); the tracer exposes it as a
         // u64 counter.
         self.state_gas = interp.gas.state_gas_spent().max(0) as u64;
-        self.refunded = interp.gas.refunded();
+        // The EIP-7702 authorization refund is granted before execution and
+        // is part of the transaction refund counter, as in geth.
+        self.refunded = interp.gas.refunded() + context.local().eip7702_refund() as i64;
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {

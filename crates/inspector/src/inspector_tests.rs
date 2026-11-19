@@ -1168,3 +1168,237 @@ mod tests {
         assert_eq!(logs[0].2, U256::from(7));
     }
 }
+
+/// The EIP-7702 authorization refund is computed before the first frame runs
+/// and only added to the transaction refund counter after execution. It is
+/// recorded on the local context so that inspectors can report it during
+/// execution, like geth's state refund counter does.
+#[cfg(test)]
+mod eip7702_refund_tests {
+    use crate::{InspectEvm, Inspector};
+    use context::{
+        result::ExecutionResult,
+        transaction::{Authorization, RecoveredAuthority, RecoveredAuthorization},
+        Cfg, Context, ContextTr, LocalContextTr, TxEnv,
+    };
+    use database::{CacheDB, EmptyDB, BENCH_CALLER, BENCH_TARGET};
+    use handler::{MainBuilder, MainContext, MainnetContext, MainnetEvm};
+    use interpreter::{CallInputs, CallOutcome, Interpreter};
+    use primitives::{address, hardfork::SpecId, Address, TxKind, KECCAK_EMPTY, U256};
+    use state::{bytecode::opcode, AccountInfo, Bytecode};
+
+    const AUTHORITY: Address = address!("5000000000000000000000000000000000000000");
+    const DELEGATE: Address = address!("6000000000000000000000000000000000000000");
+
+    /// Records the EIP-7702 refund read from the local context in every hook.
+    #[derive(Default)]
+    struct RefundProbe {
+        on_call: Vec<u64>,
+        on_step: Vec<u64>,
+        on_call_end: Vec<u64>,
+    }
+
+    impl<CTX: ContextTr> Inspector<CTX> for RefundProbe {
+        fn call(&mut self, context: &mut CTX, _: &mut CallInputs) -> Option<CallOutcome> {
+            self.on_call.push(context.local().eip7702_refund());
+            None
+        }
+
+        fn step(&mut self, _: &mut Interpreter, context: &mut CTX) {
+            self.on_step.push(context.local().eip7702_refund());
+        }
+
+        fn call_end(&mut self, context: &mut CTX, _: &CallInputs, _: &mut CallOutcome) {
+            self.on_call_end.push(context.local().eip7702_refund());
+        }
+    }
+
+    fn db(code: Vec<u8>, authority_exists: bool) -> CacheDB<EmptyDB> {
+        let mut db = CacheDB::<EmptyDB>::default();
+        db.insert_account_info(
+            BENCH_CALLER,
+            AccountInfo {
+                balance: U256::from(10_000_000_000_000_000_000u128),
+                ..Default::default()
+            },
+        );
+        db.insert_account_info(
+            BENCH_TARGET,
+            AccountInfo::from_bytecode(Bytecode::new_legacy(code.into())),
+        );
+        if authority_exists {
+            db.insert_account_info(
+                AUTHORITY,
+                AccountInfo {
+                    balance: U256::from(1),
+                    code_hash: KECCAK_EMPTY,
+                    ..Default::default()
+                },
+            );
+        }
+        db
+    }
+
+    /// EIP-7702 call to `BENCH_TARGET` delegating `AUTHORITY` to `DELEGATE`.
+    fn eip7702_tx() -> TxEnv {
+        let mut tx = TxEnv::builder_for_bench()
+            .kind(TxKind::Call(BENCH_TARGET))
+            .gas_limit(100_000)
+            .gas_price(0)
+            .build_fill();
+        tx.set_recovered_authorization(vec![RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::ZERO,
+                address: DELEGATE,
+                nonce: 0,
+            },
+            RecoveredAuthority::Valid(AUTHORITY),
+        )]);
+        tx.derive_tx_type().unwrap();
+        tx
+    }
+
+    type RefundEvm = MainnetEvm<MainnetContext<CacheDB<EmptyDB>>, RefundProbe>;
+
+    fn build_evm(spec: SpecId, db: CacheDB<EmptyDB>) -> RefundEvm {
+        Context::mainnet()
+            .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(spec))
+            .with_db(db)
+            .build_mainnet_with_inspector(RefundProbe::default())
+    }
+
+    #[test]
+    fn existing_authority_refund_is_visible_during_execution() {
+        let mut evm = build_evm(SpecId::PRAGUE, db(vec![opcode::STOP], true));
+        let refund = evm.ctx.cfg().gas_params().tx_eip7702_auth_refund_regular();
+        assert!(refund > 0);
+
+        let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+        assert!(result.is_success(), "{result:?}");
+
+        let probe = &evm.inspector;
+        assert_eq!(probe.on_call, [refund]);
+        assert_eq!(probe.on_step, [refund]);
+        assert_eq!(probe.on_call_end, [refund]);
+    }
+
+    #[test]
+    fn new_authority_has_no_refund() {
+        let mut evm = build_evm(SpecId::PRAGUE, db(vec![opcode::STOP], false));
+
+        let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+        assert!(result.is_success(), "{result:?}");
+
+        let probe = &evm.inspector;
+        assert_eq!(probe.on_call, [0]);
+        assert_eq!(probe.on_step, [0]);
+        assert_eq!(probe.on_call_end, [0]);
+    }
+
+    #[test]
+    fn refund_survives_top_level_revert() {
+        let revert = vec![opcode::PUSH0, opcode::PUSH0, opcode::REVERT];
+
+        let mut evm = build_evm(SpecId::PRAGUE, db(revert.clone(), true));
+        let refund = evm.ctx.cfg().gas_params().tx_eip7702_auth_refund_regular();
+        let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+        assert!(
+            matches!(result, ExecutionResult::Revert { .. }),
+            "{result:?}"
+        );
+        assert_eq!(evm.inspector.on_call_end, [refund]);
+
+        // The refund is still granted: the reverting transaction with an
+        // existing authority uses less gas than the same one with a new
+        // authority.
+        let mut without = build_evm(SpecId::PRAGUE, db(revert, false));
+        let unrefunded = without.inspect_one_tx(eip7702_tx()).unwrap();
+        assert!(result.tx_gas_used() < unrefunded.tx_gas_used());
+    }
+
+    #[test]
+    fn refund_is_reset_for_the_next_transaction() {
+        let mut evm = build_evm(SpecId::PRAGUE, db(vec![opcode::STOP], true));
+        let refund = evm.ctx.cfg().gas_params().tx_eip7702_auth_refund_regular();
+
+        evm.inspect_one_tx(eip7702_tx()).unwrap();
+        assert_eq!(evm.inspector.on_step, [refund]);
+
+        // A plain call afterwards must not see the previous transaction's refund.
+        evm.inspector = RefundProbe::default();
+        let plain = TxEnv::builder_for_bench()
+            .kind(TxKind::Call(BENCH_TARGET))
+            .nonce(1)
+            .gas_limit(100_000)
+            .gas_price(0)
+            .build_fill();
+        let result = evm.inspect_one_tx(plain).unwrap();
+        assert!(result.is_success(), "{result:?}");
+        assert_eq!(evm.inspector.on_call, [0]);
+        assert_eq!(evm.inspector.on_step, [0]);
+    }
+
+    /// The EIP-3155 tracer reports the refund on every step, like geth.
+    #[cfg(feature = "tracer")]
+    #[test]
+    fn eip3155_tracer_reports_the_refund() {
+        use crate::inspectors::TracerEip3155;
+        use std::{cell::RefCell, io::Write, rc::Rc};
+
+        #[derive(Clone, Default)]
+        struct SharedBuffer(Rc<RefCell<Vec<u8>>>);
+
+        impl Write for SharedBuffer {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                self.0.borrow_mut().extend_from_slice(buf);
+                Ok(buf.len())
+            }
+
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+
+        fn step_refunds(authority_exists: bool) -> Vec<String> {
+            let output = SharedBuffer::default();
+            let tracer = TracerEip3155::new(Box::new(output.clone())).without_summary();
+            let mut evm = Context::mainnet()
+                .modify_cfg_chained(|cfg| cfg.set_spec_and_mainnet_gas_params(SpecId::PRAGUE))
+                .with_db(db(vec![opcode::STOP], authority_exists))
+                .build_mainnet_with_inspector(tracer);
+
+            let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+            assert!(result.is_success(), "{result:?}");
+
+            let output = output.0.borrow();
+            let trace = core::str::from_utf8(&output).unwrap();
+            trace
+                .lines()
+                .map(|line| {
+                    let step: serde_json::Value = serde_json::from_str(line).unwrap();
+                    step["refund"].as_str().unwrap().to_string()
+                })
+                .collect()
+        }
+
+        let evm = build_evm(SpecId::PRAGUE, db(vec![], true));
+        let refund = evm.ctx.cfg().gas_params().tx_eip7702_auth_refund_regular();
+
+        assert_eq!(step_refunds(true), [format!("{refund:#x}")]);
+        assert_eq!(step_refunds(false), ["0x0"]);
+    }
+
+    #[test]
+    fn amsterdam_has_no_refund() {
+        // EIP-2780 charges the authorizations at runtime: nothing to refund.
+        let mut evm = build_evm(SpecId::AMSTERDAM, db(vec![opcode::STOP], true));
+
+        let result = evm.inspect_one_tx(eip7702_tx()).unwrap();
+        assert!(result.is_success(), "{result:?}");
+
+        let probe = &evm.inspector;
+        assert_eq!(probe.on_call, [0]);
+        assert_eq!(probe.on_step, [0]);
+        assert_eq!(probe.on_call_end, [0]);
+    }
+}

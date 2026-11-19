@@ -428,6 +428,15 @@ pub trait Handler {
     /// Returns the EIP-7702 gas refund, or `None` when the EIP-2780
     /// authorization charges ran out of gas — [`Handler::pre_execution`] owns
     /// the runtime gas phase checkpoint and reverts it in that case.
+    ///
+    /// The refund is only added to the transaction refund counter by
+    /// [`Handler::refund`] in post-execution. To make it observable to
+    /// inspectors during execution, the default implementation also records
+    /// it on the local context through
+    /// [`LocalContextTr::set_eip7702_refund`].
+    /// Overriding implementations that compute their own refund must record
+    /// it the same way, or inspectors will see zero while a different value is
+    /// applied.
     #[inline]
     fn apply_eip7702_auth_list(
         &self,
