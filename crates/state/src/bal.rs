@@ -400,12 +400,15 @@ mod tests {
             account_info: AccountInfoBal {
                 nonce: BalWrites {
                     writes: vec![(idx(9), 90), (idx(4), 40)],
+                    ..Default::default()
                 },
                 balance: BalWrites {
                     writes: vec![(idx(5), U256::from(50)), (idx(2), U256::from(20))],
+                    ..Default::default()
                 },
                 code: BalWrites {
                     writes: vec![(idx(7), code(7)), (idx(3), code(3))],
+                    ..Default::default()
                 },
                 #[cfg(feature = "account-ext")]
                 extension: BalWrites::default(),
@@ -416,16 +419,30 @@ mod tests {
                         U256::from(4),
                         BalWrites {
                             writes: vec![(idx(8), U256::from(80)), (idx(6), U256::from(60))],
+                            ..Default::default()
                         },
                     ),
-                    (U256::from(1), BalWrites { writes: vec![] }),
+                    (
+                        U256::from(1),
+                        BalWrites {
+                            writes: vec![],
+                            ..Default::default()
+                        },
+                    ),
                     (
                         U256::from(2),
                         BalWrites {
                             writes: vec![(idx(3), U256::from(30)), (idx(1), U256::from(10))],
+                            ..Default::default()
                         },
                     ),
-                    (U256::from(3), BalWrites { writes: vec![] }),
+                    (
+                        U256::from(3),
+                        BalWrites {
+                            writes: vec![],
+                            ..Default::default()
+                        },
+                    ),
                 ]),
             },
         };

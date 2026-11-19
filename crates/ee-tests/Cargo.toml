@@ -17,6 +17,7 @@ workspace = true
 revm = { workspace = true, features = ["serde", "std"] }
 
 [dev-dependencies]
+alloy-eips.workspace = true
 insta.workspace = true
 
 [features]

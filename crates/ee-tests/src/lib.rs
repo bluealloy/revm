@@ -23,3 +23,6 @@ mod eip2780;
 
 #[cfg(test)]
 mod eip8037;
+
+#[cfg(test)]
+mod eip7928;
