@@ -31,21 +31,16 @@ either.workspace = true
 
 # Optional
 serde = { workspace = true, features = ["derive", "rc"], optional = true }
-serde_json = { workspace = true, features = [
-	"alloc",
-	"preserve_order",
-], optional = true }
+serde_json = { workspace = true, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 database = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std"]
-# Preserve order of json field
 std = [
 	"serde?/std",
 	"serde_json?/std",
-	"serde_json?/preserve_order",
 	"context/std",
 	"database/std",
 	"database-interface/std",
