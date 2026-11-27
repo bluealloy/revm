@@ -864,6 +864,9 @@ impl BundleState {
         other.extend_state(this_bundle.state);
         // Extend other contracts
         other.contracts.extend(this_bundle.contracts);
+        // Keep the reverts of this bundle
+        other.reverts = this_bundle.reverts;
+        other.reverts_size = this_bundle.reverts_size;
         // Swap bundles
         mem::swap(self, &mut other)
     }
@@ -1239,7 +1242,7 @@ mod tests {
             ..Default::default()
         };
         let account1_changed = AccountInfo {
-            nonce: 1,
+            nonce: 2,
             ..Default::default()
         };
         let account2 = AccountInfo {
@@ -1249,21 +1252,25 @@ mod tests {
 
         let present_state = BundleState::builder(2..=2)
             .state_present_account_info(address1, account1_changed.clone())
+            .revert_account_info(2, address1, Some(Some(account1.clone())))
             .build();
         assert_eq!(present_state.reverts.len(), 1);
-        let previous_state = BundleState::builder(1..=1)
+        let previous_state = BundleState::builder(0..=1)
             .state_present_account_info(address1, account1)
             .state_present_account_info(address2, account2.clone())
             .build();
-        assert_eq!(previous_state.reverts.len(), 1);
+        assert_eq!(previous_state.reverts.len(), 2);
 
+        let present_reverts = present_state.reverts.clone();
+        let present_reverts_size = present_state.reverts_size;
         let mut test = present_state;
 
         test.prepend_state(previous_state);
 
         assert_eq!(test.state.len(), 2);
-        // Reverts num should stay the same.
-        assert_eq!(test.reverts.len(), 1);
+        // Reverts should stay the same.
+        assert_eq!(test.reverts, present_reverts);
+        assert_eq!(test.reverts_size, present_reverts_size);
         // Account1 is not overwritten.
         assert_eq!(
             test.state.get(&address1).unwrap().info,
