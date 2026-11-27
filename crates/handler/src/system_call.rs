@@ -12,10 +12,10 @@
 //! let beacon_contract: Address = "0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02".parse().unwrap();
 //! evm.system_call(beacon_contract, beacon_root)?;
 //!
-//! // Example: update block hash (EIP-2935) at the end of a block
-//! let block_hash: Bytes = ...; // new block hash
+//! // Example: update block hash (EIP-2935) at the start of a block
+//! let parent_hash: Bytes = ...; // hash of the parent block
 //! let history_contract: Address = "0x0000F90827F1C53a10cb7A02335B175320002935".parse().unwrap();
-//! evm.system_call(history_contract, block_hash)?;
+//! evm.system_call(history_contract, parent_hash)?;
 //! ```
 //!
 //! See the book section on [External State Transitions](../../book/src/external_state_transitions.md) for more details.

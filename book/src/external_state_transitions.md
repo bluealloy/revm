@@ -20,7 +20,7 @@ EIP-4788 requires that the root of each beacon chain block is committed to the e
 
 ## EIP-2935: Add blockHash and blockNumber to the EVM
 
-EIP-2935 introduces a system contract that stores recent block hashes, allowing contracts to query them. The client is responsible for updating this contract at each block, by calling a system contract at a fixed address (`0x0000F90827F1C53a10cb7A02335B175320002935`) with the new block hash.
+EIP-2935 introduces a system contract that stores recent block hashes, allowing contracts to query them. The client is responsible for updating this contract at the start of each block, by calling a system contract at a fixed address (`0x0000F90827F1C53a10cb7A02335B175320002935`) with the parent block hash.
 
 - The system call is performed by the client, not by EVM transaction execution.
 - See [EIP-2935](https://eips.ethereum.org/EIPS/eip-2935) for full details.
